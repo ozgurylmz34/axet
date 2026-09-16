@@ -87,6 +87,24 @@ Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (
 
 **⑦ P6 BLOCKER düzeltmesi dağıtıldı.** Yaklaşım **DUR değil FAIL-SAFE**: *yedekleyemediğini silme, kullanıcıya adıyla söyle, akışı durdurma.* Gerekçe — 4. adıma DUR koymak P6'nın 3. kalemini (*"gömülü git deposu artık `-Sifirla`'yı kalıcı tıkamıyor"*) geri kırardı. Pakete M5 kapsam boşluğunun testi, `kur.ps1:387` yorum düzeltmesi + 4. adım DUR bloğuna geri-dönüş ipucu, ve ⑤'teki `call` düzeltmesi dahil.
 
+**⑧ TX-01 ikinci kapısı (taze bug-expert) KOŞTU → WARNING → düzeltildi → `5eb3fa8` commit+push.** İş paketi artık **kapanmaya hazır** (merge kararı ④'te).
+- **H1 ve H2 KAPANDI ve bağımsız yeniden üretildi.** H1: 26 girdilik korpusla `quality_scorecard.durum_beyani` ↔ `run_review.gate_durum_beyani` yan yana koşturuldu → `run_review`'ın hüküm verdiği **23/23 girdide birebir aynı**; ayrışan 3'ü yalnız `run_review`'ın `None` döndüğü yerler ve **üçü de daha sıkı yönde** (false-green yok). H2: kilitsiz kontrol grubu **6/6 koşumda kayıp** (147 satır, hepsi `rc=0` ile sessiz) · kilitli ürün **6/6 koşumda 0 kayıp** (900/900); kilit alınamayınca `rc=3` + **hiç yazma yok**; başka dosya kilitliyken **ateş etmiyor** (guard no-op değil).
+- **Mutasyon: 30 mutant / 28 KIRMIZI.** Yeşil kalan 2 karakterize edildi ve **P6 sınıfı DEĞİL**: biri D2'nin üç katmanlı fail-closed'ının üst katmanı (değişmez korunuyor, yalnız teşhis metni kayıyor), diğeri `os.fsync` (süreç-içi gözlemlenemez).
+- **Kapatılan 2 MEDIUM — ikisi de "belge kodu yanlış anlatıyor" sınıfı:** ① `references/quality-scorecard.md:251-252` *"`kok` ölü parametre, AÇIK KALEM"* diyordu; `quality_scorecard.py:261` `Path(kok) / yol` ile **kullanıyor** ve aynı belgenin `--artefakt-kok` maddesi buna dayanıyor (belge kendiyle çelişiyordu). ② `guncelle/harita.json:437` `on_kosul` *"bu dalda 1 FAIL kaldı … (b419c09)"* diyordu; ölçüm: **0 failure**, ve `b419c09` → `fatal: Not a valid object name` (obje kaybında giden SHA'lardan). **Bir sonraki okuyucu gerçek bir regresyonu "normal" sayabilirdi.**
+- Ek 2 LOW (kapsam beyanı, core §7 MUST) + `diskte YOK` teşhisini çivileyen assert — **mutasyonla doğrulandı** (o assert olmadan `exists` mutasyonu yeşil kalıyordu).
+- ⚠ **Hiçbir otomatik katman bu iki MEDIUM'u yakalamıyordu:** `siniflandir.py` kendi kapsam beyanında *"yükleme metinlerinin doğruluğu"* ve *"dosya içeriği"* için bakmadığını yazıyor; `tests/test_guncelle_harita` 21/21 yeşil. **Bug-gate son savunmaydı ve tuttu.**
+- Doğrulama (son bayt): `sap-code-review` **115 test · 0 failure · 1 skip** · `tests.test_guncelle_harita` **21/21** · `siniflandir.py` **443 dosya 0 sorun**. `quality_scorecard.py`'ye **dokunulmadı** (sha256 `833ceb42…` taban ile aynı).
+- **Bilinçli açık 3 kalem duruyor**, ama biri için **yarıçap ölçüldü**: U+200B kapsam notu, **TAM kapsamlı** bir defterde (90/90 kapı kayıtlı) gerçek beyandan **ayırt edilemez PASS** üretiyor (`rc=0 hukum=PASS kapsam_bos=0`). Belge bunu yalnız *"D5'i atlatır"* diye yazıyor. **Kozmetik değil** — kapatma kararı bilinçli verilmeli.
+
+**⑨ P6 BLOCKER düzeltmesi BİTTİ (henüz COMMIT'SİZ — üçüncü kapı bekleniyor).** `git diff --numstat`: `README.md 2/1 · kur.ps1 46/14 · TASARIM.md 1/1 · tests/test_kur.py 74/5`.
+- Çözüm **fail-safe, DUR değil**: `add -f` sonucu bayrağa yazılıyor (`kur.ps1:459-478`), silme izni **yedek dalının AĞACINDAN** doğrulanıyor (`:526-529` — "rc=0 bir başarı mesajıdır, yedeğin kendisi değil"), 5. adım koşullu (`:570-586`): yedekte yoksa `ATLANDI: <tam yol> SİLİNMEDİ` + ne yapılacağı, **rc sözleşmesi aynı**. P6'nın 3. kalemi (gömülü depo tıkamıyor) korundu.
+- Mutasyon kanıtları: **M5** (5. adım bloğu tamamen silinir) → yeni `test_..._artigi_5_adimda_silinir` KIRMIZI (bug-expert'in boşluk bulgusu kapandı) · **M6** (guard eski hâline döndürülür) → yeni `test_..._yedeklenemeyen_axet_guncelleme_silinmez` KIRMIZI *"veri kaybı"* = **HIGH'ın gerçek `kur.cmd` ile kalıcı regresyon koruması** · **M7** (yeni DUR satırı silinir) → KIRMIZI.
+- Tam takım (son bayt, ön planda, iki kez): **272 test · 1 failure · 0 error · 2 skip**. Taban 270/2 idi ⇒ +2 yeni test, `test_ascii_olmayan_python…` düştü. Kalan tek failure `test_run_tests_cli.py:47` = `requests` eksikliği (⑤).
+- 🔴 **AJANIN KENDİ BIRAKTIĞI ÖLÇÜLMEMİŞ NOKTA — üçüncü kapının 1. önceliği:** `.axet-guncelleme/` içinde **commit'İ OLAN** gömülü depo varsa `add -f` `rc=0` döner ama yedeğe yalnız **gitlink** (`160000`, tek commit kimliği) girer ⇒ bayrak *"yedekte var"* der, 5. adım `Remove-Item -Recurse -Force` o deponun **geçmişini de siler** — oysa `clean -fd` iç içe depoyu bilerek atlıyor. **Kapatılan HIGH'ın bir katman derini: bayrak doğru, yedeğin İÇERİĞİ yok.** Kayıp doğrulanırsa BLOCKER, merge bekler.
+- İkinci ölçülmemiş nokta: `.axet-guncelleme/` yalnız **boş alt klasörlerden** oluşuyorsa `add -f` "did not match any files" ile düşebilir ⇒ dizin silinmeyip mesajla bırakılır. "Zararsız gibi" ama **ölçülmedi**.
+
+**⑩ Lider hatası (kayda geçiyor, ders):** TX-01'de kendi eklediği assert'i mutasyonla sınarken dosyayı `read_text`/`write_text` ile geri yazdı → Windows'ta **LF→CRLF** çevirdi, `quality_scorecard.py` sha256 `833ceb42` → `ec4552ef` oldu. **Testler yeşil kaldı** (Python satır sonunu umursamaz) ⇒ ölçüm bunu yakalamazdı; yalnız sha256 kontrolü yakaladı. `git checkout --` ile geri alındı. **Mutasyon geri alma DAİMA `read_bytes`/`write_bytes` ya da `git checkout --` ile yapılır.**
+
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
 
 | Ne | Değer | Nasıl ölçüldü |
@@ -132,7 +150,7 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 ### SIRADAKİ — tam sıra
 
-> **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert 🔄 **koşuyor** · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi 🔄 **koşuyor** (yukarıda ⑦) · ③c fix sonrası TAZE bug-expert ⬜ · ④ merge ⬜ · ⑤ sonrası ⬜.
+> **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert ✅ **WARNING → 2 MEDIUM düzeltildi → commit `5eb3fa8` + push** (yukarıda ⑧) · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi ✅ **272/1, 4 kalem mutasyonla kanıtlı, COMMIT'SİZ** (yukarıda ⑦+⑨) · ③c fix sonrası TAZE bug-expert 🔄 **koşuyor** · ④ merge ⬜ · ⑤ sonrası ⬜.
 > Aşağıdaki maddelerdeki `C:/axet` / `C:/.wt/...` yolları **GEÇERSİZ** — yeni yollar için en üstteki tabloya bak.
 
 
