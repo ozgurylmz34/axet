@@ -3,7 +3,7 @@ kur.ps1 — aXet.code template'ini bu makineye kurar, günceller ya da kaldırı
 
 Ne yapar (sırayla):
   1. aXet (axet-code) kurulu mu bakar; yoksa durur. aXet şirket kanalından kurulur, bu betik kurmaz.
-  2. Git ve Python >= 3.9 arar. Yoksa winget ile kurmayı SORAR; winget yoksa ya da hata verirse ne kurulacağını
+  2. Git ve Python >= 3.12 arar. Yoksa winget ile kurmayı SORAR; winget yoksa ya da hata verirse ne kurulacağını
      ve resmi indirme adresini yazıp durur. rg (ripgrep) yoksa isteğe bağlı olarak önerir.
   3. Template'i klonlar (hedef yoksa) ya da günceller (hedef bu template'in klonuysa: git pull --ff-only).
      Hedef bu template'in klonu değilse (core/00-temel.md CORE-ID + scripts/install.py + skills-sap/) DURUR ve o
@@ -64,6 +64,18 @@ $script:YedekDal = $null
 $script:YedekSayisi = 0
 $script:EskiDal = $null
 
+# Desteklenen en dusuk Python. TEK DOGRULUK KAYNAGI: asagidaki iki karsilastirma ve butun
+# kullanici mesajlari bunu okur, boylece surum bir yerde degisip baska yerde eski kalamaz.
+# 3.9 -> 3.12 (2026-09-16, kullanici karari). Gerekce OLCULDU, varsayilmadi:
+#   * 3.9'da 4 validator dosyasi hic yuklenemiyor (PEP 604 `X | None`, `from __future__
+#     import annotations` korumasi yok; AST taramasi 6 yer / 4 dosya) -> reviewer olu.
+#   * 3.10'da yeni_proje.depo_onerisi fail-open: guvenle ayristirilamayan bir origin'i
+#     reddetme karari urllib'in surum katiligina devredilmis. Katilik 3.12'de VAR.
+#   * Destek takvimi: 3.10 EOL 31 Ekim 2026 (taban ilan edildiginden ~6 hafta sonra),
+#     3.12 Ekim 2028'e kadar destekli.
+# CI matrisi (.github/workflows/testler.yml) 3.12 + 3.14 kosar; bu deger onun tabanidir.
+$script:PyAsgari = [version]'3.12'
+
 function Yaz([string]$metin = '') { [Console]::Out.WriteLine($metin) }
 function Baslik([string]$metin) { Yaz ''; Yaz "== $metin" }
 function Bitir([int]$kod) {
@@ -101,7 +113,8 @@ function Path-Yenile {
 
 # --- araç bulma --------------------------------------------------------------------------------------------------
 function Python-Dene([string]$exe, [string[]]$onArg) {
-    # Gerçek yorumlayıcının sürümünü ve sys.executable yolunu döndürür; >= 3.9 değilse ya da yol diskte yoksa $null.
+    # Gerçek yorumlayıcının sürümünü ve sys.executable yolunu döndürür; asgari sürümün altındaysa ya da yol diskte
+    # yoksa $null (asgari: $script:PyAsgari, tanımı dosyanın başında).
     $kod = "import sys;print('%d.%d|%s' % (sys.version_info[0], sys.version_info[1], sys.executable))"
     $global:LASTEXITCODE = $null
     try { $out = & $exe @onArg -c $kod 2>$null } catch { return $null }
@@ -110,7 +123,7 @@ function Python-Dene([string]$exe, [string[]]$onArg) {
     if ($satir -notmatch '^(\d+)\.(\d+)\|(.+)$') { return $null }
     $surum = [version]"$($Matches[1]).$($Matches[2])"
     $yol = $Matches[3]
-    if ($surum -lt [version]'3.9') { Yaz "  Python $surum bulundu ama 3.9 ya da üstü gerekli: $yol"; return $null }
+    if ($surum -lt $script:PyAsgari) { Yaz "  Python $surum bulundu ama $script:PyAsgari ya da üstü gerekli: $yol"; return $null }
     if (-not (Test-Path -LiteralPath $yol -PathType Leaf)) {
         Yaz "  UYARI: Python'un bildirdiği yol diskte bulunamadı, aday atlandı: $yol"
         return $null
@@ -138,7 +151,7 @@ function Python-Bul([switch]$BilinenYerler) {
             }
         }
         foreach ($a in @($adaylar | Sort-Object Surum -Descending)) {
-            if ($a.Surum -ge [version]'3.9') { $p = Python-Dene $a.Yol @(); if ($p) { return $p } }
+            if ($a.Surum -ge $script:PyAsgari) { $p = Python-Dene $a.Yol @(); if ($p) { return $p } }
         }
         $p = Python-Dene $py.Source @('-3')
         if ($p) { return $p }
@@ -690,7 +703,7 @@ try {
             Bitir 1
         }
         $python = Python-Bul
-        if (-not $python) { Yaz 'DURDU: Python 3.9+ bulunamadı; kaldırma install.py ile yapılır.'; Bitir 2 }
+        if (-not $python) { Yaz "DURDU: Python $script:PyAsgari+ bulunamadı; kaldırma install.py ile yapılır."; Bitir 2 }
         $script:PY = $python.Yol
         Yaz '  Not: kaldırma, bu klonda açılmış SAP''ye yazma iznini de kapatır (izin dosyasını siler).'
         $arg = @((Join-Path $Hedef 'scripts\install.py'), '--uninstall') + $(if ($DenemeModu) { @('--dry-run') } else { @() })
@@ -760,8 +773,8 @@ try {
 
     $python = Python-Bul
     if (-not $python) {
-        Yaz '  EKSİK: Python 3.9 ya da üstü bulunamadı.'
-        $tarif = @('Kurulacak: Python 3 (3.9 ya da üstü; kurulumda "Add python.exe to PATH" işaretli olsun).',
+        Yaz "  EKSİK: Python $script:PyAsgari ya da üstü bulunamadı."
+        $tarif = @("Kurulacak: Python 3 ($script:PyAsgari ya da üstü; kurulumda ""Add python.exe to PATH"" işaretli olsun).",
                    'Resmi indirme: https://www.python.org/downloads/windows/',
                    'winget ile: winget install --id Python.Python.3.14 -e')
         if (Winget-Kur 'Python' 'Python.Python.3.14' $tarif) {

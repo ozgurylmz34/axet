@@ -9,7 +9,7 @@ python "%~dp0scripts\yeni_proje.py" %*
 exit /b %errorlevel%
 
 :python_yok
-echo HATA: python bulunamadi ya da calismiyor - PATH'te Python 3.9+ gerekli.
+echo HATA: python bulunamadi ya da calismiyor - PATH'te Python 3.12+ gerekli.
 echo Kurulum: winget install Python.Python.3.12  - sonra YENI bir terminal ac ve tekrar calistir.
 echo Not: Windows'un "python" magaza kisayolu gercek Python degildir.
 exit /b 9009

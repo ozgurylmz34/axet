@@ -18,7 +18,7 @@ Bu belgedeki yollar template'in varsayılan yere, `%USERPROFILE%\axet` klasörü
 |---|---|---|
 | aXet.code (girişi yapılmış) | `axet-code -v` | şirket kanalından; kurulum aracı aXet'i kurmaz |
 | Git | `git --version` | yoksa kurulum aracı `winget` ile kurmayı sorar |
-| Python ≥ 3.9 | `python --version` | yoksa kurulum aracı `winget` ile kurmayı sorar |
+| Python ≥ 3.12 | `python --version` | yoksa kurulum aracı `winget` ile kurmayı sorar |
 | Windows PowerShell | Windows ile gelir | — |
 
 Önerilen: `rg` (ripgrep). Yoksa aXet'in arama aracı yavaşlar; kurulum aracı kurmayı sorar.

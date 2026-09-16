@@ -20,7 +20,7 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 
 ## Gereksinimler
 - **aXet.code** — şirket kanalından kurulmuş ve girişi yapılmış (`axet-code -v` çalışıyor). Kurulum aracı aXet'i kurmaz.
-- Git ve Python ≥ 3.9 — yoksa kurulum aracı `winget` ile kurmayı önerir; olmazsa ne indireceğini söyler.
+- Git ve Python ≥ 3.12 — yoksa kurulum aracı `winget` ile kurmayı önerir; olmazsa ne indireceğini söyler.
 - Windows PowerShell (Windows ile gelir).
 - Önerilen: `rg` (ripgrep) — yoksa aXet'in arama aracı yavaşlar. Kurulum aracı sorar.
 - İsteğe bağlı, yalnız ilgili skill'i kullanırken (skill kendi kurulum satırını söyler):

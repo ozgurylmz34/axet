@@ -869,7 +869,7 @@ class KurTest(GeciciTest):
             self.assertNotEqual(os.path.normcase(str(yol)), os.path.normcase(str(stub)), c)
             self.assertTrue(yol.is_file() and yol.stat().st_size > 0, c)
         else:
-            self.assertIn("EKSİK: Python 3.9 ya da üstü bulunamadı", c)
+            self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
         self.assertNotIn("Python was not found", c.split("== 2/5")[0])
 
     # --- gate 2 / Y4: GitHub raw biçimi (BOM + LF) --------------------------------------------------------------
@@ -933,7 +933,7 @@ class KurTest(GeciciTest):
         self.assertEqual(r.returncode, 2, c)
         self.assertNotIn("OK Python", c)  # 0 baytlık sahte python.exe/python3.exe aday olarak elendi
         self.assertIn("EKSİK: Git bulunamadı", c)
-        self.assertIn("EKSİK: Python 3.9 ya da üstü bulunamadı", c)
+        self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
         self.assertIn("giriş kapalı -> hayır", c)
         self.assertIn("https://git-scm.com/download/win", c)
         self.assertIn("https://www.python.org/downloads/windows/", c)
