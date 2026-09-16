@@ -9,8 +9,36 @@
 ## ▶ DEVAM NOKTASI — sonraki oturum buradan başlar (gün sonu 2026-09-15 GECE — İKİNCİ tur, TX-01+P6 fix)
 
 > İlk iş bu bölümü oku. İş ilerledikçe güncelle; kalıcı bilgi ilgili satırlarda durur (§2 **G** güncelleme mimarisi, **D12–D15** açıklar, **K10–K12** kararlar, **X** diğer bilgisayar).
-> Bu makinede SAP bağlantılı iş YAPILMADI: transport yok, açık kilit yok. `C:\axet`'in remote'u yok, push yapılmadı.
+> Bu makinede SAP bağlantılı iş YAPILMADI: transport yok, açık kilit yok. Remote hâlâ YOK, push yapılmadı.
 > Önceki hâl (P1/D17/K3/TX-04..15 turu, dal tablosu, eski "yerel katman" tartışması): `maintenance/arsiv/IS-LISTESI-devam-2026-09-15.md`.
+
+### 🔴 ÖNCE BUNU OKU — makine değişti, git tarihçesi KAYBOLDU (2026-09-16)
+
+**Yollar değişti** (hepsi OneDrive altına taşındı; eski `C:\...` yolları bu belgede hâlâ geçiyor, ARTIK GEÇERSİZ):
+
+| Eski | Yeni |
+|---|---|
+| `C:\axet` | `…\OneDrive - NTT DATA Business Solutions AG\AI_WORKS\AXET` |
+| `C:\.wt\axet\<dal>` | `…\AI_WORKS\.wt\axet\<dal>` |
+| `C:\IX\PROVA` · `C:\IX\DEV_CORE` | `…\AI_WORKS\IX\PROVA` · `…\AI_WORKS\IX\DEV_CORE` |
+
+**Git tarihçesi kalıcı olarak kayboldu — ÖLÇÜLDÜ.** Taşıma sırasında obje deposu hasar gördü: `git fsck` → **54 eksik obje** (11 blob · 17 tree · **5 commit**: `0087228`, `4b8f05b`, `4bc95a5`, `8ae999d`, `8c0dc8d`) + 24 bozuk reflog. Sonuç: `git push`/`clone`/`bundle` **çalışmıyordu** (kanıt: `bundle create` → `Could not read 4b8f05b… Failed to traverse parents of 46c3b97`).
+Kurtarma **denendi ve elendi**: ① OneDrive "Always keep on this device" ile tam hidrasyon yapıldı — kontrol göstergesi `axetcli.exe` 0 KB → **94.040 KB** indi, yani mekanizma çalıştı, **ama 54 obje aynen eksik kaldı** ⇒ objeler bulutta da yok. ② Bu makinede ikinci bir kopya yok (`C:\test_axet` yok, `test-axet-karsilastirma` yalnız bir RAPOR.md). ③ Eski makinedeki `C:\axet` zaten birebir buraya kopyalanmıştı — ayrı kaynak yok. ④ Remote hiç olmadığı (K2 bekliyordu) için git tarafında kurtarma yok.
+
+**Yapılan: temiz tarihçe (2026-09-16).** Çalışan ağacın tamamı sağlamdı; ondan tek köklü yeni geçmiş kuruldu — `main` = `feat/2026-09-14-kurulum` = **`15f9716`** (içerik eski `c091ad7` ile birebir). Doğrulama: **440 izlenen dosya** (eski repoyla aynı sayı) · `git status` temiz · **`git fsck` çıktısı 0 satır** · `git bundle` **1.986.717 bayt üretti** ⇒ repo artık push edilebilir.
+
+**İki yarım iş KAYBOLMADI, worktree'lerde commit'siz duruyor** (bugünkü durum eskisiyle aynı):
+- `feat/2026-09-15-p6-sifirla` → numstat `4/0 · 23/1 · 2/1 · 302/3 · 2/0 · 330/0` (aşağıdaki P6 bölümüyle birebir)
+- `feat/2026-09-15-tx01-karne` → numstat `1/1 · 6/1` + 3 yeni dosya (aşağıdaki TX-01 bölümüyle birebir)
+- P6'nın 5 dosyası ve TX-01'in 5 dosyası taşıma öncesi yedekle **bayt-bayt aynı** (`cmp` ile ölçüldü).
+
+⚠ **Değişen tek şey — TABAN:** P6 eskiden `b3e7ab5`'e, TX-01 `a4f9251`'e dayanıyordu; ikisi de artık **`15f9716`** üstünde. P6'nın yaması tek çakışan dosyada (`maintenance/guncelle-mimari/TASARIM.md`) bile temiz uygulandı. Etkisi: aşağıdaki "SIRADAKİ" sırası **aynen geçerli**, ama TX-01'in eski taban ölçümleri (115 test, 1 bilinen taban FAIL) artık YENİ taban üzerinde yeniden koşulmalı — zaten sıradaki ilk iş buydu.
+
+⚠ **Bu belgedeki tüm eski SHA atıfları (`c091ad7`, `b3e7ab5`, `a4f9251`, `313d126`, `2f6cb99`, `cfc91c3`, `b419c09`, `8a1faa6`, `b77b3bd`, `a95386e`, `c71bbb1`, `f086444`, …) artık ÇÖZÜLMEZ.** Tarihsel kayıt olarak bırakıldılar; `git show` ile açılmaya çalışılmamalı. Anlatı tarihçe bu belgede + `maintenance/arsiv/` + `…\IX\PROVA\.tmp\` rapor arşivlerinde duruyor.
+
+**Yedekler** (`C:\AXET-YEDEK-2026-09-16\`, OneDrive dışı yerel disk): bozuk `.git`'in iki kopyası (`git-bozuk`, `git-bozuk-original`) · taşıma öncesi worktree'lerin tam kopyası (`p6-sifirla`, `tx01-karne`, `wt-eski/`) · P6+TX-01 yamaları (`yamalar/`) · yeni reponun bundle'ı · `fsck-tam.txt`.
+
+**Yayın açısından beklenmedik yan etki:** Y2a *"tüm bulgular ilk commit `e0e0b13`'ten beri geçmişte → temiz tek commit'lik geçmiş (orphan) ya da filter-repo gerekir"* diyordu. Bu zorunlu yeniden kurulum, public sürüm için gereken **tek commit'lik temiz geçmişi** fiilen üretmiş oldu. ⚠ Ama bu **yayın iznini VERMEZ**: repo hâlâ `maintenance/`, `docs/agentic-connectors.md`, `docs/axet-davranis-olcumleri.md` içeriyor — Y2a bunları public sürümün DIŞINDA bırakıyor ve push şirket izninin push anında teyidine bağlı.
 
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
 
