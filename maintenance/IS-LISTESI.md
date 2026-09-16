@@ -284,14 +284,25 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 1. **DEV_CORE'a yazılamıyor — cherry kuralı YAMA olarak bekliyor.** Ölçüldü: git kimliği `ozgurylmz34`, `ix-works/DEV_CORE` üzerinde **`push: False`** (`remote: Permission to ix-works/DEV_CORE.git denied`). Kullanıcı ayrıca *"devcore'a sen yazamazsın"* dedi. DEV_CORE ana ağacı bulunduğu hâle döndürüldü (`main` = `540ba19`, origin ile birebir, çalışma ağacı temiz).
    → Kuralın tam metni: **`maintenance/core-cherry-squash-kurali.patch`** (2 dosya, +35 satır: `CLAUDE.core.md` §1.1 madde 3 ⓑ + `governance/infra-changelog.md` kaydı). Yetkili makinede `git am < …patch` ile uygulanır.
    → Silinecek yerel dal (DEV_CORE): `docs/2026-09-16-cherry-squash-yanilmasi`.
-2. **Birleşmiş dallar duruyor** — silme izin katmanınca reddedildi (`Git Destructive`), kullanıcının silmesi gerekiyor:
+2. **Birleşmiş dallar duruyor** — silme izin katmanınca reddedildi (`Git Destructive`), kullanıcının silmesi gerekiyor. **Yeniden ölçüldü 2026-09-16 akşamı** (aşağıdaki liste artık gerçek durumu yansıtıyor):
    ```
+   # AXET — 8 yerel dal (hepsi hâlâ duruyor, ölçüldü)
    git branch -D feat/2026-09-14-kurulum feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
+   # AXET — 7 uzak dal (`git ls-remote --heads` ile teyit edildi; `docs/2026-09-16-gun-sonu` PR #8 merge OLANA KADAR SİLİNMEZ)
    git push origin --delete feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
-   rmdir "…\AI_WORKS\.wt\axet"
-   rm -rf "…\AI_WORKS\IX\PROVA\.tmp\d3-fix"     # 3.4 MB, eski mutasyon çıktısı
+   # DEV_CORE — yerel dal (AMA önce 3. maddeyi oku: worktree'de commit'siz iş var)
+   git -C "…\AI_WORKS\IX\DEV_CORE" branch -D docs/2026-09-16-cherry-squash-yanilmasi
    ```
-   ⚠ Hepsinin main'de olduğu **içerik karşılaştırmasıyla** doğrulandı (aşağıda ⑯).
+   ✅ **Zaten temizlenmiş, komut GEREKMİYOR** (ölçüldü, eski satırlar yanlıştı): `…\AI_WORKS\.wt\axet` **artık YOK** (`.wt` boş kaldı) · `…\AI_WORKS\IX\PROVA\.tmp\d3-fix` **artık YOK**.
+   ⚠ Sekiz dalın da main'de olduğu **içerik karşılaştırmasıyla** doğrulandı (aşağıda ⑯).
+
+3. 🔴 **YENİ BULGU — DEV_CORE worktree'sinde COMMIT'SİZ İŞ DURUYOR (2026-09-14'ten kalma).** Gün-sonu `--wt-denetim` PROVA için `TEMİZ` dedi (0 worktree), **ama DEV_CORE'u ölçmedi** — denetim `--project` ile verilen projeye bakıyor. DEV_CORE elle denetlendi:
+   - Worktree: `…\AI_WORKS\IX\.wt\DEV_CORE\2026-09-14-ajan-bekcisi` · dal `infra/2026-09-14-ajan-bekcisi` (`85a1dad`).
+   - **Dal main'in ATASI** (`--is-ancestor` → evet; pozitif cevabı squash'tan etkilenmez) ⇒ **commit edilmiş iş main'de**.
+   - **AMA çalışma ağacı temiz DEĞİL** — 6 izlenen dosyada **+21 / −10 satır** commit'siz: `CLAUDE.core.md` · `MAINTENANCE.md` · `governance/agent-teams-operating-model.md` · `governance/infra-changelog.md` · `governance/removed-controls.md` · `scripts/hooks/README.md`. Ayrıca **izlenmeyen yeni dosya `scripts/agent_stall_watch.sh` (185 satır)**.
+   - Bu iş **main'de YOK** (ölçüldü: `git diff main --stat` ile iki örnek dosyada fark var) ⇒ **worktree silinirse KAYBOLUR.**
+   - **Ben dokunmuyorum** — kullanıcı kararı: *"devcore'a sen yazamazsın"* + ölçülen `push: False`. Karar kullanıcıya: ① yetkili makinede commit'le ② yamaya çevir ③ bilinçli olarak at.
+   - ⚠ Bu, ⑯'daki açık kalemin **ikinci yüzü**: `--wt-denetim` yalnız tek projeye bakıyor; çok-repolu bir makinede *"gün-sonu temiz"* demek **diğer repoları kapsamıyor**.
 
 #### Kullanıcı kararları — bu oturumda ALINDI
 
