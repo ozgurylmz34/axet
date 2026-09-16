@@ -64,6 +64,8 @@ python <TEMPLATE>/skills-sap/sap-code-review/scripts/abaplint_run.py <dosya|klas
 python <TEMPLATE>/skills-sap/sap-code-review/scripts/released_successors.py lookup <OBJE> [...]
 python <TEMPLATE>/skills-sap/sap-code-review/scripts/released_successors.py status
 python <TEMPLATE>/skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py adt_atc_check --args-json '{"name":"<OBJE>","object_type":"class"}' --project-dir <PROJE_KÖKÜ>
+python <TEMPLATE>/skills-sap/sap-code-review/scripts/quality_scorecard.py kaydet --kapi <kapı> --sonuc pass|fail|warn|not-run --artefakt <kanıt> --kapsam "..."
+python <TEMPLATE>/skills-sap/sap-code-review/scripts/quality_scorecard.py karne [--kosum <id>] [--json]
 ```
 Okuma kuralları:
 - `run_review` `PASS` yalnız "zincirin baktığı yerde bulgu yok"tur. `zincir_bos: true` = hiç gate koşmadı; sonuçta `SKIP` = ölçülmedi.
@@ -72,8 +74,11 @@ Okuma kuralları:
 - `abaplint_run.py` çıkış 0 yalnız her dosya ölçülüp temizse; 3 = ölçülemedi (araç yok, çıktı doğrulanamadı), 4 = kısmi
   ölçüm. abaplint derleme kanıtı değildir.
 - `adt_syntax_check` bir inceleme aracı değildir: yazma sınıfıdır (bekleyen sürümü aktive eder).
+- `quality_scorecard.py` **bir kapı DEĞİL, rapordur**: koşan kapıları append-only bir deftere yazar ve tek bir karne
+  üretir (`not-run` ayrı sütun · artefaktsız `pass` geçersiz · 0 test ya da dar kapsam `warn` · kaydedilmemiş kapı
+  varken hüküm `KISMI`). Hiçbir akışa bloklayıcı olarak bağlanmaz; çıkış kodunu **insan** okur.
 
-Ayrıntı: `references/validator-map.md` (satır ↔ validator, kapsam) · `references/clean-core.md` · `references/abaplint.md`.
+Ayrıntı: `references/validator-map.md` (satır ↔ validator, kapsam) · `references/clean-core.md` · `references/abaplint.md` · `references/quality-scorecard.md` (kapı defteri + karne).
 
 ### 4. Bağımsız inceleyici
 `references/reviewer-brief.md`'deki brifingi doldur → `agent` aracıyla **taze** alt ajan. İlgili kontrol listesi tablolarını ve
