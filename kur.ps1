@@ -18,6 +18,13 @@ Kullanım (kur.cmd aynı parametreleri geçirir):
                                    parametreleri yutar)
   kur.cmd -Kaynak <URL|yerel yol>  başka kaynaktan klonla (varsayılan: GitHub)
   kur.cmd -DenemeModu              hiçbir şey yazmadan/kurmadan planı göster
+  kur.cmd -Sifirla                 klonu template ile birebir aynı hâle getirir: ÖNCE her şey yedek/<tarih-saat>
+                                   dalına alınır, sonra klon origin/main'e döner (klon main dalına alınır).
+                                   Hedef DAİMA klonun kendi origin/main'idir; -Kaynak bu işlemde kullanılmaz.
+                                   gitignore'lu dosyalar korunur (.axet-guncelleme/ hariç: eski taban kaydı kalmasın
+                                   diye o da silinir). Klon klasörünün DIŞINA çıkmaz — klonun içinden dışarı bir bağ
+                                   (junction/symlink) konmamışsa: git böyle bir bağın içine girip oradaki dosyaları
+                                   yedeğe alabilir. Onay: "SIFIRLA" yazılır (-Evet geçer).
   kur.cmd -Kaldir                  global config'ten bu klonun kayıtlarını kaldır; bu klonda açılmış SAP'ye yazma
                                    iznini de KAPATIR (izin dosyasını siler). Klon klasörü SİLİNMEZ.
   -Evet          soruları otomatik "evet" yanıtlar (otomatik testler için)
@@ -30,6 +37,7 @@ param(
     [string]$Hedef = (Join-Path $env:USERPROFILE 'axet'),
     [string]$Kaynak = 'https://github.com/ozgurylmz34/axet-template.git',
     [switch]$Kaldir,
+    [switch]$Sifirla,
     [switch]$DenemeModu,
     [switch]$Evet,
     [switch]$WingetKapali
@@ -49,6 +57,12 @@ $env:PYTHONIOENCODING = 'utf-8'
 
 $script:EskiKodlama = [Console]::OutputEncoding
 try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false } catch { }
+
+# -Sifirla sonuçları son mesajda (ve beklenmeyen hatada dış catch'te) okunur. StrictMode 2 tanımsız değişkende hata
+# verir: baştan kurulur.
+$script:YedekDal = $null
+$script:YedekSayisi = 0
+$script:EskiDal = $null
 
 function Yaz([string]$metin = '') { [Console]::Out.WriteLine($metin) }
 function Baslik([string]$metin) { Yaz ''; Yaz "== $metin" }
@@ -313,6 +327,325 @@ function Kaynak-Anahtari([string]$k) {
     return $s.ToLowerInvariant()
 }
 
+# --- -Sifirla: klonu origin/main ile birebir aynı hâle getirir ----------------------------------------------------
+# Onay sözcüğü SIFIRLA'dır (Enter/boş yanıt ya da kapalı giriş = iptal). Sor() ile bilerek paylaşılmaz: Sor boş yanıtı
+# "evet" sayar; geri alınamaz bir silme için varsayılan EVET olamaz.
+function Sifirla-Onayi {
+    if ($Evet) { Yaz '    Onay: -Evet verildi; SIFIRLA yazılmış sayıldı.'; return $true }
+    $yanit = $null
+    try { $yanit = Read-Host '    Devam etmek için SIFIRLA yaz' } catch { $yanit = $null }
+    if ($null -eq $yanit) { Yaz '    (yanıt okunamadı: giriş kapalı)'; return $false }
+    return ("$yanit".Trim() -ceq 'SIFIRLA')
+}
+
+# `git status --porcelain` satırından dosya yolunu çıkarır. Silinmiş yollar için $null döner: silme de yedeklenen
+# durumun parçasıdır, yedek ağacında aranmaz. Yol çift tırnaklıysa (git yalnız özel karakterde tırnaklar;
+# core.quotepath=false ile ASCII dışı tırnaklanmaz) tırnaklar atılır.
+# ' -> ' ayrımı YALNIZ R/C (rename/copy) kayıtlarında yapılır: bu dizi normal bir dosya adının içinde de geçebilir ve
+# koşulsuz bölme, adı "a -> b.txt" olan bir dosyayı "b.txt" sanıp 4. adımda hatalı DUR üretirdi. (Windows dosya adında
+# '>' karakterine izin vermediği için bu yol Windows'ta ÖLÇÜLEMEDİ; ayrım yine de doğru olanıdır.)
+function Durum-Yolu([string]$satir) {
+    if ("$satir".Length -lt 4) { return $null }
+    $x = $satir[0]
+    $y = $satir[1]
+    if ($x -eq 'D' -or $y -eq 'D') { return $null }
+    $yol = $satir.Substring(3)
+    if ($x -eq 'R' -or $x -eq 'C' -or $y -eq 'R' -or $y -eq 'C') {
+        $i = $yol.IndexOf(' -> ')
+        if ($i -ge 0) { $yol = $yol.Substring($i + 4) }
+    }
+    return $yol.Trim().Trim('"')
+}
+
+# Bir durum yolu yedek ağacında var mı? Gömülü git reposu (gitlink) iki araçta FARKLI yazılır — ölçüldü (git 2.55,
+# 2026-09-15): `status --untracked-files=all` gömülü repoyu AÇMAZ ve sonuna bölü koyar ("?? ic-proje/"), `ls-tree -r
+# --name-only` ise aynı girdiyi bölüsüz yazar ("ic-proje", mod 160000). Normalleştirme olmadan, yedeğe düzgün alınmış
+# meşru bir gitlink "yedekte yok" sanılıyor ve 4. adım DUR veriyordu; kullanıcı klonunu bir daha sıfırlayamıyordu.
+# Bölü DURUM tarafında atılır: -uall normal klasörü zaten tek tek dosyalara açtığı için sondaki bölü pratikte yalnız
+# açılamayan girdiyi (gömülü repo) işaret eder. Ağaç kümesine iki biçimi birden koymak yerine tek yönde
+# normalleştirmek karşılaştırmayı tek anlamlı tutar (aynı ad hem dosya hem dizin olarak eşleşmez).
+function Yedekte-Var([hashtable]$agac, [string]$yol) {
+    if ($agac.ContainsKey($yol)) { return $true }
+    return ($yol.EndsWith('/') -and $agac.ContainsKey($yol.TrimEnd('/')))
+}
+
+# `git switch`/`git restore` git 2.23 ile geldi. Yeni bir ÖN KOŞUL KAPISI açılmıyor (ADR 0019 moratoryumu): sürüm
+# yalnız komut fiilen başarısız olduğunda okunur ve mesaja tek satır eklenir. Okunamazsa sessiz kalmaz, onu söyler.
+function Git-Surum-Notu {
+    $out = Git-Oku @('--version')
+    if ($script:GitKod -ne 0 -or -not $out) { return '  (git sürümü okunamadı; switch/restore git 2.23+ ister.)' }
+    $m = [regex]::Match("$(@($out)[0])", '(\d+)\.(\d+)')
+    if (-not $m.Success) { return '  (git sürümü ayrıştırılamadı; switch/restore git 2.23+ ister.)' }
+    $v = [version]"$($m.Groups[1].Value).$($m.Groups[2].Value)"
+    if ($v -lt [version]'2.23') {
+        return "  Git sürümünüz $v; switch/restore komutları git 2.23 ve üstünü ister. Git'i güncelleyip tekrar deneyin."
+    }
+    return $null
+}
+
+# TASARIM §10. Sıra DEĞİŞMEZ: göster -> onay -> yedek -> yedeği DOĞRULA -> sıfırla. Doğrulama geçmeden hiçbir şey
+# silinmez. Yarıda kalınca dosyalar hep yerinde kalır, ama KLONUN DALI durulan adıma bağlıdır (ölçüldü 2026-09-16):
+# 3. adım içinde durulursa klon yedek dalındadır ($geriDon basılır); 3. adımın sonunda ana dala (main) dönüldüğü için
+# 4. adımda durulursa klon MAIN'dedir — o DUR mesajı bunu ve kendi dalına dönüş komutunu ayrıca yazar.
+function Sifirla-Klon([string]$hedef, [string]$dal) {
+    Baslik 'Sıfırlama (-Sifirla)'
+    Yaz "  Klon: $hedef (dal: $dal)"
+    Yaz '  Bu komut klonu origin/main ile birebir aynı hâle getirir. ÖNCE her şey bir yedek dalına alınır.'
+    Yaz '  Klon klasörünün dışındaki proje klasörlerine (AGENTS.md, .axet-code/, proje repoları) dokunmaz.'
+    Yaz '  Tek istisna: klonun içine dışarıyı gösteren bir bağ (junction/symlink) konmuşsa git onun içine girer ve'
+    Yaz '  oradaki dosyaları da yedeğe alır. Böyle bir bağın varsa önce kaldır.'
+    $null = Git-Oku @('-C', $hedef, 'rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main')
+    if ($script:GitKod -ne 0) {
+        Yaz "DURDU: bu klonda origin/main yok; sıfırlanacak hedef bilinmiyor. Hiçbir şey değiştirilmedi."
+        Bitir 1
+    }
+
+    # 1. Göster: izlenmeyenler DAHİL (bayraksız güncellemenin aksine: burada onlar da silinecek, yedeğe girmeliler).
+    # --untracked-files=all ZORUNLU: varsayılan mod izlenmeyen bir klasörü tek satıra ("?? notlarim/") katlar, o yol
+    # yedek ağacında dosya olarak bulunamaz ve 4. adım hatalı DUR verir (ölçüldü 2026-09-15).
+    $durum = @(Git-Oku @('--no-optional-locks', '-C', $hedef, '-c', 'core.quotepath=false', 'status', '--porcelain',
+                         '--untracked-files=all') | Where-Object { $_ })
+    if ($script:GitKod -ne 0) { Yaz "DURDU: git status başarısız ($hedef). Hiçbir şey değiştirilmedi."; Bitir 1 }
+    $commitler = @(Git-Oku @('-C', $hedef, 'log', '--oneline', 'origin/main..HEAD') | Where-Object { $_ })
+    if ($script:GitKod -ne 0) { Yaz "DURDU: git log origin/main..HEAD başarısız ($hedef). Hiçbir şey değiştirilmedi."; Bitir 1 }
+    $durumDizini = Join-Path $hedef '.axet-guncelleme'
+    $durumVar = Test-Path -LiteralPath $durumDizini
+    Yaz ''
+    Yaz '  1/7 Şu an klonda ne var'
+    Yaz "    Yerel değişiklik + izlenmeyen dosya: $($durum.Count)"
+    foreach ($s in @($durum | Select-Object -First 20)) { Yaz "      $s" }
+    if ($durum.Count -gt 20) { Yaz "      ... ve $($durum.Count - 20) satır daha" }
+    Yaz "    origin/main'de olmayan yerel commit: $($commitler.Count)"
+    foreach ($s in @($commitler | Select-Object -First 20)) { Yaz "      $s" }
+    if ($commitler.Count -gt 20) { Yaz "      ... ve $($commitler.Count - 20) commit daha" }
+    # Vaat KOŞULLU yazılır: bu dizin gitignore'ludur, yedeğe ancak `add -f` ile girer ve iki yoldan kurtarılabilir
+    # yedek ÜRETMEYEBİLİR — `add -f` düşebilir (3. adım) ya da rc=0 dönüp yalnız bir gitlink sahneleyebilir (4. adım
+    # mod ölçümü). İkisinde de dizin OLDUĞU GİBİ bırakılır; "yedeğe alınır, sonra silinir" o yollarda tutulamayan
+    # bir söz olurdu.
+    Yaz "    Güncelleme durumu dizini .axet-guncelleme/: $(if ($durumVar) { 'var (yedeğe alınabilirse silinir; alınamazsa olduğu gibi bırakılır)' } else { 'yok' })"
+
+    # 2. Onay.
+    Yaz ''
+    Yaz '  2/7 Onay'
+    if ($DenemeModu) {
+        Yaz '    [deneme] Buradan sonrası YAPILMADI: yedek dalı açılmadı, hiçbir dosya silinmedi, config yazılmadı.'
+        Yaz ''
+        Yaz 'DENEME MODU bitti: hiçbir dosya, klon ya da config yazılmadı.'
+        Bitir 0
+    }
+    Yaz '    Yukarıdakilerin hepsi yedek dalına alınır; çalışma ağacı origin/main ile birebir aynı hâle gelir.'
+    Yaz '    Vazgeçmek için Enter''a bas.'
+    if (-not (Sifirla-Onayi)) {
+        Yaz 'DURDU: sıfırlama iptal edildi (SIFIRLA yazılmadı). Hiçbir şey değiştirilmedi.'
+        Bitir 1
+    }
+
+    # 3. Yedek. Kimlik `-c` ile verilir: tüketicide git user.name/user.email tanımsız olabilir. --no-verify: klonda
+    # tanımlı bir pre-commit kancası yedeği engellemesin (yedek kullanıcının işi değil, kurtarma adımıdır).
+    $yedekDal = "yedek/$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Yaz ''
+    Yaz "  3/7 Yedek dalı: $yedekDal"
+    if ((Git-Calistir @('-C', $hedef, 'switch', '-c', $yedekDal)) -ne 0) {
+        Yaz "DURDU: yedek dalı açılamadı ($yedekDal). Hiçbir şey silinmedi."
+        $surumNotu = Git-Surum-Notu
+        if ($surumNotu) { Yaz $surumNotu }
+        Bitir 1
+    }
+    $script:YedekDal = $yedekDal   # dış catch de basabilsin (beklenmeyen istisnada kullanıcı dal adını kaybetmesin)
+    $geriDon = "  Klon şu an $yedekDal dalında; dosyaların yerinde. Geri dönmek için: git -C `"$hedef`" switch $dal"
+    # add başarısızlığı BURADA durdurulmaz, 4. adıma taşınır: silme iznini veren TEK yer doğrulamadır ("1. adımda
+    # gördüğüm her şey yedekte mi"). Ölçüldü (2026-09-15): commit'i olmayan gömülü bir git reposu (`git init` yapılıp
+    # hiç commit atılmamış alt klasör) `git add -A`'yı "does not have a commit checked out" ile düşürüyor. Eskiden bu
+    # burada genel bir DURDU üretiyordu; şimdi kısmi yedek alınır, doğrulama eksik yolu ADIYLA söyler ve öyle durur.
+    # Silme riski YOK: 5. adıma yalnız doğrulama geçerse gelinir.
+    if ((Git-Calistir @('-C', $hedef, 'add', '-A')) -ne 0) {
+        Yaz '    UYARI: git add -A bazı yolları yedeğe alamadı; hükmü 4. adımdaki doğrulama verecek.'
+    }
+    # .axet-guncelleme/ gitignore'lu olduğu için `add -A`'ya GİRMEZ; buraya `add -f` ile ayrıca alınır. Sonucu İZLENİR:
+    # 4. adımdaki doğrulama bu yolu YAPISAL OLARAK göremez — `$durum`, `git status --porcelain` çıktısıdır ve gitignore'lu
+    # yolları tanım gereği hiç içermez. Ölçüldü (2026-09-16): `.axet-guncelleme/` içinde commit'i olmayan gömülü bir depo
+    # varken `add -f` rc=128 ("does not have a commit checked out") ile düşüyor, hiçbir şey sahnelenmiyor, 4. adım yine
+    # "hepsi yedekte" diyor ve 5. adımdaki koşulsuz `Remove-Item` dizini YEDEKSİZ siliyordu. Artık silme izni ölçülmüş
+    # yedeğe bağlı; akış durmaz (gömülü depo -Sifirla'yı kalıcı tıkamasın), yalnız o dizine dokunulmaz.
+    $durumDiziniEklendi = $false
+    if ($durumVar) {
+        if ((Git-Calistir @('-C', $hedef, 'add', '-f', '--', '.axet-guncelleme')) -eq 0) {
+            $durumDiziniEklendi = $true
+        } else {
+            Yaz '    UYARI: .axet-guncelleme/ yedeğe eklenemedi (git add -f düştü); bu dizin SİLİNMEYECEK (5. adım).'
+        }
+    }
+    $sahneli = @(Git-Oku @('-C', $hedef, 'diff', '--cached', '--name-only') | Where-Object { $_ })
+    if ($script:GitKod -ne 0) {
+        Yaz 'DURDU: yedeğe alınacak dosyalar okunamadı; hiçbir şey silinmedi.'; Yaz $geriDon; Bitir 1
+    }
+    if ($sahneli.Count -gt 0) {
+        # Mesajdaki Türkçe karakterler ölçüldü (2026-09-15): bu betik BOM'lu UTF-8 olduğu için PS 5.1 dizgeyi doğru
+        # okur ve git'e bozulmadan geçer (`git log -1 --format=%s` ile birebir geri okundu, test 8'de sabitlendi).
+        # BOM'suz kopyada aynı mesaj çift kodlanıyordu ("sÄ±fÄ±rlama") — BOM testi (test_ps1_bomlu_utf8...) bunu tutar.
+        $kod = Git-Calistir @('-C', $hedef, '-c', 'user.name=axet-yedek', '-c', 'user.email=yedek@yerel',
+                              'commit', '--no-verify', '-m', 'yedek: sıfırlama öncesi')
+        if ($kod -ne 0) { Yaz 'DURDU: yedek commit''i atılamadı; hiçbir şey silinmedi.'; Yaz $geriDon; Bitir 1 }
+        Yaz "    Yedek commit'i atıldı ($($sahneli.Count) dosya)."
+    } else {
+        Yaz '    Commit''lenecek değişiklik yoktu; dal yerel commit''leri tutmak için yine de açıldı.'
+    }
+    # TASARIM §10/3: ana dala (main) DÖNÜLÜR — bulunulan dala değil. Ölçüldü (2026-09-15): klon upstream'i olmayan
+    # bir dalda bırakılınca sıfırlama "birebir aynı" içeriği veriyor ama sonraki düz `kur.cmd` "upstream yok" deyip
+    # DURUYOR; yani klon güncellenemez kalıyordu. Kullanıcının dalı ve işi yedek dalında durduğu için kayıp yok.
+    # Yerel main yoksa origin/main'i izleyecek biçimde yaratılır (yoksa reset hedefi ile dal ayrışık kalırdı).
+    $anaDal = 'main'
+    $null = Git-Oku @('-C', $hedef, 'rev-parse', '--verify', '--quiet', "refs/heads/$anaDal")
+    $anaDalVar = ($script:GitKod -eq 0)
+    $donusArg = if ($anaDalVar) { @('-C', $hedef, 'switch', $anaDal) }
+                else { @('-C', $hedef, 'switch', '-c', $anaDal, '--track', 'origin/main') }
+    if ((Git-Calistir $donusArg) -ne 0) {
+        Yaz "DURDU: $anaDal dalına dönülemedi; hiçbir şey silinmedi."
+        $surumNotu = Git-Surum-Notu
+        if ($surumNotu) { Yaz $surumNotu }
+        Yaz $geriDon
+        Bitir 1
+    }
+    if ($dal -ne $anaDal) {
+        $script:EskiDal = $dal
+        Yaz "    Klon $anaDal dalına alındı (önceki dal: $dal — işi $yedekDal dalında duruyor)."
+    }
+
+    # 4. Doğrula: yedek dalı gerçekten var mı ve 1. adımda görülen yolları kapsıyor mu. Geçmezse HİÇBİR ŞEY silinmez.
+    Yaz ''
+    Yaz '  4/7 Yedek doğrulaması'
+    $null = Git-Oku @('-C', $hedef, 'rev-parse', '--verify', '--quiet', "refs/heads/$yedekDal")
+    if ($script:GitKod -ne 0) {
+        Yaz "DURDU: yedek dalı ($yedekDal) doğrulanamadı. HİÇBİR ŞEY SİLİNMEDİ."; Bitir 1
+    }
+    $yedekAgaci = @{}
+    foreach ($y in @(Git-Oku @('-C', $hedef, '-c', 'core.quotepath=false', 'ls-tree', '-r', '--name-only', $yedekDal))) {
+        if ($y) { $yedekAgaci[$y] = $true }
+    }
+    if ($script:GitKod -ne 0) {
+        Yaz 'DURDU: yedek dalının içeriği okunamadı. HİÇBİR ŞEY SİLİNMEDİ.'; Bitir 1
+    }
+    # .axet-guncelleme/ için silme iznini `add -f`'in çıkış kodu DEĞİL, yedek dalının AĞACI verir ("başarılı" mesajına
+    # güvenme). Aşağıdaki $eksikYol döngüsü bu yolu göremez: $durum gitignore'lu yol içermez.
+    #
+    # İzin yolun GÖRÜNMESİNE değil, her girdinin MODUNA bağlıdır. Ölçüldü (2026-09-16, git 2.55.0.windows.3):
+    # `.axet-guncelleme/` içinde COMMIT'İ OLAN gömülü bir depo varken `git add -f` rc=0 döner (yalnız "warning:
+    # adding embedded git repository") ve sahneye SADECE bir bağ koyar: `160000 commit <sha>`. İç deponun dosyaları
+    # ve NESNELERİ dış depoya HİÇ girmez. `--name-only` çıktısında bu girdi düz bir dosyadan ayırt EDİLEMEZ ⇒ yol
+    # "yedekte" sanılıyor, 5. adım dizini siliyor ve iç deponun çalışma ağacı + `.git`'i + TÜM GEÇMİŞİ gidiyordu;
+    # yedekte hiçbir nesnesi bulunmayan 40 baytlık commit kimliği kalıyordu ⇒ GERİ ALINAMAZ, üstelik rc=0 ile sessiz.
+    #
+    # Yukarıdaki `--name-only` çağrısı mod'lu okumaya ÇEVRİLMEDİ, AYRI ve dar bir ikinci sorgu koşuluyor. Gerekçe:
+    # $yedekAgaci, 1. adımda görülen HER yolun kaderini belirleyen $eksikYol döngüsünün ve Yedekte-Var'ın tek
+    # dayanağıdır; anahtar üretimini (quotepath, tab ile ayrışan yol, gitlink normalleştirmesi) yeniden yazmak
+    # sıfırlamanın ana güvenlik yolunu riske atardı. Buradaki soru ("bu dizinin altında gitlink var mı") dar ve
+    # ayrıdır ⇒ dar sorguyla sorulur. İkinci çağrı ayrıca yol eşleşmesini PowerShell'deki StartsWith'e değil git'in
+    # kendi pathspec'ine bırakır. Maliyet: tek bir ek git süreci (-Sifirla zaten onlarca git çağırır).
+    $durumAgacSatir = @(Git-Oku @('-C', $hedef, '-c', 'core.quotepath=false', 'ls-tree', '-r', $yedekDal,
+                                  '--', '.axet-guncelleme') | Where-Object { $_ })
+    $durumAgacOkundu = ($script:GitKod -eq 0)
+    $durumDiziniGitlink = (@($durumAgacSatir | Where-Object { $_ -match '^160000\s' }).Count -gt 0)
+    $durumDiziniYedekte = $false
+    if ($durumDiziniEklendi -and $durumAgacOkundu -and $durumAgacSatir.Count -gt 0 -and (-not $durumDiziniGitlink)) {
+        $durumDiziniYedekte = $true
+    }
+    $eksikYol = @()
+    foreach ($s in $durum) {
+        $y = Durum-Yolu $s
+        if ($y -and -not (Yedekte-Var $yedekAgaci $y)) { $eksikYol += $y }
+    }
+    if ($eksikYol.Count -gt 0) {
+        Yaz "DURDU: 1. adımda görülen $($eksikYol.Count) yol yedek dalında bulunamadı. HİÇBİR ŞEY SİLİNMEDİ:"
+        foreach ($y in @($eksikYol | Select-Object -First 20)) { Yaz "    $y" }
+        Yaz '  Sıfırlama, yedekleyemediği hiçbir şeyi silmez. Ne yapmalı:'
+        Yaz '    1. Yukarıdaki yolları klonun DIŞINA taşı (ya da kendi git deponda commit et).'
+        Yaz '       Sık görülen sebep: klonun içinde, henüz hiç commit atılmamış ayrı bir git deposu'
+        Yaz '       (git init yapılmış ama boş) — git böyle bir klasörü yedek commit''ine alamıyor.'
+        Yaz "    2. Sonra kur.cmd -Sifirla komutunu tekrar çalıştır."
+        Yaz "  Bu denemenin yedek dalı duruyor: $yedekDal"
+        Yaz "    Gerekmiyorsa sil: git -C `"$hedef`" branch -D $yedekDal"
+        # Buraya gelindiğinde klon ARTIK $anaDal'da (3. adımın sonunda dönüldü) — $geriDon satırı ("şu an yedek
+        # dalındasın") burada YANLIŞ olurdu. Nerede olunduğu + kendi dalına dönüş komutu açıkça yazılır.
+        Yaz "  Klon şu an $anaDal dalında, dosyalar yerinde."
+        if ($dal -ne $anaDal) { Yaz "    Kendi dalına dönmek için: git -C `"$hedef`" switch $dal" }
+        Bitir 1
+    }
+    Yaz "    Tamam: 1. adımdaki $($durum.Count) kaydın hepsi $yedekDal dalında ($($yedekAgaci.Count) yol)."
+
+    # 5. Sıfırla. clean'de -x YOKTUR: gitignore'lu dosyalar (yerel izin dosyası, _lab, __pycache__) kullanıcınındır.
+    # .axet-guncelleme/ ayrıca silinir: gitignore'lu olduğu için `clean -fd` onu SİLMEZ ve kalan eski taban kaydı
+    # sonraki %guncelle'yi yanlış tabana götürür. Ölçüldü (2026-09-15): olağan akışta dizinin İZLENEN dosyalarını zaten
+    # 3. adımdaki `switch $anaDal` kaldırıyor (yedek commit'inde var, ana dalda yok) — buradaki silme bir EMNİYET AĞIdır,
+    # tek mekanizma değil. Yine de duruyor: git'in izleyemediği artıklar (boş alt klasör; ölçüldü 2026-09-16) ile yedek
+    # commit'inin atlandığı yolda tek koruma budur. KOŞULLU: yalnız dizinin altındaki girdilerin HEPSİ yedek dalının
+    # ağacında KURTARILABİLİR biçimde (blob olarak) duruyorsa siler — tek bir gitlink (160000) bile izni kaldırır,
+    # çünkü gitlink'in gösterdiği nesneler dış depoda yoktur (4. adımdaki mod'lu ls-tree ölçümü).
+    Yaz ''
+    Yaz '  5/7 Sıfırlama'
+    if ((Git-Calistir @('-C', $hedef, 'fetch', '--quiet')) -ne 0) {
+        Yaz "DURDU: git fetch başarısız; sıfırlama yapılmadı. Yedek dalı duruyor: $yedekDal"; Bitir 1
+    }
+    if ((Git-Calistir @('-C', $hedef, 'reset', '--hard', 'origin/main')) -ne 0) {
+        Yaz "DURDU: klon origin/main'e döndürülemedi. Yedek dalı duruyor: $yedekDal"; Bitir 1
+    }
+    if ((Git-Calistir @('-C', $hedef, 'clean', '-fd')) -ne 0) {
+        Yaz "DURDU: izlenmeyen dosyalar temizlenemedi. Yedek dalı duruyor: $yedekDal"; Bitir 1
+    }
+    if (Test-Path -LiteralPath $durumDizini) {
+        if (-not $durumDiziniYedekte) {
+            # Fail-safe: yedekleyemediğimizi SİLMEYİZ. DUR vermiyoruz (gömülü depo -Sifirla'yı kalıcı tıkamasın),
+            # ama sessiz de geçmiyoruz: dizin ADIYLA bildirilir, yoksa kullanıcı onun silindiğini sanır.
+            # Sebep İKİ AYRI yoldan gelir ve mesaj bunları AYIRIR: gitlink vakasında `add -f` rc=0 döndüğü için
+            # 3/7'de hiçbir UYARI BASILMAZ — "sebep genellikle o uyarıdır" demek kullanıcıyı olmayan bir satırı
+            # aramaya gönderir ve yanlış teşhise götürür.
+            Yaz "    ATLANDI: $durumDizini SİLİNMEDİ — yedek dalına kurtarılabilir biçimde girmedi."
+            if ($durumDiziniGitlink) {
+                Yaz '      Sebep: bu dizinin içinde AYRI bir git deposu var. git böyle bir klasörü yedeğe yalnız bir'
+                Yaz '      bağ (gitlink: 40 baytlık commit kimliği) olarak alır; iç deponun dosyaları ve nesneleri'
+                Yaz '      yedek dalına GİRMEZ. Silinseydi o deponun geçmişi de giderdi ve yedek dalı onu geri'
+                Yaz '      getiremezdi. Ne yapmalı: o depoyu klonun DIŞINA taşı, sonra -Sifirla''yı tekrar çalıştır.'
+            } elseif (-not $durumDiziniEklendi) {
+                Yaz '      Sebep: yedeğe hiç alınamadı — 3/7 adımındaki UYARI satırına bak (git add -f düştü). En sık'
+                Yaz '      görüleni: içinde henüz hiç commit atılmamış bir git deposu var. Ne yapmalı: içine bakıp'
+                Yaz '      gerekmiyorsa kendin sil.'
+            } else {
+                Yaz '      Sebep: yedek dalının ağacında bu yolun altında kurtarılabilir hiçbir girdi bulunamadı'
+                Yaz '      (ya da ağaç okunamadı). Ne yapmalı: içine bakıp gerekmiyorsa kendin sil.'
+            }
+            Yaz '      Sıfırlama yedekleyemediği hiçbir şeyi silmez. Bu dizin dururken bir sonraki güncelleme eski'
+            Yaz '      taban kaydını görebilir.'
+        } else {
+            try {
+                Remove-Item -LiteralPath $durumDizini -Recurse -Force -ErrorAction Stop
+            } catch {
+                Yaz "DURDU: .axet-guncelleme/ silinemedi: $($_.Exception.Message)"
+                Yaz "  Yedek dalı duruyor: $yedekDal"
+                Bitir 1
+            }
+        }
+    }
+    Yaz "    Klon origin/main ile aynı. gitignore'lu dosyalar korundu (clean -fd; -x YOK)."
+    # "Birebir aynı" iddiasını ÖLÇEREK bitir: git'in bilerek silmediği şeyler kalabilir. Ölçüldü (git 2.55,
+    # 2026-09-15): `clean -fd` klonun içindeki AYRI bir git deposunu atlar ("Skipping repository ..."); silmek `-ffd`
+    # isterdi ve o, kullanıcının o depodaki geçmişini de yok ederdi — bilerek YAPMIYORUZ. Kalanı susarak geçmek
+    # yerine adıyla söylüyoruz; yoksa kullanıcı "birebir aynı" cümlesine bakıp klonu temiz sanır.
+    $kalan = @(Git-Oku @('--no-optional-locks', '-C', $hedef, '-c', 'core.quotepath=false', 'status', '--porcelain',
+                         '--untracked-files=all') | Where-Object { $_ })
+    if ($script:GitKod -eq 0 -and $kalan.Count -gt 0) {
+        Yaz "    NOT: klonda hâlâ $($kalan.Count) kayıt duruyor; git bunları bilerek silmedi:"
+        foreach ($s in @($kalan | Select-Object -First 20)) { Yaz "      $s" }
+        if ($kalan.Count -gt 20) { Yaz "      ... ve $($kalan.Count - 20) satır daha" }
+        Yaz '      En sık sebep: klonun içinde ayrı bir git deposu var. git iç içe depoyu temizlemeyi atlar, çünkü'
+        Yaz '      silinseydi o deponun geçmişi de giderdi. Gerekiyorsa o klasörü kendin taşı ya da sil.'
+    }
+
+    $script:YedekDal = $yedekDal
+    $script:YedekSayisi = @(Git-Oku @('-C', $hedef, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/yedek') |
+                            Where-Object { $_ }).Count
+    Yaz ''
+    Yaz '  6/7 install.py + doctor.py (aşağıda) · 7/7 yedek bilgisi en sonda'
+}
+
 # =================================================================================================================
 try {
     # --- 0. Parametre doğrulama (hiçbir işlemden ÖNCE) -------------------------------------------------------------
@@ -326,6 +659,12 @@ try {
             Bitir 1
         }
     }
+    if ($Kaldir -and $Sifirla) {
+        Yaz 'DURDU: -Kaldir ve -Sifirla birlikte kullanılamaz; ikisi farklı iş yapar:'
+        Yaz '  -Sifirla  klonu template ile birebir aynı hâle getirir (önce yedek dalı açılır).'
+        Yaz '  -Kaldir   global config''ten bu klonun kayıtlarını çıkarır (klon klasörü silinmez).'
+        Bitir 1
+    }
     try {
         $Hedef = [IO.Path]::GetFullPath($Hedef)
     } catch {
@@ -335,7 +674,7 @@ try {
     if ($Hedef.Length -gt 3) { $Hedef = $Hedef.TrimEnd('\', '/') }
     if ($Kaynak.Length -gt 3) { $Kaynak = $Kaynak.TrimEnd('\') }
 
-    $islem = if ($Kaldir) { 'KALDIR' } else { 'KUR/GÜNCELLE' }
+    $islem = if ($Kaldir) { 'KALDIR' } elseif ($Sifirla) { 'SIFIRLA' } else { 'KUR/GÜNCELLE' }
     Yaz "aXet template kurulumu · işlem: $islem$(if ($DenemeModu) { ' · DENEME MODU (hiçbir şey yazılmaz/kurulmaz)' })"
     Yaz "  Klon   : $Hedef"
     if (-not $Kaldir) { Yaz "  Kaynak : $Kaynak" }
@@ -510,12 +849,17 @@ try {
             }
             $dal = Git-Oku @('-C', $Hedef, 'symbolic-ref', '--short', '-q', 'HEAD')
             if ($script:GitKod -ne 0 -or -not $dal) { Yaz "DURDU: $Hedef bir dalda değil (detached HEAD). Hiçbir şey değiştirilmedi."; Bitir 1 }
+            if ($Sifirla) {
+                Sifirla-Klon $Hedef (@($dal)[0])
+            } else {
             $degisik = Git-Oku @('--no-optional-locks', '-C', $Hedef, 'status', '--porcelain', '--untracked-files=no')
             if ($script:GitKod -ne 0) { Yaz "DURDU: git status başarısız ($Hedef)."; Bitir 1 }
             if (@($degisik | Where-Object { $_ }).Count -gt 0) {
                 Yaz "DURDU: $Hedef içinde yerel değişiklik var; güncelleme YAPILMADI, hiçbir dosyaya dokunulmadı:"
                 foreach ($s in @($degisik | Where-Object { $_ } | Select-Object -First 20)) { Yaz "    $s" }
-                Yaz '  Bu değişiklikler senin mi? Saklamak istiyorsan başka yere kopyala; sonra klonu temizleyip tekrar çalıştır.'
+                Yaz '  İki yol var:'
+                Yaz '    Değişikliklerini korumak istiyorsan: kendin commit ya da stash et, sonra kur.cmd''yi tekrar çalıştır.'
+                Yaz '    Korumak istemiyorsan: kur.cmd -Sifirla (önce yedek dalı açar, sonra klonu template ile birebir aynı yapar)'
                 Bitir 1
             }
             if ($DenemeModu) {
@@ -531,7 +875,9 @@ try {
                 $onde = [int]$Matches[1]; $geride = [int]$Matches[2]
                 if ($onde -gt 0) {
                     Yaz "DURDU: klon uzak daldan ayrışmış (yerelde $onde commit, uzakta $geride commit fark). Güncelleme YAPILMADI."
-                    Yaz '  Yerel commit''lerin senin işin olabilir; hiçbir şey silinmedi. Ne yapacağına emin değilsen destek iste.'
+                    Yaz '  Hiçbir şey silinmedi. İki yol var:'
+                    Yaz '    Yerel commit''lerini korumak istiyorsan: onları kendi dalına/deponaya al, sonra kur.cmd''yi tekrar çalıştır.'
+                    Yaz '    Korumak istemiyorsan: kur.cmd -Sifirla (önce yedek dalı açar, sonra klonu template ile birebir aynı yapar)'
                     Bitir 1
                 }
                 if ($geride -eq 0) {
@@ -541,9 +887,11 @@ try {
                     Yaz "  Güncellendi ($geride yeni commit)."
                 }
             }
+            }
         }
     }
     if ($klonla) {
+        if ($Sifirla) { Yaz '  Not: klon yok, sıfırlanacak bir şey de yok; yeni klon alınacak.' }
         if ($DenemeModu) {
             Yaz "  [deneme] klonlanacaktı: git clone $Kaynak $Hedef"
         } else {
@@ -680,6 +1028,22 @@ try {
         foreach ($b in $baska) { Yaz "    & `"$($script:PY)`" `"$(Join-Path $b 'scripts\install.py')`" --uninstall" }
         Yaz '  Sonra kur.cmd''yi tekrar çalıştır.'
     }
+    if ($script:YedekDal) {
+        Yaz ''
+        Yaz "YEDEK: sıfırlama öncesi durumun (yerel değişiklikler, izlenmeyen dosyalar, yerel commit'ler) bu dalda:"
+        Yaz "    $($script:YedekDal)"
+        if ($script:EskiDal) {
+            Yaz "  Klonun dalı '$($script:EskiDal)' idi; o dalın işi yedek dalında duruyor. Klon artık main dalında"
+            Yaz '  (güncellemenin çalışması için gerekli: main origin/main''i izler).'
+        }
+        Yaz '  Tek bir dosyayı geri almak için:'
+        Yaz "    git -C `"$Hedef`" restore --source $($script:YedekDal) -- <yol>"
+        Yaz "  Yedek dallarını listelemek için: git -C `"$Hedef`" branch --list `"yedek/*`""
+        if ($script:YedekSayisi -gt 5) {
+            Yaz "  Bilgi: bu klonda $($script:YedekSayisi) yedek dalı birikti; gerekmeyeni sil:"
+            Yaz "    git -C `"$Hedef`" branch -D <dal>"
+        }
+    }
     Yaz 'SONRAKİ ADIM:'
     Yaz '  1. YENİ bir aXet oturumu aç (açık oturumlar yeni ayarı görmez).'
     Yaz '     İlk yanıtın ilk satırında AXET-CORE görünmeli; görünmüyorsa kurulum çalışmıyordur.'
@@ -692,5 +1056,11 @@ try {
     Yaz ''
     Yaz "DURDU: beklenmeyen hata, kurulum yarıda kaldı: $($_.Exception.Message)"
     Yaz "  Konum: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)"
+    # Bilinen DURDU dalları yedek dalını zaten basıyor; beklenmeyen istisnada da basılır, yoksa kullanıcı işini nerede
+    # arayacağını bilemez (yedek dalı açıldıysa tüm yerel durumu ORADA).
+    if ($script:YedekDal) {
+        Yaz "  YEDEK: sıfırlama öncesi durumun şu dalda: $($script:YedekDal)"
+        Yaz "    Dalları görmek için: git -C `"$Hedef`" branch --list `"yedek/*`""
+    }
     Bitir 1
 }
