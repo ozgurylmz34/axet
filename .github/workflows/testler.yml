@@ -33,12 +33,22 @@ concurrency:
 
 jobs:
   takimlar:
-    name: Test takimlari (Python ${{ matrix.python }})
+    name: Testler (${{ matrix.takim }} · Python ${{ matrix.python }})
     runs-on: windows-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        # TAKIM BOYUTU (2026-09-16, kullanici karari) — kok ve foundation takimlari
+        # AYNI job'da SIRAYLA kosuyordu; olculdu (kosum #14): kok 275/293 sn +
+        # foundation 375/393 sn = 668 sn seri, job toplami 674/710 sn. Geri kalan HER SEY
+        # (checkout + setup-python + pip + on kosullar + sap-code-review) toplam 25 sn,
+        # yani surenin %99'u bu iki takim.
+        # Ayri kollara alinca duvar saati max(296, 393) ~ 6.6 dk'ya duser (11.8 dk'dan).
+        # KAPSAM DEGISMEZ: ayni komutlar, ayni on kosullar, ayni matris.
+        # Maliyet: toplam derleme suresi 1348 -> ~1430 sn (+%6, on kosullar iki kez kosuyor).
+        # NOT: hesabin Actions kotasi OLCULEMEDI (billing ucu 404 - token kapsami yok).
+        takim: [kok, foundation]
         # Taban + guncel birlikte kosar ki "su surumden itibaren destekleniyor" iddiasi
         # OLCULMUS olsun, varsayilmis degil.
         #
@@ -67,9 +77,10 @@ jobs:
         #      yerine ONERI olarak donuyor). Guvenlige dokunan karar surume devredilmis.
         # Karar iddiayi DUZELTMEK degil DARALTMAK: 3.9 bugun de fiilen desteklenmiyordu,
         # degisen tek sey durustluk.
-        # ⚠ ACIK KALEM: README:23 ve kur.ps1'deki "3.9" metinleri HENUZ guncellenmedi —
-        # o iki dosyaya P6 dali da dokundugu icin cakismayi onlemek adina P6 merge edildikten
-        # SONRA yapilacak (IS-LISTESI'ne yazildi). O ana kadar matris 3.10, metin 3.9 der.
+        # ✅ KAPANDI (2026-09-16): README/kur.ps1'deki "3.9" metinleri guncellendi ve
+        # kur.ps1'e TEK DOGRULUK KAYNAGI konuldu ($script:PyAsgari). Buradaki taban ile
+        # kur.ps1'in kapisi artik ayni seyi soyluyor; ikisi ayrilirsa test_kur.py:872,936
+        # kirmiziya doner (mutasyonla dogrulandi).
         python: ['3.12', '3.14']
     env:
       PYTHONUTF8: '1'
@@ -122,14 +133,20 @@ jobs:
       - name: On kosul - Python bagimliliklari
         run: python -m pip install --quiet -r skills-sap/sap-adt-foundation/scripts/requirements.txt
 
+      # Asagidaki uc adim `takim` matris boyutuna gore ayrisir. sap-code-review yalnizca
+      # 3 sn surdugu icin kok koluna binmistir — kendi kolunu acmak on kosul maliyetini
+      # (13 sn) kazancindan buyuk yapardi.
       - name: Kok takim
+        if: matrix.takim == 'kok'
         run: python tests/run_tests.py
 
-      - name: SAP ADT foundation takimi
-        run: python skills-sap/sap-adt-foundation/tests/run_tests.py
-
       - name: sap-code-review takimi
+        if: matrix.takim == 'kok'
         run: python -m unittest discover -s skills-sap/sap-code-review/tests -v
+
+      - name: SAP ADT foundation takimi
+        if: matrix.takim == 'foundation'
+        run: python skills-sap/sap-adt-foundation/tests/run_tests.py
 
   kurulum:
     name: Kurulum dumani (install + doctor)
