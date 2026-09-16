@@ -156,6 +156,58 @@ Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (
 3. 🟠 **Test takımının yapısal kırılganlığı duruyor.** `test_kur.py:72-73` `setUpClass` fixture'ını **çalışılan deponun kendisini** `git clone --bare` ederek kuruyor ⇒ fixture ortam durumunu (dal var mı, detached mi) **devralıyor**. CI adımı (`git checkout -B main`) CI'yi normal bir çalışma klonuna benzetir, o **bağlantıyı KALDIRMAZ**. Kalıcı çözüm: `uzakta_commit`in `HEAD` yerine **tam refname** itmesi ya da bare şablonun dalını garanti etmesi.
 4. 🟡 **Belge ↔ kod eşliğinin otomatik bekçisi YOK** (⑫'de de yazılı). Yeni gate ADR 0019 moratoryumuna tabi ⇒ gözlem olarak duruyor.
 
+**⑮ ⑭'ün üç kaleminden İKİSİ KAPANDI (PR #6, #5, #7).**
+- ✅ **⑭-1 kapandı — Python eşiği 3.12.** Yalnız metin değildi: `kur.ps1:113` ve `:141` gerçek çalışma-zamanı kapısıydı. **Tek doğruluk kaynağı** konuldu — `$script:PyAsgari = [version]'3.12'`; iki karşılaştırma + dört kullanıcı mesajı onu okuyor. **13 dağılmış sabit → 1 tanım**, yani ⑭-4'teki "belge ↔ kod ayrışması" sınıfı bu dosyada mekanik olarak kapandı. Değişen 6 dosya: `kur.ps1` · `README.md:23` · `docs/onboarding.md:21` · `requirements.txt:1` · `yeni-proje.cmd:12` · `tests/test_kur.py:872,936`.
+  **Mutasyon kanıtı:** sabit `3.99` yapılınca test KIRMIZI ve gerçek `kur.cmd` hem `EKSİK: Python 3.99 ya da üstü bulunamadı` hem `Kurulacak: Python 3 (3.99 ya da üstü…)` bastı ⇒ sabit kapıyı **ve iki ayrı mesajı** fiilen sürüyor, dekoratif değil. Bayt-bayt geri alındı (`write_bytes`), BOM + CRLF korundu, PowerShell parse 0 hata.
+  **PowerShell sürüm karşılaştırması ölçüldü:** `3.2 -ge 3.12` → **False** (leksik olsaydı True olurdu).
+- 🔴 **⑭-2 AÇIK — `yeni_proje.depo_onerisi` fail-open.** Bu turda **kasıtlı olarak dokunulmadı**. 3.12+ katı olduğu için testler yeşil, ama kod *"güvenle ayrıştırılamayan bir origin'i reddet"* kararını hâlâ **urllib'in sürüm davranışına devrediyor**. Yeşil CI bu kusuru **gizliyor**. Fixture: `tests/test_yeni_proje.py:556-582`, literal `"https://[SECRETTOKEN]/r"`.
+- 🔴 **⑭-3 AÇIK — test fixture'ının ortam bağımlılığı.** `tests/test_kur.py:72-73` `setUpClass`, fixture'ını **çalışılan deponun kendisini** `git clone --bare` ederek kuruyor ⇒ dal var mı / detached mı durumunu devralıyor. CI adımı (`git checkout -B main`) bunu **maskeler, kaldırmaz**. Kalıcı çözüm: `uzakta_commit`in `HEAD` yerine **tam refname** itmesi ya da bare şablonun dalını garanti etmesi.
+- ✅ **K2b kapandı (PR #7).** `merge_pr.py` artık `--yol oto|gh|rest`. REST çıktısı gh'nin şekline çevriliyor (`rest_pr_oku`) ⇒ **tek karar yolu**, iki backend ayrı kurala göre hüküm veremez. **gh'de olmayan bir güvence eklendi:** doğrulanan head SHA merge isteğine konuyor; arada dala commit gelirse GitHub **409** ile reddeder. Testler 8 → **17**. **Dogfood:** PR #6, #5 ve #7'in kendisi bu araçla merge edildi (gerçek `PUT …/merge` yolu ve SHA kilidi canlı ölçüldü).
+  📌 Ölçülmüş tuzak, testle çivilendi (`test_bos_legacy_statuses_HICBIR_SEY_uretmez`): legacy `/commits/<sha>/status` **toplu `state`** alanı, repoda hiç legacy status yokken bile `"pending"` döner. `rest_rollup` o alanı okumaz, yalnız `statuses` dizisini çevirir. Sızsaydı yalnız check-run kullanan repo **sonsuza dek "bekleyen kontrol var"** derdi (sessiz kilitlenme).
+- ✅ **CI süresi kapandı (PR #5).** Ölçüm (koşum #14): job 674/710 sn, içinde kök 275/293 + foundation 375/393 = **668 sn seri**; kablolamanın tamamı 25 sn ⇒ sürenin **%99'u iki takım**. Matrise `takim: [kok, foundation]` eklendi, 2 job → **4 job**. **Canlı kanıt:** PR #5 (5 job) PR #7'den (3 job) **daha önce bitti**. Maliyet +%6 toplam derleme süresi. ⚠ Hesabın Actions kotası **ÖLÇÜLEMEDİ** (billing ucu 404 — token kapsamı yok).
+
+**⑯ `git cherry` ÇOK COMMIT'Lİ squash-merge'de YANILIYOR — çekirdek kuralı eksik (ölçüldü).**
+Worktree'leri kapatmadan önce çekirdeğin dediği gibi `git cherry -v main <dal>` koşuldu ve **dört squash-merge'li dalın dördünde de** her commit `+` ("main'de yok") çıktı. 4 kollu kontrol grubu (izole depo, `%TEMP%/cherrytest`) sebebi buldu:
+
+| Kol | `git cherry` | `--is-ancestor` | **içerik karşılaştırması** |
+|---|---|---|---|
+| 1 commit + squash | `-` ✅ | ata değil ❌ | 0 dosya ✅ |
+| **2 commit + squash** | **`+` ❌ YANLIŞ ALARM** | ata değil ❌ | 0 dosya ✅ |
+| fast-forward | (boş) ✅ | ATA ✅ | 0 dosya ✅ |
+| gerçekten birleşmemiş | `+` ✅ | ata değil ✅ | **1 dosya ✅** |
+
+- **Sebep:** squash **tek** commit üretir; çok commit'li dalın hiçbir patch-id'si tutmaz. Çekirdekteki 2026-08-28 ölçümü **yanlış değildi — kolu dardı** (o beş dal tek commit'liydi).
+- **Dört kolun dördünde de doğru olan TEK yöntem içerik karşılaştırması:** dalın **kendi** dokunduğu dosyalar (`diff --name-only $(merge-base main <dal>) <dal>`) main'de birebir mi. Sınırı: main o dosyaları sonradan değiştirdiyse **yanlış ALARM** üretir, sessiz onay ÜRETMEZ (fail-safe).
+- Bu turdaki 8 dalın hepsi bu yöntemle doğrulandı ⇒ worktree'ler güvenle kapatıldı.
+- 🔴 **YAMA BEKLİYOR:** kural metni yazıldı ama **DEV_CORE'a push edilemiyor** (yetki yok + kullanıcı kararı). Dosya: `maintenance/core-cherry-squash-kurali.patch`.
+- 🔴 **AÇIK KALEM:** `core/scripts/team_setup.py:498-517` `--wt-denetim` ⓑ adımı hâlâ **yalnız cherry** kullanıyor ⇒ çok commit'li dalda yanlış alarm verir ve gün-sonu denetimi *"nasılsa kırmızı"* diye okunmaz hâle gelebilir (D16'nın aynı sınıfı). Kod düzeltmesi **ayrı iş**, DEV_CORE yetkisi gerektirir.
+
+**⑰ K2a KARARI: `axet` PRIVATE kalır, `axet-template` PUBLIC açılır (kullanıcı kararı 2026-09-16).**
+Kullanıcı önce *"tüketiciler kuracaksa public olması gerekmiyor mu"* dedi — haklıydı, ama ölçüm dağıtım ihtiyacının **bu repoyu** public yapmayı gerektirmediğini gösterdi:
+
+| Repo | Ölçülen durum |
+|---|---|
+| `ozgurylmz34/axet` (bu repo, geliştirme) | private · 2.3 MB |
+| `ozgurylmz34/axet-template` (tüketicinin çektiği) | **HTTP 404 — HENÜZ YOK** |
+
+`README.md:39` ve `:44` tüketiciyi `raw.githubusercontent.com/ozgurylmz34/**axet-template**/main/kur.ps1`'e yolluyor; `kur.ps1:38` varsayılan `-Kaynak` da `axet-template.git`. Yani **mimari zaten iki repo varsayıyor** ve `yayin_hazirla.py` tam bunun için var (428 dosya kopyalar, `maintenance/` + `_lab/` + iki `docs/` dosyasını **dışlar**).
+
+**Bu repo public yapılsaydı, yayın hattının bilerek dışladığı şeyler açılırdı** (ölçüldü):
+
+| Ne | Nerede |
+|---|---|
+| `NTT DATA Business Solutions AG` | `maintenance/IS-LISTESI.md:21` (2 satır) |
+| **"Proprietary - NTT DATA Business Solutions"** lisanslı iç plugin atfı | `maintenance/IS-LISTESI.md:586` |
+| `tr11718` iç kullanıcı kimliği | `IS-LISTESI.md`, 3 satır |
+| Tüm iç çalışma notları / kararlar / yarım işler | `maintenance/IS-LISTESI.md` |
+| Commit yazarı e-postaları (`…@gmail.com`, `…@hotmail.com`) | git geçmişi, public'te görünür |
+
+Yan fayda: `axet-template` public olacağı için **dal koruması orada ücretsiz gelir**. Bu geliştirme reposunda koruma yok; bugün fail-closed merge disiplini **7 PR'ın 7'sinde de elle uygulandı** (her merge öncesi head SHA + check-run doğrulandı, `merge_pr.py` son üçünü kendi doğruladı).
+
+**⑱ D16 YENİDEN ÖLÇÜLDÜ (merge edilmiş main üzerinde) — HÂLÂ KIRMIZI, karar hâlâ kullanıcıda.**
+`python maintenance/yayin_hazirla.py --hedef <tmp> --calisma-agaci --yalniz-tara` → **gerçek çıkış kodu 1**, **17 bulgu** (428 dosya kopyalandı). Dağılım değişmedi: **16'sı *dışlanan dosyaya atıf*** (`guncelle/harita.json` 6 · `guncelle/siniflandir.py` 3 · `scripts/doctor.py` 4 · `README.md` 1 · `tests/test_guncelle_harita.py` 1 · +1) ve **1'i yanlış pozitif** (`tests/test_kur.py:789` `C:\Users\u` yer tutucusu). P6 merge'i sayıyı değiştirmedi ⇒ D16'daki *"P6 sonrası yine değişebilir"* uyarısı **kapandı**, sayı stabil.
+⚠ Ölçüm yaparken kendi hatamı yakaladım: ilk koşumda `| tail -40` ardından `$?` okudum — o **tail'in** çıkış kodudur, ölçümüm geçersizdi. Yeniden, borusuz ölçüldü.
+
 **⑩ Lider hatası (kayda geçiyor, ders):** TX-01'de kendi eklediği assert'i mutasyonla sınarken dosyayı `read_text`/`write_text` ile geri yazdı → Windows'ta **LF→CRLF** çevirdi, `quality_scorecard.py` sha256 `833ceb42` → `ec4552ef` oldu. **Testler yeşil kaldı** (Python satır sonunu umursamaz) ⇒ ölçüm bunu yakalamazdı; yalnız sha256 kontrolü yakaladı. `git checkout --` ile geri alındı. **Mutasyon geri alma DAİMA `read_bytes`/`write_bytes` ya da `git checkout --` ile yapılır.**
 
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
@@ -201,6 +253,72 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 ⚠ **Kök takımın SON tam-paket doğrulaması SONUÇLANMADI** — ajan bunu arka planda başlatıp (aynı P6 tuzağı: `run_in_background` + tur biter) bir kez "canlı çocuğu yok" sayılıp bildirim gelmedi; `SendMessage` ile uyandırıldı, checkpoint gönderdi ("sırada: kök takımın sonucu + nihai rapor"), sonra **kullanıcının gün-sonu talebiyle DURDURULDU** kök takım sonucu gelmeden. **Bu turdan eksik kalan TEK ölçüm budur** — dosyalar yukarıdaki 9+2 kalemin hepsini içeriyor, yalnız son "kök takım 0 failure" teyidi yok. **İkinci kapı (taze bug-expert) da HİÇ BAŞLATILMADI** (P6 sırasına girdi, TX-01'e sıra gelmeden gün bitti).
 
+### ⭐ GÜN SONU 2026-09-16 — YARIN BURADAN BAŞLA
+
+**Tek cümle:** CI ilk kez yeşillendi, **7 PR merge edildi**, depo temiz, açık PR yok, açık worktree yok. Yarın sıradaki iş **K12 → K10/K11 → D16 → G paketleri**.
+
+**SAP işlemi YAPILMADI** — bu oturumda hiçbir transport, kilit, aktivasyon, yarım obje yok. (PROVA'nın `.conn_adt`'si bilinçli olarak yok.)
+
+#### Bugün merge edilen 7 PR (sırayla)
+
+| PR | Ne | Squash SHA |
+|---|---|---|
+| #2 | CI ön koşulları + Python matrisi 3.12+3.14 | `73f1f16` |
+| #3 | P6 — `kur.cmd -Sifirla` + gitlink veri kaybı BLOCKER'ı | `8f9b5cd` |
+| #4 | TX-01 — kod kalite karnesi + kapı defteri | `8a95490` |
+| #1 | iş listesi (remote + CI + P6/TX-01 turu) | `863998b` |
+| #6 | asgari Python 3.9 → **3.12**, tek doğruluk kaynağı | `af474fa` |
+| #5 | CI: kök + foundation ayrı matris koluna | `4096e9a` |
+| #7 | `merge_pr.py` — `gh` yoksa REST yolu | `1777e99` |
+
+**main = `1777e99`** · çalışma ağacı temiz · worktree yalnız ana ağaç · **açık PR yok**.
+
+#### Doğrulanan durum (ölçüldü, varsayılmadı)
+
+- **Merge edilmiş sonuç CI'da yeşil** (koşum #18, 3/3 job) + `siniflandir.py` **443 dosya / 0 sorun** ⇒ eski ⑤ maddesi kapandı.
+- Kök takım son hâlde **282 test · 0 failure · 0 error · 2 skip** (273 + merge_pr'ın 9 yeni testi).
+- **CI süresi:** 11.8 dk → bölünmüş kolla ölçülen kanıt — PR #5 (5 job) PR #7'den (3 job) **daha önce bitti**.
+
+#### 🔴 Yarın ilk iş — ENGELLER ve TEMİZLİK
+
+1. **DEV_CORE'a yazılamıyor — cherry kuralı YAMA olarak bekliyor.** Ölçüldü: git kimliği `ozgurylmz34`, `ix-works/DEV_CORE` üzerinde **`push: False`** (`remote: Permission to ix-works/DEV_CORE.git denied`). Kullanıcı ayrıca *"devcore'a sen yazamazsın"* dedi. DEV_CORE ana ağacı bulunduğu hâle döndürüldü (`main` = `540ba19`, origin ile birebir, çalışma ağacı temiz).
+   → Kuralın tam metni: **`maintenance/core-cherry-squash-kurali.patch`** (2 dosya, +35 satır: `CLAUDE.core.md` §1.1 madde 3 ⓑ + `governance/infra-changelog.md` kaydı). Yetkili makinede `git am < …patch` ile uygulanır.
+   → Silinecek yerel dal (DEV_CORE): `docs/2026-09-16-cherry-squash-yanilmasi`.
+2. **Birleşmiş dallar duruyor** — silme izin katmanınca reddedildi (`Git Destructive`), kullanıcının silmesi gerekiyor:
+   ```
+   git branch -D feat/2026-09-14-kurulum feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
+   git push origin --delete feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
+   rmdir "…\AI_WORKS\.wt\axet"
+   rm -rf "…\AI_WORKS\IX\PROVA\.tmp\d3-fix"     # 3.4 MB, eski mutasyon çıktısı
+   ```
+   ⚠ Hepsinin main'de olduğu **içerik karşılaştırmasıyla** doğrulandı (aşağıda ⑯).
+
+#### Kullanıcı kararları — bu oturumda ALINDI
+
+| Karar | Sonuç |
+|---|---|
+| ⑭-1 Python eşiği | **Hem metin hem kapı 3.12** → uygulandı (PR #6) |
+| K2b `merge_pr.py` | **REST'e düşen yol eklensin** → uygulandı (PR #7) |
+| CI süresi | **Ayrı job'lara böl** → uygulandı (PR #5) |
+| K2a dal koruması | **`axet` private kalır · `axet-template` public açılır** (aşağıda ⑰) |
+
+#### 📋 YARIN SIRASI (aşağıdaki eski numaralı listenin YERİNE bunu kullan)
+
+| # | İş | Durum / neden bu sırada | Nerede anlatılıyor |
+|---|---|---|---|
+| 1 | Kullanıcı temizliği (dallar · `.wt/axet` · `.tmp/d3-fix` · DEV_CORE yerel dalı) | 🔴 **kullanıcı elinde** — izin katmanı reddetti | yukarıda "ENGELLER ve TEMİZLİK" |
+| 2 | **K12** — `doctor.py` override-by-length WARN | ✅ **ARTIK BLOKE DEĞİL**: beklediği P6 merge oldu (`8f9b5cd`) | §2 K12 |
+| 3 | **D16 kararı** — yayın sızıntı taraması daraltılsın mı | 🔴 kullanıcı kararı; yeniden ölçüldü EXIT=1 / 17 bulgu, sayı **stabil** | ⑱ + §2 D16 |
+| 4 | **`axet-template` public reposunu aç** | ⑰ kararının uygulanmamış yarısı; repo bugün **HTTP 404** ama `README.md:39,44` + `kur.ps1:38` oraya işaret ediyor | ⑰ |
+| 5 | `team_setup.py` cherry düzeltmesi + kural yaması | 🔴 **DEV_CORE yetkisi** gerekiyor; yama hazır | ⑯ |
+| 6 | K10 / K11 · D17 kalan yarısı | sıradaki normal kalemler | §2 K, D |
+| 7 | G paketleri (P2→P3∥P5∥P7→P4, P8, P9) | P1 ✅ merge; gerisi sırada | §2 G tablosu |
+| 8 | TX-10 · TX-02+03 · TX-06 · `.github/` tüketici paketine girsin mi | ayrı onay / ayrı sprint | §2 TX |
+
+⚠ **Yarın açılışta İLK komut:** `git -C "…\AI_WORKS\AXET" fetch -q origin && git checkout -b <yeni-dal> origin/main` — çıplak `checkout -b` YASAK (core §1.1: bugün 7 squash-merge oldu, bulunduğun yerden dallanmak CONFLICTING PR üretir).
+
+---
+
 ### SIRADAKİ — tam sıra
 
 > **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert ✅ **WARNING → 2 MEDIUM düzeltildi → commit `5eb3fa8` + push** (yukarıda ⑧) · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi ✅ **272/1, 4 kalem mutasyonla kanıtlı, COMMIT'SİZ** (yukarıda ⑦+⑨) · ③c fix sonrası TAZE bug-expert ✅ → **BLOCKER** (gitlink veri kaybı ÖLÇÜLDÜ — yukarıda ⑪) · ③d gitlink düzeltmesi ✅ **commit `a9eba2c` + push — P6 YEŞİL** (yukarıda ⑫) · ③e **K2c (CI ön koşulları) ✅ — CI İLK KEZ YEŞİL, PR #2 merge `73f1f16`** (yukarıda ⑬; kullanıcı kararı: *"önce K2c düzeltilsin"*, merge'ler kırmızının değil yeşilin üzerine olsun) · ④ merge 🔵 **DEVAM EDİYOR** — PR #3 (P6) ve PR #4 (TX-01) açıldı, CI paralel koşuyor (ikisi **tek bir ortak dosyaya bile** dokunmuyor, ölçüldü) · ⑤ sonrası ⬜.
@@ -208,19 +326,26 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 
 
-1. **Açılış kontrolü (~2 dk):** `git -C C:/axet status --short` (temiz olmalı) · `git -C C:/axet worktree list` (P6 + TX-01 hâlâ AÇIK olmalı, ikisi de bu dosyada yukarıda anlatıldı) · her iki worktree'de `git status --short` (yukarıdaki numstat'larla AYNI olmalı — değilse ne değişti araştır, kayıp/bozulma ihtimaline karşı).
-2. **TX-01'i BİTİR:** worktree'de `cd C:/.wt/axet/tx01-karne && python tests/run_tests.py` (ön planda, timeout ≥1500000) — kök takım 0 failure mi ölçül. Sonra **TAZE bug-expert** (core §5 — aynı ajan kendi düzeltmesini onaylamaz): brif = yukarıdaki "TX-01" bölümünün tamamı + H1/H2 orijinal BLOCKER bulguları + "AÇIK BIRAKILAN" 3 kalemin bilinçli olduğunu söyle (bunları BULGU diye tekrar yazmasın, ama gerçekten kapatılıp kapatılmadığını ölçsün). PASS/WARNING → lider commit → `feat/2026-09-14-kurulum`'a merge → worktree kapat.
+> **⛔ AŞAĞIDAKİ 1-4 MADDESİ 2026-09-16'DA TAMAMEN KAPANDI** (P6 · TX-01 · K2c · merge). Tarihçe olarak duruyor; **yarının işi için ⭐ GÜN SONU 2026-09-16 bölümündeki "YARIN SIRASI" tablosuna bak**, bu numaralı listeye değil. 5. madde kısmen açıktır (aşağıda güncellendi).
+
+1. ~~**Açılış kontrolü (~2 dk):** `git -C C:/axet status --short` (temiz olmalı) · `git -C C:/axet worktree list` (P6 + TX-01 hâlâ AÇIK olmalı, ikisi de bu dosyada yukarıda anlatıldı) · her iki worktree'de `git status --short`~~ ✅ yapıldı; **iki worktree de KAPATILDI** (içerik karşılaştırmasıyla main'e geçtiği doğrulandıktan sonra — bkz. ⑯).
+2. ~~**TX-01'i BİTİR:**~~ worktree'de `cd C:/.wt/axet/tx01-karne && python tests/run_tests.py` (ön planda, timeout ≥1500000) — kök takım 0 failure mi ölçül. Sonra **TAZE bug-expert** (core §5 — aynı ajan kendi düzeltmesini onaylamaz): brif = yukarıdaki "TX-01" bölümünün tamamı + H1/H2 orijinal BLOCKER bulguları + "AÇIK BIRAKILAN" 3 kalemin bilinçli olduğunu söyle (bunları BULGU diye tekrar yazmasın, ama gerçekten kapatılıp kapatılmadığını ölçsün). PASS/WARNING → lider commit → `feat/2026-09-14-kurulum`'a merge → worktree kapat.
 3. **P6'yı bitir:** **TAZE bug-expert** (bu tur hiç ölçüm yapmadı, sıfırdan başlar): brif = yukarıdaki "P6" bölümünün tamamı + ajan raporundaki 6 kalem + özellikle *"yeşil koşmamış test → geçersiz mutasyon kanıtı"* sınıfını ayrıca ara (test_kur.py:271 emsali) + #L1/#L3/yedek-yerelde-kalıyor/3-yetim-dizin açık kalemlerini TEYİT ET (yeni bulgu değiller, ajan zaten yazdı — ama doğrulanmadılar). PASS/WARNING → lider commit → merge → worktree kapat.
 4. **Merge sırası:** P6 önce ya da TX-01 önce fark etmez (ayak izleri ayrık, tek ortak dosya `TASARIM.md`, hunk'lar çakışmıyor — P6 ~satır 26-29, lider ~satır 90-191, önceden ölçüldü). **İkisi merge olduktan SONRA** kök + foundation + sap-code-review + `siniflandir.py` YENİDEN koşulur (merge edilmiş sonuç üzerinde — hiçbiri tek başına yeterli değil).
-5. **Ardından sırada:** K12 (`doctor.py` override-by-length WARN — P6 ile AYNI dosyaya dokunuyor, P6 merge'i BEKLER) · D16 kararı kullanıcıya sorulur (yayın sızıntı taraması daraltma önerisi, bkz. §2 D16 satırı) · D17 kalan yarısı (opsiyonel, düşük öncelik) · K10/K11 (§2 K) · TX-10/TX-02+03 (ayrı onay) · TX-06 (ayrı sprint, P1-P7 sonrası) · `.github/` tüketici pakete giriyor mu kararı.
+5. **Ardından sırada (2026-09-16 akşamı güncellendi):** **K12 ARTIK BLOKE DEĞİL** — beklediği P6 merge oldu (`8f9b5cd`), `doctor.py` main'de, çakışma kalmadı ⇒ yarın doğrudan başlanabilir · **D16 kararı HÂLÂ kullanıcıda** (yeniden ölçüldü, EXIT=1 / 17 bulgu, sayı stabil — ⑱) · D17 kalan yarısı (opsiyonel, düşük öncelik) · K10/K11 (§2 K) · TX-10/TX-02+03 (ayrı onay) · TX-06 (ayrı sprint, P1-P7 sonrası) · `.github/` tüketici pakete giriyor mu kararı · **YENİ: `axet-template` public reposunun açılması** (⑰ kararı; `README.md:39,44` ve `kur.ps1:38` oraya işaret ediyor, repo henüz YOK — HTTP 404) · **YENİ: `core/scripts/team_setup.py:498-517` cherry düzeltmesi** (⑯; DEV_CORE yetkisi gerektirir).
 6. **G/P1 zaten ✅ merge (`313d126`)** — bu satırın referans aldığı eski "P1 ∥ P6" planı GEÇERSİZ, P1 bitti. Kalan G paketleri (P2→P3∥P5∥P7→P4, P8, P9) TX-01+P6 merge'inden SONRA sırada — ayrıntı §2 G tablosu.
 
-### Kullanıcıdan beklenenler (değişmedi, hâlâ açık)
+### Kullanıcıdan beklenenler (2026-09-16 akşamı YENİDEN ÖLÇÜLDÜ)
 
-- `gh auth refresh -h github.com -s workflow` — token kapsamında `workflow` YOK ⇒ `.github/workflows/` push edilemez.
-- `ozgurylmz34/axet` PRIVATE repo yaratma onayı (dışa dönük; push anında şirket izni AYRICA teyit edilecek).
-- Elle: `C:\IX\PROVA\.tmp\d3-fix\tmp\node-compile-cache` klasörünü sil (ajanın silmesi izin katmanında reddedildi).
-- D16 kararı: yayın sızıntı taramasını daralt mı (öneri §2'de yazılı) yoksa mevcut hâliyle mi bırak.
+**✅ KAPANDI — bu satırlar artık DOĞRU DEĞİL, tarihçe için bırakıldı:**
+- ~~`gh auth refresh -h github.com -s workflow` — token kapsamında `workflow` YOK~~ → **YANLIŞ**. Token'da `workflow` kapsamı **var**; `.github/workflows/` bugün **dört kez** push edildi (PR #2, #5 ve merge'leri). Bu satır makine taşınmasından önceki duruma aitti ve bütün gün bayat kaldı.
+- ~~`ozgurylmz34/axet` PRIVATE repo yaratma onayı~~ → repo **açıldı** (private, 2.3 MB), 7 PR merge edildi.
+
+**🔴 HÂLÂ AÇIK — kullanıcı eylemi bekliyor:**
+1. **Temizlik komutları** (izin katmanı `Git Destructive` diye reddetti; hepsinin main'de olduğu ⑯'daki içerik karşılaştırmasıyla doğrulandı) — tam komut listesi yukarıda **"🔴 Yarın ilk iş — ENGELLER ve TEMİZLİK"** başlığında; kısaca: 8 yerel + 7 uzak dal, `.wt/axet` kalıntı dizini, `PROVA/.tmp/d3-fix` (3.4 MB), DEV_CORE yerel dalı `docs/2026-09-16-cherry-squash-yanilmasi`.
+2. **D16 kararı** — yayın sızıntı taraması daraltılsın mı, yoksa mevcut hâliyle mi kalsın. Yeni ölçüm ⑱'de: **EXIT=1, 17 bulgu**, 16'sı zaten dışlanan dosyaya atıf + 1 yanlış pozitif. P6 merge'i sayıyı değiştirmedi ⇒ beklenecek bir şey kalmadı, karar verilebilir.
+3. **`axet-template` public reposunun açılması** (⑰ kararı) — bugün **HTTP 404**; tüketici `README.md:39,44` ve `kur.ps1:38` üzerinden oraya yönlendiriliyor, yani tüketici kurulumu bu repo açılana kadar **fiilen çalışmaz**. Dal koruması da ücretsiz olarak orada gelecek.
+4. **DEV_CORE yazma yetkisi ya da yamanın yetkili makinede uygulanması** — `maintenance/core-cherry-squash-kurali.patch` (`git am` ile). Ölçüldü: `ix-works/DEV_CORE` üzerinde bu kimliğin `push` izni **False**.
 
 ### Ajan işletim dersleri (bu oturumda ölçüldü)
 

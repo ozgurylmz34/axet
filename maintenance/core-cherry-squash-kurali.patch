@@ -1,0 +1,109 @@
+From 09b0e9865511d905f12ac403735f30843cb46968 Mon Sep 17 00:00:00 2001
+From: Yilmaz <ozgur.yilmaz@bs.nttdata.com>
+Date: Wed, 16 Sep 2026 20:21:34 +0300
+Subject: [PATCH] docs(core): `git cherry` de cok commit'li squash-merge'de
+ yaniltir (worktree denetimi)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+§1.1 worktree yasam dongusu madde 3 ⓑ. YALNIZ DOKUMAN - kod degismedi.
+
+Kural "`--is-ancestor` KULLANILMAZ, `git cherry` kullan" diyordu. Olculdu
+(2026-09-16, 4 kollu kontrol grubu, izole depo): cherry DE tek basina yetmiyor.
+
+  1 commit + squash      -> cherry '-'  DOGRU  | icerik 0 dosya DOGRU
+  2 commit + squash      -> cherry '+'  YANLIS | icerik 0 dosya DOGRU
+  fast-forward           -> cherry bos  DOGRU  | icerik 0 dosya DOGRU
+  gercekten birlesmemis  -> cherry '+'  DOGRU  | icerik 1 dosya DOGRU
+
+Sebep: squash TEK commit uretir; cok commit'li dalin hicbir patch-id'si tutmaz,
+hepsi '+' cikar. 2026-08-28 olcumu YANLIS DEGILDI, KOLU DARDI (o bes dal tek
+commit'liydi). Iddia daraltildi, silinmedi.
+
+Dort kolun dordunde de dogru olan TEK yontem ICERIK karsilastirmasi: dalin
+KENDI dokundugu dosyalar main'de birebir ayni mi. cherry'nin '+' ciktisi artik
+HUKUM degil ISARET. Sinir da yazildi: main o dosyalari sonradan degistirdiyse
+yanlis ALARM uretir, sessiz onay URETMEZ (fail-safe).
+
+ⓓ'deki "duz dosya karsilastirmasi 150 sahte fark" notuyla celismedigi ayrica
+belirtildi (orada git-disi kiyas, burada `git diff`).
+
+ACIK KALEM: scripts/team_setup.py:498-517 ⓑ adimi hala yalniz cherry kullaniyor
+=> cok commit'li dalda yanlis alarm verir. Kod duzeltmesi AYRI IS.
+
+VAKA: ozgurylmz34/axet, 4 squash-merge'li dal; cherry dordune de "girmemis"
+dedi, icerik karsilastirmasi dordunun de main'de oldugunu gosterdi, worktree'ler
+guvenle kapatildi.
+
+run_all_validators --quick: tumu OK.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01S3xWnAxqB5d9wEkirJR7Dd
+---
+ CLAUDE.core.md                | 28 ++++++++++++++++++++++++++++
+ governance/infra-changelog.md |  7 +++++++
+ 2 files changed, 35 insertions(+)
+
+diff --git a/CLAUDE.core.md b/CLAUDE.core.md
+index c4777e3..1e9143e 100644
+--- a/CLAUDE.core.md
++++ b/CLAUDE.core.md
+@@ -120,8 +120,36 @@
+      ⓓ yetimlerde `git hash-object` → `git cat-file -e` + `gitdir`siz bayat metadata.
+      ⛔ **`--is-ancestor` KULLANILMAZ** — squash-merge'de yanıltır (ölçüldü: 5 dalın 5'i
+      "merge edilmemiş" göründü, beşi de `git cherry` ile `-` çıktı).
++     ⚠️ **`git cherry` DE TEK BAŞINA YETMEZ — ÇOK COMMIT'Lİ squash-merge'de YANLIŞ ALARM
++     verir (ölçüldü 2026-09-16, 4 kollu kontrol grubu).** Squash **tek** commit üretir;
++     dal **birden çok** commit taşıyorsa hiçbirinin patch-id'si tutmaz ve **hepsi `+`**
++     ("main'de yok") çıkar. Yukarıdaki 2026-08-28 ölçümü yanlış değildi — **kolu dardı**:
++     o dallar tek commit'liydi.
++
++     | Kol | `git cherry` | `--is-ancestor` | **içerik karşılaştırması** |
++     |---|---|---|---|
++     | 1 commit, squash-merge | `-` ✅ | ata değil ❌ | 0 dosya ✅ |
++     | **2 commit, squash-merge** | **`+` ❌ YANLIŞ ALARM** | ata değil ❌ | 0 dosya ✅ |
++     | fast-forward | (boş) ✅ | ATA ✅ | 0 dosya ✅ |
++     | gerçekten birleşmemiş | `+` ✅ | ata değil ✅ | **1 dosya ✅** |
++
++     ⇒ **Dört kolun dördünde de doğru olan TEK yöntem içerik karşılaştırmasıdır:**
++     *dalın **kendi** dokunduğu dosyalar (`diff --name-only $(merge-base main <dal>) <dal>`)
++     `main`'de birebir aynı mı* (`diff --name-only main <dal> -- <o dosyalar>` → boş).
++     `cherry`'nin `+` çıktısı **hüküm değil, işarettir**; hükmü içerik verir.
++     **Sınırı:** main o dosyaları sonradan başka yönde değiştirdiyse ya da dalın işi main'de
++     geri alındıysa fark görünür ⇒ **yanlış alarm** üretir, sessiz onay ÜRETMEZ (fail-safe).
++     📌 Vaka 2026-09-16: 4 squash-merge'li dalın 4'ünde de `cherry` "girmemiş" dedi; içerik
++     karşılaştırması dördünün de main'de olduğunu gösterdi ve worktree'ler güvenle kapandı.
++     ⚠ **AÇIK KALEM:** `team_setup.py --wt-denetim` ⓑ adımı bugün **hâlâ yalnız `cherry`**
++     kullanıyor (`scripts/team_setup.py:498-517`) ⇒ çok commit'li dalda **yanlış alarm verir**
++     ve gün-sonu denetimi "nasılsa kırmızı" diye okunmaz hâle gelebilir. Kod düzeltmesi
++     ayrı bir iştir.
+      ⛔ ⓓ olmadan *"yetimde özgün iş var mı"* **cevaplanamaz**: düz dosya karşılaştırması
+      satır-sonu gürültüsüyle **150 "farklı" dosya** gösterdi, gerçek fark **24**'tü.
++     *(Bu, yukarıdaki içerik karşılaştırmasıyla çelişmez: orada `git diff` kullanılır —
++     git satır-sonu normalizasyonunu kendi yapar — burada kastedilen **git dışı** düz
++     dosya kıyaslamasıdır.)*
+   4. **KAPATMA:** `--wt-kapat <dal>` — **silme sırası DAİMA junction-önce** (`rmdir`/`unlink`
+      ile bağ kaldırılır, sonra ağaç); `rm -rf` bir junction'a girerse **hedefi** siler.
+      Denetim temiz değilse `--zorla` olmadan dokunmaz; `git worktree remove` dört vakada da
+diff --git a/governance/infra-changelog.md b/governance/infra-changelog.md
+index ffc7e66..f8e4e56 100644
+--- a/governance/infra-changelog.md
++++ b/governance/infra-changelog.md
+@@ -14,6 +14,13 @@ Her bileşen bölümü ayrıca **`Test-senaryosu:`** bloğu taşır — o bileş
+ (infra-expert F0/F3 + lider bağımsız-koşum) çalıştıracağı adım reçetesi; mevcut test-varlığı
+ yoksa `[ÖNERİ]` etiketiyle aday yazılır (varmış gibi gösterilmez).
+ 
++## CLAUDE.core.md §1.1 madde 3 ⓑ — `git cherry` de ÇOK COMMIT'Lİ squash-merge'de yanıltır (worktree gün-sonu denetimi)
++| tarih | değişiklik | NEDEN (senaryo/vaka) | NASIL test edildi | fixture/koşucu-ref | PR |
++|---|---|---|---|---|---|
++| 2026-09-16 | **Yalnız DOKÜMAN — kod değişmedi.** Kural bugüne kadar *"`--is-ancestor` KULLANILMAZ, `git cherry` kullan"* diyordu. `git cherry`'nin de tek başına yetmediği, çok commit'li squash-merge'de **yanlış alarm** verdiği yazıldı; dört kollu ölçüm tablosu, doğru yöntem (**içerik karşılaştırması**: dalın kendi dokunduğu dosyalar `main`'de birebir mi) ve o yöntemin **sınırı** (main o dosyaları sonradan değiştirdiyse yanlış ALARM üretir, sessiz onay ÜRETMEZ — fail-safe) eklendi. 2026-08-28 ölçümü **yanlış değil, kolu dardı** diye nitelendi (o dallar tek commit'liydi) — iddia daraltıldı, silinmedi. ⓓ'deki *"düz dosya karşılaştırması 150 sahte fark"* notuyla çelişmediği ayrıca belirtildi (orada git-dışı kıyas, burada `git diff`). **AÇIK KALEM olarak yazıldı:** `scripts/team_setup.py:498-517` ⓑ adımı hâlâ yalnız `cherry` kullanıyor ⇒ çok commit'li dalda yanlış alarm verir. | **Vaka (ozgurylmz34/axet, 2026-09-16):** 4 squash-merge'li dalın worktree'leri kapatılacaktı; `git cherry -v main <dal>` **dördünde de** her commit'e `+` ("main'de yok") dedi. İçerik karşılaştırması dördünün de main'de olduğunu gösterdi ve worktree'ler güvenle kapandı. `cherry`'ye güvenilseydi gün-sonu denetimi **4 sahte "birleşmemiş iş"** alarmı verirdi; ters yönde bir hata olsaydı (sessiz onay) birleşmemiş iş silinebilirdi. Sebep: squash **tek** commit üretir, çok commit'li dalın hiçbir patch-id'si tutmaz. | **4 kollu kontrol grubu, izole depo** (`%TEMP%/cherrytest`, `git init -b main`): ⓐ 1 commit + squash → `cherry` `-` ✅ · `--is-ancestor` "ata değil" ❌ · içerik 0 ✅ ⓑ **2 commit + squash → `cherry` `+` ❌ YANLIŞ** · `--is-ancestor` ❌ · içerik 0 ✅ ⓒ fast-forward → `cherry` boş ✅ · `--is-ancestor` ATA ✅ · içerik 0 ✅ ⓓ **gerçekten birleşmemiş → `cherry` `+` ✅** · içerik **1** ✅. ⇒ dört kolun dördünde de doğru olan tek yöntem içerik karşılaştırması; ⓑ ile ⓓ'yi ayırt edebilen **başka** yöntem yok. `run_all_validators.py --quick`: tümü OK. | Otomatik fixture YOK — `tests/fixtures/worktree_yasam_dongusu/run.py` V4 hâlâ *"`git cherry` çağrılıyor"* iddiasını ölçüyor ve bu doküman değişikliğiyle çelişmiyor (kod değişmedi). Kod düzeltilirse o çapa da güncellenmeli. | (bu PR) |
++
++**F4 GEVŞETME/SIKILAŞTIRMA cetveli:** guard/gate/validator gevşetmesi YOK · SIKILAŞTIRMA YOK · kod değişikliği YOK. Yalnız kural metni daraltıldı ve bir açık kalem adlandırıldı.
++
+ ## claude/agents/infra-expert.md F2 · claude/templates/spawn-brief.md §2 — SINIF-ENVANTERİ kapsama girer (kardeş taraması spawn ÖNCESİ; LİDER + kullanıcı onayı 2026-09-13)
+ | tarih | değişiklik | NEDEN (senaryo/vaka) | NASIL test edildi | fixture/koşucu-ref | PR |
+ |---|---|---|---|---|---|
+-- 
+2.55.0.windows.3
+
