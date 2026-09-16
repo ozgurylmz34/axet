@@ -77,9 +77,10 @@ jobs:
         #      yerine ONERI olarak donuyor). Guvenlige dokunan karar surume devredilmis.
         # Karar iddiayi DUZELTMEK degil DARALTMAK: 3.9 bugun de fiilen desteklenmiyordu,
         # degisen tek sey durustluk.
-        # ⚠ ACIK KALEM: README:23 ve kur.ps1'deki "3.9" metinleri HENUZ guncellenmedi —
-        # o iki dosyaya P6 dali da dokundugu icin cakismayi onlemek adina P6 merge edildikten
-        # SONRA yapilacak (IS-LISTESI'ne yazildi). O ana kadar matris 3.10, metin 3.9 der.
+        # ✅ KAPANDI (2026-09-16): README/kur.ps1'deki "3.9" metinleri guncellendi ve
+        # kur.ps1'e TEK DOGRULUK KAYNAGI konuldu ($script:PyAsgari). Buradaki taban ile
+        # kur.ps1'in kapisi artik ayni seyi soyluyor; ikisi ayrilirsa test_kur.py:872,936
+        # kirmiziya doner (mutasyonla dogrulandi).
         python: ['3.12', '3.14']
     env:
       PYTHONUTF8: '1'
