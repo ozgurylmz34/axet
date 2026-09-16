@@ -103,6 +103,26 @@ Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (
 - 🔴 **AJANIN KENDİ BIRAKTIĞI ÖLÇÜLMEMİŞ NOKTA — üçüncü kapının 1. önceliği:** `.axet-guncelleme/` içinde **commit'İ OLAN** gömülü depo varsa `add -f` `rc=0` döner ama yedeğe yalnız **gitlink** (`160000`, tek commit kimliği) girer ⇒ bayrak *"yedekte var"* der, 5. adım `Remove-Item -Recurse -Force` o deponun **geçmişini de siler** — oysa `clean -fd` iç içe depoyu bilerek atlıyor. **Kapatılan HIGH'ın bir katman derini: bayrak doğru, yedeğin İÇERİĞİ yok.** Kayıp doğrulanırsa BLOCKER, merge bekler.
 - İkinci ölçülmemiş nokta: `.axet-guncelleme/` yalnız **boş alt klasörlerden** oluşuyorsa `add -f` "did not match any files" ile düşebilir ⇒ dizin silinmeyip mesajla bırakılır. "Zararsız gibi" ama **ölçülmedi**.
 
+**⑪ P6 ÜÇÜNCÜ KAPI KOŞTU (2026-09-16) → 🔴 BLOCKER — ⑨'un bıraktığı gitlink noktası ÖLÇÜLDÜ, veri kaybı GERÇEK.** A/B/C kontrol grubuyla, gerçek `kur.cmd -Sifirla -Evet` ile, izole klonlarda (git 2.55.0.windows.3):
+
+| | **A — commit'İ OLAN iç depo** | **B — kontrol: düz dosya** | **C — kontrol: commit'siz iç depo** |
+|---|---|---|---|
+| `git add -f` | **rc=0** (yalnız `warning: adding embedded git repository`) | rc=0 | rc=128 `does not have a commit checked out` |
+| Yedek ağacındaki girdi | **`160000 commit 75b08c7b…`** (gitlink) | `100644 blob b7bcb3ec…` | yok (hiçbir şey sahnelenmedi) |
+| `$durumDiziniYedekte` | **true** ← YANLIŞ | true | false |
+| Dizin diskte? | **HAYIR — silindi** | hayır (doğru) | **evet — korundu** |
+| `ATLANDI…SİLİNMEDİ` mesajı | **YOK** | yok (doğru) | var |
+| Geri alınabilir mi? | **HAYIR** — gitlink commit'i dış repoda yok (`git cat-file -t` rc≠0) | evet (`git show <dal>:…` → `{"surum": 1}`) | gerek yok |
+
+- **Kök neden (lider koddan doğruladı):** `kur.ps1:520` yedek ağacını `ls-tree -r **--name-only**` ile okuyor ⇒ **mod bilgisi kayboluyor**; `:528-529` yalnız yolun ağaçta *görünmesine* bakıyor. Gitlink yalnız 40 baytlık bir commit kimliğidir, iç deponun nesneleri dış repoya **hiç girmez** — ama adı ağaçta göründüğü için kontrolü geçiyor. Sonra `:578-586` `Remove-Item -Recurse -Force` iç deponun `.git`'i + geçmişi + dosyalarını siliyor. **rc=0, uyarı yok, sessiz ve geri alınamaz.**
+- **Kodun kendi sözünü ihlal ediyor:** `kur.ps1:575` *"Sıfırlama yedekleyemediği hiçbir şeyi silmez"* · `README.md:74-75` *"Klonun içindeki ayrı bir git deposunu ise git silmez … araç kalanı sana adıyla bildirir"* — `.axet-guncelleme/` içi için **ikisi de yanlış**.
+- **Daraltma (kapı ajanının kendi dürüstlük notu):** bu **regresyon DEĞİL** — fix öncesi `Remove-Item` koşulsuzdu, aynı veri aynı şekilde gidiyordu. Fix sınıfı **daraltıyor** (C kapandı), **kapatmıyor** (A açık). Senaryonun gerçekçiliği orta-düşük (`.axet-guncelleme/` araç-üretimi bir dizindir). BLOCKER'ı veren şey **kapı brifinginde önceden konmuş kuraldır**, kanıt tartışmasız.
+- **⑨'un ikinci ölçülmemiş noktası (boş alt klasör) ÖLÇÜLDÜ → bulgu YOK.** `add -f` düşer, `ATLANDI` basılır, dizin kalır, rc=0. Kodun gerekçe cümlesi ("kalan taban kaydı sonraki `%guncelle`'yi yanlış tabana götürür") bu vakada **uygulanmaz** (kalan dizinde `uygulanan.json` yok) ve tüketici tarafı zaten yok: **`scripts/guncelle.py` mevcut değil**, `.axet-guncelleme/` yalnız `TASARIM.md`'de tasarım olarak geçiyor. Sezgi doğruydu, gerekçesi şimdi ölçüldü.
+- **Fix'in geri kalanı DOĞRULANDI:** HIGH kapandı (Vaka C) · P6'nın 3. kalemi kırılmadı (`Bitir 1` sayısı **37 = 37**, yeni DUR yolu yok; test 13 yeşil) · normal yol bozulmadı (Vaka B geri alındı) · yeni 2 testin mutasyon geçerliliği **bağımsız yeniden üretildi** (bayt-bayt aynı klonda, sha256 doğrulanarak; M5 → test 17 KIRMIZI, M-failsafe → test 18 KIRMIZI, izolasyon doğru) · 4. adım DUR mesajının yeni dal-dönüş komutu **fiilen çalıştırıldı** (`switch benim-dalim` → rc=0).
+- **Ek MEDIUM — belge/kod ayrışması (4 konum):** `README.md:73` · `README.md:74-75` · `.gitignore:3-5` (hâlâ koşulsuz "AYRICA siler" diyor, silme artık koşullu) · `TASARIM.md:347` (rc=128 dalı doğru, gitlink dalı hiç anılmamış).
+- **Aksiyon (dağıtıldı):** silme izni yolun **varlığından** değil **modundan** türetilecek — `.axet-guncelleme` altında `160000` girdisi varsa `$durumDiziniYedekte = $false` ⇒ Vaka A, Vaka C ile aynı güvenli yola düşer. rc sözleşmesi ve `Bitir 1`=37 korunacak. + Vaka A'yı yalıtan yeni test + 4 belge konumu.
+- **Kapı ajanının KAPSAM BEYANI (ölçülmedi ≠ temiz):** tam takım koşulmadı (taban devralındı; yalnız `-k sifirla` 19/0 ve `-k axet_guncelleme` 3/3 kendi ölçümü) · `.axet-guncelleme/`'nin junction olması · içinde junction bulunması · **kirli/izlenmeyen dosyalı** commit'li iç depo (yalnız temiz olan ölçüldü) · iç içe birden fazla depo · salt-okunur dosya yüzünden `Remove-Item` catch dalı · eşzamanlı iki koşum · etkileşimli onay (hepsi `-Evet`) · PowerShell 7 (yalnız 5.1) · `-DenemeModu` kombinasyonu · WIP commit'in `-Sifirla` DIŞINDAKİ 302 satırı.
+
 **⑩ Lider hatası (kayda geçiyor, ders):** TX-01'de kendi eklediği assert'i mutasyonla sınarken dosyayı `read_text`/`write_text` ile geri yazdı → Windows'ta **LF→CRLF** çevirdi, `quality_scorecard.py` sha256 `833ceb42` → `ec4552ef` oldu. **Testler yeşil kaldı** (Python satır sonunu umursamaz) ⇒ ölçüm bunu yakalamazdı; yalnız sha256 kontrolü yakaladı. `git checkout --` ile geri alındı. **Mutasyon geri alma DAİMA `read_bytes`/`write_bytes` ya da `git checkout --` ile yapılır.**
 
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
@@ -150,7 +170,7 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 ### SIRADAKİ — tam sıra
 
-> **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert ✅ **WARNING → 2 MEDIUM düzeltildi → commit `5eb3fa8` + push** (yukarıda ⑧) · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi ✅ **272/1, 4 kalem mutasyonla kanıtlı, COMMIT'SİZ** (yukarıda ⑦+⑨) · ③c fix sonrası TAZE bug-expert 🔄 **koşuyor** · ④ merge ⬜ · ⑤ sonrası ⬜.
+> **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert ✅ **WARNING → 2 MEDIUM düzeltildi → commit `5eb3fa8` + push** (yukarıda ⑧) · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi ✅ **272/1, 4 kalem mutasyonla kanıtlı, COMMIT'SİZ** (yukarıda ⑦+⑨) · ③c fix sonrası TAZE bug-expert ✅ → **BLOCKER** (gitlink veri kaybı ÖLÇÜLDÜ — yukarıda ⑪) · ③d gitlink düzeltmesi 🔄 **dağıtıldı** · ④ merge ⬜ **BEKLİYOR** · ⑤ sonrası ⬜.
 > Aşağıdaki maddelerdeki `C:/axet` / `C:/.wt/...` yolları **GEÇERSİZ** — yeni yollar için en üstteki tabloya bak.
 
 
@@ -335,7 +355,7 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 | P3 | vaka kartları + sınıf kartları + `GUNCELLE.md` | P2 | evet | — | ⬜ |
 | P4 | `%guncelle` başlatıcı + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | — | ⬜ |
 | P5 | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet | — | ⬜ |
-| P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | 🟡 **İKİNCİ KAPI KOŞTU (2026-09-16) → BLOCKER**: `.axet-guncelleme/` yedeksiz siliniyor (HIGH) + emniyet ağı testsiz (MEDIUM). Düzeltme dağıtıldı, fix sonrası TAZE bug-expert şart. Worktree `…\AI_WORKS\.wt\axet\p6-sifirla`, WIP commit `b175e95`. Ayrıntı: DEVAM NOKTASI "İKİNCİ TUR" ⑥/⑦. |
+| P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | 🔴 **ÜÇÜNCÜ KAPI KOŞTU (2026-09-16) → BLOCKER (2. tur)**: ikinci kapının HIGH'ı kapandı, ama bir katman derini açık çıktı — `.axet-guncelleme/` içinde **commit'li gömülü depo** varsa yedeğe yalnız **gitlink** girer, bayrak "yedekte var" der ve depo **geçmişiyle birlikte sessizce, geri alınamaz** silinir (A/B/C ile ölçüldü). Kök neden `kur.ps1:520` `--name-only` ⇒ mod kaybı. Düzeltme dağıtıldı. Worktree `…\AI_WORKS\.wt\axet\p6-sifirla`, hâlâ **COMMIT'SİZ**. Ayrıntı: DEVAM NOKTASI "İKİNCİ TUR" ⑨/⑪. |
 | P7 | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` + `session_brief` günlük/kritik satırı | P1, P2 | evet | — | ⬜ |
 | P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | ⬜ |
 | P9 | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası) | — | ⬜ |
