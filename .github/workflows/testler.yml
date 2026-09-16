@@ -9,6 +9,12 @@
 #     olmayan TEMIZ bir runner'da olculur; gercek kullanici makinesindeki birikmis config
 #     durumunu TEMSIL ETMEZ.
 #   * Skill govde/dokuman kalitesi: burada olculmez (bug gate + doc checklist isi).
+#   * GERCEK aXet (axet-code) entegrasyonu: CI'da SAHTE (0 baytlik) bir axet-code.exe kurulur.
+#     kur.ps1'in Axet-Bul'u yalnizca VARLIK arar, binary'yi CALISTIRMAZ -> on kosul kontrolu
+#     olculur, aracin kendisi OLCULMEZ. Gercek aXet sirket kanalindan kurulur, CI'a kurulamaz.
+#     Stub bilerek PATH'e KONMAZ, yalniz %LOCALAPPDATA%\axet-code\bin altina konur: boylece
+#     install.py/doctor.py'nin `shutil.which("axet-code")` sonucu bugunku gibi BULUNAMADI kalir
+#     ve o iki betigin olculen davranisi degismez.
 name: testler
 
 on:
@@ -50,6 +56,25 @@ jobs:
         run: |
           python --version
           git --version
+
+      # ON KOSUL 1 — sahte axet-code. Olculdu (2026-09-16, yerelde CI kosulu taklit edilerek,
+      # 3 kollu): gercek axet-code VAR -> test_kur 36/1 · YOK -> 36/30 · sahte stub ile -> 36/1.
+      # Yani kosum #1'deki 36 failure'in 30'u tek bir on kosul bosluguydu, kod kusuru DEGILDI
+      # (kur.ps1:371-375 -> `Bitir 2`). Testler ayni sahte-dosya yontemini zaten kullaniyor
+      # (tests/test_kur.py dar_ortam: axet-code.exe write_bytes(b"")).
+      - name: On kosul - sahte axet-code
+        shell: pwsh
+        run: |
+          $bin = Join-Path $env:LOCALAPPDATA 'axet-code\bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          New-Item -ItemType File -Force -Path (Join-Path $bin 'axet-code.exe') | Out-Null
+          Write-Host "sahte axet-code: $bin (PATH'e EKLENMEDI - bkz. kapsam beyani)"
+
+      # ON KOSUL 2 — SAP ADT foundation takiminin calisma zamani bagimliliklari. Olculdu:
+      # kurulmazsa o takim 6 test / 6 error verir (ModuleNotFoundError: dotenv) ve kok takimdaki
+      # test_run_tests_cli.py:47 de bu yuzden duser. Dosya repoda ZATEN vardi, CI onu hic kurmuyordu.
+      - name: On kosul - Python bagimliliklari
+        run: python -m pip install --quiet -r skills-sap/sap-adt-foundation/scripts/requirements.txt
 
       - name: Kok takim
         run: python tests/run_tests.py
