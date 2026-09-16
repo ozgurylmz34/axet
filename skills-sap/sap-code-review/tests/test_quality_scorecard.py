@@ -115,7 +115,15 @@ class D2ArtefaktsizPassTests(DefterTestTemeli):
         self.satir_ekle(sonuc='pass', artefakt=str(self.tmp / 'yok.txt'))
         rc, k, _ = _karne_json(self.defter)
         self.assertEqual(rc, 2, f'diskte olmayan artefakt çıkış 2 vermeli: {k}')
-        self.assertTrue(any('artefakt' in n.lower() for s in k['satirlar'] for n in s['notlar']))
+        notlar = [n for s in k['satirlar'] for n in s['notlar']]
+        self.assertTrue(any('artefakt' in n.lower() for n in notlar))
+        # TESHIS METNI de civili: D2 uc katmanli fail-closed (exists -> is_file -> stat). Ust
+        # katman sokulunce degismez (rc 2) korunur ama mesaj sessizce "dosya degil"e kayar ve
+        # references/quality-scorecard.md'deki /tmp anlatimi yanlis mesaji tarif eder hale gelir.
+        # Olculdu 2026-09-16: `if not yol.exists()` -> `if False` mutasyonu bu assert OLMADAN
+        # YESIL kaliyordu.
+        self.assertTrue(any('diskte YOK' in n for n in notlar),
+                        f'diskte-olmayan artefakt icin teshis mesaji beklenen degil: {notlar}')
 
     def test_insan_kipinde_buyuk_uyari(self):
         self.satir_ekle(sonuc='pass', artefakt=None)
@@ -694,6 +702,10 @@ class GateDegilRaporTests(unittest.TestCase):
         # KAPSAM: bu repoda komut kablolamasi YALNIZ .py uzerinden yapilmiyor - CI is akisi (.yml)
         # ve mimari haritasinin `test.komut` dizeleri de fiilen komut calistirir. Tarama uc yuzeyi
         # de kapsar; dar kume uzerinden "hicbir akis cagirmiyor" genellemesi yapilamaz.
+        # BAKILMAYAN (bilincli): `.md` talimat yuzeyi. Bir markdown satiri mekanik olarak hicbir
+        # seyi bloklayamaz ve SKILL.md bu script'i calistirmayi zaten tarif eder. Bu test
+        # "bloklayici kablolama" arar, "anilma" degil - negatif testle olculdu 2026-09-16:
+        # tuzak .yml -> KIRMIZI, tuzak harita.json -> KIRMIZI, tuzak .md -> YESIL (beklenen).
         yuzeyler = (list(TEMPLATE.rglob('*.py')) + list(TEMPLATE.rglob('*.yml'))
                     + list(TEMPLATE.rglob('*.yaml')) + [TEMPLATE / 'guncelle' / 'harita.json'])
         cagiranlar = []

@@ -14,7 +14,7 @@ Araç: `skills-sap/sap-code-review/scripts/quality_scorecard.py` · testler:
 | **Kablolanmaz** | Yazma kapısı (`gate.py`), reviewer zinciri (`run_review.py`) ve pre-commit bu aracı **çağırmaz**. Hiçbir akış onun çıkış koduna bakarak durmaz. |
 | **Neden** | Yeni bir kapı/gate açmak **ayrı ve açık kullanıcı onayı** ister (gate moratoryumu). O onay YOK. Kural yazmak, kural doğurmasın: önce rapor, gerekirse sonra kapı. |
 | **Kendi çıkış kodu** | Aracın kendi sözleşmesidir (aşağıda). Onu okuyup karar veren **insandır**, bir otomasyon değil. |
-| **Ölçülür** | `GateDegilRaporTests` template'teki **hiçbir** `.py` dosyasının bu script'in adını geçirmediğini her koşumda doğrular. Yani "kablolanmadı" bir niyet beyanı değil, **ölçülen** bir olgudur. |
+| **Ölçülür** | `GateDegilRaporTests` template'teki hiçbir **`.py` · `.yml` · `.yaml` · `guncelle/harita.json`** dosyasının bu script'in adını geçirmediğini her koşumda doğrular. Yani "kablolanmadı" bir niyet beyanı değil, **ölçülen** bir olgudur. **KAPSAM: `.md` talimat yüzeyi TARANMAZ** — bir markdown satırı mekanik olarak hiçbir şeyi bloklayamaz (ve `SKILL.md` bu script'i çalıştırmayı zaten tarif eder); tarama "bloklayıcı kablolama" arar, "anılma" değil. |
 
 Birisi bu aracı bir akışa bağlamak isterse: önce kullanıcıdan açık onay, sonra kablolama — ve o
 gün `GateDegilRaporTests` bilinçli olarak değiştirilir. Testin sessizce silinmesi = kapının
@@ -248,8 +248,10 @@ Bakmadıkları:
   bugün yalnız boşluk kırpması yapılır. **AÇIK KALEM** (bilinçli, bu turda kapatılmadı).
 * Kapı kayıt defteri **kısmen** küçülürse (bir `check_*.py` silinirse) bu sessizdir: kapı
   listesinden düşer ve "kaydedilmemiş" sayısı azalır. **AÇIK KALEM**.
-* Kural imzalarındaki `kok` parametresi bugün hiçbir kural tarafından kullanılmıyor (ileride
-  kök-göreli bir kural gerekirse diye duruyor). **AÇIK KALEM** — ölü parametre.
+* Kural imzalarındaki `kok` parametresini 6 kuralın 5'i kullanmıyor; **`_kural_artefakt` KULLANIYOR**
+  (`quality_scorecard.py:261` — göreli artefakt yolunu `Path(kok) / yol` ile çözer, yukarıdaki
+  `--artefakt-kok` maddesinin dayandığı davranış budur). Ölü parametre DEĞİLDİR: kaldırılırsa
+  göreli artefakt çözümü ölür (ölçüldü — cwd değişince aynı defter `rc=0` yerine `rc=2` verir).
 * `test_sayisi` ve `dar_kapsam` **kaydedene** güvenir; yanlış bildirilirse karne bunu göremez —
   yalnız **tipi** denetlenir (`"0"` metin olarak yazılıp D3'ün atlatılması şema ihlalidir ve
   satırı geçersiz kılar; ölçüldü).
