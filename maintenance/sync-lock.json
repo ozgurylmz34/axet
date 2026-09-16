@@ -1,0 +1,4187 @@
+{
+ "_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
+ "sources": {
+  "DEV_CORE": {
+   "commit": "85a1dadbd26290196f669b330bcc103eea93bbe0",
+   "files": {
+    ".gitattributes": {
+     "decision": "uyarla",
+     "rule": ".gitattributes",
+     "sha256": "8f208eab7f2a872d02b1613022d255394a1ae603072b8b985c4f8e99440d825c",
+     "status": "tamam"
+    },
+    ".github/CODEOWNERS": {
+     "decision": "telafi",
+     "rule": ".github/*",
+     "sha256": "922b6fb2f2de9782a7acf0614e9f780114db19d8f6060d5761ed271a899258c9",
+     "status": "bekliyor"
+    },
+    ".github/PULL_REQUEST_TEMPLATE.md": {
+     "decision": "telafi",
+     "rule": ".github/*",
+     "sha256": "2131154407577d3f6a490f92b216058f6e3d6f3efd2f1606de92f9f7c186f9f5",
+     "status": "bekliyor"
+    },
+    ".github/workflows/core-ci.yml": {
+     "decision": "telafi",
+     "rule": ".github/*",
+     "sha256": "9811dc8a8e0eae64452fd67fe3c0d7a1036c8af0a5fff725d205b05120e4585e",
+     "status": "bekliyor"
+    },
+    ".github/workflows/project-guard.yml": {
+     "decision": "telafi",
+     "rule": ".github/*",
+     "sha256": "cf55725331aaadfedb64c30620a1dd475a3ddfa7fd946e96e6fec4042b77378a",
+     "status": "bekliyor"
+    },
+    ".gitignore": {
+     "decision": "uyarla",
+     "rule": ".gitignore",
+     "sha256": "bbbdce497e3e45e29e5aeaf9fcc1e06d0f1863507e703debea2d4ae0125666a3",
+     "status": "tamam"
+    },
+    "AGENTS.md": {
+     "decision": "alinmaz",
+     "rule": "AGENTS.md",
+     "sha256": "d9ece3cf802e03efdd89d7a8c99c1d390b854ab83b2e111ab95e07230e9b6965",
+     "status": "-"
+    },
+    "CLAUDE.core.md": {
+     "decision": "uyarla",
+     "rule": "CLAUDE.core.md",
+     "sha256": "703c7415b14f461c2c8bde0a82447af94108a529a9ba48f63463f8ff7910779e",
+     "status": "kismi"
+    },
+    "MAINTENANCE.md": {
+     "decision": "uyarla",
+     "rule": "MAINTENANCE.md",
+     "sha256": "72d2cbe6375746f5b417f5eedb35a9283c0e9ecd4bc2be9399412fb3c6f2b088",
+     "status": "tamam"
+    },
+    "ONBOARDING.md": {
+     "decision": "uyarla",
+     "rule": "ONBOARDING.md",
+     "sha256": "a9135844ea4fc414d7f179c0556309feda636c144d9e63de64acd1835df2b752",
+     "status": "tamam"
+    },
+    "PROJECT_BOOTSTRAP.md": {
+     "decision": "uyarla",
+     "rule": "PROJECT_BOOTSTRAP.md",
+     "sha256": "a08f3c9ff780ff1f4393e8542b4c285086b846ea89e9b524e7227ba28dc631c5",
+     "status": "tamam"
+    },
+    "README.md": {
+     "decision": "alinmaz",
+     "rule": "README.md",
+     "sha256": "2ff1cb2890fe0b731bdeda32e36538de8432813eab1b276f17d6ecf40e958485",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/README.md": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "31ed1cd2eca089f573dc574ac96d3a04f34fcb83983646cb491d4ad242a69c40",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/fetch_cds_source.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "2f2a0eb9badb60736784effc147626ef33dd18d2ea4e48eeb78a442cd40e7c3d",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/search/find_ddls_by_sqlview.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "55a37875ba91f60038821746ef4de50f154d1a3f8646f3359ae7cf87a2de4dbd",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/search/find_ddls_v2.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "b2e23a151d5f4c8575c5f62e604e81c9fa690c623f32328429fa5353e0488e55",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/search/find_sched.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "1151e68e5ed80634e84a00792ae41685f77ac8ad4e546016c8d2fd716980926b",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/search/search_ddls.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "226e27ff0414ec13813114916c5cce7604733a4056b0f17b84ec3ca9ede87662",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/search/search_ddls2.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "78f623fe24c824e3309a57df0767a0241a9e00232fd4aa647f727ca21c84e8db",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/workflows/_activate_one.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "f34f08a7063061bc20e1812046d0229287f58b6f26421710e324b7bd07fba262",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/workflows/_cds_one_shot.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "9a9c8a3cdbe9dc43799606e52d3d60b102d16b44109cfeab827a1642f9d5f8a8",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/workflows/_clean_recreate.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "c492015e0b8fcab12dad87c26d846bd62046a2b0e9211054f5f942aa301f3baa",
+     "status": "-"
+    },
+    "attic/adhoc-fosil/workflows/_full_cycle_v2.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "6ccc3091fa227552f400302f9797d32ff19f973e3e44b112170aaa3761545d1b",
+     "status": "-"
+    },
+    "attic/validators-fosil/README.md": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "a2a3237a931805f63cdc63070c90b12c4f42c0eb7dfaa3221e6f67cab213ff2f",
+     "status": "-"
+    },
+    "attic/validators-fosil/_verify_sqlview.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "d5e05ece24a5a4d4e8f5badbc1625f94495b462365264d7a264380f46ddac16b",
+     "status": "-"
+    },
+    "attic/validators-fosil/adt_activate_check.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "642d87eb580a32b60f72e3486558305f35b136d8c598afc20e5b04902658c6e8",
+     "status": "-"
+    },
+    "attic/validators-fosil/adt_prog_check.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "01f4999ec61e93f78bf92e6450acbff17927716225b8cff46de9897fcc44387f",
+     "status": "-"
+    },
+    "attic/validators-fosil/adt_syntax_check.py": {
+     "decision": "alinmaz",
+     "rule": "attic/*",
+     "sha256": "f57ed71a307fce01d6f054777b59bad1262c78e6731e01fda9882028e7b277d5",
+     "status": "-"
+    },
+    "claude/CLAUDE.project.template.md": {
+     "decision": "uyarla",
+     "rule": "claude/CLAUDE.project.template.md",
+     "sha256": "29674349cc9dc3ccac2630f22c0f012e30b3d1a27d79312782f204da5e617d14",
+     "status": "tamam"
+    },
+    "claude/CODEOWNERS.template": {
+     "decision": "bekliyor",
+     "rule": "claude/CODEOWNERS.template",
+     "sha256": "36e606dc7e362ba8142dec7bc457da86ec54eb624ea1d01fe2594b7cc961a879",
+     "status": "bekliyor"
+    },
+    "claude/README.project.template.md": {
+     "decision": "telafi",
+     "rule": "claude/README.project.template.md",
+     "sha256": "06428759baf6b1da951773c177fb6de0d28cdfe257c01c121bdc5bb23e9ae21d",
+     "status": "tamam"
+    },
+    "claude/agents/adt-gateway.md": {
+     "decision": "telafi",
+     "rule": "claude/agents/adt-gateway.md",
+     "sha256": "dc1983db5b81f8917d752ff189eeced5952ec25b3808955675e3a156d6ff118e",
+     "status": "kismi"
+    },
+    "claude/agents/backend-expert.md": {
+     "decision": "uyarla",
+     "rule": "claude/agents/*",
+     "sha256": "49424c31f70322bbf1f67bb88e5419b480c96129963cda935c437f2d177bd532",
+     "status": "tamam"
+    },
+    "claude/agents/bug-expert.md": {
+     "decision": "uyarla",
+     "rule": "claude/agents/bug-expert.md",
+     "sha256": "c96f842ba43257535b2e3084281a9c4c741c5763b7499ec5b8e8122fbb18a9a3",
+     "status": "tamam"
+    },
+    "claude/agents/frontend-expert.md": {
+     "decision": "uyarla",
+     "rule": "claude/agents/*",
+     "sha256": "ad0e300589f1093255db5c53fe8a9d0d312ce287fdaa3efb19b2066c2b4f7366",
+     "status": "tamam"
+    },
+    "claude/agents/infra-expert.md": {
+     "decision": "alinmaz",
+     "rule": "claude/agents/infra-expert.md",
+     "sha256": "8091d5a532b4039e3d3a2001bc973229af3004314ff2d9643b8c25dd13aa0155",
+     "status": "-"
+    },
+    "claude/agents/sap-feature.md": {
+     "decision": "uyarla",
+     "rule": "claude/agents/*",
+     "sha256": "0aa5da5bf42b2394ab55b6124ad9d1feed744c8c79f137670be3b89069a15ed2",
+     "status": "tamam"
+    },
+    "claude/agents/sap-research.md": {
+     "decision": "uyarla",
+     "rule": "claude/agents/*",
+     "sha256": "296f451daec7f5439055050126491f34a7bb4dbbb27ba47391bcb4ab43581e6d",
+     "status": "tamam"
+    },
+    "claude/commands/onboard.md": {
+     "decision": "uyarla",
+     "rule": "claude/commands/onboard.md",
+     "sha256": "e3c1489569796509707589ca469ef0cc6bce08819b287e1c54a76bafab8a24d4",
+     "status": "tamam"
+    },
+    "claude/conn_adt.template": {
+     "decision": "uyarla",
+     "rule": "claude/conn_adt.template",
+     "sha256": "3ff3d8e7005f33e532524cea53f6be78f478e2c09dcf9eecf94ef96fcfdd8a74",
+     "status": "tamam"
+    },
+    "claude/git-hooks/pre-commit.template": {
+     "decision": "uyarla",
+     "rule": "claude/git-hooks/*",
+     "sha256": "44b734b7686fa4d6ba1111cde50454f228bbe8473d25c5bf2b3be97de79aa7c1",
+     "status": "tamam"
+    },
+    "claude/hook_shim.template.py": {
+     "decision": "alinmaz",
+     "rule": "claude/hook_shim.template.py",
+     "sha256": "9b2b31d3fef28c3474a31ed3252876c8c7c9dbce1ffcca0364b87cbc5bfbaf80",
+     "status": "-"
+    },
+    "claude/kesin-yasaklar.canonical.md": {
+     "decision": "uyarla",
+     "rule": "claude/kesin-yasaklar.canonical.md",
+     "sha256": "fc36de0228ecbfa5d746f3c8d730e27d8390576c9fdc3539a24d6a4db944019f",
+     "status": "tamam"
+    },
+    "claude/managed-policy.template.json": {
+     "decision": "alinmaz",
+     "rule": "claude/managed-policy.template.json",
+     "sha256": "73db0dd93d045c4b319fc58e9e663f19e06cadbe39a083325b81d73d26d55e63",
+     "status": "-"
+    },
+    "claude/memory-seed/MEMORY.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/MEMORY.md",
+     "sha256": "f39e08ff4857d311741c0cc7d4e0f745e2dd86edd2607a7269af62418060d356",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_abap-decimal-odata-serialize-locale.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_abap-decimal-odata-serialize-locale.md",
+     "sha256": "6c6e347f66a72d48ae4e11c152f4440404389511f2925eee1c43d2b1468b20a0",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_abaplint-parser-error-gercek-olabilir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_abaplint-parser-error-gercek-olabilir.md",
+     "sha256": "1bc6184a0a96946a2b0103bdabf1253e2f356316ca1a52a41c0869475c90dcdb",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-dtel-create-fixed.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-dtel-create-fixed.md",
+     "sha256": "11a7effc7fe1a09e73589870633a44804e1b869ca69157ee91e291b7a594308e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-get-ddic-read-fixed.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-get-ddic-read-fixed.md",
+     "sha256": "3e745cbbf9d9540e584b2aa153e4cf28e88d706b1ca20bc937ab7376984114aa",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-get-namespace-encode-trap.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_adt-get-namespace-encode-trap.md",
+     "sha256": "3e1de89b1cbc9f557bf3a88fdda1b5bbd65295447a81380150a85306f524e532",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_adt-infra-degisikligi-once-uyar-onay.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-infra-degisikligi-once-uyar-onay.md",
+     "sha256": "3c2c57bcb8fb9f0edfe64d63520ec9b980edddfbfa3553353c15008408f11914",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-table-read-pozisyonel-hizalama-tuzagi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-table-read-pozisyonel-hizalama-tuzagi.md",
+     "sha256": "680f2d8e21b23b8e687c68444df2f8ad81f085e63fe1e8c4d58101e59cbf7959",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_agent-briefing-sendmessage-main.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_agent-briefing-sendmessage-main.md",
+     "sha256": "6c8a103524fccc7e31ac9df7b525d08dcf3ed86032a907dee8bd82ee7b50134f",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ajan-olumsuz-donusu-kanitla-sorgula.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ajan-olumsuz-donusu-kanitla-sorgula.md",
+     "sha256": "150a587003f17341639d2842bcb70b50362c981eace66fc6030274130e5c40b9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_api-call-ic-gateway-proxy.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_api-call-ic-gateway-proxy.md",
+     "sha256": "46c1f6cf6a9c5ed41f823240efd5cefbb88ff4f5208ad97a2ce9a2ebb446fe40",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_arac-basarisizligini-zararsiz-sayma.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_arac-basarisizligini-zararsiz-sayma.md",
+     "sha256": "d22e86c113bf0a4b15d8d43357bb2b7baf6fe7fe8f377c7a5ebbba73e0b9fd11",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_arac-kod-fix-lider-isi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_arac-kod-fix-lider-isi.md",
+     "sha256": "7caddb0103bc25fe47580e1231365b1f4bea65627d7b794b54bd31a177c31b43",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_arastir-once-patinaj-uretim-gorev.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_arastir-once-patinaj-uretim-gorev.md",
+     "sha256": "79c501dc630bd6aad54f3805af0fced096908b6a62827cb920c9065d9c6dc6bd",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_atc-priority-1-zorunlu.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_atc-priority-1-zorunlu.md",
+     "sha256": "a429fff9313f2e268ff7ef2efa575e0b091332f22253d1ee39ac1bfe6df17687",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_audit-alan-autofill-standardi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_audit-alan-autofill-standardi.md",
+     "sha256": "2598a5a4aeb3d838877956f43d44800798baa132e157b8bc37ea1d3c0c556021",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_baglanti-tutarsizligi-adt-blok.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_baglanti-tutarsizligi-adt-blok.md",
+     "sha256": "d14496ac0eb6b81d59c84573eb15dd448b6ab4052d784fefa28a6db51e7ad0a4",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_behavior-pool-main-empty-ccimp-trap.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_behavior-pool-main-empty-ccimp-trap.md",
+     "sha256": "a79b8ed5e6e5a1c19db2685de20df954123a7be2d03b8872c8aa090c49667f94",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_belge-uygulama-ortak-ui-sablonu.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_belge-uygulama-ortak-ui-sablonu.md",
+     "sha256": "62c488086650cf1b642e22dcc7013106da06750a55d85832b09f88df1684d05e",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md",
+     "sha256": "116ddd0906452dc2396564393bd631c44b13a34dfdd8f7b510fb8d6409a94c06",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_context-yonetimi-compact-clear.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_context-yonetimi-compact-clear.md",
+     "sha256": "d80423eba01266ed96e21aef9c2fc75d87baca2fd0f3e79c75fde59449cd4946",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_create-bdef-script-broken-use-blues-recipe.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_create-bdef-script-broken-use-blues-recipe.md",
+     "sha256": "6e9db7945222cf6c77c196bdb8004722f58f7054f494d22d7c7184c3d54d4594",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_create-cds-view-xml-escape.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_create-cds-view-xml-escape.md",
+     "sha256": "ee9a0d83db2150fda9567923e5c6c952ba9a3dd9bbcc1fcf8fbfe32ac1208f08",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_csrf-cache-poison-self-heal-fixed.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_csrf-cache-poison-self-heal-fixed.md",
+     "sha256": "6b3e67dc82b7b58e8317f985721ccc296d2ccdfd65f95e37321afce942ad23f6",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_deploy-lokal-test-onayi-sart.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_deploy-lokal-test-onayi-sart.md",
+     "sha256": "70ab9e188838715077b8cb74f08cae26d0ecb79aa604091777108947fe24fd40",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_detached-leading-abapdoc-class-push-400.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_detached-leading-abapdoc-class-push-400.md",
+     "sha256": "ef482a2289d349ff4405894a02943db9aa9f9572ccc4e04899de2c1458177454",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_dogrula-once-flag-spekulatif-blocker-yasak.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_dogrula-once-flag-spekulatif-blocker-yasak.md",
+     "sha256": "192ea4b282767bc54a7eeefdbe8392d94be17e7ffd7a5083e33c96a0b11e2a5c",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_done-tam-kapsam-dogrula.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_done-tam-kapsam-dogrula.md",
+     "sha256": "ba98fa78c18b4390d577608554e2ebab011d41d253a335f97eb168977a3084f7",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_dosya-bolgeleri-yazim-yetkisi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_dosya-bolgeleri-yazim-yetkisi.md",
+     "sha256": "4b4d5d5c0feb78948a36e8409c7ec039f103ef362baeb52b9f680429125aa1c7",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_fe-merge-key-padding-ve-playwright-runtime-tespit.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_fe-merge-key-padding-ve-playwright-runtime-tespit.md",
+     "sha256": "7a2ad8e1bb94482232cb056924ffbfffeaf5d89d810cfe84c93278fcb04c4d4e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_fix-oncesi-where-used-blast-radius.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_fix-oncesi-where-used-blast-radius.md",
+     "sha256": "c294e1e881c03e319929c465758cffa6dcbd7f7bccbc896fabde712fbc7db47b",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_freestyle-ui-preflight.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_freestyle-ui-preflight.md",
+     "sha256": "d1dab0a34c3ab9e32c28fa92ca6af514771c44dc70896c449905edc75c388d74",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_gateway-git-commit-push-yasak.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_gateway-git-commit-push-yasak.md",
+     "sha256": "7fbbbf76fdeed13352901e22ea6a78cb8df870e3a2e1fbaf8df93d49a538bc48",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_generic-tool-program-spesifik-isim-verme.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_generic-tool-program-spesifik-isim-verme.md",
+     "sha256": "3cf08bc58c92cb6235538356545b14bdd16ff1063b683cd3c5890f47de4db801",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_grid-liste-standardi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_grid-liste-standardi.md",
+     "sha256": "5fe6f45f4081f38b6c283c71649c0a87f85f93a751bb2761dccd393635bff290",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_grid-ui-local-run-popup.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_grid-ui-local-run-popup.md",
+     "sha256": "858007a2324b0a743612151d019a8c38737d3185ae42b557c93f91dfff1db23c",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_hook-bakim-protokolu-t11.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_hook-bakim-protokolu-t11.md",
+     "sha256": "6acdb1074b0a22483e5c1c35b00b3ee249493dcd6b8390175fd5a276af477b5e",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_hook-komut-project-dir-execform.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_hook-komut-project-dir-execform.md",
+     "sha256": "21919f91f30fedb1d255205e06715b4ba6b588196170ede1042b612d7a387bac",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_i18n-tr-her-iki-dosya.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_i18n-tr-her-iki-dosya.md",
+     "sha256": "d626a4d2a812ae00af539633ac25d49ef5e981d4f05aa96d9bc0f3b3260dd464",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_inactive-worklist-audit-http200-degil.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_inactive-worklist-audit-http200-degil.md",
+     "sha256": "4b698c8402afc9bab61ffeda96a936cb0e85ea3e27d11d8268e9e0f8627fb715",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_inline-post-empty-source-trap.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_inline-post-empty-source-trap.md",
+     "sha256": "313d67bcb229f120c3411587b746cb15423406ded54f1632e81ecbcdf58f0f91",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_karar-verimliligi-asiri-kapi-yok.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_karar-verimliligi-asiri-kapi-yok.md",
+     "sha256": "771449a7b7f8a914a251420453e599c215ce6c942250abd9f967a6b6f1cb909c",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kararlari-once-topla-sonra-dispatch.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kararlari-once-topla-sonra-dispatch.md",
+     "sha256": "ed427eed7775fe7ab27fffce0a1515fb245ea2d326d5ae05015d17ae18fd0198",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_klasik-alv-template-first.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_klasik-alv-template-first.md",
+     "sha256": "6eace993f77fdc00f62dfd0e5d8e269849659956b1824ab4fd3767e3ffcd65c9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_klasik-program-include-bol.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_klasik-program-include-bol.md",
+     "sha256": "731977cbb9fc770de97867907b6a887ac4ecd6a2a10938b150b8104cec255a5e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kural-gate-lenmeli-yoksa-anlamsiz.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_kural-gate-lenmeli-yoksa-anlamsiz.md",
+     "sha256": "abdd6ebd93c455455442eb998b6e216caf826d3bf35a9f1bac0c62890e68b7a1",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_legacy-draft-txt-files.md": {
+     "decision": "telafi",
+     "rule": "claude/memory-seed/feedback_legacy-draft-txt-files.md",
+     "sha256": "729db158bef15d8f980dbd26a9af0062d56abe7221229058a62d643c373e5ecf",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_legacy-field-adlari-sistem-bagimli.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_legacy-field-adlari-sistem-bagimli.md",
+     "sha256": "05cee517c1ce9dbaada8fee0bc22fb609bf4ae8f6dc8ec6f839043e0dc4e8867",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_legacy-full-dump-pattern.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_legacy-full-dump-pattern.md",
+     "sha256": "5deda484a97a1a8b8a4beb743ea0e952dc342c74a3c6dfce8c16f78ad6546271",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_lider-bloke-olmama-background-dispatch.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_lider-bloke-olmama-background-dispatch.md",
+     "sha256": "52fa0fc7effa0e264f89673c5f9aa23055dfa2d419c8852e8add3fc3713cab10",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_lider-build-yapmaz-experte-dagit.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_lider-build-yapmaz-experte-dagit.md",
+     "sha256": "0a6778f31d37a15504ec5b049ff88267a2f539f65422bd0d44e96b050053e7b6",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_liste-ekrani-alv-standardi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_liste-ekrani-alv-standardi.md",
+     "sha256": "6d075020f448d4c97e50cebd07b43a1562739b8e8000dcf8f615f455ca7259b0",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_mcp-post-shell-en-master-lang.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_mcp-post-shell-en-master-lang.md",
+     "sha256": "66049583fd6a68c2e4d55c875723caa49ddc3a561fe47c79cffe78c82c778eaa",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_mcp-stdio-subprocess-deadlock.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_mcp-stdio-subprocess-deadlock.md",
+     "sha256": "ab734efd710ced86fb6af4c22b55c1d1e00c404a01542ba25ff3678330fb7c28",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_namespaced-dtel-ddl-tirnaksiz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_namespaced-dtel-ddl-tirnaksiz.md",
+     "sha256": "a97b8b73d5546dfbc8ba7fb84f6c5744e040d42cd9ecda0dc2192189a586e5fb",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_numeric-input-no-type-number.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_numeric-input-no-type-number.md",
+     "sha256": "adcd864bcb314ee421621da5a5d3b68796c1cc20606286441341ba876c91150e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ortak-value-help-sor.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ortak-value-help-sor.md",
+     "sha256": "d696b82806e87b5b1b305b7437894fb022cc4f4a1142b94dc3ba18227c93a2e8",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_placeholder-tuzagi-once-mevcut-artefakt.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_placeholder-tuzagi-once-mevcut-artefakt.md",
+     "sha256": "9a3baecf4621d924c1f0c41fc001469d9e932d4fe6d8d03e015841ed7392833b",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_playbook-once-oku.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_playbook-once-oku.md",
+     "sha256": "ad952e53fa08e05a73820207228c0f27fad483d46006cefe1c1ff0a020f365c9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_playwright-ui5-firepress-model-api.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_playwright-ui5-firepress-model-api.md",
+     "sha256": "7a925b2e7d90159cdb643306af09ee9204ad63a6231979f0286cf3fc5b01f060",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ponumber-posnumber-global-iptal.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ponumber-posnumber-global-iptal.md",
+     "sha256": "e20d75f8aa795fd5287a5cef071b91cdf84febef66719199576d845fcb7eb5b4",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_powershell-utf8-bom-trap.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_powershell-utf8-bom-trap.md",
+     "sha256": "f3cf14913721718cf094c6946d36c76a90f3ff23a0ad032589980f661af708e4",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md",
+     "sha256": "6a97ac95e1cfe91a57276086251de90043fd69f2826f28e3a2f17ed50ba46412",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md",
+     "sha256": "336c3879790b2db33cadc1bb17044b336f9f78c86fda084ed98abbb6469c5334",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_rap-editablefieldfor-key-create.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_rap-editablefieldfor-key-create.md",
+     "sha256": "76146aef21b6ffefeab2887e5d06da929d9a206ebee0610633a0a263118fdbf6",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_rapor-filtre-select-options-contains-standardi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_rapor-filtre-select-options-contains-standardi.md",
+     "sha256": "02d0a020c35265eb980bb781617504892b6ad2ba6ffc11e37b782eeba16c77b2",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_resolved-tooling-bugs.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_resolved-tooling-bugs.md",
+     "sha256": "dd61fc2171cb53c8637acb501046d5c5a6ebb2cab0498f3a0ef9599820a5444e",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_review-bulgulari-bug-checkliste-routing.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_review-bulgulari-bug-checkliste-routing.md",
+     "sha256": "4e5ed52d9403442636107ebca70c5805653e9117f71853d8eb70c6adc33fed8b",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_reviewer-checklist-vs-wired-validator.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_reviewer-checklist-vs-wired-validator.md",
+     "sha256": "17cb78fa9d28988b20ce52bfc2858ba63e798ce4380d51448d57b532d22a026d",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md",
+     "sha256": "827987b8a0c0c058edd73a173bae99152fad903629393f9b7ab016fedb060189",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_soru-once-tartis-act-etme.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_soru-once-tartis-act-etme.md",
+     "sha256": "0414928fac47f7593e7f9c2414f1a8d183ee13a10e0cbd66c2c3b79b45ac8b11",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_source-based-class-type-c-trap-ve-vague-scan-bisect.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_source-based-class-type-c-trap-ve-vague-scan-bisect.md",
+     "sha256": "ec9a530140d0b97025bbe9d87710c50f718d9479c68ae2bf4f8eed1ccff0b0f7",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_source-drift-name-collision-fixed.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_source-drift-name-collision-fixed.md",
+     "sha256": "134bd9713360bbaa12e8bd1cb1b2c0d0b28f940582ddb09194d1df5b4e765fe7",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_source-drift-pull-before-edit-model.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_source-drift-pull-before-edit-model.md",
+     "sha256": "5673c1ec67ba621176c614e7ce73f989e2016c969c8cfc2615159c9122bb4a56",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_spec-mutabakat-gate.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_spec-mutabakat-gate.md",
+     "sha256": "e70a107c0f2f84b7dfa73d5edec25823fe97e107ed74afb693947320b1825517",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_subagent-karar-kurali.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_subagent-karar-kurali.md",
+     "sha256": "f19c891a62bceb6d904b9fa71e956ff41b12d94a0fb0a70181b0f84520098f24",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tablo-yaratma-onay-gate.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tablo-yaratma-onay-gate.md",
+     "sha256": "6d51af807f42dc6e78dbeb3570a11e26ae9b24b593701c83adc943348a8db326",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_takim-sureklilik-gun-sonu-resume.md": {
+     "decision": "telafi",
+     "rule": "claude/memory-seed/feedback_takim-sureklilik-gun-sonu-resume.md",
+     "sha256": "1a8a883443545e17c5aaf9098b2c488e55b004d39bedee1c4267b2fa95a85d65",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tax-zero-check-master-data-first.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tax-zero-check-master-data-first.md",
+     "sha256": "99a5e3ce04deb15f1d72f70ac75cbea822900dc04dd51d1657dd0b987bfb0344",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tek-soru-ve-bagimsiz-dokuman.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tek-soru-ve-bagimsiz-dokuman.md",
+     "sha256": "b56073971572435e0efd67dded47aec97e6cfeaaf61aab5bceca198244e718ad",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_template-drift-crlf-inflation.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_template-drift-crlf-inflation.md",
+     "sha256": "35c89a228c28aefeebf23b516f6d885b695e067106716bc9066f1dfe3cce7c04",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ui-deploy-noninteractive.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ui-deploy-noninteractive.md",
+     "sha256": "4a1d91ed086f98d5046cd6e5bfdb2aae52570f5ba0a0560d75467df35313015e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ui5-v2-plumbing-reuse-traps.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ui5-v2-plumbing-reuse-traps.md",
+     "sha256": "6eace4a97b63dae0c4d4683b9bc1981b54040dc46bb120dd47076be6802d05bf",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yeni-teknoloji-once-kural-seti.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_yeni-teknoloji-once-kural-seti.md",
+     "sha256": "efa321ae0953509a88a7a10d8e7503e12fb44346cf393674c31a333d02a83e18",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yeni-yetenek-once-arastir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_yeni-yetenek-once-arastir.md",
+     "sha256": "b716b5d9d40b21697d88c83ec7bfac5b50323355f2f9c9972f5cb87a8d0d75db",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md",
+     "sha256": "c16f432fa71fd12ec41ee0540f5b966ed77fcf638a7a8399c4618c556deaf482",
+     "status": "tamam"
+    },
+    "claude/rules/sap-source-protokolu.md": {
+     "decision": "uyarla",
+     "rule": "claude/rules/sap-source-protokolu.md",
+     "sha256": "6be1901a6d471b4f7adbb5e394a38ca91f8db15b754c6142a630c77d2c264c0d",
+     "status": "kismi"
+    },
+    "claude/rules/ui5-freestyle.md": {
+     "decision": "uyarla",
+     "rule": "claude/rules/ui5-freestyle.md",
+     "sha256": "e01e584619b30d8b18b532c0efc2e2d06af32046465c3b5f6bafe4da5f1cbc7a",
+     "status": "tamam"
+    },
+    "claude/settings.template.json": {
+     "decision": "telafi",
+     "rule": "claude/settings.template.json",
+     "sha256": "1362d0289571d5340f00bd278684fc32d67460be05ab18054074ed13b7ff79d7",
+     "status": "kismi"
+    },
+    "claude/skills/intake-triage/SKILL.md": {
+     "decision": "uyarla",
+     "rule": "claude/skills/intake-triage/*",
+     "sha256": "e6f6d932dfdf895cabc1fe6a6ca8f6d46058ae82b4f22a5f13b9fc742db9e721",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/SKILL.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "29c0b669a524d42b51934d7db9144c1c07a566d0549ae6fb6ccd810e5a3cf61b",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/element-attributes.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "bf19aa4671e0a50a0fefa9c790f39124e803060eefe395042b723c29fcb7faa2",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/playwright-tests.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "c5b0719fef2cfdff50bd744051b2f9afc119775db4b48e9b2882c1cf3886797c",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/request-mocking.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "54e801c9663fc2b6d68ceb058cb1c360724c2499f42acc7852a68e83e5b5f37c",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/running-code.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "d95c539a5990b71d02d8bdf1d9414df16191eb6cff95b0063820518b7a13dcb2",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/session-management.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "cd3e261b8763bf952f1e371b876cb78d054379afec85482f9250633e1b7e6c44",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/storage-state.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "9ac47f9ae4a1aedcd2077f8ac9ab1ba6bee1962cb83ff51adcd36fb6d83b5ec6",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/test-generation.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "12f54cfa718d9e559bad918120a4ca4f11c933167713d1b9c5f99872eddaf749",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/tracing.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "792e0ac7705e56ac48df84c0f5400221ce86107897c671590a64a4ea6a82508e",
+     "status": "tamam"
+    },
+    "claude/skills/playwright-cli/references/video-recording.md": {
+     "decision": "telafi",
+     "rule": "claude/skills/playwright-cli/*",
+     "sha256": "8555ab5400df0d90e66318aacc0a8a4418fbf872e7463824d55d5c41615abd83",
+     "status": "tamam"
+    },
+    "claude/skills/sap-abap-dev/SKILL.md": {
+     "decision": "uyarla",
+     "rule": "claude/skills/sap-abap-dev/*",
+     "sha256": "ca1bcfce170b55cb32090d3ebcd0bbce94771ce37b511a5ad1b6b6cc43d838e6",
+     "status": "kismi"
+    },
+    "claude/skills/sap-abap-dev/references/clean-core-replacements.md": {
+     "decision": "uyarla",
+     "rule": "claude/skills/sap-abap-dev/*",
+     "sha256": "9a5ca07ff8375699ce8d51c6a08745ca2eeacd6e5f3442739a377244f49065f0",
+     "status": "kismi"
+    },
+    "claude/skills/sap-abap-dev/references/operational-lessons.md": {
+     "decision": "uyarla",
+     "rule": "claude/skills/sap-abap-dev/*",
+     "sha256": "9deae9e3259c35f6a8628d53fc7b648ae2cb3850ff843ad3d7c2638bc434f738",
+     "status": "kismi"
+    },
+    "claude/templates/spawn-brief.md": {
+     "decision": "uyarla",
+     "rule": "claude/templates/spawn-brief.md",
+     "sha256": "cf7fd020a055ba993edab81755526cd70ea99c295d0c3345dadc43d55ab5cb4d",
+     "status": "tamam"
+    },
+    "claude/workflows/guard.template.yml": {
+     "decision": "bekliyor",
+     "rule": "claude/workflows/*",
+     "sha256": "4fa680a6f4351b8e33b8f18b905d71678154dc2d0d88cec482e846c347709884",
+     "status": "bekliyor"
+    },
+    "docs/README.md": {
+     "decision": "alinmaz",
+     "rule": "docs/*",
+     "sha256": "2d77229a11fdfbc56069f23048ffc640035fdab637497798195d073aa8f6e1cc",
+     "status": "-"
+    },
+    "docs/claude-rules-nasil-yazilir.md": {
+     "decision": "telafi",
+     "rule": "docs/claude-rules-nasil-yazilir.md",
+     "sha256": "bd9df43bdf4330756316c42182e8b4a4dc4da6c05fa7095da067ecd952a8d281",
+     "status": "tamam"
+    },
+    "docs/ix-works-mimari-kilavuzu.md": {
+     "decision": "alinmaz",
+     "rule": "docs/*",
+     "sha256": "9f40c2e6d8f81ac1912be93396df9d7495613e42a37352bf1f1076bedf4ab10e",
+     "status": "-"
+    },
+    "docs/ix-works-yonetici-sunum.md": {
+     "decision": "alinmaz",
+     "rule": "docs/*",
+     "sha256": "666992f10ab4ee86e13852be409a6942b9ba7b7140251f2dbefa207bfc137a80",
+     "status": "-"
+    },
+    "governance/CORE-INDEX.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "63484cc0e54e783e2f672fd8533f9ebfab49f474e04fafd0d5cbcfde3b120356",
+     "status": "-"
+    },
+    "governance/agent-teams-operating-model.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "8e4aad9aff75769f7b1560ae550d34a10c593f2c933e904853cd8af62df144cc",
+     "status": "-"
+    },
+    "governance/decisions/0001-tek-branch-main.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0001-*",
+     "sha256": "0e963743a45fa14bd6667c70c4d4d9ee6d7f655cd3b7bcdf37a53ee9611ff1d0",
+     "status": "tamam"
+    },
+    "governance/decisions/0002-package-naming.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0002-*",
+     "sha256": "1d50f0a8040c19868386bcd390bb002e8bdf5c5c6e3836d5a771bb485adc5bac",
+     "status": "tamam"
+    },
+    "governance/decisions/0003-layered-rule-architecture.md": {
+     "decision": "alinmaz",
+     "rule": "governance/decisions/0003-*",
+     "sha256": "eb054e01537718135d7d662250e27cd5ebcb1c5024fda68f4bb1a83fcfd937af",
+     "status": "-"
+    },
+    "governance/decisions/0004-erp-modul-bazli-organizasyon.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0004-*",
+     "sha256": "5472dfb14490cd6a094df4fc4f54965f7e6a503a39be11b29f4a6106b4c43d1d",
+     "status": "tamam"
+    },
+    "governance/decisions/0005-sap-standart-obje-koruma-ve-sistem-state-yasaklari.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0005-*",
+     "sha256": "aec26bad0f00b6ffc970aa5dcebf6c5ca579d7f96efedffa4bd406463a8f4aed",
+     "status": "tamam"
+    },
+    "governance/decisions/0006-reviewer-agent-pattern.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0006-*",
+     "sha256": "b1b373a6299b84cc7ab77b51eba9a7350b534fb0b0f71e1211104a096985f9fe",
+     "status": "kismi"
+    },
+    "governance/decisions/0007-sap-adt-mcp-server.md": {
+     "decision": "telafi",
+     "rule": "governance/decisions/0007-*",
+     "sha256": "96ab5c00cbfdeb1f8b3ab54d8c6e96d74df8bb0d9318f142e477a326318f1e0a",
+     "status": "kismi"
+    },
+    "governance/decisions/0008-liste-ekrani-alv-paritesi-standardi.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0008-*",
+     "sha256": "2c27445eede0914f0e42800ad1b154290bf01654956804ad20beb3bc9c390028",
+     "status": "tamam"
+    },
+    "governance/decisions/0009-ortak-value-help-cds-politikasi.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0009-*",
+     "sha256": "7c4743c8c4570dcd7a5f68968d2b65a15fe92192cb5b650aa766c71bd1797748",
+     "status": "tamam"
+    },
+    "governance/decisions/0010-tier-bazli-readonly-guard.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0010-*",
+     "sha256": "cc11ae7c49dbb0bb3262157faa65a3f7a8cc6e749a48d21e8a24eff8133a25b3",
+     "status": "kismi"
+    },
+    "governance/decisions/0011-veri-cikarma-pii-guard.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0011-*",
+     "sha256": "17ab99a178ae3ce474b0486d1bc8fa6fb2311daf06abdb389b1de2cf8fda3889",
+     "status": "kismi"
+    },
+    "governance/decisions/0012-klasik-alv-template-first.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0012-*",
+     "sha256": "517850e8a327f59c8e4de8c3b49be20bf6a1ad3b5280efebd24303e77cfb7e69",
+     "status": "tamam"
+    },
+    "governance/decisions/0013-kaynak-referans-dokuman-ayrimi-ref_docs.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0013-*",
+     "sha256": "d51f0e06d0fd0a317ec80d5c88ead86adad56cebed2de3f88d1c6a2952aa1cb4",
+     "status": "tamam"
+    },
+    "governance/decisions/0014-document-lock-app-level-vs-draft.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0014-*",
+     "sha256": "804edd9ee772b0dcf6df8dd919968b444ca3deb0cc204b079e3daf6cf7b505b3",
+     "status": "tamam"
+    },
+    "governance/decisions/0016-source-drift-onleme-repo-canli-senkron.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0016-*",
+     "sha256": "f4b5d01e6383730a7745af1b876abb9bf7c70b0ef5b33f6486f8629abe090e6b",
+     "status": "tamam"
+    },
+    "governance/decisions/0017-ui-build-dogrulama-kanonik-desen-tuzak-gate.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0017-*",
+     "sha256": "5664cd3e36708e4f22ac4eda807b784b327ff08b63d0741a8f96a6afc8d9a7f9",
+     "status": "tamam"
+    },
+    "governance/decisions/0018-agent-takim-yapisi-katman-expert-bug-gate.md": {
+     "decision": "telafi",
+     "rule": "governance/decisions/0018-*",
+     "sha256": "7440e58dc5f16dbd2f301dbfa5c9f9d43e422441b4928cb7197665b572d1d121",
+     "status": "tamam"
+    },
+    "governance/decisions/0019-kural-enforcement-mimarisi-3-eksen-coverage-check.md": {
+     "decision": "alinmaz",
+     "rule": "governance/decisions/0019-*",
+     "sha256": "d05bdf66a33264b9fbff7a213b5decd6c9bc243dccc07fafad2ab19f81e4855e",
+     "status": "-"
+    },
+    "governance/decisions/0020-canli-cekirdek-junction-mimarisi.md": {
+     "decision": "alinmaz",
+     "rule": "governance/decisions/0020-*",
+     "sha256": "b50c3ca65c490da33b70d97560611f62e21ba3169956ac00b43961f828d7d73b",
+     "status": "-"
+    },
+    "governance/decisions/0021-kesin-yasaklar-fiziksel-damga.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0021-*",
+     "sha256": "7514d9527945026668996c06afc07b43834a04a49cd38fd745faea2f5974e402",
+     "status": "tamam"
+    },
+    "governance/decisions/0022-intake-triage-gate.md": {
+     "decision": "uyarla",
+     "rule": "governance/decisions/0022-*",
+     "sha256": "f2df85d82d054313c9b18408edf40524b7b6f52a194be037ff198d62c401e868",
+     "status": "tamam"
+    },
+    "governance/decisions/0023-hook-kablolamasi-plugin-e-tasinmaz.md": {
+     "decision": "alinmaz",
+     "rule": "governance/decisions/0023-*",
+     "sha256": "d3e2ccabfe3df053b323d7161d52c8297135c80a8e01ce14345fe4856ee880f6",
+     "status": "-"
+    },
+    "governance/infra-changelog.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "66848dc9601e4b465bc6ae702c32addcefa1380f74c5fe61a0131c48d7248b23",
+     "status": "-"
+    },
+    "governance/infra-test-recipes.md": {
+     "decision": "uyarla",
+     "rule": "governance/infra-test-recipes.md",
+     "sha256": "c0ad518858edc0795d525c20c997655d0410b19349632508596cb30075de32cd",
+     "status": "tamam"
+    },
+    "governance/reference/released_successors.json": {
+     "decision": "al",
+     "rule": "governance/reference/released_successors.json",
+     "sha256": "27df1cd2096155ff10eaf0a6761c121c5ee070520f5c65ec4444712789cd9f7b",
+     "status": "tamam"
+    },
+    "governance/removed-controls.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "f3e341f8adf7858963a696761857f88aa59581eb543ead84a64085c6809d239c",
+     "status": "-"
+    },
+    "governance/research/q5-is-turu-olcumu-2026-08-22/olcum.py": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "ee2adee36b0c033c6c3dd35a3b47a1f2098a774c52155a3e620eba73ba044ee9",
+     "status": "-"
+    },
+    "governance/tooling-plugins.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "f6a867a01f98c5daa279f20d62a894e31a23591a5b920e7814ad89cc1615d82b",
+     "status": "-"
+    },
+    "governance/tooling-radar.md": {
+     "decision": "telafi",
+     "rule": "governance/tooling-radar.md",
+     "sha256": "1de1e004de0b21f6c4db031d99adffe14f6f19162a1d8c1fa75fcee1bd491dde",
+     "status": "tamam"
+    },
+    "governance/vscode-setup.md": {
+     "decision": "alinmaz",
+     "rule": "governance/*",
+     "sha256": "aa8dd4e331c37a4c65dc00c144bd714eb58be97cc319a1e800a50d922e35abb4",
+     "status": "-"
+    },
+    "intake/README.md": {
+     "decision": "telafi",
+     "rule": "intake/*",
+     "sha256": "36c06ad75abc79f1a33921511f531d57d189f94a8fdb63852f8a6dbebdaca65e",
+     "status": "tamam"
+    },
+    "mcp_servers/__init__.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/README.md": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "693ff5f369be216e8db91df575888c0058344e08607d52f5f851e1824270fe48",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/__init__.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "70a6d7497f80ec24dc3ec56703ac78e0e17c60cfaebc01edb2018aab91eb1b8e",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/_app.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "0ea6444b2b9223cdadab82cd6816098f8e3ed1cf75a816fdce6fd7a591120ac4",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/_bos_sonuc.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "5980ef7c7f3411b9ee56aa317e99bd68641d240f0efc4ed02fe3fc36e94bd094",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/_conn.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "1105fed5dd96f14d85fa17e4eddb0ea7d77d3357344c47ec8371c8f198c3c6f9",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/_profile.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "26c3497fd0526fa910dc6fa821e2196f5ba4e028d3f8d9ac7399a8f7d133aed3",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/_reviewer.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "837d1f2e9830027e41ba8caf3fcbbef044c21bec0cc9e292934c29e6736dae32",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/data_guard.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "4e59f28590c649b59d9e9f3ab061405e3bf00cce868f86b88af76e799424d28a",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/guardrails.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "ec5033b87a33a69b5a13b63a1f6658f081df09cc807386010e6b44e53fcba73d",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/requirements.txt": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "e39b2a351d62ce9f79b7613ba186fc165b4caab70f3ddae6086e44d325c93d81",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/server.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "d76d16f65ff4f95dde889c02fa5ed386b50f4afd708a5bbfc1ec5e280040d30a",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tests/__init__.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tests/integration_dtel.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "c4cee1f25da3e51c83ffb51f6956656255c573f0566b8323dc0fe43c607071ae",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tests/smoke.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "356c6c4108617a56ce4a736c67d6ffc3e7641276b2b6a6add57acf8836ae32f5",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tools/__init__.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "a4209ed011464ab8fb7069ca8edfdc256e4d319958d2b772668071e38a1add00",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tools/atom.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "a862a169bec0b2ddc856471a98edc45a927b2f5d16dcf4b7c4437d045051e534",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tools/composite.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "e0566b6821efb2b60752958ab01e609a16efb4541f5d3d39fc6daa9fb821ed21",
+     "status": "kismi"
+    },
+    "mcp_servers/sap_adt/tools/query.py": {
+     "decision": "uyarla",
+     "rule": "mcp_servers/*",
+     "sha256": "17f1399106a05c14b4efba1e47c7585f6bbd57353a50a619d7238692efbe0054",
+     "status": "kismi"
+    },
+    "playbook/00-discipline-and-principles.md": {
+     "decision": "uyarla",
+     "rule": "playbook/00-discipline-and-principles.md",
+     "sha256": "33286739dcc78a4696d8a5e9a1ba181dd7e62da79eb79d1693ea524c45d382d6",
+     "status": "tamam"
+    },
+    "playbook/README.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/README.md",
+     "sha256": "73219e92dfb08158304d2ae1e6eb9b187195cca6881a7573cd4f8b80d95aaa7c",
+     "status": "-"
+    },
+    "playbook/adt-cds.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-cds.md",
+     "sha256": "54b66ee57a05b2454f27eb20eccb58cc32f8feab8e850086f71732767e28ecb7",
+     "status": "tamam"
+    },
+    "playbook/adt-classes.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-classes.md",
+     "sha256": "34ca0891ba694a2a21ed78dfc3a665b7b716645f7060c9a3b5c252c088d467ce",
+     "status": "tamam"
+    },
+    "playbook/adt-domain-dtel.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-domain-dtel.md",
+     "sha256": "6124da28e8b106208494073ca711714a9a81ec2b1130b210e8b8481e268eabfd",
+     "status": "tamam"
+    },
+    "playbook/adt-foundation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-foundation.md",
+     "sha256": "c1612b69502fe0e41d4bf3e2faa55d12afb1793c87fbf8c49d41a9042174621f",
+     "status": "tamam"
+    },
+    "playbook/adt-fugr-functions.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-fugr-functions.md",
+     "sha256": "41d466164ff06d5dc89464d54f6d2e11c4a9ccf2b55ff6b0ef04210a2f5f0ffc",
+     "status": "tamam"
+    },
+    "playbook/adt-lock-objects.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-lock-objects.md",
+     "sha256": "aa5dae4d43a5b21e4ee522fe723e939ce2dc68125df4a60eef1f146e5d535db0",
+     "status": "tamam"
+    },
+    "playbook/adt-mcp.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-mcp.md",
+     "sha256": "579295b2a3eca0d682a12ec64eb8228815898a7b38a6222f0691226c66bb4529",
+     "status": "tamam"
+    },
+    "playbook/adt-message-class.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-message-class.md",
+     "sha256": "86bcb4c60eeffa04325ecd1c60a9f93946c6ff1e13a2034be9c57bec8835cca1",
+     "status": "tamam"
+    },
+    "playbook/adt-programs.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-programs.md",
+     "sha256": "8f6901479d4f93e299cca3573c9b9f23d2fbbb250b39458bd9a76c4a22bfafbb",
+     "status": "tamam"
+    },
+    "playbook/adt-rap.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-rap.md",
+     "sha256": "03571edc2994e48fa198e48b3f6bfdc6215026113075c9e067cb36b59898de20",
+     "status": "tamam"
+    },
+    "playbook/adt-tables-structures.md": {
+     "decision": "uyarla",
+     "rule": "playbook/adt-tables-structures.md",
+     "sha256": "f2e2fa09b4e02dc7b3d4ffa9fb138f7947986c6fad36eaf15cc4eb8ecf3385f6",
+     "status": "tamam"
+    },
+    "playbook/checklists/adobe-forms-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/adobe-forms-creation.md",
+     "sha256": "dd417fc82aaf6acb01ae1f1d711fc1c6c90a28a40ab1d9a55148dbb3b658cb5a",
+     "status": "tamam"
+    },
+    "playbook/checklists/bug-checklist-backend.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/*",
+     "sha256": "7c506928f02eae6f84815f59062a50e35fd5f873a57b965e3b4ebbe4a295fcfb",
+     "status": "tamam"
+    },
+    "playbook/checklists/bug-checklist-frontend.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/bug-checklist-frontend.md",
+     "sha256": "b2b6f9a1c38c06c18db49ea05a7f9bbfe7f5ff278faa67c8c04d305b4fb2319c",
+     "status": "tamam"
+    },
+    "playbook/checklists/cds-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/cds-creation.md",
+     "sha256": "e08092189e077584cca56b1ff2e5308d0a4d02608ffa35f076568a0621047cc7",
+     "status": "tamam"
+    },
+    "playbook/checklists/classic-dialog-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/classic-dialog-creation.md",
+     "sha256": "a65b9aba9f0bc1001f3dbc56e9e9bfefd62d05eae2e4e901a4fe6946725702ee",
+     "status": "tamam"
+    },
+    "playbook/checklists/core-script-development.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/checklists/core-script-development.md",
+     "sha256": "774c6f3db16fde1ddc60c7e80ab00a5fef4550736c49f721b60642c38fdc819d",
+     "status": "-"
+    },
+    "playbook/checklists/doc-checklist.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/doc-checklist.md",
+     "sha256": "a9eb83eede26e092fe9955decd6689a6f1c1616ae98dcda88809121b36757293",
+     "status": "tamam"
+    },
+    "playbook/checklists/domain-dtel-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/domain-dtel-creation.md",
+     "sha256": "e583ce10bec7f7a5fa50630a25d5956b3a8471b6b09e0eee90f0e1a13ea2dedb",
+     "status": "tamam"
+    },
+    "playbook/checklists/itg-s2-signoff.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/itg-s2-signoff.md",
+     "sha256": "a45eec5cd0ed4b770f8c16a0dc51c2f854766ace837d64166af984c8c01244e6",
+     "status": "tamam"
+    },
+    "playbook/checklists/packing-consumption-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/packing-consumption-creation.md",
+     "sha256": "13af61f2169b4e9502ee31869c40cc7e9412c393383a3d8b6303afc1af097036",
+     "status": "tamam"
+    },
+    "playbook/checklists/rap-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/rap-creation.md",
+     "sha256": "4562b82f8157c5067d0a62aeb8ef99e15ca3eb66738a43a54ae5f5649070b52a",
+     "status": "tamam"
+    },
+    "playbook/checklists/rap-troubleshoot.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/rap-troubleshoot.md",
+     "sha256": "56e921a1d7cdd792b3c43e0dfacd1680629b7019607d3b6733f0bb7ceda36e20",
+     "status": "tamam"
+    },
+    "playbook/checklists/struct-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/struct-creation.md",
+     "sha256": "0a88af8125e8caccfcb09543e3cb728453f7bba306d0b6d116aa93ce4a079944",
+     "status": "tamam"
+    },
+    "playbook/checklists/table-update.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/table-update.md",
+     "sha256": "b264699806a2e9aa3c53b69af6375d4fa476c45258598f64eb6a54744dfb9523",
+     "status": "tamam"
+    },
+    "playbook/checklists/ui-backend-rap-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/ui-backend-rap-creation.md",
+     "sha256": "efc898dec0d5fb4cc57049900eeabf7f3c6d15d512a1b03e6fb76243094c80ed",
+     "status": "tamam"
+    },
+    "playbook/checklists/ui-freestyle-creation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/checklists/ui-freestyle-creation.md",
+     "sha256": "d699bbe2dfe412d96fb46b1aba4cd0bc4bd8043ac102eed80f33c6b970f283f4",
+     "status": "tamam"
+    },
+    "playbook/coding-patterns.md": {
+     "decision": "uyarla",
+     "rule": "playbook/coding-patterns.md",
+     "sha256": "76b7b7dec058b0e8dcf23a3d0649c1febcf7ae1409295becd55aa692dc9314b9",
+     "status": "tamam"
+    },
+    "playbook/howto-abap-email.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-abap-email.md",
+     "sha256": "e51c9c79ee0928c7fbde8150b956d7fabcdf38a06bd1a5c8b3dc26b92251f976",
+     "status": "tamam"
+    },
+    "playbook/howto-belge-canli-teyit-turu.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-belge-canli-teyit-turu.md",
+     "sha256": "0df7e8c8083f64213e8aae18b78f24b55f4ef4dcd8eac355a356120d92cc7abf",
+     "status": "kismi"
+    },
+    "playbook/howto-classic-dynpro-datafield-screens.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-classic-dynpro-datafield-screens.md",
+     "sha256": "3f70ef5d9e4ce70113026dd40c53482193e95b04bd9dd2bf627814eddf354dc7",
+     "status": "tamam"
+    },
+    "playbook/howto-cok-katmanli-degisiklik.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-cok-katmanli-degisiklik.md",
+     "sha256": "5d63d8869bdcceb2a12bfbad41505704ad7ba462c5c01c113e5cd4d5021a6d33",
+     "status": "tamam"
+    },
+    "playbook/howto-delete-guard.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-delete-guard.md",
+     "sha256": "53e4fe7d7c43828f2cfe1152954283a42d2782753491a8a7fb44d60952a33a51",
+     "status": "tamam"
+    },
+    "playbook/howto-document-lock.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-document-lock.md",
+     "sha256": "75136b1fd72613aa71f8b2c649b2bfd451be4aaa11e4f2b9bceddfe645f83995",
+     "status": "tamam"
+    },
+    "playbook/howto-dynpro-gui-status-generation.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-dynpro-gui-status-generation.md",
+     "sha256": "d3cabd3a62b5d36025f8ad12409c8fe3b8d0d93ade291d69b51c32d447342528",
+     "status": "tamam"
+    },
+    "playbook/howto-infra-fix-proseduru.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/howto-infra-fix-proseduru.md",
+     "sha256": "74f78d7b7b220693a22a998898cbac008dee65c34e2444ead3a30a9c8f3c7274",
+     "status": "-"
+    },
+    "playbook/howto-kullanici-dokumani-pdf-ekran-goruntulu.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-kullanici-dokumani-pdf-ekran-goruntulu.md",
+     "sha256": "775489c449132594265525ceb546adcdd43e738baad16a574970f0e13c6bbc93",
+     "status": "tamam"
+    },
+    "playbook/howto-packing-instruction-consumption.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-packing-instruction-consumption.md",
+     "sha256": "c37af2a6dace3a24ad8e4af4a092032ce957b590ebc5edaf473e6740ce573d2e",
+     "status": "tamam"
+    },
+    "playbook/howto-rap-eml-sales-order-create-update.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-rap-eml-sales-order-create-update.md",
+     "sha256": "1aba6e05a031a604ef29df8db81444fb5f201a0339e5bf02b5754eeca6351583",
+     "status": "tamam"
+    },
+    "playbook/howto-sistem-denetimi.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/howto-sistem-denetimi.md",
+     "sha256": "40d87fe793c8468b7de532e2d926168e620e200d1464254a77e170c8a665d69a",
+     "status": "-"
+    },
+    "playbook/howto-talimat-dosyasi-bakimi.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/howto-talimat-dosyasi-bakimi.md",
+     "sha256": "06ae7b34f961ad23ea58f89db661b29754671c569240ffdc0690bcae1025a8f9",
+     "status": "-"
+    },
+    "playbook/intake-triage.md": {
+     "decision": "uyarla",
+     "rule": "playbook/intake-triage.md",
+     "sha256": "ba60dc3fe21fc4bf3b5d952f0b63b04acc81ed070af61d227600eb0e2661aa03",
+     "status": "tamam"
+    },
+    "playbook/known-errors.md": {
+     "decision": "uyarla",
+     "rule": "playbook/known-errors.md",
+     "sha256": "25dcd6ee81ed80e73582befb843b1f78adae45a91e570d5b86891d9061db46bc",
+     "status": "tamam"
+    },
+    "playbook/lessons-learned.md": {
+     "decision": "uyarla",
+     "rule": "playbook/lessons-learned.md",
+     "sha256": "fbd9695d797ddb0cd5460e748a788e948602c051fb0830724a1d24c2f7d44c6b",
+     "status": "tamam"
+    },
+    "playbook/modules/sd.md": {
+     "decision": "uyarla",
+     "rule": "playbook/modules/*",
+     "sha256": "0b5920c0a10ea3a4d3883e6a0aee8956a652d1a6316e65f05933844a885a6a0d",
+     "status": "tamam"
+    },
+    "playbook/odata-services.md": {
+     "decision": "uyarla",
+     "rule": "playbook/odata-services.md",
+     "sha256": "4cfe08b56aa3988109dde5bc41026b9153f60e64a46bcfca63503ef1d3bb979a",
+     "status": "tamam"
+    },
+    "playbook/templates/classic-alv-list.prog.abap": {
+     "decision": "al",
+     "rule": "playbook/templates/*",
+     "sha256": "9f6bad2ea64c8c4587b8559afe9c985608950c32bec1c2b36fab60c53cefb5cc",
+     "status": "tamam"
+    },
+    "playbook/templates/classic-dynpro-dialog.prog.abap": {
+     "decision": "al",
+     "rule": "playbook/templates/*",
+     "sha256": "d0ecee0eaddfd81816c7fa9d819ede81fcdb239e77b1556b8ce445761d25dae5",
+     "status": "tamam"
+    },
+    "playbook/ui-backend-rap.md": {
+     "decision": "uyarla",
+     "rule": "playbook/ui-backend-rap.md",
+     "sha256": "0c24a827e77e6d06c6e6ec3bfe883c0356b4e9bb520adc7f5c61adf9e4b3dc63",
+     "status": "tamam"
+    },
+    "playbook/ui-freestyle-odata-v2.md": {
+     "decision": "uyarla",
+     "rule": "playbook/ui-freestyle-odata-v2.md",
+     "sha256": "336d7143692f48c5a605a6c03cbfe9977d2a43314b1049d949f5534881dfba1c",
+     "status": "tamam"
+    },
+    "profiles/btp_abap.yaml": {
+     "decision": "uyarla",
+     "rule": "profiles/*",
+     "sha256": "1cb3359b30f50f07c7726768795c169e56d5d6f2463bf1fdaeba610e7b537567",
+     "status": "tamam"
+    },
+    "profiles/ecc.yaml": {
+     "decision": "uyarla",
+     "rule": "profiles/*",
+     "sha256": "3c2647a341593ed7e6e63e66b7424e50b82110544e48395ff85e4955c4adc671",
+     "status": "tamam"
+    },
+    "profiles/s4_private.yaml": {
+     "decision": "uyarla",
+     "rule": "profiles/*",
+     "sha256": "829363c9fe789b8a329cccdd297991b92650a70e1013affaf105706054abc7eb",
+     "status": "tamam"
+    },
+    "profiles/s4_public.yaml": {
+     "decision": "uyarla",
+     "rule": "profiles/*",
+     "sha256": "81dc546d475ba4399115d76f5ab6ba72d4441e6a5bbbb5f898cf500ac85471ee",
+     "status": "tamam"
+    },
+    "scripts/abaplint/abaplint.json": {
+     "decision": "al",
+     "rule": "scripts/abaplint/*",
+     "sha256": "7cd6311046ed3a2807e02390eb11f8478ead5cefa5503e0dce980aa16cb8454b",
+     "status": "tamam"
+    },
+    "scripts/acik_madde_tarayici.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "af661395fee4d5264762b613cfe8899f37023f6c3fab13c452e09cb4a6248015",
+     "status": "-"
+    },
+    "scripts/activate_object.py": {
+     "decision": "telafi",
+     "rule": "scripts/activate_object.py",
+     "sha256": "9bded35b02ecf4372181a62b8e2fcdff9f22e58458cdd59d9bc4fe6732a6f56c",
+     "status": "tamam"
+    },
+    "scripts/agent_log.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "836a26835324962e3f9bf052c8cc257f7d01f12f9434c79a0000c450579b6df8",
+     "status": "-"
+    },
+    "scripts/agent_time_report.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "b2e49737660c3bb061cffe24476db6fe835568ad12dca662e55549dac4196b10",
+     "status": "-"
+    },
+    "scripts/agent_watchdog.sh": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "322d68071da0145db5961434c8ce9dc310687de017c8a36059084a3cef111b09",
+     "status": "-"
+    },
+    "scripts/auth/__init__.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "b969406c6e8ff0e2400016712ff0dd1126c2ebf6cae3a5f8d87b0b1771c19fc0",
+     "status": "kismi"
+    },
+    "scripts/auth/basic_auth_provider.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "d8b27c0c4853948fc359d320fc07f8cc6f422e1ce28e7e4ced9f09e9e77b3719",
+     "status": "kismi"
+    },
+    "scripts/auth/i_auth_provider.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "4fb9d28ae363e501268a430d884041ebd313eec642469df2e9f7843be7d523af",
+     "status": "kismi"
+    },
+    "scripts/auth/jwt_auth_provider.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "62af5cf48692e8663dc6e4e4291dce9008dee5b2dace8f1c8b58f50cc3751e26",
+     "status": "kismi"
+    },
+    "scripts/auth/saml_auth_provider.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "7a6cb6d6c3ebb78a4a0fd31b624a8b45ec06c33a8becbef5310b60749ecd7a98",
+     "status": "kismi"
+    },
+    "scripts/auth/service_key_auth_provider.py": {
+     "decision": "uyarla",
+     "rule": "scripts/auth/*",
+     "sha256": "703c3dbf06832cd36eb8747f5f26027ffabc6075948a845d82bbbbc2e1c5e763",
+     "status": "kismi"
+    },
+    "scripts/behavior_manifest.py": {
+     "decision": "telafi",
+     "rule": "scripts/behavior_manifest.py",
+     "sha256": "2358013381b54c39f6ff35eae4350abde64a1fc1438b873610633a75e4c4cef9",
+     "status": "tamam"
+    },
+    "scripts/bootstrap_package.py": {
+     "decision": "uyarla",
+     "rule": "scripts/bootstrap_package.py",
+     "sha256": "8fc2d7465ecc05d2ca87dc9790650800fa017b478de97fdea03f4e12a2d09664",
+     "status": "tamam"
+    },
+    "scripts/build_cbo_inventory.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/build_cbo_inventory.py",
+     "sha256": "c84bc81b0c98475359e0c0bc6281d61b466a43a51a2e22fa1780f72d0bca16ab",
+     "status": "-"
+    },
+    "scripts/build_core_index.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "f3a5d422e7a48dc0626dd354d4bef85cf45a00a9e156e335f632238f192120bc",
+     "status": "-"
+    },
+    "scripts/build_doc_pdf.py": {
+     "decision": "al",
+     "rule": "scripts/build_doc_pdf.py",
+     "sha256": "574525d2dcf178949d9d827fc185fab664a14bda86abc9964bdf09e8bfd4a9f9",
+     "status": "tamam"
+    },
+    "scripts/build_kd_pdf.py": {
+     "decision": "uyarla",
+     "rule": "scripts/build_kd_pdf.py",
+     "sha256": "582774d5a0b71b99ec880f1d4f09b6b0abbbe907bf6bc48fc28e1dbf1a6a5625",
+     "status": "tamam"
+    },
+    "scripts/build_package_index.py": {
+     "decision": "uyarla",
+     "rule": "scripts/build_package_index.py",
+     "sha256": "9ba3b6139b06d1d3be272aa1b0a02bc49c19852c4613f96c093ea6d0cda122d1",
+     "status": "tamam"
+    },
+    "scripts/build_recall_index.py": {
+     "decision": "telafi",
+     "rule": "scripts/build_recall_index.py",
+     "sha256": "e0ef2a608188444f5cbb23f759be0efc3890edb046d79288fcc89fb2ce7bb023",
+     "status": "tamam"
+    },
+    "scripts/capture_kd_screens.js": {
+     "decision": "uyarla",
+     "rule": "scripts/capture_kd_screens.js",
+     "sha256": "f4335c1512367f9a7ccd0e1f48af467aaf450b5d4f2b19416c75f2d72702164f",
+     "status": "kismi"
+    },
+    "scripts/check_package.py": {
+     "decision": "telafi",
+     "rule": "scripts/check_package.py",
+     "sha256": "b921971a4cdaebf4e2bc2cfbefa94bbdc7d9831e2005b6a1309b87c4eea26dd1",
+     "status": "tamam"
+    },
+    "scripts/check_ui_odata_refs.py": {
+     "decision": "uyarla",
+     "rule": "scripts/check_ui_odata_refs.py",
+     "sha256": "55921d45b0da770969e24a00632ffd8f0769cf3ec888b39ef7e0eb7e4567f53a",
+     "status": "tamam"
+    },
+    "scripts/cloud/__init__.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/cloud/*",
+     "sha256": "990e8eaaa33dfb99c45948a0ddab12164cda969f65486273921f1be4f5845ff1",
+     "status": "-"
+    },
+    "scripts/cloud/cloud_connection.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/cloud/*",
+     "sha256": "f24c893b2918080abee71ec10ddae154542ca4067c640486d7e7f308cb1514d7",
+     "status": "-"
+    },
+    "scripts/cloud/service_key_parser.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/cloud/*",
+     "sha256": "38e889a8aa5028164324c0c0e9a06b3a2570a5408aa66ba92ea03fa50eeaebff",
+     "status": "-"
+    },
+    "scripts/create_access_control.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "6c68d78a53a6cdcaf0969b79211bc2e32c7920aa2495c887df91ccc5dafdb5b8",
+     "status": "kismi"
+    },
+    "scripts/create_behavior_definition.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "e4fd88a6b76691f3423e38de8b1dd4cbb53d2bdbbbc857ef738659cf02a78247",
+     "status": "kismi"
+    },
+    "scripts/create_behavior_implementation.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "8a904455b67dffcae5931bfec80794e6f8a39606aa9e59643d12e611697f5cc8",
+     "status": "kismi"
+    },
+    "scripts/create_cds_view.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "7ccd14a9896742020aac6dfcd5f9e1c38d6e394d659fd3975c86473fae133652",
+     "status": "kismi"
+    },
+    "scripts/create_dataelement.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "0a7438ba917d2d6459cccede860ac7bc63a00d9fb5a8b18955613af944171768",
+     "status": "kismi"
+    },
+    "scripts/create_domain.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "27376cff072175cb112c29c0e6fe0a7eff118967f132b7811fa6d5e238766bba",
+     "status": "kismi"
+    },
+    "scripts/create_function_group.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "ea2050e0631f8d0f7503dbf44ad5c21ca846ca1b751430f5887687b36d152830",
+     "status": "kismi"
+    },
+    "scripts/create_function_module.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "b298916a47edfc5857c16992378e70492f87422406c640ba21e81c1473b24bc4",
+     "status": "kismi"
+    },
+    "scripts/create_lock_object.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "d60993340a3006a83ea4544956cc5b647072d36b3187e7cc1752585fbf056c28",
+     "status": "kismi"
+    },
+    "scripts/create_message_class.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "88376601bf8f128d980820131ed98f20d06ebbf6059c6b4817944f1764a780cd",
+     "status": "kismi"
+    },
+    "scripts/create_metadata_extension.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "4e1b0f6e589f3de5f821bec4154c3c8a581f54253e64af0e875a77dc1e0e6741",
+     "status": "kismi"
+    },
+    "scripts/create_object.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "6db4dfd93c90c560e71cdb710c0b3f19a0aee982df340fa1b582727a9ecbf27a",
+     "status": "kismi"
+    },
+    "scripts/create_rap_service.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "d52e3f490c42df0a5ea90929d4fd20ae90b3ff8f834c22d321f7a24a03585b0e",
+     "status": "kismi"
+    },
+    "scripts/create_structure.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "93dfd365bccfc82daef05be5066a43be097b745af6120697048f2b8ced3aeaea",
+     "status": "kismi"
+    },
+    "scripts/create_table.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "0300d581d58982187f36cf1f600a61bbfbea811d1464fbb82c8ff793e7bd7d3c",
+     "status": "kismi"
+    },
+    "scripts/create_table_type.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "d21f411b7ce134c041d83fd2d34511c42725afa4888b7a50a06f5526d3515222",
+     "status": "kismi"
+    },
+    "scripts/create_type_group.py": {
+     "decision": "uyarla",
+     "rule": "scripts/create_*.py",
+     "sha256": "6544c5676a797bae479b7611fa7abfea61b6f3f4b7263e160710afbea31a26c7",
+     "status": "kismi"
+    },
+    "scripts/delete_object.py": {
+     "decision": "telafi",
+     "rule": "scripts/delete_object.py",
+     "sha256": "11a145ba14c8d9a03cde6effde929bb8c9ecf25111e859a99af616b42f85de8c",
+     "status": "tamam"
+    },
+    "scripts/deploy_common_package.py": {
+     "decision": "uyarla",
+     "rule": "scripts/deploy_common_package.py",
+     "sha256": "a6eac11216d4dcc19a46c72686644fee453a6ab9b86b10837b86be5532861d30",
+     "status": "tamam"
+    },
+    "scripts/deploy_ui.py": {
+     "decision": "uyarla",
+     "rule": "scripts/deploy_ui.py",
+     "sha256": "169f8c85d03d16070ab89cbc2fdc61d578293bed320dbf67af1c8597d1da4c39",
+     "status": "kismi"
+    },
+    "scripts/doc_equivalence_check.py": {
+     "decision": "al",
+     "rule": "scripts/doc_equivalence_check.py",
+     "sha256": "198209ff1d80d1ec1b097a75dae1a9e0e8a5f216681ffe1fa6060db490691e69",
+     "status": "tamam"
+    },
+    "scripts/doc_tools.py": {
+     "decision": "al",
+     "rule": "scripts/doc_tools.py",
+     "sha256": "2e2325c775ff14a839a1b8af1f962fc92d1de53f679763ae6050c2d7fa3c81af",
+     "status": "tamam"
+    },
+    "scripts/download_ddic_objects.py": {
+     "decision": "telafi",
+     "rule": "scripts/download_*.py",
+     "sha256": "546f8eceb1dddebb570238bd47d18c7c9f424aca026a29bdcdd4be4d3d3d1ae8",
+     "status": "tamam"
+    },
+    "scripts/download_object.py": {
+     "decision": "telafi",
+     "rule": "scripts/download_*.py",
+     "sha256": "60e58640ad1f8a76bb3bc49177f9f1e728d85266b3de91ab56cfa7592603a9da",
+     "status": "tamam"
+    },
+    "scripts/foreign_project_audit.py": {
+     "decision": "telafi",
+     "rule": "scripts/foreign_project_audit.py",
+     "sha256": "f28a1a7945b8f07ddbd39c4bd4637e95738861905de9fa60d065588bc54900ba",
+     "status": "tamam"
+    },
+    "scripts/gen_field_table.py": {
+     "decision": "al",
+     "rule": "scripts/gen_field_table.py",
+     "sha256": "e9a17cb3ee664e5e721f765412aeb3b074b1062e286b55012eb04b5c9040a4a9",
+     "status": "tamam"
+    },
+    "scripts/genericize_common.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/genericize_common.py",
+     "sha256": "8d115e3257b4fc27d9a2521f4ad5990a14162b08bd2457c69876d61ec60cd8b6",
+     "status": "-"
+    },
+    "scripts/get_object_metadata.py": {
+     "decision": "uyarla",
+     "rule": "scripts/get_*.py",
+     "sha256": "9f7ad94c2f47555524f8260c2c84ff9bb93f6a6a772db2e2547a19593cc3fe77",
+     "status": "tamam"
+    },
+    "scripts/get_object_structure.py": {
+     "decision": "uyarla",
+     "rule": "scripts/get_*.py",
+     "sha256": "af54f86f3664fa54b0105736b09d0e554c962e83140f800f123ab9c73b5ae641",
+     "status": "tamam"
+    },
+    "scripts/get_system_info.py": {
+     "decision": "uyarla",
+     "rule": "scripts/get_*.py",
+     "sha256": "5033f5a3c5143bec0d4c5e7c447358a159bac77d19e4793dca68336146f84242",
+     "status": "tamam"
+    },
+    "scripts/git-hooks/core_precommit.py": {
+     "decision": "uyarla",
+     "rule": "scripts/git-hooks/*",
+     "sha256": "1b9cbc6c3f9e01111f798c4005ada6bb1fac91596bc09636682e41c189ca1987",
+     "status": "tamam"
+    },
+    "scripts/git-hooks/pre-commit": {
+     "decision": "uyarla",
+     "rule": "scripts/git-hooks/*",
+     "sha256": "96a736a30404fdc70f5a8aadbb18de9bd36c2b18cd9d9dd2566fa3109d05c843",
+     "status": "tamam"
+    },
+    "scripts/guest_mode.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "372f4f0184e86557a15121f993703fc255796acd620d3b067d27cb586ee8ea30",
+     "status": "-"
+    },
+    "scripts/hooks/README.md": {
+     "decision": "alinmaz",
+     "rule": "scripts/hooks/*",
+     "sha256": "451256cfc4ff5a6eb6c8e73dd0a8493945bf7743b9215da4ecc2f42939df974e",
+     "status": "-"
+    },
+    "scripts/hooks/config_change_guard.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/config_change_guard.py",
+     "sha256": "0e36b841eeae8c5c23a6bf0f9b63934653cb1d75d409dc3b2611ff99c2f634ef",
+     "status": "tamam"
+    },
+    "scripts/hooks/infra_write_guard.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/infra_write_guard.py",
+     "sha256": "944db2d2b6add460c59e6cb654441c4aeb43187caa6f65307ad054614b864e46",
+     "status": "tamam"
+    },
+    "scripts/hooks/instructions_loaded_log.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/hooks/*",
+     "sha256": "236b359d6ae4762546bb192965de4f708fbdecd4aca6c2827344d0d219edc834",
+     "status": "-"
+    },
+    "scripts/hooks/intake_triage.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/intake_triage.py",
+     "sha256": "a3015fe4defa04e1bef3a1895a187c874c84066d077fb952192100e7e3f826cd",
+     "status": "tamam"
+    },
+    "scripts/hooks/itg_backstop.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/itg_backstop.py",
+     "sha256": "2e7395324332865df47ff3a338e8899c7df41cf313cfdb5dc3b234a440e726b2",
+     "status": "kismi"
+    },
+    "scripts/hooks/post_tool_failure.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/post_tool_failure.py",
+     "sha256": "c7ca95686c263c61f1ca3b5147abc95dd891f6e0306164c96cb5f3b89e4cda5e",
+     "status": "tamam"
+    },
+    "scripts/hooks/post_validate.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/post_validate.py",
+     "sha256": "59858f7466e8b72e96638ccbfb98229fc1836d5a6bb53a668e4fe1244e657f8f",
+     "status": "tamam"
+    },
+    "scripts/hooks/pre_compact.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/pre_compact.py",
+     "sha256": "7aa97a6eb3495e63895461c2a45fd965312da59cd8463f20fbdf900566d29ee4",
+     "status": "tamam"
+    },
+    "scripts/hooks/pre_tool_guard.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/pre_tool_guard.py",
+     "sha256": "908ae27539f619e04081498a758ea7352ae39de35e2c86591556026fce3015be",
+     "status": "kismi"
+    },
+    "scripts/hooks/pull_before_edit.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/pull_before_edit.py",
+     "sha256": "820f9e907ec25342ff05179d79ce74f4f07156d7e0f427b8d02b46b4a9ad41ef",
+     "status": "tamam"
+    },
+    "scripts/hooks/recall_inject.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/recall_inject.py",
+     "sha256": "de7ecc9008280c511f77b76f68c505d7cb3497fd546944b2739090e20d130e43",
+     "status": "tamam"
+    },
+    "scripts/hooks/sap_worktype_hint.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/sap_worktype_hint.py",
+     "sha256": "72aee19aa181063081c6d002f96e39b9b300903bea97f0e097610915668cfa62",
+     "status": "tamam"
+    },
+    "scripts/hooks/session_start.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/session_start.py",
+     "sha256": "0beedf49f8317fc33918a77afe25cb1ba5c21ae57c4d02ba63950b3e2c074fed",
+     "status": "tamam"
+    },
+    "scripts/hooks/skill_injector.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/skill_injector.py",
+     "sha256": "83bd01d5c44a5a984bc08d18faf02be3dc741bc4085f844d4398c55828743c42",
+     "status": "tamam"
+    },
+    "scripts/hooks/tooling_radar_check.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/hooks/*",
+     "sha256": "1f833867d5da3c5d901b81896b34686ad505d3096fbe9d790d728ec57c93c44f",
+     "status": "-"
+    },
+    "scripts/hooks/watchdog_launch.py": {
+     "decision": "telafi",
+     "rule": "scripts/hooks/watchdog_launch.py",
+     "sha256": "e65dd20f413d83647e442f8ad8d92720bac28ebb6b9cf6d6188fe2c6a2cc97a7",
+     "status": "tamam"
+    },
+    "scripts/html_to_pdf.js": {
+     "decision": "al",
+     "rule": "scripts/html_to_pdf.js",
+     "sha256": "6f19e212c4f35c90ef6b704d9567f3c0959fdb77acdea79ecb85d284af4076fd",
+     "status": "tamam"
+    },
+    "scripts/init_project.py": {
+     "decision": "telafi",
+     "rule": "scripts/init_project.py",
+     "sha256": "adeda6221b3e5f6a5b1c3d466aefb21e0b4358b1ce2602e2b7994849014f9587",
+     "status": "tamam"
+    },
+    "scripts/inspector.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "bf4a193be577ca3e0cca0ebd260601963eff1b108e16ed8af5826ae08c31861e",
+     "status": "-"
+    },
+    "scripts/ix_doctor.py": {
+     "decision": "telafi",
+     "rule": "scripts/ix_doctor.py",
+     "sha256": "8316778a7620336cf310e06bf6f896a685af1767c07850e7228b83304d0d10c6",
+     "status": "tamam"
+    },
+    "scripts/list_inactive_objects.py": {
+     "decision": "uyarla",
+     "rule": "scripts/list_*.py",
+     "sha256": "c13c4716b947245d15f4ee0fdf778352e4f86e9fac08b836f7f6a6594b9ade97",
+     "status": "tamam"
+    },
+    "scripts/list_package_contents.py": {
+     "decision": "uyarla",
+     "rule": "scripts/list_*.py",
+     "sha256": "d759724354c7984b8f42b44dcc0ec3ac0c3a463d6e34bfa7211ab8eaba641e0d",
+     "status": "tamam"
+    },
+    "scripts/list_revisions.py": {
+     "decision": "uyarla",
+     "rule": "scripts/list_*.py",
+     "sha256": "a84a82a07eabab8043b6a365f2c00944ab0dd1ba9c092327d2197153a1091997",
+     "status": "tamam"
+    },
+    "scripts/list_transports.py": {
+     "decision": "uyarla",
+     "rule": "scripts/list_*.py",
+     "sha256": "ddbdd57133aa64113ca0e25df5a5ecb0ec63581e24677a7784f8dd452c68b482",
+     "status": "tamam"
+    },
+    "scripts/login_saml_sso.py": {
+     "decision": "uyarla",
+     "rule": "scripts/login_saml_sso.py",
+     "sha256": "c99ffc5bb48ecfde7009d177f53e01e24255baa52efad66a42a3bdf38afaafe2",
+     "status": "planli"
+    },
+    "scripts/merge_pr.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/merge_pr.py",
+     "sha256": "7da83c09e78c57aa501140d62309c1e91dee5243ed662bd1346b5bcb1805aec2",
+     "status": "bekliyor"
+    },
+    "scripts/object_types.py": {
+     "decision": "uyarla",
+     "rule": "scripts/object_types.py",
+     "sha256": "fec1aad608a94077eb0e3f6f81ac58e6aceaea9f3d7963b7410752acfa4b0100",
+     "status": "kismi"
+    },
+    "scripts/populate_cds_views.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "b3abf91dd4f54d4fc0c713a15cd5ac37b4afdbb0049cdd2bf6dea5da963f1ddd",
+     "status": "kismi"
+    },
+    "scripts/populate_dataelements.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "850da383bc5ba70a2a3a5e14951808a75dc64fb5a7cc992d21c6934734c04051",
+     "status": "kismi"
+    },
+    "scripts/populate_domains.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "cd72bae19c6ff6bd1bd5a8f3a501cc9df7751e68db3f623c113cf2d75751f80b",
+     "status": "kismi"
+    },
+    "scripts/populate_lock_objects.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "32ca2c6f77fbcf6418623b4ea03d66c64fb8a8b04d84e2bbd73e84f93617c5d7",
+     "status": "kismi"
+    },
+    "scripts/populate_message_class.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "0bab23e65da1c936451b7a5410501b47e7ce0734f6abec274d4331089ecd698d",
+     "status": "kismi"
+    },
+    "scripts/populate_tables.py": {
+     "decision": "uyarla",
+     "rule": "scripts/populate_*.py",
+     "sha256": "6500fa83bceea39d9963bf5cc5490193fe5946829a8bcd2ef892f5c29086719f",
+     "status": "kismi"
+    },
+    "scripts/program_to_spec.py": {
+     "decision": "al",
+     "rule": "scripts/program_to_spec.py",
+     "sha256": "453b09f4d0b2228fe6333ba76406b1744af917d46b793fe78fc8916f5d519cbe",
+     "status": "tamam"
+    },
+    "scripts/push_bo_atomic.py": {
+     "decision": "uyarla",
+     "rule": "scripts/push_*.py",
+     "sha256": "40da48674a4ac1784df9286030e3c74235d57d764d676a676a7ddd075c7ff29c",
+     "status": "kismi"
+    },
+    "scripts/push_object.py": {
+     "decision": "uyarla",
+     "rule": "scripts/push_*.py",
+     "sha256": "8bcf91086156dc2fe599932c7f3c11797528894993cfb044df07d099cf8b6bdd",
+     "status": "kismi"
+    },
+    "scripts/push_textpool.py": {
+     "decision": "uyarla",
+     "rule": "scripts/push_*.py",
+     "sha256": "09d05f4eda742c966185335a99e03db69ed01a9c446ee0c9161b88551c74432d",
+     "status": "kismi"
+    },
+    "scripts/refresh_released_successors.py": {
+     "decision": "uyarla",
+     "rule": "scripts/refresh_released_successors.py",
+     "sha256": "2f2c0fec8925e7eb429bc9374884d7fdb2270bc3cbed5b3228aab6919980118e",
+     "status": "tamam"
+    },
+    "scripts/run_atc_check.py": {
+     "decision": "telafi",
+     "rule": "scripts/run_*.py",
+     "sha256": "8c547b71618af1cb1ffdae8e7d5032d0ecb8e2e40be0b550cef8e89da9ac227c",
+     "status": "kismi"
+    },
+    "scripts/run_check_logon.py": {
+     "decision": "telafi",
+     "rule": "scripts/run_*.py",
+     "sha256": "9e142f293ea5c6221a73c160ceb7ce88c2eb58a25d3fb0bdf498ed5dfdf425b6",
+     "status": "kismi"
+    },
+    "scripts/run_data_preview.py": {
+     "decision": "telafi",
+     "rule": "scripts/run_*.py",
+     "sha256": "db0bb4e99a78ad840a5970072330dd473355239a6d1f990ac287d2d25ffa8949",
+     "status": "kismi"
+    },
+    "scripts/run_pretty_printer.py": {
+     "decision": "telafi",
+     "rule": "scripts/run_*.py",
+     "sha256": "44de51432803d41a8ad9afa8d6c57248eb0a2212e44739834d69b6b76269b192",
+     "status": "kismi"
+    },
+    "scripts/run_sql_query.py": {
+     "decision": "telafi",
+     "rule": "scripts/run_*.py",
+     "sha256": "ac51398dbcb01bac94814e57a3775d4b96494e0562f268d39f503e0044502124",
+     "status": "kismi"
+    },
+    "scripts/sap_adt_lib.py": {
+     "decision": "uyarla",
+     "rule": "scripts/sap_adt_lib.py",
+     "sha256": "13b6a923dd0013e0468f62a7e6946e6d93d760eed7f7a1da54f307e46e072398",
+     "status": "kismi"
+    },
+    "scripts/sap_client.py": {
+     "decision": "uyarla",
+     "rule": "scripts/sap_client.py",
+     "sha256": "500cb52088e2f84622cded29615f0720da2cffbbeea8d7b530605cb27c665353",
+     "status": "kismi"
+    },
+    "scripts/sap_doctor.py": {
+     "decision": "uyarla",
+     "rule": "scripts/sap_doctor.py",
+     "sha256": "89ebf94c8ba0ed485011a98f8264614a886e8bd870dab9efe9aa3a063cdb131e",
+     "status": "tamam"
+    },
+    "scripts/sap_set_object_description.py": {
+     "decision": "uyarla",
+     "rule": "scripts/sap_set_object_description.py",
+     "sha256": "3a73034eba529ec5e09db9382a9deb6cd7162aebea35477cb9ff49b1bb28558e",
+     "status": "kismi"
+    },
+    "scripts/sap_sync_pull.py": {
+     "decision": "telafi",
+     "rule": "scripts/sap_sync_pull.py",
+     "sha256": "806c398ebedc41fbaf21066141dafa05399d7f7073648a9c117a396db118ed64",
+     "status": "tamam"
+    },
+    "scripts/scaffold_classic_program.py": {
+     "decision": "al",
+     "rule": "scripts/scaffold_classic_program.py",
+     "sha256": "a4f9bc6476f343421d1c6a07c9a3e960e2bc04d1507e586fbf2fb56b1627d179",
+     "status": "tamam"
+    },
+    "scripts/search_objects.py": {
+     "decision": "telafi",
+     "rule": "scripts/search_objects.py",
+     "sha256": "5a6c22855cd3ab8472715d5a99443c99ceb7056761895da1600ba3b7ee859c0d",
+     "status": "tamam"
+    },
+    "scripts/seed_memory.py": {
+     "decision": "telafi",
+     "rule": "scripts/seed_memory.py",
+     "sha256": "cf03f072d8f8979d9bbd61b22c8f7df7f0b8df838fe4bb423826f4ceecd7e1a8",
+     "status": "tamam"
+    },
+    "scripts/session/__init__.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/session/*",
+     "sha256": "67701c1f28a8394263ab08f268635ca54ead19282f8132a9d4ebd37559cfa137",
+     "status": "-"
+    },
+    "scripts/session/lock_manager.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/session/*",
+     "sha256": "16bf84a2f21318ee7ff7d191624b152c4121c9e5fab7182664df6e4b9249747c",
+     "status": "-"
+    },
+    "scripts/session/session_manager.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/session/*",
+     "sha256": "6e16f8f21bafd776ba85219a70b2a4cd45708bdee7bc2fa51b3b04c1eae84b59",
+     "status": "-"
+    },
+    "scripts/setup_credentials.py": {
+     "decision": "uyarla",
+     "rule": "scripts/setup_credentials.py",
+     "sha256": "4e0f8dc39bb2d2b9cf6cfc16086af1d1413059035ab24de813660d781f55b6df",
+     "status": "tamam"
+    },
+    "scripts/setup_plugins.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "74f444a4be0a58aa70ae18857e4198a41ad4674dc2dae6a73dea8b9952d3ff73",
+     "status": "-"
+    },
+    "scripts/source_drift.py": {
+     "decision": "telafi",
+     "rule": "scripts/source_drift.py",
+     "sha256": "bf2f16f5e110b1b1dbc0838f0fe8507ad6a46705cfa8e8edf7a7adcaebcd43ae",
+     "status": "tamam"
+    },
+    "scripts/sprint_gate_check.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/sprint_gate_check.py",
+     "sha256": "984e3a81ad7b148a117e8ddd5330a829d5f2be7cdc0357750062fd33e11b6071",
+     "status": "-"
+    },
+    "scripts/statusline.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "4c195a5f029e0fc5484495dc778adea0e2dba997ee515c4d223069ec693ffe58",
+     "status": "-"
+    },
+    "scripts/switch_tier.py": {
+     "decision": "uyarla",
+     "rule": "scripts/switch_tier.py",
+     "sha256": "8fb39eee992cf9231f50328486c1cd4f24e2c2b8b14a097133a7c0c615a0f468",
+     "status": "tamam"
+    },
+    "scripts/sync_yasaklar.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "0a2fe09c4c593c769665d91fff9c69740b86586185e71d882c803d1c91c1ffdd",
+     "status": "-"
+    },
+    "scripts/syntax_check.py": {
+     "decision": "telafi",
+     "rule": "scripts/syntax_check.py",
+     "sha256": "dfd92e73f21fd4654c6c109b08955e5901eb62d6b41f2fe2e81936446762e9b0",
+     "status": "tamam"
+    },
+    "scripts/td_spec_check.py": {
+     "decision": "telafi",
+     "rule": "scripts/td_spec_check.py",
+     "sha256": "be8ac2400c4945b03badd5c18722f14dbf5c09856a9a76e82c2fcf60cbb33552",
+     "status": "tamam"
+    },
+    "scripts/team_setup.py": {
+     "decision": "telafi",
+     "rule": "scripts/team_setup.py",
+     "sha256": "203da1ae82429812d760ae0454f239020c2f6e022d09a243fb87d687a4cbd72b",
+     "status": "tamam"
+    },
+    "scripts/tests/guard_conformance.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/tests/*",
+     "sha256": "7b5a7d4ec717afc7b4a3d6a3cc012d6af28600920e65b5c4a7e75cd0f1dbe54b",
+     "status": "-"
+    },
+    "scripts/tests/test_commit_message_leak_gate.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/tests/*",
+     "sha256": "8ec595934e6e9a5db64e401d97b784843f422f601ee24849992a5ea066d621a9",
+     "status": "-"
+    },
+    "scripts/tests/test_csrf_header_injection.py": {
+     "decision": "uyarla",
+     "rule": "scripts/tests/test_csrf_header_injection.py",
+     "sha256": "72ba1f2889d5507b5cc1f5cb604dc2f54573177ffa323efa42bf35e694c7e52c",
+     "status": "tamam"
+    },
+    "scripts/tests/test_pre_tool_guard.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/tests/*",
+     "sha256": "8581ce47619b3fe33935d8042bec7a9435ad1c9643edc3717b7d5261ae2c3086",
+     "status": "-"
+    },
+    "scripts/tests/test_push_readback_mismatch.py": {
+     "decision": "uyarla",
+     "rule": "scripts/tests/test_push_readback_mismatch.py",
+     "sha256": "1fcd24965b3b902b1613071971771cdfbfdcaf78bb96b083235e747cb26b887c",
+     "status": "tamam"
+    },
+    "scripts/tests/test_search_objects_type_filter.py": {
+     "decision": "uyarla",
+     "rule": "scripts/tests/test_search_objects_type_filter.py",
+     "sha256": "ea101b64002905f40a009d2c860c5e0fdc0a195ebd0e0f5f312e93e1a34de3b0",
+     "status": "tamam"
+    },
+    "scripts/ui-smoke/.gitignore": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "783ac957e375c98996f50e9ebf41e05ea5f871dbd66aa081ce0b50922c569c93",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/README.md": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "8166b805ccee57ee34d8e2e25618c3d31bf7db768ebb600690461c085dd1f7c6",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/helpers.selftest.spec.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "85abbf1f526679f72ae787370624bc4761ce2e0b07a91fb5570b873caee548ad",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/helpers.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "5f7bc50132ab2a9e29ffebfefdd083bb0f07970f8fe79fcf0c2fa3b6182b9f2d",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/outside.html": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "905ef448055b5515e4758eb8a91fdf730311adc2f4902e337ebf1f3dcda00925",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/package-lock.json": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "9627ccdfe049debe9f3fb9711d0d8f447b6fadeb73a3590512ae7f3983b2fd02",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/package.json": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "81c07accf043144012e38686f274597f21dbd82a7f7894d8474d30edd44a1838",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/playwright.config.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "73708466af6625ddc81a5d675dfe15ba14d12be266972c806deaeeadf9a3d0c7",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/run_ui_smoke.py": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "6325386b16bb20b0b01d5224c112017853bda5910bcfb41282f34b52bf328fef",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/selftest-fixtures/index.html": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "044f0cfb957b1c1c9fea04190368748489be6afc792b60d2e8a5d4e5f0fa7dc5",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/selftest-fixtures/layout-a.html": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "0f7abccdb04f76a95d7a63a0a1d318f508576300f38c99104544e560d70d9367",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/selftest-fixtures/layout-b.html": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "188c3a2ef8929ebc38909b9ca7cf4df386c8cf4c27067d1e4a4255a5e83e4428",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/selftest-fixtures/page2.html": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "6e3f3c4aeca868979ce465b107a7803dc90ac346aa53889a8c56e8a4a8512143",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/selftest.config.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "3b95502d245167f889b03844423bcc517b05304174150bf5b19ea8918e9f86f0",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/shipment.driver.spec.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "b98df683a5ff8acd137dabfda7d11d0ae555b6139e48ff3ebbeee7ac01224343",
+     "status": "kismi"
+    },
+    "scripts/ui-smoke/ui.smoke.spec.ts": {
+     "decision": "uyarla",
+     "rule": "scripts/ui-smoke/*",
+     "sha256": "675d5a8986ac2d2071da60d1af87c15d98adc713709e097ae6eccfff6be6387f",
+     "status": "kismi"
+    },
+    "scripts/utils/__init__.py": {
+     "decision": "uyarla",
+     "rule": "scripts/utils/__init__.py",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    },
+    "scripts/utils/claude_overlay.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/claude_*.py",
+     "sha256": "4538a317780bf2d4135eddcedb835805bf11f7dd4fe9178d3b46550a0c6fe938",
+     "status": "-"
+    },
+    "scripts/utils/claude_paths.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/claude_*.py",
+     "sha256": "ce19d653e51245bec91cf147634f8dd79e169f64baaca3ea7507132ef0e3ded5",
+     "status": "-"
+    },
+    "scripts/utils/console.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/*",
+     "sha256": "150fd048f70fccb94f227333366236526222cf5cfb511f893ae517728f98ecfb",
+     "status": "-"
+    },
+    "scripts/utils/ddic_aktivasyon.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/*",
+     "sha256": "36fadf3840f1f5552edda6181cd71314f0bc0f3274938e3304a3edbccb387b33",
+     "status": "-"
+    },
+    "scripts/utils/ddic_semantics.py": {
+     "decision": "uyarla",
+     "rule": "scripts/utils/ddic_semantics.py",
+     "sha256": "3dcf3446cec5d56e599116262341e280f0a3b5daf9ed6eda7658a6afcfe5f24d",
+     "status": "tamam"
+    },
+    "scripts/utils/drift_imzasi.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/*",
+     "sha256": "1f336ae55975abf6f89c1ab7e3c4bef29e3d4c1e0d669bde213fee71db79d274",
+     "status": "-"
+    },
+    "scripts/utils/infra_yuzeyi.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/infra_yuzeyi.py",
+     "sha256": "73e3c59a834929d9f2b33d345451083d2e652e2db2b80c3f3d047849c565d7c1",
+     "status": "-"
+    },
+    "scripts/utils/inject_paths.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/inject_paths.py",
+     "sha256": "ffe3d229d07871d70c95a4b82689023aa011d96b88a42b471f99a9dbb3736431",
+     "status": "-"
+    },
+    "scripts/utils/kapsam.py": {
+     "decision": "uyarla",
+     "rule": "scripts/utils/kapsam.py",
+     "sha256": "831086e8ef7ae0f94a1eb2f6b1ff8e367b6cacdc88b565bd1da1b0818412955f",
+     "status": "tamam"
+    },
+    "scripts/utils/kaynak_tarama.py": {
+     "decision": "uyarla",
+     "rule": "scripts/utils/kaynak_tarama.py",
+     "sha256": "6562ac2e99b9593c6f6b52ea9c8c983d301e27c0c25dbaac3e26874a12924a68",
+     "status": "tamam"
+    },
+    "scripts/utils/project_config.py": {
+     "decision": "uyarla",
+     "rule": "scripts/utils/project_config.py",
+     "sha256": "f9ce8e3610ecdf90e90030874e69b1b228cad3da609886d8634a754c05af52ac",
+     "status": "tamam"
+    },
+    "scripts/utils/send_mail.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/*",
+     "sha256": "d723c9b285d8018fa99aa61d56b0172abaa0d2b7e83e0be4f46fd97188d8430d",
+     "status": "-"
+    },
+    "scripts/utils/yasaklar_stamp.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/yasaklar_stamp.py",
+     "sha256": "69b70efea8fc8ec5d61bdc74ddb9ba85b1d0742ee0adefb6c3725e53bf1cb129",
+     "status": "-"
+    },
+    "scripts/validators/__init__.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "dd57faf90d7797c95b5cc7797f8644218192d8bc42597341312a5a05773b3be1",
+     "status": "-"
+    },
+    "scripts/validators/_gate_status.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/_gate_status.py",
+     "sha256": "a84ab1407d1732c57b20d12bacb30c5d089659de49819ea9ff12d37a6fdd996f",
+     "status": "kismi"
+    },
+    "scripts/validators/check_abaplint.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_abaplint.py",
+     "sha256": "28c232159c88398845a9599942e7413526929e4dfc85c9dccad7b8ff1069edab",
+     "status": "kismi"
+    },
+    "scripts/validators/check_amdp_comment_apostrophe.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_amdp_comment_apostrophe.py",
+     "sha256": "9bf69ddbfe250f9af77e3cdb26e3785ee18ff271fc7db4405ff8e4c61b1f7eb9",
+     "status": "kismi"
+    },
+    "scripts/validators/check_audit_fields_autofill.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_audit_fields_autofill.py",
+     "sha256": "c02f60cebbb64f7f2f4af4edf3d15e04d66046fd4ce836899219c27ee296113d",
+     "status": "kismi"
+    },
+    "scripts/validators/check_bdef_backtick.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_bdef_backtick.py",
+     "sha256": "d607994fe94a2011ff95e7f68a3109ef004fbae17ff82424cdeb449cddf9c333",
+     "status": "kismi"
+    },
+    "scripts/validators/check_cds_currency_reference.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_cds_currency_reference.py",
+     "sha256": "698b9f4119b73b75c37a71f694a856fcdca7470e3629c2ed910cb743f2c421b1",
+     "status": "kismi"
+    },
+    "scripts/validators/check_cds_qty_in_expression.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "a7cbdd46888eec421441614bc2eca275452bf81337667ff404b1dae2eb90b962",
+     "status": "-"
+    },
+    "scripts/validators/check_cds_srvd_comment_syntax.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "006d4b9dd7a70f0c017afbe1f4a9c05d6753b60651b0677ce9b8d9bbd312ee74",
+     "status": "-"
+    },
+    "scripts/validators/check_console_utf8.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "7ae4fdda516715f68f5e89ebf4bafa39ce5ee6cfa83d2729a985c19f8eed8a43",
+     "status": "-"
+    },
+    "scripts/validators/check_core_index_fresh.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_core_index_fresh.py",
+     "sha256": "961a72f33ea173edeee7cdef5e68c282def48b1ccb870fdaa607f2aa77112753",
+     "status": "-"
+    },
+    "scripts/validators/check_core_not_committed.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_core_not_committed.py",
+     "sha256": "49ceb50606d1e16a0e95c694f752d303e4249046b80c7c32165d59064586bc29",
+     "status": "-"
+    },
+    "scripts/validators/check_decimal_write_to.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_decimal_write_to.py",
+     "sha256": "2681f8af3e401295f420705332ebab544349de0be0a2a2097778fdad2dd99009",
+     "status": "kismi"
+    },
+    "scripts/validators/check_deprecated_annotations.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_deprecated_annotations.py",
+     "sha256": "c19b799a3db54f44e0a6595003bae8c70d395c173ca6edd943f1b4f5ef19fea2",
+     "status": "kismi"
+    },
+    "scripts/validators/check_docu_itf_line_width.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_docu_itf_line_width.py",
+     "sha256": "53f8b9b6a70d6b006189a2559a692259efdcc871420b2c32a7b003243059d9c9",
+     "status": "kismi"
+    },
+    "scripts/validators/check_domain_output_length.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_domain_output_length.py",
+     "sha256": "cb59a7d360aa56bded0ad20ea8278a7e6761fc578314b554ef166de75985d192",
+     "status": "tamam"
+    },
+    "scripts/validators/check_dtel_creation_labels.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_dtel_creation_labels.py",
+     "sha256": "ab375cf73814e779627e83441ada49192d27d9782b18f063294395b8d571df38",
+     "status": "kismi"
+    },
+    "scripts/validators/check_filter_search_pattern.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_filter_search_pattern.py",
+     "sha256": "efe87d9af5a6039816f69948d6869337ebbc9b2bc00576bb0ffd43af0b6e258d",
+     "status": "tamam"
+    },
+    "scripts/validators/check_fm_signature_doc_sync.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "bc566574c500514076a6602bebf26197033b3a20f3199bdf24e5666ad541933a",
+     "status": "-"
+    },
+    "scripts/validators/check_fs_no_analysis_log.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_fs_no_analysis_log.py",
+     "sha256": "54628fa027cb74040f6709a0c7002d47c187d6a08ba1192017c92c7a8330c4ac",
+     "status": "planli"
+    },
+    "scripts/validators/check_hook_injected_paths.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_hook_injected_paths.py",
+     "sha256": "3ae52985632ab5b70a873f0143d10a58fc2cac2a5540ce7d345a9af5c1d42ce5",
+     "status": "-"
+    },
+    "scripts/validators/check_instruction_budget.py": {
+     "decision": "telafi",
+     "rule": "scripts/validators/check_instruction_budget.py",
+     "sha256": "0f50ec5c34f8bf8cad090b28444b71b9ecc62b12d53f7e23f721cdde0cd2e7d9",
+     "status": "tamam"
+    },
+    "scripts/validators/check_itg_signoff.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_itg_signoff.py",
+     "sha256": "5bea3ca1a08f1ea2c9662d3a3c37b3be53ad356c3da012583c5902df00618083",
+     "status": "tamam"
+    },
+    "scripts/validators/check_kd_no_raw_mermaid.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "1ea5cbcfb2cfe9bac6e865328069a0e8e03e758c240c664bf78fb656c80d5415",
+     "status": "-"
+    },
+    "scripts/validators/check_kesin_yasaklar.py": {
+     "decision": "telafi",
+     "rule": "scripts/validators/check_kesin_yasaklar.py",
+     "sha256": "0622dc55ae7c822668aa3aa125893b7c3847e7cd1e0ee5cc2fa48011ca8fe656",
+     "status": "tamam"
+    },
+    "scripts/validators/check_list_view_grid.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_list_view_grid.py",
+     "sha256": "3c0a229f6cf3ece9b5e8fb814ae747fc746f889701b29f08e70d6c4169b6cd98",
+     "status": "tamam"
+    },
+    "scripts/validators/check_memory_index.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_memory_index.py",
+     "sha256": "f3143e1cebb49ecd2715a782ef0eb8cb15edca816770f9df0394897b12995198",
+     "status": "-"
+    },
+    "scripts/validators/check_method_param_type_c.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_method_param_type_c.py",
+     "sha256": "86ccf8ab11a65c5b70e5f9a0866d97c1a76f1537d699da29a557ddaa5e42597c",
+     "status": "kismi"
+    },
+    "scripts/validators/check_no_rap_commit.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "6bf7e63665ece63852eb3ec236972c888c65cecd4b548eb7794950122b672451",
+     "status": "-"
+    },
+    "scripts/validators/check_object_in_correct_pkg.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "14b545b3e9f6e943855c9d4ad450a4ca83a37df3f537f7145ce5923d43b204d8",
+     "status": "-"
+    },
+    "scripts/validators/check_package_naming.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_package_naming.py",
+     "sha256": "e00db0a0d06da44391bdf0329613e2ca28891fd0a3dce4c86d1741a49117a4f4",
+     "status": "tamam"
+    },
+    "scripts/validators/check_package_registry_fresh.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_package_registry_fresh.py",
+     "sha256": "75973e205a9f4adfba9abd7df3fa33596595cb6094d555dbda781b384b08a1d7",
+     "status": "tamam"
+    },
+    "scripts/validators/check_package_rules_present.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_package_rules_present.py",
+     "sha256": "6079552a30de8b7ca1cd6a12d4f40de60ea9ae9645d525850bbd8caac0f0749e",
+     "status": "tamam"
+    },
+    "scripts/validators/check_playbook_freshness.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "b6457017a1c26320731cceb8219d80edc019e1b14e0e9818ad1a3ec3ce381d34",
+     "status": "-"
+    },
+    "scripts/validators/check_project_root_resolution.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_project_root_resolution.py",
+     "sha256": "dc95ebfc9dfd56fe1091308eede28e136038640a88e1733b668c8e663bd2cf3e",
+     "status": "-"
+    },
+    "scripts/validators/check_rap_byassoc_keys_only.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "f6493fed833df33e818f1e1005eab28badda8465c18682c17324ba33ce7bd4d5",
+     "status": "-"
+    },
+    "scripts/validators/check_rap_managed_etag.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_rap_managed_etag.py",
+     "sha256": "04700f32c3223d0bcb00db51a2ca4c430692568162a4202ec640139256e16f6f",
+     "status": "kismi"
+    },
+    "scripts/validators/check_rap_readonly_consumption.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_rap_readonly_consumption.py",
+     "sha256": "3e3d9062f85ee5bb7ccb1dbd56fdc330494a8d80db8daecd2910db98fd3d9e02",
+     "status": "tamam"
+    },
+    "scripts/validators/check_released_objects.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_released_objects.py",
+     "sha256": "eca12f9a371c4a5b8db3968c52cd4fb863e67228b856552ba808c518de3c395e",
+     "status": "kismi"
+    },
+    "scripts/validators/check_reuse_gate.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_reuse_gate.py",
+     "sha256": "609df87cd43728a771d5c4cb0e28477a5b89e74819f7bc22dd04c4f702abb1f5",
+     "status": "tamam"
+    },
+    "scripts/validators/check_rule_gate_coverage.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "36b35dfff1b39f65c6e27f964425e553af0ab5c97d383fe80bc3e9bfc1951e8a",
+     "status": "-"
+    },
+    "scripts/validators/check_sap_active_version.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_sap_active_version.py",
+     "sha256": "d0352df5c5b56b75826ac0326c8ed78beb211a568d41b4dcea6d0b057adc63e2",
+     "status": "kismi"
+    },
+    "scripts/validators/check_sap_master_language.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_sap_master_language.py",
+     "sha256": "b73b881075a404e41c858551cacad486fb9d9843bcaacc4633ccae4d2e9c131b",
+     "status": "kismi"
+    },
+    "scripts/validators/check_sap_struct_consistency.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_sap_struct_consistency.py",
+     "sha256": "8298537e190b629540f4dc9730870c653ba26fd7af6edb150ee697015fc83750",
+     "status": "kismi"
+    },
+    "scripts/validators/check_scripts_documented.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "ef050edbe3640146778ce6fd6fd9ea47578bb7253dfac876ed05d07975b9c218",
+     "status": "-"
+    },
+    "scripts/validators/check_settings_template_sync.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/validators/check_settings_template_sync.py",
+     "sha256": "e6504324ca44b9e61d815d8d4fd2391952b8365cc23ede54d42911941652c81d",
+     "status": "-"
+    },
+    "scripts/validators/check_source_drift.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "016bb4af8edd8751ad66603b92922b268c5a76affdc3415694d1ffcd6556199c",
+     "status": "-"
+    },
+    "scripts/validators/check_standard_table_fields.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_standard_table_fields.py",
+     "sha256": "aea785ae5d9a274e60fb49ac78b3b5ec1b37b0c90a0e9a1eba7d0ee16a6deeb2",
+     "status": "kismi"
+    },
+    "scripts/validators/check_struct_field_dtel_active.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_struct_field_dtel_active.py",
+     "sha256": "76f6f95b477c693b356db715631fcac247d144f785d7b33cdee0275e238185f2",
+     "status": "kismi"
+    },
+    "scripts/validators/check_table_field_drop.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_table_field_drop.py",
+     "sha256": "d9a1fb70fd97e9831a0ef1067fb71b831aece180f16b5ebf89cf380a4c5e8afa",
+     "status": "kismi"
+    },
+    "scripts/validators/check_ui5_freestyle_traps.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_ui5_freestyle_traps.py",
+     "sha256": "547ef0b151e973c858e7cdb84e45610e048b0d8ccb62edb330f355d4e7daec7a",
+     "status": "tamam"
+    },
+    "scripts/validators/check_window_function_compatibility.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_window_function_compatibility.py",
+     "sha256": "1af2be3ccd0c5e2d7c980a7af51e58d02506c07b3a99bc55842ea64ebf658098",
+     "status": "kismi"
+    },
+    "scripts/validators/run_all_validators.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "9a1fbb4a66d3e5bba5020fd4900c93678d17a35d7b6a7b1b0b1cc17658fa31b1",
+     "status": "-"
+    },
+    "scripts/validators/run_review.py": {
+     "decision": "uyarla",
+     "rule": "scripts/validators/run_review.py",
+     "sha256": "9ba8ed64ffd74facd55fc975be381f617f7e1c89113bd13cf3ea08d712fb9d48",
+     "status": "kismi"
+    },
+    "scripts/validators/sprint_retrospective.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "38ed746ec18b879524daa5fa12c94991f6ce99d907aae40ba58e5e42492808f6",
+     "status": "-"
+    },
+    "scripts/verify_ui_static_assets.py": {
+     "decision": "uyarla",
+     "rule": "scripts/verify_ui_static_assets.py",
+     "sha256": "67f5dabc7041dec2766e5115bf2c11c04ec5db67756eee506283e68382828ab6",
+     "status": "tamam"
+    },
+    "scripts/where_used.py": {
+     "decision": "telafi",
+     "rule": "scripts/where_used.py",
+     "sha256": "291f07581225f7e8e0cdc8290a45c54b4a929a6aeb1f52759610ab8be0b9d310",
+     "status": "tamam"
+    },
+    "scripts/workflows/__init__.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/workflows/*",
+     "sha256": "43f589a524b1e83fa387802322d2139f04a99ae194fe352a3cfc58d3c2c4cddf",
+     "status": "-"
+    },
+    "scripts/workflows/write_workflow.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/workflows/*",
+     "sha256": "32175d1fbcd2cbabf4fc0beb503a6e75be32668066b71e1fd8991f1c8a94b641",
+     "status": "-"
+    },
+    "scripts/worklist_audit.py": {
+     "decision": "telafi",
+     "rule": "scripts/worklist_audit.py",
+     "sha256": "2b8a686f6334cf12d123108db387d929ee6f4165707b26bf4803d8fba0f6a84e",
+     "status": "tamam"
+    },
+    "standards/01-naming.md": {
+     "decision": "uyarla",
+     "rule": "standards/01-naming.md",
+     "sha256": "420b583951cf19dda0a4eddaedc5b20ec854f03dd9032eef5a6665cad1f7cb8c",
+     "status": "tamam"
+    },
+    "standards/02-coding-backend.md": {
+     "decision": "uyarla",
+     "rule": "standards/02-coding-backend.md",
+     "sha256": "fb61ce9663a11ff0fee254fda336dd44dabf2aec1aabd074262077b8b9dd6bf4",
+     "status": "tamam"
+    },
+    "standards/03-coding-ui-fiori.md": {
+     "decision": "uyarla",
+     "rule": "standards/03-coding-ui-fiori.md",
+     "sha256": "25aa1ac6f976faef4c17dc4167dbf304f2aedf624b43cbad5579b4d7a073d8e2",
+     "status": "tamam"
+    },
+    "standards/04-documentation-fs-ts.md": {
+     "decision": "uyarla",
+     "rule": "standards/04-documentation-fs-ts.md",
+     "sha256": "f185252bd6244428991bbc75ae29e2a4be9b86927849a8ef117bc53ec42ca9fb",
+     "status": "tamam"
+    },
+    "standards/05-coding-rap.md": {
+     "decision": "uyarla",
+     "rule": "standards/05-coding-rap.md",
+     "sha256": "5c8bda05f956710c12b4edc6e2e04cf1c67a0c716cd190edac3f2721d3f9a104",
+     "status": "tamam"
+    },
+    "standards/06-coding-classic-dialog.md": {
+     "decision": "uyarla",
+     "rule": "standards/06-coding-classic-dialog.md",
+     "sha256": "a4ac1466d71813d970ffd90b419c62329a35101f01587c95b3d4f6b6cd93a034",
+     "status": "tamam"
+    },
+    "standards/07-output-forms.md": {
+     "decision": "uyarla",
+     "rule": "standards/07-output-forms.md",
+     "sha256": "8bec778ea58c92f2f7b0e3b78f8eece82ee7a0634359ab639fcbc518165f0793",
+     "status": "tamam"
+    },
+    "standards/08-classic-gui-f1-help.md": {
+     "decision": "uyarla",
+     "rule": "standards/08-classic-gui-f1-help.md",
+     "sha256": "4a899406c5916363c8ae3c6cb062bf725b51497331e9628665be75345eeaebe4",
+     "status": "tamam"
+    },
+    "standards/09-packing-instruction-consumption.md": {
+     "decision": "uyarla",
+     "rule": "standards/09-packing-instruction-consumption.md",
+     "sha256": "ee4654b5cd562b751b8425e698531e623e5871d3fbfd282219f5afd16e85029f",
+     "status": "tamam"
+    },
+    "standards/README.md": {
+     "decision": "telafi",
+     "rule": "standards/*",
+     "sha256": "a8cc31b41cef45cf8f4cba8eb328265d305fcc56b7feee7c96114a060c95380b",
+     "status": "tamam"
+    },
+    "templates/README.md": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "8a73a1e70ca3aca078d05e58e4a661dbfdb08646c4301149e8d77c1e7e566bb1",
+     "status": "tamam"
+    },
+    "templates/new-package/.rules.md.tmpl": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "9ee14dd071b7b90900ed058e5d3eb49e807989196ea7667f8526c201f904fd77",
+     "status": "tamam"
+    },
+    "templates/new-package/README.md.tmpl": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "49ebc11a545edf0ca5554eb8f93ed88639e2f1bf91e4bbdb962c2d73b96dd282",
+     "status": "tamam"
+    },
+    "templates/new-package/SESSION_NOTES.md.tmpl": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "1ee21f90ab870728021b039a5f489a53ca9816eeb4df299b5f4f218d83e63a16",
+     "status": "tamam"
+    },
+    "templates/new-package/SPEC.md.tmpl": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "742e3d5e07d8ccc7a23d08d83708c111eacd240b9a3bd728c6cb448d5c788eb5",
+     "status": "tamam"
+    },
+    "templates/new-package/folders.txt": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "36965b513e385fd6b8716cc4b1bd9422436c34e2508b8020d199788b0cf2bb42",
+     "status": "tamam"
+    },
+    "templates/new-package/ref_docs/README.md.tmpl": {
+     "decision": "uyarla",
+     "rule": "templates/*",
+     "sha256": "f8d9b28d483470941df32072b93e205a2eb549327c60938717e7eec158881495",
+     "status": "tamam"
+    },
+    "tests/fixtures/abaplint_failopen/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2ecfdafd4460fb3f04a4015d73ab4554ce18c4990e1d09d5d5567d4c9275f44d",
+     "status": "kismi"
+    },
+    "tests/fixtures/aciklama_412_retry/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4326a04ad58645add1f5bdbe1f4d95a0c172f524b4ded1eb39fb45f842ecd960",
+     "status": "kismi"
+    },
+    "tests/fixtures/adt_uc_url_cozumu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "40d9c8d8f9d570dd19e301fb2d0e8b0b795a9cfb3e71fd2a157699376f74cad3",
+     "status": "kismi"
+    },
+    "tests/fixtures/adtget_yokluk_kaniti/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4f6d122e1641725202d49bb79e7530d7c47263e524f9d540099030105e81b08c",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_baseline_tazeligi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e9b3ca108c049dcb710e15073ec36abcffd9870d483a0eb3530505d8af5d1cc7",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/ddic_dtel_aktif.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "17d383cdcc715528dd2d4fed83768438107e674967187418d51c9f6eb4c1318e",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/ddic_tabl_aktif.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "818bd95d46c9a4312bd5be8cd6db1c552e5ca11ac3f4059a722ee113cb4bc6f6",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/faz1_ioc.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "8806b05970f936ace8e4e300ac32ee64a77d88e626269dd49a1b9a043a3e6f6a",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/govde_hepsi_true.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c133bb966fcddec726a0314273490d805f43b1feaf39701442184025aff815d9",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/govde_reaktivasyon.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "480b4e4ea5150675928252413bf76d6c0c4238d9bf3d9c2e601a84d107e11afe",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/govde_true.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "480b4e4ea5150675928252413bf76d6c0c4238d9bf3d9c2e601a84d107e11afe",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/govde_yalniz_generation.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "40d7d8237df2af9c514e14d0ddaff93d92a285e7f2fda01690e5057d6318245a",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/worklist_ayni_ad.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "41394d8b4c47a096b416a576612229489fee70ac31d9909d6156f48c9aa13855",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/worklist_fugr_ff.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e0b91089aeff0872dde6f685c438af4c8d126f4137dce481f684e54436be6938",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/canli/worklist_fugr_temiz.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "0463af068d470e5e25f642bc725244e53904e3a0766380e4d7e442edaf5e3704",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_govde_hukmu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7c4d9a8291878aff2374710dd1741877cb645d9f3c1e8f73e5daf615e63e7fc3",
+     "status": "kismi"
+    },
+    "tests/fixtures/aktivasyon_sahte_ok/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "69e308f9b7553d3916193c8e7501ee32fd7cb230a78e2940c6af040c5916ee39",
+     "status": "kismi"
+    },
+    "tests/fixtures/amdp_satir_sonu_yorumu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "58a1d65b4c30393cae284f8f8fb72710e0fe9c1bfba4eb2fcfd6ca7956a38c1b",
+     "status": "kismi"
+    },
+    "tests/fixtures/atc_p1_sonuc/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "fd6d8d45d10ce1fd94a274973cfc382a009f23e14d0777e2279ef4d84d0019e6",
+     "status": "kismi"
+    },
+    "tests/fixtures/av02_project_config_bom/bomlu.yaml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9af09aef0239ffb9ccbbedb61ddd9133c944db129081c71dc0037f555c5135cc",
+     "status": "kismi"
+    },
+    "tests/fixtures/av02_project_config_bom/bomsuz.yaml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ec727e8c22f7e4b1eff32d6e37e63aa850b6eb265233fa8c1d688845f3806cbb",
+     "status": "kismi"
+    },
+    "tests/fixtures/av02_project_config_bom/bos.yaml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "kismi"
+    },
+    "tests/fixtures/av02_project_config_bom/yalniz_bom.yaml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5",
+     "status": "kismi"
+    },
+    "tests/fixtures/av03_genericize_sap_user/sizinti.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9701789b09d098ef0692e4f0cb1c0781e37984218d45ddc705da17f3454d36c1",
+     "status": "kismi"
+    },
+    "tests/fixtures/av03_genericize_sap_user/temiz.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "49b6a34725d9c745cb3c3287a7f26e4f47edd31164e5794f5545ddf039b75c51",
+     "status": "kismi"
+    },
+    "tests/fixtures/av13_worklist_classify/siniflama.json": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "13e119ae27783705758a46b0096e64d09432183c477dca60765180e624fd2f71",
+     "status": "kismi"
+    },
+    "tests/fixtures/b0_secim/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "365787a78902aa7d474a2075a55569a80912e593bc3a2f3b837ad5f69b28c3ae",
+     "status": "kismi"
+    },
+    "tests/fixtures/bos_seans_markeri/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4a29046e38c5bcbeac65a7533e599900c722c7ceb3415f6038a478e198991bbf",
+     "status": "kismi"
+    },
+    "tests/fixtures/byassoc_advisory/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "290d81d76e0bd3d251abc81852132c46747d3d8cba9ab660394785bd8bb02e56",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_curr_eksik_annotation/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4ae45f7eac0968b70fbdeea5f69e7cea550fe4b4144d59fffffc3b4e16242310",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_curr_kaynak_tipi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2d5124a24fdcfe86cc9ee83ee682bdc2b10ad17a6fe5e7f6a281125565c5cd2f",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_curr_satir_yorumu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ffde8b6b697c2ac6bfd22e5cb1a37aefa4b23bd6597cee46ab830f550e0e19a9",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_kaynak_kapisi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "72ff039eca3ccb29f7236932100e02e814c72ad8de02c8548cc0bb00e32113a4",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_paket_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a154a4f3f61a3e7c00cd87ef0c8031e39628b3c07a5730a981ef4636176c0c50",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_qty_in_expression/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "74e1ab55a06f01d9307a5ddda40e65b1d9f97e1952f5de4a0bd58d8c9186df84",
+     "status": "kismi"
+    },
+    "tests/fixtures/cds_uzanti_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3c8fe4fee26c8f1b17e56b3084e7d14998a02068a607a81c078dd989c7fcde3d",
+     "status": "kismi"
+    },
+    "tests/fixtures/changelog_amend/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "562a00d1cbd3d086e533e4b8ae2cddff4dfb09910828be7b395a8a68103df30a",
+     "status": "kismi"
+    },
+    "tests/fixtures/changelog_gate/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "320286cc3a00b86918c3eff4d31e123f8f4c97374708f3a3c82b3293c4aa718b",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_amdp_comment_apostrophe/bad/SOURCE_CODES/ZSD001/src/zcl_amdp_navlun.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "92d63fba81515fab9264aea0c4b55591cd6a5f556c7a662a70020c03c8f526d5",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_amdp_comment_apostrophe/good/SOURCE_CODES/ZSD001/src/zcl_amdp_navlun.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "76ead862b1e79743703788b73a17903663f37afc300791850e3f082a08c91d3a",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_bdef_backtick/bad/SOURCE_CODES/ZSD001/behavior/zsd001_order.bdef": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e984ccd7fc13001e9d34740f04de24add352235d66b1ce597d635ccd4a4ada50",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_bdef_backtick/good/SOURCE_CODES/ZSD001/behavior/zsd001_order.bdef": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a68cceffa5399a7e90ebb30c978ea878ad1eabffd9272657511303ba480b303c",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_cds_srvd_comment_syntax/bad/SOURCE_CODES/ZSD001/cds/zsd001_i_order.cds": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a1ae02f60388e2291b04e280a7ff097588fb2642272524d4ae16a94bb270923a",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_cds_srvd_comment_syntax/good/SOURCE_CODES/ZSD001/cds/zsd001_i_order.cds": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f788fce77b5073f7a9daf57563edc9226c01b387f357f2a725ee3fc845d1e2e8",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_decimal_write_to/bad/SOURCE_CODES/ZSD001/src/zcl_order_api.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c826a15318cae931a14d217e7a29e06fb83e38b972b4b59076fcc2e4700f448d",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_decimal_write_to/good/SOURCE_CODES/ZSD001/src/zcl_order_api.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4fb03251c6f93ffa70a9406e04ad52757413af4657e47ba912037ec3ae0f7178",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_dtel_creation_labels/bad/SOURCE_CODES/SD/ZTEST_CLC/dataelements.csv": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "df43d757f74e68007b899dcb96c856e895dae221f4c5cff2f1c57d38c191c762",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_dtel_creation_labels/good/SOURCE_CODES/SD/ZTEST_CLC/dataelements.csv": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9b285a0db879c7316578b7314e7197646b95d31df357ae8df1aa2d400861cf8c",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_filter_search_pattern/bad/SOURCE_CODES/ZSD001/ui/webapp/controller/Search.controller.js": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "bfa87ddd7b3a6c0dc54a28adffbac1363ceb180b5bfc4ba8046d7924f4c94e1c",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_filter_search_pattern/good/SOURCE_CODES/ZSD001/ui/webapp/controller/Search.controller.js": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e28add3f2869199677dfa568b602d7d95c42bae67700077411920fd0ca0da10b",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_kd_no_raw_mermaid/bad/docs/KD-ZSD001.html": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4ca248d0ca9c45c1a45f5d1e830072db58c38d9476dcca491f3625f01578b81d",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_kd_no_raw_mermaid/good/docs/KD-ZSD001.html": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2c6dda1872a209c8963be1526be34eaca1ecd32325d2e7b64ee5ed1bdf8f819f",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_list_view_grid/bad/SOURCE_CODES/ZSD001/ui/webapp/view/List.view.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e1cd00a564364b96845ac904576f931ab169d49d27e63724375fa141953ec8ea",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_list_view_grid/good/SOURCE_CODES/ZSD001/ui/webapp/view/List.view.xml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "8ae820d27cee77c7fa64a8e0aad347639c4231eb00886ebf01234bb2b4e2c042",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_method_param_type_c/bad/SOURCE_CODES/ZSD001/src/zcl_helper.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "492344fe01082956d976118760b070fa5a2186a7665cf26984a906c6afd0bf61",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_method_param_type_c/good/SOURCE_CODES/ZSD001/src/zcl_helper.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9acb2cbaeca3fc3fe8f9a28a01cb744ad5bdde27fcca5ab8796a53356fc29243",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_no_rap_commit/bad/SOURCE_CODES/ZSD001/src/zbp_i_zsd001_order.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "42595f2f703fb40f5a95bacfa82d9b423dd6ab8570006df7073cf0de721e7d2d",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_no_rap_commit/good/SOURCE_CODES/ZSD001/src/zbp_i_zsd001_order.clas.abap": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "64ade6fa89efa47ebd53afc29193a6dd8317797ec7fc7e80b555916a918af7c6",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_ui5_freestyle_traps/bad/SOURCE_CODES/ZSD001/ui/webapp/controller/Booking.controller.js": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c75d6e49d6d9790996d6bd160c615354e66c05e60037ca0f23a9c1103a8b6f08",
+     "status": "kismi"
+    },
+    "tests/fixtures/check_ui5_freestyle_traps/good/SOURCE_CODES/ZSD001/ui/webapp/controller/Booking.controller.js": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a89f8e96e4e7be034d2c048d8f5534f1c19970332eaecbef9f28314f5556bf97",
+     "status": "kismi"
+    },
+    "tests/fixtures/cikti_iddiasi_durustlugu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "8d067775485fc75f5c4b7be6f63125ccf6d93687178839c3c72ce6a9952f4944",
+     "status": "kismi"
+    },
+    "tests/fixtures/class_include_push/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7ebbf94097ecad6c7b28042ef30e5f12a596f56c94d8eb16139f01b076331180",
+     "status": "kismi"
+    },
+    "tests/fixtures/conn_adt_proje_koku/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "dc5f430f76564075251fa149c39cd10395ea7f4709b2bcca86465f3a01198eaa",
+     "status": "kismi"
+    },
+    "tests/fixtures/conn_cift_anahtar/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "46a8ce03adbb5ee1e8c19cd302a70da2e51b20a6d66a248447323f1688f2402b",
+     "status": "kismi"
+    },
+    "tests/fixtures/conn_kum_sizintisi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ec333eb96bf015c4e4f49a30bc6494800b096581115923b71ecc29afe8c3637a",
+     "status": "kismi"
+    },
+    "tests/fixtures/conn_yazici_encoding/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "d1659441fcd9e3ddf3a559b9caa255f648ecf1ec566129ddfb04d9f3469debca",
+     "status": "kismi"
+    },
+    "tests/fixtures/console_utf8_kok_izolasyonu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c291cf07cd6c46ca20545e658b94ffd34c1d53980ec5256514f05937e4c22d3f",
+     "status": "kismi"
+    },
+    "tests/fixtures/core_fiziksel_kopya/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "bd47eabe696a931b519bf95ee1a07dca3bb9bd699d186c6bf6f4d27ccd25c69b",
+     "status": "kismi"
+    },
+    "tests/fixtures/core_index_kapsam/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "abe82492719710840df3be9698ba308ac650b6ce5b179e16b961e9040c662a7d",
+     "status": "kismi"
+    },
+    "tests/fixtures/core_index_siralama/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "134a93783e204c971723110fd0cc652ab822052f36a858bacfa0ecf01d92d28f",
+     "status": "kismi"
+    },
+    "tests/fixtures/d7_drift_imzasi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2106dc5386786dde0374ff9a451f833db21bbaa2f58a407e8a6484f3cf28ffef",
+     "status": "kismi"
+    },
+    "tests/fixtures/damga_yarisi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3a373656727fca1734d15a66e1ed902e847c6dcbd8585cdb2bba879c4c6d21a2",
+     "status": "kismi"
+    },
+    "tests/fixtures/ddic_aktivasyon_notu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "10987a7dc3b212feadef8c22ba41a956837392b1d3b5f69dd41505bf5a6d55e7",
+     "status": "kismi"
+    },
+    "tests/fixtures/ddic_okuma_yolu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2850cfa801e9462f8813e53ece08c80a0b4707781be80ce3f17ab8e9ebf8b8ad",
+     "status": "kismi"
+    },
+    "tests/fixtures/doctor_baglanti_kaniti/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "85aaafde9206d63c41f1e7b04b729834c179465340e62108a726245e54787fbb",
+     "status": "kismi"
+    },
+    "tests/fixtures/dogrulama_kosamadi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7453c656f640bcd962058675c24e552fa5f115c1805bd68275fec76f543ecc5b",
+     "status": "kismi"
+    },
+    "tests/fixtures/filtre_yorum_ve_tirnak/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3931d3e3f98929b15916010810741ebf6ce4b1403874b9438c14d3df5b10d72f",
+     "status": "kismi"
+    },
+    "tests/fixtures/fm_imza_doc_sync/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c094073aecd13840cc9bf0b7de20c7b0df21d0ffbccc0d3330b16e636576a688",
+     "status": "kismi"
+    },
+    "tests/fixtures/fm_okuma_where_used/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "aebcf7b73d197fe06649d6fd6349c9ff33504e080f2d9b9ec95c80df84a852bc",
+     "status": "kismi"
+    },
+    "tests/fixtures/fs_docstd/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1b8a61b18ea433e1a0a213ebc617b099b9e3cfad8d1384accb803a9c1756e017",
+     "status": "kismi"
+    },
+    "tests/fixtures/gevsetme_pozitif_kontrol/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "cbe933d315d0eb77140d6314eb3782d2491dd8665fe72304521bd678d6819a5c",
+     "status": "kismi"
+    },
+    "tests/fixtures/git_sorgu_sessiz_bos/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ab6b7650ef9613fb73b2f481b6d9a0df188ac61dbfdc9087999661e8d04a3479",
+     "status": "kismi"
+    },
+    "tests/fixtures/gitignore_tam_satir/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "70751ea5c7436f405df03c29eb016d7e035b1f52ee6bbf41e3c8035e78af4782",
+     "status": "kismi"
+    },
+    "tests/fixtures/grep_kapsam_gorunurlugu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1f95b4346b435f8f34bb73853f666d4c8c4a71379062c80d25cbf711ffcb7c18",
+     "status": "kismi"
+    },
+    "tests/fixtures/guard_f1_taban_failclosed/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e20af8c4d1ebe705bfa49f1aebe75cb79385c4113fa5a95d091bf4a6e4cf8ca9",
+     "status": "kismi"
+    },
+    "tests/fixtures/hook_bash_ve_stderr_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "020e93a1ca65b9e7f96aad9913cb65e846d71dc3778a1a154d69206c58d0eef9",
+     "status": "kismi"
+    },
+    "tests/fixtures/hook_gate_coverage/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f1a80ff7dc64cf97842ef2e94ebae3fdb7a765109589402e63f915f2ee6e8a23",
+     "status": "kismi"
+    },
+    "tests/fixtures/imza_cok_satirli_type_c/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7448f1afd8285aa46981df71ae68cfe03271ad080225464aa56f6ca1bf080d41",
+     "status": "kismi"
+    },
+    "tests/fixtures/infra_write_guard/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f9721eeed5987b803a769dd9a68ae018bc289f66bb32594ecf05e7cee43b7091",
+     "status": "kismi"
+    },
+    "tests/fixtures/init_project_iskelet/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6a86e2dba4fa6272dec25f00a012d629a9f20bc799b78e10421af2d534d7e268",
+     "status": "kismi"
+    },
+    "tests/fixtures/instruction_budget/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "0347f3f14a2f9c257c901cd2e2c6309c6c8f4ba15bb5d0ddba0cdf7435e37d6e",
+     "status": "kismi"
+    },
+    "tests/fixtures/intake_modul_carpismasi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6b38ad5f5a1c830413ff2910c89b1beebb9362785bcb39db40f3342baa05d849",
+     "status": "kismi"
+    },
+    "tests/fixtures/itg_alan_dolulugu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a081d37dcb535f8340ab5942965f2e16881b4fc27abb39b32a29c22ba094f816",
+     "status": "kismi"
+    },
+    "tests/fixtures/ix_doctor_kablolama/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "bb51f8031edbac8bc3026ee6b513183b681cd44e2893d974915d363370e6e859",
+     "status": "kismi"
+    },
+    "tests/fixtures/lock_modification_support/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c5bcdebb1b62dd7f358d1ad7364fba2275647b76b63e10da928e3fb116c93045",
+     "status": "kismi"
+    },
+    "tests/fixtures/manifest_secici_onay/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6657ced38af65f315164f2491c4ea3afb0e841639d00c6f5755202f910968e09",
+     "status": "kismi"
+    },
+    "tests/fixtures/mcp_profil_aktivasyon_offline/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9fa1f77468b4e2c58ea111487b1cc4698a8ef95589b6063b4742c45b3fc2584c",
+     "status": "kismi"
+    },
+    "tests/fixtures/mcp_sahte_sonuc_uclusu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "880854c820e36f4d8d39f8289b2e694b8f835094dff8de066bf780684525634a",
+     "status": "kismi"
+    },
+    "tests/fixtures/memory_yukleme_butcesi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "968a8b7fd2681be47dcb5f3e770007fccb018e93dc179c84900b56097de04121",
+     "status": "kismi"
+    },
+    "tests/fixtures/msgtext_uzunluk_guard/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "988b02f58ded510a281e07e988a0352e3dcf24b9af4bb785896161ea7a5d2227",
+     "status": "kismi"
+    },
+    "tests/fixtures/negatif_test_harness/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "76de740e07415efc1317da73b2f742e2eebe8e8eb43d6d37607437d51587a8e1",
+     "status": "kismi"
+    },
+    "tests/fixtures/olcum_yoklugu_sozlesmesi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "86c1238c41f3f53ac918eaf784661f643c472a2f2d1270bfedb409f235a81094",
+     "status": "kismi"
+    },
+    "tests/fixtures/overlay_kiyas_tabani/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1b59f88d7f9c1039535d377ea421f0cff4a5daaca9d0760be481ddd25eba1e58",
+     "status": "kismi"
+    },
+    "tests/fixtures/overlay_materyalize_atomik/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f152df7347332933d05bed71cd1abe87fc829d96938f1c03b157fd2821845f19",
+     "status": "kismi"
+    },
+    "tests/fixtures/overlay_oto_tazeleme/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "97e42eda3d5feb28438b17d7f18d2fceef440e1970f8b9714c9a4671c3a26af9",
+     "status": "kismi"
+    },
+    "tests/fixtures/paket_aciklama_dogrulanmadi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3f4c8ac0784d06b247423c6aae050667462429e086999f5b9d3597c1b4bcc312",
+     "status": "kismi"
+    },
+    "tests/fixtures/paket_indeks_siralama/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "89c53e9c7f52e5d9b4ea63083291242f87fc318237ef4affe56f49c17e93b049",
+     "status": "kismi"
+    },
+    "tests/fixtures/paket_uzanti_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a243461c4ccd4eca83c13615844602373b4761b8a04860fbc97afb1d62865a41",
+     "status": "kismi"
+    },
+    "tests/fixtures/populate_ddic_fail_closed/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2ead9426987700f434d864ed763b56357a4abce86b796ee7621522dddcd5af83",
+     "status": "kismi"
+    },
+    "tests/fixtures/populate_tables_unit_kind/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4a27c793e05ee084a82562e1e43c82d0f5abb1b50c8b5ae43d901e7723944a10",
+     "status": "kismi"
+    },
+    "tests/fixtures/post_tool_failure_bash/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f60cec71ee5f970dcf35107711e2938a52bbfcc22d2f25b19c723010544aa0cb",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/README.md": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a3def2a0785e189a71ae0d74b2f88d53aa78ad855178cc96278a4065b1a786c9",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/CLAUDE.core.md": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "140d31ef1e35ec4ada2dd272480ee2717b470582785fd38fe82d64484764e04e",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/claude/kesin-yasaklar.canonical.md": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "934a4ce0bb6ff739773f3e4c09c0150282e5831cd881344726167117fe85b0d8",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/komsu_proje/CLAUDE.md": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4944f89fc50d5c9718695fbc0744a0df6eb21667be8983ba81cf266069e0accc",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/komsu_proje/DOTGIT": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7bae5cf9248032d9a7859e8b417fc6082ca54107df1ccb53f6d96e0a64da6764",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/komsu_proje/SOURCE_CODES/ornek.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a4e88e63f01b6dd94e3769cf2b73fab9665ea74daa7bf668a3bc141989f7c5a3",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/cekirdek_ikizi/scripts/mevcut.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "372c0a4a818409213202f6384a7cbb40605186e27b1327ecc40c1dae21646876",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/sahte_proje/CLAUDE.md": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9e469098d9c95da10642e6ddb841e00362c2157858bca67039b411aa9bd7cc69",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/sahte_proje/DOTGIT": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7bae5cf9248032d9a7859e8b417fc6082ca54107df1ccb53f6d96e0a64da6764",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/sahte_proje/SOURCE_CODES/ornek.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a4e88e63f01b6dd94e3769cf2b73fab9665ea74daa7bf668a3bc141989f7c5a3",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/agac/sahte_proje/project.yaml": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6e8ff9b64831e0419b5ff82105e2c4739d7dcdcf19d50ae94fea2b508ab9cfa9",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/blok.json": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ce968f2fd754d69e2917f08617f29fcce50818d1d197921f00e915361f9fb77f",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/mesajlar/kirli.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a61c6b0c264edfeed13f2f55706f46ad594dd05e763f999bf2bdecc34d98e77c",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/mesajlar/temiz.txt": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "67f388bd92b2123398618c717e3382fdb53d038863d742673dd39fe692a11ffc",
+     "status": "kismi"
+    },
+    "tests/fixtures/pre_tool_guard/serbest.json": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e21beb27993c8394587d414984907fdb90f5ff2ad286db71319e38b53f30ca5a",
+     "status": "kismi"
+    },
+    "tests/fixtures/precommit_coreleak_failclosed/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "b10137cdea3d927f981b31cdc361e66c9bbb937cd563d7fdd6497c4a5b7e28f8",
+     "status": "kismi"
+    },
+    "tests/fixtures/precommit_junction_failclosed/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "5e14eb267db4de4b7641b27cbf05c90dbc5370057c30aac712534be9470eebc5",
+     "status": "kismi"
+    },
+    "tests/fixtures/precommit_kopya_surum_esligi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "332002bb19542dabf6236406abeb330fa49a51e74435bb20468547163d2783df",
+     "status": "kismi"
+    },
+    "tests/fixtures/prior_art_kb01/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "438e8eaba5187281f1850c0bc0f3718c052780bfa6b402654b848ed21a936f62",
+     "status": "kismi"
+    },
+    "tests/fixtures/proje_koku_varyantlari/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2b49c0a97b45d19de84ed552321894b92929cf14010088098b38b43e456c92ce",
+     "status": "kismi"
+    },
+    "tests/fixtures/proje_slug_tek_kaynak/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "59db7cc37f528fc313785c2513ddfba590c158cbd105b984b11dad6c9bc56d85",
+     "status": "kismi"
+    },
+    "tests/fixtures/push_atlandi_ve_kaynak_izi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4b1f8bfa4b0af5b78e196074a46acc18e19ecdea32374e9f7966feebc34f0c71",
+     "status": "kismi"
+    },
+    "tests/fixtures/push_onkontrol_olculemedi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "fd17c19cf2a2bb25d4d39b89b5912e70909de556bf52287aac9735888fdaa5a5",
+     "status": "kismi"
+    },
+    "tests/fixtures/rap_commit_ifade_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a44e27c81ea91880e7ec7543ee8c0ffce861c71208ff362c9efda2d3921d0c41",
+     "status": "kismi"
+    },
+    "tests/fixtures/recall_index_ozetsiz/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "0e2d7bae16e3e19f945999197edfa389b68d1bcaea208454b4805faae109278f",
+     "status": "kismi"
+    },
+    "tests/fixtures/retry_500_govde/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "847a605ad5c3a426dc5663662b02645053777848a56599308058530ff6e8cdb0",
+     "status": "kismi"
+    },
+    "tests/fixtures/reviewer_skip_sozlesmesi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "a5d46a0c806b55b05637ae993187da43b8227f3706d75683ff9d3c5a5866e278",
+     "status": "kismi"
+    },
+    "tests/fixtures/reviewer_tip_kapsam/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7c2bc8120156c754faae8c034488e69a69e5a7562f79efc61ae39ff06d1cf393",
+     "status": "kismi"
+    },
+    "tests/fixtures/run_all_ozet_kipi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "53534b71565a2aefeba63a479612357993acd46cddb4bed4d0cb1fa400c16f0e",
+     "status": "kismi"
+    },
+    "tests/fixtures/run_battery/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6ce9fb891797ecccf8bc2b5b91644f3aaba835994d0aa71f752f76ab63e5b484",
+     "status": "kismi"
+    },
+    "tests/fixtures/sablon_zorunlu_maddeler/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3007ec9a6f82fa374807917f81d5211ecd1da084d0a62735613e3fe7ae7ae895",
+     "status": "kismi"
+    },
+    "tests/fixtures/sap_gate_skip_sozlesmesi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e1b5a799660613191291860262daa850c069204d29b99dcdc4ef283d93720dcc",
+     "status": "kismi"
+    },
+    "tests/fixtures/seed_memory_hub_indeks/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "dfcb4a53ac38594c5b00aa6f2ba929b05c3693d1ea2cb114c85713a51a0153ab",
+     "status": "kismi"
+    },
+    "tests/fixtures/session_start_compact_dali/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "8dd9ba7a39c7540cf9e348d9c6ea320d4f41eda199dc6d27735ec1041214218c",
+     "status": "kismi"
+    },
+    "tests/fixtures/sessiz_olumsuzlama_2026_08_10/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e27980049f408ed62363e07b454e14da6c5cf9cd2ccc3ad0b486ff3d43b1ef5e",
+     "status": "kismi"
+    },
+    "tests/fixtures/shim_tazeleme/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "53f840516427884c89475c4742e523fba72e9ad37ebba48bb016004643a5bd99",
+     "status": "kismi"
+    },
+    "tests/fixtures/sir_gate/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1b0f33246ca9a53d24b623f4f0a40c254803adbf45cdee693f4f05ed5b0114ef",
+     "status": "kismi"
+    },
+    "tests/fixtures/sorgu_araclari_durustlugu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "25aec8e244f40df1faee8b65191a3c7d3c12e0742c09761781b4d30984e11cfa",
+     "status": "kismi"
+    },
+    "tests/fixtures/sorgu_basarisizligi_gorunur/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "f24f76849bd1b74c964156bae9cafa998f5e0d5be0b7834cff25a92ff2d34125",
+     "status": "kismi"
+    },
+    "tests/fixtures/statusline_token_esikleri/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e336742ff578caa056d3d5ee0651a8d4a9be4321925b046d5a6c30e058e46d60",
+     "status": "kismi"
+    },
+    "tests/fixtures/std_tablo_include_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c79d4516eedd8247296d3d878b73969cf620d6a072fd35c6574ccd2f6e7ea153",
+     "status": "kismi"
+    },
+    "tests/fixtures/suite_ortam_hijyeni/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "463728689f2f93de4462d4cec8b0d7b055b0b85f013d8b1f84106393cbeeade0",
+     "status": "kismi"
+    },
+    "tests/fixtures/team_setup_hook_kablolama/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "4a8852f8de80ab45a6f02dbd4f529503b0553cc5d8e616ce1b31e80a254bed8d",
+     "status": "kismi"
+    },
+    "tests/fixtures/tembel_desen/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3b625b0496b28b8aa2f9d06af43e8d1e8c0fa33617601d340c1add0a0d525945",
+     "status": "kismi"
+    },
+    "tests/fixtures/tier_fail_closed/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "c19a9ff20f110a5ad79b11d622372ddeb0420294fcf3f9968b799d4e1627aef8",
+     "status": "kismi"
+    },
+    "tests/fixtures/transport_gorev_istek_cevrimi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ade603f2816f6e55df27e16e7161a03dc640d32e1f49e94ec01fc0a9a597acf1",
+     "status": "kismi"
+    },
+    "tests/fixtures/transport_sifir_kaniti/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "babd1e0869ccf2555bf7fdf2df52ae81b3c33273fe742a51be460260b1e1b5c4",
+     "status": "kismi"
+    },
+    "tests/fixtures/ui5_blok_yorumu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "d6bae37db0d49d8c48a778400a4f139de9b60a408429641d44afa6b131835f6f",
+     "status": "kismi"
+    },
+    "tests/fixtures/ui5_t1_tirnak_sinifi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1e2c9033f7b1d4689241a373b4f0b50512de14dea5d28a821af3b1469fe2aab7",
+     "status": "kismi"
+    },
+    "tests/fixtures/ui_dogrulama_satir_sonu_kacis/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "0af76816daacdbdc356d033f0d1d56f8fa2db8f69c84b71b274ee51865f6e27d",
+     "status": "kismi"
+    },
+    "tests/fixtures/ui_odata_refs_kapsami/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9b1306e51873b491a0d7f3fdb2ac0c53cf3c85984ebc7cd2aa27ff661f3e607f",
+     "status": "kismi"
+    },
+    "tests/fixtures/ui_smoke_sapsiz/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "0a22135c5653351f0e559ca3f7e25db12abba6d557611d5e8d6de4b4936f3c33",
+     "status": "kismi"
+    },
+    "tests/fixtures/unit_run_guard_riski/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "b843376b1692e8c93410d9454e2f923bc2d48dd6f062d5f1c83771171b504e9e",
+     "status": "kismi"
+    },
+    "tests/fixtures/validator_kapsam_paydasi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1f5061f5cff78007cc92e68a76f1ebe21a948025d8c9f93c9782f5e9355442a6",
+     "status": "kismi"
+    },
+    "tests/fixtures/veri_yetki_guardlari/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3dbfbf7a09413a90afcdd97592990114f0248153e945a629d4d55b0665e6550b",
+     "status": "kismi"
+    },
+    "tests/fixtures/workflow_tetik_dupe/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "e12a7c758bd9816134239ff908d58eb29330cd5fb0f13cf1ec49173489a849cf",
+     "status": "kismi"
+    },
+    "tests/fixtures/worktree_blocklist/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "1fea621f4d7f55e81baa11b09731d19713dca0e4d89365cc7b4f09bb414aff83",
+     "status": "kismi"
+    },
+    "tests/fixtures/worktree_yasam_dongusu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "008edd29600666d694ad63216529d0abc9e6b7f2a5254abb617a08d6186bcdae",
+     "status": "kismi"
+    },
+    "tests/fixtures/worktype_alt_tur/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "7f7199b42f2f37a2b5147887c0de39ff77b160b55b58f7715f78273d0e54843a",
+     "status": "kismi"
+    },
+    "tests/fixtures/yabanci_proje_json_kacisi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "58a75b3ecadf7b0f181c76e6ad33d9eebdb0440bfc2f366f83f668ccaf246c27",
+     "status": "kismi"
+    },
+    "tests/fixtures/yazma_hukmu_durustlugu/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "46bfcbe8b4c5f724b7c942546aaebf8263ff271865b59319f87f7cf69055519e",
+     "status": "kismi"
+    },
+    "tests/run_battery.py": {
+     "decision": "uyarla",
+     "rule": "tests/*",
+     "sha256": "a9275973568df1b734f132bdc555cf75440553d63367122d2b6c6fbf1aeb9d09",
+     "status": "tamam"
+    },
+    "tests/run_fixture_tests.py": {
+     "decision": "uyarla",
+     "rule": "tests/*",
+     "sha256": "486d56f1302dddd5193ef456cf6bc3b3a2a77c6114b12fa0f0468970e451f2ca",
+     "status": "tamam"
+    },
+    "tests/run_guard_fixture_tests.py": {
+     "decision": "uyarla",
+     "rule": "tests/*",
+     "sha256": "0b1c9f78b439b6dd82de390491c4fa7846b6858fca901e9f4ca6f5ca2fcce263",
+     "status": "tamam"
+    }
+   },
+   "locked_at": "2026-09-14T15:27:38"
+  },
+  "PROVA": {
+   "commit": "aa328a7d241ece789f5dfbfa9dc6a2cf1f6c5893",
+   "files": {
+    ".claude/settings.json": {
+     "decision": "telafi",
+     "rule": ".claude/settings.json",
+     "sha256": "1362d0289571d5340f00bd278684fc32d67460be05ab18054074ed13b7ff79d7",
+     "status": "kismi"
+    },
+    ".gitattributes": {
+     "decision": "uyarla",
+     "rule": "*",
+     "sha256": "d5c26055e5f54e30acf34627738e461833dc9d7ca620532d16e343c13f53dffb",
+     "status": "kismi"
+    },
+    ".gitignore": {
+     "decision": "uyarla",
+     "rule": "*",
+     "sha256": "997eceebdf4554a09d8bbacc2b171e3fd5140f167e355be48ec690e473413bed",
+     "status": "kismi"
+    },
+    ".mcp.json": {
+     "decision": "telafi",
+     "rule": ".mcp.json",
+     "sha256": "7faf35ca3d3ddb8d1f11e8426c3844ef8501bb7661596f2a140437b7dcfa1fc4",
+     "status": "kismi"
+    },
+    "CLAUDE.md": {
+     "decision": "uyarla",
+     "rule": "CLAUDE.md",
+     "sha256": "275273648f3fb318acb0dca94ec4b8e1a7838679b8c85eba324846cadeae66f7",
+     "status": "kismi"
+    },
+    "README.md": {
+     "decision": "uyarla",
+     "rule": "*",
+     "sha256": "735efc1c2b28ff50664f8b39e07302f5bbcc83a1c2d17c6e5ac421fc5e1e1f91",
+     "status": "kismi"
+    },
+    "SOURCE_CODES/.gitkeep": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    },
+    "SOURCE_CODES/SD/ZSD001_CLC/.rules.md": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "b43b30b39a06f1b7c8e4197477993627cc7a8f920036f9dccd9ef471dbfe9175",
+     "status": "tamam"
+    },
+    "SOURCE_CODES/SD/ZSD001_CLC/README.md": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "cc618d7f34ceb1060e1320187b65ce5527f7081e0da3f9588f8b41b1961144be",
+     "status": "tamam"
+    },
+    "SOURCE_CODES/SD/ZSD001_CLC/SESSION_NOTES.md": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "7c195bbde7ca34e57ac6e766b8494fd608b362488d6778ef299a3b7a95010556",
+     "status": "tamam"
+    },
+    "SOURCE_CODES/SD/ZSD001_CLC/SPEC.md": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "88ae3f74239f19aa4c2a0346d8b398ad4d855c631175c328ebe4985f88cbfe70",
+     "status": "tamam"
+    },
+    "SOURCE_CODES/SD/ZSD001_CLC/ref_docs/README.md": {
+     "decision": "uyarla",
+     "rule": "SOURCE_CODES/*",
+     "sha256": "9283aa4198b07a2162e94e4e73a831b56ab6dd9917d59faa3fcf70228305ac57",
+     "status": "tamam"
+    },
+    "conn/.gitkeep": {
+     "decision": "uyarla",
+     "rule": "conn/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "kismi"
+    },
+    "governance/.gitkeep": {
+     "decision": "telafi",
+     "rule": "governance/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    },
+    "governance/CORE-INDEX.md": {
+     "decision": "alinmaz",
+     "rule": "governance/CORE-INDEX.md",
+     "sha256": "dcaa86cbc543480076196e555148d516bd24062c78906540e2430f304105bf8c",
+     "status": "-"
+    },
+    "governance/infra-findings.md": {
+     "decision": "telafi",
+     "rule": "governance/*",
+     "sha256": "3aa1e1340e1982936ae3b71f003a252b8ce25b49b7e4f1b94005defba2915f39",
+     "status": "tamam"
+    },
+    "playbook-local/.gitkeep": {
+     "decision": "telafi",
+     "rule": "playbook-local/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    },
+    "project.yaml": {
+     "decision": "uyarla",
+     "rule": "project.yaml",
+     "sha256": "64c5a6bfb34ff1a9c83330e7058417e28dc0af41a43ce70669477c222cb2a682",
+     "status": "tamam"
+    },
+    "scripts/git-hooks/pre-commit": {
+     "decision": "uyarla",
+     "rule": "scripts/git-hooks/*",
+     "sha256": "44b734b7686fa4d6ba1111cde50454f228bbe8473d25c5bf2b3be97de79aa7c1",
+     "status": "tamam"
+    },
+    "scripts/hook_shim.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/hook_shim.py",
+     "sha256": "9b2b31d3fef28c3474a31ed3252876c8c7c9dbce1ffcca0364b87cbc5bfbaf80",
+     "status": "-"
+    },
+    "scripts/validators-local/.gitkeep": {
+     "decision": "uyarla",
+     "rule": "scripts/validators-local/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    },
+    "standards-local/.gitkeep": {
+     "decision": "telafi",
+     "rule": "standards-local/*",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "status": "tamam"
+    }
+   },
+   "locked_at": "2026-09-14T15:27:38"
+  }
+ }
+}

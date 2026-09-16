@@ -1,0 +1,4104 @@
+{
+  "_aciklama": "IX (DEV_CORE + PROVA) -> aXet template aktarim haritasi. Kurallar YUKARIDAN ASAGI denenir, ilk eslesen kazanir (ozel desen once, genel desen sonra). Desen kaynak kokune gore POSIX yoludur; fnmatch '*' alt klasorleri de kapsar. decision: al (kopya/az uyarlama) | uyarla (icerik donusturulerek) | telafi (aXet'te mekanizma yok, baska yolla) | alinmaz (note ile gerekce ZORUNLU) | bekliyor (henuz karar yok). status: tamam | kismi | yapiliyor | planli | bekliyor | -. targets: AXET template kokune gore yollar; status=tamam iken diskte var olmalidir. Denetim: python maintenance/sync_check.py --source DEV_CORE=<yol> --source PROVA=<yol>",
+  "version": 1,
+  "sources": {
+    "DEV_CORE": {
+      "description": "IX metodoloji cekirdegi (git reposu). Dosya listesi: git ls-files."
+    },
+    "PROVA": {
+      "description": "IX ornek tuketici projesi: proje yapisi ve proje duzeyi dosyalar icin referans."
+    }
+  },
+  "rules": [
+    {
+      "source": "DEV_CORE",
+      "pattern": "CLAUDE.core.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md",
+        "core/sap/00-sap.md",
+        "maintenance/rule-coverage.md"
+      ],
+      "party": 1,
+      "status": "kismi",
+      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (40 madde; eksikler orada listeli)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "AGENTS.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "DEV_CORE'da SUPERSEDED; icerigi CLAUDE.core.md'de."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "MAINTENANCE.md",
+      "decision": "uyarla",
+      "targets": [
+        "maintenance/UPDATE-PROCEDURE.md"
+      ],
+      "party": 8,
+      "status": "tamam",
+      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "ONBOARDING.md",
+      "decision": "uyarla",
+      "targets": [
+        "docs/onboarding.md",
+        "skills/onboard/SKILL.md"
+      ],
+      "party": 5,
+      "status": "tamam",
+      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "PROJECT_BOOTSTRAP.md",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/new_project.py",
+        "scripts/new_package.py",
+        "README.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Proje iskeleti new_project.py (--sap: profil + yasak damgasi); paket katmani new_package.py."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "README.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "DEV_CORE repo tanitimi; aXet README ayri yazildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": ".gitignore",
+      "decision": "uyarla",
+      "targets": [
+        ".gitignore"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Kimlik dosyasi ve gecici dosya kaliplari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": ".gitattributes",
+      "decision": "uyarla",
+      "targets": [
+        ".gitattributes",
+        "templates/project/.gitattributes"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": ".github/*",
+      "decision": "telafi",
+      "targets": [],
+      "party": 7,
+      "status": "bekliyor",
+      "note": "CI barindirma belli degil (kullanici karari 2026-09-13); simdilik yerel pre-commit."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "attic/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Fosil/emekli dosyalar."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/kesin-yasaklar.canonical.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md",
+        "scripts/sap_stamp.py",
+        "maintenance/rule-coverage.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "A/B/C/D kodla zorlaniyor (paket yasagi, std_dml_scan ADR_0005_B, kilit silme araci yok, dil/etiket kontrolleri); fiziksel damga sap_stamp + doctor. Canli yazma davranisi DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/CLAUDE.project.template.md",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/AGENTS.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Proje talimat sablonu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/README.project.template.md",
+      "decision": "telafi",
+      "targets": [
+        "README.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Proje README sablonu uretilmez (projenin kendi icerigi); aXet README'ye kabul kontrolu + sorun giderme eklendi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/settings.template.json",
+      "decision": "telafi",
+      "targets": [
+        "config/permissions.json"
+      ],
+      "party": 1,
+      "status": "kismi",
+      "note": "Hook kayitlari tasinamaz; izin kurallari permissions.json'da."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/hook_shim.template.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "aXet'te hook yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/managed-policy.template.json",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "aXet karsiligi yok; kullanici kurmama karari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/CODEOWNERS.template",
+      "decision": "bekliyor",
+      "targets": [],
+      "party": 7,
+      "status": "bekliyor",
+      "note": "CI/barindirma kararina bagli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/conn_adt.template",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/assets/.conn_adt.example"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Yalniz yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/agents/adt-gateway.md",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Tek SAP yazicisi rolu yerine tek yazma kapisi (gate.check_write). Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/agents/infra-expert.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude takim altyapisi rolu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/agents/bug-expert.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/code-review/",
+        "skills-sap/sap-code-review/references/reviewer-brief.md"
+      ],
+      "party": 6,
+      "status": "tamam",
+      "note": "Genel brifing code-review'da; SAP inceleyici brifingi (2 faz, 4 soruluk kapi, HATA/EKSIK/ONERI) sap-code-review. Arac listesi/SendMessage/model secimi alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/agents/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/role-briefs.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "backend/frontend/sap-feature/sap-research -> agent araci icin rol brifingleri (ortak yasak/KVKK/ALV bloklari 00-sap.md'den birebir). Alt ajanin arac yuzeyi canli olculmedi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/commands/onboard.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/onboard/SKILL.md"
+      ],
+      "party": 5,
+      "status": "tamam",
+      "note": "%onboard her adimi calistirarak dogrular; .conn_adt okumaz; install once --dry-run."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/git-hooks/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/.githooks/pre-commit"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Sablon ayni; new_project core.hooksPath kurar."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kararlari-once-topla-sonra-dispatch.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kararlari-once-topla.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Takim/dispatch dili tek model + agent aracina indirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_deploy-lokal-test-onayi-sart.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_deploy-kullanici-testi-sonrasi.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_spec-mutabakat-gate.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_spec-mutabakat-once-build.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Proje/sprint izleri genellestirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yeni-teknoloji-once-kural-seti.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yeni-teknoloji-once-arastir.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "3 kayit tek derste birlestirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yeni-yetenek-once-arastir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yeni-teknoloji-once-arastir.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "3 kayit tek derste birlestirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_arastir-once-patinaj-uretim-gorev.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yeni-teknoloji-once-arastir.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "3 kayit tek derste birlestirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_scratch-dosyalari-tmp.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_template-drift-crlf-inflation.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_git-diff-ve-satir-sonu.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "lessons-learned PATTERN #15 ile birlestirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_powershell-utf8-bom-trap.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_powershell-bom-ve-tirnak.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "lessons-learned PATTERN #31 ile birlestirildi; aXet write BOM'suz olculdu."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_create-cds-view-xml-escape.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_inline-post-empty-source-trap.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_namespaced-dtel-ddl-tirnaksiz.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_adt-dtel-create-fixed.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_adt-get-ddic-read-fixed.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_tablo-yaratma-onay-gate.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_behavior-pool-main-empty-ccimp-trap.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_create-bdef-script-broken-use-blues-recipe.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_rap-editablefieldfor-key-create.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_abaplint-parser-error-gercek-olabilir.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_inactive-worklist-audit-http200-degil.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_tax-zero-check-master-data-first.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_ortak-value-help-sor.md",
+      "targets": [
+        "skills-sap/sap-rap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_klasik-alv-template-first.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_klasik-program-include-bol.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_detached-leading-abapdoc-class-push-400.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_source-based-class-type-c-trap-ve-vague-scan-bisect.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_generic-tool-program-spesifik-isim-verme.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_atc-priority-1-zorunlu.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_abap-decimal-odata-serialize-locale.md",
+      "targets": [
+        "skills-sap/sap-odata-backend/"
+      ],
+      "status": "tamam",
+      "note": "Musteri ortak sinif/paket adlari yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_api-call-ic-gateway-proxy.md",
+      "targets": [
+        "skills-sap/sap-odata-backend/"
+      ],
+      "status": "tamam",
+      "note": "Musteri ortak sinif/paket adlari yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_rapor-filtre-select-options-contains-standardi.md",
+      "targets": [
+        "skills-sap/sap-odata-backend/",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/scripts/"
+      ],
+      "status": "tamam",
+      "note": "Backend + UI5 (§6, check_filter_search_pattern)."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_fe-merge-key-padding-ve-playwright-runtime-tespit.md",
+      "targets": [
+        "skills-sap/sap-odata-backend/",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "status": "tamam",
+      "note": "Backend + UI5 §5.6."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_audit-alan-autofill-standardi.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/",
+        "skills-sap/sap-rap/",
+        "skills-sap/sap-odata-backend/"
+      ],
+      "status": "tamam",
+      "note": "Tablo, RAP determination ve DPC tarafi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/",
+        "skills-sap/sap-rap/",
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "claude/memory-seed/feedback_liste-ekrani-alv-standardi.md",
+      "targets": [
+        "core/sap/00-sap.md",
+        "skills-sap/sap-classic-abap/",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
+      ],
+      "status": "tamam",
+      "note": "Cekirdek ALV paritesi + klasik taraf + UI5 grid mekanigi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-infra-degisikligi-once-uyar-onay.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-olumsuz-donusu-kanitla-sorgula.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_arac-basarisizligini-zararsiz-sayma.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_fix-oncesi-where-used-blast-radius.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_karar-verimliligi-asiri-kapi-yok.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_placeholder-tuzagi-once-mevcut-artefakt.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_soru-once-tartis-act-etme.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_subagent-karar-kurali.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-table-read-pozisyonel-hizalama-tuzagi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_mcp-post-shell-en-master-lang.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_dogrula-once-flag-spekulatif-blocker-yasak.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/code-review/SKILL.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_done-tam-kapsam-dogrula.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/verify-done/SKILL.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_reviewer-checklist-vs-wired-validator.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/verify-done/SKILL.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_legacy-field-adlari-sistem-bagimli.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_playbook-once-oku.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_source-drift-pull-before-edit-model.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Zaten karsilaniyor (tohum parti kararlari 2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_legacy-full-dump-pattern.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/domain-dtel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "§6 tam dokum maddesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tek-soru-ve-bagimsiz-dokuman.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_bagimsiz-tam-dokuman.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_review-bulgulari-bug-checkliste-routing.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_inceleme-bulgusu-kontrol-listesine.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_legacy-draft-txt-files.md",
+      "decision": "telafi",
+      "targets": [
+        "templates/package/.rules.md.tmpl"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Paket kuralinda: paket kokundeki *.txt yeniden adlandirilmaz/silinmez."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_takim-sureklilik-gun-sonu-resume.md",
+      "decision": "telafi",
+      "targets": [
+        "skills/gun-sonu/SKILL.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Takim rolleri alinmaz; gun sonu + push %gun-sonu'da (kullanici karari)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_freestyle-ui-preflight.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "§0 PRE-FLIGHT."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_grid-liste-standardi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_grid-ui-local-run-popup.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-lokal-popup-hesap-kilidi.md",
+        "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "rules §4 ile ters cumle alinmadi; memory ayrimi dogru kabul edildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_i18n-tr-her-iki-dosya.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-i18n-iki-dosya.md",
+        "skills-sap/sap-ui5-fiori/scripts/check_i18n_keys.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_numeric-input-no-type-number.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "§5.4 + traps T2."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_playwright-ui5-firepress-model-api.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-runtime-sayiyla-dogrula.md",
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui-deploy-noninteractive.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Kimlik env'den; kimlik dosyasindan okuma alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui5-v2-plumbing-reuse-traps.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-plumbing-reuse-runtime-done.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-get-namespace-encode-trap.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Cozulmus arac hatasi; kodda quote(safe='')."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_agent-briefing-sendmessage-main.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "SendMessage mekanizmasi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_arac-kod-fix-lider-isi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Lider/gateway rolleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_baglanti-tutarsizligi-adt-blok.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "MCP surec onbellegi; CLI her cagrida yeni surec."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_belge-uygulama-ortak-ui-sablonu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Proje UI karari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_context-yonetimi-compact-clear.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude context/rewind; karsiligi cekirdek §10."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_csrf-cache-poison-self-heal-fixed.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Cozulmus; CSRF disk onbellegi kapali."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_dosya-bolgeleri-yazim-yetkisi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Ajan takimi bolgeleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gateway-git-commit-push-yasak.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Gateway rolu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hook-bakim-protokolu-t11.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hook-komut-project-dir-execform.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude settings.json."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kural-gate-lenmeli-yoksa-anlamsiz.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "IX gate/hook mimarisi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_lider-bloke-olmama-background-dispatch.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude arka plan ajani."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_lider-build-yapmaz-experte-dagit.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Ajan takimi rolleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_mcp-stdio-subprocess-deadlock.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "MCP stdio; aXet'te MCP yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ponumber-posnumber-global-iptal.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Proje alan karari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Cozulmus; hata sonrasi unlock kodda."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_resolved-tooling-bugs.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Cozulmus hata indeksi; maddeler ayrica kararlandi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_source-drift-name-collision-fixed.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Cozulmus; pull kaydi tip:AD anahtarli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/MEMORY.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Tohum indeksi; aXet'in kendi indeksi var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/*",
+      "decision": "bekliyor",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Yakalama kurali: yeni eklenen tohum dosyalari buraya duser; dosya bazinda karar ver, ozel satir ekle."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/rules/sap-source-protokolu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/SKILL.md",
+        "skills-sap/sap-adt-foundation/SKILL.md"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "§1 pull-before-edit foundation + yazma kapisi (kod ajani), §2 reviewer gate, §3 ADT sirasi sap-dev §5, §4 once-oku sap-dev §4, §5 tek yazici = alt ajana yazma verilmez, §6-7 klasor core/sap + .rules.md, §10 teyit tablosu sap-dev §6. Eksik: §12 paket naming/obje paket siniri validator'lari (parti 7)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/rules/ui5-freestyle.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/SKILL.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Rules + referanslar; §4 popup cumlesi memory/playbook ile ters -> alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/skills/intake-triage/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/skills/sap-abap-dev/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/SKILL.md",
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "Router: intake->profil->paket->is turu->ADT sirasi->kullanicidan gelenler->kapanis. operational-lessons: ADT protokol kismi foundation'da, ABAP/islem tuzaklari coding-patterns §5-6; clean-core-replacements -> coding-patterns §7. Eksik: obje tipi skill satirlari (RAP, klasik dialog, UI5 deploy, Adobe, dynpro uretimi) — skill'ler geldikce router tablosu guncellenir. Musteri FM'i (ekran uretici) ve deferred-triggers alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/skills/playwright-cli/*",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/ui-smoke/",
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Global npm -g ve Claude'a ozgu allowed-tools; yerine proje ici ui-smoke. Genel skill ihtiyaci dogarsa ayri yazilir."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/templates/spawn-brief.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/explore/references/brief-template.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Genel brifing sablonu; ara mesaj/arka plan/worktree karsiligi yok (dosya sonunda tablo). 2026-09-14: kardes taramasi satiri ve canli baglanti olcum satiri alindi; ara mesaj yedegi alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/workflows/*",
+      "decision": "bekliyor",
+      "targets": [],
+      "party": 7,
+      "status": "bekliyor",
+      "note": "CI barindirma kararina bagli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "docs/claude-rules-nasil-yazilir.md",
+      "decision": "telafi",
+      "targets": [
+        "docs/axet-davranis-olcumleri.md",
+        "skills/write-skill/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Ders ('yuklendi varsayma, calisan surumde olc') aXet kanaryasi + olcum tablosu olarak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "docs/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "DEV_CORE mimari kilavuzu ve yonetici sunumu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0001-*",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "main'e dogrudan commit yok (cekirdek §6)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0002-*",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/new_package.py",
+        "skills-sap/sap-dev/references/naming.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Paket ad bicimi new_package.py (Z/Y zorunlu, kurumsal bicim uyarisi) + naming.md §3. Musteri migrasyon ayrintisi alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0003-*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "L1-L4 + paths: kosullu yukleme mimarisi; aXet'te cekirdek + skill modeli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0004-*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/package/",
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "<source_root>/<MODUL>/<PKG>/ duzeni; bos modul klasorleri onceden acilmaz, paket acilinca olusur."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0005-*",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md",
+        "scripts/sap_stamp.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "A/C/D metin + gate.check_names; B kaynak taramasi std_dml_scan (ADR_0005_B dogrudan BLOCKER, kullanici karari); proje AGENTS.md damgasi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0006-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/",
+        "skills/code-review/",
+        "skills-sap/sap-code-review/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi CLI kapisinda. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0007-*",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Yerel MCP yok sayilir; ayni araclar CLI ile. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0008-*",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "m.Table govdesi §7 istisnasina indirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0009-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/value-help.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Ortak paket adlari yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0010-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Tier fail-closed. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0011-*",
+      "decision": "uyarla",
+      "targets": [
+        "core/sap/00-sap.md",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "KVKK kurali cekirdekte; data_guard CLI'da. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0012-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/alv-report.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0013-*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/package/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "ref_docs ayrimi paket sablonundaki ref_docs/README.md ve .rules.md klasor duzeni bolumunde; ADR metni alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0014-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/draft-and-locks.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0016-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/pull_state.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "adt_get canli hash kaydeder (.axet-code/sap-pull-state.json); adt_push_source kayit yok -> pull_before_edit_missing, canli degisti -> source_changed_since_pull. Test PBE 1-6 + mutasyon; canli okuma kaydi olculdu, canli push karsilastirmasi olculmedi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0017-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/SKILL.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "G1 icin ui-smoke (telafi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0018-*",
+      "decision": "telafi",
+      "targets": [
+        "core/00-temel.md",
+        "skills/explore/references/brief-template.md",
+        "skills-sap/sap-dev/references/role-briefs.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Takim/roster yapisi yok (ozel ajan calismaz, olculdu); devir core §7 + genel brifing sablonu + SAP rol brifingleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0019-*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook tabanli kural enforcement kapsama mimarisi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0020-*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Junction mimarisi; aXet merkezi klon + global config."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0021-*",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/sap_stamp.py",
+        "scripts/new_project.py",
+        "scripts/doctor.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kullanici karari 2026-09-13: yasak blogu proje AGENTS.md'ye damgalanir (kurulumdan bagimsiz yuklenir, --live olculdu); doctor kanonikle esligi denetler."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0022-*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/",
+        "core/sap/00-sap.md"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kapsam beyani her yazmada; intake skill + check_intake_signoff + gate."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/decisions/0023-*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude hook/plugin tartismasi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/reference/released_successors.json",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/data/released_successors.json",
+        "skills-sap/sap-code-review/references/clean-core.md"
+      ],
+      "party": 6,
+      "status": "tamam",
+      "note": "Tek kaynak foundation lib/data; kopya yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/tooling-radar.md",
+      "decision": "telafi",
+      "targets": [
+        "maintenance/UPDATE-PROCEDURE.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Hook + paralel ajan radari yok; UPDATE-PROCEDURE §7 elle periyodik radar + skill-audit."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/infra-test-recipes.md",
+      "decision": "uyarla",
+      "targets": [
+        "tests/"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "governance/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude takim/junction isletimi: operating model, CORE-INDEX, infra changelog, removed controls, plugin/vscode kurulumu, arastirma artigi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "intake/*",
+      "decision": "telafi",
+      "targets": [
+        "skills/skill-audit/"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Dis icerik gumrugu -> sirket marketplace skill_install oncesi inceleme."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "mcp_servers/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "MCP'siz shim + CLI. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14 tasima: aktivasyon hukmu uc degerli + worklist sondasi, push on-kontrol olculemedi isareti, sorgu araclari (SAP hata govdesi, kesin truncated, TADIR 5'li parca, FM takma adi, where-used paket ayrimi, kanonik worklist), reviewer fugr/func pin (IMPLEMENTATION.md §17)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-foundation.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Satir 754'teki duz metin sifre TASINMAZ (yer tutucu)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-mcp.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/tool-catalog.md"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "MCP semantigi -> CLI arac katalogu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/known-errors.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/",
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "ADT kismi foundation known-errors-adt; klasik 12.6 sap-classic-abap/references/known-errors-classic.md; UI5 12.1-12.4 sap-ui5-fiori/references/known-errors-ui5.md (12.5 ADT konusu)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/lessons-learned.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/",
+        "skills-sap/sap-adt-foundation/references/",
+        "skills-sap/sap-cds-ddic/references/cds.md",
+        "skills-sap/sap-dev/references/coding-patterns.md",
+        "skills-sap/sap-classic-abap/references/",
+        "core/sap/00-sap.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/intake-triage.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/modules/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/modules/"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Yalniz SD var; diger moduller uydurulmaz."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/itg-s2-signoff.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/doc-checklist.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "DOC-KD/FS/TS/CR + mekanik yardimci kolonu + bagimsiz inceleme brifingi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/core-script-development.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude altyapi script gelistirme incelemesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/cds-creation.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "status": "tamam",
+      "note": "Yazma oncesi kontrol listesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/domain-dtel-creation.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "status": "tamam",
+      "note": "Yazma oncesi kontrol listesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/struct-creation.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "status": "tamam",
+      "note": "Yazma oncesi kontrol listesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/table-update.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "status": "tamam",
+      "note": "Yazma oncesi kontrol listesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/packing-consumption-creation.md",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "status": "tamam",
+      "note": "Yazma oncesi kontrol listesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/rap-creation.md",
+      "targets": [
+        "skills-sap/sap-rap/references/checklists.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/rap-troubleshoot.md",
+      "targets": [
+        "skills-sap/sap-rap/references/checklists.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/ui-backend-rap-creation.md",
+      "targets": [
+        "skills-sap/sap-rap/references/checklists.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/classic-dialog-creation.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/checklists.md",
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "decision": "uyarla",
+      "party": 3,
+      "pattern": "playbook/checklists/adobe-forms-creation.md",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/checklists.md",
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+      ],
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/bug-checklist-frontend.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/checklists.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Olusturma 6 faz + FE-01..43; Otomatik sutunu script adi ya da yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/ui-freestyle-creation.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/checklists.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Olusturma 6 faz + FE-01..43; Otomatik sutunu script adi ya da yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/"
+      ],
+      "party": 6,
+      "status": "tamam",
+      "note": "bug-checklist-backend -> checklist-common/abap/cds-ddic/rap/odata-backend/clean-core (69/70; BE-19 sap-rap §A'da). Satir<->validator eslemesini test_checklists koda karsi dogrular."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-cds.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/cds.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Inline POST olcumu, DCL/replacement, sqlViewName/namespace, T1-T14 tuzaklari. Yeni CDS kabugu CLI'de yok (kullanici acar)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-domain-dtel.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/domain-dtel.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Cikti uzunlugu, built-in DTEL, aciklama iki yerde, 406 Accept. adt_domain_create formulu lib/utils/ddic_domain.py tek kaynaktan hesaplar + steps.pre_flight (2026-09-13, cevrimdisi 323/323). Domain sabit deger / DTEL domain bagi degistirme araci yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-tables-structures.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/tables-structures.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Yapi, table type, Z tablo. TYPE-POOL alinmadi. Tablo kabugu ve table type araci yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-lock-objects.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/lock-objects.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "CLI'de enqu tipi yok: yaratma/aktivasyon kullanici GUI'de, dogrulama CLI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-message-class.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/message-class.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "If-Match kok sebep + basarisiz varyant tablosu korundu. Mesaj yazma adt_msgclass_write (s4_private, birlestir, kilit silme adimi ALINMADI - Yasak C); cevrimdisi test, canli DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-packing-instruction-consumption.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/packing-instruction.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "PACK-14 UI yerlesimi alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-rap.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/layering-and-bdef.md",
+        "skills-sap/sap-rap/references/behavior-impl.md",
+        "skills-sap/sap-rap/references/service-publish.md",
+        "skills-sap/sap-rap/references/eml.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "§32-35 dagitildi. BDEF/CCIMP push ve DDLS/SRVD/BDEF kabugu CLI'de yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/ui-backend-rap.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/checklists.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Backend tarafi sap-rap; UI kismi sap-ui5-fiori freestyle §2.1/§2.4/§3 C6 (satir satir yeniden eslenmedi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-rap-eml-sales-order-create-update.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/eml.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-delete-guard.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/delete-guard.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "§1-6, §12-13 backend; §7-11 UI yarisi sap-ui5-fiori/references/delete-flow-ui.md."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-document-lock.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/draft-and-locks.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "UI kodu yalniz backend sozlesmesi olarak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-classes.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/classes.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Python REST sablonlari alinmadi; ccau/ccimp push araci yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-programs.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/programs-includes.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Text pool yazma araci yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/adt-fugr-functions.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/fugr-fm.md",
+        "skills-sap/sap-classic-abap/references/dynpro-gui-status.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "FUGR/FM yaratma ve FM push araci yok. Ekran uretici FM yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-classic-dynpro-datafield-screens.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/dynpro-dialog-fields.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-dynpro-gui-status-generation.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/dynpro-gui-status.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "SOAP-RFC kanali CLI'de yok; musteri FM'i yer tutucu, model tarif eder."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-abap-email.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/email.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/templates/*",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-classic-abap/templates/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "classic-alv-list + classic-dynpro-dialog alindi (kaynak sablondaki olu exit modulu, TABLES+FOR, PAI CLEAR ok_code sapmalari duzeltildi); ek olarak 4 ALV sablon programi + ekran ureteci kiti canli SAP kaynagindan (deploy_common_package satiri)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/coding-patterns.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "§22-25 -> §1-4; proje-dogrulanmis range table type ornek tablosu alinmadi (sistemde arama/sor kuralina cevrildi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/odata-services.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-odata-backend/references/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "create_by_url+authenticate(password) calisan-yontem ornegi alinmadi (kimlik bilgisi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/ui-freestyle-odata-v2.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "freestyle-odata-v2, list-grid-alv, app-skeleton, deploy-and-local-run."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-kullanici-dokumani-pdf-ekran-goruntulu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md",
+        "skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Dogrulama kodu script'e donustu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-belge-canli-teyit-turu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/live-confirmation-tour.md"
+      ],
+      "party": 4,
+      "status": "kismi",
+      "note": "CLI okuma araclariyla yazildi; canli kosum ve alt ajanin bash erisimi DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-cok-katmanli-degisiklik.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/verify-done/references/cok-katmanli-degisiklik.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Tam yontem tablosu bagimsiz-tam referans olarak alindi; ajan takimi ifadeleri yerlesik agent aracina uyarlandi; %verify-done cok katmanli degisiklikte bu referansi okutur."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/00-discipline-and-principles.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md",
+        "skills-sap/sap-dev/SKILL.md",
+        "skills-sap/sap-dev/references/coding-patterns.md",
+        "skills-sap/sap-classic-abap/references/alv-report.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "3 deneme DUR kurali cekirdek §1; spec otoritesi sap-dev §6; ekip ABAP kurallari coding-patterns §5; hotspot->CALL TRANSACTION alv-report §4. Referans script klasoru ve baglanti bolumu alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-infra-fix-proseduru.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude altyapi fix proseduru."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-sistem-denetimi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "DEV_CORE sistem denetimi runbook'u."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-talimat-dosyasi-bakimi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude talimat dosyasi bakimi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/README.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "DEV_CORE playbook indeksi; aXet'te skill description'lari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/*",
+      "decision": "bekliyor",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Yakalama kurali: yeni playbook dosyalari buraya duser; dosya bazinda karar ver, ozel kural ekle."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "profiles/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/profiles.md"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Etiket blogu REGISTRY/TIP_PROFIL_KISITI ile testli; matris rehber."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sap_adt_lib.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: aktivasyon govde hukmu True/False/None + ayirt edici worklist sondasi (olcemeyen sonda basari degil), syntax_check valid uc degerli (IMPLEMENTATION.md §17)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sap_client.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: SAP hata govdesi (last_sql_error), arama tip suzgeci elemesi gorunur, push on-kontrol olculemedi isareti, kanonik worklist + where-used paket ayrimi yardimcilari (IMPLEMENTATION.md §17)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/object_types.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/object_types.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/auth/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/cloud/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 2,
+      "status": "-",
+      "note": "Tetik: ilk s4_public/btp_abap SSO projesi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/session/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 2,
+      "status": "-",
+      "note": "Cagri basina surec; force_unlock Yasak C riski."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/workflows/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 2,
+      "status": "-",
+      "note": "Araclar akisi kendi icinde uyguluyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/claude_*.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude overlay/yol yardimcilari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/infra_yuzeyi.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude infra yazma yuzeyi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/inject_paths.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook enjeksiyon yollari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/yasaklar_stamp.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Fiziksel damga."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/ddic_semantics.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ddic_semantics.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kod ajani tasidi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/kapsam.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/kapsam.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kod ajani tasidi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/kaynak_tarama.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/kaynak_tarama.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kod ajani tasidi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/project_config.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/project_config.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kod ajani tasidi. Yeniden yazildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/__init__.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/__init__.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/utils/*",
+      "decision": "alinmaz",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "-",
+      "note": "Kalanlar: console (CLI basinda UTF-8 ile telafi), ddic_aktivasyon (populate 2026-09-14 tasindi ama modul yine alinmadi: satir basina adt_activate/composite; tetik: cok-objeli tek istek DDIC aktivasyonu ihtiyaci), drift_imzasi (aXet karsiligi yok), send_mail (konu disi). Yeni dosya gelirse dosya bazinda satir ac."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/run_review.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/_gate_status.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_itg_signoff.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/scripts/check_intake_signoff.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "P6 (acili yer tutucu + [x]) reddi eklendi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_instruction_budget.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/doctor.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Cekirdek <=150 satir kontrolu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_kesin_yasaklar.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/sap_stamp.py",
+        "scripts/doctor.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "denetle/kanonik_denetle: guncel/farkli/yok/bozuk, ikinci kopya, A-D tamligi. tests/test_sap_stamp (8)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_core_not_committed.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 7,
+      "status": "-",
+      "note": "aXet projesinde core junction'i yok; sir dosyasi kilidi project_precommit'te."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_settings_template_sync.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook sablonu senkronu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_memory_index.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Claude auto-memory kesme siniri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_hook_injected_paths.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook enjeksiyonu; skill link kontrolu doctor'a ayri yazilacak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_core_index_fresh.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Junction arama korlugu cozumu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_project_root_resolution.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Junction kok tuzagi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_abaplint.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_abaplint.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_amdp_comment_apostrophe.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_amdp_comment_apostrophe.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_audit_fields_autofill.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_audit_fields_autofill.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_bdef_backtick.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_bdef_backtick.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_cds_currency_reference.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_cds_currency_reference.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_decimal_write_to.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_decimal_write_to.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_deprecated_annotations.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_deprecated_annotations.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_docu_itf_line_width.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_docu_itf_line_width.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_dtel_creation_labels.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_dtel_creation_labels.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_method_param_type_c.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_method_param_type_c.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_rap_managed_etag.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_rap_managed_etag.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_released_objects.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_released_objects.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_sap_active_version.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_active_version.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_sap_master_language.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_master_language.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_sap_struct_consistency.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_struct_consistency.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_standard_table_fields.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_standard_table_fields.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_struct_field_dtel_active.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_struct_field_dtel_active.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_table_field_drop.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_table_field_drop.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. ack_drop yasak (gate)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_window_function_compatibility.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_window_function_compatibility.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_package_rules_present.py",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/doctor.py",
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "doctor: SAP projesinde .rules.md eksik paket FAIL."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_package_registry_fresh.py",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/doctor.py",
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "new_package.py --index --check (cikis 1) + doctor WARN."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_package_naming.py",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/check_package_naming.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Naming tablosu regex'leri, istisna, include turetme, 26 karakter; tests/test_package_naming (13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_rap_readonly_consumption.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_rap_readonly_consumption.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Kural B (yerel BDEF yoksa) OLCULEMEDI, bloklamaz. rap_cds_creation zincirinde."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_reuse_gate.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_reuse_gate.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Kok = proje dizini; tarama siniri measured=false; musteri master adlari cikarildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_domain_output_length.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_domain_output_length.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Desteklenmeyen uzanti measured=false. adt_domain_create artifact_path ile domain_creation_csv zincirine bagli (2026-09-13); artefaktsiz SKIP gorunur. Formul lib/utils/ddic_domain.py ortak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_fs_no_analysis_log.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/"
+      ],
+      "party": 4,
+      "status": "planli",
+      "note": "DOC-FS-05/06a mekanik sayim; simdilik inceleyici yargisi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_filter_search_pattern.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Proje klasorune calisan bagimsiz script + KAPSAM; tests 38/38."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_list_view_grid.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Proje klasorune calisan bagimsiz script + KAPSAM; tests 38/38."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_ui5_freestyle_traps.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Proje klasorune calisan bagimsiz script + KAPSAM; tests 38/38."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/validators/*",
+      "decision": "bekliyor",
+      "targets": [
+        "skills-sap/"
+      ],
+      "party": 7,
+      "status": "-",
+      "note": "Yakalama kurali: dosya bazinda satirlar var (run_review zinciri, pre-commit, skill script'leri); yeni validator buraya duser, dosya bazinda karar ver."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/pre_tool_guard.py",
+      "decision": "telafi",
+      "targets": [
+        "config/permissions.json",
+        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Glob ile ifade edilebilen kurallar deny; SAP kurallari CLI kapisinda."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/infra_write_guard.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/install.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Merkezi klon edit deny (clone_rules), canli olculdu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/pull_before_edit.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/pull_state.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Hook yerine yazma kapisinda zorunlu kontrol (edit ani degil push ani). Canli okuma kaydi olculdu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/intake_triage.py",
+      "decision": "telafi",
+      "targets": [
+        "core/sap/00-sap.md",
+        "skills-sap/sap-intake-triage/"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/itg_backstop.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kapsam beyani yazma kapisinda. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/recall_inject.py",
+      "decision": "telafi",
+      "targets": [
+        "skills/recall/",
+        "core/00-temel.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Elle cagrilan recall skill'i + cekirdek §9 satiri; otomatik tetik yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/session_start.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/session_brief.py",
+        "core/00-temel.md",
+        "scripts/doctor.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Hook yerine cekirdek §0: ilk yanittan once session_brief.py (git durum capasi, template guncelligi, doctor, aktif paket, is listesi, devir notlari). Kullanici karari 2026-09-13."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/pre_compact.py",
+      "decision": "telafi",
+      "targets": [
+        "skills/handoff/SKILL.md",
+        "skills/gun-sonu/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "aXet'te compact oncesi tetik yok; %handoff + %gun-sonu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/config_change_guard.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/behavior_manifest.py",
+        "scripts/doctor.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "ConfigChange hook yok; doctor manifest + template yuzeyi kontrolu. Onay (generate) bash deny ile modele kapali."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/skill_injector.py",
+      "decision": "telafi",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Skill description tetigi + cekirdek §8."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/sap_worktype_hint.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/hints.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "checklist_hint CLI ciktisina eklenir (hook yok); alt-tur ayrimi alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/post_validate.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/project_precommit.py",
+        "templates/project/validators-local/README.md"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Edit ani yerine commit ani."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/post_tool_failure.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/hints.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "known_errors_hint CLI hata ciktisina eklenir; ATC Prio-1 ekseni alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/watchdog_launch.py",
+      "decision": "telafi",
+      "targets": [
+        "skills/explore/references/brief-template.md",
+        "core/00-temel.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Hook yok; brifing kontrolleri (amac, sinirlar, kanit kurallari, cikti bicimi, engellenince bildir) brifing sablonunda prosedur olarak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/hooks/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "tooling_radar_check, instructions_loaded_log, README: Claude isletimine ozgu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/git-hooks/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/.githooks/pre-commit",
+        "scripts/project_precommit.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Proje pre-commit: kimlik dosyasi, sir deseni, paket adlandirma, validators-local, SAP cevrimdisi reviewer. tests/test_precommit (16)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/tests/test_csrf_header_injection.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/tests/test_lib_regressions.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "5/5."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/tests/test_push_readback_mismatch.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/tests/test_lib_regressions.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "Kodu cagirmayan 2 test alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/tests/test_search_objects_type_filter.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/tests/test_lib_regressions.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "adt_search_objects: truncated alani yok, tavan 550 (tool-catalog)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/tests/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook/commit-mesaji guard testleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/ui-smoke/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/ui-smoke/"
+      ],
+      "party": 4,
+      "status": "kismi",
+      "note": "Cevrimdisi test (playwright yoksa DUR); gercek tarayici kosusu DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/abaplint/*",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/abaplint/",
+        "skills-sap/sap-code-review/scripts/abaplint_run.py",
+        "skills-sap/sap-code-review/references/abaplint.md"
+      ],
+      "party": 6,
+      "status": "tamam",
+      "note": "Config ve pin foundation'da tek kaynak; cok dosyali inceleme kosucusu sap-code-review. FUGR yerlesimi yok (olculmez)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/create_*.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/shells.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "adt_post_shell tipe ozel kabuk: ddls/srvd/bdef/fugr/func/msag/enqu/ttyp; mesaj yazma adt_msgclass_write (cevrimdisi 323/323; canli DOGRULANMADI). KALAN: ddlx/dcl/srvb kabugu, ttyp satir tipi duzeltme, text pool."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/populate_*.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "2026-09-14 (D3): scripts/sap_adt_populate.py + scripts/sapadt/populate.py tasindi — turler domain, dtel, cds, enqu, msag. Her satirin her adimi sap_adt_cli.calistir uzerinden (kapi + reviewer + arac; ikinci yazma yolu yok); yazmadan once TUM planli cagrilar on geciste kapidan gecer (red -> 0 yazma, exit 2). --force-recreate tasindi: yalniz domain/dtel/cds + --only <TEK AD>; DELETE calistir'dan gecer, delete_verified okunur (dogrulanamazsa kosum durur, kalan satirlar islenmedi); oneri metni tek ada daraltilir. enqu varligi adt_get(enqu) salt-GET sondasi (yeni). Kilit silme/temizleme cagrisi yok; kilit cakismasi satir HATA + SM12 tarifi, kosum devam. Tablolar ALINMADI: tablo kabuğu reçetesi yok (D2 ile birlikte, ilk canlı başarıdan sonra değerlendirilir). Alinmayan kaynak ozellikleri: CDS ad on-ek whitelist / sprint gate / TD spec on kontrolu, msgno zfill (3 hane zorunlu), DTEL datatype/length/decimals kolonlari (domain'den okunur). Cevrimdisi testler tests/test_populate.py + tests/test_populate_hat.py; canli SAP DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/push_*.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "adt_push_source bdef/ccimp/ccau/func eklendi (cevrimdisi test). KALAN: srvb/msag/enqu/ccdef/ccmac push, FM RFC-enable (SE37). 2026-09-14: sozdizimi on-kontrolu olculemediyse syntax_precheck=olculemedi + bildirim (CLI satiri alinmadi: push CLI yok)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/deploy_ui.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/deploy_ui.py"
+      ],
+      "party": 4,
+      "status": "kismi",
+      "note": "prepare/verify/deploy; deploy kullanici OK sonrasi, izin 'ask' + fiori/npm deploy deny. Gercek deploy DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/deploy_common_package.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/templates/screen-gen/DEPLOY.md",
+        "skills-sap/sap-classic-abap/references/screen-gen-kit.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Ortak paket kurulumu: ekran ureteci kiti (yapi, tablo tipi, FUGR, FM) + 4 ALV sablon programi (canli SAP kaynagindan salt-okur alindi, ZBC000 notr ad, varsayilan donor SAPLKKBL/STANDARD). Ortak value-help CDS kismi alinmadi (musteri objeleri). SAP'de derlenmedi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/activate_object.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_activate."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/delete_object.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_delete (Z/Y, yazma kapisi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sap_set_object_description.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/description.py"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "adt_set_description (s4_private, transport zorunlu; kilit silinmez). Cevrimdisi 24 test; canli once DDLS sonra class. srvb/prog/dtel unsupported_type."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/syntax_check.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_syntax_check (yazma sinifi). 2026-09-14: kontrol kosmadiginda valid=None (NOT MEASURED), sahte 'hata var' yok; DDIC CLI parcasi alinmadi (CLI yok)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/check_package.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_get object_type=package + adt_package_contents package_verified. Paket tipi canli DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/download_*.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_package_contents + tek tek adt_get; dosyayi model yazar. Toplu indirme araci yok (gerek gorulmedi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/get_*.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/diag.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_object_structure, adt_system_info (cikti allowlist). Canli DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/list_*.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/diag.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_revisions; link deseni (atom:link) canli DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/run_*.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "ATC/logon(ping+adt_get)/veri onizleme (adt_table_read+adt_sql_query KVKK)/SQL var. Pretty printer yok: ertelendi (deger dusuk; metni dondurur, kaydetmez)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/search_objects.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_search_objects."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/where_used.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_where_used. 2026-09-14: paket (DEVC) dugumleri obje sayisindan ayrildi; yalniz paket donerse ok:false where_used_belirsiz. CLI kodu alinmadi (CLI yok)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/worklist_audit.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_inactive_objects TADIR DELFLAG capraz kontrolu; temizleme (yazma) alinmadi. 2026-09-14: kanonik worklist ayristirma, TADIR 5'li parca (olculemeyen ad null + ok:false, sayim yok)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/source_drift.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/pull_state.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Ezme riski pull_state ile kapali. Repo<->canli fark raporu kullanici karariyla ALINMADI (2026-09-13 Q1: yeni okuma araclari evet, fark raporu haric)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sap_sync_pull.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/pull_state.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "adt_get pull kaydi yazar; dosyayi model yazar."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sap_doctor.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/diag.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "sap_doctor araci: yerel on kosul + canli logon/CSRF; URL/client/kullanici basilmaz; probe objesi katmani yok. Canli DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/verify_ui_static_assets.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/verify_ui_static_assets.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Gercek ICF DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/check_ui_odata_refs.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/check_ui_odata_refs.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Cevrimdisi $metadata dosyasi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/build_cbo_inventory.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 7,
+      "status": "-",
+      "note": "Tetik: canli SAP envanteri ya da CI karari gelince yeniden degerlendir."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/switch_tier.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/switch_tier.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "JSON cikti, dosya icerigi basilmaz; celisen tier -> UNKNOWN."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/setup_credentials.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/setup_credentials.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "getpass iki kez; input()/--json parola yolu alinmadi; etkilesimsiz cagri reddedilir (Git Bash'te calismaz, PowerShell)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/login_saml_sso.py",
+      "decision": "uyarla",
+      "targets": [],
+      "party": 5,
+      "status": "planli",
+      "note": "Tetik: ilk s4_public/btp_abap projesi. Riskler: duz metin .saml_cookies.json, .conn_adt parolasini IdP formuna doldurma, playwright bagimliligi, SAP API politikasi; once foundation saml_auth_provider incelenir."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/doc_tools.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/doc_tools.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Kapsam satiri + check."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/build_doc_pdf.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/build_doc_pdf.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "--also parca birlestirme."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/build_kd_pdf.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/build_kd_pdf.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Projeye ozel kisimlar atildi, JSON esleme."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/capture_kd_screens.js",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/capture_kd_screens.js"
+      ],
+      "party": 4,
+      "status": "kismi",
+      "note": "Yapilandirmali adimlar; yalniz --dry-run test edildi, gercek UI5 kosumu DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/html_to_pdf.js",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/html_to_pdf.js"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Gercek PDF olculdu (Edge)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/gen_field_table.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/gen_field_table.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/doc_equivalence_check.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/doc_equivalence_check.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "9 senaryo testi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/program_to_spec.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/program_to_spec.py"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/scaffold_classic_program.py",
+      "decision": "al",
+      "targets": [
+        "skills-sap/sap-classic-abap/scripts/scaffold_classic_program.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Stdlib, SAP'ye yazmaz. Kaynaktaki bayat ALV sinifi ve include adlari duzeltildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/refresh_released_successors.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/scripts/released_successors.py"
+      ],
+      "party": 6,
+      "status": "tamam",
+      "note": "Ag erisimi yok: refresh --source <yerel json>; bos/kuculen harita yazilmaz (lessons PATTERN #14). SAP JSON guncel alan adlari DOGRULANMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/bootstrap_package.py",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Farklar: modul addan cikarilir; soneksiz (cloud) paket desteklenir; Y onekli pakette sinif YCL_<govde> (DEV_CORE yalniz Z atar); SAP'de paket yaratilmaz; bos klasorlere .gitkeep; owner varsayilani yer tutucu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/build_package_index.py",
+      "decision": "uyarla",
+      "targets": [
+        "scripts/new_package.py",
+        "scripts/doctor.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "governance/package-registry.md yerine <source_root>/PAKETLER.md (--index); --check ve doctor WARN = check_package_registry_fresh karsiligi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/genericize_common.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "IX public-core sizinti altyapisi; aXet'te UPDATE-PROCEDURE uyarlama kurali metinle."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/sprint_gate_check.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Proje sprint planina bagli; populate 2026-09-14 tasindi ama sprint gate ALINMADI (proje sprint plani template'te yok). Telafi intake S2 mutabakati + verify-done + populate on gecis kapisi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/td_spec_check.py",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-intake-triage/",
+        "skills-sap/sap-dev/SKILL.md",
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Spec otoritesi sap-dev §6, intake S2 artefakti, CDS-NS/STR-SPEC checklist satirlari; TD klasor duzeni proje surecine bagli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/merge_pr.py",
+      "decision": "bekliyor",
+      "targets": [],
+      "party": 7,
+      "status": "bekliyor",
+      "note": "Barindirma kararina bagli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/behavior_manifest.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/behavior_manifest.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Proje kipi hash; template kipi git tabanli. tests/test_behavior_manifest (14)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/build_recall_index.py",
+      "decision": "telafi",
+      "targets": [
+        "skills/recall/scripts/recall.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Indeks dosyasi yerine her cagrida canli tarama."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/foreign_project_audit.py",
+      "decision": "telafi",
+      "targets": [
+        "skills/skill-audit/scripts/audit_surface.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "aXet yuzeyine uyarlandi: otomatik baglam dosyalari, .axet-code.json ezme kontrolu, skill/komut risk desenleri."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/init_project.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/new_project.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/ix_doctor.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/doctor.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/seed_memory.py",
+      "decision": "telafi",
+      "targets": [
+        "memory/MEMORY.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Hafiza repoda, context_paths ile yuklenir."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/team_setup.py",
+      "decision": "telafi",
+      "targets": [
+        "scripts/install.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "scripts/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Kalanlar Claude/IX isletimi: acik_madde_tarayici, agent_log, agent_time_report, agent_watchdog, build_core_index, guest_mode, inspector, setup_plugins, statusline, sync_yasaklar. YENI script buraya duserse sync_check 'yeni' listesinde gosterir: karar ver."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/01-naming.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/naming.md",
+        "templates/package/.rules.md.tmpl"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Tum bolumler naming.md'de; kaynaktaki olcum/karar tarihceleri ve musteri adi alinmadi; legacy bicimler §4.12 genel kural olarak."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/02-coding-backend.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-odata-backend/references/backend-coding.md",
+        "skills-sap/sap-odata-backend/references/segw-service.md",
+        "skills-sap/sap-odata-backend/references/dpc-crud.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "FLP/PFCG/UI5 kismi parti 4; rol metni alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/03-coding-ui-fiori.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Musteri ozel §12.3/§12.4 alinmadi. Kaynaktaki celiskiler referanslarda taviriyla yazili."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/04-documentation-fs-ts.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/SKILL.md",
+        "skills-sap/sap-fs-ts-docs/references/",
+        "skills-sap/sap-fs-ts-docs/templates/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "fs/ts/kd-authoring + traceability + sablonlar; F1 uretimi %sap-classic-abap'a, S0/S1/S2 %sap-intake-triage'e bagli. Sirket fs-generator uydurma-yok kurallari + fs2ts 4 seviyeli clean-core agaci/5 parca uyarlandi (2026-09-13)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/05-coding-rap.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/SKILL.md",
+        "skills-sap/sap-rap/references/layering-and-bdef.md",
+        "skills-sap/sap-rap/references/behavior-impl.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "§4 naming sap-dev naming.md'de; §5 numbering ic celiskisi olculmus yontemle yazildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/06-coding-classic-dialog.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/programs-includes.md",
+        "skills-sap/sap-classic-abap/references/alv-report.md",
+        "skills-sap/sap-classic-abap/references/dynpro-dialog-fields.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/07-output-forms.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/08-classic-gui-f1-help.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/09-packing-instruction-consumption.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/packing-instruction.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/*",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/README.md",
+        "skills-sap/sap-dev/SKILL.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "standards/README indeksinin karsiligi skill indeksi + sap-dev is turu tablosu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "templates/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/package/",
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "new-package sablonlari templates/package/ altinda. Legacy ad bicimleri (<PKG>_CL_*, ciplak mesaj sinifi) ve kaynaktaki olcum/karar notlari alinmadi; RAP servis tanimi/binding, interface, exception, draft tablo, number range, enhancement satirlari standarttan eklendi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/*",
+      "decision": "uyarla",
+      "targets": [
+        "tests/"
+      ],
+      "party": 7,
+      "status": "kismi",
+      "note": "sir_gate, gitignore, manifest, precommit failclosed, paket uzanti, git sorgu, reviewer skip -> tests/. Validator bad/good ciftleri skills-sap testlerine bekliyor. Claude hook/MCP/overlay/worktree/statusline alinmaz. 2026-09-14: aktivasyon/push on-kontrol/sorgu araclari/reviewer fugr fixture'lari foundation unittest'lerine uyarlandi (test_verdict_*). Salt-okur kum temizligi (_sil) alinmadi: kok tests/_helpers.py zaten chmod'lu rmtree; foundation suite izole TMP'de 0 test kumu birakti (tek artik node-compile-cache)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/*",
+      "decision": "uyarla",
+      "targets": [
+        "tests/"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Stdlib unittest kosucusu (87 test); fixture JSON bicimi alinmadi."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "CLAUDE.md",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/AGENTS.md",
+        "maintenance/rule-coverage.md"
+      ],
+      "party": 1,
+      "status": "kismi",
+      "note": "Madde bazli: rule-coverage.md bolum 4."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "project.yaml",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project-sap/sap-project.json"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "source": "PROVA",
+      "pattern": ".mcp.json",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/",
+        "skills-sap/sap-gui-scripting/"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "sap-adt -> sap-adt-foundation CLI; sap-gui -> skills-sap/sap-gui-scripting (model yazar, gelistirici calistirir)."
+    },
+    {
+      "source": "PROVA",
+      "pattern": ".claude/settings.json",
+      "decision": "telafi",
+      "targets": [
+        "config/permissions.json"
+      ],
+      "party": 1,
+      "status": "kismi",
+      "note": ""
+    },
+    {
+      "source": "PROVA",
+      "pattern": "SOURCE_CODES/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/package/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Paket katmani ornegi: templates/package/ ile ayni yapi."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "conn/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/switch_tier.py",
+        "skills-sap/sap-adt-foundation/scripts/setup_credentials.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Cok sistem: setup_credentials --slot <AD> -> conn/<AD>.env, switch_tier <AD> etkinlestirir (59a16c0, cevrimdisi test). Canli akis DOGRULANMADI."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "governance/CORE-INDEX.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Junction arama indeksi."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "governance/*",
+      "decision": "telafi",
+      "targets": [
+        "templates/project/.axet-code/memory/project_is-listesi.md",
+        "scripts/new_package.py"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Kararlar -> proje hafizasi; ertelenmis isler + RESUME + arsiv -> is listesi; paket kaydi -> PAKETLER.md. CORE-INDEX ve infra-findings alinmaz."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "playbook-local/*",
+      "decision": "telafi",
+      "targets": [
+        "templates/project/AGENTS.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Proje overlay -> .axet-code/skills/<ad>/SKILL.md (AGENTS.md Proje kurallari satiri)."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "standards-local/*",
+      "decision": "telafi",
+      "targets": [
+        "templates/project/AGENTS.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Proje overlay -> .axet-code/skills/."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "scripts/validators-local/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/validators-local/README.md"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "Yerel validator sozlesmesi; pre-commit calistirir."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "scripts/hook_shim.py",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "Hook yok."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "scripts/git-hooks/*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/.githooks/pre-commit",
+        "scripts/project_precommit.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "DEV_CORE scripts/git-hooks/* ile ayni karsilik (fe31b0f; tests/test_precommit 16)."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "*",
+      "decision": "uyarla",
+      "targets": [
+        "templates/project/.gitignore",
+        "templates/project/.gitattributes",
+        "scripts/doctor.py"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": ".gitignore (.conn_adt git'e kapali, doctor FAIL kontrolu) + .gitattributes alindi; proje README sablonu uretilmez; CLAUDE.md/.claude/.mcp.json/hook_shim alinmaz; pre-commit/validators-local parti 7."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "claude-plugin:ui5",
+      "version": "0.1.8",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "MCP linter/API referansi alinmadi (yerel MCP yok); 'UI5 API referansini oku' kurali + opsiyonel ui5lint devDependency (DOGRULANMADI); Form+ColumnLayout kurali fiori-elements-ux §8."
+    },
+    {
+      "id": "claude-plugin:playwright",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/scripts/ui-smoke/"
+      ],
+      "party": 4,
+      "status": "kismi",
+      "note": "MCP tarayici yerine proje ici ui-smoke; canli kosu DOGRULANMADI."
+    },
+    {
+      "id": "claude-plugin:code-review",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills/code-review/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "id": "claude-plugin:skill-creator + plugin-dev",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills/write-skill/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "id": "claude-plugin:claude-md-management",
+      "version": "1.0.0",
+      "decision": "telafi",
+      "targets": [
+        "skills/remember/SKILL.md",
+        "skills/gun-sonu/SKILL.md",
+        "scripts/doctor.py"
+      ],
+      "party": 7,
+      "status": "tamam",
+      "note": "AGENTS.md/hafiza bakimi: %remember (once ara, guncelle/sil, indeks 150 satir siniri, Son-dogrulama/Applies-to), %gun-sonu kapanisi, doctor frontmatter/proje kontrolleri."
+    },
+    {
+      "id": "claude-plugin:frontend-design",
+      "version": "",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 4,
+      "status": "-",
+      "note": "SAP arayuzleri Fiori/UI5 tasarim kurallariyla yazilir (parti 4 sap-ui5-fiori); genel web tasarim skill'i template kapsaminda degil."
+    },
+    {
+      "id": "claude-plugin:pyright-lsp",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "docs/axet-davranis-olcumleri.md"
+      ],
+      "party": 7,
+      "status": "bekliyor",
+      "note": "aXet LSP config destegi OLCULMEDI."
+    },
+    {
+      "id": "mcp:sap-adt",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+    },
+    {
+      "id": "mcp:sap-gui",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-gui-scripting/"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "Model script yazar, gelistirici calistirir (kullanici karari). 3 VBS sablonu + cevrimdisi denetleyici (31 test, cscript derleme kontrolu). Canli GUI calismasi DOGRULANMADI; PowerShell sablonu canli olcum sonrasina."
+    },
+    {
+      "id": "harness:web-search/web-fetch/deep-research",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills/research/"
+      ],
+      "party": 3,
+      "status": "kismi",
+      "note": "aXet fetch/agentic_fetch/download/sourcegraph; ana modelde web_search yok. agentic_fetch url'siz arama ve parametre adlari canli DOGRULANMADI."
+    },
+    {
+      "id": "harness:auto-memory + JIT recall",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "memory/MEMORY.md",
+        "skills/recall/"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Hafiza repoda; recall skill'i elle/cekirdek talimatiyla."
+    },
+    {
+      "id": "harness:subagents/background/workflows",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 1,
+      "status": "kismi",
+      "note": "Yerlesik agent araci; ozel rol yok, SendMessage yok."
+    },
+    {
+      "id": "harness:hooks",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "config/permissions.json",
+        "scripts/install.py"
+      ],
+      "party": 2,
+      "status": "kismi",
+      "note": "Hook bazinda kararlar scripts/hooks/* kurallarinda."
+    },
+    {
+      "id": "harness:compact/rewind",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "skills/handoff/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": ""
+    },
+    {
+      "id": "harness:statusline/worktrees/scheduling/artifacts",
+      "version": "",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": null,
+      "status": "-",
+      "note": "aXet'te karsiligi yok, calisma disiplini icin zorunlu degil."
+    },
+    {
+      "id": "axet:agentic-connectors",
+      "version": "",
+      "decision": "telafi",
+      "targets": [
+        "docs/agentic-connectors.md"
+      ],
+      "party": 3,
+      "status": "planli",
+      "note": "Arastirma notu + karar onerisi 'bekle': SAP islemleri CLI ile. Connector olcum plani (_lab, ayri onay) docs §6."
+    }
+  ]
+}

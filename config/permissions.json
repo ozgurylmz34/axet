@@ -1,0 +1,39 @@
+{
+  "_aciklama": "install.py bu kuralları global config'teki permissions.rules altına birleştirir (kullanıcının diğer kuralları korunur). Desen, komut metninin TAMAMINA glob olarak uyar; baştaki * yoksa desen metnin başına bağlıdır (ölçüldü). deny: run modu dahil her modda bloklar (ölçüldü). ask: TUI'de sorması beklenir (DOĞRULANMADI); etkileşimsiz 'axet-code run' modunda SORMADAN onaylar ve logda permission.decision satırı bırakmaz (ölçüldü 2026-09-14, aXet.code 1.3.0). ÖNCELİK: aynı komuta bir ask ve bir deny deseni uyunca uzun desen kazanır, eşitlikte ask kazanır, kural sırası etkisizdir (ölçüldü 2026-09-14, tek ölçüm serisi; uzunluğun '*' hariç sabit karakterle mi toplam uzunlukla mı sayıldığı DOĞRULANMADI). Bu yüzden her ask deseni her deny deseninden hem sabit karakterde hem toplam uzunlukta KISA tutulur (tests/test_install.py IzinDesenUzunlukTest denetler): eski uzun '*Remove-Item*-Recurse*' ask'ı zincirli 'cd . && git reset --hard HEAD~1; powershell -Command \"Remove-Item ... -Recurse\"; ...' komutunda '*git reset --hard*' deny'ını ezdi ve komut sorulmadan çalıştı. Kısa ask'ın dayanağı öncelik ölçümü (deny uzunsa deny kazandı) ve uzunluk testidir; yeni kurallarla aynı zincirin reddedilmesi yalnız deny'ın o zincirde kazandığını gösterir, '*Remove-It*'in eşleştiğini göstermez. Önceki sürümlerin eski desenlerini install.py yeniden kurulumda ve --uninstall'da siler (RETIRED_RULES; karar kullanıcıca değiştirilmişse dokunmaz, uyarır). Kısa desenin bedeli geniş eşleşmedir: '*deploy_ui*' deploy dışı çağrıları da ('deploy_ui.py --help', 'prepare', 'verify'), '*Remove-It*' özyinelemesiz Remove-Item ve Remove-ItemProperty'yi de sorar. Silme ve git desenleri * ile başlar: başa bağlı eski hâl zincirli ('echo x; rm -rf ...', 'cd ... && git reset --hard', 'echo x; git clean -fd', 'echo x; git push --force') ve sarmalanmış ('cmd /c \"rd /s ...\"', 'cmd /c \"git reset --hard\"') biçimleri kaçırdı, * önekli hâl eşleşti ya da reddetti (ölçüldü). Remove-Item eşleşmesi yalnız 'powershell -Command' ile sarmalanmış biçimde görüldü (eski '*Remove-Item*-Recurse*' deny yapılarak); yeni '*Remove-It*' ve '*deploy_ui*' desenlerinin kendi eşleşmesi ölçülmedi. Yeni desenlerden ölçülen: 'echo x; git clean -xdf ...' '*git clean -xdf*' ile reddedildi; '*rd /q /s*' deny yapılınca 'cmd /c \"rd /q /s ...\"' eşleşti. Diğerleri ('git clean -df/-fdx/-d -f/--force', 'git -C x push --force', 'rm -fr', 'rm -R', 'del /q /s', 'rmdir /s') yalnız simülasyonla denetlendi (DOĞRULANMADI); büyük/küçük harf duyarlılığı ('RD /S') DOĞRULANMADI. Yan etki: desen metni yalnız argümanda, echo içinde ya da commit mesajında geçse de eşleşir (ölçüldü: 'echo \"rm -rf notu\"', 'python x.py \"rd /s metni\"', 'git commit -m \"git push --force notu\"', 'echo \"git reset --hard açıklaması\"'). Commit mesajı dosyaya bash echo ile değil düzenleme aracıyla yazılıp 'git commit -F <dosya>' ile verilir (bu yol ölçülmedi).",
+  "rules": {
+    "bash": {
+      "*git push --force*": "deny",
+      "*git push -f*": "deny",
+      "*git push *--force*": "deny",
+      "*git push * -f*": "deny",
+      "*git reset --hard*": "deny",
+      "*git clean -f*": "deny",
+      "*git clean -df*": "deny",
+      "*git clean -xdf*": "deny",
+      "*git clean -fdx*": "deny",
+      "*git clean -d -f*": "deny",
+      "*git clean *--force*": "deny",
+      "*git *push*--force*": "deny",
+      "*--no-verify*": "deny",
+      "*install.py*--sap-write*": "deny",
+      "*sap-write.local*": "deny",
+      "*behavior_manifest.py*generate*": "deny",
+      "*core.hooksPath*": "deny",
+      "*fiori deploy*": "deny",
+      "*fiori undeploy*": "deny",
+      "*npm run deploy*": "deny",
+      "*npm --prefix * run deploy*": "deny",
+      "*deploy_ui*": "ask",
+      "*rm -rf *": "ask",
+      "*rm -r *": "ask",
+      "*rm -fr*": "ask",
+      "*rm -R*": "ask",
+      "*Remove-It*": "ask",
+      "*rd /s *": "ask",
+      "*rd /q /s*": "ask",
+      "*del /s *": "ask",
+      "*del /q /s*": "ask",
+      "*rmdir /s*": "ask"
+    }
+  }
+}

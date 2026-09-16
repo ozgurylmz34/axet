@@ -1,0 +1,84 @@
+# aXet template — CI test takimlari (K2, 2026-09-15).
+#
+# KAPSAM BEYANI — bu is akisi NEYE BAKMAZ:
+#   * Canli SAP: hicbir is .conn_adt okumaz, SAP'ye baglanmaz (takimlar zaten cevrimdisi).
+#   * Linux/macOS: yalnizca windows-latest kosar. Gerekce: tests/test_kur.py Windows disinda
+#     kendini atlar (test_kur.py:66) ve tests/test_yeni_proje.py'de atlama korumasi YOK ->
+#     Linux runner'i yesil gorunurken gercekte kapsam kaybettirirdi.
+#   * Kurulum sonrasi davranis: install.py + doctor.py ayri iste kosar, ama global config'i
+#     olmayan TEMIZ bir runner'da olculur; gercek kullanici makinesindeki birikmis config
+#     durumunu TEMSIL ETMEZ.
+#   * Skill govde/dokuman kalitesi: burada olculmez (bug gate + doc checklist isi).
+name: testler
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testler-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  takimlar:
+    name: Test takimlari (Python ${{ matrix.python }})
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 = README:23'te beyan edilen taban; 3.13 = guncel. Ikisi de kosar ki
+        # ">= 3.9 destekleniyor" iddiasi olculmus olsun, varsayilmis degil.
+        python: ['3.9', '3.13']
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: 'utf-8'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Surumleri bas
+        run: |
+          python --version
+          git --version
+
+      - name: Kok takim
+        run: python tests/run_tests.py
+
+      - name: SAP ADT foundation takimi
+        run: python skills-sap/sap-adt-foundation/tests/run_tests.py
+
+      - name: sap-code-review takimi
+        run: python -m unittest discover -s skills-sap/sap-code-review/tests -v
+
+  kurulum:
+    name: Kurulum dumani (install + doctor)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: 'utf-8'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: install.py --dry-run
+        run: python scripts/install.py --dry-run
+
+      - name: install.py
+        run: python scripts/install.py
+
+      - name: doctor.py
+        run: python scripts/doctor.py
