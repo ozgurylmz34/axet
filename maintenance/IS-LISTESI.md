@@ -27,10 +27,19 @@ Kurtarma **denendi ve elendi**: ① OneDrive "Always keep on this device" ile ta
 
 **Yapılan: temiz tarihçe (2026-09-16).** Çalışan ağacın tamamı sağlamdı; ondan tek köklü yeni geçmiş kuruldu — `main` = `feat/2026-09-14-kurulum` = **`15f9716`** (içerik eski `c091ad7` ile birebir). Doğrulama: **440 izlenen dosya** (eski repoyla aynı sayı) · `git status` temiz · **`git fsck` çıktısı 0 satır** · `git bundle` **1.986.717 bayt üretti** ⇒ repo artık push edilebilir.
 
-**İki yarım iş KAYBOLMADI, worktree'lerde commit'siz duruyor** (bugünkü durum eskisiyle aynı):
+**İki yarım iş KAYBOLMADI** — içerik taşıma öncesiyle birebir:
 - `feat/2026-09-15-p6-sifirla` → numstat `4/0 · 23/1 · 2/1 · 302/3 · 2/0 · 330/0` (aşağıdaki P6 bölümüyle birebir)
 - `feat/2026-09-15-tx01-karne` → numstat `1/1 · 6/1` + 3 yeni dosya (aşağıdaki TX-01 bölümüyle birebir)
 - P6'nın 5 dosyası ve TX-01'in 5 dosyası taşıma öncesi yedekle **bayt-bayt aynı** (`cmp` ile ölçüldü).
+
+⚠ **DEĞİŞİKLİK — ikisi artık WIP COMMIT'Lİ** (aşağıdaki P6/TX-01 bölümlerinin *"commit edilmedi"* cümleleri bu yüzden BAYAT): obje kaybından sonra commit'siz iş yedeksiz kaldığı için yedeklendiler — P6 `b175e95`, TX-01 `25e2422`, ikisi de push edildi. **İşin DURUMU değişmedi**: P6'nın ikinci kapısı (taze bug-expert) hâlâ hiç koşmadı, TX-01'in kök takım son koşumu hâlâ sonuçlanmadı. Sıradaki adımlar aynen geçerli; düzeltmeler bu WIP commit'lerin üstüne gelir, merge öncesi istenirse squash edilir.
+
+### ✅ REMOTE AÇILDI — `ozgurylmz34/axet` (PRIVATE, 2026-09-16)
+
+K2'nin bekleyen kalemi kısmen kapandı. `gh` bu makinede KURULU DEĞİL (MSI yönetici izni istiyor) — gerek de kalmadı: Git Credential Manager'daki kimlik çalışıyor (PRIVATE repo `ls-remote` ile doğrulandı) ve repo **GitHub API** ile açıldı. Ölçülen kimlik: `login=ozgurylmz34`, kapsam **`gist, repo, workflow`**.
+⇒ **"Kullanıcıdan beklenenler"deki `gh auth refresh -s workflow` maddesi bu makinede GEREKSİZ** — token'da `workflow` zaten var, `.github/workflows/` push edilebilir.
+Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (`b175e95`) · `feat/2026-09-15-tx01-karne` (`25e2422`). Şirket izni teyidi kullanıcıdan alındı (K2/Y2a kapısı, 2026-09-16) — **yalnız PRIVATE için**; public `axet-template` Y2a sırasına bağlı ve repo hâlâ `maintenance/` + `docs/agentic-connectors.md` + `docs/axet-davranis-olcumleri.md` içeriyor.
+**K2'den KALAN:** `main` dal koruması · CI workflow · CODEOWNERS · merge aracı. Bunlar açılana kadar `UPDATE-PROCEDURE.md` §8 disiplini elle uygulanır: **doğrudan `main` commit'i yok → dal + PR**.
 
 ⚠ **Değişen tek şey — TABAN:** P6 eskiden `b3e7ab5`'e, TX-01 `a4f9251`'e dayanıyordu; ikisi de artık **`15f9716`** üstünde. P6'nın yaması tek çakışan dosyada (`maintenance/guncelle-mimari/TASARIM.md`) bile temiz uygulandı. Etkisi: aşağıdaki "SIRADAKİ" sırası **aynen geçerli**, ama TX-01'in eski taban ölçümleri (115 test, 1 bilinen taban FAIL) artık YENİ taban üzerinde yeniden koşulmalı — zaten sıradaki ilk iş buydu.
 
