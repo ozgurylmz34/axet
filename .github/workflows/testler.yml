@@ -9,6 +9,12 @@
 #     olmayan TEMIZ bir runner'da olculur; gercek kullanici makinesindeki birikmis config
 #     durumunu TEMSIL ETMEZ.
 #   * Skill govde/dokuman kalitesi: burada olculmez (bug gate + doc checklist isi).
+#   * GERCEK aXet (axet-code) entegrasyonu: CI'da SAHTE (0 baytlik) bir axet-code.exe kurulur.
+#     kur.ps1'in Axet-Bul'u yalnizca VARLIK arar, binary'yi CALISTIRMAZ -> on kosul kontrolu
+#     olculur, aracin kendisi OLCULMEZ. Gercek aXet sirket kanalindan kurulur, CI'a kurulamaz.
+#     Stub bilerek PATH'e KONMAZ, yalniz %LOCALAPPDATA%\axet-code\bin altina konur: boylece
+#     install.py/doctor.py'nin `shutil.which("axet-code")` sonucu bugunku gibi BULUNAMADI kalir
+#     ve o iki betigin olculen davranisi degismez.
 name: testler
 
 on:
@@ -33,9 +39,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.9 = README:23'te beyan edilen taban; 3.13 = guncel. Ikisi de kosar ki
-        # ">= 3.9 destekleniyor" iddiasi olculmus olsun, varsayilmis degil.
-        python: ['3.9', '3.13']
+        # Taban + guncel birlikte kosar ki "su surumden itibaren destekleniyor" iddiasi
+        # OLCULMUS olsun, varsayilmis degil.
+        #
+        # TABAN 3.9 -> 3.10 -> 3.12 · UST KOL 3.13 -> 3.14 (2026-09-16, kullanici karari).
+        #
+        # NEDEN 3.10'DA KALINMADI: destek takvimi olculdu — 3.10 EOL 31 Ekim 2026, yani
+        # taban ilan edildiginden ~6 hafta sonra oluyordu; ayrica 3.13'un bugfix evresi
+        # 1 Ekim 2026'da bitiyor (o tarihten sonra "guncel kol" guncel olmazdi). 3.12
+        # Ekim 2028'e, 3.14 Ekim 2030'a kadar destekli.
+        # 3.10 KOSTU VE DUSTU (kosum #11: 3.10 -> 2 failure, 3.13 -> yesil): asagidaki
+        # 2. kusur 3.10'da HALA acikti. Yani "3.10 gecer" varsayimi olsaydi yanlis olurdu.
+        # 3.12 SECIMI OLCULDU, varsayilmadi: yerelde Python 3.12.10 ile
+        # test_f1_belirsiz_origin... GECTI ve urllib 'https://[SECRETTOKEN]/r' icin
+        # ValueError veriyor (katilik 3.12'de VAR). 3.14 olculmedi — ama depoda PEP 594'te
+        # kaldirilan modullerden hicbiri ve __annotations__/get_type_hints kullanimi YOK
+        # (tarandi), maruziyet dusuk. Duserse kanitla ayarlanacak.
+        #
+        # Ilk daraltmanin gerekcesi: matris isini yapti ve
+        # "3.9 destekleniyor" iddiasinin YANLIS oldugunu olctu (kosum #10, 3.9 kolu 4 failure;
+        # 3.13 ve kurulum yesil). Iki ayri kusur:
+        #   1) 4 validator dosyasinda PEP 604 (`X | None`) var, `from __future__ import
+        #      annotations` korumasi yok -> 3.9'da reviewer HIC yuklenemiyor
+        #      ("TypeError: unsupported operand type(s) for |"). AST taramasi: 6 yer / 4 dosya.
+        #   2) yeni_proje.depo_onerisi, guvenle ayristirilamayan bir origin'i reddetmeyi
+        #      urllib'in SURUM KATILIGINA birakmis; 3.9'da fail-open (bozuk adres "yerel"
+        #      yerine ONERI olarak donuyor). Guvenlige dokunan karar surume devredilmis.
+        # Karar iddiayi DUZELTMEK degil DARALTMAK: 3.9 bugun de fiilen desteklenmiyordu,
+        # degisen tek sey durustluk.
+        # ⚠ ACIK KALEM: README:23 ve kur.ps1'deki "3.9" metinleri HENUZ guncellenmedi —
+        # o iki dosyaya P6 dali da dokundugu icin cakismayi onlemek adina P6 merge edildikten
+        # SONRA yapilacak (IS-LISTESI'ne yazildi). O ana kadar matris 3.10, metin 3.9 der.
+        python: ['3.12', '3.14']
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: 'utf-8'
@@ -50,6 +85,42 @@ jobs:
         run: |
           python --version
           git --version
+
+      # ON KOSUL 0 — depo bir DALIN uzerinde olmali. actions/checkout depoyu detached ve
+      # YEREL DALSIZ birakir; tests/test_kur.py setUpClass kendi fixture'ini `git clone --bare
+      # <bu depo>` ile kurdugu icin dalsizlik bare kopyaya, oradan da calisma klonuna geciyor
+      # ve `git push -q origin HEAD` "The destination you provided is not a full refname" ile
+      # dusuyor. Olculdu (2026-09-16, 3 kollu): dalda -> gecti · detached ama DALLAR VAR ->
+      # gecti · detached + dalsiz -> CI'daki hatanin AYNISI. Yani belirleyici olan detached
+      # olmak degil, yerel dalin BULUNMAMASI. Tam takim: dalsiz 252/15 -> bu adimla 252/0.
+      # NOT (acik kalem): asil kirilganlik testlerde — fixture calisilan deponun ortam
+      # durumunu devraliyor. Kalici cozum `uzakta_commit`in HEAD yerine tam refname itmesi
+      # ya da bare sablonun dalini garanti etmesidir; bu adim CI'yi normal bir calisma
+      # klonuna benzetir, o baglantiyi KALDIRMAZ.
+      # Dal adi bilerek `main`: olculen kol buydu ve normal bir calisma klonunun hali budur.
+      # PR'da bu yerel `main`, merge commit'ine isaret eder (origin/main'e DEGIL) — fixture
+      # kendi icinde tutarli oldugu icin testler icin dogru olan da budur.
+      - name: On kosul - dal uzerinde ol
+        run: git checkout -B main
+
+      # ON KOSUL 1 — sahte axet-code. Olculdu (2026-09-16, yerelde CI kosulu taklit edilerek,
+      # 3 kollu): gercek axet-code VAR -> test_kur 36/1 · YOK -> 36/30 · sahte stub ile -> 36/1.
+      # Yani kosum #1'deki 36 failure'in 30'u tek bir on kosul bosluguydu, kod kusuru DEGILDI
+      # (kur.ps1:371-375 -> `Bitir 2`). Testler ayni sahte-dosya yontemini zaten kullaniyor
+      # (tests/test_kur.py dar_ortam: axet-code.exe write_bytes(b"")).
+      - name: On kosul - sahte axet-code
+        shell: pwsh
+        run: |
+          $bin = Join-Path $env:LOCALAPPDATA 'axet-code\bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          New-Item -ItemType File -Force -Path (Join-Path $bin 'axet-code.exe') | Out-Null
+          Write-Host "sahte axet-code: $bin (PATH'e EKLENMEDI - bkz. kapsam beyani)"
+
+      # ON KOSUL 2 — SAP ADT foundation takiminin calisma zamani bagimliliklari. Olculdu:
+      # kurulmazsa o takim 6 test / 6 error verir (ModuleNotFoundError: dotenv) ve kok takimdaki
+      # test_run_tests_cli.py:47 de bu yuzden duser. Dosya repoda ZATEN vardi, CI onu hic kurmuyordu.
+      - name: On kosul - Python bagimliliklari
+        run: python -m pip install --quiet -r skills-sap/sap-adt-foundation/scripts/requirements.txt
 
       - name: Kok takim
         run: python tests/run_tests.py
