@@ -92,13 +92,18 @@ class KurTest(GeciciTest):
     # --- yardımcılar ------------------------------------------------------------------------------------------
     def kur(self, *args: str, env: dict | None = None, winget_kapali: bool = True,
             varsayilan: bool = True, hedef: Path | None = None) -> subprocess.CompletedProcess:
-        """kur.cmd'yi çağırır. varsayilan=True: -Kaynak <geçici bare> -Hedef <hedef> önden eklenir."""
+        """kur.cmd'yi çağırır. varsayilan=True: -Kaynak <geçici bare> -Hedef <hedef> önden eklenir.
+
+        `/c` ile betik adı arasındaki `call` ZORUNLU (ölçüldü 2026-09-16, izole deney): `cmd /c` komut satırında
+        ikiden fazla tırnak varken ilk ve son tırnağı atar; klon yolu ("...\\bos luklu klasor\\kur.cmd") VE bir argüman
+        ("-Hedef C:\\...\\hedef bos luk") birlikte boşluk içerdiğinde batch dosyası HİÇ başlamaz
+        (rc=1, "'C:\\...\\bos' is not recognized"). `call` ile aynı çağrı rc=0 ve argümanlar bozulmadan geçiyor."""
         arglar = list(args)
         if varsayilan:
             arglar = ["-Kaynak", str(self.kaynak), "-Hedef", str(hedef or self.hedef)] + arglar
         if winget_kapali:
             arglar.append("-WingetKapali")
-        return subprocess.run([COMSPEC, "/c", str(KUR_CMD), *arglar], env=env or self.env, cwd=str(self.tmp),
+        return subprocess.run([COMSPEC, "/c", "call", str(KUR_CMD), *arglar], env=env or self.env, cwd=str(self.tmp),
                               capture_output=True, text=True, encoding="utf-8", errors="replace",
                               stdin=subprocess.DEVNULL, timeout=600)
 
@@ -965,7 +970,7 @@ class KurTest(GeciciTest):
                                  stdin=subprocess.DEVNULL, timeout=120)
             self.assertNotEqual(duz.returncode, 0, self.cikti(duz))
             self.assertNotIn("DENEME MODU bitti", self.cikti(duz))
-        r = subprocess.run([COMSPEC, "/c", str(kopya / "kur.cmd"), *arglar], env=self.env, capture_output=True, text=True,
+        r = subprocess.run([COMSPEC, "/c", "call", str(kopya / "kur.cmd"), *arglar], env=self.env, capture_output=True, text=True,
                            encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, timeout=300)
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("DENEME MODU bitti", self.cikti(r))
@@ -1154,8 +1159,11 @@ class KurTest(GeciciTest):
         self.yaz(proje / ".axet-guncelleme" / "uygulanan.json", "{}\n")
         once = self._agac(proje)
         self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
-        # Klonun KENDİ .axet-guncelleme'si de kurulur: silme yolu ancak böyle koşar. (Ölçüldü 2026-09-15: bu dosya
-        # olmadan, temizliği klon dışına taşıyan mutasyon bile testi geçiyordu — silme bloğuna hiç girilmiyordu.)
+        # Klonun KENDİ .axet-guncelleme'si de kurulur: aynı adlı dizinin klon İÇİNDE gidip DIŞINDA kaldığı ölçülsün.
+        # ⚠ Bu satır 5. adımdaki `Remove-Item` bloğunu YALITMAZ: ölçüldü (2026-09-16), blok TAMAMEN silindiğinde bu test
+        # yine YEŞİL kalıyor — klon içindeki dizini zaten 3. adımın `switch` + 5. adımın `reset --hard`'ı kaldırıyor.
+        # (Eski yorum "silme yolu ancak böyle koşar" diyordu; ölçüm bunu çürüttü.) Emniyet ağını yalıtan test ayrıdır:
+        # test_sifirla_axet_guncelleme_artigi_5_adimda_silinir.
         self.yaz(self.hedef / ".axet-guncelleme" / "uygulanan.json", "{}\n")
         r = self.kur("-Sifirla", "-Evet")
         self.assertEqual(r.returncode, 0, self.cikti(r))
@@ -1244,6 +1252,10 @@ class KurTest(GeciciTest):
         self.assertIn("kur.cmd -Sifirla komutunu tekrar", c)  # eyleme dönüştürülebilir mesaj
         self.assertIn("branch -D", c)                          # kalan yedek dalı için ne yapılacağı
         self.assertEqual(self._agac(self.hedef), once, "doğrulama geçmeden dosya değişti/silindi")
+        # DUR anında klon YEDEK dalında değil ana dalda durur (3. adımın sonunda dönülür). Mesaj bunu söylemeli:
+        # söylemezse kullanıcı kendini yedek dalında sanır (kur.ps1 başlığındaki eski yorum da öyle diyordu).
+        self.assertEqual(self.git(self.hedef, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "main")
+        self.assertIn("Klon şu an main dalında", c)
 
     # 15: main olmayan daldan sıfırlama → klon main'e alınır ve upstream'i olur
     def test_sifirla_main_olmayan_daldan_main_e_doner_upstream_kurulur(self):
@@ -1274,6 +1286,128 @@ class KurTest(GeciciTest):
         self.assertEqual(self._agac(self.hedef), once)
         self.assertEqual(self.yedek_dallari(), [])
         self.assertFalse(self.cfg.exists())
+
+    # 17: 5. adımdaki .axet-guncelleme/ silme bloğunu YALITAN test (M5 mutasyonu bunu KIRMIZI yapar)
+    def test_sifirla_axet_guncelleme_artigi_5_adimda_silinir(self):
+        """Emniyet ağı: dizinin izlenen dosyasını `switch`/`reset` kaldırsa bile git'in izleyemediği artık kalır.
+
+        BOŞ alt klasör bu bloğu yalıtarak ölçer (ölçüldü 2026-09-16): git boş klasörü izlemez ⇒ yedek commit'ine
+        girmez ⇒ dal değişimi/`reset --hard` onu kaldırmaz; `clean -fd` ise gitignore'lu `.axet-guncelleme/`'ye
+        (-x YOK) hiç girmez. Geriye TEK mekanizma olarak 5. adımdaki `Remove-Item` kalır. Kontrol grubu: aynı
+        senaryo boş klasörsüz kurulduğunda blok silinse bile test geçiyordu (test 10'daki nota bak)."""
+        self.sifirla_klonu()
+        self.yaz(self.hedef / ".axet-guncelleme" / "uygulanan.json", '{"surum": 1}\n')
+        (self.hedef / ".axet-guncelleme" / "oneri").mkdir()  # boş: git izlemez
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        # ön koşul: dizin gerçekten yedeğe girdi (silme izni yalnız ölçülmüş yedekten doğar)
+        self.assertIn('"surum": 1', self.yedekte(self.tek_yedek(), ".axet-guncelleme/uygulanan.json"))
+        self.assertFalse((self.hedef / ".axet-guncelleme").exists(),
+                         "5. adımdaki emniyet ağı koşmadı: gitignore'lu dizin artığı klonda kaldı\n" + c)
+
+    # 18: yedeğe ALINAMAYAN .axet-guncelleme/ SİLİNMEZ (fail-safe) — akış durmaz, çıkış kodu 0 kalır
+    def test_sifirla_yedeklenemeyen_axet_guncelleme_silinmez(self):
+        """Ölçülmüş vaka (2026-09-16, bug gate): `.axet-guncelleme/` içinde commit'i olmayan gömülü bir depo varken
+        `git add -f -- .axet-guncelleme` rc=128 ("does not have a commit checked out") ile düşüyor, hiçbir şey
+        sahnelenmiyor. 4. adım bu yolu YAPISAL OLARAK göremez (`git status --porcelain` gitignore'lu yol basmaz) ⇒
+        eskiden 5. adım dizini YEDEKSİZ siliyor ve araç rc=0 ile "hepsi yedekte" diyordu.
+
+        Beklenen: silme ATLANIR, dizin diskte kalır, kullanıcıya adıyla söylenir; DUR verilmez (gömülü depo
+        -Sifirla'yı kalıcı tıkamamalı) ve sıfırlamanın geri kalanı tamamlanır."""
+        self.sifirla_klonu()
+        durum_dizini = self.hedef / ".axet-guncelleme"
+        veri = self.yaz(durum_dizini / "uygulanan.json", '{"surum": 1}\n')
+        ic = durum_dizini / "ic-bos"
+        ic.mkdir(parents=True)
+        self.git(ic, "init", "-q", "-b", "main", ".")  # hiç commit YOK: `add -f` bunu indeksleyemez
+        readme = self.hedef / "README.md"
+        ozgun = readme.read_bytes()
+        readme.write_bytes(ozgun + b"\nyerel not\n")
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        # ön koşul kanıtı: add -f gerçekten düştü (3. adım uyarısı) — senaryo ölçmek istediği yolu koştu
+        self.assertIn("git add -f düştü", c)
+        # 1. fail-safe: dizin ve içindeki gömülü depo YERİNDE
+        self.assertTrue(veri.is_file(), "yedeklenemeyen .axet-guncelleme/ silindi (veri kaybı)\n" + c)
+        self.assertEqual(veri.read_text(encoding="utf-8"), '{"surum": 1}\n')
+        self.assertTrue((ic / ".git").is_dir(), "gömülü deponun .git'i silindi\n" + c)
+        # 2. yedekte olmadığı ölçülür (silmeme kararının dayanağı)
+        dal = self.tek_yedek()
+        self.assertEqual(self.git(self.hedef, "ls-tree", "-r", "--name-only", dal, "--",
+                                  ".axet-guncelleme").stdout.strip(), "")
+        # 3. kullanıcıya ADIYLA söylendi
+        self.assertIn(str(durum_dizini), c)
+        self.assertIn("SİLİNMEDİ", c)
+        # 4. akış DURMADI: sıfırlamanın geri kalanı tamamlandı (izlenen değişiklik geri alındı, kurulum bitti)
+        self.assertEqual(readme.read_bytes(), ozgun)
+        self.assertIn("yerel not", self.yedekte(dal, "README.md"))
+
+    # 19: .axet-guncelleme/ içinde COMMIT'Lİ gömülü depo → yedeğe yalnız gitlink girer ⇒ dizin SİLİNMEZ
+    def test_sifirla_axet_guncelleme_icindeki_commitli_gomulu_depo_silinmez(self):
+        """Vaka A — test 18'in (vaka C) açık kalan yarısı. Fark TEK bir ayrıntıda: iç deponun commit'i VAR.
+
+        Ölçüldü (2026-09-16, git 2.55.0.windows.3): commit'i olan gömülü depoda `git add -f -- .axet-guncelleme`
+        rc=0 döner (yalnız "warning: adding embedded git repository") ve sahneye SADECE bir gitlink koyar:
+        `160000 commit <sha>`. İç deponun dosyaları ve NESNELERİ dış depoya hiç girmez. `ls-tree --name-only`
+        çıktısında bu girdi düz bir dosyadan ayırt edilemediği için yol "yedekte" sanılıyor, 5. adım dizini
+        siliyor ve iç deponun çalışma ağacı + `.git`'i + tüm geçmişi gidiyordu; yedek dalında yalnız hiçbir
+        nesnesi bulunmayan 40 baytlık commit kimliği kalıyordu ⇒ GERİ ALINAMAZ veri kaybı, üstelik rc=0 ile
+        sessiz (vaka C'nin ATLANDI satırı basılmıyor, çünkü `add -f` düşmüyor).
+
+        Beklenen: vaka C ile AYNI güvenli yol — dizin olduğu gibi bırakılır, adıyla bildirilir, rc=0 kalır
+        (gömülü depo -Sifirla'yı kalıcı tıkamamalı). Vaka B'nin (düz dosya → silinir + yedekten geri alınır)
+        kontrol grubu olarak testleri: test 5 (test_sifirla_axet_guncelleme_silinir_ve_yedekte_var) ve
+        test 17 (test_sifirla_axet_guncelleme_artigi_5_adimda_silinir)."""
+        self.sifirla_klonu()
+        durum_dizini = self.hedef / ".axet-guncelleme"
+        veri = self.yaz(durum_dizini / "uygulanan.json", '{"surum": 1}\n')
+        ic = durum_dizini / "ic-repo"
+        ic.mkdir(parents=True)
+        self.git(ic, "init", "-q", "-b", "main", ".")
+        ic_dosya = self.yaz(ic / "ic.txt", "iç depo dosyası\n")
+        self.git(ic, "add", "-A")
+        self.git(ic, "commit", "-q", "-m", "ic ilk")
+        ic_head = self.git(ic, "rev-parse", "HEAD").stdout.strip()
+        readme = self.hedef / "README.md"
+        ozgun = readme.read_bytes()
+        readme.write_bytes(ozgun + b"\nyerel not\n")
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        # ön koşul 1 — vaka C'den ayrışma kanıtı: `add -f` DÜŞMEDİ, yani C'yi yakalayan kapı burada hiç kapanmıyor
+        self.assertNotIn("git add -f düştü", c)
+        dal = self.tek_yedek()
+        # ön koşul 2: yedek ağacında gitlink VAR (mod 160000) — `--name-only` ile bu düz dosyadan ayırt edilemezdi
+        satirlar = [s for s in self.git(self.hedef, "ls-tree", "-r", dal, "--",
+                                        ".axet-guncelleme").stdout.splitlines() if s.strip()]
+        self.assertTrue(any(s.startswith("160000 commit") for s in satirlar),
+                        f"gitlink yedek ağacında yok, senaryo kurulmadı: {satirlar!r}")
+        # ön koşul 3: gitlink'in gösterdiği commit DIŞ depoda YOK ⇒ yedek dalı iç depoyu geri getiremez
+        self.assertNotEqual(self.git(self.hedef, "cat-file", "-t", ic_head, kontrol=False).returncode, 0,
+                            "iç deponun commit'i dış depoda bulundu: gitlink senaryosu kurulmamış")
+        # 1. fail-safe: gömülü deponun dosyası + .git'i DİSKTE DURUYOR (kurtarılamaz olan tek şey bunlardı)
+        self.assertTrue(ic_dosya.is_file(), "gömülü deponun dosyası silindi (GERİ ALINAMAZ veri kaybı)\n" + c)
+        self.assertEqual(ic_dosya.read_text(encoding="utf-8"), "iç depo dosyası\n")
+        self.assertTrue((ic / ".git").is_dir(), "gömülü deponun .git'i silindi (geçmiş yok oldu)\n" + c)
+        # Aynı dizindeki DÜZ dosya blob olarak yedeğe girdiği için diskten kalkar (onu 3. adımdaki `switch main`
+        # kaldırır, 5. adımdaki Remove-Item değil) — ölçüldü 2026-09-16: yedek commit'i `100644 uygulanan.json` +
+        # `160000 ic-repo` içeriyor. Kayıp DEĞİL: yedek dalından geri alınır. Vaat "kurtarılamayanı silme"dir,
+        # "hiçbir şeyi silme" değil; iddiayı olduğundan geniş yazmamak için dosya varlığı DEĞİL kurtarılabilirlik
+        # ölçülür.
+        self.assertFalse(veri.is_file(), "senaryo değişti: düz dosya diskte kaldı (switch main koşmadı mı?)\n" + c)
+        self.assertIn('"surum": 1', self.yedekte(dal, ".axet-guncelleme/uygulanan.json"))
+        # 2. kullanıcıya ADIYLA söylendi (sessiz geçilmedi)
+        self.assertIn(str(durum_dizini), c)
+        self.assertIn("SİLİNMEDİ", c)
+        # 3. sebep DOĞRU anlatıldı: burada 3/7'de UYARI satırı BASILMAZ ⇒ mesaj vaka C'nin sebebini (add -f düştü)
+        # göstermemeli, gitlink sebebini söylemeli. "gitlink" kelimesi yalnız bu dalda geçer.
+        self.assertIn("gitlink", c)
+        self.assertIn("AYRI bir git deposu", c)
+        # 4. akış DURMADI: sıfırlamanın geri kalanı tamamlandı
+        self.assertEqual(readme.read_bytes(), ozgun)
+        self.assertIn("yerel not", self.yedekte(dal, "README.md"))
 
     # --- statik: sığ klon yasağı + README varyantı --------------------------------------------------------------
     def test_kur_ps1_sig_klon_yapmaz(self):

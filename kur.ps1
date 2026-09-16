@@ -384,7 +384,9 @@ function Git-Surum-Notu {
 }
 
 # TASARIM §10. Sıra DEĞİŞMEZ: göster -> onay -> yedek -> yedeği DOĞRULA -> sıfırla. Doğrulama geçmeden hiçbir şey
-# silinmez. Yarıda kalırsa klon yedek dalında ve dosyaları yerinde kalır; ne silinir ne saklanır.
+# silinmez. Yarıda kalınca dosyalar hep yerinde kalır, ama KLONUN DALI durulan adıma bağlıdır (ölçüldü 2026-09-16):
+# 3. adım içinde durulursa klon yedek dalındadır ($geriDon basılır); 3. adımın sonunda ana dala (main) dönüldüğü için
+# 4. adımda durulursa klon MAIN'dedir — o DUR mesajı bunu ve kendi dalına dönüş komutunu ayrıca yazar.
 function Sifirla-Klon([string]$hedef, [string]$dal) {
     Baslik 'Sıfırlama (-Sifirla)'
     Yaz "  Klon: $hedef (dal: $dal)"
@@ -416,7 +418,11 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
     Yaz "    origin/main'de olmayan yerel commit: $($commitler.Count)"
     foreach ($s in @($commitler | Select-Object -First 20)) { Yaz "      $s" }
     if ($commitler.Count -gt 20) { Yaz "      ... ve $($commitler.Count - 20) commit daha" }
-    Yaz "    Güncelleme durumu dizini .axet-guncelleme/: $(if ($durumVar) { 'var (yedeğe alınır, sonra silinir)' } else { 'yok' })"
+    # Vaat KOŞULLU yazılır: bu dizin gitignore'ludur, yedeğe ancak `add -f` ile girer ve iki yoldan kurtarılabilir
+    # yedek ÜRETMEYEBİLİR — `add -f` düşebilir (3. adım) ya da rc=0 dönüp yalnız bir gitlink sahneleyebilir (4. adım
+    # mod ölçümü). İkisinde de dizin OLDUĞU GİBİ bırakılır; "yedeğe alınır, sonra silinir" o yollarda tutulamayan
+    # bir söz olurdu.
+    Yaz "    Güncelleme durumu dizini .axet-guncelleme/: $(if ($durumVar) { 'var (yedeğe alınabilirse silinir; alınamazsa olduğu gibi bırakılır)' } else { 'yok' })"
 
     # 2. Onay.
     Yaz ''
@@ -455,8 +461,19 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
     if ((Git-Calistir @('-C', $hedef, 'add', '-A')) -ne 0) {
         Yaz '    UYARI: git add -A bazı yolları yedeğe alamadı; hükmü 4. adımdaki doğrulama verecek.'
     }
-    if ($durumVar -and (Git-Calistir @('-C', $hedef, 'add', '-f', '--', '.axet-guncelleme')) -ne 0) {
-        Yaz '    UYARI: .axet-guncelleme/ yedeğe eklenemedi; hükmü 4. adımdaki doğrulama verecek.'
+    # .axet-guncelleme/ gitignore'lu olduğu için `add -A`'ya GİRMEZ; buraya `add -f` ile ayrıca alınır. Sonucu İZLENİR:
+    # 4. adımdaki doğrulama bu yolu YAPISAL OLARAK göremez — `$durum`, `git status --porcelain` çıktısıdır ve gitignore'lu
+    # yolları tanım gereği hiç içermez. Ölçüldü (2026-09-16): `.axet-guncelleme/` içinde commit'i olmayan gömülü bir depo
+    # varken `add -f` rc=128 ("does not have a commit checked out") ile düşüyor, hiçbir şey sahnelenmiyor, 4. adım yine
+    # "hepsi yedekte" diyor ve 5. adımdaki koşulsuz `Remove-Item` dizini YEDEKSİZ siliyordu. Artık silme izni ölçülmüş
+    # yedeğe bağlı; akış durmaz (gömülü depo -Sifirla'yı kalıcı tıkamasın), yalnız o dizine dokunulmaz.
+    $durumDiziniEklendi = $false
+    if ($durumVar) {
+        if ((Git-Calistir @('-C', $hedef, 'add', '-f', '--', '.axet-guncelleme')) -eq 0) {
+            $durumDiziniEklendi = $true
+        } else {
+            Yaz '    UYARI: .axet-guncelleme/ yedeğe eklenemedi (git add -f düştü); bu dizin SİLİNMEYECEK (5. adım).'
+        }
     }
     $sahneli = @(Git-Oku @('-C', $hedef, 'diff', '--cached', '--name-only') | Where-Object { $_ })
     if ($script:GitKod -ne 0) {
@@ -508,6 +525,30 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
     if ($script:GitKod -ne 0) {
         Yaz 'DURDU: yedek dalının içeriği okunamadı. HİÇBİR ŞEY SİLİNMEDİ.'; Bitir 1
     }
+    # .axet-guncelleme/ için silme iznini `add -f`'in çıkış kodu DEĞİL, yedek dalının AĞACI verir ("başarılı" mesajına
+    # güvenme). Aşağıdaki $eksikYol döngüsü bu yolu göremez: $durum gitignore'lu yol içermez.
+    #
+    # İzin yolun GÖRÜNMESİNE değil, her girdinin MODUNA bağlıdır. Ölçüldü (2026-09-16, git 2.55.0.windows.3):
+    # `.axet-guncelleme/` içinde COMMIT'İ OLAN gömülü bir depo varken `git add -f` rc=0 döner (yalnız "warning:
+    # adding embedded git repository") ve sahneye SADECE bir bağ koyar: `160000 commit <sha>`. İç deponun dosyaları
+    # ve NESNELERİ dış depoya HİÇ girmez. `--name-only` çıktısında bu girdi düz bir dosyadan ayırt EDİLEMEZ ⇒ yol
+    # "yedekte" sanılıyor, 5. adım dizini siliyor ve iç deponun çalışma ağacı + `.git`'i + TÜM GEÇMİŞİ gidiyordu;
+    # yedekte hiçbir nesnesi bulunmayan 40 baytlık commit kimliği kalıyordu ⇒ GERİ ALINAMAZ, üstelik rc=0 ile sessiz.
+    #
+    # Yukarıdaki `--name-only` çağrısı mod'lu okumaya ÇEVRİLMEDİ, AYRI ve dar bir ikinci sorgu koşuluyor. Gerekçe:
+    # $yedekAgaci, 1. adımda görülen HER yolun kaderini belirleyen $eksikYol döngüsünün ve Yedekte-Var'ın tek
+    # dayanağıdır; anahtar üretimini (quotepath, tab ile ayrışan yol, gitlink normalleştirmesi) yeniden yazmak
+    # sıfırlamanın ana güvenlik yolunu riske atardı. Buradaki soru ("bu dizinin altında gitlink var mı") dar ve
+    # ayrıdır ⇒ dar sorguyla sorulur. İkinci çağrı ayrıca yol eşleşmesini PowerShell'deki StartsWith'e değil git'in
+    # kendi pathspec'ine bırakır. Maliyet: tek bir ek git süreci (-Sifirla zaten onlarca git çağırır).
+    $durumAgacSatir = @(Git-Oku @('-C', $hedef, '-c', 'core.quotepath=false', 'ls-tree', '-r', $yedekDal,
+                                  '--', '.axet-guncelleme') | Where-Object { $_ })
+    $durumAgacOkundu = ($script:GitKod -eq 0)
+    $durumDiziniGitlink = (@($durumAgacSatir | Where-Object { $_ -match '^160000\s' }).Count -gt 0)
+    $durumDiziniYedekte = $false
+    if ($durumDiziniEklendi -and $durumAgacOkundu -and $durumAgacSatir.Count -gt 0 -and (-not $durumDiziniGitlink)) {
+        $durumDiziniYedekte = $true
+    }
     $eksikYol = @()
     foreach ($s in $durum) {
         $y = Durum-Yolu $s
@@ -523,16 +564,22 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
         Yaz "    2. Sonra kur.cmd -Sifirla komutunu tekrar çalıştır."
         Yaz "  Bu denemenin yedek dalı duruyor: $yedekDal"
         Yaz "    Gerekmiyorsa sil: git -C `"$hedef`" branch -D $yedekDal"
+        # Buraya gelindiğinde klon ARTIK $anaDal'da (3. adımın sonunda dönüldü) — $geriDon satırı ("şu an yedek
+        # dalındasın") burada YANLIŞ olurdu. Nerede olunduğu + kendi dalına dönüş komutu açıkça yazılır.
+        Yaz "  Klon şu an $anaDal dalında, dosyalar yerinde."
+        if ($dal -ne $anaDal) { Yaz "    Kendi dalına dönmek için: git -C `"$hedef`" switch $dal" }
         Bitir 1
     }
     Yaz "    Tamam: 1. adımdaki $($durum.Count) kaydın hepsi $yedekDal dalında ($($yedekAgaci.Count) yol)."
 
     # 5. Sıfırla. clean'de -x YOKTUR: gitignore'lu dosyalar (yerel izin dosyası, _lab, __pycache__) kullanıcınındır.
     # .axet-guncelleme/ ayrıca silinir: gitignore'lu olduğu için `clean -fd` onu SİLMEZ ve kalan eski taban kaydı
-    # sonraki %guncelle'yi yanlış tabana götürür. Ölçüldü (2026-09-15): olağan akışta dizini zaten 3. adımdaki
-    # `switch $dal` kaldırıyor (yedek commit'inde izleniyor, $dal'da izlenmiyor) — buradaki silme bir EMNİYET AĞIdır,
-    # tek mekanizma değil. Yine de duruyor: yedek commit'inin atlandığı ya da dizinin sonradan oluştuğu yolda tek
-    # koruma budur.
+    # sonraki %guncelle'yi yanlış tabana götürür. Ölçüldü (2026-09-15): olağan akışta dizinin İZLENEN dosyalarını zaten
+    # 3. adımdaki `switch $anaDal` kaldırıyor (yedek commit'inde var, ana dalda yok) — buradaki silme bir EMNİYET AĞIdır,
+    # tek mekanizma değil. Yine de duruyor: git'in izleyemediği artıklar (boş alt klasör; ölçüldü 2026-09-16) ile yedek
+    # commit'inin atlandığı yolda tek koruma budur. KOŞULLU: yalnız dizinin altındaki girdilerin HEPSİ yedek dalının
+    # ağacında KURTARILABİLİR biçimde (blob olarak) duruyorsa siler — tek bir gitlink (160000) bile izni kaldırır,
+    # çünkü gitlink'in gösterdiği nesneler dış depoda yoktur (4. adımdaki mod'lu ls-tree ölçümü).
     Yaz ''
     Yaz '  5/7 Sıfırlama'
     if ((Git-Calistir @('-C', $hedef, 'fetch', '--quiet')) -ne 0) {
@@ -545,12 +592,36 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
         Yaz "DURDU: izlenmeyen dosyalar temizlenemedi. Yedek dalı duruyor: $yedekDal"; Bitir 1
     }
     if (Test-Path -LiteralPath $durumDizini) {
-        try {
-            Remove-Item -LiteralPath $durumDizini -Recurse -Force -ErrorAction Stop
-        } catch {
-            Yaz "DURDU: .axet-guncelleme/ silinemedi: $($_.Exception.Message)"
-            Yaz "  Yedek dalı duruyor: $yedekDal"
-            Bitir 1
+        if (-not $durumDiziniYedekte) {
+            # Fail-safe: yedekleyemediğimizi SİLMEYİZ. DUR vermiyoruz (gömülü depo -Sifirla'yı kalıcı tıkamasın),
+            # ama sessiz de geçmiyoruz: dizin ADIYLA bildirilir, yoksa kullanıcı onun silindiğini sanır.
+            # Sebep İKİ AYRI yoldan gelir ve mesaj bunları AYIRIR: gitlink vakasında `add -f` rc=0 döndüğü için
+            # 3/7'de hiçbir UYARI BASILMAZ — "sebep genellikle o uyarıdır" demek kullanıcıyı olmayan bir satırı
+            # aramaya gönderir ve yanlış teşhise götürür.
+            Yaz "    ATLANDI: $durumDizini SİLİNMEDİ — yedek dalına kurtarılabilir biçimde girmedi."
+            if ($durumDiziniGitlink) {
+                Yaz '      Sebep: bu dizinin içinde AYRI bir git deposu var. git böyle bir klasörü yedeğe yalnız bir'
+                Yaz '      bağ (gitlink: 40 baytlık commit kimliği) olarak alır; iç deponun dosyaları ve nesneleri'
+                Yaz '      yedek dalına GİRMEZ. Silinseydi o deponun geçmişi de giderdi ve yedek dalı onu geri'
+                Yaz '      getiremezdi. Ne yapmalı: o depoyu klonun DIŞINA taşı, sonra -Sifirla''yı tekrar çalıştır.'
+            } elseif (-not $durumDiziniEklendi) {
+                Yaz '      Sebep: yedeğe hiç alınamadı — 3/7 adımındaki UYARI satırına bak (git add -f düştü). En sık'
+                Yaz '      görüleni: içinde henüz hiç commit atılmamış bir git deposu var. Ne yapmalı: içine bakıp'
+                Yaz '      gerekmiyorsa kendin sil.'
+            } else {
+                Yaz '      Sebep: yedek dalının ağacında bu yolun altında kurtarılabilir hiçbir girdi bulunamadı'
+                Yaz '      (ya da ağaç okunamadı). Ne yapmalı: içine bakıp gerekmiyorsa kendin sil.'
+            }
+            Yaz '      Sıfırlama yedekleyemediği hiçbir şeyi silmez. Bu dizin dururken bir sonraki güncelleme eski'
+            Yaz '      taban kaydını görebilir.'
+        } else {
+            try {
+                Remove-Item -LiteralPath $durumDizini -Recurse -Force -ErrorAction Stop
+            } catch {
+                Yaz "DURDU: .axet-guncelleme/ silinemedi: $($_.Exception.Message)"
+                Yaz "  Yedek dalı duruyor: $yedekDal"
+                Bitir 1
+            }
         }
     }
     Yaz "    Klon origin/main ile aynı. gitignore'lu dosyalar korundu (clean -fd; -x YOK)."

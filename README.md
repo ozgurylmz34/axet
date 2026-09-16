@@ -70,10 +70,14 @@ yolu söyler: değişikliklerini korumak istiyorsan onları kendin commit ya da 
 
 `-Sifirla` hiçbir şeyi silmeden önce yerel değişiklikleri, izlenmeyen dosyaları ve yerel commit'leri `yedek/<tarih-saat>`
 dalına alır ve yedeği doğrular; onayı senden ister (`SIFIRLA` yazarsın; `-DenemeModu` yalnız durumu gösterir).
-gitignore'lu dosyalarına dokunmaz (`.axet-guncelleme/` hariç: o silinir) ve klon klasörünün dışına çıkmaz.
+gitignore'lu dosyalarına dokunmaz (`.axet-guncelleme/` hariç: o yalnız **içindeki her şey yedek dalından geri
+alınabilir hâlde** yedeğe girdiyse silinir; giremediyse olduğu gibi bırakılır ve sana sebebiyle birlikte adıyla
+bildirilir) ve klon klasörünün dışına çıkmaz.
 Tek istisna: klonun içine dışarıyı gösteren bir bağ (junction/symlink) koyduysan git o bağın içine girer ve
-oradaki dosyaları da yedeğe alır — böyle bir bağın varsa önce kaldır. Klonun içindeki ayrı bir git deposunu
-ise git silmez (geçmişi gitmesin diye); araç kalanı sana adıyla bildirir. Klon işlem sonunda `main` dalında olur
+oradaki dosyaları da yedeğe alır — böyle bir bağın varsa önce kaldır. Klonun içindeki **ayrı bir git deposunu**
+araç silmez; bu `.axet-guncelleme/` içindekiler için de geçerlidir: git böyle bir klasörü yedeğe yalnız bir bağ
+(gitlink — 40 baytlık commit kimliği) olarak alır, dosyaları ve geçmişi yedek dalına GİRMEZ; silinseydi yedekten
+geri getirilemezdi. Araç kalanı sana adıyla bildirir. Klon işlem sonunda `main` dalında olur
 (güncellemenin çalışması için gerekli); klonun dalı başkaysa o dalın işi yedek dalında durur.
 
 Tek bir dosyayı geri almak için son mesajdaki komutu kullan:
