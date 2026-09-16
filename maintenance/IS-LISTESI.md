@@ -39,7 +39,7 @@ Kurtarma **denendi ve elendi**: ① OneDrive "Always keep on this device" ile ta
 K2'nin bekleyen kalemi kısmen kapandı. `gh` bu makinede KURULU DEĞİL (MSI yönetici izni istiyor) — gerek de kalmadı: Git Credential Manager'daki kimlik çalışıyor (PRIVATE repo `ls-remote` ile doğrulandı) ve repo **GitHub API** ile açıldı. Ölçülen kimlik: `login=ozgurylmz34`, kapsam **`gist, repo, workflow`**.
 ⇒ **"Kullanıcıdan beklenenler"deki `gh auth refresh -s workflow` maddesi bu makinede GEREKSİZ** — token'da `workflow` zaten var, `.github/workflows/` push edilebilir.
 Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (`b175e95`) · `feat/2026-09-15-tx01-karne` (`25e2422`). Şirket izni teyidi kullanıcıdan alındı (K2/Y2a kapısı, 2026-09-16) — **yalnız PRIVATE için**; public `axet-template` Y2a sırasına bağlı ve repo hâlâ `maintenance/` + `docs/agentic-connectors.md` + `docs/axet-davranis-olcumleri.md` içeriyor.
-**K2'den KALAN:** `main` dal koruması · CI workflow · CODEOWNERS · merge aracı. Bunlar açılana kadar `UPDATE-PROCEDURE.md` §8 disiplini elle uygulanır: **doğrudan `main` commit'i yok → dal + PR**.
+**K2'den KALAN:** ~~CI workflow · CODEOWNERS · merge aracı~~ → üçü de repoda ZATEN VARDI (2026-09-16 doğrulandı, aşağıdaki "İKİNCİ TUR" bölümü). Kalan tek kalem **`main` dal koruması** ve o da **kurulamıyor** (ücretsiz plan + private = API `403`). Bu yüzden `UPDATE-PROCEDURE.md` §8 disiplini **elle** uygulanmaya devam eder: **doğrudan `main` commit'i yok → dal + PR**.
 
 ⚠ **Değişen tek şey — TABAN:** P6 eskiden `b3e7ab5`'e, TX-01 `a4f9251`'e dayanıyordu; ikisi de artık **`15f9716`** üstünde. P6'nın yaması tek çakışan dosyada (`maintenance/guncelle-mimari/TASARIM.md`) bile temiz uygulandı. Etkisi: aşağıdaki "SIRADAKİ" sırası **aynen geçerli**, ama TX-01'in eski taban ölçümleri (115 test, 1 bilinen taban FAIL) artık YENİ taban üzerinde yeniden koşulmalı — zaten sıradaki ilk iş buydu.
 
@@ -48,6 +48,44 @@ Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (
 **Yedekler** (`C:\AXET-YEDEK-2026-09-16\`, OneDrive dışı yerel disk): bozuk `.git`'in iki kopyası (`git-bozuk`, `git-bozuk-original`) · taşıma öncesi worktree'lerin tam kopyası (`p6-sifirla`, `tx01-karne`, `wt-eski/`) · P6+TX-01 yamaları (`yamalar/`) · yeni reponun bundle'ı · `fsck-tam.txt`.
 
 **Yayın açısından beklenmedik yan etki:** Y2a *"tüm bulgular ilk commit `e0e0b13`'ten beri geçmişte → temiz tek commit'lik geçmiş (orphan) ya da filter-repo gerekir"* diyordu. Bu zorunlu yeniden kurulum, public sürüm için gereken **tek commit'lik temiz geçmişi** fiilen üretmiş oldu. ⚠ Ama bu **yayın iznini VERMEZ**: repo hâlâ `maintenance/`, `docs/agentic-connectors.md`, `docs/axet-davranis-olcumleri.md` içeriyor — Y2a bunları public sürümün DIŞINDA bırakıyor ve push şirket izninin push anında teyidine bağlı.
+
+### 🔵 İKİNCİ TUR — 2026-09-16 (remote sonrası ilk gerçek ölçüm turu)
+
+**① CI bugüne kadar HİÇ KOŞMAMIŞ — ve kırmızı.** `.github/workflows/testler.yml` 2026-09-15'te yazılmıştı ama remote olmadığı için hiç tetiklenmedi ("kod ≠ kablolama" sınıfı). Remote açılınca ilk kez koştu. Ölçülen tam matris:
+
+| Dal | yerel (bu makine) | CI 3.13 | CI 3.9 |
+|---|---|---|---|
+| `main` `32ee4d3` | — | 32 | 36 |
+| `feat/…-tx01-karne` `25e2422` | **2 / 252** | 32 | 36 |
+| `feat/…-p6-sifirla` `b175e95` | **2 / 270** | 47 | 51 |
+| `docs/2026-09-16-remote-ve-wip` `acf25ce` | — | 32 | 36 |
+
+**Tek kök neden** (CI log'undan, tam metin): `kur.cmd` 1/5. adımda duruyor — `DURDU: aXet (axet-code) bulunamadı: PATH içinde yok ve %LOCALAPPDATA%\axet-code\bin\axet-code.exe yok.` → çıkış 2. `test_kur.py`'de `kurulu()` çağıran HER test CI'da `AssertionError: 2 != 0` veriyor. Temiz runner'da axet-code yok; bu makinede var. P6'nın sayısı daha yüksek çünkü ~18 test daha ekliyor — **kusur değil**.
+⛔ **CI sayıları bu iki iş paketinin kalite göstergesi DEĞİLDİR**; geçerli taban YEREL koşumdur.
+⚠ Lider bu turda bir kez **yerel P6'yı CI main ile karşılaştırıp** "P6 kırmızıyı 32→2 düşürüyor" dedi; kontrol grubu (TX-01 worktree'si, P6 değişikliği içermez, yerelde aynı **2**) bunu **çürüttü**. PATTERN #19 ihlali, kayda geçti.
+→ **YENİ AÇIK KALEM (K2c):** `testler.yml` axet-code ön koşulunu sağlamıyor. Üç yol: ① CI'ya stub `axet-code` (kapsamı korur, önerilen) ② testleri atlat (workflow'un kendi yorumu bu yaklaşımı Linux için açıkça reddediyor: *"yeşil görünürken gerçekte kapsam kaybettirir"*) ③ `kur.cmd`'ye test bypass'ı. **P6 merge'inden SONRA.**
+
+**② Dal koruması KURULAMIYOR — ölçüldü.** Hem klasik branch-protection hem repository-ruleset API'si: `403 {"message":"Upgrade to GitHub Pro or make this repository public to enable this feature."}`. Ücretsiz plan + private repo = koruma yok. `.github/CODEOWNERS` dolu ama kendi başlığında yazdığı gibi *koruma olmadan kapı kurmaz, yalnız kayıt tutar*. **❓ Kullanıcı kararı:** public · GitHub Pro · yerel `pre-push` kancası (üçüncüsü yeni gate ⇒ ADR 0019 moratoryumu, ayrı ve açık onay ister).
+
+**③ Merge aracı `gh`'sız çalışmıyor — geçici çözüm var, kalıcısı yok.** `scripts/merge_pr.py:34` tamamen `gh` çağırıyor; bu makinede `gh` kurulu değil. Aynı fail-closed disiplini (önce `statusCheckRollup` doğrula → kırmızı/bekleyen varsa DUR → sonra squash) REST üzerinden uygulayan bir eşdeğer yazıldı (token: `git credential fill`) ve **doğru sebeple durdu** (CI kırmızı). Şu an yalnız scratchpad'de. → **YENİ AÇIK KALEM (K2b):** `merge_pr.py`'ye `gh` yoksa REST'e düşen bir yol eklensin mi, yoksa `gh` kurulumu mu şart koşulsun.
+
+**④ TX-01'in eksik kalan TEK ölçümü YAPILDI.** `…\.wt\axet\tx01-karne` → `python tests/run_tests.py` ön planda, tam: **252 test · 2 failure · 0 error · 2 skip · 481 sn**. (Beklenen "0 failure" değil 2 çıktı — ikisi de aşağıdaki ⑤ gereği TX-01'in işi DEĞİL.)
+
+**⑤ Yereldeki 2 failure — ikisi de TABAN, ikisi de teşhis edildi** (P6 ve TX-01 worktree'lerinde birebir aynı ikisi):
+- `test_kur.py` (tx01'de `:417`, p6'da `:426`) `test_ascii_olmayan_python_ve_hedef_utf8_ayarsiz_ortamda` → **test harness kusuru, ürün temiz.** `tests/test_kur.py:87-92` `[COMSPEC,"/c",KUR_CMD,*arglar]` kuruyor; `cmd /c` komut satırında ikiden fazla tırnak varken ilk ve sonu atıyor → betik yolu **ve** argüman ikisi birden boşlukluysa **batch dosyası hiç başlamıyor** (hatayı cmd.exe basıyor). 4 kollu kontrol grubu (lider ölçtü, `-DenemeModu`): `cmd /c` + iki boşluklu → `rc=1` · aynısı argüman boşluksuz → `rc=0` · `cmd /c **call**` + iki boşluklu → **`rc=0`, `Klon: …\a b\hedef`** · belgelenen PowerShell yolu + iki boşluklu → **`rc=0`**. ⇒ `kur.cmd`/`kur.ps1` boşluklu yolu doğru işliyor; düzeltilebilir tek yer çağıran taraf. Çözüm `call` (uygulandı, P6 fix turunda).
+  📌 Bu, **yeni makineye geçişin ortaya çıkardığı** bir kalemdir — eski `C:\axet` yolunda boşluk yoktu, bu yüzden kayıtlı taban "252 test **0 failure**" idi.
+- `test_run_tests_cli.py:47` → bu makinede `requests` modülü kurulu değil; foundation koşucusunun 6 modülü `ModuleNotFoundError` veriyor, loader hatası `testsRun=6` ürettiği için koşucunun *"0 test → çıkış 2"* sözleşmesi devreye girmiyor, çıkış 1 oluyor. **Çare lider kararı:** `requests` kur **ya da** koşucu import-hatasını kullanım hatasından ayırsın (yeni gate değil, çıktı ayrımı).
+
+**⑥ P6 ikinci kapısı (taze bug-expert) KOŞTU → BLOCKER.** İş listesinin *"düzeltme turu ajana göre tamam"* satırı yanlışmış:
+- **[HATA·HIGH]** `.axet-guncelleme/` **yedeklenmeden, sessizce, çıkış kodu 0 ile siliniyor.** 4. adım doğrulaması (`kur.ps1:512`) yalnız `git status --porcelain` listesini geziyor, o liste gitignore'lu yolları **tanım gereği içermez**; `.axet-guncelleme/` gitignore'lu (`.gitignore:4-7`), yedeğe `add -f` ile ayrıca alınıyor (`:458`), 5. adımda **koşulsuz** siliniyor (`:549`). `:459`'daki *"hükmü 4. adımdaki doğrulama verecek"* uyarısı **yanlış** — doğrulama o yolu göremez. Uçtan uca ölçüldü (iç repo commit'siz): `rc=0` · diskte YOK · yedekte YOK · araç *"Tamam: hepsi yedekte"* diyor. Kontrol grubu (iç repo yok): `rc=0` · yedekte VAR.
+- **[EKSİK·MEDIUM]** `kur.ps1:547-555` bloğunun **tamamı silindiğinde** onu ölçtüğü iddia edilen İKİ test de (`test_kur.py:1092-1101`, `:1140-1160`) **yeşil kaldı**; üstelik `:1152-1154` yorumu tersini iddia ediyor. Aranan *"yeşil koşmamış test → geçersiz mutasyon kanıtı"* sınıfı **bulundu**.
+- Mutasyon turunun kalan 6'sı KIRMIZI (testler geçerli). `test_kur.py:250`/`:269`'daki `assertNotIn("%guncelle", …)` **vakum-assertion** (o dizge `main`'de hiç yok, kırmızı olamazdı) — kusur değil, kanıt-değeri sınırı.
+- **Kalem 1'in ifadesi yanlış:** `main`'de `kur.ps1`+`README.md` içinde "guncelle" dizgesi **hiç yok** → *kaldırılan* bir işaretçi yoktu; yapılan, `%guncelle` atfını **eklememek**. Verdict'i etkileyen kısım (mesajların iki çalışan yolu söylemesi) mutasyonla DOĞRULANDI.
+- **Açık kalemler:** `#L1` TEYİT · `#L3` TEYİT · "yedek dalı klonla birlikte gider" uyarısının eksikliği TEYİT (grep 0 satır).
+- ❌ **"3 yetim `%TEMP%` dizini" kalemi ÇÜRÜTÜLDÜ** — `tests/_helpers.py:59-60` `tearDown` koşulsuz temizliyor, `_sil` salt-okunur git objeleri için `chmod` düzeltmesi taşıyor (`:22-29`); ~10 koşum sonrası `%TEMP%\axet-test-*` sayımı **0**. Yetimler yalnız **yarıda kesilen** koşumlardan kalır — kayıtlı 3 dizin tam da öyle oluşmuştu. **Ürün kusuru değil, kalem kapandı.**
+- **Kapsam dışı bırakıldı (bilinçli):** dış `catch` yedek dalı (`kur.ps1:989-993`) test edilemedi — tetikleyici bulunamadı, *"çalışıyor" diye raporlanmamalı* · junction/symlink davranışı ölçülmedi · Linux/macOS ve git<2.23 ölçülmedi.
+
+**⑦ P6 BLOCKER düzeltmesi dağıtıldı.** Yaklaşım **DUR değil FAIL-SAFE**: *yedekleyemediğini silme, kullanıcıya adıyla söyle, akışı durdurma.* Gerekçe — 4. adıma DUR koymak P6'nın 3. kalemini (*"gömülü git deposu artık `-Sifirla`'yı kalıcı tıkamıyor"*) geri kırardı. Pakete M5 kapsam boşluğunun testi, `kur.ps1:387` yorum düzeltmesi + 4. adım DUR bloğuna geri-dönüş ipucu, ve ⑤'teki `call` düzeltmesi dahil.
 
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
 
@@ -92,7 +130,12 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 ⚠ **Kök takımın SON tam-paket doğrulaması SONUÇLANMADI** — ajan bunu arka planda başlatıp (aynı P6 tuzağı: `run_in_background` + tur biter) bir kez "canlı çocuğu yok" sayılıp bildirim gelmedi; `SendMessage` ile uyandırıldı, checkpoint gönderdi ("sırada: kök takımın sonucu + nihai rapor"), sonra **kullanıcının gün-sonu talebiyle DURDURULDU** kök takım sonucu gelmeden. **Bu turdan eksik kalan TEK ölçüm budur** — dosyalar yukarıdaki 9+2 kalemin hepsini içeriyor, yalnız son "kök takım 0 failure" teyidi yok. **İkinci kapı (taze bug-expert) da HİÇ BAŞLATILMADI** (P6 sırasına girdi, TX-01'e sıra gelmeden gün bitti).
 
-### SIRADAKİ — tam sıra (yarın)
+### SIRADAKİ — tam sıra
+
+> **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert 🔄 **koşuyor** · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi 🔄 **koşuyor** (yukarıda ⑦) · ③c fix sonrası TAZE bug-expert ⬜ · ④ merge ⬜ · ⑤ sonrası ⬜.
+> Aşağıdaki maddelerdeki `C:/axet` / `C:/.wt/...` yolları **GEÇERSİZ** — yeni yollar için en üstteki tabloya bak.
+
+
 
 1. **Açılış kontrolü (~2 dk):** `git -C C:/axet status --short` (temiz olmalı) · `git -C C:/axet worktree list` (P6 + TX-01 hâlâ AÇIK olmalı, ikisi de bu dosyada yukarıda anlatıldı) · her iki worktree'de `git status --short` (yukarıdaki numstat'larla AYNI olmalı — değilse ne değişti araştır, kayıp/bozulma ihtimaline karşı).
 2. **TX-01'i BİTİR:** worktree'de `cd C:/.wt/axet/tx01-karne && python tests/run_tests.py` (ön planda, timeout ≥1500000) — kök takım 0 failure mi ölçül. Sonra **TAZE bug-expert** (core §5 — aynı ajan kendi düzeltmesini onaylamaz): brif = yukarıdaki "TX-01" bölümünün tamamı + H1/H2 orijinal BLOCKER bulguları + "AÇIK BIRAKILAN" 3 kalemin bilinçli olduğunu söyle (bunları BULGU diye tekrar yazmasın, ama gerçekten kapatılıp kapatılmadığını ölçsün). PASS/WARNING → lider commit → `feat/2026-09-14-kurulum`'a merge → worktree kapat.
@@ -274,7 +317,7 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 | P3 | vaka kartları + sınıf kartları + `GUNCELLE.md` | P2 | evet | — | ⬜ |
 | P4 | `%guncelle` başlatıcı + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | — | ⬜ |
 | P5 | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet | — | ⬜ |
-| P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | 🟡 **düzeltme turu ajanın raporuna göre tamam, İKİNCİ KAPI (taze bug-expert) doğrulaması YOK** (worktree `C:\.wt\axet\p6-sifirla`, COMMIT YOK). Ayrıntı: DEVAM NOKTASI "P6" bölümü. |
+| P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | 🟡 **İKİNCİ KAPI KOŞTU (2026-09-16) → BLOCKER**: `.axet-guncelleme/` yedeksiz siliniyor (HIGH) + emniyet ağı testsiz (MEDIUM). Düzeltme dağıtıldı, fix sonrası TAZE bug-expert şart. Worktree `…\AI_WORKS\.wt\axet\p6-sifirla`, WIP commit `b175e95`. Ayrıntı: DEVAM NOKTASI "İKİNCİ TUR" ⑥/⑦. |
 | P7 | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` + `session_brief` günlük/kritik satırı | P1, P2 | evet | — | ⬜ |
 | P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | ⬜ |
 | P9 | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası) | — | ⬜ |
