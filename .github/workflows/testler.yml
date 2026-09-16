@@ -42,7 +42,21 @@ jobs:
         # Taban + guncel birlikte kosar ki "su surumden itibaren destekleniyor" iddiasi
         # OLCULMUS olsun, varsayilmis degil.
         #
-        # TABAN 3.9 -> 3.10 (2026-09-16, kullanici karari). Gerekce: matris isini yapti ve
+        # TABAN 3.9 -> 3.10 -> 3.12 · UST KOL 3.13 -> 3.14 (2026-09-16, kullanici karari).
+        #
+        # NEDEN 3.10'DA KALINMADI: destek takvimi olculdu — 3.10 EOL 31 Ekim 2026, yani
+        # taban ilan edildiginden ~6 hafta sonra oluyordu; ayrica 3.13'un bugfix evresi
+        # 1 Ekim 2026'da bitiyor (o tarihten sonra "guncel kol" guncel olmazdi). 3.12
+        # Ekim 2028'e, 3.14 Ekim 2030'a kadar destekli.
+        # 3.10 KOSTU VE DUSTU (kosum #11: 3.10 -> 2 failure, 3.13 -> yesil): asagidaki
+        # 2. kusur 3.10'da HALA acikti. Yani "3.10 gecer" varsayimi olsaydi yanlis olurdu.
+        # 3.12 SECIMI OLCULDU, varsayilmadi: yerelde Python 3.12.10 ile
+        # test_f1_belirsiz_origin... GECTI ve urllib 'https://[SECRETTOKEN]/r' icin
+        # ValueError veriyor (katilik 3.12'de VAR). 3.14 olculmedi — ama depoda PEP 594'te
+        # kaldirilan modullerden hicbiri ve __annotations__/get_type_hints kullanimi YOK
+        # (tarandi), maruziyet dusuk. Duserse kanitla ayarlanacak.
+        #
+        # Ilk daraltmanin gerekcesi: matris isini yapti ve
         # "3.9 destekleniyor" iddiasinin YANLIS oldugunu olctu (kosum #10, 3.9 kolu 4 failure;
         # 3.13 ve kurulum yesil). Iki ayri kusur:
         #   1) 4 validator dosyasinda PEP 604 (`X | None`) var, `from __future__ import
@@ -56,9 +70,7 @@ jobs:
         # ⚠ ACIK KALEM: README:23 ve kur.ps1'deki "3.9" metinleri HENUZ guncellenmedi —
         # o iki dosyaya P6 dali da dokundugu icin cakismayi onlemek adina P6 merge edildikten
         # SONRA yapilacak (IS-LISTESI'ne yazildi). O ana kadar matris 3.10, metin 3.9 der.
-        # ⚠ 3.10'un GECECEGI VARSAYILMADI: kusur 2'nin hangi surumde kapandigi olculmedi;
-        # 3.10 da duserse taban kanitla yukari cekilecek.
-        python: ['3.10', '3.13']
+        python: ['3.12', '3.14']
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: 'utf-8'
