@@ -57,6 +57,23 @@ jobs:
           python --version
           git --version
 
+      # ON KOSUL 0 — depo bir DALIN uzerinde olmali. actions/checkout depoyu detached ve
+      # YEREL DALSIZ birakir; tests/test_kur.py setUpClass kendi fixture'ini `git clone --bare
+      # <bu depo>` ile kurdugu icin dalsizlik bare kopyaya, oradan da calisma klonuna geciyor
+      # ve `git push -q origin HEAD` "The destination you provided is not a full refname" ile
+      # dusuyor. Olculdu (2026-09-16, 3 kollu): dalda -> gecti · detached ama DALLAR VAR ->
+      # gecti · detached + dalsiz -> CI'daki hatanin AYNISI. Yani belirleyici olan detached
+      # olmak degil, yerel dalin BULUNMAMASI. Tam takim: dalsiz 252/15 -> bu adimla 252/0.
+      # NOT (acik kalem): asil kirilganlik testlerde — fixture calisilan deponun ortam
+      # durumunu devraliyor. Kalici cozum `uzakta_commit`in HEAD yerine tam refname itmesi
+      # ya da bare sablonun dalini garanti etmesidir; bu adim CI'yi normal bir calisma
+      # klonuna benzetir, o baglantiyi KALDIRMAZ.
+      # Dal adi bilerek `main`: olculen kol buydu ve normal bir calisma klonunun hali budur.
+      # PR'da bu yerel `main`, merge commit'ine isaret eder (origin/main'e DEGIL) — fixture
+      # kendi icinde tutarli oldugu icin testler icin dogru olan da budur.
+      - name: On kosul - dal uzerinde ol
+        run: git checkout -B main
+
       # ON KOSUL 1 — sahte axet-code. Olculdu (2026-09-16, yerelde CI kosulu taklit edilerek,
       # 3 kollu): gercek axet-code VAR -> test_kur 36/1 · YOK -> 36/30 · sahte stub ile -> 36/1.
       # Yani kosum #1'deki 36 failure'in 30'u tek bir on kosul bosluguydu, kod kusuru DEGILDI
