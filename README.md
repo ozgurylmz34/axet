@@ -38,6 +38,14 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 ```powershell
 $f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
 ```
+Klonun kendisi bozulduysa (yerel `kur.ps1` dahil) aynı satırın **sıfırlayan** varyantı: klonu template ile birebir
+aynı hâle getirir, önce her şeyi `yedek/<tarih-saat>` dalına alır:
+```powershell
+$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f -Sifirla
+```
+Tek satır komutlar klonu varsayılan yere (`%USERPROFILE%\axet`) kurar: `-Hedef` ile başka bir yere kurduysan
+aynı `-Hedef`'i bu komuta da ver, yoksa ikinci bir klon kurulur.
+
 Kurulum aracı sırayla şunları yapar:
 1. aXet'in kurulu olduğunu kontrol eder. Kurulu değilse durur.
 2. Git ve Python'u kontrol eder. Eksikse `winget` ile kurmayı sorar.
@@ -52,10 +60,24 @@ Aynı araç klondan da çalışır:
 ```powershell
 & $HOME\axet\kur.cmd                 # güncelle (git pull --ff-only + install.py + doctor)
 & $HOME\axet\kur.cmd -DenemeModu     # hiçbir şey yazmadan ne yapacağını göster
+& $HOME\axet\kur.cmd -Sifirla        # klonu template ile birebir aynı hâle getir (önce yedek dalı açılır)
 & $HOME\axet\kur.cmd -Kaldir         # config'ten template kayıtlarını çıkar (klasör silinmez)
 & $HOME\axet\kur.cmd -Hedef D:\araclar\axet   # başka klasöre kur
 ```
-Araç yerel değişikliği olan bir klonu güncellemez, `reset` ya da `stash` yapmaz; durur ve ne yapman gerektiğini söyler.
+Araç yerel değişikliği olan bir klonu **kendiliğinden** güncellemez, `reset` ya da `stash` yapmaz; durur ve iki
+yolu söyler: değişikliklerini korumak istiyorsan onları kendin commit ya da stash et ve `kur.cmd`'yi tekrar
+çalıştır; korumak istemiyorsan `kur.cmd -Sifirla`.
+
+`-Sifirla` hiçbir şeyi silmeden önce yerel değişiklikleri, izlenmeyen dosyaları ve yerel commit'leri `yedek/<tarih-saat>`
+dalına alır ve yedeği doğrular; onayı senden ister (`SIFIRLA` yazarsın; `-DenemeModu` yalnız durumu gösterir).
+gitignore'lu dosyalarına dokunmaz (`.axet-guncelleme/` hariç: o silinir) ve klon klasörünün dışına çıkmaz.
+Tek istisna: klonun içine dışarıyı gösteren bir bağ (junction/symlink) koyduysan git o bağın içine girer ve
+oradaki dosyaları da yedeğe alır — böyle bir bağın varsa önce kaldır. Klonun içindeki ayrı bir git deposunu
+ise git silmez (geçmişi gitmesin diye); araç kalanı sana adıyla bildirir. Klon işlem sonunda `main` dalında olur
+(güncellemenin çalışması için gerekli); klonun dalı başkaysa o dalın işi yedek dalında durur.
+
+Tek bir dosyayı geri almak için son mesajdaki komutu kullan:
+`git -C "$HOME\axet" restore --source yedek/<...> -- <yol>`.
 Çıkış kodları: `0` tamam · `1` durdu · `2` ön koşul eksik · `3` yeni terminal açıp tekrar çalıştır · `4` doctor FAIL.
 
 Elle kurmak istersen:

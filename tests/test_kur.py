@@ -246,6 +246,11 @@ class KurTest(GeciciTest):
         r = self.kur("-Evet")
         self.assertNotEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("yerel değişiklik var", self.cikti(r))
+        # Bayraksız kur.cmd yalnız "DURDU" demez, İKİ yolu da söyler (TASARIM §1). Mesaj BUGÜN var olan eylemleri
+        # göstermeli: `%guncelle` skill'i bu dalda YOK (P2/P4 ile gelecek) — ölü işaretçi yazılmaz.
+        self.assertNotIn("%guncelle", self.cikti(r))
+        self.assertIn("stash", self.cikti(r))
+        self.assertIn("kur.cmd -Sifirla", self.cikti(r))
         self.assertEqual(readme.read_bytes(), icerik)
         self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), head)
         self.assertFalse((self.hedef / "YENI.txt").exists())
@@ -261,6 +266,10 @@ class KurTest(GeciciTest):
         r = self.kur("-Evet")
         self.assertEqual(r.returncode, 1, self.cikti(r))
         self.assertIn("ayrışmış", self.cikti(r))
+        # Ayrışma mesajı da iki yolu söyler, ikisi de bugün çalışan eylem (ölü `%guncelle` işaretçisi yok).
+        self.assertNotIn("%guncelle", self.cikti(r))
+        self.assertIn("Yerel commit", self.cikti(r))  # mesajdaki biçim: "Yerel commit'lerini korumak istiyorsan"
+        self.assertIn("kur.cmd -Sifirla", self.cikti(r))
         self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), head)
 
     def test_hedef_var_git_degil_durur(self):
@@ -960,6 +969,327 @@ class KurTest(GeciciTest):
                            encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, timeout=300)
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("DENEME MODU bitti", self.cikti(r))
+
+    # --- -Sifirla (TASARIM §10) --------------------------------------------------------------------------------
+    def _agac(self, kok: Path) -> dict:
+        """Klasördeki dosyaların içerik özeti; `.git` HARİÇ (git kendi iç dosyalarını okuma sırasında da tazeler)."""
+        sonuc = {}
+        for p in sorted(kok.rglob("*")):
+            g = p.relative_to(kok)
+            if ".git" in g.parts or not p.is_file():
+                continue
+            sonuc[str(g)] = hashlib.sha256(p.read_bytes()).hexdigest()
+        return sonuc
+
+    def sifirla_klonu(self) -> None:
+        """hedef = kaynak bare'in `main` dalını izleyen TEMİZ klon (gerçek tüketici klonunun şekli).
+
+        kur.cmd ile değil doğrudan git ile klonlanır: her senaryoya ikinci bir tam kurulum koşumu (klon+install+doctor)
+        eklenmesin. Çalışma ağacındaki `.gitignore` klona taşınır: `.axet-guncelleme/` kuralı henüz commit'lenmemiş
+        olabilir ve iki senaryo (gitignore'lu dosya korunur · `.axet-guncelleme` yedekte) tam olarak onu ölçer."""
+        self.git(self.kaynak, "update-ref", "refs/heads/main", "HEAD")
+        self.git(self.kaynak, "symbolic-ref", "HEAD", "refs/heads/main")
+        self.git(self.tmp, "clone", "-q", "-b", "main", str(self.kaynak), str(self.hedef))
+        shutil.copy2(AXET_HOME / ".gitignore", self.hedef / ".gitignore")
+        if self.git(self.hedef, "status", "--porcelain", "--", ".gitignore").stdout.strip():
+            self.git(self.hedef, "add", ".gitignore")
+            self.git(self.hedef, "commit", "-q", "-m", "test: calisma agacindaki .gitignore")
+            self.git(self.hedef, "push", "-q", "origin", "main")
+        self.assertEqual(self.git(self.hedef, "status", "--porcelain").stdout.strip(), "")
+
+    def yedek_dallari(self) -> list:
+        r = self.git(self.hedef, "for-each-ref", "--format=%(refname:short)", "refs/heads/yedek")
+        return [s.strip() for s in r.stdout.splitlines() if s.strip()]
+
+    def tek_yedek(self) -> str:
+        d = self.yedek_dallari()
+        self.assertEqual(len(d), 1, f"tam bir yedek dalı bekleniyordu, bulunan: {d}")
+        return d[0]
+
+    def yedekte(self, dal: str, yol: str) -> str:
+        return self.git(self.hedef, "show", f"{dal}:{yol}").stdout
+
+    # 1/12 izlenen değişiklik
+    def test_sifirla_izlenen_degisiklik_geri_alinir_yedekte_kalir(self):
+        self.sifirla_klonu()
+        readme = self.hedef / "README.md"
+        ozgun = readme.read_bytes()
+        readme.write_bytes(ozgun + b"\nyerel not\n")
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertEqual(readme.read_bytes(), ozgun)
+        self.assertEqual(self.git(self.hedef, "status", "--porcelain").stdout.strip(), "")
+        dal = self.tek_yedek()
+        self.assertIn(dal, c)
+        self.assertIn("yerel not", self.yedekte(dal, "README.md"))
+
+    # 2/12 izlenmeyen dosya
+    def test_sifirla_izlenmeyen_dosya_silinir_yedekte_kalir(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / "notlarim" / "benim.txt", "kullanıcı notu\n")
+        # Boş klasör `clean -fd`'yi YALITARAK ölçer: git boş klasörü izlemez, bu yüzden yedek commit'ine giremez ve
+        # dal değişiminde de silinmez; onu yalnız `clean -fd` kaldırır. (Ölçüldü 2026-09-15: yalnız dosyayla yazılan
+        # bu senaryo `clean -fd` satırı tamamen kaldırıldığında da GEÇİYORDU — dosyayı zaten `switch` siliyor.)
+        (self.hedef / "bos-klasor").mkdir()
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("benim.txt", c)  # 1. adım izlenmeyenleri de gösterdi
+        self.assertFalse((self.hedef / "notlarim").exists())
+        self.assertFalse((self.hedef / "bos-klasor").exists(), "izlenmeyen boş klasör kaldı (clean -fd koşmadı)")
+        self.assertIn("kullanıcı notu", self.yedekte(self.tek_yedek(), "notlarim/benim.txt"))
+
+    # 3/12 yerel commit
+    def test_sifirla_yerel_commit_geri_alinir_yedek_dalinda_kalir(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / "YEREL.txt", "yerel commit\n")
+        self.git(self.hedef, "add", "YEREL.txt")
+        self.git(self.hedef, "commit", "-q", "-m", "yerel is")
+        yerel_head = self.git(self.hedef, "rev-parse", "HEAD").stdout.strip()
+        uzak = self.git(self.hedef, "rev-parse", "origin/main").stdout.strip()
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("yerel is", c)  # 1. adım yerel commit'leri listeledi
+        self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), uzak)
+        self.assertFalse((self.hedef / "YEREL.txt").exists())
+        self.assertEqual(self.git(self.hedef, "rev-parse", self.tek_yedek()).stdout.strip(), yerel_head)
+
+    # 4/12 gitignore'lu dosya korunur (clean -fd, -x YOK)
+    def test_sifirla_gitignorelu_dosya_korunur(self):
+        self.sifirla_klonu()
+        benim = self.yaz(self.hedef / "_lab" / "deneme.txt", "deneme alanı\n")
+        self.assertEqual(self.git(self.hedef, "check-ignore", "-q", "_lab/deneme.txt", kontrol=False).returncode, 0,
+                         "_lab/ .gitignore'da değil: senaryonun ön koşulu yok")
+        r = self.kur("-Sifirla", "-Evet")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue(benim.is_file(), "gitignore'lu dosya silindi (clean -fdx mi çalıştı?)")
+        self.assertEqual(benim.read_text(encoding="utf-8"), "deneme alanı\n")
+
+    # 5/12 .axet-guncelleme silinir ve yedekte var
+    def test_sifirla_axet_guncelleme_silinir_ve_yedekte_var(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / ".axet-guncelleme" / "uygulanan.json", '{"surum": 1}\n')
+        self.assertEqual(self.git(self.hedef, "check-ignore", "-q", ".axet-guncelleme/uygulanan.json",
+                                  kontrol=False).returncode, 0, ".axet-guncelleme/ .gitignore'da değil")
+        r = self.kur("-Sifirla", "-Evet")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.hedef / ".axet-guncelleme").exists(), ".axet-guncelleme/ silinmedi")
+        self.assertIn('"surum": 1', self.yedekte(self.tek_yedek(), ".axet-guncelleme/uygulanan.json"))
+
+    # 6/12 onaysız -> dokunulmaz
+    def test_sifirla_onaysiz_hicbir_seye_dokunmaz(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        readme = self.hedef / "README.md"
+        readme.write_bytes(readme.read_bytes() + b"\nyerel not\n")
+        once = self._agac(self.hedef)
+        head = self.git(self.hedef, "rev-parse", "HEAD").stdout.strip()
+        r = self.kur("-Sifirla")  # stdin kapalı, -Evet yok: SIFIRLA yazılamaz
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("SIFIRLA", c)
+        self.assertIn("iptal", c)
+        self.assertEqual(self._agac(self.hedef), once)
+        self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertEqual(self.yedek_dallari(), [])
+        self.assertFalse(self.cfg.exists())
+
+    # 7/12 -DenemeModu hiçbir şey yazmaz
+    def test_sifirla_deneme_modu_hicbir_sey_yazmaz(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        once = self._agac(self.hedef)
+        once_git = _goruntu(self.hedef / ".git")
+        r = self.kur("-Sifirla", "-DenemeModu")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("DENEME MODU bitti", c)
+        self.assertIn("benim.txt", c)  # 1. adım basıldı
+        self.assertEqual(self._agac(self.hedef), once)
+        self.assertEqual(_goruntu(self.hedef / ".git"), once_git)
+        self.assertEqual(self.yedek_dallari(), [])
+        self.assertFalse(self.cfg.exists())
+
+    # 8/12 git kimliği tanımsız ortamda yedek commit'i
+    def test_sifirla_git_kimligi_tanimsizken_yedek_commiti_atilir(self):
+        self.sifirla_klonu()
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        env = dict(self.env)
+        for k in ("GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"):
+            env.pop(k, None)
+        r = self.kur("-Sifirla", "-Evet", env=env)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        dal = self.tek_yedek()
+        self.assertEqual(self.git(self.hedef, "log", "-1", "--format=%an <%ae>", dal).stdout.strip(),
+                         "axet-yedek <yedek@yerel>")
+        # Mesaj BİREBİR karşılaştırılır: PS 5.1 native argümanda hem Türkçe karakteri bozabilir (BOM'suz kopyada
+        # ölçüldü: "sÄ±fÄ±rlama") hem de gömülü tırnakta argümanı bölebilir; gözle bakmak ikisini de kaçırır.
+        self.assertEqual(self.git(self.hedef, "log", "-1", "--format=%s", dal).stdout.strip(),
+                         "yedek: sıfırlama öncesi")
+        self.assertIn("kullanıcı dosyası", self.yedekte(dal, "benim.txt"))
+
+    # 9/12 pre-commit kancası tanımlıyken --no-verify
+    def test_sifirla_kanca_tanimliyken_no_verify_ile_commitler(self):
+        self.sifirla_klonu()
+        kancalar = self.tmp / "_kancalar"
+        isaret = self.tmp / "KANCA_CALISTI.txt"
+        self.yaz(kancalar / "pre-commit", f'#!/bin/sh\necho calisti > "{isaret.as_posix()}"\nexit 1\n')
+        self.git(self.hedef, "config", "core.hooksPath", kancalar.as_posix())
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("kullanıcı dosyası", self.yedekte(self.tek_yedek(), "benim.txt"))
+        self.assertFalse(isaret.exists(), "pre-commit kancası çalıştı: --no-verify yok")
+
+    # 10/12 klon dışı proje klasörü aynen kalır
+    def test_sifirla_klon_disi_proje_klasoru_aynen_kalir(self):
+        self.sifirla_klonu()
+        proje = self.tmp / "musteri-projesi"
+        self.yaz(proje / "AGENTS.md", "proje talimatı\n")
+        self.yaz(proje / ".axet-code" / "durum.json", "{}\n")
+        self.yaz(proje / ".axet-guncelleme" / "uygulanan.json", "{}\n")
+        once = self._agac(proje)
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        # Klonun KENDİ .axet-guncelleme'si de kurulur: silme yolu ancak böyle koşar. (Ölçüldü 2026-09-15: bu dosya
+        # olmadan, temizliği klon dışına taşıyan mutasyon bile testi geçiyordu — silme bloğuna hiç girilmiyordu.)
+        self.yaz(self.hedef / ".axet-guncelleme" / "uygulanan.json", "{}\n")
+        r = self.kur("-Sifirla", "-Evet")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.hedef / ".axet-guncelleme").exists())  # klon içindeki silindi
+        self.assertEqual(self._agac(proje), once)  # klon dışındaki (aynı adlı dizin dahil) duruyor
+
+    # 11/12 yedek dalından tek dosya geri alma
+    def test_sifirla_yedek_dalindan_tek_dosya_geri_alinir(self):
+        self.sifirla_klonu()
+        readme = self.hedef / "README.md"
+        degisik = readme.read_bytes() + b"\nyerel not\n"
+        readme.write_bytes(degisik)
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        dal = self.tek_yedek()
+        self.assertIn(f"restore --source {dal} -- ", c)  # son mesajdaki komut
+        self.assertNotIn(b"yerel not", readme.read_bytes(), "sıfırlama satırı geri almadı")
+        self.git(self.hedef, "restore", "--source", dal, "--", "README.md")
+        # Bayt karşılaştırması yapılmaz: `.gitattributes`'taki `* text=auto` yüzünden git checkout'ta satır sonunu
+        # CRLF'ye çevirir, dosyanın özgün baytları birebir geri gelmez (ölçüldü). Geri gelen yedekteki İÇERİKTİR.
+        self.assertIn(b"yerel not", readme.read_bytes())
+
+    # 12/12 yabancı repoda DUR
+    def test_sifirla_yabanci_repoda_durur(self):
+        bare, isaret = self.yabanci_repo("yabanci-sifirla")
+        self.git(self.tmp, "clone", "-q", str(bare), str(self.hedef))
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        head = self.git(self.hedef, "rev-parse", "HEAD").stdout.strip()
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("template'inin klonu değil", c)
+        self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertEqual((self.hedef / "benim.txt").read_text(encoding="utf-8"), "kullanıcı dosyası\n")
+        self.assertEqual(self.yedek_dallari(), [])
+        self.assertFalse(isaret.exists(), "yabancı install.py/doctor.py çalıştırıldı")
+        self.assertFalse(self.cfg.exists())
+
+    # --- bug gate turu: yedek bütünlüğü, ana dala dönüş, parametre çakışması -----------------------------------
+    def ic_repo(self, ad: str, commitli: bool) -> Path:
+        """Klonun İÇİNDE ayrı bir git deposu (gitlink adayı). commitli=False → hiç commit atılmamış depo."""
+        d = self.hedef / ad
+        d.mkdir(parents=True)
+        self.git(d, "init", "-q", "-b", "main", ".")
+        if commitli:
+            self.yaz(d / "ic.txt", "iç proje dosyası\n")
+            self.git(d, "add", "-A")
+            self.git(d, "commit", "-q", "-m", "ic ilk")
+        return d
+
+    # 13: gömülü git reposu (commit'li) yedeğe alınır ve sıfırlama TAMAMLANIR — gate #M4'ün kalıcı tıkanması
+    def test_sifirla_gomulu_git_reposu_yedege_alinir_ve_tamamlanir(self):
+        self.sifirla_klonu()
+        self.ic_repo("ic-proje", commitli=True)
+        ic_dosya = self.hedef / "ic-proje" / "ic.txt"
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)  # `?? ic-proje/` ↔ ls-tree `ic-proje` normalize edilmezse burada rc 1
+        dal = self.tek_yedek()
+        # gitlink olarak yedekte: ls-tree modu 160000 (yalnız commit kimliği; iç deponun dosyaları kendi .git'inde)
+        satir = self.git(self.hedef, "ls-tree", "-r", dal, "--", "ic-proje").stdout.strip()
+        self.assertTrue(satir.startswith("160000 commit"), f"gitlink yedeğe alınmadı: {satir!r}")
+        # İç depo YERİNDE KALIR: `git clean -fd` iç içe depoyu bilerek atlar (silmek `-ffd` isterdi ve o deponun
+        # geçmişini de yok ederdi — ölçüldü git 2.55). Araç bunu susarak geçmez, kalanı adıyla bildirir.
+        self.assertTrue(ic_dosya.is_file(), "iç git deposu silindi (clean -ffd mi çalıştı?)")
+        self.assertIn("hâlâ", c)
+        self.assertIn("ic-proje", c)
+
+    # 14: yedeklenemeyen yol → 4. ADIM DUR; hiçbir şey silinmez (ağaç bit-bit aynı)
+    def test_sifirla_yedeklenemeyen_yol_varsa_dogrulama_durdurur(self):
+        self.sifirla_klonu()
+        # Hiç commit'i olmayan gömülü depo: `git add -A` onu indekse alamaz ("does not have a commit checked out",
+        # ölçüldü git 2.55) ⇒ 1. adımda görülen yol yedek ağacına giremez ⇒ 4. adım silmeye izin VERMEMELİ.
+        self.ic_repo("ic-bos", commitli=False)
+        self.yaz(self.hedef / "benim.txt", "kullanıcı dosyası\n")
+        readme = self.hedef / "README.md"
+        readme.write_bytes(readme.read_bytes() + b"\nyerel not\n")
+        once = self._agac(self.hedef)
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("4/7", c)
+        self.assertIn("HİÇBİR ŞEY SİLİNMEDİ", c)
+        self.assertIn("ic-bos", c)
+        self.assertIn("kur.cmd -Sifirla komutunu tekrar", c)  # eyleme dönüştürülebilir mesaj
+        self.assertIn("branch -D", c)                          # kalan yedek dalı için ne yapılacağı
+        self.assertEqual(self._agac(self.hedef), once, "doğrulama geçmeden dosya değişti/silindi")
+
+    # 15: main olmayan daldan sıfırlama → klon main'e alınır ve upstream'i olur
+    def test_sifirla_main_olmayan_daldan_main_e_doner_upstream_kurulur(self):
+        self.sifirla_klonu()
+        self.git(self.hedef, "switch", "-q", "-c", "benim-dalim")
+        self.yaz(self.hedef / "YEREL.txt", "dal işi\n")
+        self.git(self.hedef, "add", "YEREL.txt")
+        self.git(self.hedef, "commit", "-q", "-m", "dal isi")
+        self.git(self.hedef, "branch", "-D", "main")  # yerel main hiç yok: -Sifirla onu kurmalı
+        r = self.kur("-Sifirla", "-Evet")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertEqual(self.git(self.hedef, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "main")
+        self.assertEqual(self.git(self.hedef, "rev-parse", "--abbrev-ref", "@{u}").stdout.strip(), "origin/main")
+        self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(),
+                         self.git(self.hedef, "rev-parse", "origin/main").stdout.strip())
+        self.assertIn("benim-dalim", c)  # son mesaj eski dalı söylüyor
+        self.assertIn("dal işi", self.yedekte(self.tek_yedek(), "YEREL.txt"))
+
+    # 16: -Kaldir + -Sifirla birlikte → DURDU (hiçbir işlemden önce)
+    def test_kaldir_ve_sifirla_birlikte_durur(self):
+        self.sifirla_klonu()
+        once = self._agac(self.hedef)
+        r = self.kur("-Sifirla", "-Kaldir")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("birlikte kullanılamaz", c)
+        self.assertEqual(self._agac(self.hedef), once)
+        self.assertEqual(self.yedek_dallari(), [])
+        self.assertFalse(self.cfg.exists())
+
+    # --- statik: sığ klon yasağı + README varyantı --------------------------------------------------------------
+    def test_kur_ps1_sig_klon_yapmaz(self):
+        """Sığ/kısmi klon `origin/main..HEAD`, `merge-base` ve yedek dalını bozar (TASARIM §1, §12 satır 351)."""
+        metin = KUR_PS1.read_text(encoding="utf-8-sig")
+        klon_satirlari = [s for s in metin.splitlines() if re.search(r"'clone'|\bgit clone\b", s)]
+        self.assertTrue(klon_satirlari, "kur.ps1'de clone çağrısı bulunamadı (test kör kaldı)")
+        for s in klon_satirlari:
+            for yasak in ("--depth", "--shallow", "--filter", "--single-branch"):
+                self.assertNotIn(yasak, s, f"sığ/kısmi klon: {s.strip()}")
+
+    def test_readme_sifirla_tek_satir_varyanti(self):
+        """Bozuk yerel kur.ps1'den bağımsız sıfırlama: indirilen dosyayı -Sifirla ile çalıştıran varyant (TASARIM §10)."""
+        metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
+        self.assertIn("-File $f -Sifirla", metin)
+        self.assertIn("kur.cmd -Sifirla", metin)
 
 
 if __name__ == "__main__":

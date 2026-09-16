@@ -1,5 +1,9 @@
 # aXet.code çalışma durumu (oturum DB, log, codegraph) — repoya girmez
 /.axet-code/
+# Güncelleme çalışma durumu (plan, uygulanan.json, öneri/elle dosyaları) — repoya girmez.
+# kur.cmd -Sifirla bu dizini AYRICA siler: clean -fd gitignore'lu dosyayı silmez ve kalan eski taban kaydı
+# sonraki %guncelle'yi yanlış tabana götürür.
+/.axet-guncelleme/
 # Deneme alanı
 /_lab/
 # Şirket içi ham dokümanlar (gerçek sistem/kişi bilgisi içerebilir) — repoya girmez

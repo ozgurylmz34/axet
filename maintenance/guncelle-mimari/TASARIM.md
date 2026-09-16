@@ -26,6 +26,8 @@ Bu belge kod içermez; "script" dediğim her şey yazılacak koddur. Dosya:satı
 `Kendi değişikliklerini koruyarak güncellemek için: aXet'i aç, %guncelle yaz.` · `Klonu tamamen template'e eşitlemek için (önce yedek alınır): kur.cmd -Sifirla`.
 Not: `%guncelle` yerel commit ürettiği için, bir kez kullanıldıktan sonra bayraksız `kur.cmd` hep "ayrışmış" der ve bu mesajı basar — bu beklenen davranıştır. İzlenmeyen dosyalar bugün de engellemez (`--untracked-files=no`, `kur.ps1:513`); korunur.
 
+**P6 (2026-09-15) uygulama notu:** bayraksız `kur.cmd` mesajlarına `%guncelle` atfı BUGÜN KONMADI — P2/P4 gelmeden `%guncelle` yok, yani ölü işaretçi olurdu. Bugünkü metin çalışan iki yolu söyler (kendin commit/stash et + `kur.cmd`, ya da `kur.cmd -Sifirla`); `%guncelle` atfı P2/P4 ile birlikte bu mesajlara eklenecek.
+
 **`CLONE_PROTECTED` kaldırılır** (`install.py:46`, `:93-108`); doctor, template'ten farklı dosyaları **bilgi** satırı olarak listeler (engellemez).
 
 ---
