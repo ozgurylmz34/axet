@@ -106,10 +106,10 @@
       "etkin": "yeni-oturum",
       "esler": [],
       "test": [],
-      "risk": "dusuk",
+      "risk": "orta",
       "ozel_adim": null,
       "kritik_yol": false,
-      "not": "Kök AGENTS.md bakımcı talimatıdır; proje şablonunun templates/project/AGENTS.md'si AYRI sınıftır."
+      "not": "Kök AGENTS.md bakımcı talimatıdır; proje şablonunun templates/project/AGENTS.md'si AYRI sınıftır. RİSK GEREKÇESİ (2026-09-17, D17 yargı kalemi) — 'dusuk' → 'orta': §3'ün risk varsayılanı 'yuksek' olduğu için derece gerekçesiz bırakılmaz. Ölçülenler: (a) bu dosya aXet'in KENDİ davranış yüzeyindedir — behavior_manifest.py:40 TEMPLATE_DOSYALAR listesinin ilk üyesi, diğer iki üyesi (config/permissions.json, .axetcode-denylist) risk 'yuksek' + kritik_yol true; (b) yayin_hazirla.py:31 ZORUNLU_DOSYALAR'da → public sürüme ZORUNLU girer, yani 'yalnız bakımcıya ait, tüketiciye gitmez' karşı-argümanı ölçümle ÇÜRÜK; (c) eski 'dusuk' derecesi belge-lisans kovasından miras görünüyordu — o kovanın 6 üyesinden 5'i etkin=null atıl metindir (LICENSE/README/docs/skill indeksleri), bu sınıf oradaki TEK etkin!=null üyedir; ayrıca haritanın oturum-başı yüklenen 6 sınıfının tek 'dusuk'u buydu (memory/** bile 'orta'). 'yuksek' DEĞİL: izin dosyası doğrudan komut çalıştırma yetkisi verir, bu dosya talimat taşır — 'orta' ölçülen kanıtın tam karşılığıdır, fazlası değil. kritik_yol false KALIR: §3'e göre kritik_yol asgari güvence raporu/gate zinciri üyeliğidir, bu dosya gate zinciri üyesi değildir."
     },
     {
       "sinif": "belge-kok",
