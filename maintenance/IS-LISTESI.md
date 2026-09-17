@@ -540,6 +540,31 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 
 Paralel: P1 ∥ P6 → P2 → P3 ∥ P5 ∥ P7 → P4. Kod gate'i: P2, P4, P5, P6, P7 · doküman gate'i: P3 ve §11 metni.
 
+> 🔴 **SÜREÇ KURALI — GATE'SİZ MERGE YOK (kullanıcı uyarısı 2026-09-18, lider hatası kabul edildi).**
+> **İhlal edildi:** lider P2'yi (`4e8717e`), P3'ü (`4601ee4`) ve P7'yi (`d980c48`) **taze gate'leri
+> koşarken** entegrasyon dalına aldı. Gerekçe (P3/P5/P7 P2'ye bağlıydı, beklemek üç ajanı boş
+> bırakırdı) hatayı ortadan kaldırmıyor. Sonuç ölçüldü: P2'nin gate'i **BLOCKER** verdi ve
+> entegrasyon dalı bir süre 2 BLOCKER + 3 HIGH taşıdı. `main`'e hiçbir şey gitmedi — geri alınamaz
+> zarar yok, ama sıralama yanlıştı.
+> **Bundan sonra:** ① lane biter → lider **commit'ler** (commit'siz iş penceresi kapanır)
+> ② **taze gate** koşar → PASS/WARNING ③ **ancak o zaman** entegrasyona merge. Commit ≠ merge.
+> ④ Entegrasyon dalında gate'i dönmemiş paket varsa **`main`'e PR AÇILMAZ**.
+
+> 🔴 **TEST STANDARDI — "yeşil" kanıt değildir; BAĞIMSIZ MUTASYON zorunlu (2026-09-18, P2 gate'inde ölçüldü).**
+> P2'nin **93 testi yeşildi** ve yazan ajan **10/10 mutasyon kırmızı** demişti. Taze gate **kendi
+> seçtiği** 4 mutasyonu denedi: **3'ü SAĞ KALDI**. Yani yazan ajanın mutasyon iddiası, testlerin
+> gerçek koruma gücü hakkında hiçbir şey söylemiyor — mutasyonu **yazan değil, gate seçmeli**.
+> Ölçülen üç tuzak biçimi (hepsi P2'de gerçek):
+> - **Adı ölçmediği şeyi vaat eden test:** `test_V6_silinir_ama_V6d_silinmez` içinde tek bir V6
+>   iddiası yok; V6 dalı 30 testin hiçbirinde yürütülmemiş.
+> - **Beklenen hatanın ölçülmek istenen koşuldan ÖNCE tetiklenmesi:** `kapanis`'in atlanamazlık
+>   kuralı TAMAMEN silindiğinde 15 testin 15'i yeşil kaldı (test zaten başka bir eksiğe takılıyordu).
+> - **Mutasyonun güven veren YANLIŞ çıktı üretmesi:** WARN üretimi silinince satır *"hiçbirinde
+>   sapma yok"* oldu — çekirdek §7 KAPSAM BEYANI tuzağının birebir örneği. En tehlikeli biçim budur.
+> **Zorunlu:** her gate brifingi "kuralı tamamen KALDIR, test hâlâ yeşilse kural korumasızdır"
+> mutasyonunu + **kontrol grubunu** (mutasyonun etkili olduğunun kanıtı) içerir. Mutasyonla
+> ölçülmemiş PASS kabul edilmez.
+
 **Karar ve tasarım kaydı** (2026-09-15 gün sonunda DEVAM NOKTASI'ndan taşındı):
 **✅ KARAR (kullanıcı onayı 2026-09-15, "7 madde ok") — tüketici güncelleme mimarisi.** Bu blok aşağıdaki eski "yerel katman" tartışmasının YERİNE geçer; eski metin tarihçe olarak altta.
 - Felsefe: kurulumdan sonra kopya tüketicinin. Template başlangıç noktası, sonrasında isteğe bağlı yeni yetenek ve düzeltme.
@@ -796,6 +821,7 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 | Z3 | aXet LSP config desteği ölçümü | LSP gerektiren iş |
 | Z4 | Agentic connector ölçümü (`docs/agentic-connectors.md` §6) | kullanıcı ayrı onayı |
 | Z5 | **doctor `template_denetle` gürültü düzeltmesi** — ✅ **KAPANDI: P4'E DAHİL EDİLDİ (kullanıcı kararı 2026-09-18, "Z5'i de P4'e dahil et").** Gerekçe ölçüldü: Z5 ile P4'ün doctor bilgi satırı `scripts/doctor.py:777-785` — **birebir aynı 9 satırlık bloğu** hedefliyor; ayrı dallarda yapılsa metinsel çakışma kesindi. TASARIM §13 DÜZELTME-2'nin kendi tavsiyesi de buydu. Uygulama: dal `feat/2026-09-18-p4-baslatici` (FAZ A/A1). | ~~K12 merge sonrası~~ → P4 ile birlikte |
+| Z6 | **P1 ve P6'nın test takımlarına geriye dönük BAĞIMSIZ MUTASYON denetimi** — ikisi de `main`'e merge edildi (`313d126`, `8f9b5cd`) ve gate'lerinden geçti, ama gate'leri P2'de ölçülen "vakum assertion" sınıfını aramıyordu (o sınıf 2026-09-18'de keşfedildi). Kapsam: her paketin korumak istediği kuralı tamamen kaldır → test yeşil kalıyorsa bulgu. | G paketleri bitince; yayından ÖNCE |
 
 ## 4. Kapananlar (bu denetimde bayat bulunup düzeltilen kayıtlar, 2026-09-14)
 - sync-rules `PROVA:conn/*` planlı → kısmi (`switch_tier`/`setup_credentials` var, canlı yok).
