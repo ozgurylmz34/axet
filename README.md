@@ -245,23 +245,25 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   *"desen bu komut metnine uyuyor"*dur, *"`ask` ne yapar"* DEĞİL — o ayrı ve zaten ölçülü: **`axet-code run` kipinde
   `ask` SORMADAN onaylar** (yukarı bkz.). Yani bu beş komut bugün **bloklanmıyor**.
   `bash -c` ve değişkenle kurulan komut ölçülmedi; desenler güvenlik sınırı değildir.
-- **BİLİNEN SINIR — `git -C <yol> …` biçimi (ve genel olarak `git` ile alt-komut arasına giren her global seçenek: `-C`, `--git-dir=`, `-c ayar=değer`) `*git <altkomut>…*` kalıbındaki desenleri ATLAR.** Ölçüldü 2026-09-17
-  (simülasyon, `fnmatch.fnmatchcase`; desenlerin ve testlerin dayandığı semantik — canlı `axet-code run` ile
-  DOĞRULANMADI): `git -C /t/r branch -D f`, `git -C /t/r checkout -- .`, `git -C /t/r stash drop`,
-  `git -C /t/r push origin +main`, `git -C /t/r reset --hard`, `git -C /t/r clean -xdf` → **hiçbir kurala uymuyor**;
-  kontrol `git branch -D f` → deny. Bugün bu biçimde kapalı olan **tek** aile `push`'tur
-  (`*git -C * push -f*` ve `*git *push*--force*` bilinçli olarak bu biçimi taşır).
-  ⚠ Bu, aXet'in kendi belgesinin önerdiği biçimdir (`kur.ps1` çıktısı `git -C "$hedef" branch -D …` önerir) ⇒
-  sınır teorik değil, **günlük kullanımdaki biçim**. Kapatılmadı çünkü desen eklemek "önce ölç, sonra dar ekle"
-  kararına tabidir (kullanıcı kararı); burada **belgelendi** — eksik varyant listesi sahte koruma üretir.
-- **BİLİNEN SINIR — eşleşme büyük/küçük harfe DUYARLIDIR; büyük harfli biçim deny listesini atlar.**
-  Ölçüldü 2026-09-17 (motor kanıtı: log + dosya): `echo "RD /S x"` **ÇALIŞTI**, kontrol `echo "rd /s x"` **REDDEDİLDİ**;
-  `echo "RM -RF /tmp/x"` de çalıştı. Desenler komutu/bayrağı tek bir yazımla (kanonik biçimiyle; `-R`/`-D`/`-xdf` gibi
-  bayraklar kendi kanonik harfleriyle) yazar ⇒ komutun ya da bayrağın harf yazımı değiştirilirse desen eşleşmez.
-  **Neden varyant eklemedik (kasıtlı karar, unutulmuş değil):** `Rd /S`, `rD /s`, `RD /s` … kombinatoryaldır; eksik bir varyant
-  listesi **sahte koruma** üretir ("kapsandı" sanılır) ve her yeni desen yukarıdaki **uzunluk-ezme** yüzeyini büyütür.
-  Bu yüzden sınır kapatılmadı, **belgelendi**: izin desenleri kötü niyetli atlatmaya karşı bir güvenlik sınırı değil,
-  kazara yıkıcı komuta karşı bir emniyet kemeridir.
+- **`git -C <yol> …` KAÇIŞI — ölçüldü ve KISMEN KAPATILDI (2026-09-17, kullanıcı kararı).**
+  `git` ile alt-komut arasına giren her global seçenek (`-C`, `--git-dir=`, `-c ayar=değer`) `*git <altkomut>…*`
+  kalıbındaki desenleri ATLAR. Ölçüldü (simülasyon, `fnmatch.fnmatchcase`, 40 desenin tamamına karşı):
+  `git -C <yol>` ile `branch -D`, `checkout -- .`, `stash drop`, `push origin +`, `reset --hard`, `clean -xdf`
+  biçimlerinin **hiçbiri** kurala uymuyordu; kontrol `-C`siz `git branch -D f` → deny. Bu, aXet'in kendi
+  belgesinin önerdiği biçimdir (`kur.ps1` çıktısı `git -C "$hedef" branch -D …` önerir) ⇒ sınır teorik değildi.
+  **Eklenen 6 dar desen:** `*git -C * branch -D*`, `*git -C * checkout -- .*`, `*git -C * stash drop*`,
+  `*git -C * push origin +*`, `*git -C * reset *--hard*`, `*git -C * clean -*f*`. Eklendikten sonra 13 hedef
+  biçimin 13'ü de deny; 12 komutluk kontrol grubunda (`status`, `log`, `push`, `push origin main`, `branch -d`,
+  `checkout -- src/foo.py`, `checkout main`, `stash list`, `stash pop`, `reset --soft`, `clean -n`,
+  `clean --dry-run` — hepsi `git -C <yol>` önekli) **yanlış pozitif yok**.
+  *Bilinen yanlış pozitif:* `git -C <yol> clean -n <içinde 'f' geçen yol>` — `clean -*f*` bilinçli olarak
+  `-f`/`-df`/`-xdf`/`-fdx`/`-d -f`/`--force` ailesinin tamamını **tek** desenle tutar; altı ayrı desen yazmak
+  uzunluk-ezme yüzeyini gereksiz büyütürdü.
+  ⚠ **HÂLÂ AÇIK** (bilinçli, `tests/test_install.py::test_git_c_disi_kacis_bicimleri_hala_acik` ile kilitli):
+  `git -c ayar=değer <altkomut>` biçimi (kombinatoryal, desenle kapatılamaz) ·
+  `git --git-dir=<yol>` yalnız yol `.git` ile bitiyorsa **kazara** eşleşir (koruma değil, tesadüf) ·
+  ve bu 6 desenin tamamı **simülasyonla** ölçüldü, canlı `axet-code run` ile **DOĞRULANMADI**
+  (kardeşi `*git -C * push -f*` canlı ölçülmüştü, biçim birebir aynı).
 - **Yeni deny desenleri (2026-09-17, kullanıcı onayı):** `*git -C * push -f*`, `*git push origin +*`, `*git reset *--hard*`,
   `*rm --recursive*`, `*git stash drop*`, `*gh repo delete*`, `*git branch -D*`, `*git checkout -- .*`. Sekizi de eklendikten
   sonra canlı ölçüldü: hepsi reddedildi; kontrol grubu (`git -C x push`, `git reset --soft HEAD~1`, `rm --interactive`,

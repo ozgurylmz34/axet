@@ -389,6 +389,19 @@ KONTROL_GRUBU_IZINLI = [
     'gh repo view org/repo',                     # canlı: çalıştı
     'git branch -d feature',                     # canlı: çalıştı — güvenli dal silme bloklanmamalı
     'git checkout -- src/foo.py',                # canlı: çalıştı — TEK DOSYA geri alma bloklanmamalı
+    # `git -C` desenleri eklendikten sonraki yanlış-pozitif kontrolü (simülasyon, 2026-09-17):
+    'git -C /t/r status --short',
+    'git -C /t/r log --oneline',
+    'git -C /t/r push',
+    'git -C /t/r push origin main',
+    'git -C /t/r branch -d feature',             # güvenli dal silme `-D` deseniyle karışmamalı
+    'git -C /t/r checkout -- src/foo.py',        # tek dosya geri alma `checkout -- .` ile karışmamalı
+    'git -C /t/r checkout main',
+    'git -C /t/r stash list',
+    'git -C /t/r stash pop',                     # `stash drop` ile karışmamalı
+    'git -C /t/r reset --soft HEAD~1',
+    'git -C /t/r clean -n',                      # kuru koşum `clean -*f*` ile karışmamalı
+    'git -C /t/r clean --dry-run',
 ]
 
 # BİLİNEN SINIR (ölçüldü 2026-09-17): eşleşme büyük/küçük harfe duyarlı → büyük harfli biçim deny'ı ATLAR.
@@ -405,6 +418,41 @@ BILINEN_SINIR_HARF_DUYARLI = [
 # ölçütüne göre yapıldı, yanlış-pozitif konforuna göre DEĞİL.
 
 
+# `git -C <yol> …` KAÇIŞI (2026-09-17, kullanıcı kararı). `git` ile alt-komut arasına giren global seçenek
+# `*git <altkomut>…*` kalıbını ATLATIYORDU: ölçüldü, bu altı biçimin hiçbiri kurala uymuyordu (kontrol: `-C`siz
+# `git branch -D f` → deny). Altı DAR desen eklendi. ⚠ Bu tablo SİMÜLASYONLA ölçüldü (fnmatchcase), canlı
+# `axet-code run` ile DOĞRULANMADI — kardeşi `*git -C * push -f*` canlı ölçülmüştü, biçim birebir aynı.
+GIT_C_SIMULASYONLA_OLCULEN = [
+    ('git -C /t/r branch -D feature',   '*git -C * branch -D*',     'deny'),
+    ('git -C /t/r checkout -- .',       '*git -C * checkout -- .*', 'deny'),
+    ('git -C /t/r stash drop',          '*git -C * stash drop*',    'deny'),
+    ('git -C /t/r push origin +main',   '*git -C * push origin +*', 'deny'),
+    ('git -C /t/r reset --hard HEAD~1', '*git -C * reset *--hard*', 'deny'),
+    ('git -C /t/r reset HEAD~1 --hard', '*git -C * reset *--hard*', 'deny'),  # bayrak sonda da olabilir
+    ('git -C /t/r clean -f',            '*git -C * clean -*f*',     'deny'),
+    ('git -C /t/r clean -df',           '*git -C * clean -*f*',     'deny'),
+    ('git -C /t/r clean -xdf',          '*git -C * clean -*f*',     'deny'),
+    ('git -C /t/r clean -fdx',          '*git -C * clean -*f*',     'deny'),
+    ('git -C /t/r clean -d -f',         '*git -C * clean -*f*',     'deny'),
+    ('git -C /t/r clean --force',       '*git -C * clean -*f*',     'deny'),
+]
+
+# HÂLÂ AÇIK (ölçüldü 2026-09-17) — bilinçli olarak kapatılMADI, çünkü her yeni desen uzunluk-ezme yüzeyini
+# büyütür ve `-c ayar=değer` kombinatoryaldır. Bu satırlar açıklığı KİLİTLER: biri desen eklerse ya da motor
+# semantiği değişirse test FAIL verir ve README/_aciklama'daki "bilinen sınır" metni güncellenmek zorunda kalır.
+HALA_ACIK_KACIS_BICIMLERI = [
+    'git -c core.pager=cat branch -D feature',   # `-c ayar=değer` biçimi: hiçbir desen tutmuyor
+    'git -c user.name=x checkout -- .',
+    'git checkout .',                            # `--` ayıraçsız nokta biçimi (aynı yıkıcılıkta)
+    'git checkout -f .',
+    'git restore .',                             # `checkout -- .`nın modern eşdeğeri
+    'git restore --staged .',
+]
+# ⚠ `git --git-dir=<yol> …` bu listede YOK ve olmamalı: yol `.git` ile bitiyorsa metinde `.git branch -D`
+# geçtiği için `*git branch -D*` KAZARA eşleşir (ölçüldü). Bu koruma değil, tesadüftür —
+# `git --git-dir=/x/depo branch -D f` (yol `.git` ile bitmiyor) yine açıktır.
+
+
 def _eslesen_desenler(kurallar: dict, komut: str) -> list[tuple[str, str]]:
     """Komut metnine uyan (desen, karar) çiftleri. Ölçülen semantik: tam metne glob, harfe DUYARLI."""
     return [(p, karar) for p, karar in kurallar.get("bash", {}).items() if fnmatch.fnmatchcase(komut, p)]
@@ -418,7 +466,7 @@ class OlculmusDenyKapsamiTest(unittest.TestCase):
 
     def test_olculmus_desenler_duruyor_ve_esliyor(self):
         eksik = []
-        for komut, beklenen, karar in CANLI_OLCULEN_ESLESME + K11_EKLENEN_DENY:
+        for komut, beklenen, karar in CANLI_OLCULEN_ESLESME + K11_EKLENEN_DENY + GIT_C_SIMULASYONLA_OLCULEN:
             gercek = self.kurallar.get("bash", {}).get(beklenen)
             if gercek != karar:
                 eksik.append(f"{beklenen!r} config/permissions.json'da {karar!r} değil ({gercek!r}) — canlı ölçümde "
@@ -434,6 +482,17 @@ class OlculmusDenyKapsamiTest(unittest.TestCase):
         ihlal = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}"
                  for k in KONTROL_GRUBU_IZINLI if _eslesen_desenler(self.kurallar, k)]
         self.assertEqual(ihlal, [], "\n".join(ihlal))
+
+    def test_git_c_disi_kacis_bicimleri_hala_acik(self):
+        """`-c ayar=değer` ve ayıraçsız `checkout .`/`restore .` bugün KURALSIZ (ölçüldü) — bilinçli karar.
+
+        Kapanırsa bu test FAIL verir: o an README "Bilinen sınırlar" ve `_aciklama` KAPSAM BEYANI metinleri
+        de güncellenmek zorundadır, yoksa belge kapsamdan sessizce sapar (K11 gate'inin yakaladığı sınıf).
+        """
+        kapananlar = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}"
+                      for k in HALA_ACIK_KACIS_BICIMLERI if _eslesen_desenler(self.kurallar, k)]
+        self.assertEqual(kapananlar, [], "Bu biçimler artık kural alıyor; belgeler güncellenmeli:"
+                                         + "\n" + ("\n").join(kapananlar))
 
     def test_bilinen_sinir_harf_duyarliligi_hala_acik(self):
         """Büyük harfli biçim bugün kuralsız (ölçüldü). Kapanırsa bu test FAIL verir → README/_aciklama güncellenir."""
