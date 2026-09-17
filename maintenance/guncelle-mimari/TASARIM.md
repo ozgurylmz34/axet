@@ -78,7 +78,7 @@ Bugün proje dosyaları için taban yok: `new_project.py:91-102` yalnız "aynı 
 > davranışına giren ayrı bir "etkinleşme anı" YOKTUR.* İki farklı durumu kapsar ve ikisi de
 > bilinçlidir: ① dosya hiç yüklenmez/çalıştırılmaz (LICENSE, NOTICE, belge) ② etkinleşmesi bir
 > kullanıcı eylemine bağlıdır ve o eylem aXet oturumunun dışındadır (`kur.ps1`'in bir sonraki elle
-> çalıştırılması). Haritadaki 36 sınıfın 12'si `null`'dur. ⚠ P2 (`scripts/guncelle.py`) `etkin`
+> çalıştırılması). Haritadaki **38 alt sınıfın 13'ü** `null`'dur (ÖLÇÜLDÜ 2026-09-17, `guncelle/harita.json`; üst sınıf 15. Eski '36 sınıfın 12'si' kaydı P1 merge'ünden önceye aitti ve BAYATTI — sayıyı haritadan türet, buradan okuma). ⚠ P2 (`scripts/guncelle.py`) `etkin`
 > üzerinden dallanırken bu değeri AYRI bir dal olarak ele almalıdır; dört değer varsayan bir
 > `if/elif` zinciri o 12 sınıfı sessizce "bilinmeyen" kovasına düşürür.
 
@@ -222,7 +222,10 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 **Dosyalar** (`<klon>/.axet-guncelleme/`, gitignore'lu):
 - `plan.json` — script üretir, ajan **yazmaz**.
 - `durum.json` — yalnız `isaretle`/`uygula` yazar; her yazım geri okunup doğrulanır (`install.py:297-299` deseni).
-- `uygulanan.json` — yol → son uygulanan yayın etiketi (§2a taban).
+- `uygulanan.json` — **iki boyutlu** (P2 kararı 2026-09-17; §2a yalnız yol boyutunu tanımlıyordu ama §11 ve §8 `uygulanan.json`'da olmayan **kalem** sayısını sorguluyor ⇒ kalem üyeliği de burada durmalı):
+  `{"surum": 1, "dosyalar": {<yol>: <yayin_etiketi>}, "kalemler": {<id>: {"etiket", "durum", "zaman"}}}`.
+  `dosyalar` §2a tabanını verir; `kalemler` §8/§11'in kalem sorgusunu ve P7'nin CHANGELOG eşlemesini besler.
+  ⚠ **P7 bu şemaya bağlanır** — değiştirilecekse `scripts/guncelle.py` ile birlikte değişir.
 - `olcum-once.json`, `olcum-sonra.json`, `butunluk.json`, `RAPOR.md`.
 
 **`plan.json` şeması (özet):**
@@ -414,7 +417,7 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | Paket | İçerik | Bağımlı | Yayından önce? | Kabul ölçütü |
 |---|---|---|---|---|
 | **P1** | `guncelle/harita.json` + sınıflandırıcı + `test_guncelle_harita` | — | evet | 412/412 tek sınıf; mutasyon: yeni sınıfsız dosya → FAIL |
-| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, **kart**, oneri, isaretle, **ozel-adim**, butunluk, geri-al, kapanis, durum — **14 komut; §6 sözleşme tablosuyla birebir**) + fixture üreteci + §12a testleri + doctor `template_denetle` gürültü düzeltmesi | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
+| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, **kart**, oneri, isaretle, **ozel-adim**, butunluk, geri-al, kapanis, durum — **14 komut; §6 sözleşme tablosuyla birebir**) + fixture üreteci + §12a testleri | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
 | **P3** | vaka kartları + sınıf kartları + `GUNCELLE.md` (akış tablosu haritadan üretilen özetle) | P2 (kodlar, komutlar) | evet | her plan vaka kodunun kartı var (test); kart dili incelemesi (doküman checklist'i) |
 | **P4** | `%guncelle` başlatıcı skill + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | motor sürüm testi; `doctor.py` testleri; §11 metni bug gate (doküman) |
 | **P5** | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet (kayıt ilk projelerden başlamalı) | proje senaryoları (_doldur, damga, geri düşüş, VTB) |
@@ -423,6 +426,8 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | **P8** | onaylanan B1–B4 | P2 + kullanıcı onayı | hayır (onaylanırsa) | her kontrol fail-first + WARN çıktısı |
 | **P9** | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası, KARAR 7) | §12b ölçütleri; sonuçlar kart/§11 revizyonuna döner |
 
+> ⚠ **DÜZELTME-2 (2026-09-17):** doctor `template_denetle` gürültü düzeltmesi **P2'den ÇIKARILDI** — `scripts/doctor.py` K12 lane'i tarafından değiştiriliyordu, çakışma olurdu. Ertelenmiş tetik **IS-LISTESI §3 Z5** olarak açıldı (tetik: K12 merge sonrası, P3/P4'ten önce). Kapsam kaybı DEĞİL, sıralama kararı. P2 `scripts/doctor.py`'ye HİÇ dokunmadı (`git status` ile doğrulandı).
+>
 > ⚠ **DÜZELTME (2026-09-17):** Bu hücre önce 12 alt komut sayıyordu, §6 sözleşme tablosunda ise 14 satır var (`kart` ve `ozel-adim` listede yoktu). İkisi de P2'ye dahildir: `kapanis`'in çıkış sözleşmesi özel adımların koşup koşmadığına BAĞLI, `kart` da P3'ün tek girişidir. Bulgu P2 ajanından geldi, lider doğruladı.
 
 **Paralel:** P1 ∥ P6 başlar; P1 bitince P2; P2 bitince P3 ∥ P5 ∥ P7; P3 bitince P4. P8 onaylar geldikçe. P9 en son.
