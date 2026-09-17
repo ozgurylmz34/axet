@@ -3,6 +3,11 @@
 ## Tetik
 Plandaki dosya `core/sap/00-sap.md`. Bu sınıf `kritik_yol`'dur: asgari güvence raporuna girer.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `cekirdek-kural-sap-kanonik` | `yeni-oturum` | manuel | türemiş projelerde %guncelle-proje ile damga yenilenir |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir (vaka kartına göre).
 2. `python scripts/doctor.py` çıktısındaki damga satırlarını kullanıcıya göster.

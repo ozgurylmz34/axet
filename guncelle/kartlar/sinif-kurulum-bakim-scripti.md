@@ -3,6 +3,13 @@
 ## Tetik
 Plandaki dosya `scripts/install.py`, `scripts/doctor.py`, `scripts/new_project.py` ya da başka bir kök script.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `kurulum-script-install` | `install-sonra-yeni-oturum` | komut | python scripts/install.py --dry-run, sonra python scripts/install.py |
+| `kurulum-araci-script` | `aninda` | yok | anında geçerli |
+| `bakim-script-kok` | `aninda` | yok | anında geçerli |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir.
 2. `scripts/install.py` değiştiyse ÖNCE `python scripts/install.py --dry-run` (çıkış 0 olmalı),

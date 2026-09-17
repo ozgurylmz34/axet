@@ -11,6 +11,9 @@ Silme geri alınması en pahalı işlemdir. Kullanıcının kendi eklediği kura
 gitmemelidir; kalması da bir maliyet doğurmaz (yalnız bayat kalabilir).
 
 ## Adımlar
+⛔ Bu vakada `oneri` KOŞULMAZ: birleştirilecek yeni sürüm yoktur. Yine de çalıştırılırsa motor
+taban↔yerel farkından bir "çakışma önerisi" ya da eşik uyarısı üretebilir (ölçüldü 2026-09-18,
+doküman gate'i) ve bu seni yanlış yola sokar — silme kararı YALNIZ kullanıcınındır.
 1. Kullanıcıya durumu söyle: "template bu dosyayı emekliye ayırdı; sendeki değişmiş kopya duruyor".
 2. Neden emekliye ayrıldığını kalem başlığından aktar (yerine ne geldi?).
 3. Dosyayı olduğu gibi bırakmak kararıysa: `guncelle.py isaretle <yol> --karar yerel`.

@@ -3,6 +3,14 @@
 ## Tetik
 Plandaki dosya bir `SKILL.md`, skill `references/**` ya da `templates/**`/`assets/**` dosyası.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `skill-govde` | `skill-cagrisi` | komut | skill klasörü YENİ eklendiyse python scripts/install.py |
+| `bilinen-hata-referans` | `skill-cagrisi` | yok | skill'in bir sonraki çağrısında |
+| `skill-referans` | `skill-cagrisi` | yok | skill'in bir sonraki çağrısında |
+| `skill-asset-template` | `skill-cagrisi` | yok | skill'in bir sonraki çağrısında |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir.
 2. `python scripts/doctor.py --skills` koş: ad çakışması, bozuk frontmatter, eksik referans

@@ -3,6 +3,11 @@
 ## Tetik
 Plandaki dosya bu akışı yürüten motorun bir parçası.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `guncelleme-motoru` | `aninda` | yok | anında geçerli |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir. Şunu bil: **şu anda koşan motor zaten yeni sürümdendir** (akış
    `origin/main`'den geçici bir kopya çıkarıp onu çalıştırır); klona almak yalnız bir sonraki

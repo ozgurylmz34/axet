@@ -7,7 +7,11 @@
 **Ne yapar:** merkezi klonu (`%USERPROFILE%\axet`) yeni template yayınına **seçmeli** olarak
 günceller. Senin değiştirdiğin dosyalar izinsiz ezilmez, her adım ölçülür, her şey geri alınabilir.
 **Ne yapmaz:** projelerini güncellemez (o `%guncelle-proje`), SAP'ye dokunmaz, hiçbir şeyi push
-etmez.
+etmez, hiçbir şeyi zorla (`--force`) yapmaz.
+**Klonda İKİ commit atar** (yerel kalır, push edilmez): ① `hazirla` adımı, güncelleme öncesi
+izlenen değişikliklerini `guncelle: yerel anlık <tarih>` commit'ine alır — geri dönüş noktan budur;
+② `kapanis` adımı uygulanan kalemleri `guncelle: <yayın> kalemler <id…>` commit'ine yazar.
+Kullanıcıya bunu BAŞTAN söyle: klonun git geçmişinde bu iki commit görünecek.
 
 Motor: `scripts/guncelle.py`. Akış boyunca **yeni sürümden** çalışır (yerel kopyası eski ya da
 bozuk olabilir). Durum dosyaları klonun `.axet-guncelleme/` klasöründedir ve git tarafından
@@ -22,19 +26,19 @@ izlenmez.
 | 0 | Başlangıç | `git -C <klon> fetch --tags`, bu dosyayı `origin/main`'den oku | 0 | ağ yoksa "şimdi güncellenemez" de, DUR |
 | 1 | Etkileşim | kullanıcıdan "başlayalım mı" cevabını al | açık onay | etkileşimsiz koşuyorsan DUR |
 | 2 | Ön kontrol | `guncelle.py onkontrol` | 0 | 2 → sebebi AYNEN göster, DUR |
-| 3 | Geri dönüş noktası | `guncelle.py hazirla` | 0 | DUR (geri alınamayacak bir güncelleme başlatılmaz) |
+| 3 | Geri dönüş noktası | `guncelle.py hazirla` — **yerel anlık commit** + `guncelle-oncesi-<tarih>` etiketi + `fetch --tags` | 0 | DUR (geri alınamayacak bir güncelleme başlatılmaz) |
 | 4 | Plan | `guncelle.py plan` | 0 (1 = güncel, bitir) | 2 → DUR |
 | 5 | Seçim | plan tablosunu göster → `guncelle.py sec --hepsi` ya da `--kalem/--cikar` | 0 | 2 → tutarsızlığı açıkla, yeniden sor |
 | 6 | Önce-ölçüm | `guncelle.py olc --asama once` | 0 | 2 → DUR (ölçülemeyen güncelleme yapılmaz) |
-| 7 | Otomatik vakalar | `guncelle.py uygula --otomatik` | 0 | 1 → `guncelle.py durum` göster, DUR |
-| 8 | Yargı vakaları | her dosya için `guncelle.py kart <KOD>` → `guncelle.py oneri <yol>` → kartı uygula → `guncelle.py isaretle <yol> --karar …` | her biri 0 | kartın DUR koşulu |
+| 7 | Otomatik vakalar | `guncelle.py uygula --otomatik`, sonra yazılan her dosyanın plandaki `kart` alanındaki kartları (`V1`/`V2`/… + `sinif-…`) oku ve ek adımlarını uygula | 0 | 1 → `guncelle.py durum` göster, DUR |
+| 8 | Yargı vakaları | her dosya için `guncelle.py kart <KOD>` → **kartın adımlarını uygula** (hangi komutun koşacağını KART söyler) → `guncelle.py isaretle <yol> --karar …` | her biri 0 | kartın DUR koşulu |
 | 9 | Özel adımlar | `guncelle.py ozel-adim <ad>` | 0 | kart talimatı (ör. `install.py --dry-run` hata → `geri-al`) |
 | 10 | Sonra-ölçüm | `guncelle.py olc --asama sonra` | 0 | 2 → DUR |
 | 11 | Kritik yol karşılaştırması | `kritik_yol` sınıfı V4 dosyaları: aynı örnekle önce/sonra hüküm | fark açıklanmış | açıklanamayan fark → DUR |
 | 12 | Bütünlük turu | `guncelle.py butunluk` | 0 | 1 → adım 13 |
 | 13 | Düzeltme döngüsü | FAIL'i düzelt → ilgili dosyayı yeniden `isaretle` → `butunluk` | en fazla **2 tur** | 2. turda da FAIL → DUR, üç seçenek sun |
-| 14 | Kapanış | `guncelle.py kapanis` | 0 | 1 → raporu göster, seçenek sun |
-| 15 | Son | `RAPOR.md`'yi AYNEN göster; gerekiyorsa "aXet'i kapat-aç" de | — | — |
+| 14 | Kapanış | `guncelle.py kapanis` — hükmü verir, `RAPOR.md`'yi üretir ve **kalem commit'ini** atar | 0 | 1 → raporu göster, seçenek sun |
+| 15 | Son | `RAPOR.md`'yi AYNEN göster; kapat-aç gerekip gerekmediğini `plan.json`'daki `yeniden_baslat` alanı söyler (`null` = gerekmez · `yeni-oturum` = kapat-aç · `install-sonra-yeni-oturum` = önce `install.py`, sonra kapat-aç) | — | — |
 
 **2. turda hâlâ FAIL varsa** üç seçeneği sun ve kullanıcı seçsin:
 (a) hepsini geri al — `guncelle.py geri-al --hepsi` (**önerilen**) ·
@@ -45,8 +49,11 @@ izlenmez.
 
 ## Vaka kartları
 
-Her dosya bir **vaka kodu** alır. Yargı gereken her kodun kartı vardır; kartı okumadan o dosyaya
-dokunma:
+Her dosya bir **vaka kodu** alır. Plana giren her kodun — otomatik uygulananların da — bir kartı
+vardır: yargı kartları ne soracağını, otomatik kartlar ne olduğunu ve kullanıcıya nasıl
+anlatacağını söyler. Dosyanın sınıf kartı (`sinif-…`) ise otomatik vakalarda da ZORUNLUDUR
+(ör. `core/**` otomatik alınır ama `sinif-cekirdek-kural` kartı "yeni oturum gerekli" demeyi
+emreder). Planın `kart` alanı hangi kartları okuyacağını dosya başına yazar:
 
 ```
 guncelle.py kart <KOD>
@@ -58,6 +65,12 @@ olarak** o da uygulanır — plan her dosyanın `kart` alanında hangilerini oku
 
 İşlem gerektirmeyen kodların (V0, V3, V2e, V4e, V5s, V6x, VKD) kartı YOKTUR: plan onları yalnız
 sayar, hiçbir komut çalıştırılmaz.
+
+**Hangi komutun koşacağına KART karar verir, akış tablosu değil.** Birleştirme isteyen kartlar
+(`V4t`, `V4c`, `V4c+ESIK`, `V4B`, `V4R`) `guncelle.py oneri <yol>` komutunu kendi 1. adımlarında
+çağırır. Silme (`V6d`), ad çakışması (`V7`) ve tabansız (`VTB`) vakalarında bu komut
+ÇALIŞTIRILMAZ: ya birleştirilecek bir sürüm yoktur ya da ortak taban yoktur; yine de koşulursa
+yanıltıcı bir öneri ya da yanlış vaka etiketi üretebilir (ölçüldü 2026-09-18, doküman gate'i).
 
 ## Sınıf özeti (harita.json'dan üretilmiştir)
 

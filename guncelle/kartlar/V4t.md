@@ -32,7 +32,18 @@ eklemişiz; ikisi de kalmalı.
 
 ## DUR
 Kullanıcı cevap vermeden `isaretle` çalıştırma. Dosyanın sınıfı `validator` ya da `kritik_yol` ise
-akışın 11. adımı (aynı örnekle önce/sonra hüküm karşılaştırması) ZORUNLUDUR.
+akışın 11. adımı (hüküm karşılaştırması) ZORUNLUDUR ve şöyle ÖLÇÜLÜR:
+   Kontrol grubu kur: **aynı girdi, önce ve sonra.**
+   - **Fixture'ı olan validator:** `python skills-sap/sap-adt-foundation/tests/run_tests.py -k validator_fixtures`
+     — adım 6 (önce-ölçüm) ve adım 10 (sonra-ölçüm) çıktılarını karşılaştır; her validator için
+     `bad` tarafı FAIL, `good` tarafı PASS olmalı ve bu İKİSİNDE DE tutmalı.
+   - **Fixture'ı olmayan validator:** taban sürümünü `git show <taban>:<yol>` ile geçici bir dosyaya
+     al; iki sürümü de AYNI örnek proje kökünde `AXET_SAP_PROJECT_DIR=<kök>` ortam değişkeniyle koş,
+     çıkış kodunu ve `[İHLAL]` satırlarını karşılaştır.
+   - **Zincir dosyası** (`run_review.py`, `_reviewer.py`, `gate.py`): aynı örnek dosyayla
+     `python skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/run_review.py --task <görev> --artifact <örnek> --cevrimdisi --json`
+     komutunu önce ve sonra koş; hükmü (PASS / WARNING / BLOCKER) karşılaştır.
+   Fark çıkarsa SEBEBİNİ açıkla; açıklayamıyorsan DUR — "karşılaştırdım, fark yok" tek başına ölçüm değildir.
 
 ## Geri alma
 Bir şey ters giderse: `guncelle.py geri-al <yol>` o dosyayı güncelleme öncesi hâline döndürür

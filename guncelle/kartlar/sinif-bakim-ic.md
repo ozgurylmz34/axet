@@ -3,6 +3,11 @@
 ## Tetik
 Plandaki dosya `maintenance/` altında. Normalde bu dosyalar public yayına GİRMEZ; tüketici klonunda görünmesi beklenmez.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `bakim-ic` | `null` | yok | ayrı etkinleşme anı yok |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir (vaka kartına göre); aXet'e yüklenen bir şey değildir, etkinleşme anı
    yoktur.

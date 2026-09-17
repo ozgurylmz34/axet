@@ -40,8 +40,19 @@ eklemiş olabilirsin) ve yeni sürüm de bir nedenle geldi. Varsayılan cevap ç
    `=======`, `>>>>>>>` satırları gidecek).
 5. `guncelle.py isaretle <yol> --karar birlesik` — motor çakışma işareti kalmadığını ve diske
    yazılanın geri okunduğunda aynı olduğunu doğrular.
-6. Dosyanın sınıfı `validator` ya da `kritik_yol` ise akış adım 11: aynı örnek girdiyle önce/sonra
-   hüküm karşılaştırması ZORUNLU.
+6. Dosyanın sınıfı `validator` ya da `kritik_yol` ise **akış adım 11 zorunludur** — hüküm
+   karşılaştırmasını şöyle ÖLÇ:
+   Kontrol grubu kur: **aynı girdi, önce ve sonra.**
+   - **Fixture'ı olan validator:** `python skills-sap/sap-adt-foundation/tests/run_tests.py -k validator_fixtures`
+     — adım 6 (önce-ölçüm) ve adım 10 (sonra-ölçüm) çıktılarını karşılaştır; her validator için
+     `bad` tarafı FAIL, `good` tarafı PASS olmalı ve bu İKİSİNDE DE tutmalı.
+   - **Fixture'ı olmayan validator:** taban sürümünü `git show <taban>:<yol>` ile geçici bir dosyaya
+     al; iki sürümü de AYNI örnek proje kökünde `AXET_SAP_PROJECT_DIR=<kök>` ortam değişkeniyle koş,
+     çıkış kodunu ve `[İHLAL]` satırlarını karşılaştır.
+   - **Zincir dosyası** (`run_review.py`, `_reviewer.py`, `gate.py`): aynı örnek dosyayla
+     `python skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/run_review.py --task <görev> --artifact <örnek> --cevrimdisi --json`
+     komutunu önce ve sonra koş; hükmü (PASS / WARNING / BLOCKER) karşılaştır.
+   Fark çıkarsa SEBEBİNİ açıkla; açıklayamıyorsan DUR — "karşılaştırdım, fark yok" tek başına ölçüm değildir.
 
 ## Örnek
 `check_x.py` — sen bir kontrolü BLOCKER'dan WARNING'e düşürmüşsün; biz aynı fonksiyondaki ayrı bir
