@@ -34,14 +34,19 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 İlk kez kuruyorsan adım adım rehber: [`docs/onboarding.md`](docs/onboarding.md) (kurulumdan sonra aXet içinde `%onboard`).
 
 ## Kurulum
+> **Depo şu an private.** Kurulum için `github.com/ozgurylmz34/axet` deposuna okuma yetkin olmalı; yetkisi
+> olmayan bir hesaba GitHub bu depoyu "yok" (404) diye gösterir. Aşağıdaki tek satır komut dosyayı kimlik
+> doğrulamasız indirdiği için private dönemde 404 alabilir — o zaman aşağıdaki **"Elle kurmak istersen"**
+> bloğundaki `git clone` yolunu kullan (git GitHub kimliğini sorar). Public sürüm yayın anında açılacaktır.
+
 **PowerShell**'i aç ve şu satırı yapıştır. Komut kurulum betiğini geçici klasöre indirip çalıştırır:
 ```powershell
-$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
+$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
 ```
 Klonun kendisi bozulduysa (yerel `kur.ps1` dahil) aynı satırın **sıfırlayan** varyantı: klonu template ile birebir
 aynı hâle getirir, önce her şeyi `yedek/<tarih-saat>` dalına alır:
 ```powershell
-$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f -Sifirla
+$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f -Sifirla
 ```
 Tek satır komutlar klonu varsayılan yere (`%USERPROFILE%\axet`) kurar: `-Hedef` ile başka bir yere kurduysan
 aynı `-Hedef`'i bu komuta da ver, yoksa ikinci bir klon kurulur.
@@ -86,7 +91,7 @@ Tek bir dosyayı geri almak için son mesajdaki komutu kullan:
 
 Elle kurmak istersen:
 ```powershell
-git clone https://github.com/ozgurylmz34/axet-template.git $HOME\axet
+git clone https://github.com/ozgurylmz34/axet.git $HOME\axet
 python $HOME\axet\scripts\install.py --sap      # --dry-run önce gösterir, --uninstall geri alır
 python $HOME\axet\scripts\doctor.py             # statik kontroller
 python $HOME\axet\scripts\doctor.py --live      # aXet'in çekirdeği fiilen yüklediğini ölçer (1 model çağrısı)
