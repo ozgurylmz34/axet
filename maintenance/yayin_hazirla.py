@@ -8,7 +8,9 @@ Kullanım (template kökünden):
   python maintenance/yayin_hazirla.py --hedef <boş ya da olmayan klasör>              HEAD'in commit'li içeriği
   python maintenance/yayin_hazirla.py --hedef <klasör> --ref <dal|sha>                 başka bir commit
   python maintenance/yayin_hazirla.py --hedef <klasör> --calisma-agaci --yalniz-tara   commit'siz hâli dene (git kurmaz)
-Çıkış kodu: 0 temiz ve (istenirse) commit kuruldu · 1 tarama bulgusu var (git kurulmadı) · 2 kullanım/git hatası.
+Çıkış kodu: 0 BLOCKER yok ve (istenirse) commit kuruldu · 1 BLOCKER bulgusu var (git kurulmadı) · 2 kullanım/git hatası.
+Tarama iki şiddet üretir (D16, 2026-09-17): BLOCKER = bilgi sızıntısı, çıkışı düşürür · WARNING = tüketici
+klonunda kırık kalacak işaretçi, yalnız listelenir. Şiddet tablosu DESENLER'dedir.
 """
 from __future__ import annotations
 
@@ -29,15 +31,29 @@ DISLANANLAR = ["maintenance/", "docs/agentic-connectors.md", "docs/axet-davranis
 ZORUNLU_DOSYALAR = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt",
                     "README.md", "AGENTS.md", "kur.cmd", "kur.ps1", "yeni-proje.cmd"]
 
-# (ad, desen, bayraklar). Sızıntı taraması 2026-09-14 raporundaki sınıflar + dışlanan dosya atıfları.
+BLOCKER, WARNING = "BLOCKER", "WARNING"
+
+# (şiddet, ad, desen, bayraklar). Sınıflar 2026-09-14 sızıntı raporundan; şiddet ayrımı D16 (2026-09-17).
+#   BLOCKER = bilgi sızıntısı → çıkış 1, git geçmişi kurulmaz.
+#   WARNING = tüketici klonunda kırık kalacak işaretçi (belge kalitesi sorunu) → listelenir, ÇIKIŞI DEĞİŞTİRMEZ.
 DESENLER = [
-    ("şirket adı", r"ntt\s*data|nttdata|\bNTT\b", re.I),
-    ("iç kullanıcı/dizin", r"tr\d{5}\b|C:\\Users\\(?!<)[A-Za-z]", re.I),
-    ("iç repo adı", r"DEV_CORE|\bPROVA\b|ix-works|ix_doctor|TrakyaDokum", 0),
-    ("müşteri izi", r"trakya", re.I),
-    ("oturum bağlantısı", r"claude\.ai/code/session_", 0),
-    ("dışlanan dosyaya atıf", r"maintenance/|agentic-connectors|axet-davranis-olcumleri", 0),
-    ("gerçek alan adı örneği", r"your-sap-server\.com|//server\.com", 0),
+    (BLOCKER, "şirket adı", r"ntt\s*data|nttdata|\bNTT\b", re.I),
+    # C:\Users\ (D16): gerçek kullanıcı adı = en az 3 karakter + yer tutucu DEĞİL. Muaf olanlar: `<...>`
+    # biçimi, 1-2 karakterlik adlar (`C:\Users\u`) ve yer-tutucu sözcükler (örnek/kullanıcı/user/example…).
+    # İki körlük 2026-09-17'de ÖLÇÜLEREK kapatıldı (ikisi de `tests/test_kur.py` fixture'ında gerçek bir ad
+    # taşıyordu): ① harf sınıfı artık UNICODE ([^\W\d_]) — eski `[A-Za-z]` ASCII olduğu için `C:\Users\Özgür`
+    # gibi Türkçe karakterli adlar görünmüyordu ② her iki bölü işareti ([\\/]) — `C:/Users/...` biçimi kaçıyordu.
+    (BLOCKER, "iç kullanıcı/dizin",
+     r"tr\d{5}\b|C:[\\/]Users[\\/](?!<)"
+     r"(?!(?:örnek|ornek|kullanıcı|kullanici|user|username|example|sample)\b)[^\W\d_][\w.-]{2,}", re.I),
+    (BLOCKER, "iç repo adı", r"DEV_CORE|\bPROVA\b|ix-works|ix_doctor|TrakyaDokum", 0),
+    (BLOCKER, "müşteri izi", r"trakya", re.I),
+    (BLOCKER, "oturum bağlantısı", r"claude\.ai/code/session_", 0),
+    (BLOCKER, "gerçek alan adı örneği", r"your-sap-server\.com|//server\.com", 0),
+    # Yalnız MARKDOWN LİNK biçimindeki atıf (D16): tüketici klonunda dangling olan şey linktir; yorum
+    # satırındaki kaynak atfı, ters-tırnaklı dosya adı ya da bir sınıf globu tüketiciyi hiçbir yere götürmez.
+    (WARNING, "dışlanan dosyaya atıf",
+     r"\]\([^)\s]*(?:maintenance/|agentic-connectors|axet-davranis-olcumleri)", 0),
 ]
 IKILI_UZANTI = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".docx", ".xlsx", ".pptx", ".zip", ".exe"}
 
@@ -71,26 +87,27 @@ def kopyala(hedef: Path, ref: str, calisma_agaci: bool) -> list[str]:
     return sorted(alinan)
 
 
-def tara(hedef: Path, yollar: list[str]) -> list[str]:
-    bulgular = [f"EKSİK zorunlu dosya: {z}" for z in ZORUNLU_DOSYALAR if not (hedef / z).is_file()]
+def tara(hedef: Path, yollar: list[str]) -> list[tuple[str, str]]:
+    """(şiddet, metin) çiftleri döner. Yapısal eksikler (zorunlu dosya, NOTICE yolu, okunamayan dosya) BLOCKER'dır."""
+    bulgular = [(BLOCKER, f"EKSİK zorunlu dosya: {z}") for z in ZORUNLU_DOSYALAR if not (hedef / z).is_file()]
     notice = hedef / "NOTICE"
     if notice.is_file():
         for satir in notice.read_text(encoding="utf-8").splitlines():
             m = re.match(r"\s+- (\S+)", satir)
             if m and not list(hedef.glob(m.group(1).rstrip("/"))):
-                bulgular.append(f"NOTICE listesindeki yol yok: {m.group(1)}")
+                bulgular.append((BLOCKER, f"NOTICE listesindeki yol yok: {m.group(1)}"))
     for y in yollar:
         if Path(y).suffix.lower() in IKILI_UZANTI:
             continue
         try:
             metin = (hedef / y).read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            bulgular.append(f"OKUNAMADI (utf-8 değil, taranmadı): {y}")
+            bulgular.append((BLOCKER, f"OKUNAMADI (utf-8 değil, taranmadı): {y}"))
             continue
         for no, satir in enumerate(metin.splitlines(), 1):
-            for ad, desen, bayrak in DESENLER:
+            for siddet, ad, desen, bayrak in DESENLER:
                 if re.search(desen, satir, bayrak):
-                    bulgular.append(f"{ad}: {y}:{no}: {satir.strip()[:140]}")
+                    bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))
     return bulgular
 
 
@@ -121,18 +138,26 @@ def main() -> int:
 
     print(f"Kaynak: {kaynak} → {hedef}")
     print(f"Kopyalanan dosya: {len(yollar)} · dışlananlar: {', '.join(DISLANANLAR)}")
-    print("KAPSAM — bakılan: zorunlu dosyalar, NOTICE yolları, utf-8 metin dosyalarında şu sınıflar: "
-          + ", ".join(d[0] for d in DESENLER))
+    print("KAPSAM — bakılan (BLOCKER = çıkış 1): zorunlu dosyalar, NOTICE yolları, utf-8 metin dosyalarında "
+          "şu sınıflar: " + ", ".join(d[1] for d in DESENLER if d[0] == BLOCKER))
+    print("KAPSAM — bakılan (WARNING = yalnız listelenir, çıkışı etkilemez): "
+          + ", ".join(d[1] for d in DESENLER if d[0] == WARNING))
     print("KAPSAM — bakılmayan: ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + "), kişi adları sözlüğü, "
           "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu. "
           "Bu tarama tam sızıntı denetiminin yerine geçmez.")
-    if bulgular:
-        print(f"\nBULGU: {len(bulgular)}")
-        for b in bulgular:
+    engelleyen = [b for siddet, b in bulgular if siddet == BLOCKER]
+    uyari = [b for siddet, b in bulgular if siddet == WARNING]
+    if uyari:
+        print(f"\nUYARI: {len(uyari)} (WARNING — çıkış kodunu etkilemez, yayını durdurmaz)")
+        for b in uyari:
+            print("  " + b)
+    if engelleyen:
+        print(f"\nBULGU: {len(engelleyen)} (BLOCKER)")
+        for b in engelleyen:
             print("  " + b)
         print("\nGit geçmişi kurulmadı.")
         return 1
-    print("BULGU: 0 (yalnız yukarıdaki kapsamda)")
+    print(f"BULGU: 0 (BLOCKER yok · {len(uyari)} WARNING · yalnız yukarıdaki kapsamda)")
     if a.yalniz_tara:
         return 0
 

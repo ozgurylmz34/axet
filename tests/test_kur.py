@@ -807,9 +807,12 @@ class KurTest(GeciciTest):
             ("harf + ters bölü + sondaki ayraç", "C:\\axet\\", r"C:\yeni",
              {"options": {"skills_paths": ["c:\\AXET\\skills\\"]}, "permissions": {"rules": {"edit": {"C:/Axet/core/*": "deny"}}}},
              ["options.skills_paths: c:\\AXET\\skills\\", "permissions.rules.edit: C:/Axet/core/*"]),
-            ("ASCII dışı", r"C:\Users\Özgür\İş", r"C:\yeni",
-             {"options": {"context_paths": ["C:/Users/Özgür/İş/core/00-temel.md"]}},
-             ["options.context_paths: C:/Users/Özgür/İş/core/00-temel.md"]),
+            # Ad bilerek YER TUTUCUDUR (gerçek bir kişi adı değil): bu dosya public yayın paketine girer ve
+            # yayın öncesi sızıntı taramasından geçer — gerçek kullanıcı adı BLOCKER'dır. Türkçe karakterler
+            # testin ÖLÇTÜĞÜ şeydir (ASCII dışı yol), o yüzden korunur.
+            ("ASCII dışı", r"C:\Users\ÖRNEK\İş", r"C:\yeni",
+             {"options": {"context_paths": ["C:/Users/ÖRNEK/İş/core/00-temel.md"]}},
+             ["options.context_paths: C:/Users/ÖRNEK/İş/core/00-temel.md"]),
         ]
         vakalar = []
         for i, (ad, kok, aktif, cfg, _) in enumerate(tablo):
@@ -1424,6 +1427,37 @@ class KurTest(GeciciTest):
         metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
         self.assertIn("-File $f -Sifirla", metin)
         self.assertIn("kur.cmd -Sifirla", metin)
+
+    # --- statik: tüketici-yüzü depo işaretçileri ----------------------------------------------------------------
+    def test_tuketici_isaretcileri_gercek_depoyu_gosterir(self):
+        """Kurulum yolundaki her GitHub işaretçisi var olan depoya (`ozgurylmz34/axet`) gitmeli.
+
+        `axet-template` ileride açılacak PUBLIC yayın hedefinin adıdır ve yalnız `maintenance/yayin_hazirla.py`
+        içindeki push tarifinde geçer — tüketicinin izlediği hiçbir yolda geçmemelidir, yoksa kurulum var
+        olmayan bir adrese gider."""
+        dosyalar = {"README.md": "utf-8", "kur.ps1": "utf-8-sig", "docs/onboarding.md": "utf-8"}
+        toplam = 0
+        for yol, kodlama in dosyalar.items():
+            metin = (AXET_HOME / yol).read_text(encoding=kodlama)
+            self.assertNotIn("ozgurylmz34/axet-template", metin,
+                             f"{yol}: tüketici-yüzü işaretçi henüz açılmamış depoyu gösteriyor")
+            toplam += metin.count("ozgurylmz34/axet")
+        self.assertGreaterEqual(toplam, 5, "işaretçiler kayboldu — test kör kaldı")
+        # kur.ps1'in klonladığı varsayılan kaynak
+        ps1 = KUR_PS1.read_text(encoding="utf-8-sig")
+        self.assertIn("$Kaynak = 'https://github.com/ozgurylmz34/axet.git'", ps1)
+
+    def test_readme_ve_onboarding_private_notu_tasir(self):
+        """Depo private olduğu sürece tek satır kurulum 404 alabilir; belge bunu SÖYLEMELİ (yanıltıcı olmasın).
+
+        Üç unsurun üçü de aranır: ① deponun private OLDUĞU ② erişim YETKİSİ gerektiği ③ yetkisiz hesapta
+        ne görüleceği (404). Yalnız "private" sözcüğünü aramak yetmez — sözcük notun gövdesinde de geçtiği
+        için başlığı silen bir düzenleme fark edilmeden geçerdi (mutasyonla ölçüldü 2026-09-17)."""
+        for yol, kodlama in (("README.md", "utf-8"), ("docs/onboarding.md", "utf-8")):
+            metin = (AXET_HOME / yol).read_text(encoding=kodlama)
+            self.assertIn("Depo şu an private", metin, f"{yol}: deponun private olduğu açıkça yazılmamış")
+            self.assertIn("yetki", metin, f"{yol}: erişim yetkisi gerektiği yazılmamış")
+            self.assertIn("404", metin, f"{yol}: yetkisiz hesapta ne olacağı (404) anlatılmamış")
 
 
 if __name__ == "__main__":
