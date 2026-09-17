@@ -33,10 +33,14 @@ aXet 2026-09-14 (D1, lider kararı):
 
 Bug gate 2026-09-14 (B1, lider kararı (b)): 404 sondası eksik DTEL başına 1+3 GET yapıyor ve her GET 10 sn
 bekleyebiliyordu → zincir `_reviewer` 30 sn sarmalayıcısını aşıp WARNING'e (YAZMA) düşüyordu. Artık istemci kurulumu
-ve tüm ağ okumaları TEK döngüde ve TEK toplam süre bütçesiyle koşar (`VARSAYILAN_BUTCE_SN`); tekrar deneme ve paralel
+ve tüm ağ okumaları TEK döngüde ve TEK toplam süre bütçesiyle koşar (`butce_sn()`); tekrar deneme ve paralel
 istek YOK. Bütçe biterse denetlenemeyen adaylar ÖLÇÜLEMEDİ olur: bulgu yoksa `measured=false` (run_review → SKIP =
-BLOCKER), bulgu varsa exit 1 + kalanlar adlarıyla basılır. Env `AXET_DTEL_GATE_BUTCE_SN` bütçeyi yalnız DÜŞÜREBİLİR;
-geçersiz değer → varsayılan + uyarı satırı.
+BLOCKER), bulgu varsa exit 1 + kalanlar adlarıyla basılır.
+
+K10 (2026-09-17, kullanıcı kararı "Süreyi ölç + uzat, sonra BLOCKER"): bütçe artık SABİT 15 sn değil, TEK KAYNAKTAN
+(`utils/butce.py`) gelir ve sarmalayıcı bütçesiyle ölçeklenir (varsayılanda 28 sn). `AXET_REVIEWER_BUTCE_SN` tüm
+katmanları birlikte yükseltir/düşürür; yalnız bu gate'in payı için `AXET_DTEL_GATE_BUTCE_SN` — artık YÜKSELTEBİLİR de
+(üst sınır sabit bir sayı değil, ZİNCİR bütçesidir). Geçersiz değer → varsayılan + uyarı satırı.
 
 Re-gate 2026-09-15 (LOW): `timeout=min(10, kalan)` requests'te SOKET OKUMASI BAŞINA uygulanır → damlayan yanıtta
 (1 bayt/1,5 sn) gate, bütçe 3 sn iken 90 sn'de bitmemişti (ölçüldü) ve istemci kurulumu bütçenin dışındaydı. Artık istemci
@@ -60,18 +64,21 @@ from urllib.parse import quote
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from _gate_status import gate_status, sap_baglanti_yok  # noqa: E402
+from utils import butce as _butce  # noqa: E402
 from utils.ddic_dtel import KAPSAM_BEYANI, dtel_adaylari  # noqa: E402
 
 _GATE = Path(__file__).stem
 # DTEL 404 aldığında adın DTEL dışı bir bileşen tipi olarak var olup olmadığı bu uçlarda sorulur.
 _BILESEN_UCLARI = ('structures', 'tables', 'tabletypes')
 
-# B1 + re-gate 2026-09-15: istemci kurulumu + tüm ağ okumalarının GERÇEK toplam bütçesi (`_sureli`). `_reviewer`
-# sarmalayıcısı tüm zinciri 30 sn'de keser; bu gate'in payı 15 sn (zincirin geri kalanı: run_review + diğer validator'ların
-# süreç açılışı + varsa ağ okumaları).
-VARSAYILAN_BUTCE_SN = 15.0
+# B1 + re-gate 2026-09-15: istemci kurulumu + tüm ağ okumalarının GERÇEK toplam bütçesi (`_sureli`).
+# ⭐ K10 (2026-09-17): bu gate'in payı artık SABİT 15 sn DEĞİL — sarmalayıcı bütçesiyle birlikte
+# ölçeklenir (`utils/butce.py` L3 = L2 × %50; varsayılanda 28 sn). Eski sabit 15 sn, D12'nin ölçülmüş
+# riskini taşıyordu: 1 sn/GET yanıt veren bir sistemde 16 geçerli Z DTEL'li yapı bütçeye sığmıyor ve
+# SAP DOĞRU cevap verdiği hâlde ÖLÇÜLEMEDİ → yanlış BLOCKER çıkıyordu (ÖLÇÜLDÜ: 14 aday = son geçen,
+# 16 aday = BLOCKER). Bütçe yapılandırılabilir olduğu için bu risk artık ayarla karşılanır.
+BUTCE_ENV = _butce.GATE_ENV
 _ISTEK_ZAMAN_ASIMI_SN = 10.0
-BUTCE_ENV = 'AXET_DTEL_GATE_BUTCE_SN'
 # İstek bütçe kısıtlı zaman aşımıyla koparsa kalan süre bu eşiğin altındadır → "bütçe doldu" sayılır.
 _BUTCE_ESIK_SN = 0.5
 
@@ -84,19 +91,14 @@ if sys.platform == 'win32':
 
 
 def butce_sn() -> float:
-    """Env bütçeyi yalnız düşürebilir. Geçersiz (sayı değil, ≤ 0, NaN, varsayılandan büyük) → varsayılan + uyarı."""
-    ham = os.environ.get(BUTCE_ENV)
-    if ham is None or not ham.strip():
-        return VARSAYILAN_BUTCE_SN
-    try:
-        deger = float(ham)
-    except ValueError:
-        deger = float('nan')
-    if not (0 < deger <= VARSAYILAN_BUTCE_SN):   # NaN karşılaştırması da False
-        print(f'UYARI: {BUTCE_ENV}={ham!r} geçersiz (0 < değer <= {VARSAYILAN_BUTCE_SN:g} olmalı; env bütçeyi '
-              f'yalnız düşürebilir) → varsayılan {VARSAYILAN_BUTCE_SN:g} sn kullanıldı', file=sys.stderr)
-        return VARSAYILAN_BUTCE_SN
-    return deger
+    """Bu gate'in toplam ağ bütçesi — TEK KAYNAK `utils/butce.py` (K10).
+
+    ⛔ ESKİ KURAL ("env bütçeyi yalnız DÜŞÜREBİLİR, üst sınır sabit 15 sn") KALDIRILDI. Gerekçe:
+    bütçeyi YÜKSELTMEK bir gevşetme değildir — daha uzun bütçe DAHA ÇOK adayın ÖLÇÜLMESİ demektir;
+    kısa bütçe ise ölçülemeyeni (ve dolayısıyla BLOCKER'ı) artırır. Üst sınır artık sabit bir sayı
+    değil ZİNCİR bütçesidir (L3 < L2 < L1 yapısal olarak korunur). Geçersiz env → varsayılan + uyarı.
+    """
+    return _butce.gate_butce_sn()
 
 
 class _ButceDoldu(Exception):
@@ -208,7 +210,7 @@ def main() -> int:
     print(KAPSAM_BEYANI)
     butce_suresi = butce_sn()
     print(f'SÜRE BÜTÇESİ: {butce_suresi:g} sn (istemci kurulumu + tüm SAP okumalarının gerçek toplamı; biterse '
-          f'denetlenemeyen adaylar ÖLÇÜLEMEDİ → BLOCKER)')
+          f'denetlenemeyen adaylar ÖLÇÜLEMEDİ → BLOCKER). {_butce.nasil_uzatilir()}')
 
     if not dtels:
         print(f'OK — {path.name} Z/Y ya da /ad-alanı/ DTEL adayı yok')
@@ -288,7 +290,7 @@ def main() -> int:
         # Lider şartı 1: "DTEL yok" ile karışmasın — sayılar ve adlar görünür.
         print(f'[ÖLÇÜLEMEDİ: süre bütçesi ({butce.sn:g} sn) doldu, {len(denetlenmeyen)} aday denetlenmedi] '
               f'denetlenen {denetlenen}/{len(dtels)} · denetlenmeyen: {", ".join(denetlenmeyen)} — '
-              f'bu "DTEL yok" DEMEK DEĞİL; TEMİZ de denemez.', file=sys.stderr)
+              f'bu "DTEL yok" DEMEK DEĞİL; TEMİZ de denemez. {_butce.nasil_uzatilir()}', file=sys.stderr)
         butce_slug = f'sure-butcesi-{butce.sn:g}sn-doldu-{len(denetlenmeyen)}-aday-denetlenmedi-{denetlenen}-denetlendi'
 
     if not missing and not inactive:

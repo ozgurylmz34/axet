@@ -23,23 +23,115 @@ import os
 
 from sapadt._app import REPO_ROOT, log
 from sapadt.project import PROJECT_ENV, project_dir
+# `sapadt` import'u lib/'i sys.path'e ekler (bkz. sapadt/__init__.py) → `utils.*` buradan görünür.
+from utils import butce  # noqa: E402
 
 # aXet: zincir paket içinde → sapadt/lib/validators/run_review.py
 _REVIEW_SCRIPT = REPO_ROOT / "validators" / "run_review.py"
 _MANUEL = ("python <sap-adt-foundation>/scripts/sapadt/lib/validators/run_review.py "
            "--task <X> --artifact <path> --json  (proje kökünden)")
 
-# Sarmalayıcının tüm `run_review` zincirine verdiği süre (sn).
-REVIEWER_ZAMAN_ASIMI_SN = 30
+# Sarmalayıcının tüm `run_review` zincirine verdiği süre: SABİT DEĞİL, YAPILANDIRILABİLİR (K10).
+# Katman şeması (L1 sarmalayıcı > L2 zincir > L3 gate-içi) + varsayılanın ÖLÇÜM dayanağı TEK YERDE:
+# `utils/butce.py` modül docstring'i. Eski `REVIEWER_ZAMAN_ASIMI_SN = 30` sabiti KALDIRILDI.
 
-# ── Bug gate 2026-09-14 B1 (a) — zaman aşımı hangi zincirde BLOCKER ────────────────────────────────
-# ÖLÇÜLEN KUSUR: sarmalayıcı zaman aşımı DAİMA WARNING'di (yazma yapılır). DTEL varlık gate'i SAP yavaş ya da
-# erişilemezken zinciri 30 sn'nin üstüne taşıyınca checklist'in vaat ettiği BLOCKER (C-STR-FIELD-02 /
-# C-TBL-DTEL-01) fiilen yoktu (prior-art: kaynak çekirdekte table-update checklist'inin "reviewer-kör" vakası dersi).
-# KARAR (lider): bu kümedeki bir gate'i BLOCKER önemiyle taşıyan zincirde zaman aşımı = BLOCKER (ÖLÇÜLEMEDİ).
-# ⛔ KAPSAM SINIRI: yalnız DTEL gate'i. Diğer canlı BLOCKER validator'lara genelleştirme KULLANICI KARARI bekliyor;
-#    genelleşirse değişecek TEK yer bu kümedir (etkilenen görevler `zaman_asimi_blocker_gorevleri()` ile koddan türer).
-ZAMAN_ASIMI_BLOCKER_GATELERI = frozenset({"check_struct_field_dtel_active.py"})
+# ── K10 (kullanıcı kararı 2026-09-15: "Süreyi ölç + uzat, sonra BLOCKER") ──────────────────────────
+# ÖLÇÜLEN KUSUR: sarmalayıcı zaman aşımı DAİMA WARNING'di (yazma yapılır). 2026-09-14'te (B1 a) bu
+# YALNIZ DTEL gate'li 4 zincirde BLOCKER'a çevrilmişti ve o kayıt "genelleştirme KULLANICI KARARI
+# bekliyor" diyordu. Karar geldi ⇒ KAPSAM SINIRI KALDIRILDI: canlı (SAP'ye bağlanan) bir gate'i
+# BLOCKER önemiyle taşıyan HER zincirde zaman aşımı = BLOCKER (ÖLÇÜLEMEDİ). K10 ile kapsama
+# YENİ giren zincirler: `struct_post_create`, `sap_active_check` (ikisi de canlı BLOCKER taşır ve
+# eskiden zaman aşımında WARNING verip yazmaya izin veriyordu). Dayanak: "ölçülemedi ≠ temiz".
+#
+# ⭐ KÜME ELLE YAZILMAZ, KODDAN TÜRER (elle liste bayatlar): bir validator "CANLI"dır ⇔ kaynağında
+#    `SAPADTClient` geçer (= SAP oturumu kurar, dolayısıyla ağ yüzünden asılabilir). Ölçülen küme
+#    (2026-09-17): check_struct_field_dtel_active · check_sap_struct_consistency ·
+#    check_sap_active_version · check_table_field_drop · check_standard_table_fields (sonuncusu
+#    hiçbir zincirde BLOCKER değil → tek başına bir zinciri kapsama sokmaz).
+_CANLI_IMI = re.compile(r"\bSAPADTClient\b")
+
+
+def _yol_coz(node):
+    """`HARICI_VALIDATORLER` değerlerindeki yol ifadesini AST'den çöz (modül ÇALIŞTIRILMADAN).
+
+    Desteklenen biçim `run_review.py`dekiyle aynıdır: `VALIDATORS_DIR.parents[n] / 'a' / 'b.py'`.
+    Tanınmayan bir düğüm → `None` (çağıran fail-closed davranır; sessizce "ağsız" SAYMAZ).
+    """
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Name) and node.id == "VALIDATORS_DIR":
+        return _REVIEW_SCRIPT.parent
+    if isinstance(node, ast.Attribute):
+        taban = _yol_coz(node.value)
+        return getattr(taban, node.attr, None) if taban is not None else None
+    if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
+        taban = _yol_coz(node.value)
+        try:
+            return taban[node.slice.value]
+        except Exception:  # noqa: BLE001
+            return None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        sol, sag = _yol_coz(node.left), _yol_coz(node.right)
+        return (sol / sag) if isinstance(sol, Path) and sag is not None else None
+    return None
+
+
+@functools.lru_cache(maxsize=1)
+def _harici_yollar() -> dict:
+    """`run_review.HARICI_VALIDATORLER` — zincirdeki ADI BAŞKA bir dosyaya eşleyen kayıt.
+
+    ⛔ NEDEN GEREKLİ (lider düzeltmesi 2026-09-17): `check_itg_signoff.py` zincirde bu adla geçer
+    ama GERÇEK dosya `sap-intake-triage/scripts/check_intake_signoff.py`dir (ad farkı bilinçli ve
+    belgeli: "kopyalanmadı — tek kaynak orada kalır"). Bu eşlemeyi okumadan yapılan "dosyayı
+    bulamadım ⇒ canlı say" kısayolu, dosya ÇÖZÜLEBİLİR olduğu hâlde yanlış sınıflandırıyordu.
+    Yarın ağa ÇIKAN bir harici validator eklenirse aynı boşluk TERS yönde ısırırdı ("ağsız" sanmak).
+    """
+    try:
+        for node in ast.parse(_REVIEW_SCRIPT.read_text(encoding="utf-8")).body:
+            if isinstance(node, ast.Assign) and any(
+                    isinstance(t, ast.Name) and t.id == "HARICI_VALIDATORLER" for t in node.targets):
+                if isinstance(node.value, ast.Dict):
+                    return {k.value: _yol_coz(v) for k, v in zip(node.value.keys, node.value.values)
+                            if isinstance(k, ast.Constant)}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("HARICI_VALIDATORLER okunamadı (%s) — çözülemeyen ad fail-closed canlı sayılır", exc)
+    return {}
+
+
+def validator_yolu(script: str) -> Optional[Path]:
+    """Zincirdeki script adının GERÇEK dosyası (harici eşleme dahil). Çözülemezse None."""
+    harici = _harici_yollar()
+    if script in harici:
+        return harici[script]          # None olabilir → çözülemedi (fail-closed)
+    return _REVIEW_SCRIPT.parent / script
+
+
+def canli_mi(script: str) -> bool:
+    """Bu validator SAP'ye canlı bağlanır mı? KODDAN ölçülür (kaynağında `SAPADTClient` geçer mi).
+
+    ⛔ FAIL-CLOSED: yolu çözülemeyen ya da okunamayan dosya CANLI sayılır. "Okuyamadım"/"nerede
+    olduğunu bilmiyorum" bir "ağa çıkmıyor" hükmü DEĞİLDİR.
+    """
+    yol = validator_yolu(script)
+    if yol is None:
+        log.warning("%s yolu çözülemedi — canlı sayıldı (fail-closed)", script)
+        return True
+    try:
+        if not yol.exists():
+            log.warning("%s bulunamadı (%s) — canlı sayıldı (fail-closed)", script, yol)
+            return True
+        return bool(_CANLI_IMI.search(yol.read_text(encoding="utf-8", errors="replace")))
+    except Exception as exc:  # noqa: BLE001
+        log.warning("%s okunamadı (%s) — canlı sayıldı (fail-closed)", script, exc)
+        return True
+
+
+@functools.lru_cache(maxsize=1)
+def canli_validatorler() -> frozenset:
+    """Zincirlerde geçen script adlarından CANLI olanlar — KODDAN türetilir (elle liste değil)."""
+    zincir = _gorev_zincirleri() or {}
+    adlar = {s for ogeler in zincir.values() for s, _sv, _d in ogeler}
+    return frozenset(s for s in sorted(adlar) if canli_mi(s))
 
 
 @functools.lru_cache(maxsize=1)
@@ -56,10 +148,18 @@ def _gorev_zincirleri() -> Optional[dict]:
 
 
 def zaman_asimi_blocker_gorevleri() -> list:
-    """Zaman aşımı BLOCKER sayılan görevler (koddan türetilir)."""
+    """Zaman aşımı BLOCKER sayılan görevler = zincirinde CANLI + BLOCKER gate olanlar (koddan türer)."""
     zincir = _gorev_zincirleri() or {}
+    canli = canli_validatorler()
     return sorted(t for t, ogeler in zincir.items()
-                  if any(s in ZAMAN_ASIMI_BLOCKER_GATELERI and sv == "BLOCKER" for s, sv, _d in ogeler))
+                  if any(s in canli and sv == "BLOCKER" for s, sv, _d in ogeler))
+
+
+def zaman_asimi_blocker_gateleri(task: Optional[str]) -> list:
+    """`task` zincirinde zaman aşımını BLOCKER yapan canlı gate'ler (mesajda adlarıyla geçer)."""
+    ogeler = (_gorev_zincirleri() or {}).get(task or "", [])
+    canli = canli_validatorler()
+    return sorted({s for s, sv, _d in ogeler if s in canli and sv == "BLOCKER"})
 
 
 def zaman_asimi_blocker_mi(task: Optional[str]) -> bool:
@@ -292,6 +392,11 @@ def run_reviewer(task: Optional[str], artifact_path: Optional[str],
         cmd += ["--ack-drop", ack_drop]
     env = os.environ.copy()
     env[PROJECT_ENV] = str(project_dir())
+    # K10 ②: bütçe TEK KAYNAKTAN gelir ve alt katmanlara AÇIKÇA taşınır. Alt süreç env'i miras
+    # alsa bile değeri burada yeniden yazıyoruz: kullanıcı env'i koymadıysa L2/L3 varsayılanı
+    # `butce` modülünden hesaplar — yani üç katman DAİMA aynı sayıya bakar (kayma imkânsız).
+    butce_sn = butce.reviewer_butce_sn()
+    env[butce.REVIEWER_ENV] = f"{butce_sn:g}"
     try:
         proc = subprocess.run(
             cmd,
@@ -306,30 +411,34 @@ def run_reviewer(task: Optional[str], artifact_path: Optional[str],
             # handle'ını miras alır ve Windows'ta bloke olur → her çağrı 120s donardı
             # (standalone 0.6s; bug spawn'da, script'te değil). Bkz. _reviewer-stdio-deadlock.
             stdin=subprocess.DEVNULL,
-            timeout=REVIEWER_ZAMAN_ASIMI_SN,
+            timeout=butce_sn,
         )
     except subprocess.TimeoutExpired:
         if zaman_asimi_blocker_mi(task):
-            # B1 (a): zincir canlı DTEL varlık gate'ini BLOCKER olarak taşıyor → sonuç üretilmeden yazmak,
-            # checklist BLOCKER'ını yavaş SAP'de sessizce düşürür. İhlal bulunmadı; ÖLÇÜLEMEDİ.
-            log.warning("Reviewer timeout for task=%s artifact=%s — BLOCKER (ÖLÇÜLEMEDİ; DTEL gate'li zincir)",
+            # K10: zincir CANLI bir gate'i BLOCKER olarak taşıyor → sonuç üretilmeden yazmak,
+            # checklist BLOCKER'ını yavaş/erişilemez SAP'de sessizce düşürür. İhlal bulunmadı; ÖLÇÜLEMEDİ.
+            gateler = zaman_asimi_blocker_gateleri(task) or ["(konumu çözülemeyen gate)"]
+            log.warning("Reviewer timeout for task=%s artifact=%s — BLOCKER (ÖLÇÜLEMEDİ; canlı BLOCKER gate)",
                         task, artifact)
             return ReviewerResult(
                 verdict="BLOCKER", blocker_count=1,
                 skip_reason=(f"reviewer_timeout — zaman aşımı → BLOCKER (ÖLÇÜLEMEDİ): reviewer "
-                             f"{REVIEWER_ZAMAN_ASIMI_SN} sn'yi aştı; zincir canlı DTEL varlık gate'ini "
-                             f"({', '.join(sorted(ZAMAN_ASIMI_BLOCKER_GATELERI))}) içeriyor. İhlal bulunduğu "
-                             "anlamına gelmez, PASS da sayılmaz — SAP erişimini/yavaşlığını düzeltip tekrar dene. "
+                             f"{butce_sn:g} sn'lik süre bütçesini aştı; zincir canlı (SAP'ye bağlanan) "
+                             f"BLOCKER gate taşıyor: {', '.join(gateler)}. İhlal bulunduğu anlamına GELMEZ, "
+                             "PASS da sayılmaz — bir kontrol koşmadıysa sonucu 'temiz' değil NOT MEASURED'dır. "
+                             + butce.nasil_uzatilir() + " Ya da SAP erişimini/yavaşlığını düzeltip tekrar dene. "
                              "Manuel: " + _MANUEL.replace("<X>", str(task))))
         # Timeout ≠ ihlal. Eskiden BLOCKER (0/0) döndürüp meşru push'u bloklıyordu
-        # (2026-06-10 reviewer-kör vakası). Artık non-blocking WARNING: push geçer
-        # ama coordinator manuel run_review.py çalıştırmalı (asıl gate zaten manuel).
+        # (2026-06-10 reviewer-kör vakası). Zincirde CANLI BLOCKER gate YOKSA (yani ağ yüzünden
+        # düşen bir BLOCKER kontrolü yok) non-blocking WARNING: push geçer ama coordinator manuel
+        # run_review.py çalıştırmalı (asıl gate zaten manuel).
         log.warning("Reviewer timeout for task=%s artifact=%s — WARNING (manuel review öner)",
                     task, artifact)
         return ReviewerResult(
             verdict="WARNING", skipped=False, warning_count=1,
-            skip_reason=("reviewer_timeout — reviewer 30s aştı; push bloke "
-                         "EDİLMEDİ. Manuel doğrula: " + _MANUEL.replace("<X>", str(task))))
+            skip_reason=(f"reviewer_timeout — reviewer {butce_sn:g} sn'lik süre bütçesini aştı; zincirde "
+                         "canlı BLOCKER gate YOK, push bloke EDİLMEDİ. Yine de bu zincir ÖLÇÜLEMEDİ. "
+                         + butce.nasil_uzatilir() + " Manuel doğrula: " + _MANUEL.replace("<X>", str(task))))
     except Exception as exc:
         log.warning("Reviewer subprocess error: %s", exc)
         return ReviewerResult(verdict="SKIP", skipped=True,

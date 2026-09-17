@@ -516,23 +516,44 @@ class B1ZamanButcesi(_Taban):
             hukum = {t: self.rv.run_reviewer(t, str(yol)).verdict
                      for t in sorted(_ZAMAN_ASIMI_GOREVLERI | {"class_push", "interface_push", "cds_update", "program_push"})}
         beklenen = {t: ("BLOCKER" if t in _ZAMAN_ASIMI_GOREVLERI else "WARNING") for t in hukum}
-        self.kaydet("d zaman aşımı: DTEL gate'li 4 zincir BLOCKER; diğerleri WARNING kalır (kapsam sınırı)",
+        # ⭐ 2026-09-17 K10 — ESKİ PİN (silinmedi, kayda geçiyor): burada
+        #   "DTEL gate'li 4 zincir BLOCKER; diğerleri WARNING kalır (KAPSAM SINIRI)"
+        # yazıyordu ve `_ZAMAN_ASIMI_GOREVLERI` elle yazılmış 4 görevdi. B1 (a) kaydının kendisi
+        # "genelleştirme KULLANICI KARARI bekliyor" diyordu. KARAR GELDİ (2026-09-15: "Süreyi ölç +
+        # uzat, sonra BLOCKER") ⇒ kapsam sınırı BİLİNÇLİ OLARAK KALDIRILDI: artık CANLI (SAP'ye
+        # bağlanan) BLOCKER gate taşıyan HER zincirde zaman aşımı BLOCKER'dır. Bu testin B1 kapsamı
+        # (DTEL gate'li 4 zincir) hâlâ geçerli bir ALT KÜME olarak çivilenir; genişleyen kümenin
+        # tamamı + kontrol grubu `tests/test_k10_zaman_asimi_butce.py::K10b3`te ölçülür.
+        self.kaydet("d zaman aşımı: DTEL gate'li 4 zincir BLOCKER (kapsam K10 ile GENİŞLETİLDİ; "
+                    "canlı BLOCKER'sız 4 zincir hâlâ WARNING)",
                     "4 BLOCKER / 4 WARNING", hukum, hukum == beklenen)
 
     def test_B1e_zaman_asimi_kumesi_koddan_turetilir(self):
         gorevler = set(self.rv.zaman_asimi_blocker_gorevleri())
-        self.kaydet("e zaman aşımı=BLOCKER görevleri TASK_VALIDATORS'tan türetilir", sorted(_ZAMAN_ASIMI_GOREVLERI),
-                    sorted(gorevler), gorevler == _ZAMAN_ASIMI_GOREVLERI)
-        self.kaydet("e küme yalnız DTEL gate'i (genelleştirme ayrı karar)", "['check_struct_field_dtel_active.py']",
-                    sorted(self.rv.ZAMAN_ASIMI_BLOCKER_GATELERI),
-                    set(self.rv.ZAMAN_ASIMI_BLOCKER_GATELERI) == {"check_struct_field_dtel_active.py"})
+        # ⭐ K10: küme artık "elle yazılmış gate listesi ∩ BLOCKER" değil, "KODDAN türetilen CANLI
+        # validator kümesi ∩ BLOCKER". Eski pin `set(...) == _ZAMAN_ASIMI_GOREVLERI` (tam eşitlik)
+        # idi; K10 kümeyi genişlettiği için artık ALT KÜME çivilenir, tam küme K10b2'de ölçülür.
+        self.kaydet("e zaman aşımı=BLOCKER görevleri TASK_VALIDATORS'tan türetilir (B1'in 4 zinciri ⊆ küme)",
+                    f"⊇ {sorted(_ZAMAN_ASIMI_GOREVLERI)}", sorted(gorevler),
+                    _ZAMAN_ASIMI_GOREVLERI <= gorevler)
+        canli = set(self.rv.canli_validatorler())
+        self.kaydet("e canlı küme koddan türer ve DTEL gate'ini içerir (eski elle-liste kaldırıldı)",
+                    "check_struct_field_dtel_active.py ∈ canlı", sorted(canli),
+                    "check_struct_field_dtel_active.py" in canli and not hasattr(self.rv, "ZAMAN_ASIMI_BLOCKER_GATELERI"))
 
 
 class B1fButceEnvGecersiz(unittest.TestCase):
-    """Lider şartı 4: env bütçeyi yalnız DÜŞÜREBİLİR; geçersiz değer (negatif, sıfır, sayı değil, varsayılandan büyük)
-    → varsayılan + görünür uyarı satırı (sessizce yutulmaz). Ağ yok: aday içermeyen DDL."""
+    """Lider şartı 4: geçersiz env değeri (negatif, sıfır, sayı değil) → varsayılan + görünür uyarı
+    satırı (sessizce yutulmaz). Ağ yok: aday içermeyen DDL.
+
+    ⭐ K10 (2026-09-17): "env bütçeyi YALNIZ DÜŞÜREBİLİR + üst sınır sabit 15 sn" şartı KALDIRILDI
+    (kullanıcı kararı "Süreyi ölç + UZAT"): bütçeyi yükseltmek gevşetme değil DAHA ÇOK ölçüm
+    demektir. Üst sınır artık ZİNCİR bütçesidir ⇒ varsayılan ve sınır `utils/butce.py`den OKUNUR
+    (sayı elle yazılmaz — kaynak değişince test sessizce bayatlamasın). "99" hâlâ geçersizdir ama
+    ARTIK BAŞKA SEBEPLE: zincir bütçesini (varsayılanda 56 sn) aşıyor, "15'ten büyük" olduğu için değil."""
 
     def test_B1f_gecersiz_env_varsayilan_ve_uyari(self):
+        from utils import butce as _B
         dizin = Path(tempfile.mkdtemp(prefix="axet_b1f_"))
         try:
             ddl = dizin / "s.ddls.asddls"
@@ -540,10 +561,14 @@ class B1fButceEnvGecersiz(unittest.TestCase):
             betik = LIB / "validators" / "check_struct_field_dtel_active.py"
             for deger, gecerli in (("abc", False), ("-1", False), ("0", False), ("99", False), ("2.5", True)):
                 env = dict(os.environ, AXET_DTEL_GATE_BUTCE_SN=deger, PYTHONIOENCODING="utf-8")
+                env.pop("AXET_REVIEWER_BUTCE_SN", None)
                 p = subprocess.run([sys.executable, str(betik), str(ddl)], capture_output=True, text=True,
                                    encoding="utf-8", errors="replace", env=env, stdin=subprocess.DEVNULL, timeout=60)
                 uyari = "AXET_DTEL_GATE_BUTCE_SN" in p.stderr and "varsayılan" in p.stderr
-                butce = "SÜRE BÜTÇESİ: 2.5 sn" if gecerli else "SÜRE BÜTÇESİ: 15 sn"
+                # Beklenen varsayılan: alt sürecin env'inde AXET_REVIEWER_BUTCE_SN YOK ⇒ modül
+                # varsayılanlarından hesaplanır (bu sürecin env'ine bakılmaz — sızıntı olmasın).
+                _vars_gate = round((_B.VARSAYILAN_SN - _B.ZINCIR_PAYI_SN) * _B.GATE_ORANI, 1)
+                butce = "SÜRE BÜTÇESİ: 2.5 sn" if gecerli else f"SÜRE BÜTÇESİ: {_vars_gate:g} sn"
                 ok = p.returncode == 0 and (butce in p.stdout) and (uyari != gecerli)
                 H.kaydet(f"B1f env={deger!r} → {'kabul' if gecerli else 'varsayılan + uyarı'}", butce,
                          f"rc={p.returncode} · uyarı={uyari} · {[s for s in p.stdout.splitlines() if 'BÜTÇE' in s]}", ok)

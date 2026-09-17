@@ -1241,3 +1241,74 @@ tek tek CR, LF, U+2028, U+2029, U+0085 çıkarıldı (her birinde yalnız o kara
 DOĞRULANMADI: canlı SAP'nin `--`, çok satırlı etiket ya da U+2028/U+0085 içeren DDL'i nasıl ayrıştırdığı (artık gönderilmiyor) · Windows dışı davranış.
 Açık kalemler (dokunulmadı): artefaktlı yolda `--` kör noktası (`ddic_dtel.py` `_STRING_YORUM`; artefakt metni kullanıcıdan gelir, bu kural onu kapsamaz) ·
 POST XML kaçışı (`sap_adt_lib.create_structure` POST gövdesi) · ADT_* env mirası · sarmalayıcı SKIP.
+
+### 20.9 K10 — inceleme zincirinin süre bütçesi: ölç → uzat → BLOCKER (2026-09-17)
+
+Kullanıcı kararı (2026-09-15, `maintenance/IS-LISTESI.md` K10): **"Süreyi ölç + uzat, sonra BLOCKER"**.
+Dayanak: *"ölçülemedi ≠ temiz"* — bir kontrol koşmadıysa sonucu TEMİZ değil **NOT MEASURED**'dır.
+⚠ Bu bölüm §20.6'daki B1 (a)/(b) satırlarını ve "(a) genelleşirse etkilenecekler" listesini **GÜNCELLER**
+(o satırlar tarihçedir; bugünkü davranış burasıdır).
+
+**① ÖLÇÜM** — gerçek giriş noktası `_reviewer.run_reviewer`, sahte ADT sunucusu (127.0.0.1), gerçek SAP YOK.
+
+| görev | validator | canlı | canlı BLOCKER | 0 sn/GET | 1 sn/GET | GET |
+|---|---|---|---|---|---|---|
+| table_update | 5 | 3 | 2 | 1,45 sn | **11,27 sn** | 10 |
+| struct_creation (8 DTEL) | 4 | 2 | 1 | 0,94 | 8,95 | 8 |
+| struct_fields_dtel (8 DTEL) | 1 | 1 | 1 | 0,56 | 8,53 | 8 |
+| table_creation (8 DTEL) | 3 | 1 | 1 | 0,66 | 8,72 | 8 |
+| struct_post_create | 2 | 2 | 2 | 0,83 | 4,80 | 4 |
+| sap_active_check | 2 | 1 | 1 | 0,73 | 3,83 | 3 |
+| rap_cds_creation | 7 | 1 | 0 | 1,06 | 1,84 | 1 |
+| class_push | 6 | 0 | 0 | 0,77 | 0,67 | 0 |
+| (ağsız zincirler: cds_update, program_push, interface_push, rap_bdef_creation, dtel_*, domain_creation_csv, itg_s2_signoff) | | 0 | 0 | 0,09-0,48 | aynı | 0 |
+
+Ölçek eğrisi (`struct_creation`, 1 sn/GET, eski 15 sn gate bütçesi) — **D12 iddiası doğrulandı ve sayısallaştı**:
+2/5/8/12/**14** aday → PASS (2,94 / 5,97 / 9,16 / 13,14 / **15,03** sn) · **16/20/30 aday → BLOCKER** (bütçe dolar, 15 GET,
+~15,7 sn). Yani 1 sn/GET yanıt veren bir sistemde 15 geçerli Z DTEL'den sonrası **SAP doğru cevap verdiği hâlde**
+yanlış BLOCKER'dı. Gate'in ölçülen işleme hızı ≈ **1 aday/sn**.
+⛔ **ÖLÇÜLEMEDİ:** gerçek SAP'ye karşı süreler (canlı bağlantı yoktu). Gecikmeler benzetimdir.
+
+**② YAPILANDIRILABİLİR BÜTÇE** — TEK KAYNAK `scripts/sapadt/lib/utils/butce.py`, üç katman **yapısal** olarak sıralı:
+
+| katman | nerede | varsayılan | ayar |
+|---|---|---|---|
+| L1 sarmalayıcı | `_reviewer.run_reviewer` → `subprocess.run(timeout=…)` | **60 sn** | `AXET_REVIEWER_BUTCE_SN` (5-900; **yükseltir de düşürür de**) |
+| L2 zincir | `run_review.main` → validator'lara dağıtılan toplam | **56 sn** (= L1 − 4) | L1'den türer |
+| L3 gate-içi | `check_struct_field_dtel_active` ağ bütçesi | **28 sn** (= L2 × %50) | `AXET_DTEL_GATE_BUTCE_SN` (üst sınır artık sabit değil, **L2**) |
+
+Varsayılanın dayanağı: L3 28 sn ≈ 28 aday (ölçülen 1 aday/sn) — eski 15 sn'de ~14 idi, D12 riski tam oradaydı ·
+L1 60 = L3 28 + ölçülen zincir artığı ~11 + ≈2× emniyet · **ayrıca 60 = ESKİ iç zaman aşımı ⇒ hiçbir katman
+eskisinden DAHA AZ süre almaz** (yükseltme bir gevşetme değil, daha ÇOK ölçüm demektir).
+Geçersiz env (sayı değil, aralık dışı, NaN) → varsayılan + görünür `UYARI:` satırı.
+
+**③ ZAMAN AŞIMI = BLOCKER** — kapsam sınırı kaldırıldı. Küme **koddan türer**: bir validator "CANLI"dır ⇔
+GERÇEK dosyasında `SAPADTClient` geçer. Ad→yol çözümü `HARICI_VALIDATORLER`i de okur (AST ile), çünkü
+`check_itg_signoff.py` zincirde bu adla geçer ama dosyası `sap-intake-triage/scripts/check_intake_signoff.py`dir.
+Canlı küme (ölçüldü): `check_struct_field_dtel_active` · `check_sap_struct_consistency` · `check_sap_active_version` ·
+`check_table_field_drop` · `check_standard_table_fields` (sonuncusu hiçbir zincirde BLOCKER değil).
+**BLOCKER görevleri 4 → 6:** eski `table_creation`, `table_update`, `struct_creation`, `struct_fields_dtel`
+**+ YENİ** `struct_post_create`, `sap_active_check`. Kapsam DIŞI (kontrol grubu, WARNING kalır):
+`cds_creation`, `cds_update`, `rap_cds_creation`, `class_push`, `program_push`, `interface_push`,
+`rap_bdef_creation`, `itg_s2_signoff` (ağ gate'i değil), boş zincirler.
+Mesaj süreyi uzatma yolunu **açıkça** söyler (`butce.nasil_uzatilir()`: env adı + güncel süre + geçerli aralık).
+Fail-closed: `TASK_VALIDATORS` okunamazsa · dosya yolu çözülemezse · dosya okunamazsa → **canlı/BLOCKER sayılır**.
+
+**Katman hizası (yan kusur, aynı turda düzeltildi):** `run_validator` validator başına SABİT **60 sn** veriyordu ama
+sarmalayıcı zinciri **30 sn**'de kesiyordu ⇒ iç dal **ULAŞILAMAZDI** (ölü dal) ve hükmü daima sarmalayıcının KÖR
+kesmesi veriyordu (hangi gate'te takıldığı raporlanamıyordu). Artık L3 < L2 < L1 ve `run_validator` zincire KALAN
+süreyi kullanır; bütçe bittiyse sıradaki gate **hiç başlatılmaz** → `SKIP` + `olcum_yok=True` (kendi şiddetiyle sayılır).
+Bu, §20.6'da "açık kalem" bırakılan *"`check_standard_table_fields` bütçesiz"* maddesini de **zincir katmanında**
+kapatır (gate'in kendi içine bütçe eklenmedi — bu ayrım bilinçlidir).
+
+**Testler** `tests/test_k10_zaman_asimi_butce.py` (14 test / 28 senaryo satırı) — fail-first: düzeltmesiz ağaçta
+2 failure + 9 error. **Mutasyonlar (5/5 yakalandı):** M1 canlı küme yerine eski elle-liste → K10b2+b3 · M2 sarmalayıcı
+`timeout` sabit 30 → K10b5 · M3 `run_validator` sabit 60 → K10c1 · M4 gate bütçesi sabit 15 → K10a4+K10c2 ·
+M5 `HARICI_VALIDATORLER` okunmuyor → K10b1+b1b+b2+b3.
+Eski pinler silinmedi, gerekçeleriyle güncellendi: `test_verdict_reviewer_k1_d1.py::B1d` (kapsam K10 ile GENİŞLETİLDİ,
+B1'in 4 zinciri artık ALT KÜME) · `B1e` (elle-liste → koddan türeyen küme) · `B1f` ("99" hâlâ geçersiz ama artık
+"15'ten büyük" diye değil, **L2'yi aştığı** için).
+
+**DOĞRULANMADI:** gerçek SAP'ye karşı hiçbir süre · 900 sn üst sınırın pratikte anlamlılığı · Windows dışı davranış ·
+canlı gate'lerin (`check_table_field_drop`, `check_sap_active_version`, `check_sap_struct_consistency`,
+`check_standard_table_fields`) KENDİ içlerine bütçe eklenmesinin etkisi (eklenmedi; zincir katmanı kesiyor).
