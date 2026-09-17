@@ -193,20 +193,24 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 
 **VTB — taban bilinmiyor:** fark göster, "yeniyi al / yereli koru / elle" sor; otomatik birleştirme **yasak** (taban uydurma).
 
-**Sınıf özel kartları** (`guncelle/kartlar/sinif-<ad>.md`; plan, dosyanın sınıfı bunlardan biriyse vaka kartına ek olarak gösterir):
+**Sınıf özel kartları** (`guncelle/kartlar/sinif-<id>.md`; plan, dosyanın sınıfı bunlardan biriyse vaka kartına ek olarak gösterir).
+
+⭐ **Kanonik ad kaynağı: `guncelle/harita.json` → `ust_siniflar[].id`.** Kart dosyasının adı `sinif-<id>.md`'dir; aşağıdaki tablo o id'leri kullanır. ⚠ *Düzeltildi 2026-09-18 (lider ölçtü):* bu tablo daha önce **10 addan 8'ini yanlış** yazıyordu (`sinif-install`, `sinif-memory`, `sinif-cekirdek`, `sinif-yasak-kanonik`, `sinif-izin-config`, `sinif-validator-zincir`, `sinif-skill-asset`, `sinif-guncelle-motoru` — hiçbiri diskte yok) ve aynı ölü ad §6'daki **makine-okunur `plan.json` şema örneğinde** de duruyordu, yani kopyalanmaya açıktı. Ölçüm: `ust_siniflar` 15 · `guncelle/kartlar/sinif-*.md` 15 · eşleşme 15/15.
+
+**Tabloda olmayan 5 sınıf kartı** (var ama burada anlatılmıyor — kartın kendisi otoritedir): `sinif-bakim-ic` · `sinif-belge-lisans` · `sinif-depo-hijyeni` · `sinif-proje-sablonu` · `sinif-skill-scripti`.
 
 | Kart | Tetik | Zorunlu ek adımlar | DUR |
 |---|---|---|---|
-| `sinif-cekirdek` | `core/00-temel.md` değişti | 1) değişen bölümleri `git diff <taban> <yeni> -- core/` ile oku 2) **diskteki yeni sürüm otoritedir, bağlamındaki eski kopyaya dayanma** 3) raporda "yeni oturum gerekli" | yeni çekirdek bu kartla çelişirse |
-| `sinif-yasak-kanonik` | `core/sap/00-sap.md` KESİN YASAKLAR değişti | 1) klonda al 2) `doctor.py` damga satırlarını göster 3) kullanıcıya: "SAP projelerinde `%guncelle-proje` çalıştır" | yerelde kanonik değiştirilmişse V4c + asgari güvence raporu |
-| `sinif-izin-config` | `config/permissions.json`, denylist | 1) al/birleştir 2) **`python scripts/install.py`** (özel adım; plan zorunlu kılar) 3) `tests/test_install.py` 4) "aXet'i kapat-aç" | kullanıcının kendi kuralı template deny'ını ezerse (`doctor.py:938-949`) → rapor, engelleme |
-| `sinif-install` | `scripts/install.py` | 1) al 2) `python scripts/install.py --dry-run` çıkış 0 olmalı 3) sonra gerçek `install.py` | `--dry-run` hata → dosyayı taban sürüme geri al (`guncelle.py geri-al <yol>`), DUR |
-| `sinif-validator-zincir` | validator, `run_review.py`, `_reviewer.py`, `gate.py`, `validator-map.md` | 1) eş dosyalar aynı pakette (plan birlikte seçer) 2) sap-code-review takımı (`test_checklists.py` zincir↔tablo eşitliği) 3) foundation takımı | eşlerden biri V3 (yerelde değişmiş, yeni gelmiyor) iken diğeri V1 ise → uyumsuzluk riski, kullanıcıya göster |
-| `sinif-memory` | `memory/MEMORY.md` | 1) indeks satır bazında birleşir (ekleme çakışması nadir) 2) yeni `feedback_*.md` aynı kalemde gelir 3) indeks↔dosya eşleşmesi (B1 onaylanırsa script, değilse ajan elle sayar ve rapora yazar) | — |
-| `sinif-skill-asset` | `skills*/*/templates/**`, `assets/**` | `.conn_adt.example` gibi örnek dosyalar: yalnız örnek; gerçek `.conn_adt`'ye asla dokunma ve okuma | — |
+| `sinif-cekirdek-kural` | `core/00-temel.md` değişti | 1) değişen bölümleri `git diff <taban> <yeni> -- core/` ile oku 2) **diskteki yeni sürüm otoritedir, bağlamındaki eski kopyaya dayanma** 3) raporda "yeni oturum gerekli" | yeni çekirdek bu kartla çelişirse |
+| `sinif-kesin-yasak-kanonigi` | `core/sap/00-sap.md` KESİN YASAKLAR değişti | 1) klonda al 2) `doctor.py` damga satırlarını göster 3) kullanıcıya: "SAP projelerinde `%guncelle-proje` çalıştır" | yerelde kanonik değiştirilmişse V4c + asgari güvence raporu |
+| `sinif-config-izin` | `config/permissions.json`, denylist | 1) al/birleştir 2) **`python scripts/install.py`** (özel adım; plan zorunlu kılar) 3) `tests/test_install.py` 4) "aXet'i kapat-aç" | kullanıcının kendi kuralı template deny'ını ezerse (`doctor.py:938-949`) → rapor, engelleme |
+| `sinif-kurulum-bakim-scripti` | `scripts/install.py` | 1) al 2) `python scripts/install.py --dry-run` çıkış 0 olmalı 3) sonra gerçek `install.py` | `--dry-run` hata → dosyayı taban sürüme geri al (`guncelle.py geri-al <yol>`), DUR |
+| `sinif-validator-ailesi` | validator, `run_review.py`, `_reviewer.py`, `gate.py`, `validator-map.md` | 1) eş dosyalar aynı pakette (plan birlikte seçer) 2) sap-code-review takımı (`test_checklists.py` zincir↔tablo eşitliği) 3) foundation takımı | eşlerden biri V3 (yerelde değişmiş, yeni gelmiyor) iken diğeri V1 ise → uyumsuzluk riski, kullanıcıya göster |
+| `sinif-ders-memory` | `memory/MEMORY.md` | 1) indeks satır bazında birleşir (ekleme çakışması nadir) 2) yeni `feedback_*.md` aynı kalemde gelir 3) indeks↔dosya eşleşmesi (B1 onaylanırsa script, değilse ajan elle sayar ve rapora yazar) | — |
+| `sinif-skill-govde-referans-asset` | `skills*/*/templates/**`, `assets/**` | `.conn_adt.example` gibi örnek dosyalar: yalnız örnek; gerçek `.conn_adt`'ye asla dokunma ve okuma | — |
 | `sinif-test-fixture` | `tests/**`, `fixtures/**` | test ettiği dosya aynı kalemde değilse testi alma (plan uyarır) | — |
 | `sinif-kurulum-araci` | `kur.ps1`/`kur.cmd` | çalıştırma; yalnız al. Test: `tests/test_kur.py`. Raporda "bir sonraki `kur.cmd` çalıştırmasında etkin" | — |
-| `sinif-guncelle-motoru` | `GUNCELLE.md`, `guncelle/**`, `guncelle.py` | motor zaten yeni sürümden çalışıyor (§7); klona almak yalnız bir sonraki sefer içindir | — |
+| `sinif-guncelleme-motoru` | `GUNCELLE.md`, `guncelle/**`, `guncelle.py` | motor zaten yeni sürümden çalışıyor (§7); klona almak yalnız bir sonraki sefer içindir | — |
 
 ---
 
@@ -234,7 +238,7 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
  "kalemler": [{"id": "0.5.0-03", "baslik": "…", "tur": "duzeltme|yetenek|kural|guvenlik",
    "kritik": true, "gerektirir": ["0.5.0-01"], "min_axet": "1.3.0", "paket": "P2",
    "dosyalar": [{"yol": "scripts/doctor.py", "sinif": "kurulum-script", "vaka": "V4t",
-     "kart": ["V4t","sinif-install"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
+     "kart": ["V4t","sinif-kurulum-bakim-scripti"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
    "testler": ["kok:test_doctor"], "ozel_adimlar": []}],
  "paketler": {"P2": ["0.5.0-03","0.5.0-05"]},
  "sayaclar": {"V3": 12, "VKD": 40}, "yeniden_baslat": "yeni-oturum"}
