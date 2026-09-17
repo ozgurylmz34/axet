@@ -125,6 +125,21 @@
       "not": "Otomatik testi yok (RAPOR §4 'Test HİÇ OLMAYAN sınıflar'); B4 link kontrolü onaylanırsa buraya test eklenir."
     },
     {
+      "sinif": "belge-changelog",
+      "ust_sinif": "belge-lisans",
+      "glob": ["CHANGELOG.md"],
+      "yukleme": "aXet'e yüklenmez; insan okuru için yayın günlüğü",
+      "etkin": null,
+      "esler": ["guncelle/yayinlar.json"],
+      "test": [],
+      "risk": "dusuk",
+      "ozel_adim": null,
+      "kritik_yol": false,
+      "beklenen_bos": true,
+      "beklenen_bos_neden": "CHANGELOG.md yalnız PUBLIC YAYIN KLONUNDA üretilir (yayın aracı, kaynak guncelle/yayinlar.json); geliştirme reposunda hiç bulunmaz, dolayısıyla burada 0 dosya eşlemesi NORMALDİR. Sınıf yine de gerekli: tüketici klonu = public repo olduğu için orada `git ls-files` CHANGELOG.md'yi döndürür ve sınıfsız bir yol harita denetiminde FAIL olurdu (tests/test_guncelle_harita.py::test_her_yol_tam_bir_sinifa_duser).",
+      "not": "Üretilen dosya — elle düzenlenmez; kalem-dosya eşlemesinden muaftır (yayın aracının URETILEN_DOSYALAR listesi)."
+    },
+    {
       "sinif": "belge-docs",
       "ust_sinif": "belge-lisans",
       "glob": ["docs/*"],
