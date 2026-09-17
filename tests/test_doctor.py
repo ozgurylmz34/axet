@@ -70,10 +70,13 @@ class DoctorTest(GeciciTest):
         self.assertIn("emekli izin deseni yalnız global config'te aranır", kapsam, "kapsam beyanı eksik")
         self.emekli_ekle({"git reset --hard*": "deny", "*deploy_ui.py*deploy *": "ask"})
         r = self.doctor(d)
-        self.var(r, "WARN", "emekli template izin deseni kaldı (2)")
-        self.var(r, "WARN", "bash:git reset --hard*")
-        self.var(r, "WARN", "bash:*deploy_ui.py*deploy *")
-        self.var(r, "WARN", "install.py")
+        # NOT: desen adları EMEKLİ satırında aranır — K12 ezme kontrolü de aynı desen adını yazabilir (o satır
+        # emekli mantığından bağımsızdır); süzgeç dar tutulmazsa bu test emekli mantığı bozulsa da geçerdi.
+        emekli_satir = [s for s in self.satirlar(r) if "emekli template izin deseni kaldı (2)" in s]
+        self.assertEqual(len(emekli_satir), 1, r.stdout)
+        self.assertTrue(emekli_satir[0].startswith("[WARN]"), emekli_satir[0])
+        for parca in ("bash:git reset --hard*", "bash:*deploy_ui.py*deploy *", "install.py"):
+            self.assertIn(parca, emekli_satir[0])
         self.assertFalse([s for s in self.satirlar(r) if s.startswith("[INFO]") and "emekli" in s])
         self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
 
@@ -82,7 +85,8 @@ class DoctorTest(GeciciTest):
         self.emekli_ekle({"rm -rf *": "deny"})  # install'ın yazdığı karar 'ask'; kullanıcı 'deny' yapmış
         r = self.doctor(d)
         self.var(r, "INFO", "bash:rm -rf *")
-        self.assertFalse([s for s in self.satirlar(r) if s.startswith("[WARN]") and "emekli" in s], r.stdout)
+        self.assertFalse([s for s in self.satirlar(r) if s.startswith("[WARN]") and "emekli template izin" in s],
+                         r.stdout)
 
     def test_emekli_listesi_install_py_den_gelir(self):
         self.global_config()
@@ -90,11 +94,82 @@ class DoctorTest(GeciciTest):
         with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(self.xdg)}):
             with mock.patch.object(doctor, "results", []) as sonuc:
                 doctor.check_global()
-            self.assertFalse([m for _, m in sonuc if "emekli" in m], "kontrol: listede olmayan desen emekli sayılmamalı")
+            # süzgeç "emekli template izin deseni"dir, düz "emekli" değil: desen adı 'emekli' içeriyor ve K12 ezme
+            # kontrolü de aynı adı yazıyor → dar süzgeç olmadan bu test emekli mantığından bağımsız geçerdi
+            self.assertFalse([m for _, m in sonuc if "emekli template izin deseni" in m],
+                             "kontrol: listede olmayan desen emekli sayılmamalı")
             with mock.patch.object(doctor, "results", []) as sonuc, \
                     mock.patch.object(doctor.inst, "RETIRED_RULES", {"bash": {"*sahte-emekli*": "ask"}}):
                 doctor.check_global()
-            self.assertTrue([m for s, m in sonuc if s == "WARN" and "bash:*sahte-emekli*" in m], sonuc)
+            self.assertTrue([m for s, m in sonuc if s == "WARN" and "emekli template izin deseni kaldı" in m
+                             and "bash:*sahte-emekli*" in m], sonuc)
+
+    # --- K12: canlı config'teki ask/allow deseni template deny'ını uzunlukla ezebilir (yalnız WARN) -------------
+    EZME = "uzunlukla ezebilir"
+
+    def kural_ekle(self, arac: str, kurallar: dict) -> None:
+        f = self.xdg / "axet-code" / "axet-code.json"
+        cfg = json.loads(f.read_text(encoding="utf-8"))
+        cfg["permissions"]["rules"].setdefault(arac, {}).update(kurallar)
+        f.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    def ezme_satirlari(self, r) -> list[str]:
+        return [s for s in self.satirlar(r) if self.EZME in s]
+
+    def test_ezme_uzun_ask_deny_ezebilir_warn(self):
+        d = self.sap_proje()
+        kontrol = self.doctor(d)
+        self.assertEqual(self.ezme_satirlari(kontrol), [],
+                         f"kontrol: taze kurulumda ezme satırı olmamalı:\n{kontrol.stdout}")
+        kapsam = next((s for s in self.satirlar(kontrol) if s.startswith("KAPSAM")), "")
+        self.assertIn("uzunluk-önceliği yalnız global config'te aranır", kapsam, "kapsam beyanı eksik")
+        # ① gerçekten yaşandı: bu ask deseni '*git reset --hard*' deny'ını ezip komutu sorulmadan çalıştırmıştı
+        self.kural_ekle("bash", {"*Remove-Item*-Recurse*": "ask"})
+        r = self.doctor(d)
+        self.var(r, "WARN", self.EZME)
+        self.var(r, "WARN", "bash:*Remove-Item*-Recurse* (ask; sabit 19, toplam 22)")
+        self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
+        self.assertFalse([s for s in self.ezme_satirlari(r) if not s.startswith("[WARN]")], r.stdout)
+        # DARALT: jokersiz (yalnız kendi metnine uyan) desen TEK deny ile çakışır → o deny ADIYLA yazılır.
+        # `*X*` biçimli desenler zincirli komut yüzünden hemen her deny ile çakışır; ölçülmüş vaka da zincirliydi.
+        self.kural_ekle("bash", {"git reset --hard --quiet": "ask"})
+        r = self.doctor(d)
+        self.var(r, "WARN", "bash:git reset --hard --quiet (ask; sabit 24, toplam 24) → ezebileceği deny: "
+                            "*git reset --hard* (sabit 16, toplam 18) —")
+
+    def test_ezme_cakismayan_ya_da_kisa_desen_uretmez(self):
+        """Yanlış pozitif kontrol grubu: (a) uzun ama hiçbir deny ile çakışmayan desen, (b) çakışan ama kısa desen."""
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"git status --short --branch --untracked-files=all": "allow",  # jokersiz, uzun
+                                 "*Rm-It*": "ask"})                                             # çakışır ama kısa
+        r = self.doctor(d)
+        self.assertEqual(self.ezme_satirlari(r), [], f"yanlış pozitif:\n{r.stdout}")
+
+    def test_ezme_allow_sayilir_arac_alani_ayri(self):
+        d = self.sap_proje()
+        # 'edit' alanındaki uzun desen 'bash' deny'larıyla KARŞILAŞTIRILMAZ (alanlar ayrı)
+        self.kural_ekle("edit", {"*edit-cok-uzun-bir-desen-ornegi-burada*": "allow"})
+        r = self.doctor(d)
+        self.assertEqual(self.ezme_satirlari(r), [], f"alan sızması:\n{r.stdout}")
+        self.kural_ekle("bash", {"*bash-cok-uzun-bir-desen-ornegi-burada*": "allow"})
+        r = self.doctor(d)
+        self.var(r, "WARN", "bash:*bash-cok-uzun-bir-desen-ornegi-burada*")
+        self.assertIn("allow", next(s for s in self.ezme_satirlari(r) if "bash-cok-uzun" in s))
+
+    def test_ezme_esit_uzunluk_da_riskli(self):
+        """Ölçüldü: eşitlikte ask kazanır → 'kesin kısa' değilse risklidir."""
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"*git push -X*": "ask"})  # sabit 11 = '*git push -f*' (11), toplam 13 = 13
+        self.var(self.doctor(d), "WARN", "bash:*git push -X*")
+
+    def test_ezme_cok_bulgu_ozet_satirina_duser(self):
+        """Gürültü sınırı: en çok EZME_EN_COK_SATIR satır + 1 özet."""
+        d = self.sap_proje()
+        fazla = doctor.EZME_EN_COK_SATIR + 2
+        self.kural_ekle("bash", {f"*kullanici-deseni-{i:02d}-cok-uzun*": "ask" for i in range(fazla)})
+        r = self.doctor(d)
+        self.assertEqual(len(self.ezme_satirlari(r)), doctor.EZME_EN_COK_SATIR + 1, "\n".join(self.ezme_satirlari(r)))
+        self.var(r, "WARN", "… ve 2 izin deseni daha template deny'ını uzunlukla ezebilir")
 
     # --- negatif ---
     def test_gitignore_eksik(self):

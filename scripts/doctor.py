@@ -101,6 +101,21 @@ def check_global() -> tuple[dict, bool]:
     for satir in emekli["emekli_korunan"]:
         add("INFO", f"global config'te emekli template izin deseni kullanıcı kararıyla duruyor, install.py dokunmaz: {satir}"
                     " — bilinçliyse sorun yok")
+    ezme = ezebilen_izin_desenleri(cfg)
+    for b in ezme[:EZME_EN_COK_SATIR]:
+        gosterilen = b["denyler"][:EZME_EN_COK_DENY]
+        fazla = len(b["denyler"]) - len(gosterilen)
+        add("WARN", f"global config izin deseni template deny'ını uzunlukla ezebilir: {b['arac']}:{b['desen']} "
+                    f"({b['karar']}; sabit {_sabit(b['desen'])}, toplam {len(b['desen'])}) → ezebileceği deny: "
+                    + ", ".join(f"{d} (sabit {_sabit(d)}, toplam {len(d)})" for d in gosterilen)
+                    + (f" ve {fazla} deny daha" if fazla else "")
+                    + " — aynı komuta uyan iki desenden UZUN olan kazanır, eşitlikte ask (ölçüldü 2026-09-14, "
+                      "aXet.code 1.3.0; sabit mi toplam mı DOĞRULANMADI) ve ask etkileşimsiz `run` kipinde SORMADAN "
+                      "onaylar → deseni her deny'dan hem sabit hem toplam uzunlukta KESİN kısa yaz ya da bilinçliyse "
+                      "yok say")
+    if len(ezme) > EZME_EN_COK_SATIR:
+        add("WARN", f"… ve {len(ezme) - EZME_EN_COK_SATIR} izin deseni daha template deny'ını uzunlukla ezebilir "
+                    f"(yalnız ilk {EZME_EN_COK_SATIR} satır yazıldı)")
     return cfg, sap
 
 
@@ -109,6 +124,106 @@ def emekli_izin_desenleri(cfg: dict) -> dict:
     emekli desenler. Liste (`install.RETIRED_RULES`) ve karar karşılaştırması install.py'de tek kopya: `strip_ours`
     config'in KOPYASINDA koşulur (kopyalanan ölçüt yok)."""
     return inst.strip_ours(copy.deepcopy(cfg), inst.load_rules())
+
+
+# --- K12: canlı config'teki uzun `ask`/`allow` deseni template `deny`ını ezebilir ------------------------------------
+# Ölçüldü (2026-09-14, aXet.code 1.3.0, tek ölçüm serisi): aynı komuta bir ask ve bir deny deseni birlikte uyunca UZUN
+# desen kazanır, eşitlikte ask kazanır, kural sırası etkisizdir; ask etkileşimsiz `run` kipinde sormadan onaylar.
+# Uzunluğun `*` hariç sabit karakterle mi toplam uzunlukla mı ölçüldüğü DOĞRULANMADI → ikisi birden denetlenir
+# (tests/test_install.py `IzinDesenUzunlukTest` ile AYNI ölçüt). Fark: o test TEMPLATE dosyasına bakar, buradaki
+# kontrol KULLANICININ CANLI config'ini okur — kullanıcının kendi yazdığı uzun ask/allow deseni başka hiçbir yerde
+# görünmüyordu. Vaka: `*Remove-Item*-Recurse*` (ask) `*git reset --hard*` (deny) ile aynı zincirli komuta uydu,
+# uzun olduğu için kazandı ve komut sorulmadan çalıştı. Karar (kullanıcı 2026-09-15): "Ekle, yalnız WARN" —
+# rapor eder, engellemez (ADR 0019 gate moratoryumu).
+EZME_EN_COK_SATIR = 10   # bundan fazlası tek özet satırına düşer (gürültü sınırı)
+EZME_EN_COK_DENY = 3     # bir desenin ezebileceği deny'lardan satıra yazılan sayı
+_KESISIM_DURUM_SINIRI = 20000  # çarpım otomatı bu kadar durumda bitmezse "çakışıyor" sayılır (sessiz kalmaktansa uyar)
+
+
+def _sabit(desen: str) -> int:
+    """Desenin `*` hariç karakter sayısı (ölçütlerden biri; hangisinin gerçek olduğu DOĞRULANMADI)."""
+    return len(desen.replace("*", ""))
+
+
+def _glob_kapanis(desen: str, konumlar) -> frozenset:
+    """Glob NFA'sının epsilon-kapanışı. Durum = desendeki karakter indeksi; `*` boş dizgiye de uyabildiği için
+    `i` durumundan `i+1`'e karakter tüketmeden geçilir. `len(desen)` = kabul durumu."""
+    S = set(konumlar)
+    yigin = list(S)
+    while yigin:
+        i = yigin.pop()
+        if i < len(desen) and desen[i] == "*" and (i + 1) not in S:
+            S.add(i + 1)
+            yigin.append(i + 1)
+    return frozenset(S)
+
+
+def _glob_gecis(desen: str, S: frozenset, c: str) -> frozenset:
+    yeni = set()
+    for i in S:
+        if i >= len(desen):
+            continue
+        if desen[i] == "*":
+            yeni.add(i)          # `*` bu karakteri yutar, durum ilerlemez
+        elif desen[i] == c:
+            yeni.add(i + 1)
+    return _glob_kapanis(desen, yeni)
+
+
+def glob_kesisir(a: str, b: str) -> bool:
+    """İki izin deseni AYNI komut metnine uyabilir mi (kesişimleri boş değil mi)?
+
+    İki glob NFA'sının çarpım otomatı gezilir; her ikisi de kabul durumundaysa ortak bir metin vardır. Alfabe
+    sonlu tutulur: iki desende geçen sabit karakterler + ikisinde de geçmeyen TÜM karakterleri temsil eden tek
+    nöbetçi (`\\x00`) — o karakterleri yalnız `*` yutabildiği için iki desen de onları ayırt edemez.
+
+    Sınır: joker olarak YALNIZ `*` tanınır; `?` ve `[...]` düz harf sayılır (aXet izin desenlerinde kullanılmıyor).
+    aXet'in gerçek eşleştiricisi ÇALIŞTIRILMAZ; bu, desen metinleri üzerinde yapılan bir üst-sınır hesabıdır.
+    """
+    alfabe = ((set(a) | set(b)) - {"*"}) | {"\x00"}
+    basla = (_glob_kapanis(a, {0}), _glob_kapanis(b, {0}))
+    gorulen, kuyruk = {basla}, [basla]
+    while kuyruk:
+        Sa, Sb = kuyruk.pop()
+        if len(a) in Sa and len(b) in Sb:
+            return True
+        if len(gorulen) > _KESISIM_DURUM_SINIRI:
+            return True  # ölçülemedi → sessiz kalma, uyar
+        for c in alfabe:
+            yeni = (_glob_gecis(a, Sa, c), _glob_gecis(b, Sb, c))
+            if yeni[0] and yeni[1] and yeni not in gorulen:
+                gorulen.add(yeni)
+                kuyruk.append(yeni)
+    return False
+
+
+def _kesin_kisa(izin: str, deny: str) -> bool:
+    """`izin` deseni `deny`dan HEM sabit HEM toplam uzunlukta kesin kısa mı (yani deny'ı ezemez)?"""
+    return _sabit(izin) < _sabit(deny) and len(izin) < len(deny)
+
+
+def ezebilen_izin_desenleri(cfg: dict, template_kurallari: dict | None = None) -> list[dict]:
+    """Canlı config'teki `ask`/`allow` desenlerinden, AYNI araç alanındaki bir template `deny` desenini uzunlukla
+    ezebilecek olanlar: `[{"arac", "desen", "karar", "denyler"}]`.
+
+    Riskli sayılma koşulu: desen o deny ile çakışıyor (aynı komut metnine ikisi de uyabiliyor) VE deny'dan kesin
+    kısa değil. Karşılaştırma yalnız TEMPLATE deny desenlerine karşı yapılır; kullanıcının kendi deny kuralları
+    ölçüye girmez (bu kontrol template'in koruma katmanının delinip delinmediğini ölçer)."""
+    kurallar = inst.load_rules() if template_kurallari is None else template_kurallari
+    bulgular: list[dict] = []
+    for arac, desenler in sorted(_kurallar(cfg).items()):
+        if not isinstance(desenler, dict):
+            continue
+        denyler = [p for p, v in (kurallar.get(arac) or {}).items() if v == "deny" and isinstance(p, str)]
+        for desen, karar in desenler.items():
+            if karar not in ("ask", "allow") or not isinstance(desen, str):
+                continue
+            ezilen = [d for d in denyler if not _kesin_kisa(desen, d) and glob_kesisir(desen, d)]
+            if ezilen:
+                # en KISA deny önce: düzeltmede bağlayıcı kısıt odur (desen hepsinden kısa olmalı)
+                bulgular.append({"arac": arac, "desen": desen, "karar": karar,
+                                 "denyler": sorted(ezilen, key=lambda d: (_sabit(d), len(d), d))})
+    return bulgular
 
 
 def frontmatter_problems(text: str) -> list[str]:
@@ -1091,7 +1206,12 @@ def main() -> int:
               "ya da geçerli değer taşımayan `- SAP…` maddeleri (serbest metin) atlanır; aktif paket, transport ve `- SAP` ile başlamayan satırlardaki SAP ifadeleri bakılmaz · "
               "bağlam boyutu yalnız dosya baytıdır (token sayısı ölçülmez, bayttan çıkarılır; TUI bağlamı ve aXet'in sabit "
               "sistem prompt'u ölçülmez) · "
-              "emekli izin deseni yalnız global config'te aranır (proje .axet-code.json'da aranmaz)"
+              "emekli izin deseni yalnız global config'te aranır (proje .axet-code.json'da aranmaz) · "
+              "izin deseni uzunluk-önceliği yalnız global config'te aranır (proje .axet-code.json ve "
+              "AXET_* ortam ayarları ÖLÇÜLMEDİ) ve yalnız TEMPLATE deny desenlerine karşı ölçülür (kullanıcının "
+              "kendi deny kuralları karşılaştırmaya girmez); çakışma desen METİNLERİNDEN hesaplanır (joker yalnız "
+              "`*`; aXet'in gerçek eşleştiricisi çalıştırılmaz, komut fiilen denenmez) ve uzunluk ölçütünün sabit "
+              "karakter mi toplam uzunluk mu olduğu DOĞRULANMADI → ikisi birden riskli sayılır"
               + ("" if args.live else " · bağlamın fiilen yüklendiği (--live ile ölçülür)"))
     fails = sum(1 for s, _ in results if s == "FAIL")
     print(f"SONUÇ: {fails} FAIL · {sum(1 for s, _ in results if s == 'WARN')} WARN")
