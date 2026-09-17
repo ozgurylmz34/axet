@@ -144,6 +144,7 @@ Gösterim: T = taban içeriği, L = yerel, Y = yeni. "yok" = o sürümde dosya y
 
 **Değiştiriciler (yukarıdaki koda eklenir):**
 - **+R yeniden adlandırma:** `git diff -M --name-status <taban> <yeni>` R satırı. L = T eski yolda → yeni yola taşı (V1R). L ≠ T → yerel değişiklik yeni yola birleştirilir (V4R, onaylı). Yeni yolda zaten L varsa → V7.
+  <br>⚠ **R100 (içerik AYNI, yalnız yol değişti) — ÖLÇÜLDÜ 2026-09-17 (P2 fixture'ı yakaladı, motorda kusurdu):** bu vakada taban/yerel/yeni blob'ları **birbirinin aynısıdır**, dolayısıyla yukarıdaki §4 tablosu düz uygulanırsa **V0 "değişiklik yok"** çıkar ve dosya **plandan sessizce düşer** — oysa taşınması gerekir. ⇒ **+R, içerik karşılaştırmasından ÖNCE ve ondan BAĞIMSIZ değerlendirilir: yol değişimi başlı başına bir eylemdir.** İkinci tuzak (aynı ölçümde çıktı): yeniden adlandırmanın **hedef yolu** ayrıca "taban yok + Y var" görünümü verdiği için **V2 olarak ikinci kez** listelenebilir → aynı dosya iki kez uygulanır, `kapanis` iki kez doğrular. Hedef yol, R kaleminin parçasıysa V2 dalına DÜŞMEMELİ.
 - **+B ikili dosya** (`.gitattributes` binary satırları: png/jpg/pdf/zip/exe/xlsx/docx — `.gitattributes:14-23`; ya da git "Binary files differ"): V4 birleştirilemez → **V4B**: kullanıcı yerel ya da yeniyi seçer. V1/V2/V5/V6 değişmez.
 - **VTB taban bilinmiyor:** proje dosyasında geri düşüş eşleşmesi yok (§2b) ya da klonda taban commit'i yok (sığ klon/force push izi). Otomatik işlem yok: L ≠ Y ise fark gösterilir, kullanıcı "yeniyi al / yereli koru / elle birleştir" seçer; L = Y ise V2e.
 - **K kritik:** kalem `kritik: true` ise tüm dosyaları seçili gelir (Q3); kod değişmez.
@@ -413,7 +414,7 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | Paket | İçerik | Bağımlı | Yayından önce? | Kabul ölçütü |
 |---|---|---|---|---|
 | **P1** | `guncelle/harita.json` + sınıflandırıcı + `test_guncelle_harita` | — | evet | 412/412 tek sınıf; mutasyon: yeni sınıfsız dosya → FAIL |
-| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, oneri, isaretle, butunluk, geri-al, kapanis, durum) + fixture üreteci + §12a testleri + doctor `template_denetle` gürültü düzeltmesi | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
+| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, **kart**, oneri, isaretle, **ozel-adim**, butunluk, geri-al, kapanis, durum — **14 komut; §6 sözleşme tablosuyla birebir**) + fixture üreteci + §12a testleri + doctor `template_denetle` gürültü düzeltmesi | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
 | **P3** | vaka kartları + sınıf kartları + `GUNCELLE.md` (akış tablosu haritadan üretilen özetle) | P2 (kodlar, komutlar) | evet | her plan vaka kodunun kartı var (test); kart dili incelemesi (doküman checklist'i) |
 | **P4** | `%guncelle` başlatıcı skill + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | motor sürüm testi; `doctor.py` testleri; §11 metni bug gate (doküman) |
 | **P5** | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet (kayıt ilk projelerden başlamalı) | proje senaryoları (_doldur, damga, geri düşüş, VTB) |
@@ -421,6 +422,8 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | **P7** | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` üretimi + `session_brief` günlük/kritik satırı | P1 (sınıf/test eşlemesi), P2 (uygulanan.json okuma) | evet (ilk yayın `--ilk` ile; biçim baştan) | ikinci yayın simülasyonu: tüketici klonu ff-only ve `%guncelle` ile güncellenir; eşlemesiz dosya → FAIL |
 | **P8** | onaylanan B1–B4 | P2 + kullanıcı onayı | hayır (onaylanırsa) | her kontrol fail-first + WARN çıktısı |
 | **P9** | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası, KARAR 7) | §12b ölçütleri; sonuçlar kart/§11 revizyonuna döner |
+
+> ⚠ **DÜZELTME (2026-09-17):** Bu hücre önce 12 alt komut sayıyordu, §6 sözleşme tablosunda ise 14 satır var (`kart` ve `ozel-adim` listede yoktu). İkisi de P2'ye dahildir: `kapanis`'in çıkış sözleşmesi özel adımların koşup koşmadığına BAĞLI, `kart` da P3'ün tek girişidir. Bulgu P2 ajanından geldi, lider doğruladı.
 
 **Paralel:** P1 ∥ P6 başlar; P1 bitince P2; P2 bitince P3 ∥ P5 ∥ P7; P3 bitince P4. P8 onaylar geldikçe. P9 en son.
 **Bug gate:** P2, P4, P5, P6, P7 kod gate'i (bug-checklist); P3 ve §11 metni doküman gate'i (doc-checklist).
@@ -460,3 +463,6 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 - `new_package.py` ve `yeni_proje.py`'nin projeye yazdığı ek dosyalar (rapor detaylı okumadı) — P5 başında ölçülecek.
 - İkinci yayın senaryosunun uçtan uca çalışması (rapor kod okumasıyla kanıtladı, canlı denenmedi) — P7 kabul testi.
 - Linux/macOS; PYTHONUTF8'siz ortamda Türkçe çıktı.
+
+**ÖLÇÜLDÜ (DOĞRULANMADI listesinden düşenler):**
+- **2026-09-17 (P2 fixture'ı, gerçek git ile):** git birleşmesi **BİTİŞİK satır** değişikliklerini de çakışma sayıyor (satır 4 bizden + satır 5 kullanıcıdan → **V4c**, V4t değil). Bu bir motor kusuru DEĞİL, kartların kalibrasyonudur: **"temiz birleşme (V4t)" beklentisi olduğundan iyimserdi** — vaka kartları ve kullanıcıya verilen beklenti buna göre yazılmalı (P3'ün işi). Fixture bu davranışa göre genişletildi.
