@@ -540,6 +540,23 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 
 Paralel: P1 ∥ P6 → P2 → P3 ∥ P5 ∥ P7 → P4. Kod gate'i: P2, P4, P5, P6, P7 · doküman gate'i: P3 ve §11 metni.
 
+> 🟠 **LİDER KARARI — GATE TİPİ: "taze gate" mi, "aynı gate'in doğrulaması" mı (2026-09-18, otonom).**
+> *Kullanıcı yetkilendirdi ("sen karar al"); kuralı GEVŞETMİYOR, hangi durumda hangisinin geçerli
+> olduğunu ölçütlere bağlıyor.* Kullanıcının asıl şikâyeti şuydu: **düzelten kendi ödevini kendi
+> okuyor.* Koruması gereken değişmez de bu: **DOĞRULAYAN ≠ DÜZELTEN.** İki ayrı durum var:
+>
+> | Durum | Gate tipi | Gerekçe |
+> |---|---|---|
+> | **Hiç gate görmemiş build** (P4, P5) | 🔴 **TAZE gate** — sıfır bağlam, yeni ajan | Kodu ilk kez bağımsız bir göz okumalı; mutasyonu **gate seçer**, yazarın listesine bakmaz. |
+> | **Düzeltme turu** — bir gate'in KENDİ bulgularını kapatıyor (P2-fix, P3-fix) | 🟡 **Bulguyu bulan AYNI gate ajanı devam ettirilir** (`SendMessage`) ve düzeltmeyi kendi ölçümüyle doğrular | Bağımsızlık korunuyor: **doğrulayan yine düzelten değil.** Gate zaten fixture'larını kurmuş; sıfırdan taze gate her turda tüm paketi yeniden türetir ⇒ tur başına bir tam döngü kaybı. |
+> | **Düzeltme turunda KAPSAM BÜYÜDÜYSE** (bulgu dışı yeni kod/yeni komut geldi) | 🔴 **TAZE gate** | Eski gate o yüzeyi hiç görmedi; devam ettirmek "ölçülmemişi ölçülmüş saymak" olur. |
+>
+> ⛔ **Üç durumda da değişmeyenler:** ① mutasyonu **gate seçer**, yazan değil ② `rc=2` asla "geçti"
+> sayılmaz ③ **KAPSAM BEYANI** zorunlu ④ merge yalnız gate PASS/WARNING döndükten SONRA.
+> ⚠ Bu satır, P2'nin **93 yeşil testi + yazarın "10/10 mutasyon kırmızı" raporuna** rağmen taze
+> gate'in **4 mutasyondan 3'ünü sağ bulmasıyla** doğdu — "yeşil" ve "yazarın mutasyon raporu"
+> ikisi de kanıt değildir.
+
 > ⭐ **KULLANICI KARARLARI — 2026-09-18, OTONOM DEVİR.** Kullanıcı ekrandan kalkarken üç soru soruldu
 > ve üçü de cevaplandı; *"otonom devam et, sen karar al, bu maddelerin yarına bitmiş olması gerek"*.
 >
