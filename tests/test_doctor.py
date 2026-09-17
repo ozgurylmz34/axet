@@ -146,15 +146,45 @@ class DoctorTest(GeciciTest):
         self.assertEqual(self.ezme_satirlari(r), [], f"yanlış pozitif:\n{r.stdout}")
 
     def test_ezme_allow_sayilir_arac_alani_ayri(self):
+        """Alan ayrımı ('edit' deseni 'bash' deny'larıyla karşılaştırılMAZ) + 'allow' da 'ask' gibi sayılır.
+
+        ⚠ Alan ayrımı CLI üzerinden ölçülemez: `edit` deny desenlerinin TAMAMI `install.clone_rules()`
+        tarafından AXET_HOME'un DİSK YOLUNDAN türetilir (ölçüldü: bu ağaçta en kısa `edit` deny 103 kr;
+        `C:/ax/axet` kurulumunda 17 kr). Kısa yolda uzun bir `edit` deseni KENDİ alanında meşru bir WARN
+        üretir; "hiç ezme satırı olmamalı" beklentisi böylece kurulum yolunun UZUNLUĞUNA bağlı kırmızıya
+        döner (CI `runs-on: windows-latest`, çalışma dizini `D:/a/axet/axet` → deterministik kırmızı).
+        Bu yüzden alan ayrımı SABİT template fixture'ıyla birim seviyesinde ölçülür.
+        """
+        uzun = "*edit-cok-uzun-bir-desen-ornegi-burada*"
+        sabit_template = {"bash": {"*bash-cok-uzun-bir-deny-deseni-buraya*": "deny"},
+                          "edit": {"*/core/*": "deny"}}
+        bulgular = doctor.ezebilen_izin_desenleri(
+            {"permissions": {"rules": {"edit": {uzun: "allow"}}}}, template_kurallari=sabit_template)
+        self.assertEqual([b["arac"] for b in bulgular], ["edit"], bulgular)
+        # asıl iddia: desen YALNIZ kendi alanının deny'larıyla kıyaslandı — bash deny'ı sızmadı
+        self.assertEqual(bulgular[0]["denyler"], ["*/core/*"], bulgular)
+        # ... ve 'allow' kararı da 'ask' gibi riskli sayılıyor
+        self.assertEqual(bulgular[0]["karar"], "allow", bulgular)
+        # CLI ucu: 'bash' deny'ları yola bağlı DEĞİL (sabit template metni) → orada uçtan uca ölçülebilir
         d = self.sap_proje()
-        # 'edit' alanındaki uzun desen 'bash' deny'larıyla KARŞILAŞTIRILMAZ (alanlar ayrı)
-        self.kural_ekle("edit", {"*edit-cok-uzun-bir-desen-ornegi-burada*": "allow"})
-        r = self.doctor(d)
-        self.assertEqual(self.ezme_satirlari(r), [], f"alan sızması:\n{r.stdout}")
         self.kural_ekle("bash", {"*bash-cok-uzun-bir-desen-ornegi-burada*": "allow"})
         r = self.doctor(d)
         self.var(r, "WARN", "bash:*bash-cok-uzun-bir-desen-ornegi-burada*")
         self.assertIn("allow", next(s for s in self.ezme_satirlari(r) if "bash-cok-uzun" in s))
+
+    def test_ezme_sabit_kisa_ama_toplam_uzun_desen_riskli(self):
+        """`_kesin_kisa` HEM sabit HEM toplam uzunluk ister (`and`) — mutasyon koruması.
+
+        Ayırt edici vaka: `*g*i*t* *p*u*s*h*` SABİT uzunlukta (8) `*git push -f*`dan (11) kısa ama
+        TOPLAMDA uzun (17 > 13). `and` → "kesin kısa" DEĞİL → WARN. `or` mutantı sessiz kalır.
+        Bu WARN, "eşleştirmede sabit mi toplam mı belirleyici" sorusu DOĞRULANMADI kaldığı için alınan
+        tek savunmadır; regresyon koruması olmadan sessizce gevşeyebilir (ölçüldü: bu test yokken
+        `and`→`or` mutasyonu 66 testin TAMAMINDAN kaçtı).
+        """
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"*g*i*t* *p*u*s*h*": "ask"})
+        self.var(self.doctor(d), "WARN", "bash:*g*i*t* *p*u*s*h* (ask; sabit 8, toplam 17)")
+
 
     def test_ezme_esit_uzunluk_da_riskli(self):
         """Ölçüldü: eşitlikte ask kazanır → 'kesin kısa' değilse risklidir."""
