@@ -37,6 +37,10 @@ def ask_deny_uzunluk_ihlalleri(kurallar: dict) -> list[str]:
     """Her araç için her IZIN-VERICI desen (ask/allow) her deny deseninden sabit karakterde VE toplam uzunlukta
     KESİN kısa olmalı.
 
+    ⚠ KAPSAM — bu denetim EŞLEŞMEYE BAKMAZ: iki desenin aynı komut metnine uyup uymadığını hiç ölçmez, yalnız
+    uzunlukları karşılaştırır (en kötü durumu varsayar: "uyarlarsa"). Eşleşme kapsamını `OlculmusDenyKapsamiTest`
+    fnmatchcase ile simüle eder, canlı motor kapsamını da yalnız o tablo taşır.
+
     Gerekçe — iki ayrı ölçüm (aXet.code 1.3.0):
     · ask↔deny (2026-09-14, tek seri): aynı komuta bir ask ve bir deny uyunca uzun desen kazanır; run modunda ask
       sormadan onaylar. Ask deny'dan kısa değilse zincirli komutta ('echo x; git reset --hard; ... Remove-Item ...')
@@ -83,7 +87,7 @@ class IzinDesenUzunlukTest(unittest.TestCase):
         self.assertEqual(len(ihlal), 1, ihlal)
         self.assertIn("'*Remove-Item*-Recurse*'", ihlal[0])
         self.assertIn("'*git push -f*'", ihlal[0])
-        # eşitlik de ihlaldir (eşitlikte ask kazanır): sabit 11=11, toplam 13=13
+        # eşitlik de ihlaldir (eşitlikte kazanan ÖNGÖRÜLEMEZ, o yüzden eşitliğe hiç girilmez): 11=11, 13=13
         self.assertEqual(len(ask_deny_uzunluk_ihlalleri({"bash": {"*git push -f*": "deny", "*Remove-Item*": "ask"}})), 1)
         # yalnız bir ölçüt eşit/uzunsa da ihlal: sabit 6<11 ama toplam 13=13 · toplam 12<13 ama sabit 11=11
         self.assertEqual(len(ask_deny_uzunluk_ihlalleri({"bash": {"*git push -f*": "deny", "*R*e*m*o*v*e*": "ask"}})), 1)
@@ -331,8 +335,10 @@ class InstallTest(GeciciTest):
 # kontrol grubunu kapsayacak kadar genişlerse FAIL vermek.
 #
 # Ölçülen semantik: desen komut metninin TAMAMINA glob olarak uyar (yalnız '*'), eşleşme büyük/küçük harfe
-# DUYARLIDIR. fnmatchcase bu semantiği taklit eder. Önceliği (uzun desen kazanır, eşitlikte ask) ayrıca
-# IzinDesenUzunlukTest kilitler: her ask her deny'dan KESİN kısa olduğu için eşleşen bir deny daima kazanır.
+# DUYARLIDIR. fnmatchcase bu semantiği taklit eder. Önceliği (uzun desen kazanır; EŞİTLİKTE KAZANAN
+# ÖNGÖRÜLEMEZ — bkz. ask_deny_uzunluk_ihlalleri docstring'i, "eşitlikte ask kazanır" iddiası 2026-09-17
+# allow↔deny ölçümüyle çürütüldü) ayrıca IzinDesenUzunlukTest kilitler: her izin-verici desen her deny'dan
+# KESİN kısa olduğu için eşleşen bir deny daima kazanır — eşitlik hiç oluşmaz, belirsizliğe girilmez.
 
 CANLI_OLCULEN_ESLESME = [
     # (komut metni, eşleşen desen, dosyadaki karar)

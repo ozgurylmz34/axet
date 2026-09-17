@@ -226,6 +226,10 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   uzunlukta desen yazma.** Şablonda `allow` deseni yoktur; uzunluk testi bugün yalnız ask↔deny çiftlerini denetler.
 - **Kısa ask desenleri geniş sorar:** `*deploy_ui*` deploy dışı çağrılarda da onay ister (`deploy_ui.py --help`, `prepare`,
   `verify`); `*Remove-It*` özyinelemesiz `Remove-Item` ve `Remove-ItemProperty`'yi de kapsar.
+- **`rm` ailesinde karar asimetrisi (bilinçli, ölçüme dayalı):** `*rm --recursive*` **deny**'dir ama `*rm -rf *` ve
+  `*rm -r *` **ask**'tır (yani `run` kipinde sormadan onaylanır). Uzun biçim yeni ve dar olduğu için deny yazıldı;
+  kısa biçimler eski, geniş eşleşmeli ve uzunluk-ezme yüzeyini büyüttükleri için ask kaldı. *"Özyinelemeli silme
+  deny'dir"* diye genelleme YAPMA.
 - **İzin deseni komut metninin tamamına glob olarak uyar:** baştaki `*` yoksa desen metnin başına bağlıdır ve
   `echo x; rm -rf …` ya da `cmd /c "rd /s …"` gibi zincirli/sarmalanmış komutları kaçırır (ölçüldü). Silme ve git
   desenleri bu yüzden `*` ile başlar: başa bağlı hâlleri `cd … && git reset --hard`, `echo x; git clean -fd` ve
@@ -234,9 +238,22 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   ölçülmedi. Yeni desenlerden `echo x; git clean -xdf …` reddedildi ve `cmd /c "rd /q /s …"` eşleşti (ölçüldü).
   **2026-09-17'de canlı ölçüldü** (aXet.code 1.3.0, lab projesi; kanıt motor tarafından: `BgJob started` log satırı +
   işaret dosyası — model beyanı kanıt sayılmadı): `git clean -df`/`-fdx`/`-d -f`/`--force`, `git -C x push --force`,
-  `rm -fr`, `rm -R`, `del /q /s`, `rmdir /s`, `rd /s ` desenlerinin **hepsi eşleşti ve reddetti**; kontrol grubu
+  `rm -fr`, `rm -R`, `del /q /s`, `rmdir /s`, `rd /s ` desenlerinin **hepsi eşleşti**; kontrol grubu
   (`git clean --dry-run`, `git push origin main`, `git status --short`, `rm -i`, `rmdir empty`) yanlış pozitif vermedi.
+  ⚠ **"Eşleşti" ≠ "reddetti":** son beş desenin (`rm -fr`, `rm -R`, `del /q /s`, `rmdir /s`, `rd /s `) dosyadaki
+  gerçek kararı **`ask`**'tir; eşleşmeyi ölçebilmek için lab config'inde GEÇİCİ olarak `deny` yapıldılar. Ölçülen şey
+  *"desen bu komut metnine uyuyor"*dur, *"`ask` ne yapar"* DEĞİL — o ayrı ve zaten ölçülü: **`axet-code run` kipinde
+  `ask` SORMADAN onaylar** (yukarı bkz.). Yani bu beş komut bugün **bloklanmıyor**.
   `bash -c` ve değişkenle kurulan komut ölçülmedi; desenler güvenlik sınırı değildir.
+- **BİLİNEN SINIR — `git -C <yol> …` biçimi (ve genel olarak `git` ile alt-komut arasına giren her global seçenek: `-C`, `--git-dir=`, `-c ayar=değer`) `*git <altkomut>…*` kalıbındaki desenleri ATLAR.** Ölçüldü 2026-09-17
+  (simülasyon, `fnmatch.fnmatchcase`; desenlerin ve testlerin dayandığı semantik — canlı `axet-code run` ile
+  DOĞRULANMADI): `git -C /t/r branch -D f`, `git -C /t/r checkout -- .`, `git -C /t/r stash drop`,
+  `git -C /t/r push origin +main`, `git -C /t/r reset --hard`, `git -C /t/r clean -xdf` → **hiçbir kurala uymuyor**;
+  kontrol `git branch -D f` → deny. Bugün bu biçimde kapalı olan **tek** aile `push`'tur
+  (`*git -C * push -f*` ve `*git *push*--force*` bilinçli olarak bu biçimi taşır).
+  ⚠ Bu, aXet'in kendi belgesinin önerdiği biçimdir (`kur.ps1` çıktısı `git -C "$hedef" branch -D …` önerir) ⇒
+  sınır teorik değil, **günlük kullanımdaki biçim**. Kapatılmadı çünkü desen eklemek "önce ölç, sonra dar ekle"
+  kararına tabidir (kullanıcı kararı); burada **belgelendi** — eksik varyant listesi sahte koruma üretir.
 - **BİLİNEN SINIR — eşleşme büyük/küçük harfe DUYARLIDIR; büyük harfli biçim deny listesini atlar.**
   Ölçüldü 2026-09-17 (motor kanıtı: log + dosya): `echo "RD /S x"` **ÇALIŞTI**, kontrol `echo "rd /s x"` **REDDEDİLDİ**;
   `echo "RM -RF /tmp/x"` de çalıştı. Desenler komutu/bayrağı tek bir yazımla (kanonik biçimiyle; `-R`/`-D`/`-xdf` gibi
@@ -249,7 +266,10 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   `*rm --recursive*`, `*git stash drop*`, `*gh repo delete*`, `*git branch -D*`, `*git checkout -- .*`. Sekizi de eklendikten
   sonra canlı ölçüldü: hepsi reddedildi; kontrol grubu (`git -C x push`, `git reset --soft HEAD~1`, `rm --interactive`,
   `git stash list`, `gh repo view`, `git branch -d`, `git checkout -- src/foo.py`) çalıştı. `*git checkout -- .*` **dar**
-  seçildi: yalnız tüm ağacı geri alan nokta-biçimini tutar, **tek dosya geri alma çalışmaya devam eder**; bilinen yanlış
+  seçildi: yalnız `--` ayıraçlı nokta-biçimini tutar, **tek dosya geri alma çalışmaya devam eder**;
+  ⚠ ayıraçsız kardeşleri **kapsam dışıdır**: `git checkout .`, `git checkout -f .`, `git restore .`,
+  `git restore --staged .` hiçbir kurala uymuyor (ölçüldü 2026-09-17, simülasyon) — oysa `git checkout .` de
+  tam olarak "tüm ağacı geri alan nokta biçimi"dir. Kapatılmadı, **belgelendi**; bilinen yanlış
   pozitifi `git checkout -- .gitignore` ve `git checkout -- ./yol`. Seçim ölçütü "daha geri alınamaz olan"dı: commit'siz iş
   için reflog YOKTUR ⇒ `checkout -- .` bu setin en geri alınamazıdır, `branch -D`/`stash drop` reflog/fsck ile kurtarılabilir.
 - **Yanlış pozitif: desen metni komutun herhangi bir yerinde geçerse eşleşir.** Ölçülen: `echo "rm -rf notu"`,
