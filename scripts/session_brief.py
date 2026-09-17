@@ -174,11 +174,25 @@ def guncelleme_kalemleri() -> list[dict] | None:
 
 def template_bolumu(fetch: bool) -> list[str]:
     """TEMPLATE bölümü. Kalem satırı ölçülebiliyorsa commit sayısı satırının YERİNE geçer (Q4);
-    ölçülemiyorsa (henüz hiç yayın yok, yayinlar.json okunamadı) bugünkü satır AYNEN kalır."""
+    ölçülemiyorsa ya da HİÇ kalem tanımlı değilse bugünkü satır AYNEN kalır.
+
+    Üç durum bilinçli olarak AYRIDIR:
+      None  ÖLÇÜLEMEDİ (yayinlar.json yok / bozuk / git okuyamadı) → bugünkü satır aynen.
+      []    ölçüldü ama HİÇ yayın kalemi tanımlı değil → bugünkü satır aynen (aşağıdaki nota bak).
+      [...] kalemler var → kalem satırı commit sayısı satırının YERİNE geçer (Q4).
+    """
     not_ = _gunluk_fetch(fetch)
     satirlar = template_durumu(False)          # fetch'i yukarıda GÜNLÜK eşikle biz yaptık
     kalemler = guncelleme_kalemleri()
     if kalemler is None:
+        return satirlar
+    if not kalemler:
+        # ÖLÇÜLDÜ ama hiç yayın kalemi YOK (`"yayinlar": []` — ilk gerçek yayına kadarki hâl).
+        # Bu, "kalemler var, hepsi uygulanmış" ile AYNI ŞEY DEĞİLDİR: commit sayısı satırının
+        # yerine geçecek bir bilgi yoktur, o yüzden o satır KORUNUR.
+        # REGRESYON 2026-09-18 (ölçüldü): bu dal ayrılmadığında klon 5 commit geride olduğu hâlde
+        # "template güncel" deniyordu — tek satırlık çıktı sessizce yanlıştı.
+        # Kilit: tests/…::test_kalem_tanimli_degilse_commit_geride_satiri_korunur
         return satirlar
     bekleyen = [k for k in kalemler if k["durum"] is None]
     yeni = ([f"template: {len(bekleyen)} güncelleme kalemi bekliyor{not_} -> `%guncelle`"] if bekleyen

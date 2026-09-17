@@ -401,6 +401,32 @@ class SessionBriefGuncellemeTest(GeciciTest):
         self.yaz(self.klon / ".axet-guncelleme" / "uygulanan.json",
                  json.dumps({"surum": 1, "dosyalar": {}, "kalemler": kalemler}, ensure_ascii=False))
 
+    def klon_geride(self, veri: dict | None, n: int = 5) -> None:
+        """HEAD'i `origin/main`'den n commit geride bırakır ve upstream'i TANIMLAR.
+
+        Bu kurulum olmadan `template_durumu` "upstream tanımlı değil — ÖLÇÜLEMEDİ" döner ve
+        "N commit geride" satırı hiç ÜRETİLMEZ; o satırın korunup korunmadığını sınayan bir test
+        de boş geçerdi (vakum-assertion). `veri` verilirse `guncelle/yayinlar.json` YALNIZ
+        origin/main tarafında bulunur — tüketicinin gerçek hâli budur.
+        """
+        taban = self.git(self.klon, "rev-parse", "HEAD").stdout.strip()
+        if veri is not None:
+            self.yaz(self.klon / "guncelle" / "yayinlar.json",
+                     json.dumps(veri, ensure_ascii=False, indent=1) + "\n")
+            self.git(self.klon, "add", "-A")
+            self.git(self.klon, "commit", "-q", "--no-verify", "-m", "yayinlar")
+            n -= 1
+        for i in range(n):
+            self.yaz(self.klon / f"f{i}.txt", "x\n")
+            self.git(self.klon, "add", "-A")
+            self.git(self.klon, "commit", "-q", "--no-verify", "-m", f"c{i}")
+        self.git(self.klon, "update-ref", "refs/remotes/origin/main", "HEAD")
+        self.git(self.klon, "remote", "add", "origin", str(self.tmp / "sahte-uzak"))
+        self.git(self.klon, "config", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
+        self.git(self.klon, "config", "branch.main.remote", "origin")
+        self.git(self.klon, "config", "branch.main.merge", "refs/heads/main")
+        self.git(self.klon, "checkout", "-q", "-B", "main", taban)
+
     def bolum(self) -> list[str]:
         with mock.patch.object(self.sb, "AXET_HOME", self.klon), \
              mock.patch.object(self.sb, "GUNCELLEME_CACHE", self.tmp / "onbellek"):
@@ -413,6 +439,40 @@ class SessionBriefGuncellemeTest(GeciciTest):
                         f"template satırı hiç üretilmedi: {satirlar}")
         self.assertFalse(any("güncelleme kalemi" in s for s in satirlar),
                          f"yayinlar.json yokken kalem satırı üretildi: {satirlar}")
+
+    # --- "N commit geride" satırının YAŞAM DÖNGÜSÜ (regresyon 2026-09-18) ------------------------
+    def test_kalem_tanimli_degilse_commit_geride_satiri_korunur(self):
+        """ÖLÇÜLMÜŞ REGRESYON: `yayinlar.json` VAR ama kalem listesi BOŞ iken klonun geride
+        olduğu SAKLANIYORDU ("template güncel" deniyordu).
+
+        "hiç yayın kalemi tanımlı değil" ile "kalemler var, hepsi uygulanmış" AYNI ŞEY DEĞİLDİR:
+        ilkinde commit sayısı satırının yerine geçecek bir bilgi YOKTUR, o yüzden korunur.
+        Bu dal ilk gerçek yayına kadarki TÜM sürede canlıdır (bugünkü `yayinlar.json` boş)."""
+        self.klon_geride(yayinlar())
+        satirlar = self.bolum()
+        self.assertTrue(any("5 commit geride" in s for s in satirlar),
+                        f"klon 5 commit geride ama satır kayboldu: {satirlar}")
+        self.assertFalse(any("bekleyen güncelleme kalemi yok" in s for s in satirlar),
+                         f"hiç kalem tanımlı değilken 'güncel' denildi: {satirlar}")
+
+    def test_bekleyen_kalem_varken_commit_satiri_yer_degistirir(self):
+        """KONTROL GRUBU: kalem VARSA Q4 kararı aynen geçerli — commit sayısı satırı düşer."""
+        self.klon_geride(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        satirlar = self.bolum()
+        self.assertTrue(any("1 güncelleme kalemi bekliyor" in s for s in satirlar), satirlar)
+        self.assertFalse(any("commit geride" in s for s in satirlar), satirlar)
+
+    def test_hepsi_uygulanmissa_kalem_satiri_commit_satirinin_yerine_gecer(self):
+        """TERS YÖN (kararı burada kilitliyorum): kalemler VAR, hepsi uygulanmış, klon yine geride.
+
+        KARAR: bu NORMAL hâldir — `%guncelle` `origin/main`'i hiçbir zaman merge ETMEZ (TASARIM §2a),
+        dolayısıyla BAŞARILI bir güncellemeden sonra klon DAİMA "N commit geride" görünür. O satır
+        burada yanlış alarmdır; kalem satırı onun yerine geçer — Q4'ün asıl amacı budur."""
+        self.klon_geride(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        self.uygulananlari_yaz({"0.1.0-01": {"etiket": "v0.1.0", "durum": "uygulandi"}})
+        satirlar = self.bolum()
+        self.assertTrue(any("bekleyen güncelleme kalemi yok" in s for s in satirlar), satirlar)
+        self.assertFalse(any("commit geride" in s for s in satirlar), satirlar)
 
     def test_bekleyen_kalem_satiri_uretilir(self):
         self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"), kalem("0.1.0-02",
