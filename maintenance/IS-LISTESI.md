@@ -36,7 +36,7 @@ Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
 **Emniyet kopyası (repo dışı):** commit'siz 4 lane'in yaması + yeni dosyaları
 oturum scratchpad'inde `lane-yedek-0129/` altında.
 
-**Entegrasyon dalı `integrasyon/2026-09-17`** — `origin/main`'in 37 commit önünde, 0 gerisinde.
+**Entegrasyon dalı `integrasyon/2026-09-17`** — `origin/main`'in **önünde, 0 gerisinde** (sayı her commit'te değişir; ölç: `git rev-list --left-right --count origin/main...HEAD`).
 Sağlık (ölçüldü): `-k guncelle_harita` 28/0 · `guncelle_kartlar` 12/0 · `doctor` 69/0 ·
 `install` 24/0(1 skip) · `session_brief` 7/0 · `yayin_surumleri` 32/0 · `yayin_hazirla` 9/0
 = **181 test 0 failure** · `siniflandir.py` 481 dosya 0 sorun rc=0.
