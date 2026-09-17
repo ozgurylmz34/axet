@@ -535,10 +535,28 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 | P5 | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet | — | ⬜ |
 | P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | ✅ **YEŞİL — commit `a9eba2c` + push (2026-09-16), merge'e hazır.** Üç kapı koştu; sonuncusunun BLOCKER'ı (gitlink veri kaybı) kapatıldı, lider son baytlar üzerinde bağımsız doğruladı (rc dağılımı HEAD ile birebir, `-k axet_guncelleme` 4/0). Ayrıntı: DEVAM NOKTASI ⑪/⑫. ~~🔴 ÜÇÜNCÜ KAPI → BLOCKER (2. tur)~~: ikinci kapının HIGH'ı kapandı, ama bir katman derini açık çıktı — `.axet-guncelleme/` içinde **commit'li gömülü depo** varsa yedeğe yalnız **gitlink** girer, bayrak "yedekte var" der ve depo **geçmişiyle birlikte sessizce, geri alınamaz** silinir (A/B/C ile ölçüldü). Kök neden `kur.ps1:520` `--name-only` ⇒ mod kaybı. Düzeltme dağıtıldı. Worktree `…\AI_WORKS\.wt\axet\p6-sifirla`, hâlâ **COMMIT'SİZ**. Ayrıntı: DEVAM NOKTASI "İKİNCİ TUR" ⑨/⑪. |
 | P7 | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` + `session_brief` günlük/kritik satırı | P1, P2 | evet | — | 🔵 **commit `4f77760`** (dal `feat/2026-09-17-p7-yayin`). Ölçüldü (lider bağımsız): `-k yayin_surumleri` 29/0 · `-k session_brief` 7/0 · `-k yayin_hazirla` 9/0 · sızıntı 436 dosya 0 bulgu EXIT=0 · mutasyon 9/9. 🔴 **DÜZELTME TURU:** lider ölçtü — `yayinlar.json` boş liste iken `template_bolumu` klonun geride olduğunu GİZLİYOR ("5 commit geride" → "template güncel"); merge olunca canlıya çıkardı. Fail-first + düzeltme + mutasyon istendi. |
-| P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | ⬜ |
+| P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | 🟡 **ERTELENDİ — kullanıcı kararı 2026-09-18.** Gerekçe: **kapsam belirsiz** — §13'teki *"B1–B4 (K3 kararı)"* atfı K3'ün içeriğiyle tutmuyor, hangi B maddeleri kastediliyor çözülemedi. Lider kapsamı kendi yorumuyla doldurmadı (seçenek sunuldu, kullanıcı *"P8'i ertele, kalan 7 maddeyi bitir"* dedi). **Yayını BLOKLAMAZ.** Açılış koşulu: kullanıcı B1–B4'ün ne olduğunu netleştirir. |
 | P9 | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası) | — | ⬜ |
 
 Paralel: P1 ∥ P6 → P2 → P3 ∥ P5 ∥ P7 → P4. Kod gate'i: P2, P4, P5, P6, P7 · doküman gate'i: P3 ve §11 metni.
+
+> ⭐ **KULLANICI KARARLARI — 2026-09-18, OTONOM DEVİR.** Kullanıcı ekrandan kalkarken üç soru soruldu
+> ve üçü de cevaplandı; *"otonom devam et, sen karar al, bu maddelerin yarına bitmiş olması gerek"*.
+>
+> | # | Soru | **Karar** | Sonuç |
+> |---|---|---|---|
+> | 1 | Toplu CI yeşilse `main`'e merge'ü lider mi yapsın? | ✅ **Lider merge eder** | **Şartlar (hepsi, tek tek ölçülür):** ① entegrasyon dalındaki **HER** paketin taze gate'i PASS/WARNING ② toplu CI'ın **5 job'ı da** yeşil ③ ⛔ `gh pr merge --admin` **CI atlatmak için kullanılmaz**. Tek kırmızı varsa merge YOK — PR açık bırakılır, kullanıcıya raporlanır. Merge **geri alınamaz**. |
+> | 2 | P8 kapsamı belirsiz, ne yapılsın? | ✅ **Ertele** | Lider kapsamı **kendi yorumuyla doldurmaz**. §2 G tablosu P8 satırı 🟡; yayını bloklamaz. |
+> | 3 | Z6 ne zaman koşsun? | ✅ **Merge'den ÖNCE, paralel** | Z6 başlatıldı (§3 Z6). P1/P6 zaten main'de olsa da, vakum sınıfı orada da varsa `main`'e bir şey daha eklemeden görülecek. |
+>
+> **Ayrıca (kullanıcı talebi, aynı mesaj):** *"ajanlar benden onay istemesinler, bash onayı vs."* →
+> `PROVA/.claude/settings.local.json` `permissions.allow` **18 → 82 desen**. Eklenen sınıflar: okuma/arama
+> (`cat`/`grep`/`rg`/`find`/`diff`/`sha256sum`…), **salt-okuma git** (`status`/`diff`/`log`/`show`/`hash-object`/
+> `cat-file`/`ls-tree`… ve `git -C *` karşılıkları), test koşma (`run_tests.py`/`unittest`/`python -c`),
+> scratch yazımı (`mkdir -p`/`cp`/`touch`). ⛔ **BİLEREK DIŞARIDA BIRAKILANLAR:** `rm` · `git push` ·
+> `git commit` · `git checkout` · `git restore` · `git stash` · `git reset` · `gh` · `curl` · `pip install`.
+> Gerekçe: bunlar ya **geri alınamaz** ya da ajanın hiç yapmaması gereken işler (commit = lider). Dosya
+> **gitignore'lu ve behavior-manifest'te değil** (ölçüldü) ⇒ manifest yenilemesi ve PR gerekmiyor.
 
 > 🔴 **SÜREÇ KURALI — GATE'SİZ MERGE YOK (kullanıcı uyarısı 2026-09-18, lider hatası kabul edildi).**
 > **İhlal edildi:** lider P2'yi (`4e8717e`), P3'ü (`4601ee4`) ve P7'yi (`d980c48`) **taze gate'leri
@@ -821,7 +839,8 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 | Z3 | aXet LSP config desteği ölçümü | LSP gerektiren iş |
 | Z4 | Agentic connector ölçümü (`docs/agentic-connectors.md` §6) | kullanıcı ayrı onayı |
 | Z5 | **doctor `template_denetle` gürültü düzeltmesi** — ✅ **KAPANDI: P4'E DAHİL EDİLDİ (kullanıcı kararı 2026-09-18, "Z5'i de P4'e dahil et").** Gerekçe ölçüldü: Z5 ile P4'ün doctor bilgi satırı `scripts/doctor.py:777-785` — **birebir aynı 9 satırlık bloğu** hedefliyor; ayrı dallarda yapılsa metinsel çakışma kesindi. TASARIM §13 DÜZELTME-2'nin kendi tavsiyesi de buydu. Uygulama: dal `feat/2026-09-18-p4-baslatici` (FAZ A/A1). | ~~K12 merge sonrası~~ → P4 ile birlikte |
-| Z6 | **P1 ve P6'nın test takımlarına geriye dönük BAĞIMSIZ MUTASYON denetimi** — ikisi de `main`'e merge edildi (`313d126`, `8f9b5cd`) ve gate'lerinden geçti, ama gate'leri P2'de ölçülen "vakum assertion" sınıfını aramıyordu (o sınıf 2026-09-18'de keşfedildi). Kapsam: her paketin korumak istediği kuralı tamamen kaldır → test yeşil kalıyorsa bulgu. | G paketleri bitince; yayından ÖNCE |
+| Z6 | **P1 ve P6'nın test takımlarına geriye dönük BAĞIMSIZ MUTASYON denetimi** — ikisi de `main`'e merge edildi (P1 eski tarihçede `313d126`, içerik main'de; P6 `8f9b5cd`) ve gate'lerinden geçti, ama gate'leri P2'de ölçülen "vakum assertion" sınıfını aramıyordu (o sınıf 2026-09-18'de keşfedildi). Kapsam: **P1** = `guncelle/harita.json` + `guncelle/siniflandir.py` + `tests/test_guncelle_harita.py` · **P6** = `kur.ps1` + `kur.cmd` + `tests/test_kur.py`. Yöntem: paketin korumak istediği kuralı **tamamen kaldır** → test yeşil kalıyorsa bulgu; mutasyonu **gate seçer**, yazarın listesine bakılmaz; paket başına ≥6 mutasyon. | 🔵 **KOŞUYOR (2026-09-18)** — kullanıcı kararı: *"merge'den ÖNCE, paralel koşsun"*. Taze `bug-expert`, izole worktree `.wt/axet/z6-denetim` (dal `denetim/2026-09-18-z6`, HEAD `1777e99` = `origin/main`). **Lider ön ölçümü (tarayıcı, aday — kusur değil):** `test_guncelle_harita.py` **3 aday** (`:98`, `:106`, `:199` — üçü de adında `s3` var, gövdede yok) · `test_kur.py` **0 aday** ⚠ *0 bulgu ≠ temiz* (tarayıcı iki dar yüzeye bakıyor) → P6'ya da **tam mutasyon turu** emredildi. |
+| Z7 | **Test hijyeni turu — kalan 19 vakum-assertion adayı + tarayıcının repoya alınması.** Lider `vakum_tara.py`'yi yazdı ve entegrasyon dalında koşturdu: **18 dosya · 419 test fonksiyonu · 46 bulgu** (`ASSERT-YOK` 0 · `AD-GOVDE` 21 · `RC-AYIRT-EDİLEMEZ` 25). Bunların bir bölümü P2-fix ajanına verildi (`test_guncelle.py`, 11 kalem); **kalanı** `test_doctor` · `test_install` · `test_yayin_surumleri` · `test_new_package` · `test_precommit` · `test_behavior_manifest` · `test_package_naming` · `test_new_project` · `test_yeni_proje` dosyalarında. **Şimdi yapılmıyor çünkü** bu dosyalar P4 ve P5 ajanlarının elinde — iki lane çakışır. ⚠ **Aday ≠ kusur:** her biri mutasyonla ölçülecek (kuralı kaldır → test yeşilse bulgu), sağlam çıkanlar rapora *"ölçüldü, sağlam"* diye yazılacak. Ayrıca `maintenance/vakum_tara.py` kendi testiyle repoya girer — ⛔ **GATE DEĞİL**, elle koşulan teşhis aracı (gate açmak ADR 0019 onay zinciri ister, istenmedi). | **P4 ve P5 merge olduktan SONRA, `main`'e PR açılmadan ÖNCE** — tek turda |
 
 ## 4. Kapananlar (bu denetimde bayat bulunup düzeltilen kayıtlar, 2026-09-14)
 - sync-rules `PROVA:conn/*` planlı → kısmi (`switch_tier`/`setup_credentials` var, canlı yok).
