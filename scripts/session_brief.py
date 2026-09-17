@@ -101,6 +101,112 @@ def template_durumu(fetch: bool) -> list[str]:
     return [f"template güncel{not_}"]
 
 
+# --- P7 / TASARIM §11: günlük güncelleme kontrolü + kritik hatırlatma ------------------------------------
+# Ayrı önbellek ve eşik (Q4): güncelleme kontrolü GÜNDE BİR yapılır, saatlik `FETCH_CACHE` değil.
+# Kalem satırı, `template_durumu()`'nun "N commit geride" satırıyla YER DEĞİŞTİRİR — iki bildirim olmasın.
+GUNCELLEME_CACHE = Path.home() / ".axet-template-cache" / "last_guncelle_check"
+GUNCELLEME_EVERY_SEC = 86400
+DURUM_DIZIN_ADI = ".axet-guncelleme"          # scripts/guncelle.py:46 ile AYNI ad
+YAYINLAR_REF = "origin/main:guncelle/yayinlar.json"
+
+
+def _gunluk_fetch(fetch: bool) -> str:
+    """Günde en fazla bir `git fetch`. Ağ hatası SESSİZ (bugünkü davranış) — yalnız not döner."""
+    if not fetch:
+        return ""
+    try:
+        yas = time.time() - GUNCELLEME_CACHE.stat().st_mtime if GUNCELLEME_CACHE.exists() else None
+    except OSError:
+        yas = None
+    if yas is not None and yas <= GUNCELLEME_EVERY_SEC:
+        return ""
+    rc, _ = _git(AXET_HOME, "fetch", "--quiet", timeout=8)
+    if rc:
+        return " (fetch başarısız — son bilinen duruma göre)"
+    with contextlib.suppress(OSError):
+        GUNCELLEME_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        GUNCELLEME_CACHE.touch()
+    return ""
+
+
+def guncelleme_kalemleri() -> list[dict] | None:
+    """`origin/main:guncelle/yayinlar.json` x `.axet-guncelleme/uygulanan.json` -> kalem durumları.
+
+    Döner: her kalem için {id, baslik, kritik, durum} — `durum` None ise kalem hiç uygulanmamış
+    (bekliyor). ÖLÇÜLEMEZSE None döner (dosya yok / bozuk / git okuyamadı): "0 kalem" ile
+    "ölçemedim" karıştırılmasın diye ayrı değer. Hiçbir yere YAZMAZ.
+    Alan adları `scripts/guncelle.py`'nin yazdığı/okuduğu adlardır (koddan doğrulandı: :529-539, :1312-1327).
+    """
+    import json  # yerel: bu dosyanın öteki bölümleri json'a bağımlı değil
+    rc, ham = _git(AXET_HOME, "show", YAYINLAR_REF, timeout=8)
+    if rc or not ham.strip():
+        return None
+    try:
+        veri = json.loads(ham)
+    except ValueError:
+        return None
+    if not isinstance(veri, dict) or not isinstance(veri.get("yayinlar"), list):
+        return None
+    kayit: dict = {}
+    f = AXET_HOME / DURUM_DIZIN_ADI / "uygulanan.json"
+    if f.is_file():
+        try:
+            u = json.loads(f.read_text(encoding="utf-8", errors="replace"))
+            kayit = u.get("kalemler") if isinstance(u, dict) and isinstance(u.get("kalemler"), dict) else {}
+        except ValueError:
+            kayit = {}
+    kalemler = []
+    for yayin in veri["yayinlar"]:
+        if not isinstance(yayin, dict):
+            continue
+        for k in yayin.get("kalemler") or []:
+            if not isinstance(k, dict) or not k.get("id"):
+                continue
+            kd = kayit.get(k["id"])
+            kalemler.append({
+                "id": k["id"], "baslik": k.get("baslik", ""),
+                # tur=guvenlik ise kritik (scripts/guncelle.py:600 ile AYNI türetme)
+                "kritik": bool(k.get("kritik") or k.get("tur") == "guvenlik"),
+                "durum": kd.get("durum") if isinstance(kd, dict) else None,
+            })
+    return kalemler
+
+
+def template_bolumu(fetch: bool) -> list[str]:
+    """TEMPLATE bölümü. Kalem satırı ölçülebiliyorsa commit sayısı satırının YERİNE geçer (Q4);
+    ölçülemiyorsa ya da HİÇ kalem tanımlı değilse bugünkü satır AYNEN kalır.
+
+    Üç durum bilinçli olarak AYRIDIR:
+      None  ÖLÇÜLEMEDİ (yayinlar.json yok / bozuk / git okuyamadı) → bugünkü satır aynen.
+      []    ölçüldü ama HİÇ yayın kalemi tanımlı değil → bugünkü satır aynen (aşağıdaki nota bak).
+      [...] kalemler var → kalem satırı commit sayısı satırının YERİNE geçer (Q4).
+    """
+    not_ = _gunluk_fetch(fetch)
+    satirlar = template_durumu(False)          # fetch'i yukarıda GÜNLÜK eşikle biz yaptık
+    kalemler = guncelleme_kalemleri()
+    if kalemler is None:
+        return satirlar
+    if not kalemler:
+        # ÖLÇÜLDÜ ama hiç yayın kalemi YOK (`"yayinlar": []` — ilk gerçek yayına kadarki hâl).
+        # Bu, "kalemler var, hepsi uygulanmış" ile AYNI ŞEY DEĞİLDİR: commit sayısı satırının
+        # yerine geçecek bir bilgi yoktur, o yüzden o satır KORUNUR.
+        # REGRESYON 2026-09-18 (ölçüldü): bu dal ayrılmadığında klon 5 commit geride olduğu hâlde
+        # "template güncel" deniyordu — tek satırlık çıktı sessizce yanlıştı.
+        # Kilit: tests/…::test_kalem_tanimli_degilse_commit_geride_satiri_korunur
+        return satirlar
+    bekleyen = [k for k in kalemler if k["durum"] is None]
+    yeni = ([f"template: {len(bekleyen)} güncelleme kalemi bekliyor{not_} -> `%guncelle`"] if bekleyen
+            else [f"template güncel{not_} (bekleyen güncelleme kalemi yok)"])
+    # Q3: kritik kalemler ayrı liste tutulmaz, aynı kaynaktan türetilir; `atlandi` işaretlense de görünür kalır.
+    for k in kalemler:
+        if not k["kritik"] or k["durum"] == "uygulandi":
+            continue
+        durum = "atlandı (kritik)" if k["durum"] == "atlandi" else "bekliyor"
+        yeni.append(f"WARN kritik güncelleme {durum}: {k['id']} {k['baslik']}".rstrip())
+    # commit sayısı satırı düşer, ÖLÇÜLEMEDİ satırları korunur (bilgi kaybı olmasın)
+    return yeni + [s for s in satirlar if "ÖLÇÜLEMEDİ" in s or "git reposu değil" in s]
+
+
 def saglik(proj: Path) -> list[str]:
     import doctor  # aynı klasör
     doctor.results.clear()
@@ -204,7 +310,7 @@ def main() -> int:
     template_ici = proj == AXET_HOME or AXET_HOME in proj.parents
 
     bolumler = [("DURUM ÇAPASI (git)", lambda: durum_capasi(proj)),
-                ("TEMPLATE", lambda: template_durumu(not args.no_fetch)),
+                ("TEMPLATE", lambda: template_bolumu(not args.no_fetch)),
                 ("SAĞLIK", lambda: saglik(proj))]
     if not template_ici:
         bolumler += [("PAKET", lambda: aktif_paket(proj)),

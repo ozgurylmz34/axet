@@ -1,0 +1,31 @@
+{
+ "surum": 1,
+ "aciklama": "Yayin kalemleri — yapisal degisiklik listesi (TASARIM §11, is paketi P7). Tuketici motoru bunu `origin/main:guncelle/yayinlar.json` olarak okur (scripts/guncelle.py:361) ve kalem-dosya eslemesini buradan alir; CHANGELOG.md bu dosyadan URETILIR (maintenance/yayin_hazirla.py). Dogrulayici: `python maintenance/yayin_hazirla.py --yalniz-dogrula`. Yayinlar ESKIDEN YENIYE siralidir; motor SON girdiyi en yeni sayar.",
+ "sema": {
+  "yayin": [
+   "etiket (vX.Y.Z)",
+   "tarih (YYYY-MM-DD)",
+   "min_axet (istege bagli, kalemlere miras edilir)",
+   "gecmis_yeniden_yazildi (istege bagli bool)",
+   "kalemler"
+  ],
+  "kalem": [
+   "id",
+   "baslik",
+   "tur (duzeltme|yetenek|kural|guvenlik)",
+   "kritik (bool)",
+   "neden",
+   "dosyalar (bos olamaz)",
+   "gerektirir",
+   "test",
+   "min_axet (istege bagli)"
+  ],
+  "kurallar": [
+   "tur=guvenlik ise kritik:true zorunlu",
+   "kalem id'leri tum dosyada tekil",
+   "gerektirir yalnizca DAHA ONCE tanimli bir kaleme isaret edebilir",
+   "yayin diff'indeki her dosya en az bir kaleme ait olmali (uretilen dosyalar haric)"
+  ]
+ },
+ "yayinlar": []
+}
