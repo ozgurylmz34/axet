@@ -247,5 +247,70 @@ class DenetimNegatifTest(unittest.TestCase):
                         f"geçersiz etkin değeri yakalanmadı: {sorunlar}")
 
 
+    def test_yazim_hatali_k_filtresi_yakalanir(self) -> None:
+        """`-k` DEĞERİ hiçbir test adıyla eşleşmiyorsa FAIL (D17 açık kalemi, 2026-09-17).
+
+        Eski hâli: `_yol_simgeleri` `-` ile başlayanı atladığı için filtre DEĞERİNE hiç
+        bakılmıyordu → haritaya yazım hatalı bir filtre girilirse denetim sessiz kalıyordu.
+        """
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["test"] = [
+            {"komut": "python tests/run_tests.py -k guncelle_haritaXX", "cwd": ".",
+             "on_kosul": None}]
+        sorunlar = self._sorunlar(harita=bozuk)
+        self.assertTrue(any("hiçbir test adıyla eşleşmiyor" in s for s in sorunlar),
+                        f"yazım hatalı -k filtresi yakalanmadı: {sorunlar}")
+
+    def test_dogru_k_filtresi_sorun_uretmez(self) -> None:
+        """KONTROL GRUBU: çalıştığı BİLİNEN filtre değeri sorun üretmemeli (yanlış pozitif yok)."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["test"] = [
+            {"komut": "python tests/run_tests.py -k guncelle_harita", "cwd": ".",
+             "on_kosul": None}]
+        k_sorunlari = [s for s in self._sorunlar(harita=bozuk) if "-k" in s]
+        self.assertEqual([], k_sorunlari, f"geçerli filtre yanlış yere sorun üretti: {k_sorunlari}")
+
+    def test_degersiz_k_filtresi_yakalanir(self) -> None:
+        """`-k`'dan sonra değer yoksa koşucu rc=2 verir; denetim de sessiz kalmamalı."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["test"] = [
+            {"komut": "python tests/run_tests.py -k", "cwd": ".", "on_kosul": None}]
+        sorunlar = self._sorunlar(harita=bozuk)
+        self.assertTrue(any("-k" in s and "değer" in s for s in sorunlar),
+                        f"değersiz -k yakalanmadı: {sorunlar}")
+
+    def test_yanlis_harfli_es_yolu_yakalanir(self) -> None:
+        """Harf-duyarlı varlık denetimi (D17 açık kalemi): Windows'ta `Path.exists()` harf-duyarsız
+        olduğu için yanlış harfli yol GEÇİYORDU; Linux/macOS tüketicisinde FAIL olurdu."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["esler"] = ["Scripts/doctor.py"]
+        sorunlar = self._sorunlar(harita=bozuk)
+        self.assertTrue(any("eş yolu diskte yok" in s and "Scripts/doctor.py" in s
+                            for s in sorunlar),
+                        f"yanlış harfli eş yolu yakalanmadı: {sorunlar}")
+
+    def test_dogru_harfli_es_yolu_gecer(self) -> None:
+        """KONTROL GRUBU: doğru harfli aynı yol sorun ÜRETMEMELİ."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["esler"] = ["scripts/doctor.py"]
+        sorunlar = [s for s in self._sorunlar(harita=bozuk) if "eş yolu diskte yok" in s]
+        self.assertEqual([], sorunlar, f"doğru harfli yol yanlışlıkla eksik sayıldı: {sorunlar}")
+
+    def test_yanlis_harfli_glob_deseni_yakalanir(self) -> None:
+        """Glob dalı da harf-duyarlı olmalı: `Path.glob` Windows'ta harf-duyarsız eşler."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["esler"] = ["Scripts/*.py"]
+        sorunlar = self._sorunlar(harita=bozuk)
+        self.assertTrue(any("eş yolu diskte yok" in s and "Scripts/*.py" in s for s in sorunlar),
+                        f"yanlış harfli glob yakalanmadı: {sorunlar}")
+
+    def test_dogru_harfli_glob_deseni_gecer(self) -> None:
+        """KONTROL GRUBU: doğru harfli glob sorun ÜRETMEMELİ."""
+        bozuk = copy.deepcopy(self.harita)
+        bozuk["siniflar"][0]["esler"] = ["scripts/*.py"]
+        sorunlar = [s for s in self._sorunlar(harita=bozuk) if "eş yolu diskte yok" in s]
+        self.assertEqual([], sorunlar, f"doğru harfli glob yanlışlıkla eksik sayıldı: {sorunlar}")
+
+
 if __name__ == "__main__":
     unittest.main()
