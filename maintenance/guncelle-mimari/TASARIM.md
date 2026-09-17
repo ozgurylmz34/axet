@@ -370,17 +370,18 @@ Hiçbiri 1. şartı (gerçekten yaşanmış hata) karşılamıyor. Bu yüzden ö
 
 **`guncelle/yayinlar.json` (yapısal değişiklik listesi; `CHANGELOG.md` bundan üretilir, `README.md:241-271` serbest metni buna bağlanır):**
 ```json
-{"yayinlar": [{"etiket": "v0.5.0", "tarih": "2026-10-01", "min_axet": "1.3.0",
+{"yayinlar": [{"etiket": "v0.5.0", "tarih": "2026-10-01", "min_axet": "1.3.0",   // YAYIN düzeyi = VARSAYILAN (kalemlere miras)
   "kalemler": [{"id": "0.5.0-01", "baslik": "doctor: …", "tur": "duzeltme", "kritik": false,
     "neden": "…", "dosyalar": ["scripts/doctor.py", "tests/test_doctor.py"],
     "gerektirir": [], "test": ["kok:test_doctor"]}]}]}
 ```
 - **Dosyalar diff'ten üretilir:** `yayin_hazirla` önceki public HEAD ile yeni ağacın farkını alır; bakımcı yalnız "hangi kalem" eşlemesini verir (`--kalem-esle esle.json` ya da etkileşimli). Kural: diff'teki **her** dosya ≥1 kaleme ait; kalemdeki her dosya gerçekten değişmiş; yoksa FAIL ve commit yok.
 - `tur: guvenlik` ⇒ `kritik: true` zorunlu (Q3).
+- ⚠ **`min_axet` — KANONİK DÜZEY KALEM (karar 2026-09-17, P7 bulgusu, lider ölçtü).** Bu belge alanı İKİ yerde gösteriyordu (yukarıdaki `:235` kalem nesnesinde, `:373` yayın nesnesinde) ama `scripts/guncelle.py:601` yalnız **`kalem.get("min_axet")`** okuyor ⇒ yayın düzeyine yazılmış bir değer bugün **sessizce yok sayılırdı** (sessiz tüketici hatası). Kural: **kalem düzeyi kanoniktir**; yayın düzeyindeki değer o yayının kalemlerine **varsayılan olarak miras** edilir, kalemde açıkça verilmişse kalemdeki kazanır. Mirası **`yayinlar.json` üretimi/doğrulaması** (P7) uygular — motorun sözleşmesi değişmez, `guncelle.py`'ye dokunulmaz. Miras testle kilitlenir (yayın düzeyinde `min_axet` olan + kalemde olmayan fixture → kalem o değeri almalı).
 - **Force push yasağı:** yayın aracı force komutu üretmez; `GUNCELLE.md` ve bakım prosedürüne yazılır. **Tek istisna sır sızıntısı:** geçmiş temizlenir, `yayinlar.json`'a `"gecmis_yeniden_yazildi": true` kaydı eklenir; `onkontrol` taban commit'ini bulamayınca "`kur.cmd -Sifirla` öner" der (VTB yerine).
 - **Sığ klon yasağı testi:** `tests/test_kur.py`'ye `kur.ps1` metninde `clone` çağrısında `--depth`/`--shallow`/`--filter` bulunmadığını doğrulayan statik test; `onkontrol` çalışma anında `--is-shallow-repository`.
 - **Günde bir kontrol (Q4):** `session_brief.py:32-33` (`FETCH_CACHE`, `FETCH_EVERY_SEC = 3600`) ve `template_durumu()` (`:77-101`). Değişiklik: ayrı önbellek `~/.axet-template-cache/last_guncelle_check`, eşik 86400 sn; birim "N kalem" = `origin/main:guncelle/yayinlar.json`'da `uygulanan.json`'da olmayan kalem sayısı; ağ hatası bugünkü gibi sessiz (`:88-90`); yazma yok. Mevcut saatlik "N commit geride" satırı kalemli satırla **yer değiştirir** (iki bildirim olmasın).
-- **Kritik hatırlatma (Q3):** ayrı liste tutulmaz; `session_brief.py` ve `doctor.py` aynı kaynaktan türetir: `yayinlar.json` `kritik: true` ∧ `uygulanan.json`'da yok ∧ `durum.json`'da `atlandi` değil → her oturum `WARN kritik güncelleme bekliyor: <id> <baslik>`. Kullanıcı `atlandi` işaretlese de satır "atlandı (kritik)" olarak kalır.
+- **Kritik hatırlatma (Q3):** ayrı liste tutulmaz; `session_brief.py` ve `doctor.py` aynı kaynaktan türetir: `yayinlar.json` `kritik: true` ∧ `uygulanan.json`'da yok ∧ `uygulanan.json`'da `atlandi` değil (⚠ **DÜZELTME 2026-09-17:** burası önce `durum.json` diyordu — ama `durum_kaydet` (`scripts/guncelle.py:725-730`) kaydı **yol** anahtarıyla tutuyor, `kalem` yalnız bir ALAN ⇒ `durum.json`'da **kalem bazlı `atlandi` YOK**, ancak türetilebilir. Kalem düzeyinde `durum: uygulandi|atlandi` **`uygulanan.json`**'dadır (`:1326`)) → her oturum `WARN kritik güncelleme bekliyor: <id> <baslik>`. Kullanıcı `atlandi` işaretlese de satır "atlandı (kritik)" olarak kalır.
 
 ---
 
