@@ -130,12 +130,19 @@ class DoctorTest(GeciciTest):
         self.var(r, "WARN", "bash:*Remove-Item*-Recurse* (ask; sabit 19, toplam 22)")
         self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
         self.assertFalse([s for s in self.ezme_satirlari(r) if not s.startswith("[WARN]")], r.stdout)
-        # DARALT: jokersiz (yalnız kendi metnine uyan) desen TEK deny ile çakışır → o deny ADIYLA yazılır.
-        # `*X*` biçimli desenler zincirli komut yüzünden hemen her deny ile çakışır; ölçülmüş vaka da zincirliydi.
+        # DARALT: jokersiz (yalnız kendi metnine uyan) desen AZ SAYIDA deny ile çakışır → o deny'lar ADIYLA yazılır.
+        # `*X*` biçimli desenler zincirli komut yüzünden hemen her deny ile çakışır (yukarıdaki vakada 29) ve liste
+        # "… ve N deny daha" özetine düşer; ölçülmüş vaka da zincirliydi. Ayırt edici ölçüt İSİM + ÖZETE DÜŞMEME.
+        # ⚠ "TAM OLARAK TEK deny" diye çivilenMEZ: K11 `*git reset *--hard*` desenini ekleyince aynı komuta uyan
+        # ikinci bir template deny'ı oluştu ve satır iki deny listeledi — davranış DOĞRU, eski çivi kırılgandı.
+        # (Ölçüldü 2026-09-17 entegrasyon dalında: K11 ve K12 tek başına yeşil, birleşince bu test kırmızıydı.)
         self.kural_ekle("bash", {"git reset --hard --quiet": "ask"})
         r = self.doctor(d)
         self.var(r, "WARN", "bash:git reset --hard --quiet (ask; sabit 24, toplam 24) → ezebileceği deny: "
-                            "*git reset --hard* (sabit 16, toplam 18) —")
+                            "*git reset --hard* (sabit 16, toplam 18)")
+        satir = next(s for s in self.ezme_satirlari(r) if "git reset --hard --quiet" in s)
+        self.assertNotIn("deny daha", satir,
+                         "jokersiz desen özet satırına düşmemeli (az deny ile çakışır): " + satir)
 
     def test_ezme_cakismayan_ya_da_kisa_desen_uretmez(self):
         """Yanlış pozitif kontrol grubu: (a) uzun ama hiçbir deny ile çakışmayan desen, (b) çakışan ama kısa desen."""
