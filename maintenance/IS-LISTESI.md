@@ -6,6 +6,47 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## 🔴 CANLI DURUM — 2026-09-18 GECE (oturum kesilirse BURADAN devam et)
+
+> Aşağıdaki "DEVAM NOKTASI 2026-09-15" bölümü **TARİHÇEDİR**. Bugünün işi budur.
+
+**Kullanıcı ekrandan kalktı, otonom devir yapıldı** (kararlar §2 "KULLANICI KARARLARI" bloğunda).
+Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
+
+| Lane | Dal | Durum | Sıradaki adım |
+|---|---|---|---|
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` | 🔵 koşuyor · B1–B5 + EK-1 kapandı (fail-first + mutasyon) · B6–B15 + EK-3 kaldı · **COMMIT'SİZ** | bitince lider commit → **TAZE gate** (aşağıdaki gerekçe) |
+| **P3** | `feat/2026-09-17-p3-kartlar` | ✅ düzeltme turu bitti → **`c58ec1e`** | ⏳ `GATE-P3` doğrulama turu koşuyor → PASS gelirse entegrasyona merge |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` | 🔵 FAZ A bitti (16/16 mutasyon) · **FAZ B başladı** · COMMIT'SİZ | bitince lider commit → **TAZE gate** (build hiç gate görmedi) |
+| **P5** | `feat/2026-09-17-p5-guncelle-proje` | 🔵 mutasyon turunda · COMMIT'SİZ (176 satır + 3 yeni dosya) | bitince lider commit → **TAZE gate** |
+| **P7** | `feat/2026-09-17-p7-yayin` | ✅ entegrasyonda (`d980c48`) | ⏳ `GATE-P7` kod gate'i koşuyor |
+| **Z6** | `denetim/2026-09-18-z6` (worktree `z6-denetim`) | 🔵 koşuyor — P1/P6 geriye dönük mutasyon denetimi | hüküm bekleniyor |
+| **Z7** | — | ⬜ açılmadı | P4+P5 merge olduktan sonra, PR'dan ÖNCE |
+
+**⚠ P2-fix'e neden TAZE gate:** düzeltme turu yalnız bulgu kapatmıyor, **yeni mantık ekliyor**
+(V7 dalı · `VAKA_IZINLI_KARARLAR` matrisi · `_yedeksiz_mi()` · `olc` rc=2 · `|||||||`). §2'deki gate
+ölçütüne göre *"düzeltme turunda kapsam büyüdüyse → TAZE gate"*.
+
+**⚠ ÖLÇÜLMÜŞ ÇAKIŞMA RİSKİ — `scripts/doctor.py` iki lane'de:** P4 `check_template`
+(`@@ -777,7 +777,27 @@`, `@@ -785 +805,19 @@`) · P5 import + `check_project`
+(`@@ -26,0 +27 @@`, `@@ -993,0 +995 @@`, `@@ -1089,0 +1092,11 @@`). **Metinsel çakışma YOK**
+(200+ satır ayrık) ama **ikisi de doctor'ın bastığı satır sayısını artırıyor** = K11×K12 sınıfı.
+İki ajana da *"aşırı-belirtilmiş assertion taraması"* emredildi. `README.md` şu an yalnız P4'te.
+
+**Emniyet kopyası (repo dışı):** commit'siz 4 lane'in yaması + yeni dosyaları
+oturum scratchpad'inde `lane-yedek-0129/` altında.
+
+**Entegrasyon dalı `integrasyon/2026-09-17`** — `origin/main`'in 37 commit önünde, 0 gerisinde.
+Sağlık (ölçüldü): `-k guncelle_harita` 28/0 · `guncelle_kartlar` 12/0 · `doctor` 69/0 ·
+`install` 24/0(1 skip) · `session_brief` 7/0 · `yayin_surumleri` 32/0 · `yayin_hazirla` 9/0
+= **181 test 0 failure** · `siniflandir.py` 481 dosya 0 sorun rc=0.
+
+**BİTİŞ SIRASI:** her lane bitince → lider commit → gate → PASS → entegrasyona merge →
+(hepsi bitince) **Z7 test hijyeni turu** → entegrasyonu push → **`main`'e PR** (CI 5 job, ~6.6 dk) →
+5'i de yeşilse **lider merge eder** → `behavior_manifest.py generate` → worktree'leri kapat.
+
+---
+
 ## ▶ DEVAM NOKTASI — sonraki oturum buradan başlar (gün sonu 2026-09-15 GECE — İKİNCİ tur, TX-01+P6 fix)
 
 > İlk iş bu bölümü oku. İş ilerledikçe güncelle; kalıcı bilgi ilgili satırlarda durur (§2 **G** güncelleme mimarisi, **D12–D15** açıklar, **K10–K12** kararlar, **X** diğer bilgisayar).
