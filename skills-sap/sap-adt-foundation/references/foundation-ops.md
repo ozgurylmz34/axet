@@ -117,8 +117,10 @@ cli adt_get '{"name":"ZCL_DEMO_CLASS","object_type":"class","include_source":fal
   DTEL olarak var ve aktif olduğu **her çağrıda** denetlenir (`check_struct_field_dtel_active.py`, görev `struct_fields_dtel`). `artifact_path`
   verilirse artefaktın `struct_creation` zinciri de koşar ve hükümler birleşir; yol bulunamazsa `artifact_not_found` → `reviewer_blocker` (ağa
   gidilmez). DTEL değil de yapı/tablo/tablo tipi olan alan atlanır. Yazmayı durduran ölçülemeyen dallar: SAP okunamadı · gate'in süre bütçesi
-  (istemci kurulumu + tüm SAP okumaları için gerçek toplam 15 sn — damlayan/asılı yanıtta da; tekrar deneme yok) doldu → ÖLÇÜLEMEDİ, denetlenen/denetlenmeyen aday sayısıyla · zincir 30 sn'yi aştı →
-  `reviewer_timeout` → BLOCKER (ÖLÇÜLEMEDİ; yalnız bu gate'i taşıyan zincirlerde, diğer zincirlerde zaman aşımı hâlâ WARNING). Standart DTEL'ler
+  (istemci kurulumu + tüm SAP okumaları için gerçek toplam, varsayılan **28 sn** — damlayan/asılı yanıtta da; tekrar deneme yok) doldu → ÖLÇÜLEMEDİ, denetlenen/denetlenmeyen aday sayısıyla · zincir
+  sarmalayıcı bütçesini (varsayılan **60 sn**) aştı → `reviewer_timeout` → BLOCKER (ÖLÇÜLEMEDİ; **canlı — SAP'ye bağlanan — BLOCKER gate taşıyan HER zincirde**: `table_creation`, `table_update`,
+  `struct_creation`, `struct_fields_dtel`, `struct_post_create`, `sap_active_check`; canlı BLOCKER taşımayan zincirlerde WARNING). Bütçe YAPILANDIRILABİLİR: `AXET_REVIEWER_BUTCE_SN` üç katmanı
+  birlikte yükseltir/düşürür (5-900 sn), yalnız gate payı için `AXET_DTEL_GATE_BUTCE_SN`; zaman aşımı mesajı bu yolu kendisi yazar (K10 — IMPLEMENTATION §20.9). Standart DTEL'ler
   denetlenmez — onları `adt_get` ile doğrula.
 - DTEL: 4 etiket (kısa/orta/uzun/başlık) `master_language`'de, dolu. Metinler spesifikasyondan; tahmin yok.
   **DTEL/append adı önerilmez — kullanıcı verir.**

@@ -54,6 +54,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -63,6 +64,10 @@ if sys.platform == 'win32':
         sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 VALIDATORS_DIR = Path(__file__).parent
+# `utils.butce` bir üst dizinde (lib/) — bu script alt süreç olarak da koşar, sys.path garanti değil.
+if str(VALIDATORS_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(VALIDATORS_DIR.parent))
+from utils import butce  # noqa: E402
 # PROJE kökü (aXet): env AXET_SAP_PROJECT_DIR (CLI basar) → cwd.
 # ⚠ Proje-lokal validator araması (`<proje>/scripts/validators-local/`) aXet'te KALDIRILDI:
 # zincirdeki bir BLOCKER gate'in yerine proje dizinine konan aynı adlı bir dosya geçerdi —
@@ -314,17 +319,39 @@ def sonuc_kaydi(validator: str, severity: str, status: str, description: str,
     }
 
 
-def run_validator(script_path: Path, artifact: str | None, extra_args: list[str]) -> tuple[int, str, str]:
+# ── ZİNCİR SÜRE BÜTÇESİ (K10) ─────────────────────────────────────────────────────────────────────
+# ⛔ ÖLÇÜLEN KUSUR (2026-09-17): buradaki validator-başı zaman aşımı SABİT 60 sn idi, sarmalayıcı
+# (`_reviewer.run_reviewer`) ise tüm zinciri 30 sn'de kesiyordu ⇒ 60 sn'lik dala HİÇ ULAŞILAMIYORDU
+# (ölü dal) ve hükmü daima sarmalayıcının KÖR kesmesi veriyordu: hangi validator'da takıldığı,
+# kaçının koştuğu raporlanamıyordu. Artık sıra YAPISAL: L3 gate-içi < L2 (burası) < L1 sarmalayıcı.
+# Tek ayar düğmesi `AXET_REVIEWER_BUTCE_SN`; dağıtım `utils/butce.py`de (dayanak + ölçümler orada).
+_ZINCIR_SON: float | None = None      # monotonic deadline; main() kurar
+
+
+def zincir_kalan_sn() -> float:
+    """Zincire kalan süre. `main()` dışından çağrılırsa (tekil kullanım) tam zincir bütçesi."""
+    if _ZINCIR_SON is None:
+        return butce.zincir_butce_sn()
+    return _ZINCIR_SON - time.monotonic()
+
+
+def run_validator(script_path: Path, artifact: str | None, extra_args: list[str],
+                  zaman_asimi_sn: float | None = None) -> tuple[int, str, str]:
     """Validator script'ini çalıştır, (exit_code, stdout, stderr) döner.
 
-    artifact=None → pozisyonel artifact geçilmez (repo-geneli tarayıcılar için)."""
+    artifact=None → pozisyonel artifact geçilmez (repo-geneli tarayıcılar için).
+    zaman_asimi_sn=None → zincire KALAN süre (asla sarmalayıcı bütçesinden büyük olamaz)."""
+    if zaman_asimi_sn is None:
+        zaman_asimi_sn = zincir_kalan_sn()
     cmd = [sys.executable, str(script_path)] + ([artifact] if artifact else []) + extra_args
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8',
-                           errors='replace', timeout=60)
+                           errors='replace', timeout=zaman_asimi_sn)
         return r.returncode, r.stdout, r.stderr
     except subprocess.TimeoutExpired:
-        return 2, '', f'TIMEOUT: {script_path.name} 60s aşıldı'
+        return 2, '', (f'TIMEOUT: {script_path.name} zincir süre bütçesini aştı '
+                       f'({zaman_asimi_sn:.1f} sn). ÖLÇÜLEMEDİ — "temiz" DEĞİL. '
+                       + butce.nasil_uzatilir())
     except Exception as e:
         return 2, '', f'EXCEPTION: {script_path.name}: {e}'
 
@@ -436,6 +463,10 @@ def main() -> int:
         print(f'HATA: {artifact_path} bulunamadı', file=sys.stderr)
         return 2
 
+    # K10 — zincir süre bütçesi burada başlar (sarmalayıcı bütçesi eksi run_review payı).
+    global _ZINCIR_SON
+    _ZINCIR_SON = time.monotonic() + butce.zincir_butce_sn()
+
     validators = TASK_VALIDATORS.get(args.task, [])
     # ⛔ Q238 (2026-09-04) — BOŞ ZİNCİR: HÜKÜM DEĞİŞMEDİ, GÖRÜNÜRLÜK EKLENDİ.
     # "Koşacak gate yok" BİLİNÇLİ ve KAYITLI bir boşluktur (modül docstring'i;
@@ -478,6 +509,18 @@ def main() -> int:
         # Repo-geneli tarayıcılar (kendileri <source_root>/** os.walk eder) pozisyonel artifact KABUL ETMEZ
         # → artifact=None geç (yoksa "unrecognized arguments" → sahte BLOCKER).
         review_artifact = None if script_name in REPO_WIDE_SCANNERS else args.artifact
+        # K10: bütçe bittiyse gate'i BAŞLATMA — 0 sn'lik bir koşum "temiz" üretemez, yalnız
+        # gürültü ve belirsizlik üretir. Koşmayan gate SKIP + `olcum_yok` ⇒ KENDİ şiddetiyle
+        # verdict'e sayılır (BLOCKER gate → BLOCKER). "Ölçülemedi ≠ temiz".
+        if zincir_kalan_sn() <= 0:
+            results.append(sonuc_kaydi(
+                script_name, default_severity, 'SKIP', description,
+                message=(f'PRE-FLIGHT KOŞMADI: zincir süre bütçesi '
+                         f'({butce.zincir_butce_sn():g} sn) önceki gate\'lerde doldu — '
+                         f'{script_name} hiç başlatılmadı. ÖLÇÜLEMEDİ, PASS SANMA. '
+                         + butce.nasil_uzatilir()),
+                olcum_yok=True))
+            continue
         rc, out, err = run_validator(script_path, review_artifact, extra_args)
         # AXET-GATE-STATUS tüketimi (kayıt #5③) — YALNIZ `rc == 0` dalında sorulur.
         # Gerekçe (kapsam niteleyicisi): `rc != 0` zaten GÜRÜLTÜLÜ bir sonuçtur (FAIL,
