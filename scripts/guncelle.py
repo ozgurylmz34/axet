@@ -1595,15 +1595,21 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # ⚠ "Motor yazmadıysa HER izlenmeyen yol korunur" DENMEZ: V4R'de `birlesik` sonra `ertelendi`
     # sırasında yeni yolu motor oluşturmuş, eski yolun silmesi zaten stage'lidir ⇒ yeni yolu dışarıda
     # bırakmak HEAD'de iki yolu da yok eden YARIM taşıma üretiyordu (ikinci tur ölçümü).
-    def _korunur(d: dict) -> bool:
+    # ⚠ Aynı sınıf `yerel` kararında da vardı (üçüncü tur, ölçüldü: V4R `birlesik` → `yerel`): YENİ yol
+    # yalnız taşıma GERÇEKLEŞMEDİYSE (eski yol hâlâ diskte ya da index'te) korunur. Taşıma olduysa yeni
+    # yolu motor yazmıştır; onu dışarıda bırakmak yine yarım taşıma olurdu.
+    def _korunan_yollar(d: dict) -> set:
         kayit = durum["dosyalar"].get(d["yol"], {})
-        if kayit.get("karar") == "yerel":
-            return True
         motor_yazdi = kayit.get("durum") in ("dogrulandi", "uygulandi")
-        return d.get("vaka") == "V7" and not motor_yazdi
+        if kayit.get("karar") != "yerel" and not (d.get("vaka") == "V7" and not motor_yazdi):
+            return set()
+        yollar = {d["yol"]}
+        eski_duruyor = (k.kok / d["yol"]).exists() or d["yol"] in izlenen
+        if d.get("yeni_yol") and eski_duruyor:
+            yollar.add(d["yeni_yol"])
+        return yollar
     yerel_izlenmeyen = {y for kalem in plan["kalemler"] if kalem["id"] in secili
-                        for d in kalem["dosyalar"] if _korunur(d)
-                        for y in (d["yol"], d.get("yeni_yol")) if y} - izlenen
+                        for d in kalem["dosyalar"] for y in _korunan_yollar(d)} - izlenen
     plan_yollari = list(add_yollari)   # süzgeçten ÖNCEKİ küme — hata dalında index'i bununla geri al
     add_yollari = [y for y in add_yollari
                    if ((k.kok / y).exists() or y in izlenen) and y not in yerel_izlenmeyen]

@@ -184,6 +184,14 @@ def denetle(proj: Path, files: list[str] | None = None, package: str | None = No
             sonuc.paket_sayisi += 1
             paket_denetle(pkg, None, sonuc)
         return sonuc, None
+    for pkg, liste in sorted(_grupla(proj, root, files).items()):
+        sonuc.paket_sayisi += 1
+        paket_denetle(pkg, liste, sonuc)
+    return sonuc, None
+
+
+def _grupla(proj: Path, root: Path, files: list[str]) -> dict[Path, list[Path]]:
+    """Paket klasörü → o pakete düşen dosyalar (obje klasörü altındakiler; diğerleri yok sayılır)."""
     gruplar: dict[Path, list[Path]] = {}
     root_r = root.resolve()
     for ham in files:
@@ -195,10 +203,17 @@ def denetle(proj: Path, files: list[str] | None = None, package: str | None = No
             continue
         if len(parcalar) >= 4 and parcalar[2] in OBJE_KLASORLERI:
             gruplar.setdefault(root_r / parcalar[0] / parcalar[1], []).append(p)
-    for pkg, liste in sorted(gruplar.items()):
-        sonuc.paket_sayisi += 1
-        paket_denetle(pkg, liste, sonuc)
-    return sonuc, None
+    return gruplar
+
+
+def okunan_kural_dosyalari(proj: Path, files: list[str]) -> set[Path]:
+    """`denetle(proj, files)`in DİSKTEN okuyacağı `.rules.md` yolları (çözülmüş). Tek kaynak: aynı gruplama
+    + `paket_denetle`in "obje yoksa kuralı okuma" kuralı. Kaynak kökü okunamazsa boş küme."""
+    root, err = npk.source_root(proj)
+    if err:
+        return set()
+    return {pkg / ".rules.md" for pkg, liste in _grupla(proj, root, files).items()
+            if any(obje_adi(f.name) is not None for f in liste)}
 
 
 # K-O① (davranış testi 2026-09-18): FAIL alan model `.rules.md` Naming regex'ini kendi adını kapsayacak

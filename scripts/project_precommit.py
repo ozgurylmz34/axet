@@ -245,16 +245,19 @@ def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> 
     # ⛔ Adlandırma denetimi `.rules.md`'yi DİSKTEN okur, yukarıdaki karşılaştırma ise STAGED içerikten
     # (bug gate 2026-09-19 #3, ölçüldü): stage'lenmemiş bir regex genişletmesi denetimi geçirir ama
     # commit'e girmediği için hiç WARN üretmezdi. Disk ≠ index olan izlenen `.rules.md` uyarılır —
-    # YALNIZ o pakette staged bir dosya varsa (ikinci tur, ölçüldü: aksi hâlde ilgisiz her commit'te
-    # uyarı çıkıyordu; o kuralı bu commit'te hiçbir denetim okumadı).
+    # YALNIZ adlandırma denetiminin bu commit'te fiilen OKUDUĞU kural dosyasıysa (ikinci ve üçüncü tur,
+    # ölçüldü: ilgisiz commit, kökteki `.rules.md` ve pakette yalnız obje-dışı dosya stage'liyken de
+    # uyarı çıkıyordu). Küme `check_package_naming.okunan_kural_dosyalari` — denetimle TEK kaynak.
+    okunan = cpn.okunan_kural_dosyalari(proj, dosyalar)
+    if not okunan:
+        return
     try:
         kirli = _git(proj, "diff", "-z", "--name-only", "--", ":(glob)**/.rules.md").decode("utf-8", "replace")
     except GitHatasi as e:
         rapor.add("WARN", f"kural değişikliği: stage'lenmemiş `.rules.md` denetimi ÖLÇÜLEMEDİ ({e})")
         return
     for yol in filter(None, kirli.split("\0")):
-        paket = yol[: -len(".rules.md")]
-        if not any(d.startswith(paket) and d != yol for d in dosyalar):
+        if (proj / yol).resolve() not in okunan:
             continue
         rapor.add("WARN", f"kural değişikliği: {yol} diskte STAGE'LENMEMİŞ değişiklik var — adlandırma "
                           "denetimi diskteki içeriği okudu, commit'e girecek kural bu DEĞİL. Değişiklik "
@@ -263,14 +266,22 @@ def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> 
 
 def _yeniden_adlandirma_kaynagi(proj: Path, yol: str) -> str | None:
     """Staged bir yeniden adlandırmanın HEAD'deki kaynak yolu; yoksa None (ilk kayıt, hiç commit yok)."""
+    # `-z` ŞART (üçüncü tur, ölçüldü): onsuz `core.quotePath` ASCII olmayan yolu tırnaklayıp kaçışlar ⇒
+    # eşleşme olmaz, taşınan kural "ilk kayıt" sayılır. `-z` çıktısı: durum, yol[, yeni yol] — NUL ayrık.
     try:
-        cikti = _git(proj, "diff", "--cached", "-M", "--name-status", "HEAD").decode("utf-8", "replace")
+        cikti = _git(proj, "diff", "--cached", "-M", "--name-status", "-z", "HEAD").decode("utf-8", "replace")
     except GitHatasi:
         return None
-    for satir in cikti.splitlines():
-        parca = satir.split("\t")
-        if len(parca) == 3 and parca[0].startswith("R") and parca[2] == yol:
-            return parca[1]
+    parca = cikti.split("\0")
+    i = 0
+    while i < len(parca) and parca[i]:
+        durum = parca[i]
+        if durum[:1] in ("R", "C"):
+            if durum.startswith("R") and i + 2 < len(parca) and parca[i + 2] == yol:
+                return parca[i + 1]
+            i += 3
+        else:
+            i += 2
     return None
 
 

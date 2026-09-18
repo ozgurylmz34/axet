@@ -209,6 +209,27 @@ class PrecommitTest(GeciciTest):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertNotIn("STAGE'LENMEMİŞ", r.stdout, self.cikti(r))
 
+    def test_stagelenmemis_kural_pakette_yalniz_obje_disi_dosya_varken_WARN_uretmez(self):
+        """Üçüncü tur (ölçüldü): pakette yalnız obje-dışı dosya (SESSION_NOTES.md) stage'liyken adlandırma
+        denetimi kuralı OKUMAZ ⇒ uyarı gürültüdür."""
+        self._ilk_commit()
+        self._class_satiri_genislet()
+        self.git(self.d, "reset", "-q", "--", self.KURAL)
+        self.stage("SOURCE_CODES/SD/ZSD001_CLC/SESSION_NOTES.md", "not\n")
+        r = self.denetle()
+        self.assertNotIn("STAGE'LENMEMİŞ", r.stdout, self.cikti(r))
+
+    def test_ascii_olmayan_yola_tasinan_rules_md_de_WARN(self):
+        """Üçüncü tur (ölçüldü): `-z`'siz `--name-status` ASCII olmayan yolu tırnaklıyordu ⇒ taşınan kural
+        "ilk kayıt" sayılıp uyarı çıkmıyordu."""
+        self._ilk_commit()
+        self._class_satiri_genislet()
+        self.git(self.d, "mv", "SOURCE_CODES/SD/ZSD001_CLC", "SOURCE_CODES/SD/ZSD001_ÇLC")
+        yeni = "SOURCE_CODES/SD/ZSD001_ÇLC/.rules.md"
+        r = self.denetle()
+        uyari = [s for s in r.stdout.splitlines() if s.startswith("[WARN] kural değişikliği") and yeni in s]
+        self.assertEqual(len(uyari), 1, self.cikti(r))
+
     def test_yeniden_adlandirilan_rules_md_ilk_kayit_sayilmaz(self):
         """Bug gate 2026-09-19 #3: paket klasörü taşınıp kural aynı commit'te genişletilirse `.rules.md`
         HEAD'de yeni yolda yoktur ⇒ eskiden "ilk kayıt" sayılıp WARN atlanıyordu."""

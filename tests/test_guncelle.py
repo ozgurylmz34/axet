@@ -1301,6 +1301,26 @@ class AkisTest(GuncelleTemel):
         self.assertTrue("docs/tasindi2.md" in agac or "docs/tasinan2.md" in agac,
                         f"yarım taşıma: iki yol da HEAD'de yok\n{self.cikti(r)}")
 
+    def test_V4R_birlesik_sonra_yerel_yarim_tasima_uretmez(self):
+        """Bug gate 2026-09-19 üçüncü tur (ölçüldü): aynı sınıf `yerel` kararında — süzgeç `yerel` için
+        yeni yolu da koruyordu; taşıma motor tarafından yapılmışken bu HEAD'de iki yolu da yok ediyordu."""
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self.birlesik_isaretle("docs/tasinan2.md")
+        self._tum_yargilari_kapat(haric="docs/tasinan2.md")
+        r = self.f.calistir("isaretle", "docs/tasinan2.md", "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        # kontrol grubu: taşıma gerçekten olmuş (eski yol diskte yok, yeni yol izlenmiyor)
+        self.assertFalse((self.f.tuketici / "docs/tasinan2.md").exists())
+        self.assertEqual(self.git(self.f.tuketici, "ls-files", "--", "docs/tasindi2.md").stdout.strip(), "")
+        self.ozel_adimlari_kostur()
+        self.f.calistir("olc", "--asama", "sonra")
+        self.f.calistir("butunluk")
+        r = self.f.calistir("kapanis")
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertTrue("docs/tasindi2.md" in agac or "docs/tasinan2.md" in agac,
+                        f"yarım taşıma: iki yol da HEAD'de yok\n{self.cikti(r)}")
+
     def test_kapanis_COMMIT_BASARISIZSA_eksik_olur_ve_muhur_basilmaz(self):
         """⛔ BLOCKER-3 (kardeş vaka): commit'in kendisi patlarsa da yalnız `UYARI:` basılıyordu.
 
