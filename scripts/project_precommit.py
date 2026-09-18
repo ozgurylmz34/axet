@@ -10,6 +10,8 @@ Kontroller (FAIL → commit ENGELLENİR):
   2. Staged içerikte açık sır deseni: özel anahtar, bilinen token biçimleri, URL içinde parola,
      tırnaklı parola/sır ataması, yapılandırma dosyasında `…PASSWORD=değer`. Yer tutucular (`<…>`, `${…}`) serbest.
   3. Paket adlandırma (SAP projesi): staged obje dosyaları `.rules.md` Naming regex'leri (check_package_naming.py).
+     + WARN (engellemez): staged `.rules.md` Naming tablosu / istisna listesi HEAD'e göre değiştiyse
+       (ilk kez eklenen `.rules.md` hariç) — eski → yeni satırlar gösterilir.
   4. `validators-local/*.py` (varsa): exit 0 geçer · 1 engeller · başka çıkış/zaman aşımı da engeller (koşmadı ≠ temiz).
   5. SAP kaynak incelemesi, çevrimdışı (SAP projesi): staged `.clas.abap` · `.ddls.asddls`/`.cds` · `.bdef` ·
      `.srvd` · `.tabl.*` dosyası yazma kapısının kullandığı reviewer zincirinden (sap-adt-foundation `run_review`)
@@ -196,6 +198,47 @@ def kontrol_paket_adlari(proj: Path, dosyalar: list[str], rapor: Rapor) -> None:
         rapor.add("PASS", f"paket adlandırma: {sonuc.taranan} obje dosyası uygun ({sonuc.paket_sayisi} paket)")
 
 
+def _naming_farki(eski: list[tuple[str, str]], yeni: list[tuple[str, str]]) -> list[str]:
+    """Obje tipi başına `eski → yeni` satırları (yalnız değişen satırlar)."""
+    giden, gelen = [x for x in eski if x not in yeni], [x for x in yeni if x not in eski]
+    satirlar = []
+    for tip in dict.fromkeys(t for t, _ in giden + gelen):
+        e = [f"`{r}`" for t, r in giden if t == tip]
+        y = [f"`{r}`" for t, r in gelen if t == tip]
+        satirlar.append(f"{tip}: {' '.join(e) or '(yok)'} → {' '.join(y) or '(silindi)'}")
+    return satirlar
+
+
+def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> None:
+    """K-O② (kullanıcı kararı 2026-09-18): staged `.rules.md` Naming tablosu ya da istisna listesi
+    HEAD'e göre değiştiyse WARN (engellemez).
+
+    Ölçülen vaka: pre-commit adlandırma FAIL'i alan model `.rules.md` regex'ini kendi obje adını
+    kapsayacak şekilde genişletti ve aynı commit'e koydu — adlandırma denetimi `.rules.md`'yi
+    diskten okuduğu için geçti, kimse fark etmedi. İlk kez eklenen `.rules.md` (HEAD'de yok ya da
+    repo hiç commit almamış) WARN ÜRETMEZ: yeni pakette "genişleme" kavramı yoktur; her yeni pakette
+    uyarı basmak gerçek vakayı gürültüye gömerdi.
+    """
+    import check_package_naming as cpn
+    for yol in dosyalar:
+        if Path(yol).name != ".rules.md":
+            continue
+        r = subprocess.run(["git", "-C", str(proj), "cat-file", "-e", f"HEAD:{yol}"],
+                           capture_output=True, stdin=subprocess.DEVNULL)
+        if r.returncode != 0:
+            continue  # ilk kayıt (HEAD'de yok / hiç commit yok)
+        eski_k, eski_i = cpn.kurallari_oku(_git(proj, "show", f"HEAD:{yol}").decode("utf-8", "replace"))
+        yeni_k, yeni_i = cpn.kurallari_oku(staged_icerik(proj, yol).decode("utf-8", "replace"))
+        fark = _naming_farki(eski_k, yeni_k)
+        eklenen_istisna = sorted(yeni_i - eski_i)
+        if eklenen_istisna:
+            fark.append(f"yeni istisna: {', '.join(eklenen_istisna)}")
+        if fark:
+            rapor.add("WARN", f"kural değişikliği: {yol} Naming/istisna değişti — " + " · ".join(fark)
+                      + " — kullanıcı onayı yoksa geri al: bir denetimi geçmek için kuralı genişletmek "
+                        "kuralı gevşetmektir (core/00-temel.md §3)")
+
+
 def kontrol_yerel_validatorler(proj: Path, dosyalar: list[str], rapor: Rapor) -> None:
     klasor = proj / VALIDATORS_LOCAL
     if not klasor.is_dir():
@@ -334,6 +377,7 @@ def main() -> int:
         sap = (proj / "sap-project.json").is_file()
         if sap:
             kontrol_paket_adlari(proj, dosyalar, rapor)
+            kontrol_kural_degisikligi(proj, dosyalar, rapor)
         kontrol_yerel_validatorler(proj, dosyalar, rapor)
         if sap:
             kontrol_sap_inceleme(proj, dosyalar, rapor)
@@ -354,6 +398,10 @@ def main() -> int:
     if fails:
         print("Düzelt ve tekrar commit et. Yanlış alarm ise kullanıcı kendi terminalinde karar verir "
               "(git commit --no-verify); aXet oturumu bu denetimi atlatmaz.")
+        # K-O① (2026-09-18): "düzelt" = İÇERİĞİ düzelt. Ölçülen vaka: model kuralı genişletip geçti.
+        print("HATIRLATMA: düzeltme = içeriği düzeltmek. Denetimi geçmek için kuralı / regex'i / "
+              "`.rules.md`'yi / validator'ı DEĞİŞTİRME — reddi ve sebebini kullanıcıya bildir; kural "
+              "değişikliği ayrı ve açık onay ister (core/00-temel.md §3).")
     return 1 if fails else 0
 
 

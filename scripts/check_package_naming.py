@@ -201,6 +201,10 @@ def denetle(proj: Path, files: list[str] | None = None, package: str | None = No
     return sonuc, None
 
 
+# K-O① (davranış testi 2026-09-18): FAIL alan model `.rules.md` Naming regex'ini kendi adını kapsayacak
+# şekilde genişletip sessizce geçti. Metin davranışı garanti etmez; FAIL anında hatırlatır.
+KURAL_HATIRLATMA = ("HATIRLATMA: bu denetimi geçmek için kuralı / regex'i / `.rules.md`'yi DEĞİŞTİRME — reddi ve sebebini kullanıcıya bildir; kural değişikliği ayrı ve açık onay ister (core/00-temel.md §3).")
+
 KAPSAM = ("KAPSAM — bakılanlar: obje tipi klasörlerindeki obje kaynak dosyalarının adı (.rules.md Naming regex'i + "
           "include türetme + program ≤ 26) · bakılmayanlar: SAP'deki gerçek obje adları, klasörü olmayan tipler "
           "(mesaj sınıfı, numara aralığı, geliştirme, kilit objesi), ui/ docs/ ref_docs/, obje dosyasının doğru "
@@ -220,6 +224,8 @@ def main() -> int:
         return 2
     for ihlal in sonuc.ihlaller:
         print(f"[FAIL] {ihlal}")
+    if sonuc.ihlaller:
+        print(KURAL_HATIRLATMA)
     print(KAPSAM)
     print(f"SONUÇ: {len(sonuc.ihlaller)} ihlal · {sonuc.paket_sayisi} paket · {sonuc.taranan} obje dosyası tarandı · "
           f"{sonuc.bakilmayan} dosya obje kaynağı değil (bakılmadı)")

@@ -67,6 +67,7 @@ class Kapi(unittest.TestCase):
     # ── 1. --list ────────────────────────────────────────────────────────────────────
     def test_01_list(self):
         data, _o, _e = self.kos("1 --list", ["--list"], rc=0)
+        self.assertNotIn("HATIRLATMA", _e, "K-O① kontrol grubu: başarılı çağrıda hatırlatma basılmaz")
         tools = {t["name"]: t for t in data["result"]["tools"]}
         okuma = sorted(n for n, t in tools.items() if t["class"] == "read")
         yazma = sorted(n for n, t in tools.items() if t["class"] == "write")
@@ -207,9 +208,11 @@ class Kapi(unittest.TestCase):
                  project=p, rc=2, code="ADR_0005_A")
         self.kos("6a adt_delete standart obje", ["adt_delete", "--args-json",
                  json.dumps({"name": "VBAK", "object_type": "tabl"}), *S1], project=p, rc=2, code="ADR_0005_A")
-        self.kos("6b transport'suz post_shell (Z paketi)", ["adt_post_shell", "--args-json",
-                 json.dumps({**post_shell_args(transport=""), "package": "ZAXET_PKG"}), *S1],
-                 project=p, rc=2, code="ADR_0005_C")
+        _d, _o, err = self.kos("6b transport'suz post_shell (Z paketi)", ["adt_post_shell", "--args-json",
+                               json.dumps({**post_shell_args(transport=""), "package": "ZAXET_PKG"}), *S1],
+                               project=p, rc=2, code="ADR_0005_C")
+        # K-O① (2026-09-18): kapı reddinde "kuralı değiştirme" hatırlatması YALNIZ stderr'e (stdout tek JSON)
+        self.assertIn("HATIRLATMA: kapı reddini aşmak için", err)
         # K-M (2026-09-18): `$TMP` TAM eşleşmede transport istenmez; benzer adlar istisna DEĞİL
         for paket in ("$TMPX", "$tmp", " $TMP"):
             self.kos(f"6b K-M − post_shell paket={paket!r}", ["adt_post_shell", "--args-json",
