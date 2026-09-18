@@ -93,7 +93,8 @@ class SahteKlon:
             with open(h, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(icerik)
 
-    def uret(self, sap: bool = False) -> "SahteKlon":
+    def uret(self, sap: bool = False, onceden: dict | None = None) -> "SahteKlon":
+        """onceden: new_project'ten ÖNCE projede duran dosyalar (rel -> içerik); aXet'in kendi yazdıkları gibi."""
         (self.home / "scripts").mkdir(parents=True)
         for ad in KOPYALANAN_SCRIPTLER:
             shutil.copy2(GERCEK_SCRIPTS / ad, self.home / "scripts" / ad)
@@ -107,6 +108,9 @@ class SahteKlon:
         g(self.home, "commit", "-q", "-m", "v1")
         self.proje.mkdir()
         g(self.proje, "init", "-q", "-b", "main")
+        for rel, icerik in (onceden or {}).items():
+            (self.proje / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.proje / rel).write_bytes(icerik.encode("utf-8"))
         r = self.t.calistir("new_project.py", str(self.proje), "--name", "PROJE",
                             *(["--sap"] if sap else []),
                             scripts_dir=self.home / "scripts")
@@ -228,6 +232,18 @@ class SurumKaydiTest(GeciciTest):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertFalse(self.f.kayit_yolu().exists(), self.cikti(r))
         self.assertIn("sürüm kaydı yazılmadı", self.cikti(r))
+
+    def test_axetin_kendi_gitignoreu_varken_kayit_YAZILIR(self):
+        """K-E: aXet klasörü açınca `.axet-code/.gitignore`'ı `*` ile kendisi yazar; bu, kullanıcı dosyası DEĞİLDİR."""
+        self.f.uret(onceden={".axet-code/.gitignore": "*\n"})
+        self.assertTrue(self.f.kayit_yolu().exists(),
+                        "aXet'in yazdığı `*` .gitignore'u 'proje zaten vardı' sayılmamalı")
+
+    def test_axet_gitignoreu_YANINDA_kullanici_dosyasi_varsa_kayit_YAZILMAZ(self):
+        """Negatif kontrol: aXet dosyasının yanında kullanıcının farklı bir proje dosyası varsa doğum bilinmiyor."""
+        self.f.uret(onceden={".axet-code/.gitignore": "*\n", "AGENTS.md": "# kullanicinin kendi AGENTS'i\n"})
+        self.assertFalse(self.f.kayit_yolu().exists(),
+                         "kullanıcı dosyası önceden varken doğum sürümü uydurulmamalı")
 
 
 # =====================================================================================================
