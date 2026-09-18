@@ -63,6 +63,13 @@ def yayin(etiket: str, *kalemler: dict, **ek) -> dict:
 
 
 class YayinTemeli(GeciciTest):
+    # Yayın aracı noreply olmayan kimlikle commit atmaz (yayın ⓐ) → akış testleri noreply kimlikle koşar.
+    NOREPLY = "test@users.noreply.github.com"
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.env = dict(self.env, GIT_AUTHOR_EMAIL=self.NOREPLY, GIT_COMMITTER_EMAIL=self.NOREPLY)
+
     def depo(self, yayinlar_verisi: dict | None = None, motor: bool = False, **dosyalar: str) -> Path:
         """Sahte template deposu: zorunlu dosyalar + yayın aracı (+ istenirse güncelleme motoru)."""
         d = self.tmp / "depo"
@@ -191,6 +198,29 @@ class YayinAkisiTest(YayinTemeli):
         hedef = self.tmp / hedef_ad
         r = self.arac(depo, "--hedef", str(hedef), "--ilk")
         return hedef, r
+
+    # --- yayın ⓐ: commit kimliği ---------------------------------------------------------------------------
+    def test_noreply_olmayan_kimlik_yayini_durdurur_hedef_bos_kalir(self):
+        d = self.depo(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        self.commitle(d)
+        kurumsal = "biri@" + "sirket.example"  # parçalı: yayın taraması bu dosyayı da tarar
+        self.env = dict(self.env, GIT_AUTHOR_EMAIL=kurumsal)  # committer noreply kalır: yazar TEK BAŞINA yeter
+        hedef, r = self.ilk_yayin(d)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("GIT_AUTHOR_IDENT: e-posta GitHub noreply adresi değil", c)
+        self.assertNotIn("GIT_COMMITTER_IDENT", c)
+        self.assertNotIn(kurumsal, c)  # kimlik izi çıktıya basılmaz
+        self.assertFalse((hedef / ".git").exists(), "kimlik reddinde depo kurulmamalı")
+        self.assertEqual([], list(hedef.iterdir()), "--ilk tekrar koşulabilsin diye hedef BOŞ kalmalı")
+
+    def test_committer_kimligi_de_denetlenir(self):
+        d = self.depo(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        self.commitle(d)
+        self.env = dict(self.env, GIT_COMMITTER_EMAIL="biri@" + "sirket.example")
+        hedef, r = self.ilk_yayin(d)
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        self.assertIn("GIT_COMMITTER_IDENT: e-posta GitHub noreply adresi değil", self.cikti(r))
 
     def test_ilk_yayin_commit_etiket_changelog_trailer(self):
         d = self.depo(yayinlar(yayin("v0.1.0",
