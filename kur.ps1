@@ -26,7 +26,8 @@ Kullanım (kur.cmd aynı parametreleri geçirir):
                                    (junction/symlink) konmamışsa: git böyle bir bağın içine girip oradaki dosyaları
                                    yedeğe alabilir. Onay: "SIFIRLA" yazılır (-Evet geçer).
   kur.cmd -Kaldir                  global config'ten bu klonun kayıtlarını kaldır; bu klonda açılmış SAP'ye yazma
-                                   iznini de KAPATIR (izin dosyasını siler). Klon klasörü SİLİNMEZ.
+                                   iznini de KAPATIR (izin dosyasını siler). Klon klasörü SİLİNMEZ. -Hedef
+                                   verilmezse kaldırılan klon, bu kur.cmd'nin bulunduğu klasördür.
   -Evet          soruları otomatik "evet" yanıtlar (otomatik testler için)
   -WingetKapali  winget'i hiç çağırmaz; eksik araç için yalnız tarif yazar (otomatik testler için)
 
@@ -671,6 +672,10 @@ try {
         Yaz '  Her değer parametre adıyla verilir. Klasör için: kur.cmd -Hedef "C:\klasör"'
         Bitir 1
     }
+    # -Kaldir'da -Hedef verilmediyse hedef BU betiğin klonudur: klonun içindeki kur.cmd -Kaldir, %USERPROFILE%\axet'i
+    # değil kendini kaldırmalı (K-B, ölçüldü 2026-09-18: başka klon denetlenip "klonu değil" diye durdu). Kur/güncelle
+    # akışının varsayılanı DEĞİŞMEZ: kur.cmd ilk kurulumda indirme klasöründen de çalışabilir, orası hedef olamaz.
+    if ($Kaldir -and -not $PSBoundParameters.ContainsKey('Hedef')) { $Hedef = $PSScriptRoot }
     # Ölçüldü: kur.cmd'ye tırnaklı ve sonu ters bölü ile biten bir yol verilince ("C:\c b\") Windows \" dizisini
     # kaçışlı tırnak sayar; sonraki bütün parametreler (-DenemeModu, -WingetKapali dahil) bu değerin içine düşer.
     foreach ($ciftAd in @(@('-Hedef', $Hedef), @('-Kaynak', $Kaynak))) {

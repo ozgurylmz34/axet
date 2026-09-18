@@ -425,6 +425,36 @@ class KurTest(GeciciTest):
         self.assertIn("SİLİNMEDİ", self.cikti(r))
         self.assertIn("SAP'ye yazma iznini de kapatır", self.cikti(r))
 
+    def klondaki_kur(self, *args: str, env: dict | None = None) -> subprocess.CompletedProcess:
+        """KURULU klonun KENDİ kur.cmd'sini -Hedef VERMEDEN çağırır (kur() -Hedef'i daima ekler, bu yolu göremez)."""
+        return subprocess.run([COMSPEC, "/c", "call", str(self.hedef / "kur.cmd"), *args, "-WingetKapali"],
+                              env=env or self.env, cwd=str(self.tmp), capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, timeout=600)
+
+    # --- K-B: klonun içindeki kur.cmd -Kaldir KENDİ klonunu kaldırır ---------------------------------------------
+    def test_kaldir_hedefsiz_betigin_kendi_klonunu_kaldirir(self):
+        self.kurulu()
+        ev = self.tmp / "ev"  # %USERPROFILE%\axet YOK: eski davranış orayı denetleyip "klonu değil" diye dururdu
+        ev.mkdir()
+        r = self.klondaki_kur("-Kaldir", env=dict(self.env, USERPROFILE=str(ev)))
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn(f"Klon   : {self.hedef}", c)
+        self.assertNotIn("template'inin klonu değil", c)
+        metin = json.dumps(self.cfg_oku()).lower()
+        self.assertNotIn(self.hedef.as_posix().lower(), metin)
+
+    def test_kaldir_acik_hedef_betik_konumunu_ezmez(self):
+        # Negatif kontrol: -Hedef açıkça verilirse betiğin konumu kullanılmaz (verilen klasör denetlenir).
+        self.kurulu()
+        yabanci = self.tmp / "baska-klasor"
+        yabanci.mkdir()
+        r = self.klondaki_kur("-Kaldir", "-Hedef", str(yabanci))
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("template'inin klonu değil", c)
+        self.assertIn(self.hedef.as_posix(), json.dumps(self.cfg_oku()))  # kendi kaydı yerinde
+
     # --- K-A: adsız argüman sessizce -Hedef olmaz ----------------------------------------------------------------
     def test_adsiz_arguman_reddedilir_hicbir_sey_olusmaz(self):
         adsiz = self.tmp / "adsiz-hedef"
