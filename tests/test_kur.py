@@ -1526,35 +1526,30 @@ class KurTest(GeciciTest):
         self.assertIn("kur.cmd -Sifirla", metin)
 
     # --- statik: tüketici-yüzü depo işaretçileri ----------------------------------------------------------------
-    def test_tuketici_isaretcileri_gercek_depoyu_gosterir(self):
-        """Kurulum yolundaki her GitHub işaretçisi var olan depoya (`ozgurylmz34/axet`) gitmeli.
+    def test_tuketici_isaretcileri_public_depoyu_gosterir(self):
+        """Kurulum yolundaki her GitHub işaretçisi PUBLIC yayın deposuna (`ozgurylmz34/axet-template`) gitmeli.
 
-        `axet-template` ileride açılacak PUBLIC yayın hedefinin adıdır ve yalnız `maintenance/yayin_hazirla.py`
-        içindeki push tarifinde geçer — tüketicinin izlediği hiçbir yolda geçmemelidir, yoksa kurulum var
-        olmayan bir adrese gider."""
+        Kullanıcı kararı (2026-09-18): kurulum public depodan yapılır. `ozgurylmz34/axet` PRIVATE geliştirme
+        deposudur; tüketicinin izlediği bir yolda kalırsa yetkisiz hesap 404 alır ve kurulum başlamaz.
+        Sayım alt sınırı testin kör kalmasını önler (işaretçiler silinirse NotIn tek başına yeşil kalırdı)."""
         dosyalar = {"README.md": "utf-8", "kur.ps1": "utf-8-sig", "docs/onboarding.md": "utf-8"}
         toplam = 0
         for yol, kodlama in dosyalar.items():
             metin = (AXET_HOME / yol).read_text(encoding=kodlama)
-            self.assertNotIn("ozgurylmz34/axet-template", metin,
-                             f"{yol}: tüketici-yüzü işaretçi henüz açılmamış depoyu gösteriyor")
-            toplam += metin.count("ozgurylmz34/axet")
+            eski = re.findall(r"ozgurylmz34/axet(?!-template)", metin)
+            self.assertEqual([], eski, f"{yol}: tüketici-yüzü işaretçi PRIVATE geliştirme deposunu gösteriyor")
+            toplam += metin.count("ozgurylmz34/axet-template")
         self.assertGreaterEqual(toplam, 5, "işaretçiler kayboldu — test kör kaldı")
         # kur.ps1'in klonladığı varsayılan kaynak
         ps1 = KUR_PS1.read_text(encoding="utf-8-sig")
-        self.assertIn("$Kaynak = 'https://github.com/ozgurylmz34/axet.git'", ps1)
+        self.assertIn("$Kaynak = 'https://github.com/ozgurylmz34/axet-template.git'", ps1)
 
-    def test_readme_ve_onboarding_private_notu_tasir(self):
-        """Depo private olduğu sürece tek satır kurulum 404 alabilir; belge bunu SÖYLEMELİ (yanıltıcı olmasın).
-
-        Üç unsurun üçü de aranır: ① deponun private OLDUĞU ② erişim YETKİSİ gerektiği ③ yetkisiz hesapta
-        ne görüleceği (404). Yalnız "private" sözcüğünü aramak yetmez — sözcük notun gövdesinde de geçtiği
-        için başlığı silen bir düzenleme fark edilmeden geçerdi (mutasyonla ölçüldü 2026-09-17)."""
+    def test_readme_ve_onboarding_private_notu_tasimaz(self):
+        """Depo public olduktan sonra "private / yetki gerekir / 404" notu YANILTICIDIR ve belgede kalmamalı."""
         for yol, kodlama in (("README.md", "utf-8"), ("docs/onboarding.md", "utf-8")):
             metin = (AXET_HOME / yol).read_text(encoding=kodlama)
-            self.assertIn("Depo şu an private", metin, f"{yol}: deponun private olduğu açıkça yazılmamış")
-            self.assertIn("yetki", metin, f"{yol}: erişim yetkisi gerektiği yazılmamış")
-            self.assertIn("404", metin, f"{yol}: yetkisiz hesapta ne olacağı (404) anlatılmamış")
+            self.assertNotIn("Depo şu an private", metin, f"{yol}: bayat private notu duruyor")
+            self.assertNotIn("private dönemde", metin, f"{yol}: bayat private notu duruyor")
 
 
 if __name__ == "__main__":

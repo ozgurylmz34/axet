@@ -37,15 +37,10 @@ Kurulum biçimi: `python -m pip install --user <paket>`.
 
 ## 1. Kurulum
 
-> **Depo şu an private.** Bu komutun çalışması için `github.com/ozgurylmz34/axet` deposuna okuma yetkin
-> olmalı; yetkisi olmayan bir hesapta GitHub depoyu 404 gösterir ve indirme başarısız olur. Yetkin olduğu
-> hâlde 404 alıyorsan klonu elle al — `git clone https://github.com/ozgurylmz34/axet.git $HOME\axet`
-> (git GitHub kimliğini sorar) — sonra `& $HOME\axet\kur.cmd` çalıştır. Public sürüm yayın anında açılacaktır.
-
 PowerShell'i aç ve şu satırı yapıştır:
 
 ```powershell
-$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
+$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
 ```
 
 Kurulum aracının yaptıkları:

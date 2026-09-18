@@ -35,7 +35,7 @@ Kullanım (kur.cmd aynı parametreleri geçirir):
 [CmdletBinding()]
 param(
     [string]$Hedef = (Join-Path $env:USERPROFILE 'axet'),
-    [string]$Kaynak = 'https://github.com/ozgurylmz34/axet.git',
+    [string]$Kaynak = 'https://github.com/ozgurylmz34/axet-template.git',
     [switch]$Kaldir,
     [switch]$Sifirla,
     [switch]$DenemeModu,
