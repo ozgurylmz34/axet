@@ -12,6 +12,10 @@
   5. Şema: zorunlu alanlar, etkin/risk değer kümesi, tekil sınıf adı, tanımlı ust_sinif.
   6. TASARIM §3 sınır kararları uygulanmıştır (_gate_status.py, check_package_naming.py).
   7. Denetimin KENDİSİ boş değildir: sentetik bozuk girdilerde gerçekten FAIL verir (negatif test).
+  8. EVRENİN KENDİSİ: `evren()` çıktısı, BAĞIMSIZ koşulan `git ls-files` çıktısına küme olarak EŞİTTİR
+     (1-7'nin hepsi evrenin üzerinde ölçülür; evren sessizce daralırsa hepsi "0 sorun" der).
+  9. `--izlenmeyenler-de` (geniş) kolu izlenen evrenin ÖZ ÜST KÜMESİDİR — test ayırt edici girdiyi
+     KENDİ üretir (geçici izlenmeyen "sonda" dosyası), yoksa temiz ağaçta koşulsuz yeşil olurdu.
 
 KAPSAM — bakılmayanlar: `test.komut`'ların gerçekten koştuğu (yalnız yol varlığı ölçülür) ·
 `yukleme` metinlerinin doğruluğu · `risk`/`kritik_yol` yargısının isabeti · dosya içeriği.
@@ -20,8 +24,11 @@ from __future__ import annotations
 
 import copy
 import fnmatch
+import os
+import subprocess
 import sys
 import unittest
+import uuid
 from pathlib import Path
 
 AXET_HOME = Path(__file__).resolve().parents[1]
@@ -56,6 +63,20 @@ def s3_tablo_adlari() -> list[str]:
     return adlar
 
 
+def bagimsiz_git_yollari(*argv: str) -> set[str]:
+    """`git ls-files`i DOĞRUDAN çalıştırır — `siniflandir.evren()` üzerinden DEĞİL.
+
+    İki bağımsızlık kuralı (ikisi de zorunlu, yoksa ölçüm kendini kanıtlar):
+      · Çıktı `evren()`den okunmaz; ayrı bir subprocess'ten gelir.
+      · Komut burada ELLE yazılır, `siniflandir.EVREN_KOMUTU`dan OKUNMAZ — okunsaydı komuta eklenen bir
+        dışlama pathspec'i karşılaştırmanın İKİ tarafına birden yansır ve daralma yine görünmez olurdu.
+    """
+    c = subprocess.run(["git", *argv], cwd=AXET_HOME, capture_output=True, text=True, encoding="utf-8")
+    if c.returncode != 0:
+        raise AssertionError(f"git {' '.join(argv)} rc={c.returncode}: {(c.stderr or '').strip()}")
+    return {s.strip() for s in c.stdout.splitlines() if s.strip()}
+
+
 class HaritaTemelTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -65,6 +86,81 @@ class HaritaTemelTest(unittest.TestCase):
     def test_evren_bos_degil(self) -> None:
         self.assertGreater(len(self.yollar), 100,
                            "git evren komutu beklenenden az dosya döndürdü — ölçüm geçersiz")
+
+    def test_evren_git_ls_files_ciktisiyla_birebir_esit(self) -> None:
+        """Evren = `git ls-files` (KÜME OLARAK EŞİT) — "yeterince çok dosya var" DEĞİL.
+
+        Neden: bu modülün tüm değişmezleri (1-7) `evren()` NE DÖNERSE onun üzerinde ölçülür; evren
+        sessizce daralırsa denetim "0 sorun", takım da yeşil der — ikna edici ama YANLIŞ bir çıktı.
+        Mutasyon denetimi Z6/B2 bunu ölçtü: `EVREN_KOMUTU`ya `':(exclude)LICENSES/*'` eklenince evren
+        443 -> 442 düştü, denetim "SONUÇ: 0 sorun" verdi ve 21 testin hiçbiri kırılmadı; aynısı
+        `':(exclude)skills-sap/sap-adt-foundation/references/*'` ile (443 -> 438) tekrarlandı.
+        Tek doğrudan güvence `assertGreater(len, 100)` idi: 342 dosya kaybolsa bile yeşil kalıyordu.
+        Eşiği büyütmek çözüm DEĞİLDİR — sayı bayatlar ve kavramsal olarak yanlış şeyi ölçer; ölçülmesi
+        gereken, evrenin git index'ine EŞİT olduğudur (modül docstring'inin iddiası da budur)."""
+        self.assertEqual(bagimsiz_git_yollari("ls-files"), set(self.yollar),
+                         "evren() git index'ine eşit değil — EVREN_KOMUTU daraltılmış/genişletilmiş olabilir")
+
+    def test_evren_genis_kolu_izlenenlerin_ust_kumesi(self) -> None:
+        """`--izlenmeyenler-de` kolu (`EVREN_KOMUTU_GENIS`): izlenen evrenin ÖZ ÜST KÜMESİ ve kendi
+        git komutuyla aynı.
+
+        AYIRT EDİCİ GİRDİYİ TEST KENDİ ÜRETİR (bug gate 2026-09-18, MEDIUM). Eski hâli temiz bir
+        çalışma ağacında KOŞULSUZ yeşildi: `git ls-files --others --exclude-standard` 0 satır
+        döndüğü için izlenen küme (481) = geniş küme (481) oluyor ve üç assertion da "boş küme =
+        boş küme" hâline düşüyordu. Ölçülen mutasyon (V9): `siniflandir.py:61`
+        `komut = EVREN_KOMUTU_GENIS if izlenmeyenler else EVREN_KOMUTU` → `komut = EVREN_KOMUTU`,
+        yani bayrak TÜMDEN no-op → `-k guncelle_harita` yine rc=0 / 30 test / 0 failure verdi
+        (MUTANT SAĞ KALDI). Bayrağın ilan edilen amacı commit ÖNCESİ sınıfsız dosyayı yakalamaktır
+        (`siniflandir.py:23` ve `:42`); sessizce ölürse CI'nin temiz checkout'unda hiç görülmez.
+        Bu yüzden test repo ağacının İÇİNDE geçici, `.gitignore`'lanmamış bir izlenmeyen dosya
+        ("sonda") yaratır ve `finally` ile kesin siler. Kalibrasyon: sondanın git'in kendi
+        `--others --exclude-standard` çıktısında GÖRÜNDÜĞÜ ölçülür — görünmüyorsa ölçüm
+        geçersizdir ve test sessizce geçmek yerine FAIL eder.
+
+        Yarış-güvenli: izlenmeyen dosyalar ölçüm sırasında doğabilir/silinebilir (paralel testler),
+        bu yüzden bağımsız komut ÖNCE ve SONRA koşulur; kesişim = ölçüm boyunca kararlı kalan
+        yollar ve yalnız o küme zorunlu tutulur. Dışlama pathspec'i eklenmesi (izlenen dosya
+        düşer) her iki yönde de yakalanır."""
+        izlenen = set(self.yollar)
+        # Ad hem tekil (paralel koşum/başka ajan çakışmasın) hem .gitignore'a takılmayacak biçimde:
+        # .gitignore'daki hiçbir desen (`.conn*`, `*.env`, `*.bak-*`, `__pycache__/`, `*.pyc`,
+        # sabit kök yolları) bu adı elemiyor — kalibrasyon assertion'ı bunu ayrıca ÖLÇER.
+        sonda_adi = f".z6-gecici-izlenmeyen-{os.getpid()}-{uuid.uuid4().hex[:8]}.tmp"
+        sonda = AXET_HOME / sonda_adi
+        self.assertFalse(sonda.exists(), f"sonda adı zaten var, ölçüm güvenli değil: {sonda_adi}")
+        sonda.write_text("gecici olcum sondasi — testin finally blogunda silinir\n", encoding="utf-8")
+        try:
+            onceki = bagimsiz_git_yollari("ls-files", "--cached", "--others", "--exclude-standard")
+            genis = set(siniflandir.evren(AXET_HOME, izlenmeyenler=True))
+            sonraki = bagimsiz_git_yollari("ls-files", "--cached", "--others", "--exclude-standard")
+
+            # 0 — KALİBRASYON: ayırt edici girdi gerçekten oluştu mu? (yoksa test kör kalır)
+            self.assertIn(sonda_adi, onceki & sonraki,
+                          f"sonda git'in --others --exclude-standard çıktısında GÖRÜNMÜYOR "
+                          f"({sonda_adi}) — .gitignore'a takılmış olabilir; bu testin ayırt edici "
+                          f"girdisi YOK demektir, sonuç 'temiz' DEĞİL ÖLÇÜLEMEDİ'dir")
+            self.assertNotIn(sonda_adi, izlenen,
+                             f"sonda izlenen evrene girmiş ({sonda_adi}) — izlenen/izlenmeyen "
+                             f"ayrımı ölçülemez")
+
+            # 1 — AYIRT EDİCİ: geniş kol izlenmeyeni GERÇEKTEN katıyor (V9'u öldüren assertion)
+            self.assertIn(sonda_adi, genis - izlenen,
+                          f"geniş evren izlenmeyen dosyayı katmadı ({sonda_adi}) — "
+                          f"`--izlenmeyenler-de` kolu izlenen komutu kullanıyor olabilir "
+                          f"(EVREN_KOMUTU_GENIS seçimi no-op mu?)")
+
+            # 2 — üst küme ve git ile iki yönlü eşlik
+            self.assertEqual(set(), izlenen - genis,
+                             f"izlenen dosya geniş evrenden düştü: {sorted(izlenen - genis)[:10]}")
+            kararli = onceki & sonraki
+            self.assertEqual(set(), kararli - genis,
+                             f"geniş evren git'in verdiği kararlı yolları kapsamıyor: {sorted(kararli - genis)[:10]}")
+            self.assertEqual(set(), genis - (onceki | sonraki),
+                             f"geniş evrende git'in hiç vermediği yol var: {sorted(genis - (onceki | sonraki))[:10]}")
+        finally:
+            sonda.unlink(missing_ok=True)
+        self.assertFalse(sonda.exists(), f"sonda silinemedi, çalışma ağacı kirli kaldı: {sonda_adi}")
 
     def test_denetim_temiz(self) -> None:
         """Haritanın tüm değişmezleri tek seferde: sorun listesi BOŞ olmalı."""
