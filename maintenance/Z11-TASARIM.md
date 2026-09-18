@@ -1,3 +1,60 @@
+> # ⚠ SÜRÜM 2 — PRIOR-ART DÜZELTMESİ (2026-09-18, aynı gün)
+>
+> **Sürüm 1 core'un mevcut mutasyon altyapısını görmeden yazıldı ve bir bölümünü yeniden
+> icat ediyordu.** Düzeltme aşağıda; §2 ve §5 buna göre okunmalı.
+>
+> **Ölçülen prior-art (core):**
+> - `core/tests/fixtures/` — **133 fixture'ın 56'sı `--mutasyon` kipli**.
+> - `core/tests/run_battery.py` — **paylaşılan batarya koşucusu** (taban + tüm mutasyon
+>   kipleri, tek turda). Başlığında **`⛔ Bu bir KAPI DEĞİLDİR`** yazıyor: §10'da
+>   "keşfettiğim" gate-değil sözleşmesi **zaten core'un konvansiyonu**.
+> - `taban_karari()` / `mutasyon_karari()` — **hüküm fonksiyonları**. §5'te tasarladığım
+>   hüküm sözlüğünün muadili core'da **zaten var**.
+> - ⭐ **En önemlisi — core gerekçeyi KORPUS ÜZERİNDE ÖLÇMÜŞ:**
+>   *"'mutasyon exit!=0 vermeli' naif kuralı canlı korpusta **33 kipin 15'inde SAHTE-FAIL**"*
+>   ⇒ §5'in "ikili sözlük sahte güvenin kaynağıdır" iddiası benim çıkarımım değil,
+>   **core'un ölçümüdür**. Kanıt bana ait değil; ona ait.
+> - Core'un mutasyon **modeli** farklı ve bazı yönlerden daha sağlam: mutasyon bir metin
+>   değiştirme değil, **kusurun CANLI olduğu sabit bir SHA'dan** eski sürümü yüklemek ⇒
+>   mutasyon **no-op olamaz** (D4'ün yapısal çözümü) ve **yeniden üretilebilir**.
+>   Üstelik hareketli ref tuzağı da çözülmüş: *"`--ref`e DAL ADI VERME… korpus ayırt
+>   etmiyormuş gibi görünür, **HATA VERMEDEN**"* + bunu yakalayan **taban öz-denetimi (exit 2)**.
+>
+> **İKİ MODEL RAKİP DEĞİL — FARKLI SORU SORUYOR:**
+>
+> | | Core'un batarya modeli | Z11'in ihtiyacı |
+> |---|---|---|
+> | Soru | *"Korpus **tarihsel kusuru** ayırt ediyor mu?"* | *"Test **bu kuralı** koruyor mu?"* |
+> | Mutasyon | sabit SHA'dan eski sürüm | çapa ile kural kaldırma |
+> | Ön koşul | **kusurun bir kez yaşanmış olması** | yok — hiç bozulmamış kural da ölçülebilir |
+> | Dayanıklılık | yüksek (no-op imkânsız) | çapa doğrulaması gerektirir (D4/D5) |
+>
+> Core'un modeli **hiç bozulmamış bir kuralı ölçemez** (SHA yok). Z11'in modeli o boşluğu
+> doldurur. ⇒ Z11 **core'un yerine geçmez, eksiğini tamamlar**.
+>
+> **SÜRÜM 2'DE DEĞİŞENLER (core'dan devralınanlar — icat değil, uyarlama):**
+> 1. **Hüküm sözlüğü core'un ölçümüne dayandırılır** (33/15 sahte-FAIL), benim çıkarımıma değil.
+> 2. **Taban öz-denetimi ZORUNLU** — ölçüm referansı kaydıysa `exit 2` ile dur. Core'un
+>    `--ref` dersinin aXet karşılığı: kampanyanın taban commit'i beklenenden farklıysa DUR.
+> 3. **Bağlam ekonomisi:** ham çıktılar `.tmp/` altına, ekrana **yalnız özet tablo**
+>    (core: `OZET_SATIR_BUTCESI = 22`). Sürüm 1'de bu yoktu; rapor şişmesinin çaresi bu.
+> 4. **Kip/kampanya keşfi `--help`'e GÜVENMEZ** — kaynaktan türetilir (core'un üç katmanlı
+>    keşfi 90 koşuculuk korpusa karşı ölçülmüş: "0 hayalet").
+> 5. **Mutasyonun ikinci türü eklenir:** kusurun yaşandığı bir SHA varsa, çapa yerine
+>    **SHA-tabanlı mutasyon** tercih edilir (daha dayanıklı). Çapa yalnız SHA yokken.
+>
+> **AÇIK SORU (kullanıcı/sahip kararı):** `run_battery.py` aXet'e **doğrudan** koşulamaz —
+> core'un fixture mimarisine bağlı, aXet'te ise düz `unittest` modülleri var. İki yol:
+> ⓐ aXet kendi koşucularına `--mutasyon` kipleri ekleyip core'un konvansiyonuna geçsin
+> (büyük, mimari değişiklik) ⓑ Z11 dar kapsamlı kalsın, core'un **hüküm disiplinini**
+> devralsın (küçük). **Öneri: ⓑ** — ⓐ ayrı ve büyük bir karardır, bu turda yapılmaz.
+>
+> ⚠ **ÖLÇÜLMEDİ:** `run_battery.py`'nin aXet'e uyarlanabilirliği fiilen denenmedi; yukarıdaki
+> "doğrudan koşulamaz" hükmü **kod okumasına** dayanıyor (fixture düzeni ↔ unittest modülü).
+
+
+---
+
 # Z11 — `maintenance/mutasyon_kos.py` TASARIMI
 
 > **Bir cümle:** Bir testin *koruduğunu iddia ettiği kuralı gerçekten koruyup
