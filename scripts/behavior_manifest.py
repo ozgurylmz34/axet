@@ -16,6 +16,8 @@ TEMPLATE modu (dizin template reposuysa ya da --template):
              (tests/ ve __pycache__ hariç)
   onay     : git. Commit edilmemiş değişiklik ve upstream'e gitmemiş commit'lerdeki yüzey dosyaları sapmadır.
              Manifest tutulmaz (her `git pull` onay istemesin); `generate` bu modda reddedilir.
+             İSTİSNA (Z5): `%guncelle`'nin kendi kimliğiyle attığı commit'ler sapma SAYILMAZ, bilgi olarak
+             listelenir — klon push edilmediği için bunlar hiçbir zaman upstream'e gitmez (temizlenemez uyarı).
 
 Hash satır sonu normalize edilerek alınır (CRLF↔LF farkı davranış taşımaz).
 Kullanım:
@@ -40,6 +42,11 @@ PROJE_DIZINLER = [".githooks", "validators-local", ".axet-code/skills", ".axet-c
 TEMPLATE_DOSYALAR = ["AGENTS.md", ".axetcode-denylist", "config/permissions.json"]
 TEMPLATE_DIZINLER = ["core", "skills", "skills-sap"]
 BUDANAN = {"__pycache__", ".pytest_cache", "tests", "node_modules", ".git"}
+# `%guncelle` akışının git kimliği ve anlık-commit konusu. KOPYADIR — kaynak: scripts/guncelle.py:51 (GIT_KIMLIK)
+# ve :1456 (anlık commit mesajı). Eşliği tests/test_behavior_manifest.py::test_guncelle_kimligi_kaynakla_es pinler.
+# guncelle.py buradan import EDİLMEZ: o modül ağır ve bu dosya doctor'ın sıcak yolunda.
+GUNCELLE_EPOSTA = "guncelle@yerel"
+GUNCELLE_ANLIK_ONEKI = "guncelle: yerel anlık"
 
 
 def _hash(p: Path) -> str:
@@ -153,16 +160,63 @@ def _yuzeyde_mi(rel: str) -> bool:
     return parcalar[0] in TEMPLATE_DIZINLER and not (set(parcalar) & BUDANAN) and not rel.endswith(".pyc")
 
 
-def template_denetle(kok: Path = AXET_HOME) -> tuple[str, list[str]]:
-    """('es'|'sapma'|'olculemedi', satırlar). Git'e göre: commit'siz + upstream'e gitmemiş yüzey değişiklikleri."""
+def _commit_sahipleri(kok: Path) -> tuple[set[str], set[str], set[str], str]:
+    """`@{u}..HEAD` commit'lerindeki yüzey dosyalarını YAZARA göre ayırır.
+
+    Dönüş: (anlik, uygulama, kullanici, not). `%guncelle` iki tür commit atar ve ikisi de kendi git
+    kimliğini kullanır (`scripts/guncelle.py:51` GIT_KIMLIK); konusu onları birbirinden ayırır:
+      · `guncelle: yerel anlık <tarih>` (`guncelle.py:1456`) → KULLANICININ commit'siz değişikliklerini saklayan anlık commit
+      · `guncelle: <etiket> kalemler …`  (`guncelle.py:1331`) → template güncellemesinin uygulanması
+    Not dolu dönerse ölçüm yapılamamıştır; çağıran her şeyi 'kullanici' saymalıdır (temkinli taraf).
+    """
+    anlik: set[str] = set()
+    uygulama: set[str] = set()
+    kullanici: set[str] = set()
+    # %x00 sentinel: dosya adları NUL içeremez → commit başlığı ile dosya satırı karışmaz.
+    # --no-merges: merge commit'leri --name-only ile diff üretmez; atfedilemeyen dosya çağırana 'kullanici' olarak döner.
+    rc, log = _git(kok, "log", "--no-merges", "--format=%x00%ae%x00%s", "--name-only", "@{u}..HEAD", "--",
+                   *TEMPLATE_DOSYALAR, *TEMPLATE_DIZINLER)
+    if rc:
+        return anlik, uygulama, kullanici, "commit yazarları okunamadı — sapma sınıfı ÖLÇÜLEMEDİ, tümü kullanıcı sayıldı"
+    aktif: set[str] | None = None
+    for satir in log.splitlines():
+        if satir.startswith("\0"):
+            parcalar = satir.split("\0")
+            eposta = parcalar[1].strip() if len(parcalar) > 1 else ""
+            konu = parcalar[2] if len(parcalar) > 2 else ""
+            if eposta == GUNCELLE_EPOSTA:
+                aktif = anlik if konu.startswith(GUNCELLE_ANLIK_ONEKI) else uygulama
+            else:
+                aktif = kullanici
+        elif satir.strip() and aktif is not None:
+            aktif.add(satir.strip())
+    return anlik, uygulama, kullanici, ""
+
+
+def template_sinifla(kok: Path = AXET_HOME) -> dict:
+    """Template davranış yüzeyi denetimi, sapma SINIFLARINA ayrılmış (Z5).
+
+    Dönüş: {"durum": 'es'|'sapma'|'olculemedi', "kullanici": [satır], "guncelle_anlik": [yol],
+            "guncelle_uygulama": [yol], "notlar": [satır]}.
+
+    `durum` YALNIZ "kullanici" doluysa 'sapma'dır. Gerekçe: `%guncelle` yerel commit atar ve klon
+    hiçbir zaman `origin`'e push edilmez (motor `origin/main`'den geçici kopyaya çekilir) → bu
+    commit'ler YAPISAL olarak "upstream'de yok" kalır. Her oturumda temizlenemeyecek bir uyarı
+    basmak, uyarının tamamını değersizleştirir; bu yüzden bilgi satırına iner (bkz. doctor).
+    ⚠ ÖLÇÜLEN SINIR: ayrım commit'i KİMİN ATTIĞINA bakar, içeriği kimin YAZDIĞINA değil. `guncelle:
+    yerel anlık` commit'inin İÇERİĞİ kullanıcınındır; bu yüzden ayrı bir sınıfta tutulur ve raporda
+    ayrı ifade edilir, `guncelle_uygulama` ile aynı torbaya konmaz.
+    """
+    o: dict = {"durum": "olculemedi", "kullanici": [], "guncelle_anlik": [], "guncelle_uygulama": [], "notlar": []}
     rc, _ = _git(kok, "rev-parse", "--is-inside-work-tree")
     if rc:
-        return "olculemedi", [f"{kok} git reposu değil — template davranış yüzeyi ÖLÇÜLEMEDİ"]
+        o["notlar"] = [f"{kok} git reposu değil — template davranış yüzeyi ÖLÇÜLEMEDİ"]
+        return o
     rc, st = _git(kok, "status", "--porcelain", "-z", "--untracked-files=all", "--",
                   *TEMPLATE_DOSYALAR, *TEMPLATE_DIZINLER)
     if rc:
-        return "olculemedi", ["git status çalışmadı — template davranış yüzeyi ÖLÇÜLEMEDİ"]
-    satirlar, notlar = [], []
+        o["notlar"] = ["git status çalışmadı — template davranış yüzeyi ÖLÇÜLEMEDİ"]
+        return o
     girdiler = [g for g in st.split("\0") if g]
     i = 0
     while i < len(girdiler):
@@ -171,20 +225,43 @@ def template_denetle(kok: Path = AXET_HOME) -> tuple[str, list[str]]:
         if kod[0] in "RC":  # yeniden adlandırmada kaynak yol ayrı girdi olarak gelir
             i += 1
         if _yuzeyde_mi(rel):
-            satirlar.append(("KAYITSIZ yeni dosya (commit'siz)" if kod == "??" else f"commit edilmemiş değişiklik [{kod.strip()}]")
-                            + f": {rel}")
+            # Çalışma ağacı DAİMA kullanıcının: %guncelle işini commit'ler, commit'siz bırakmaz.
+            o["kullanici"].append(("KAYITSIZ yeni dosya (commit'siz)" if kod == "??" else f"commit edilmemiş değişiklik [{kod.strip()}]")
+                                  + f": {rel}")
         i += 1
     rc, ust = _git(kok, "rev-parse", "--abbrev-ref", "@{u}")
     if rc:
-        notlar.append("upstream tanımlı değil — upstream'e gitmemiş commit'ler ÖLÇÜLEMEDİ")
+        o["notlar"].append("upstream tanımlı değil — upstream'e gitmemiş commit'ler ÖLÇÜLEMEDİ")
     else:
         rc, fark = _git(kok, "diff", "--name-only", "@{u}...HEAD", "--", *TEMPLATE_DOSYALAR, *TEMPLATE_DIZINLER)
         if rc:
-            notlar.append("upstream farkı alınamadı — ÖLÇÜLEMEDİ")
+            o["notlar"].append("upstream farkı alınamadı — ÖLÇÜLEMEDİ")
         else:
-            satirlar += [f"upstream'de ({ust.strip()}) olmayan yerel commit'te: {r}"
-                         for r in fark.splitlines() if r.strip() and _yuzeyde_mi(r.strip())]
-    return ("sapma" if satirlar else "es"), satirlar + notlar
+            tum = sorted({r.strip() for r in fark.splitlines() if r.strip() and _yuzeyde_mi(r.strip())})
+            anlik, uygulama, kul_c, uyari = _commit_sahipleri(kok)
+            if uyari:
+                o["notlar"].append(uyari)
+            for r in tum:
+                if r in kul_c or (r not in anlik and r not in uygulama):
+                    # atfedilemeyen (merge commit'i, ölçüm hatası) → temkinli taraf: kullanıcı
+                    o["kullanici"].append(f"upstream'de ({ust.strip()}) olmayan yerel commit'te: {r}")
+                elif r in anlik:
+                    o["guncelle_anlik"].append(r)
+                else:
+                    o["guncelle_uygulama"].append(r)
+    o["durum"] = "sapma" if o["kullanici"] else "es"
+    return o
+
+
+def template_denetle(kok: Path = AXET_HOME) -> tuple[str, list[str]]:
+    """('es'|'sapma'|'olculemedi', satırlar) — `template_sinifla`'nın 2'li geriye uyumlu sarmalayıcısı."""
+    o = template_sinifla(kok)
+    if o["durum"] == "olculemedi":
+        return o["durum"], o["notlar"]
+    return o["durum"], (o["kullanici"]
+                        + [f"%guncelle anlık commit'inde (kullanıcı içeriği): {r}" for r in o["guncelle_anlik"]]
+                        + [f"%guncelle'nin uyguladığı güncellemede: {r}" for r in o["guncelle_uygulama"]]
+                        + o["notlar"])
 
 
 def _template_mi(proj: Path, zorla: bool) -> bool:
@@ -205,12 +282,22 @@ def main() -> int:
             print("HATA: template modunda manifest yok — onay git'tir (commit + upstream). "
                   "Proje yüzeyini onaylamak için proje kökünde çalıştır.")
             return 2
-        durum, satirlar = template_denetle(AXET_HOME)
+        o = template_sinifla(AXET_HOME)
+        durum = o["durum"]
         print(f"[{'OK' if durum == 'es' else 'SAPMA' if durum == 'sapma' else 'ÖLÇÜLEMEDİ'}] template davranış yüzeyi · {AXET_HOME}")
-        for s in satirlar:
+        for s in o["kullanici"]:
+            print(f"   ! {s}")
+        for r in o["guncelle_anlik"]:
+            print(f"   i %guncelle anlık commit'inde (İÇERİK KULLANICININ, commit `%guncelle`'nin): {r}")
+        for r in o["guncelle_uygulama"]:
+            print(f"   i %guncelle'nin uyguladığı template güncellemesinde: {r}")
+        for s in o["notlar"]:
             print(f"   {s}")
         print("KAPSAM — bakılanlar: git'e göre commit'siz ve upstream'e gitmemiş yüzey dosyaları · bakılmayanlar: "
-              "commit'lenmiş değişikliğin içeriği (onay git geçmişidir), memory/ scripts/ templates/")
+              "commit'lenmiş değişikliğin içeriği (onay git geçmişidir), memory/ scripts/ templates/ · "
+              f"'{GUNCELLE_EPOSTA}' kimliğiyle atılmış commit'ler sapma SAYILMAZ (yapısal olarak upstream'e gitmez) — "
+              "kimlik taklit edilebilir, bu bir güvenlik sınırı DEĞİL, gürültü ayıklamasıdır · "
+              "merge commit'leriyle gelen dosyalar atfedilemez ve temkinli olarak kullanıcı sayılır")
         return 0 if durum == "es" else 1
 
     if args.komut == "generate":

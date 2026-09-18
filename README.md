@@ -14,7 +14,7 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 | Proje talimatı | proje kökünde `AGENTS.md` | aXet otomatik yükler |
 | Skills | `skills/` (+ SAP: `skills-sap/`) | global `skills_paths`, `%ad` ile çağrı |
 | Auto-memory | `memory/` (ekip) + `<proje>/.axet-code/memory/` (proje), `%remember` | `context_paths` ile yüklenen indeksler |
-| Hook/guard ile engelleme | `config/permissions.json` deny kuralları + merkezi klonun yazma koruması + `.axetcode-denylist` | aXet izin kuralları (run modunda da bloklar) |
+| Hook/guard ile engelleme | `config/permissions.json` deny kuralları (`bash`) + `.axetcode-denylist` | aXet izin kuralları (run modunda da bloklar) |
 | Alt ajanlar | skill içindeki rol brifingleri + yerleşik `agent` aracı | aXet'te özel ajan tanımı çalışmaz |
 | Yükleme kanaryası | ilk yanıtın ilk satırı `[AXET-CORE-… · SAP · proje · hafıza]` | çekirdek §0 |
 
@@ -198,6 +198,7 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
 - `%commit-pr` — commit, push, PR disiplini
 - `%write-skill` — yeni skill yazma
 - `%onboard` — yeni ekip üyesine kurulum ve ilk oturum rehberi
+- `%guncelle` — merkezi klonu yeni template yayınına seçmeli olarak taşı (kendi değişikliklerin korunur)
 - `%research` — web/doküman araştırması (kaynaklı, aXet'in web araçlarıyla)
 - `%office-excel` · `%office-docs` · `%office-slides` — Excel, Word/PDF, sunum üretimi ve okuma
 - SAP işi: giriş `%sap-dev` (yeni talepte önce `%sap-intake-triage`); SAP skill listesi [`skills-sap/README.md`](skills-sap/README.md)
@@ -206,6 +207,13 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
 
 ## Bilinen sınırlar (aXet.code 1.3.0, ölçülmüş)
 - **Hook yok:** kurallar talimat + izin kuralı + script ile uygulanır; mekanik zorlama sınırlıdır.
+- **Merkezi klonun `edit` yazma koruması YOK** (2026-09-18'de kaldırıldı; önce `install.py` global config'e klon
+  klasörleri için `edit` deny yazıyordu). Gerekçe: `%guncelle` klonun içine yazar, koruma kendi akışını
+  engelliyordu; zaten kazara değişikliğe karşı bir hatırlatmaydı — `bash` üzerinden ve farklı harf
+  karışımıyla atlatılabiliyordu (güvenlik sınırı değildi). Yerine **görünürlük** var: `doctor.py` klonun
+  davranış yüzeyindeki (`core/`, `skills/`, `skills-sap/`, `AGENTS.md`, `config/permissions.json`,
+  `.axetcode-denylist`) değişiklikleri git'e karşı raporlar; `%guncelle`'nin kendi commit'leri bilgi satırı,
+  kullanıcı kaynaklı sapma WARN olur. Yeniden kurulum eski `edit` deny'larını config'ten siler.
 - **Özel ajan tanımı çalışmaz** (`.axet-code/agents`, `agent create`): devir yerleşik `agent` aracıyla yapılır.
 - **`axet-code run` ve `-y` izin sormaz:** `ask` kuralları run modunda sormadan onaylanır (ölçüldü); deny run modunda
   da bloklar. Betikten çağırırken stdin kapatılmalı. `ask`'ın TUI'de sorması beklenir (DOĞRULANMADI).
@@ -348,5 +356,5 @@ SAP, ABAP ve S/4HANA SAP SE'nin ticari markalarıdır; bu proje SAP SE ile bağl
   `sap-odata-backend`. `doctor.py` 1024 karakteri aşan skill açıklamasını FAIL verir (aXet böyle skill'i yüklemez).
 - **0.2.0** — **install.py tekrar çalıştırılmalı.** SAP çekirdeğine yazma yolu, hassas veri (KVKK), kimlik
   bilgisi ve ALV paritesi kuralları (`AXET-SAP-0.2.0`); merkezi klon yazma koruması; ekip hafızasına 10 çalışma
-  dersi; template köküne `.axetcode-denylist`.
+  dersi; template köküne `.axetcode-denylist`. (Klon yazma koruması 2026-09-18'de kaldırıldı — bkz. Bilinen sınırlar.)
 - **0.1.0** — Faz 1 iskeleti: çekirdek, SAP kuralları, hafıza düzeni, `remember` skill'i, kurulum/proje/doğrulama script'leri.

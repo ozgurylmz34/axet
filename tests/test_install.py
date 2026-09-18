@@ -271,7 +271,8 @@ class InstallTest(GeciciTest):
         self.assertIn((self.klon / "core" / "00-temel.md").as_posix(), cfg["options"]["context_paths"])
         self.assertIn((self.klon / "skills").as_posix(), cfg["options"]["skills_paths"])
         self.assertEqual(cfg["permissions"]["rules"]["bash"]["*--no-verify*"], "deny")
-        self.assertTrue(any(p.endswith("/core/*") for p in cfg["permissions"]["rules"]["edit"]))
+        # A3 (2026-09-18): CLONE_PROTECTED kaldirildi -> kurulum artik HIC `edit` kurali yazmiyor.
+        self.assertNotIn("edit", cfg["permissions"]["rules"], "klon edit deny'lari geri geldi")
         self.assertNotIn((self.klon / "core" / "sap").as_posix(), cfg["options"]["context_paths"])
 
     def test_kullanici_ayari_korunur_ve_kaldirma(self):
@@ -500,3 +501,72 @@ class OlculmusDenyKapsamiTest(unittest.TestCase):
                       for k in BILINEN_SINIR_HARF_DUYARLI if _eslesen_desenler(self.kurallar, k)]
         self.assertEqual(kapananlar, [], "Bilinen sınır kapanmış görünüyor; belgeyi (README 'Bilinen sınırlar' + "
                                          "permissions.json _aciklama) ve bu testi güncelle:\n" + "\n".join(kapananlar))
+
+
+class KlonKorumasiKaldirildiTest(GeciciTest):
+    """A3 — `CLONE_PROTECTED` kaldırıldı (TASARIM §"7 karar" / §13 P4).
+
+    Bu bir KORUMA KALDIRMA'dır: ölçülen, kaldırmanın (a) yeni kurulumda hiç `edit` kuralı üretmediği,
+    (b) ESKİ kurulumdaki klon `edit` deny'larını yeniden kurulumda TEMİZLEDİĞİ (aksi hâlde kullanıcıda
+    ölü kural kalır ve `%guncelle` klona yazamaz), (c) `bash` deny katmanına DOKUNMADIĞI.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.klon = self.tmp / "klon"
+        for rel in ("scripts/install.py", "config/permissions.json", "core/00-temel.md", "memory/MEMORY.md"):
+            hedef = self.klon / rel
+            hedef.parent.mkdir(parents=True, exist_ok=True)
+            hedef.write_bytes((AXET_HOME / rel).read_bytes())
+        (self.klon / "skills").mkdir()
+        (self.klon / "skills-sap").mkdir()
+        self.cfg = self.xdg / "axet-code" / "axet-code.json"
+
+    def install(self, *args: str):
+        return self.calistir(self.klon / "scripts" / "install.py", *args)
+
+    def oku(self) -> dict:
+        return json.loads(self.cfg.read_text(encoding="utf-8"))
+
+    def eski_edit_kurallari(self) -> dict:
+        """Kaldırmadan ÖNCEKİ sürümün yazdığı desenler (install.py:93-108'in o günkü biçimi)."""
+        home = self.klon.as_posix()
+        varyantlar = {home, home.lower()}
+        if len(home) > 1 and home[1] == ":":
+            varyantlar |= {home[0].swapcase() + home[1:]}
+        return {f"{v}/{d}/*": "deny" for v in sorted(varyantlar)
+                for d in ("core", "skills", "skills-sap", "scripts", "config", "templates")}
+
+    def test_sabit_ve_uretici_kaldirildi(self):
+        import install as yerel_install
+        self.assertFalse(hasattr(yerel_install, "CLONE_PROTECTED"), "CLONE_PROTECTED hâlâ tanımlı")
+        self.assertFalse(hasattr(yerel_install, "clone_rules"), "clone_rules() hâlâ tanımlı")
+        self.assertNotIn("edit", yerel_install.load_rules(), "load_rules hâlâ edit kuralı üretiyor")
+
+    def test_yeni_kurulumda_edit_alani_hic_olusmaz(self):
+        """İddia SADECE `edit`in yokluğu. 'alan listesi tam olarak ["bash"]' demiyoruz: başka bir lane
+        yeni bir izin ALANI eklerse bu test davranış doğruyken kırılırdı (K11×K12 sınıfı kırılganlık)."""
+        self.assertEqual(self.install().returncode, 0)
+        kurallar = self.oku()["permissions"]["rules"]
+        self.assertNotIn("edit", kurallar, kurallar)
+        self.assertIn("bash", kurallar, kurallar)
+
+    def test_kontrol_grubu_bash_deny_katmani_duruyor(self):
+        """Kaldırma YALNIZ `edit` alanını etkiledi: `bash` deny'ları (asıl koruma katmanı) aynen duruyor."""
+        self.assertEqual(self.install().returncode, 0)
+        bash = self.oku()["permissions"]["rules"]["bash"]
+        beklenen = json.loads((self.klon / "config" / "permissions.json").read_text(encoding="utf-8"))["rules"]["bash"]
+        self.assertEqual(bash, beklenen)
+        self.assertTrue([p for p, k in bash.items() if k == "deny"], "hiç deny kalmadı")
+
+    def test_eski_kurulumun_edit_denyleri_yeniden_kurulumda_temizlenir(self):
+        """Göç: kaldırma ölü kural bırakmamalı (klonun içine yazmayı fiilen engellemeye devam ederdi)."""
+        eski = self.eski_edit_kurallari()
+        self.assertTrue(eski)
+        self.cfg.parent.mkdir(parents=True, exist_ok=True)
+        self.cfg.write_text(json.dumps({"permissions": {"rules": {"edit": {**eski, "D:/benim/*": "deny"}}}}),
+                            encoding="utf-8")
+        self.assertEqual(self.install().returncode, 0)
+        kurallar = self.oku()["permissions"]["rules"]
+        self.assertEqual(kurallar.get("edit"), {"D:/benim/*": "deny"},
+                         "klon edit deny'ları silinmedi ya da kullanıcının kendi kuralı da silindi")

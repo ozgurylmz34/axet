@@ -4,7 +4,8 @@
 Yazdığı şeyler (yalnız bunlar; kullanıcının diğer ayarları korunur):
   options.context_paths  -> core/00-temel.md, memory/MEMORY.md (+ core/sap  --sap ile)
   options.skills_paths   -> skills (+ skills-sap  --sap ile)
-  permissions.rules      -> config/permissions.json içeriği + merkezi klonun yazma koruması (clone_rules)
+  permissions.rules      -> config/permissions.json içeriği (yalnız `bash`; merkezi klonun `edit` yazma koruması
+                            2026-09-18'de KALDIRILDI — gerekçe `load_rules` üstündeki not)
 
 Kullanım:
   python scripts/install.py              kur / güncelle (SAP durumu korunur; ilk kurulumda kapalı)
@@ -42,8 +43,6 @@ SAP_SKILLS_DIR = AXET_HOME / "skills-sap"
 PERMISSIONS_FILE = AXET_HOME / "config" / "permissions.json"
 # SAP'ye yazma için makine düzeyi izin; sap_adt_cli.py yazma kapısının ilk koşulu. Gitignore'lu.
 SAP_WRITE_FLAG = AXET_HOME / "config" / "sap-write.local"
-# Başka projelerde açılan aXet oturumlarının yazamayacağı klon klasörleri (memory/ bilinçli olarak serbest).
-CLONE_PROTECTED = ("core", "skills", "skills-sap", "scripts", "config", "templates")
 # Önceki sürümlerde config/permissions.json ile yayımlanıp artık dosyada olmayan kurallar: alan → desen → o zaman
 # yazdığımız karar. Yeniden kurulum ve --uninstall bunları kullanıcı config'inden siler; karar kullanıcı tarafından
 # değiştirilmişse dokunmaz, uyarır. Kaynak: `git log -p -- config/permissions.json` — e0e0b13, ae4309c, 42b37b8'de
@@ -90,33 +89,27 @@ def is_ours(entry: object) -> bool:
     return target == home or target.startswith(home + os.sep)
 
 
-def clone_rules() -> dict:
-    """Merkezi klonun korunan klasörlerine `edit` deny kuralları (edit alanı write aracını da kapsar).
-
-    Ölçüldü (aXet 1.3.0, _lab t11-t15): oturum dizini DIŞINDAKİ yol mutlak eşleşir, `dizin/*` alt klasörleri
-    de kapsar, `\\` yolları `/`'ye çevrilir; eşleşme modelin yazdığı harflerle yapılır ve büyük/küçük harfe DUYARLIDIR
-    → klonun diskteki yazımı ve tamamen küçük harfli yazımı, sürücü harfinin iki hâliyle eklenir.
-    Klonun içinde açılan oturumda yol göreli eşleştiği için bu kurallar bakımı engellemez.
-    Kazara değişikliğe karşı korumadır; güvenlik sınırı değildir (başka harf karışımı ve bash atlatır).
-    """
-    home = AXET_HOME.as_posix()
-    variants = set()
-    for base in {home, home.lower()}:
-        variants.add(base)
-        if len(base) > 1 and base[1] == ":":
-            variants.add(base[0].swapcase() + base[1:])
-    return {"edit": {f"{v}/{d}/*": "deny" for v in sorted(variants) for d in CLONE_PROTECTED}}
-
-
 def _pattern_is_ours(pattern: str) -> bool:
+    """Bu klonun içini gösteren bir izin deseni mi. `strip_ours` bununla, ARTIK ÜRETMEDİĞİMİZ klon `edit`
+    deny'larını da (eski sürümlerin `clone_rules()`'u yazmıştı) yeniden kurulumda temizler — bkz. aşağıdaki not."""
     return is_ours(pattern.rstrip("*").rstrip("/"))
 
 
+# KALDIRILDI (2026-09-18, TASARIM §"7 karar" madde 1 · P4/A3): `CLONE_PROTECTED` + `clone_rules()`.
+# Ne yapıyordu: klonun core/ skills/ skills-sap/ scripts/ config/ templates/ klasörlerine, kullanıcının GLOBAL
+# aXet config'ine 24 adet `edit` deny deseni (6 klasör × 4 harf varyantı) yazıyordu. `config/permissions.json`
+# hiç `edit` kuralı taşımadığı için config'teki TÜM `edit` deny'ları buradan geliyordu.
+# Neden kaldırıldı: `%guncelle` klonun içine YAZAR (3-yollu birleştirme sonucu dosyaya uygulanır); kendi
+# koruması kendi akışını engellerdi. Zaten "kazara değişikliğe karşı" bir hatırlatmaydı, güvenlik sınırı
+# değildi — eski docstring'in kendi ifadesiyle "başka harf karışımı ve bash atlatır".
+# Yerine ne var: doctor `check_template()` klonun davranış yüzeyindeki değişiklikleri git'e karşı raporlar
+# (`behavior_manifest.template_sinifla`) — ENGELLEME değil GÖRÜNÜRLÜK.
+# Göç: eski kurulumların yazdığı `edit` deny'ları `strip_ours` + `_pattern_is_ours` ile yeniden kurulumda
+# ve `--uninstall`'da silinir (tests/test_install.py::KlonKorumasiKaldirildiTest).
+
+
 def load_rules() -> dict:
-    rules = json.loads(PERMISSIONS_FILE.read_text(encoding="utf-8"))["rules"]
-    for domain, patterns in clone_rules().items():
-        rules.setdefault(domain, {}).update(patterns)
-    return rules
+    return json.loads(PERMISSIONS_FILE.read_text(encoding="utf-8"))["rules"]
 
 
 def sap_enabled(cfg: dict) -> bool:
