@@ -1,7 +1,7 @@
 # sinif-belge-lisans — belgeler, lisanslar ve depo talimatı
 
 ## Tetik
-Plandaki dosya `README.md`, `docs/**`, `LICENSE`/`NOTICE`, `AGENTS.md` ya da bir skill indeksi.
+Plandaki dosya `README.md`, `docs/**`, `LICENSE`/`NOTICE`, `CHANGELOG.md`, `AGENTS.md` ya da bir skill indeksi.
 
 ## Kapsam (harita.json)
 | Alt sınıf | `etkin` | Özel adım | Ne demek |
@@ -12,6 +12,7 @@ Plandaki dosya `README.md`, `docs/**`, `LICENSE`/`NOTICE`, `AGENTS.md` ya da bir
 | `belge-docs` | `null` | yok | ayrı etkinleşme anı yok |
 | `skill-index-belge` | `null` | yok | ayrı etkinleşme anı yok |
 | `skill-implementation-belge` | `null` | yok | ayrı etkinleşme anı yok |
+| `belge-changelog` | `null` | yok | ayrı etkinleşme anı yok |
 
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir.
