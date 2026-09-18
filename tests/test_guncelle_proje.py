@@ -741,6 +741,12 @@ class TetikKablolamaTest(GeciciTest):
         # `git log --format=%H -- templates/project | wc -l` = 1) ⇒ "en eski şablon commit'i"
         # ile "en yeni" AYNIDIR ve eski-kayıt senaryosu kurulamaz. Bu yüzden kayda gerçek ama
         # BAŞKA bir ata commit yazılır; ölçülen şey "kayıt ≠ güncel" dalıdır.
+        # Sığ klonda (CI checkout'u, fetch-depth=1) ata commit YOKTUR ⇒ senaryo kurulamaz; geçmişe
+        # bağlı öteki testlerle aynı kural (test_install EmekliKuralTest): atla, sessiz geçme.
+        # Tüketici klonu tamdır (kur.ps1 --depth kullanmaz; test_kur.py bunu denetler).
+        sig = self.git(AXET_HOME, "rev-parse", "--is-shallow-repository").stdout.strip()
+        if sig == "true":
+            self.skipTest("git geçmişi yok (sığ klon): HEAD~1 çözülemez — tam klonda koşar")
         eski = self.git(AXET_HOME, "rev-parse", "HEAD~1").stdout.strip()
         guncel = self.git(AXET_HOME, "log", "-1", "--format=%H", "--",
                           "templates/project").stdout.strip()

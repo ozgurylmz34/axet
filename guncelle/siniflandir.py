@@ -237,15 +237,17 @@ def _var_mi(kok: Path, desen: str) -> bool:
     """Yol ya da glob deseni diskte en az bir şeye karşılık geliyor mu — HARF-DUYARLI."""
     if not re.search(r"[*?\[]", desen):
         return _harf_duyarli_var_mi(kok, desen)
-    # `Path.glob` de Windows'ta harf-duyarsız eşler, ama girdileri diskteki GERÇEK harfleriyle
-    # döndürür → eşleşmeyi bir de harf-duyarlı `fnmatchcase` ile süzeriz.
+    # `Path.glob` de Windows'ta harf-duyarsız eşler. Döndürdüğü yolun harfleri SÜRÜME BAĞLIDIR:
+    # 3.12'de diskteki GERÇEK harfler, 3.13+'ta joker içermeyen parçalar DESENDEKİ harflerle gelir
+    # (CI 3.14'te ölçüldü: "Scripts/*.py" yanlış harfle geçti) ⇒ glob sonucunun harflerine
+    # GÜVENİLMEZ; her aday dizin girdileriyle harf-duyarlı yeniden doğrulanır.
     duzgun = desen.replace("\\", "/")
     for p in kok.glob(desen):
         try:
             bagil = p.relative_to(kok).as_posix()
         except ValueError:
             continue
-        if fnmatch.fnmatchcase(bagil, duzgun):
+        if fnmatch.fnmatchcase(bagil, duzgun) and _harf_duyarli_var_mi(kok, bagil):
             return True
     return False
 
