@@ -2005,6 +2005,21 @@ class M6YenidenAdlandirmaTest(GuncelleTemel):
         self._kullanici_dosyasi_commite_girmedi(r)
 
 
+class M6EskiYolSilinmisTest(M6YenidenAdlandirmaTest):
+    """Bug gate 2026-09-19 dördüncü tur (ölçüldü): aynı üç karar, ama kullanıcı template'in ESKİ yolunu
+    önceden kendisi silip commit'lemiş. "Eski yol duruyor mu" işareti burada "taşındı" diyordu ⇒
+    kullanıcının yeni yoldaki izlenmeyen dosyası üç kararda da commit'e giriyordu. Testler üst sınıftan."""
+
+    def setUp(self) -> None:
+        GuncelleTemel.setUp(self)
+        self.senaryolari_uygula()
+        self.git(self.f.tuketici, "rm", "-q", "docs/tasinacak.md")
+        self.git(self.f.tuketici, "commit", "-qm", "kullanici eski yolu sildi")
+        self.f.yerel_degistir("docs/tasindi.md", self.OZEL)
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+
 def _uret_elle(hedef: str) -> int:
     """`python tests/test_guncelle.py --uret <dizin>` — fixture'ı elle inceleme için üretir."""
     import tempfile

@@ -1598,15 +1598,29 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # ⚠ Aynı sınıf `yerel` kararında da vardı (üçüncü tur, ölçüldü: V4R `birlesik` → `yerel`): YENİ yol
     # yalnız taşıma GERÇEKLEŞMEDİYSE (eski yol hâlâ diskte ya da index'te) korunur. Taşıma olduysa yeni
     # yolu motor yazmıştır; onu dışarıda bırakmak yine yarım taşıma olurdu.
+    # ⚠ V7'de "eski yol duruyor mu" sinyali YETMEZ (dördüncü tur, ölçüldü): kullanıcı eski yolu önceden
+    # kendisi silmişse işaret "taşındı" der ve kullanıcının yeni yoldaki dosyası commit'e girerdi. V7'nin
+    # tanımı içeriktir (yeni yoldaki disk ≠ template blob'u) ⇒ ayırt edici sinyal de içerik: motor yeni
+    # yola yalnız `yeniden-adlandir` ile YAZAR ve o zaman disk = blob olur. Ölçülemezse KORU (fail-closed).
+    def _kullanicinin(yol: str) -> bool:
+        try:
+            disk = k.disk_sha(yol)
+        except Dur:
+            return True
+        return disk is not None and disk != k.blob_sha(b.yeni_ref, yol)
+
     def _korunan_yollar(d: dict) -> set:
         kayit = durum["dosyalar"].get(d["yol"], {})
         motor_yazdi = kayit.get("durum") in ("dogrulandi", "uygulandi")
-        if kayit.get("karar") != "yerel" and not (d.get("vaka") == "V7" and not motor_yazdi):
+        v7 = d.get("vaka") == "V7"
+        if kayit.get("karar") != "yerel" and not (v7 and not motor_yazdi):
             return set()
         yollar = {d["yol"]}
-        eski_duruyor = (k.kok / d["yol"]).exists() or d["yol"] in izlenen
-        if d.get("yeni_yol") and eski_duruyor:
-            yollar.add(d["yeni_yol"])
+        yeni = d.get("yeni_yol")
+        if yeni:
+            eski_duruyor = (k.kok / d["yol"]).exists() or d["yol"] in izlenen
+            if (_kullanicinin(yeni) if v7 else eski_duruyor):
+                yollar.add(yeni)
         return yollar
     yerel_izlenmeyen = {y for kalem in plan["kalemler"] if kalem["id"] in secili
                         for d in kalem["dosyalar"] for y in _korunan_yollar(d)} - izlenen
