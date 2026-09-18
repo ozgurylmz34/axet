@@ -100,20 +100,36 @@ def dislanan_mi(yol: str) -> bool:
     return any(yol == d or (d.endswith("/") and yol.startswith(d)) for d in DISLANANLAR)
 
 
+def kopya_hatasi(yol: Path, e: OSError) -> SystemExit:
+    """Kopyalama OSError'ını ham traceback yerine anlamlı bir HATA'ya çevirir (yayın ⓑ, ölçüldü 2026-09-18:
+    uzun hedef yolunda ham FileNotFoundError basılıyordu; sebebin MAX_PATH olduğu okunamıyordu)."""
+    ipucu = ""
+    if len(str(yol)) >= 260:
+        ipucu = (f" Yol {len(str(yol))} karakter: Windows'un 260 karakter sınırı (MAX_PATH) aşılmış olabilir —"
+                 " hedefi kısa bir klasöre ver (örn. C:\\yayin).")
+    return SystemExit(f"HATA: kopyalanamadı: {yol} ({type(e).__name__}: {e}).{ipucu}")
+
+
 def kopyala(hedef: Path, ref: str, calisma_agaci: bool) -> list[str]:
     if calisma_agaci:
         yollar = git("ls-files", "--cached", "--others", "--exclude-standard", "-z").decode().split("\0")
         yollar = sorted({y for y in yollar if y and (KOK / y).is_file()})
         for y in yollar:
             if not dislanan_mi(y):
-                (hedef / y).parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(KOK / y, hedef / y)
+                try:
+                    (hedef / y).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(KOK / y, hedef / y)
+                except OSError as e:
+                    raise kopya_hatasi(hedef / y, e) from e
         return [y for y in yollar if not dislanan_mi(y)]
     arsiv = tarfile.open(fileobj=io.BytesIO(git("archive", "--format=tar", ref)))
     alinan = []
     for uye in arsiv.getmembers():
         if uye.isfile() and not dislanan_mi(uye.name):
-            arsiv.extract(uye, hedef)
+            try:
+                arsiv.extract(uye, hedef)
+            except OSError as e:
+                raise kopya_hatasi(hedef / uye.name, e) from e
             alinan.append(uye.name)
     return sorted(alinan)
 
