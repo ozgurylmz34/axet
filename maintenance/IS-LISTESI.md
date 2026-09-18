@@ -66,6 +66,29 @@ tuttuğunu artık lider **varsaymıyor**, bekçi ölçüyor ③ izlenen ajan lis
 (`bekci/izlenen.txt`), ajan eklenince monitör yeniden başlatılmıyor ⇒ "izlemeyi güncellemeyi unutma"
 sınıfı kapandı ④ saat sıçraması dedektörü korundu.
 
+### ⚠ SÜREÇ BULGUSU 3 — eşzamanlı test koşumu: SÜRE gürültülü, SONUÇ değil (ölçüldü)
+
+`Get-CimInstance Win32_Process` (2026-09-18 08:46): aynı makinede **4 ayrı `run_tests.py`
+süreci paralel** koşuyordu, biri **filtresiz tam koşum**. Etkisi ölçüldü: aynı 4 test bir
+koşumda **6778 sn**, hemen ardından **4 sn**.
+
+⭐ **Kritik ayrım — bu bir ölçüm geçersizliği DEĞİL:** testler `tempfile.mkdtemp` ile repo
+DIŞI izole fixture kuruyor ⇒ paralel koşumlar birbirinin **PASS/FAIL'ini bozmuyor**, yalnız
+yavaşlatıyor. Yani **süreler gürültülü, sonuçlar geçerli**. Bunu karıştırmak iki yönde de
+hata üretir: gerçek bir kırmızıyı "ortam gürültüsü" diye elemek, ya da bir zaman aşımını
+"kırmızı" saymak. Kural: `rc=124` → **ÖLÇÜLEMEDİ** · kırmızı → **önce tek başına tekrar koş**,
+ikinci koşumda da kırmızıysa **bulgudur**.
+
+**Alınan önlem (süreç öldürülmedi — ⛔ ajanların birbirinin sürecini öldürmesi yasak):**
+gate'lere *"filtresiz koşma, yalnız kendi yüzeyini süz"* talimatı gönderildi; P3-fix2 kendi
+kapsamı dışındaki motor takımını beklemekten çıkarıldı (değiştirdiği hiçbir dosya motor
+değildi ve o worktree **P2-fix ÖNCESİ** motoru taşıyordu ⇒ ölçümü bayat doğacaktı).
+**Birleşim ölçümü lider'dedir**, lane'lerde değil.
+
+⚠ Dar süzgeçte kritikleşen kural: **"öldü" dar süzgeçle söylenebilir** (kırmızı = öldü),
+**"sağ kaldı" söylenemez** — sağ kalma iddiası ilgili TAM modülü ister; koşulamıyorsa hüküm
+`ÖLÇÜLEMEDİ`dir.
+
 ### ⛔ SÜREÇ BULGUSU 2 — paylaşılan scratchpad ÇAKIŞMASI (ölçüldü, tahmin değil)
 
 İki ajan aynı adı (`mutasyon.py`) kullandı; biri diğerinin **aracını ezdi**. Sonuçları:
