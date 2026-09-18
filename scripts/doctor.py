@@ -774,15 +774,53 @@ def check_template() -> None:
     ok, bilgi = sap_stamp.kanonik_denetle()
     add("PASS" if ok else "FAIL", f"SAP kanonik kesin yasak bölümü okundu, A-D kategorileri tam (damga sürümü {bilgi})"
         if ok else f"SAP kanonik kesin yasak bölümü BOZUK — damga üretilemez ya da eksik basılır: {bilgi}")
-    durum, satirlar = bm.template_denetle()
-    if durum == "sapma":
-        add("WARN", f"template davranış yüzeyinde onaysız (commit'siz/upstream'e gitmemiş) değişiklik ({len(satirlar)}): "
-                    + "; ".join(satirlar[:8]) + (" …" if len(satirlar) > 8 else "")
-                    + " → bakımcı değilsen: git -C <template> status / git diff")
-    elif durum == "es":
-        add("PASS", "template davranış yüzeyi git'e göre temiz" + (f" ({'; '.join(satirlar)})" if satirlar else ""))
+    for durum, msg in template_bulgulari(bm.template_sinifla()):
+        add(durum, msg)
+
+
+def _kisalt(yollar: list[str], sinir: int = 8) -> str:
+    return "; ".join(yollar[:sinir]) + (" …" if len(yollar) > sinir else "")
+
+
+def template_bulgulari(olc: dict) -> list[tuple[str, str]]:
+    """`bm.template_sinifla()` çıktısını doctor satırlarına çevirir. Saf fonksiyon (test edilebilirlik: git'e bakmaz).
+
+    Yönlendirme kararı (Z5 + P4, 2026-09-18):
+      · **WARN (değişmedi)** — çalışma ağacındaki commit'siz değişiklikler ve `%guncelle` dışı bir yazarın
+        upstream'e gitmemiş commit'leri. Açıklanmamış sapma budur.
+      · **INFO** — `%guncelle`'nin kendi git kimliğiyle attığı commit'ler. Klon `origin`'e push EDİLMEZ
+        (motor `origin/main`'den geçici kopyaya çekilir) → bu satırlar yapısal olarak hiçbir zaman
+        temizlenemez. Her oturumda temizlenemeyen bir WARN, TÜM WARN'ları değersizleştirir.
+        Bilgi kaybı yok: dosya yolları satırda aynen listelenir.
+      · Hiçbir sınıf FAIL üretmez → doctor'ın çıkış kodu değişmez (yeni kapı açılmadı; ADR 0019).
+    """
+    out: list[tuple[str, str]] = []
+    if olc["durum"] == "olculemedi":
+        out.append(("INFO", "template davranış yüzeyi: " + "; ".join(olc["notlar"])))
+    elif olc["durum"] == "sapma":
+        k = olc["kullanici"]
+        out.append(("WARN", f"template davranış yüzeyinde onaysız (commit'siz/upstream'e gitmemiş) değişiklik ({len(k)}): "
+                            + _kisalt(k) + " → bakımcı değilsen: git -C <template> status / git diff"))
     else:
-        add("INFO", "; ".join(satirlar))
+        out.append(("PASS", "template davranış yüzeyinde kullanıcı kaynaklı sapma yok"
+                    + (f" ({'; '.join(olc['notlar'])})" if olc["notlar"] else "")))
+    if olc["durum"] == "sapma" and olc["notlar"]:
+        out.append(("INFO", "template davranış yüzeyi notları: " + "; ".join(olc["notlar"])))
+    if olc["guncelle_anlik"]:
+        out.append(("INFO", f"`%guncelle` anlık commit'indeki template dosyaları ({len(olc['guncelle_anlik'])} dosya) — "
+                            "İÇERİK KULLANICININ, commit'i `%guncelle` attı (engellemez): " + _kisalt(olc["guncelle_anlik"])
+                            + " → incelemek için: git -C <template> log -p --author=" + bm.GUNCELLE_EPOSTA))
+    if olc["guncelle_uygulama"]:
+        out.append(("INFO", f"`%guncelle`'nin uyguladığı template güncellemesi ({len(olc['guncelle_uygulama'])} dosya) — "
+                            "beklenen, engellemez: " + _kisalt(olc["guncelle_uygulama"])))
+    out.append(("INFO", "template yüzeyi KAPSAM — bakılanlar: "
+                + " · ".join(bm.TEMPLATE_DOSYALAR + [d + "/**" for d in bm.TEMPLATE_DIZINLER])
+                + " (git status + `@{u}...HEAD` farkı) — bakılmayanlar: değişikliğin İÇERİĞİ (yalnız hangi dosya) · "
+                  "memory/ scripts/ templates/ tests/ · klonun `origin` adresinin doğruluğu · "
+                  f"'{bm.GUNCELLE_EPOSTA}' kimliği TAKLİT EDİLEBİLİR (gürültü ayıklaması, güvenlik sınırı DEĞİL) · "
+                  "merge commit'iyle gelen dosya atfedilemez, temkinli olarak kullanıcı sayılır · "
+                  "upstream tanımsızsa commit dalı hiç ÖLÇÜLMEZ"))
+    return out
 
 
 # Şablon yer tutucusu: `<kısa açıklama>`, `<komut>`, `<…>`. HTML yorumu (`<!--`), kapanış etiketi ve autolink sayılmaz.
