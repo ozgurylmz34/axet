@@ -445,6 +445,46 @@ class OnayTest(ProjeTemel):
         r = self.f.calistir("onay", "--kabul", "YANLIS-AD")
         self.assertEqual(r.returncode, 2, self.cikti(r))
 
+    def test_onaysiz_isaretle_karar_yeni_dosyaya_DOKUNMAZ(self):
+        """`uygula` gibi `isaretle --karar yeni|birlesik|yeniden-adlandir` de bir YAZMA yoludur:
+        kullanıcının dosyasını EZER ⇒ onay kapısı burada da geçerli (Q1 · SKILL.md §"onay
+        olmadan dosya yazmak"). Kapanış `onay.json` SİLİNEREK kurulur; tek değişken onaydır."""
+        self.f.yerel_degistir("AGENTS.md", self.f.oku("AGENTS.md").replace("son\n", "son yerel\n"))
+        self.f.ilerlet()
+        self.planla()
+        self.assertIn("AGENTS.md", self.f.vakalar(), "fixture ön koşulu: dosya planda olmalı")
+        once = self.f.oku("AGENTS.md")
+        self.assertIn("son yerel", once, "fixture ön koşulu: yerel satır diskte olmalı")
+        (self.f.durum_dizini() / "onay.json").unlink()
+        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yeni")
+        # rc=2 başka bir arızadan da gelebilir → HANGİ hata olduğunu da ölç (vakum koruması).
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("proje onayı YOK", self.cikti(r), self.cikti(r))
+        self.assertEqual(self.f.oku("AGENTS.md"), once,
+                         "onaysız `isaretle` kullanıcının dosyasına DOKUNMAMALI")
+        # KONTROL GRUBU: tek fark onaydır — geri verilince aynı komut gerçekten YAZAR.
+        self.assertEqual(self.f.onayla().returncode, 0)
+        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotEqual(self.f.oku("AGENTS.md"), once, self.cikti(r))
+
+    def test_onaysiz_kapanis_SURUM_KAYDINI_ilerletmez(self):
+        """Sürüm kaydı gelecekteki TÜM 3-yollu birleştirmelerin TABANI'dır. Onaysız bir kapanış
+        tabanı ilerletirse sonraki `%guncelle-proje` kullanıcının hiç almadığı değişiklikleri
+        "zaten sende var" sayar ⇒ SESSİZ VERİ KAYBI. Kontrol grubu (mutlu yol) =
+        `AkisTest.test_kapanis_tamamlaninca_surum_kaydini_gunceller`."""
+        self.f.ilerlet()
+        self.planla()
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        once = self.f.kayit()
+        (self.f.durum_dizini() / "onay.json").unlink()
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("proje onayı YOK", self.cikti(r), self.cikti(r))
+        self.assertEqual(self.f.kayit(), once,
+                         "onaysız kapanış şablon sürüm kaydını İLERLETMEMELİ")
+
 
 # =====================================================================================================
 # 5. DAMGA (SAP projesi)
@@ -551,6 +591,45 @@ class AkisTest(ProjeTemel):
         self.f.yerel_degistir("proje-recetesi.ornek.md", "# elle bozuldu\n")
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
+
+    def test_kapanis_CAKISMA_ISARETI_kalan_dosyayi_KAPATMAZ(self):
+        """`test_kapanis_diskten_YENIDEN_dogrular`ın İKİNCİ kolu. O test yalnız HASH kolunu
+        ölçer; bu test hash'i bilerek EŞLETİR (dosya bozulduktan SONRA `isaretle --karar yerel`
+        ile beklenen özet diskten yeniden hesaplanır) ⇒ kapanışı durdurabilecek TEK şey
+        çakışma-işareti koludur.
+
+        ⚠ ÖLÇÜM TUZAĞI (gate'in kendi aracı buna düştü): `kapanis` RAPOR.md'yi stdout'a basar
+        ve onun KAPSAM beyanında da "çakışma işareti" ifadesi GEÇER. Bu yüzden aranan dize
+        kasten dar tutuldu: "AGENTS.md: çakışma işareti duruyor" (yalnız `eksikler` satırı)."""
+        self.f.ilerlet()
+        self.planla()
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.f.yerel_degistir("AGENTS.md", self.f.oku("AGENTS.md") +
+                              "\n<<<<<<< YEREL\nx\n=======\ny\n>>>>>>> YENİ\n")
+        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))   # ön koşul: hash kolu artık EŞLEŞİR
+        once = self.f.kayit()
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        self.assertIn("AGENTS.md: çakışma işareti duruyor", self.cikti(r), self.cikti(r))
+        self.assertEqual(self.f.kayit(), once,
+                         "kapanmayan kapanış şablon sürüm kaydını GÜNCELLEMEMELİ")
+
+    def test_plan_disi_dosyaya_oneri_REDDEDILIR(self):
+        """§7: kart kapsamdır — planda olmayan bir dosyaya dokunulmaz. (`isaretle` de aynı
+        `_plan_kaydi` kapısından geçer; burada gate'in ölçtüğü `oneri` yolu ölçülür.)"""
+        self.f.ilerlet()
+        self.planla()
+        disardaki = ".axet-code.json"
+        self.assertNotIn(disardaki, self.f.vakalar(), "fixture ön koşulu: dosya planda OLMAMALI")
+        self.assertTrue((self.f.proje / disardaki).is_file(),
+                        "fixture ön koşulu: dosya projede VAR (yani 'yok' diye reddedilmiyor)")
+        r = self.f.calistir("oneri", disardaki)
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("planda yok", self.cikti(r), self.cikti(r))
+        self.assertFalse((self.f.durum_dizini() / "oneri" / disardaki).exists(),
+                         "plan DIŞI dosyaya öneri YAZILMAMALI")
 
     def test_kapanis_kabul_ile_cikis_3(self):
         self.kur_v4()
