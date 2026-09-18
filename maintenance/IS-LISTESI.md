@@ -15,15 +15,58 @@ Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
 
 | Lane | Dal / commit | Durum | Sıradaki adım |
 |---|---|---|---|
-| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · COMMİT'SİZ | 🔵 **kod işi BİTTİ** — B1–B15 + EK-1/EK-3 kapandı | tam koşum + rapor → lider commit → **TAZE gate** |
-| **P3** | `feat/2026-09-17-p3-kartlar` · **`c4a8e2e`** | ✅ gate 2. tur WARNING → 2 MEDIUM + 4 LOW **kapandı** | ⛔ merge P2'nin `V1R` BLOCKER'ına bağlı |
-| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · **`04c3bd9`** | ✅ FAZ A+B bitti · **tam suite 460 test / 0 failure / 1 skip / rc=0** | 🔵 **TAZE GATE-P4 koşuyor** |
-| **P5** | `feat/2026-09-17-p5-guncelle-proje` · **`bf1489f`** | ✅ 50 test, 11/11 mutasyon kırmızı | 🔵 **TAZE GATE-P5 koşuyor** |
-| **P7** | `feat/2026-09-17-p7-yayin` · `4be5bc9` | ✅ taze gate **WARNING** (16 mutasyon, 6 geçerli sağ kalan) | 🔵 **P7-FIX koşuyor** — 5 zorunlu bulgu |
-| **Z6** | `denetim/2026-09-18-z6` | ✅ hüküm BLOCKER (aşağıda) | 🔵 **kendi düzeltmesini doğruluyor** |
-| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` · **`94d60dc`** | ✅ iki mutant da öldü · salt ekleme (+51/+97, 0 silme) · `-k kur` **73 test / 0 failure / rc=0** | Z6 hükmü → entegrasyona merge |
-| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi entegrasyonda (`ca4ae88`) | P4+P5 merge sonrası, PR'dan ÖNCE |
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · **`e1108f9`** | ✅ 16 kalem kapandı (2 BLOCKER · 3 HIGH · 6 MEDIUM · 3 LOW + EK-1/EK-3) · `-k guncelle` **146 test / 0 failure / rc=0** · gate'in sağ bıraktığı M1/M2/M4 **üçü de artık KIRMIZI** | 🔵 **TAZE GATE-P2B koşuyor** (kapsam büyüdü ⇒ taze) |
+| **P3** | `feat/2026-09-17-p3-kartlar` · **`c4a8e2e`** | ✅ gate 2. tur WARNING → 2 MEDIUM + 4 LOW **kapandı** | ⛔ merge P2'nin `V1R` BLOCKER'ına bağlıydı → **P2'de kapandı**, gate sonucu bekleniyor |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · **`04c3bd9`** | ✅ FAZ A+B bitti · tam suite 460 test / 0 failure / 1 skip / rc=0 | 🔵 **TAZE GATE-P4 koşuyor** |
+| **P5** | `feat/2026-09-17-p5-guncelle-proje` · **`bf1489f`** | 🔴 taze gate **BLOCKER** — 20 mutasyon, 14 öldü, **4 geçerli sağ kalan**. ⚠ **Ürün kodunda kusur YOK**, dördü de test-kapsamı boşluğu | 🔵 **P5-FIX koşuyor** — BG-1…BG-4 |
+| **P7** | `feat/2026-09-17-p7-yayin` · **`7187c92`** | ✅ 5 zorunlu + 1 isteğe bağlı bulgu kapandı · ürün kodunda **tek satır değişiklik yok** · `-k yayin_surumleri` 32→**37 test / 0 failure / rc=0** | 🔵 **TAZE GATE-P7B koşuyor** |
+| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` · **`d67de93`** | ✅ gate doğrulaması **WARNING** — BULGU-1 + BULGU-2 **kapandı** (9 mutasyon, 8 öldü) · kalan tek MEDIUM (V9) de kapatıldı | 🔵 **Z6-GATE2 doğruluyor** (aynı gate sürdürüldü — kapsam büyümedi) |
+| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi entegrasyonda (`ca4ae88`) · **merge-öncesi taban: 43 aday** (`<scratchpad>/z7/taban-merge-oncesi.txt`) | P4+P5 merge sonrası, PR'dan ÖNCE |
 | **P8** | — | 🟡 **ERTELENDİ** (kullanıcı kararı) | — |
+
+⭐ **Lane'lerin hiçbiri `main`'e gitmedi; entegrasyon dalı `a649d9c`'de temiz, `origin/main`+46.**
+
+### 🔴 P5 TAZE GATE HÜKMÜ — BLOCKER (2026-09-18)
+
+20 mutasyon · **14 öldü** · **4 geçerli sağ kalan** · 1 ÖLÇÜLEMEDİ · 0 no-op · 0 çöken.
+Taban: `-k guncelle_proje` → **50 test / 0 failure / rc=0**.
+⚠ **Nüans aksiyonu belirliyor: çalışan bir ürün kusuru YOK.** Ürün kodu ölçülen her kuralda
+doğru davranıyor. Blok **regresyon korumasının yokluğundan** geliyor: Q1 onay kapısının
+(kullanıcının açık kararı, "veri kaybı sınıfı") **üç yazma yolundan yalnız BİRİ** test ediliyor.
+
+| # | Kural | Ürün satırı | Mutant ne yapıyor |
+|---|---|---|---|
+| **BG-1** HIGH | Q1 onay kapısı `isaretle` yolunda | `guncelle_proje.py:597` | onaysız `isaretle --karar yeni` → rc 2→**0**, kullanıcının yerel satırı **KAYBOLUYOR** |
+| **BG-2** HIGH | Q1 onay kapısı `kapanis` yolunda | `guncelle_proje.py:691` | onaysız `kapanis` → **sürüm kaydı İLERLİYOR** |
+| **BG-3** MEDIUM | kapanışın "çakışma işareti duruyor" denetimi | `guncelle_proje.py:705-709` | çakışma işareti duran dosya "temiz kapandı" sayılıyor **ve** taban ilerliyor |
+| **BG-4** MEDIUM | "planda olmayan dosyaya dokunulmaz" (§7) | `guncelle_proje.py:344` | plan dışı dosyaya öneri **yazılıyor** |
+
+⭐ **BG-2 neden HIGH:** sürüm kaydı **tüm gelecekteki 3-yollu birleştirmelerin TABANI**dır.
+Taban sessizce ileri kayarsa sonraki `%guncelle-proje` kullanıcının **hiç almadığı**
+değişiklikleri "zaten sende var" sayar ⇒ **sessiz veri kaybı**.
+
+⚠ **Gate kendi ölçüm aracının bir kez vakuma düştüğünü DÜRÜSTÇE yazdı:** BG-3'ü ölçerken
+denetleyicisi `"çakışma işareti"` alt dizesini arıyordu ve **RAPOR.md'nin KAPSAM beyanındaki**
+aynı ifadeye takılıp yanlış "EVET" dedi; `"çakışma işareti duruyor"` ile daraltınca gerçek
+fark çıktı. Bu, [ölçüm aracı kendini kanıtlamasın] sınıfının **üçüncü** ölçülmüş örneği.
+
+### 🟡 Z6 DOĞRULAMA HÜKMÜ — WARNING (2026-09-18)
+
+9 mutasyon · **8 öldü** · 1 sağ kaldı. Gate **beyanı devralmadı, kendi ölçtü**: ürün blob'ları
+taban↔fix birebir aynı (`kur.ps1` `8262896f`, `siniflandir.py` `a765521b`), `git diff --numstat`
+**sıfır silme**.
+- **BULGU-1 (BLOCKER, `kur.ps1:126`) KAPANDI** — asıl mutant kırmızı; üstelik **eşik-kaydırma**
+  mutantı da kırmızı ⇒ test "bir şey reddedildi"yi değil **3.12 eşiğinin kendisini** çiviliyor.
+- **BULGU-2 (HIGH, `siniflandir.py:43`) KAPANDI** — iki sağ kalanın ikisi de kırmızı; geniş kol
+  ve ters yön (genişleme) de kırmızı.
+- **Sağ kalan V9 (MEDIUM)** → `d67de93` ile kapatıldı: geniş-kol testi artık ayırt edici girdiyi
+  (geçici izlenmeyen sonda) **kendi üretiyor** + kalibrasyon assertion'ı taşıyor.
+
+⭐ **`kur.ps1:154` — SİLMEYİN.** Gate "eşdeğer mutant" iddiasını **iki kollu** ölçümle daralttı:
+etiketi gerçek sürümle ayrışan bir launcher'da (bayat `py` kaydı, yerinde yükseltilmiş kurulum)
+mutant `RED` → `KABUL 3.12`'ye dönüyor ⇒ **ölü kod değil, etikete dayalı ön eleme**. Kusur değil
+(fark orijinalin daha muhafazakâr yanlış-negatifi yönünde) ama ileride *"zaten `:126` tekrar
+bakıyor, gereksiz"* diye **silinmemeli**.
 
 ### ⛔ MERGE ANINDA YAPILACAKLAR — unutulursa sessizce bayatlar
 
