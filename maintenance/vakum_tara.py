@@ -45,14 +45,49 @@ ICERIK = re.compile(r"assertIn\(|assertRegex\(|assertNotIn\(|\bin\s+(out|cikti|s
 #   h1 a4 m2 y7 l3 d2 -> küçük harfli vaka kodu (aynı sınıf)
 #   VTB VKD ALL_CAPS  -> sabit / enum adı
 KOD_SIMGE = re.compile(r"^(?:[A-Za-z]\d+[A-Za-z]?|[A-Z][A-Z0-9_]{2,})$")
+VAKA_KODU = re.compile(r"^[A-Za-z]\d+[A-Za-z]?$")
+BUYUK_SIMGE = re.compile(r"\b[A-Z][A-Z0-9_]{2,}\b")
+# ⚠ BÜYÜK HARFLİ TÜRKÇE VURGU SÖZCÜĞÜ ≠ SİMGE (ölçüldü 2026-09-18, Z7 öncelik-2): test adlarında
+# DOKUNMAZ, KAPATMAZ, REDDEDILIR gibi vurgu sözcükleri 37 mutantın 37'si ölmüşken 32 yanlış bulgu
+# üretti. Büyük harfli parça ancak ÜRÜN KODUNDA da büyük harfli bir simge olarak geçiyorsa (VTB,
+# WARN, OTOMATIK_VAKALAR…) vaat sayılır. Vaka kodları (V6d, a4) bu süzgeçten geçmez — hep vaattir.
+# Test adı `_` ile bölündüğü için büyük harfli parça hep TEK sözcüktür (OTOMATIK_VAKALAR gibi
+# bileşik sabit ada hiç ulaşmaz). Vaat taşıyan büyük harfli sözcükler kısa çıktı etiketleridir
+# (WARN, PASS, FAIL, DUR, VTB); uzun olanlar (DOKUNMAZ, REDDEDILIR) ürün mesajlarında da büyük
+# harfle geçtiği için ürün-simgesi süzgeci onları ELEMİYORDU (ölçüldü: 92 → 65).
+ETIKET_AZAMI = 4
+# Kısa Türkçe sözcükler (HİÇ, ŞEY, TÜM…) katlanınca kısa etiket gibi görünür ve ürün mesajlarında
+# büyük harfle geçer ⇒ ayrı süzülür (ölçüldü: HIC/SEY/TUM üç yanlış bulgu).
+TURKCE_KISA = frozenset({"HIC", "SEY", "TUM", "VAR", "BOS", "TEK", "ILK", "SON", "HER",
+                         "IKI", "BIR", "ICIN", "GIBI", "DAHA", "AYNI", "ONCE", "ASLA"})
+URUN_KALIPLARI = ("scripts/**/*.py", "guncelle/**/*.py", "kur.ps1", "skills*/**/scripts/**/*.py")
+_TR = str.maketrans("ÇĞİIÖŞÜçğıiöşü", "CGIIOSUcgiiosu")
 
-BAKILANLAR = ("test adındaki kod-benzeri simge gövdede geçiyor mu · "
+
+def katla(metin: str) -> str:
+    """Türkçe harfleri ASCII karşılığına indirger: test adları ASCII yazılır (`OLCULEMEDI`),
+    gövde ve ürün metni Türkçedir (`ÖLÇÜLEMEDİ`) — katlamadan karşılaştırma yanlış 'yok' der."""
+    return metin.translate(_TR)
+
+
+def urun_simgeleri(kok: Path) -> set[str]:
+    """Ürün kodunda geçen büyük harfli simgeler (Türkçe katlanmış). Ürün kodu yoksa boş küme."""
+    simge: set[str] = set()
+    for kalip in URUN_KALIPLARI:
+        for f in kok.glob(kalip):
+            if f.is_file():
+                simge |= set(BUYUK_SIMGE.findall(katla(f.read_text(encoding="utf-8", errors="replace"))))
+    return simge
+
+BAKILANLAR = ("test adındaki kod-benzeri simge gövdede geçiyor mu (büyük harfli parça yalnız ≤4 harfli bir çıktı "
+              "etiketiyse ve ürün kodunda da geçiyorsa; Türkçe harfler katlanır) · "
               "hiç assert var mı (proje assert yardımcıları dahil) · "
               "rc!=0 iddiasının yanında HANGİ hata olduğu doğrulanıyor mu")
 BAKILMAYANLAR = ("bulgunun GERÇEKTEN kusur olup olmadığı (yalnız mutasyon söyler) · "
                  "assertion'ın anlamca doğruluğu · fixture'ın kurduğu senaryonun gerçekliği · "
                  "aşırı-belirtilmiş (over-specified) assertion · `tests/` dışındaki testler · "
-                 "Python olmayan test dosyaları · testin gerçekten KOŞTUĞU")
+                 "Python olmayan test dosyaları · testin gerçekten KOŞTUĞU · "
+                 "4 harften uzun büyük harfli ad parçaları (vurgu sözcüğü sayılır; gerçek uzun bir etiket vaadi kaçabilir)")
 
 
 def yardimcilar(agac: ast.AST, satirlar: list[str]) -> set[str]:
@@ -74,6 +109,7 @@ def tara(kok: Path) -> tuple[int, int, list[tuple[str, int, str, str]]]:
     df = tf = 0
     ortak: set[str] = set()       # yardımcılar TÜM test dosyalarından toplanır (`_helpers.py` ortak taban)
     agaclar: dict[Path, tuple[ast.AST, list[str]]] = {}
+    urun = urun_simgeleri(kok)
     for f in sorted((kok / "tests").glob("*.py")):
         kaynak = f.read_text(encoding="utf-8", errors="replace")
         try:
@@ -96,7 +132,7 @@ def tara(kok: Path) -> tuple[int, int, list[tuple[str, int, str, str]]]:
             # ⛔ İMZA SATIRI GÖVDEYE DAHİL EDİLMEZ. Edilirse testin ADI gövdesinin içinde olur ve
             # her test kendi vaadini KENDİ ADIYLA kanıtlar ⇒ AD-GÖVDE boyutu tümden körleşir,
             # üstelik çıktı "0 bulgu" diye sağlıklı görünür (ölçüldü 2026-09-18).
-            govl = " ".join(satirlar[d.lineno:(d.end_lineno or d.lineno)]).lower()
+            govl = katla(" ".join(satirlar[d.lineno:(d.end_lineno or d.lineno)])).lower()
 
             assert_var = bool(ASSERT_RE.search(gov)) or any(
                 re.search(r"self\." + re.escape(y) + r"\s*\(", gov) for y in ortak)
@@ -107,6 +143,8 @@ def tara(kok: Path) -> tuple[int, int, list[tuple[str, int, str, str]]]:
             for parca in re.split(r"[_\W]+", d.name):
                 if parca == "test" or not KOD_SIMGE.match(parca):
                     continue
+                if not VAKA_KODU.match(parca) and (len(parca) > ETIKET_AZAMI or parca in TURKCE_KISA or parca not in urun):
+                    continue              # vurgu sözcüğü: çıktı etiketi / ürün simgesi değil
                 p = parca.lower()
                 # Sınır sınıfına `_` DAHİL EDİLMEZ: simge bir bileşik adın parçası olarak geçse de
                 # (`s3` → `s3_cekirdek`) vaat ÖLÇÜLMÜŞ sayılır. Ama alfanümerik sınır KORUNUR:
