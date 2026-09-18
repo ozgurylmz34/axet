@@ -731,6 +731,13 @@ class AkisTest(ProjeTemel):
         r = self.f.calistir("onkontrol")
         self.assertIn("ekip", self.cikti(r).lower())
 
+    def test_ekip_reposu_denetlenemezse_OLCULEMEDI_der(self):
+        """rc taraması 2026-09-18 (Z15): `git remote` rc≠0 iken EKİP REPOSU uyarısı sessizce
+        düşüyordu. Arıza: proje `.git/config`'i bozuk (her git çağrısı rc=128)."""
+        (self.f.proje / ".git" / "config").write_text("[bozuk", encoding="utf-8")
+        r = self.f.calistir("onkontrol")
+        self.assertIn("ekip reposu denetimi ÖLÇÜLEMEDİ (git remote rc=", self.cikti(r))
+
     def test_durum_tablosu_basar(self):
         self.f.ilerlet()
         self.planla()
@@ -742,6 +749,27 @@ class AkisTest(ProjeTemel):
 # =====================================================================================================
 # 7. P2 İLE PAYLAŞIM (kopyalanmadı, çağrıldı)
 # =====================================================================================================
+class PaketSablonuRcTest(unittest.TestCase):
+    """rc taraması 2026-09-18 (Z15): `git diff` rc≠0 "paket şablonu: değişiklik yok" diye
+    okunuyordu. Taklit Baglam: `k.git` rc=128 döner; kontrol grubu rc=0 + boş çıktı."""
+
+    def _satir(self, rc: int, stdout: str = "") -> str:
+        import guncelle_proje as gp  # noqa: PLC0415
+        from types import SimpleNamespace
+        cp = subprocess.CompletedProcess([], rc, stdout=stdout, stderr="fatal: bozuk")
+        b = SimpleNamespace(taban_commit="aaa", yeni_commit="bbb",
+                            k=SimpleNamespace(git=lambda *a, **kw: cp))
+        return gp._paket_sablonu_satiri(b)
+
+    def test_diff_basarisizsa_olculemedi(self):
+        satir = self._satir(128)
+        self.assertIn("ÖLÇÜLEMEDİ (git diff rc=128)", satir)
+        self.assertNotIn("değişiklik yok", satir)
+
+    def test_kontrol_grubu_bos_diff_degisiklik_yok(self):
+        self.assertIn("değişiklik yok", self._satir(0, ""))
+
+
 class PaylasimTest(unittest.TestCase):
     def test_3_yollu_birlestirme_P2den_gelir(self):
         sys.path.insert(0, str(GERCEK_SCRIPTS))

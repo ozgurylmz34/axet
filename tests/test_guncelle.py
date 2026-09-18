@@ -1468,6 +1468,42 @@ class OlcumOlculemediTest(GuncelleTemel):
                         [t for t in veri["testler"] if t["cikis"] is not None])
 
 
+class HazirlaStatusRcTest(GuncelleTemel):
+    """rc taraması 2026-09-18 (Z15): `hazirla` `git status` rc'sini okumuyordu ⇒ bozuk index'te
+    "temiz" sanılıp anlık commit atlanıyor, geri dönüş etiketi kullanıcının izlenen
+    değişikliğini İÇERMİYORDU (ölçüldü: etiketteki LICENSE = eski sürüm).
+    KAPSAM — bakılmayan: onkontrol'ün sığ-klon rc dalı (sahte klon gerektirir; kod okumasıyla)."""
+
+    def test_status_basarisizsa_DUR_ve_etiket_atilmaz(self):
+        self.f.yerel_degistir("LICENSE", "MIT yerel\n")
+        (self.f.tuketici / ".git" / "index").write_bytes(b"bozuk")
+        r = self.f.calistir("hazirla")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("git status", self.cikti(r))
+        etiketler = self.git(self.f.tuketici, "tag", "-l", "guncelle-oncesi-*").stdout.split()
+        self.assertEqual(etiketler, [], "ölçülemeyen durumda geri dönüş noktası atıldı")
+
+
+class BirlestirRcTest(unittest.TestCase):
+    """`git merge-file` hata kodu (Windows'ta 255) "255 çakışma" sayılıyordu ⇒ yanlış teşhis
+    ("ayrışma eşiği aşıldı"). Hata taklitle üretilir; kontrol grubu gerçek merge-file'dır."""
+
+    def test_127_ustu_rc_hata_sayilir(self):
+        import guncelle  # noqa: PLC0415
+        from unittest import mock
+        sahte = subprocess.CompletedProcess([], 255, stdout=b"", stderr=b"error: kirik")
+        with mock.patch.object(guncelle.subprocess, "run", return_value=sahte):
+            with self.assertRaises(guncelle.Dur) as bag:
+                guncelle.birlestir(None, "a.md", b"t\n", b"l\n", b"y\n")
+        self.assertIn("rc=255", str(bag.exception))
+
+    def test_kontrol_grubu_gercek_cakisma_sayisi(self):
+        import guncelle  # noqa: PLC0415
+        icerik, cakisma = guncelle.birlestir(None, "a.md", b"x\n", b"yerel\n", b"yeni\n")
+        self.assertEqual(cakisma, 1)
+        self.assertIn(b"YEREL:a.md", icerik)
+
+
 class DiskShaOlculemediTest(GuncelleTemel):
     """rc taraması 2026-09-18 (ZARARLI-1): `Klon.disk_sha` `git hash-object` rc≠0'ını yutup
     `None` ("dosya yok") döndürüyordu ⇒ kullanıcının İZLENMEYEN dosyası V7 (yargı) yerine V2

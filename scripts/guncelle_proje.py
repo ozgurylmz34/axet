@@ -416,7 +416,11 @@ def _paket_sablonu_satiri(b: Baglam) -> str:
     if not b.taban_commit:
         return "paket şablonu: taban bilinmiyor, karşılaştırılmadı (K5: kapsam dışı)"
     r = b.k.git("diff", "--name-only", b.taban_commit, b.yeni_commit, "--", PAKET_SABLONU)
-    degisen = [s.strip() for s in r.stdout.splitlines() if s.strip()] if r.returncode == 0 else []
+    if r.returncode != 0:
+        # rc≠0 "değişiklik yok" demek değildir (rc taraması 2026-09-18).
+        return (f"paket şablonu: karşılaştırma ÖLÇÜLEMEDİ (git diff rc={r.returncode}) "
+                "(K5: kapsam dışı)")
+    degisen = [s.strip() for s in r.stdout.splitlines() if s.strip()]
     if not degisen:
         return "paket şablonu: değişiklik yok (K5: kapsam dışı)"
     return ("paket şablonunda değişiklik var (K5 — kapsam DIŞI, dokunulmadı): "
@@ -745,11 +749,13 @@ def komut_kapanis(b: Baglam, args) -> int:
     rapor += ["", "## Sayaçlar", ", ".join(f"{a}={c}" for a, c in plan["sayaclar"].items()),
               "", "## Damga", damga_satiri,
               "", "## Paket şablonu", plan["paket_sablonu"]]
-    if b.k.git("-C", str(p.kok), "remote").returncode == 0:
-        pass
     ekip = subprocess.run(["git", "-C", str(p.kok), "remote"], capture_output=True, text=True,
                           stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
-    if ekip.returncode == 0 and ekip.stdout.strip():
+    if ekip.returncode != 0:
+        rapor += ["", "## Ekip reposu",
+                  f"ÖLÇÜLEMEDİ (git remote rc={ekip.returncode}) — proje bir ekip reposuysa bu "
+                  "değişiklikler commit'le ekip arkadaşlarına gider; commit KULLANICININ onayıyla atılır."]
+    elif ekip.stdout.strip():
         rapor += ["", "## Ekip reposu",
                   "Bu değişiklikler proje reposuna commit edilecek; ekip arkadaşların pull edince "
                   "onlara da gelir. Commit KULLANICININ onayıyla atılır; push asla."]
@@ -828,7 +834,10 @@ def komut_onkontrol(b: Baglam, args) -> int:
 
     r = subprocess.run(["git", "-C", str(p.kok), "remote"], capture_output=True, text=True,
                        stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
-    if r.returncode == 0 and r.stdout.strip():
+    if r.returncode != 0:
+        bilgi.append(f"ekip reposu denetimi ÖLÇÜLEMEDİ (git remote rc={r.returncode}) — proje bir "
+                     "ekip reposuysa değişiklikler commit'le ekibe gider.")
+    elif r.stdout.strip():
         bilgi.append("EKİP REPOSU UYARISI: bu değişiklikler proje reposuna commit edilecek; "
                      "ekip arkadaşların pull edince onlara da gelir. Commit kullanıcının "
                      "onayıyla atılır; push asla.")

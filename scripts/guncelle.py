@@ -432,9 +432,13 @@ def birlestir(klon: Klon, yol: str, t: bytes, l: bytes, y: bytes) -> tuple[bytes
              "-L", f"YEREL:{yol}", "-L", f"TABAN:{yol}", "-L", f"YENİ:{yol}",
              str(p_l), str(p_t), str(p_y)],
             cwd=str(dd), capture_output=True, stdin=subprocess.DEVNULL)
-    if r.returncode < 0:
-        raise Dur(f"git merge-file çalıştırılamadı: {yol}")
-    return r.stdout, max(0, r.returncode)
+    # merge-file: çakışma sayısı 127'de kırpılır, hata NEGATİF döner — Windows'ta 255 olarak
+    # görünür (ölçüldü, git 2.55). >127'yi "çakışma sayısı" saymak hatayı "ayrışma eşiği aşıldı"
+    # diye yanlış teşhis ediyordu (rc taraması 2026-09-18).
+    if r.returncode < 0 or r.returncode > 127:
+        hata = " ".join((r.stderr or b"").decode("utf-8", "replace").split())[:300]
+        raise Dur(f"git merge-file başarısız (rc={r.returncode}): {yol} — {hata or 'çıktı yok'}")
+    return r.stdout, r.returncode
 
 
 def fark_metni(a: bytes, b: bytes, a_ad: str, b_ad: str) -> str:
@@ -1568,7 +1572,9 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # yol süzgeçten geçer, `git add` `fatal: pathspec ... did not match any files` der ve o
     # çağrıda HİÇBİR yolu stage etmez (kısmi başarı yoktur) ⇒ o koşumun tüm birleştirme sonucu
     # commit'e GİRMEZ. Ölçüldü (`--karar birlesik`): `core/00-temel.md` diskte v3, HEAD'de v1,
-    # `kapanis` yine rc=0. Silmeler `Klon.sil()` tarafından ZATEN stage'lidir.
+    # `kapanis` yine rc=0. Silmeleri normalde `Klon.sil()` stage'ler; onun `git rm --cached`'i
+    # başarısız olsa bile yol index'te kaldığı için `izlenen` kümesine girer ve `git add` silmeyi
+    # stage'ler (rc taraması 2026-09-18 ölçtü: `git add -- <silinmiş izlenen yol>` → `D`, rc=0).
     izlenen = k.izlenen_yollar(add_yollari)
     # ⛔ M-6 (kullanıcı kararı 2026-09-18, TASARIM §6): `--karar yerel` = "bu dosyaya DOKUNMA". Dosya
     # daha önce İZLENMİYORSA (V7: kullanıcının kendi dosyası template'in yeni yolunda) kapanış onu
@@ -1842,7 +1848,11 @@ def komut_onkontrol(b: Baglam | None, args, klon: Klon) -> int:
     else:
         bilgi.append(gs.stdout.strip())
     # 5 — sığ klon
-    if klon.git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+    sig = klon.git("rev-parse", "--is-shallow-repository")
+    if sig.returncode != 0:
+        sorunlar.append(f"sığ klon denetimi ÖLÇÜLEMEDİ (git rev-parse rc={sig.returncode}): "
+                        f"{' '.join((sig.stderr or '').split())[:200]}")
+    elif sig.stdout.strip() == "true":
         sorunlar.append("sığ klon (--depth) — taban commit'leri eksik, 3-yollu karşılaştırma "
                         "yapılamaz. `kur.cmd -Sifirla` ya da tam klon gerekir.")
     # 6 — aXet sürümü
@@ -1864,7 +1874,14 @@ def komut_onkontrol(b: Baglam | None, args, klon: Klon) -> int:
 
 def komut_hazirla(b: Baglam | None, args, klon: Klon) -> int:
     klon.durum_dizini.mkdir(parents=True, exist_ok=True)
-    kirli = klon.git("status", "--porcelain", "--untracked-files=no").stdout.strip()
+    st = klon.git("status", "--porcelain", "--untracked-files=no")
+    if st.returncode != 0:
+        # Ölçülemeyen durum "temiz" sayılırsa anlık commit atlanır ve geri dönüş etiketi
+        # kullanıcının izlenen değişikliğini İÇERMEZ (rc taraması 2026-09-18, ölçüldü).
+        print(f"DUR: `git status` başarısız (rc={st.returncode}): {' '.join((st.stderr or '').split())[:300]} "
+              f"— yerel durum ölçülemedi, geri dönüş noktası atılmadı.", file=sys.stderr)
+        return 2
+    kirli = st.stdout.strip()
     if kirli:
         klon.git("add", "-u", kontrol=True)
         r = klon.git("commit", "--no-verify", "-q", "-m",
@@ -1883,7 +1900,7 @@ def komut_hazirla(b: Baglam | None, args, klon: Klon) -> int:
     f = klon.git("fetch", "--tags", "origin")
     if f.returncode != 0:
         print(f"DUR: `git fetch --tags` başarısız: {f.stderr.strip()} "
-              f"(ağ yok → şimdi güncellenemez)", file=sys.stderr)
+              f"(ağ ya da depo sorunu → şimdi güncellenemez)", file=sys.stderr)
         return 2
     print(f"Geri dönüş noktası: {etiket}")
     return 0
