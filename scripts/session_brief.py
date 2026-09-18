@@ -40,7 +40,9 @@ def _git(cwd: Path, *args: str, timeout: int = 5) -> tuple[int, str]:
     try:
         r = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, timeout=timeout,
                            encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, env=env)
-        return r.returncode, r.stdout.strip()
+        # ⚠ Yalnız SONDAN kırp: porcelain satırı boşlukla başlar (" M a.txt"); baştan kırpmak ilk
+        # dosya adının ilk karakterini yutuyordu (rc taraması 2026-09-18, ölçüldü: `.txt`).
+        return r.returncode, r.stdout.rstrip()
     except (OSError, subprocess.TimeoutExpired) as exc:
         return 1, type(exc).__name__
 
@@ -55,10 +57,13 @@ def durum_capasi(proj: Path) -> list[str]:
         return ["git reposu değil — durum çapası ÖLÇÜLEMEDİ"]
     _, dal = _git(proj, "rev-parse", "--abbrev-ref", "HEAD")
     _, son = _git(proj, "log", "-1", "--format=%h %s (%cr)")
-    _, st = _git(proj, "status", "--porcelain")
-    degisen = [s for s in st.splitlines() if s.strip()]
+    rc_st, st = _git(proj, "status", "--porcelain")
+    degisen = [s for s in st.splitlines() if s.strip()] if rc_st == 0 else []
     out = [f"dal: {dal}", f"son commit: {son or '(commit yok)'}"]
-    if degisen:
+    if rc_st != 0:
+        # git status başarısızsa (bozuk index, zaman aşımı) "temiz" DENMEZ — ölçülemedi ≠ temiz.
+        out.append(f"değişiklik: ÖLÇÜLEMEDİ (git status rc={rc_st})")
+    elif degisen:
         ornek = ", ".join(s[3:] for s in degisen[:5]) + (" …" if len(degisen) > 5 else "")
         out.append(f"değişiklik: {len(degisen)} dosya — {ornek}")
         if dal in ("main", "master"):
