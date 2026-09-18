@@ -43,14 +43,31 @@
 > 5. **Mutasyonun ikinci türü eklenir:** kusurun yaşandığı bir SHA varsa, çapa yerine
 >    **SHA-tabanlı mutasyon** tercih edilir (daha dayanıklı). Çapa yalnız SHA yokken.
 >
-> **AÇIK SORU (kullanıcı/sahip kararı):** `run_battery.py` aXet'e **doğrudan** koşulamaz —
-> core'un fixture mimarisine bağlı, aXet'te ise düz `unittest` modülleri var. İki yol:
-> ⓐ aXet kendi koşucularına `--mutasyon` kipleri ekleyip core'un konvansiyonuna geçsin
-> (büyük, mimari değişiklik) ⓑ Z11 dar kapsamlı kalsın, core'un **hüküm disiplinini**
-> devralsın (küçük). **Öneri: ⓑ** — ⓐ ayrı ve büyük bir karardır, bu turda yapılmaz.
+> **KAPANDI — ⓑ, artık ÖLÇÜLDÜ (2026-09-18).** Sürüm 2 bunu "kod okumasına dayanan
+> çıkarım" diye ÖLÇÜLMEDİ etiketiyle bırakmıştı. Ölçüldü; çıkarım **doğrulandı** ve
+> gerekçesi sanılandan derin:
 >
-> ⚠ **ÖLÇÜLMEDİ:** `run_battery.py`'nin aXet'e uyarlanabilirliği fiilen denenmedi; yukarıdaki
-> "doğrudan koşulamaz" hükmü **kod okumasına** dayanıyor (fixture düzeni ↔ unittest modülü).
+> | Ölçüm | Sonuç |
+> |---|---|
+> | `run_battery` koşucu yolu | `repo/tests/fixtures/<ad>/run.py` — **kaynakta sabit** (`_batarya`, `is_file()` değilse satır `YOK` döner) |
+> | aXet'te o yapı | `tests/fixtures/` **yok**, `run.py` **0 adet**; bunun yerine 19 düz `test_*.py` modülü |
+> | aXet koşucuları `--mutasyon-*` tanıyor mu | **0 eşleşme** (`tests/` + `scripts/` tarandı) |
+> | ⭐ `_skor()` aXet çıktısında | **`None`** — kıyas çapası okunamıyor |
+>
+> ⭐ **Üçüncü satır belirleyici.** Kontrol grubuyla kalibre edildi: core'un kendi
+> `_skor()` fonksiyonu `"SONUC: 12/12"` → `12/12` ve `"9 PASS / 1 FAIL"` → `9/10`
+> **çözüyor** (yani araç çalışıyor), ama aXet'in `SONUÇ: N test · N failure · N error ·
+> N skip · N sn` biçimini **çözemiyor**. Sonuç: fixture düzenini kurup her kural için
+> `run.py` yazsan bile, `mutasyon_karari()` skoru okuyamadığı için her mutasyon
+> **`OLCULEMEDI` = FAIL** satırına düşerdi. Uyumsuzluk yalnız **yerleşimde** değil,
+> **ayrıştırma katmanında** da var.
+>
+> ⇒ ⓐ ("aXet core'un konvansiyonuna geçsin") iki ayrı büyük iş demek: 19 modül için
+> fixture koşucusu **ve** skor biçimi değişikliği. **ⓑ seçildi:** Z11 dar kapsamlı
+> kalır, core'un **hüküm disiplinini** devralır. ⓐ kapatılmadı, ertelendi.
+>
+> ⚠ **Bu ölçüm core'un `main`'ine karşı yapıldı; o sırada origin'in 8 commit
+> GERİSİNDEYDİ.** Pull sonrası yeniden doğrulanacak (§14/0).
 
 
 ---
@@ -395,7 +412,20 @@ sanılmış **sahte bulgu** · çöken mutant yüzünden "öldü" sayılmış **
 yoksa tüketici projelerin de kendi testlerini ölçebilmesi için dağıtılan kümeye mi
 alınsın? **Şimdilik dağıtılmıyor** (§13) — bilinçli ve geri alınabilir.
 
-**AYRICA (DEV_CORE):** Bu tasarımın 14 değişmezi ve hüküm sözlüğü **aXet'e özel
-değil, metodoloji düzeyindedir.** Core'da mutasyon turu metodolojisi ölçüldü:
-**yok.** DEV_CORE sahibine ayrı bir bildirim hazırlandı (bu oturumun scratchpad'i,
-`z11/DEV_CORE-BILDIRIM.md`) — 6 bulgu, kanıtlarıyla. Taşıma kararı sahibindir.
+**AYRICA (DEV_CORE) — ⚠ BU PARAGRAF SÜRÜM 1'DE YANLIŞTI, DÜZELTİLDİ (2026-09-18).**
+Sürüm 1 burada *"core'da mutasyon turu metodolojisi ölçüldü: **yok**"* diyordu ve
+sahibe **6 bulgu** bildirilecekti. **Core'a karşı doğrulanınca 4 bulgu yanlış, 1'i
+zayıf çıktı:** core'da mutasyon metodolojisi **VAR** (`tests/run_battery.py` + 133
+fixture'ın 56'sı `--mutasyon` kipli), zorunlu brifing şablonu **VAR**
+(`claude/templates/spawn-brief.md` §7 kanıt bloğu), hüküm sözlüğü **VAR**, içerik-çapası
+kuralı **VAR**. Hepsini **bulamamıştım**.
+
+Ayakta kalan **tek** bulgu yapısaldır: `CORE-INDEX` `core/claude/` ve `core/tests/`
+alanlarını kapsamıyor (`build_core_index.py` → `ALANLAR`), junction da Grep/Glob'a
+kapalı olduğu için o metodolojinin **hiçbir keşif yolu kalmıyor**. Kalibrasyonlu ölçüm:
+indekste `standards/`=11 · `playbook`=52 *(kontrol grubu — araç çalışıyor)* ama
+`claude/`=0 · `tests/`=0 · `run_battery`=0.
+
+Bildirim Sürüm 2 olarak yeniden yazıldı (tek bulgu + çürüyenlerin listesi, çünkü
+**onların nasıl çürüdüğü bulgunun kendi kanıtıdır**) ve sahibe iletildi. **Sahip
+bulguları DEV_CORE'da uyguluyor** — pull sonrası yeniden doğrulanacak (§14/0).
