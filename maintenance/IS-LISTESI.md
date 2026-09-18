@@ -15,13 +15,67 @@ Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
 
 | Lane | Dal | Durum | Sıradaki adım |
 |---|---|---|---|
-| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` | 🔵 koşuyor · B1–B5 + EK-1 kapandı (fail-first + mutasyon) · B6–B15 + EK-3 kaldı · **COMMIT'SİZ** | bitince lider commit → **TAZE gate** (aşağıdaki gerekçe) |
-| **P3** | `feat/2026-09-17-p3-kartlar` | ✅ düzeltme turu bitti → **`c58ec1e`** | ⏳ `GATE-P3` doğrulama turu koşuyor → PASS gelirse entegrasyona merge |
-| **P4+Z5** | `feat/2026-09-18-p4-baslatici` | 🔵 FAZ A bitti (16/16 mutasyon) · **FAZ B başladı** · COMMIT'SİZ | bitince lider commit → **TAZE gate** (build hiç gate görmedi) |
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` | 🔵 koşuyor · **B1–B11 + EK-1 kapandı** (her biri fail-first + mutasyon) · B12–B15 + EK-3 kaldı · **COMMIT'SİZ** | bitince lider commit → **TAZE gate** (aşağıdaki gerekçe) |
+| **P3** | `feat/2026-09-17-p3-kartlar` | ✅ `c58ec1e` · **GATE-P3 2. tur = WARNING** — 1. turun 10 bulgusunun **10'u kapandı**, 14 bağımsız mutasyon (9 kırmızı / 4 sağ / 1 geçersiz) | 🔵 **P3-FIX2** koşuyor: 2 MEDIUM + 4 LOW. ⛔ merge P2'nin `V1R` BLOCKER'ına bağlı |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` | 🔵 FAZ A bitti (16/16 mutasyon) · **FAZ B** · COMMIT'SİZ | bitince lider commit → **TAZE gate** (build hiç gate görmedi) |
 | **P5** | `feat/2026-09-17-p5-guncelle-proje` | 🔵 mutasyon turunda · COMMIT'SİZ (176 satır + 3 yeni dosya) | bitince lider commit → **TAZE gate** |
-| **P7** | `feat/2026-09-17-p7-yayin` | ✅ entegrasyonda (`d980c48`) | ⏳ `GATE-P7` kod gate'i koşuyor |
-| **Z6** | `denetim/2026-09-18-z6` (worktree `z6-denetim`) | 🔵 koşuyor — P1/P6 geriye dönük mutasyon denetimi | hüküm bekleniyor |
-| **Z7** | — | ⬜ açılmadı | P4+P5 merge olduktan sonra, PR'dan ÖNCE |
+| **P7** | `feat/2026-09-17-p7-yayin` | ✅ entegrasyonda (`d980c48`) · ⛔ **ilk gate öldü** (aşağıda "SÜREÇ BULGUSU") | 🔵 **TAZE GATE-P7** koşuyor |
+| **Z6** | `denetim/2026-09-18-z6` | ✅ **BİTTİ — hüküm BLOCKER** (aşağıda) | → **Z6-FIX** lane'i açıldı |
+| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` (`452f1e8`'den) | 🔵 koşuyor — B1 Python-3.12 kapısı testi · B2 evren-eşitliği testi | bitince lider commit → entegrasyona merge |
+| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi hazır, 33 aday | P4+P5 merge olduktan sonra, PR'dan ÖNCE |
+| **P8** | — | 🟡 **ERTELENDİ** (kullanıcı kararı: kapsamı belirsiz, AI doldurmadı) | — |
+
+### 🔴 Z6 HÜKMÜ — BLOCKER (2026-09-18, bağımsız mutasyon denetimi)
+
+Bağlam: **27 mutasyonun 26'sı geçerliydi, 24'ü öldü** — P1 ve P6 takımları genel olarak sağlam.
+**Ürün kodunda hata YOK.** Bulunan şey **test kapsamı boşluğu**: bugün doğru çalışan iki kural
+yarın bozulursa takım **yeşil kalır**.
+
+1. **[BLOCKER] P6 — asgari Python 3.12 kapısının uygulanması hiç ölçülmüyor.** `kur.ps1:126`
+   `if ($surum -lt $script:PyAsgari)` → `if ($false)` yapıldı: `-k kur` **rc=0 · 68 test · 0 failure**.
+   3.12'yi anan iki test (`test_kur.py:936`, `:872`) yalnız **mesaj metnini** ölçüyor; girdileri
+   0-baytlık/9009 sahteler olduğu için `:121`'de eleniyor ve `:126`'ya **hiç ulaşmıyor**. Test
+   ortamında 3.12'nin ALTINDA hiçbir yorumlayıcı yok. Mutantın geçerliliği kontrol grubuyla
+   kanıtlandı (orijinal `SONUC|RED`, mutant `SONUC|KABUL surum=3.9`).
+   ⚠ Aynı karşılaştırma `kur.ps1:154` py-launcher kolunda da var — **ÖLÇÜLMEDİ**.
+2. **[HIGH] P1 — denetimin EVRENİ sessizce daralabilir.** `siniflandir.py:43` `EVREN_KOMUTU`'na
+   dışlama pathspec'i eklendi: `LICENSES/*` (443→442) ve `sap-adt-foundation/references/*` (443→438)
+   ile takım **rc=0 · 21 test · 0 failure** ve denetim **"0 sorun"** dedi. Tek evren assertion'ı
+   `test_guncelle_harita.py:65-67` → `assertGreater(len(yollar), 100)`; bugünkü evren **443**, yani
+   **342 dosya kaybolsa bile yeşil**. Modül docstring'i *"git index'indeki HER yol"* iddia ediyor ama
+   `evren()` ile `git ls-files` eşitliğini doğrulayan **hiçbir assertion yok**. Yakalanan varyantlar
+   (`docs/*`, `sap-adt-foundation/*`) yalnız **bir sınıfı tamamen boşalttıkları** için kırmızı oldu ⇒
+   **bir sınıfı boşaltmayan hiçbir daralma yakalanmıyor.**
+
+Sağlam çıkıp adıyla anılanlar: 2026-09-15'te kapatılan §3 vakumu **gerçekten kapalı** (M4b ölçtü) ·
+`clean -fd` / `Remove-Item` ayrımı yalıtılmış · lider'in geri çektiği 3 `s3` adayı mutasyonla
+ölçüldü, **üçü de sağlam**.
+
+### ⛔ SÜREÇ BULGUSU — bekçi çaldı, DÜZELTİCİ EYLEM DOĞRULANMADI (2026-09-18)
+
+**Olay:** `GATE-P7` **16844 sn (4.7 saat)** akışsız kaldı ve hiçbir çıktı üretmeden öldü.
+**Bekçi ÇALIŞTI** — `TAKILMA? GATE-P7` alarmı **1525 sn**'de düştü. Kusur alarmda değil,
+**lider'in tepkisindeydi**: düzeltici `SendMessage` `classifier timed out` ile **başarısız döndü**,
+lider başka işe geçti ve **gönderildiğini hiç doğrulamadı** — yani kendi kuralı
+*"araç başarısızlığını zararsız sayma"* ihlal edildi. Araya makine askıya alınması
+(duvar saati ~4 saat sıçraması; `timed out after -629 seconds` NEGATİF süre) girdi.
+
+**Çare (uygulandı, bekçi v13):** ① ikinci eşikte (2100 sn) **`OLU-SAY`** — "düzeltme TUTMADI,
+TaskStop + taze ajan aç, BEKLEME" ② ihlalden sonra akış geri gelince **`TOPARLANDI`** — düzeltmenin
+tuttuğunu artık lider **varsaymıyor**, bekçi ölçüyor ③ izlenen ajan listesi **dosyadan** okunuyor
+(`bekci/izlenen.txt`), ajan eklenince monitör yeniden başlatılmıyor ⇒ "izlemeyi güncellemeyi unutma"
+sınıfı kapandı ④ saat sıçraması dedektörü korundu.
+
+### ⛔ SÜREÇ BULGUSU 2 — paylaşılan scratchpad ÇAKIŞMASI (ölçüldü, tahmin değil)
+
+İki ajan aynı adı (`mutasyon.py`) kullandı; biri diğerinin **aracını ezdi**. Sonuçları:
+**3 ölçüm turu geçersiz oldu** ("0 failure" sahte yeşildi — mutasyon hiç uygulanmamıştı) ve
+**bir lane, yabancı bir worktree'de (`p3-kartlar`) 6 kez mutasyon koşturdu** ⇒ o lane'in o
+sıradaki ölçümleri kirlenmiş olabilir. Bir ajanın **yedek dizinine** de yabancı dosya yazıldı;
+yedek ezilseydi geri-alma kanıtı anlamsızlaşacaktı.
+**Kural (tüm brifinglere girdi):** her ajan **YALNIZ `<scratchpad>/<benzersiz-lane>/`** altına yazar;
+`mutasyon.py`/`kos.py`/`yedek.py`/`orijinal/` gibi ortak adlar YASAK.
+⇒ P3-FIX2 brifingine gate'in mutasyonlarını **birebir tekrar ölçme** emri kondu, kirlenme bu yolla kapanıyor.
 
 **⚠ P2-fix'e neden TAZE gate:** düzeltme turu yalnız bulgu kapatmıyor, **yeni mantık ekliyor**
 (V7 dalı · `VAKA_IZINLI_KARARLAR` matrisi · `_yedeksiz_mi()` · `olc` rc=2 · `|||||||`). §2'deki gate
