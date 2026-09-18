@@ -964,11 +964,15 @@ try {
         # Config'teki kök de çözülüp çözülmüş hâlle karşılaştırılır: config junction'lı biçimi tutup kur gerçek yolla
         # çalışınca AKTİF klon "başka klon" sanılıyordu (ölçüldü). Kök çözülemezse o kök için ÖLÇÜLEMEDİ: öneri yok.
         $olculemeyen = @()
+        # "Config zaten bu klonu gösteriyor" yalnız config'te GERÇEKTEN bu klona eşit bir kayıt varsa basılır. Eskiden
+        # koşul "$onceki boş değil" idi: config'te yalnız BAYAT (klasörü silinmiş) kayıt varken de bu cümle basılıyordu
+        # (K-C, ölçüldü 2026-09-18).
+        $bukiKlon = $false
         foreach ($o in $onceki) {
-            if ((Yol-Esit $o $Hedef) -or (Yol-Esit $o $HedefGercek)) { continue }
+            if ((Yol-Esit $o $Hedef) -or (Yol-Esit $o $HedefGercek)) { $bukiKlon = $true; continue }
             $oGercek = Gercek-Yol $o
             if ($null -eq $oGercek) { $olculemeyen += $o; Yaz "  DİKKAT: config'teki klonla karşılaştırma ÖLÇÜLEMEDİ: $($script:GercekYolHata)"; continue }
-            if (-not (Yol-Esit $oGercek $HedefGercek)) { $baska += $o }
+            if (Yol-Esit $oGercek $HedefGercek) { $bukiKlon = $true } else { $baska += $o }
         }
         if ($olculemeyen.Count -gt 0) {
             Yaz "          config'te kayıtlı klon: $($olculemeyen -join ', ')"
@@ -990,7 +994,7 @@ try {
             Yaz '          çekirdek birden yüklenebilir. Önceki klonu artık kullanmayacaksan onun kayıtlarını PowerShell''de kaldır.'
             Yaz '          Bu komut o klonda açılmış SAP''ye yazma iznini de KAPATIR (izin dosyasını siler):'
             foreach ($b in $baska) { Yaz "            & `"$($script:PY)`" `"$(Join-Path $b 'scripts\install.py')`" --uninstall" }
-        } elseif ($onceki.Count -gt 0 -and $olculemeyen.Count -eq 0) {
+        } elseif ($bukiKlon -and $olculemeyen.Count -eq 0) {
             Yaz '  Config zaten bu klonu gösteriyor; kayıtlar yenilenecek.'
         }
     }

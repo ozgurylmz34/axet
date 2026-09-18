@@ -593,6 +593,8 @@ class KurTest(GeciciTest):
         self.assertEqual(r.returncode, 0, c)
         self.assertIn("SONUÇ: 0 FAIL", c)
         self.assertIn("kayıtlı klon klasörü yok; kayıt bayat", c)
+        # K-C: config'te bu klona eşit kayıt YOK (yalnız bayat kayıt var) -> "zaten bu klonu gösteriyor" denmez
+        self.assertNotIn("Config zaten bu klonu gösteriyor", c)
         self.assertNotIn(str(silinmis / "scripts" / "install.py"), c)  # olmayan betik önerilmez
         self.assertNotIn("doctor'ın FAIL satırları", c)  # doctor 0 FAIL
         son = c[c.index("Kurulum tamam"):]
