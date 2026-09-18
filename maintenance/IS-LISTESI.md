@@ -6,7 +6,37 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ▶ 2026-09-18 AKŞAM — KURULUMA GİDİŞ (güncel durum; altındaki "GÜN SONU 2026-09-18" bloğu TARİHÇEDİR)
+## ▶ 2026-09-18 GECE — KURULUM TAMAM (güncel durum; aşağıdaki "AKŞAM" ve "GÜN SONU" blokları TARİHÇEDİR)
+
+**Public yayın + ilk gerçek kurulum yapıldı; kurulumda bulunan kusurlar aşağıda "Açık kalemler" → K-A…K-G.**
+
+| Adım | Sonuç | Kanıt |
+|---|---|---|
+| Entegrasyon PR #9 | ✅ squash-merge `545cdab` · CI 5/5 yeşil (`18e3f8a`; `statusCheckRollup` tek tek) · PR #8 supersede kapatıldı | ilk CI koşumu kırmızıydı → 2 düzeltme (aşağıda) |
+| CI kırmızısı 1 | `test_yanlis_harfli_glob_deseni_yakalanir` yalnız **py3.14**: 3.13+ `Path.glob` joker içermeyen parçaları DESENDEKİ harfle döndürür → harf-duyarlı eş denetimi körleşiyordu (gerçek ürün kusuru, `guncelle/siniflandir.py:_var_mi`) → her aday dizin girdileriyle yeniden doğrulanıyor | 3.14 yerelde yok: glob TAKLİDİ ile ölçüldü (eski kod True=hata · yeni False) + CI 3.14 yeşil |
+| CI kırmızısı 2 | `test_doctor_eski_sablonda_WARN`: CI checkout sığ (fetch-depth=1) → `HEAD~1` yok → sığ klonda `skipTest` (geçmişe bağlı öteki testlerle aynı kural) | sığ klonda SKIP · tam klonda OK |
+| İlk yayın kaydı | `guncelle/yayinlar.json` boştu → `--ilk` "yayınlanacak kalem yok" der (yayın provasında bulundu) → `v0.1.0` kaydı eklendi (`18e3f8a`) | `--yalniz-dogrula` SORUN 0 |
+| Yayın taraması | `yayin_hazirla --yalniz-tara` → 472 dosya · **0 BLOCKER · 0 WARNING** · ikili dosya 0 (elle) | — |
+| **Public yayın** | `ozgurylmz34/axet-template` PUBLIC · tek commit `2396f2a` + etiket `v0.1.0` · `raw.../kur.ps1` anonim **200** | `gh repo view` · `git ls-remote` |
+| Kurulum (public'ten, README tek satırı) | ✅ `%USERPROFILE%\axet` · doctor 0 FAIL · skill 30 · `doctor --live`: CORE/SAP/MEMORY kimlikleri bağlamda | ilk deneme `C:\AXET_TEST`'e kuruldu (K-A) → kaldır + yeniden kur |
+| Test projesi `C:\AXET_TEST` | ✅ `%yeni-proje` · `setup_credentials` · `behavior_manifest generate` (6 dosya) · `sap_doctor` logon + CSRF PASS (TLS doğrulaması bilinçli kapalı) · yeni oturum kanaryası 4 kimlik tam | aXet DB `messages`/`read_files` |
+
+**Kararlar (2026-09-18 gece, kullanıcı):**
+- Şirket kaynaklı 9 bölüm (NOTICE listesi) için **yazılı izin var** — Y2a şartı push anında yeniden teyit edildi.
+- Public push → **onaylandı** (CI yeşil + merge şartıyla).
+- Yayın commit'inin yazarı → **GitHub no-reply** (`<id>+ozgurylmz34@users.noreply.github.com`), yalnız o komut için ortam değişkeniyle; global git ayarına dokunulmadı.
+  Gerekçe (ölçüldü): bu makinede `user.email` tanımlı DEĞİL → git adresi Windows şirket hesabından türetiyor; yayın provasında commit yazarı **şirket adresi** çıktı. Tarama commit yazarına BAKMIYOR (açık kalem).
+- Template yeri → varsayılan `%USERPROFILE%\axet`; `C:\AXET_TEST` test PROJESİ.
+- Bayat config kayıtları (5 × `C:/AXET_TEST/...`) → lider sildi (yedekli), doctor WARN kalktı.
+- TLS doğrulaması → `false` (kurum CA'sı; araçta CA yolu seçeneği yok).
+
+**P2 taze gate hükmü (`e34ab81`, kullanıcı talebiyle erken kesildi): WARNING, BLOCKER yok.** 22 mutant · 14 ÖLDÜ · 8 SAĞ.
+Eski sessiz veri kaybı sınıfı (A1/A2/A4) 8 testle korunuyor. Sağ kalanlar ve ek bulgular → Açık kalemler "P2 gate".
+Hazır test kodu: ajan kopyası `%TEMP%\p2g\k5\tests\test_p2g_ek.py` (oturum scratchpad'ine de kopyalandı, sha256 `3f2c812a…`).
+
+**Sıradaki:** kullanıcı `C:\AXET_TEST`'te SAP işi yaptırarak davranış testi (skill yükleme · hatırlama · hafıza · AGENTS.md · kesin yasaklar · pre-commit · izin kuralları); lider aXet DB'sinden (`messages` + `read_files`, salt-okur) motor izini takip eder.
+
+## 2026-09-18 AKŞAM — KURULUMA GİDİŞ (TARİHÇE; güncel durum yukarıda "GECE")
 
 > Kullanıcı (2026-09-18 akşam): *"bayat satırları düzelt ve 7 dalı entegrasyona al, aXet kurulumundan önce
 > mutlaka yapılması gerekenleri yap, CI'yı en son koştur, her adımda CI çalıştırma."*
@@ -14,14 +44,14 @@
 | # | Adım | Durum |
 |---|---|---|
 | 1 | 7 lane entegrasyona (`6fb557e` P2-fix · `15cfd9a` P3 · `b6453fe` P4+Z5 · `8897e3a` P5 · `214b868` P7 · `43da5b0` Z6 · `71ca6f2` Z7) | ✅ metinsel çakışma 0 |
-| 2 | Birleşik tam takım (tek koşum, lider) | 🔵 koşuyor — **1 birleşim kırmızısı yakalandı ve kapandı**: P7'nin `belge-changelog` alt sınıfı P3'ün `sinif-belge-lisans.md` kapsam tablosunda yoktu (P3 lane'i P7'siz açılmıştı) → satır eklendi, `test_guncelle_kartlar` 25/25 |
-| 3 | P2 TAZE gate (kapsam büyüdüğü için; kullanıcı onayı) | 🔵 koşuyor (mutasyon, `e34ab81`) |
+| 2 | Birleşik tam takım (tek koşum, lider) | ✅ kök 597 · 1 failure (düzeltildi) · foundation 935/935 + 403 — **1 birleşim kırmızısı yakalandı ve kapandı**: P7'nin `belge-changelog` alt sınıfı P3'ün `sinif-belge-lisans.md` kapsam tablosunda yoktu (P3 lane'i P7'siz açılmıştı) → satır eklendi, `test_guncelle_kartlar` 25/25 |
+| 3 | P2 TAZE gate (kapsam büyüdüğü için; kullanıcı onayı) | ✅ WARNING (yukarıda "GECE") |
 | 4 | Bayat satırlar (G tablosu P3/P4/P5/P7 · §2b · `gh` ön koşulu · D16 · karar listesi) | ✅ bu commit |
-| 5 | `sync-rules.json` `infra_write_guard` telafi kaydı (P4 `clone_rules`'u kaldırdı) | ⬜ |
-| 6 | **Public geçiş:** tüketici-yüzü işaretçiler (`README.md` · `kur.ps1 $Kaynak` · `docs/onboarding.md`) `ozgurylmz34/axet` → `ozgurylmz34/axet-template`; "depo private" uyarıları kalkar; `test_kur.py` işaretçi testi tersine döner | ⬜ |
-| 7 | Tek PR → `main`, **CI tek sefer** (5 job) → yeşilse merge (`--admin` CI atlatmak için ASLA) | ⬜ |
-| 8 | `yayin_hazirla.py --yalniz-tara` → sonuç kullanıcıya · şirket içeriği **yazılı izin teyidi** (Y2a şartı) → `--ilk` → `gh repo create ozgurylmz34/axet-template --public` + push (**geri alınamaz**, ayrı onay) | ⬜ |
-| 9 | Kurulum: README tek satırı (public'ten) · test projesi **`C:\AXET_TEST`** | ⬜ |
+| 5 | `sync-rules.json` `infra_write_guard` telafi kaydı (P4 `clone_rules`'u kaldırdı) | ✅ `f2a58a6` |
+| 6 | **Public geçiş:** tüketici-yüzü işaretçiler (`README.md` · `kur.ps1 $Kaynak` · `docs/onboarding.md`) `ozgurylmz34/axet` → `ozgurylmz34/axet-template`; "depo private" uyarıları kalkar; `test_kur.py` işaretçi testi tersine döner | ✅ `2e6fdf3` |
+| 7 | Tek PR → `main`, **CI tek sefer** (5 job) → yeşilse merge (`--admin` CI atlatmak için ASLA) | ✅ PR #9 `545cdab` (CI iki koşum: ilki kırmızı → düzeltildi) |
+| 8 | `yayin_hazirla.py --yalniz-tara` → sonuç kullanıcıya · şirket içeriği **yazılı izin teyidi** (Y2a şartı) → `--ilk` → `gh repo create ozgurylmz34/axet-template --public` + push (**geri alınamaz**, ayrı onay) | ✅ `v0.1.0` yayında |
+| 9 | Kurulum: README tek satırı (public'ten) · test projesi **`C:\AXET_TEST`** | ✅ (yukarıda "GECE") |
 
 **Kullanıcı kararları (2026-09-18 akşam, tek tek soruldu):**
 - P2 taze gate → **evet, paralel**. `--kabul` sıkılaştırması → **kalsın**. P2 ⓐ yarım-stage temizliği + ⓑ diğer
@@ -156,6 +186,17 @@ doğrulanmalı, "kuruldu = çalışıyor" sayılmamalı.
   koşulmadı** — ajan bunu kod okuyarak çıkardı, **ölçmedi** (⚠ KG-1 tam olarak böyle bir
   çıkarımın yanlış çıkmasıydı) ⓒ süzgeçsiz tam paket koşumu yapılmadı.
 - **P2 kurulum-sonrası (kullanıcı 2026-09-18 akşam):** ⓐ `git add` patlayınca yarım stage'li index için temizleme adımı · ⓑ "alt-süreç başarısızlığını `UYARI:`le geçiştirme" deseninin `install.py` · `doctor.py` · `kur.ps1`'de taranması.
+- **Kurulum bulguları (2026-09-18 gece, ilk gerçek kurulum — kanıtlı):**
+  - **K-A** (düşük) `kur.ps1` konumsal argümanı sessizce `-Hedef` sayıyor: `... -File $f c:\axet_test\` template'i test proje klasörüne kurdu; bulunulan dizin / olağandışı yer uyarısı yok.
+  - **K-B** (orta) klondaki `kur.cmd -Kaldir` KENDİ klonunu değil varsayılan `%USERPROFILE%\axet`'i hedefledi → "klon değil" deyip durdu (güvenli taraf; ama kaldırma çalışmadı). Betik kendi konumunu varsayılan hedef almalı.
+  - **K-C** (düşük) `kur.ps1:979-980` yalnız BAYAT kayıt varken de "Config zaten bu klonu gösteriyor" basıyor (koşul bayatları dışlamıyor).
+  - **K-D** (düşük, model) proje YOKKEN açılış kanaryası `SAP: YOK` yazdı; `doctor --live` SAP-CORE-ID'nin bağlamda olduğunu ölçtü. Projede tekrarlanmadı. Aynı oturumda kanarya 1. değil 2. satırdaydı.
+  - **K-E** (orta) ANA YOLDA (aXet klasörde açık + `%yeni-proje`) şablon sürüm kaydı YAZILMIYOR: aXet'in kendi `.axet-code/.gitignore` (`*`) dosyası `new_project.py`'de "değiştirildi" sayılıyor → `onceden_vardi` → kayıt atlanıyor. Kontrol grubu (dry-run): boş klasör → yazılacak · yalnız o dosya → YAZILMAYACAK. Çare: aXet varsayılan gitignore'u `onceden_vardi` hesabından çıkar. `C:\AXET_TEST` bu yüzden kayıtsız.
+  - **K-F** (orta, her yeni kullanıcı) taze klonda oturum özeti **"1 güncelleme kalemi bekliyor"** diyor; motor (`guncelle.py:komut_plan`) atası olan yayını atlıyor (`merge-base --is-ancestor v0.1.0 HEAD` = 0). `session_brief.py:guncelleme_kalemleri()` yalnız `uygulanan.json`'a bakıyor — iki gerçekleştirim ayrışmış; `v0.1.0` kaydı görünür kıldı. Çare: özet de motorun ata kuralını kullansın (tek kaynak).
+  - **K-G** (düşük, UX) her yeni oturumda `session_brief.py` için izin soruluyor (`permission.decision grant_for_session`, log). Çekirdek "her oturumun ilk işi" diyor → izin listesinde `allow` adayı (davranış yüzeyi: ayrı onay).
+- **Yayın aracı (`yayin_hazirla.py`):** ⓐ commit yazarı/committer kimliği DENETLENMİYOR (bu makinede şirket adresi çıktı; bu yayında ortam değişkeniyle aşıldı) → yazar e-postası sızıntı sınıfına alınsın ya da `--ilk` kimlik istesin · ⓑ uzun hedef yolda (MAX_PATH) ham `FileNotFoundError` traceback — anlamlı mesaj.
+- **Git kimliği (makine, kullanıcı kararı):** `user.email`/`user.name` tanımlı değil → commit'ler Windows şirket hesabından türetilen adresle atılıyor (entegrasyon dalında 77 commit; private repo). Public DEV_CORE geçmişinde bu oturumdan ÖNCEKİ 3 commit başka bir kurumsal adres taşıyor (bilgi; geri alınamaz).
+- **P2 gate (WARNING, `e34ab81`) — kurulum sonrası:** ⓐ **M-1** `guncelle.py:1674` `if kabul:` → `if kod == 3:` (`--kabul` + git hatasında RAPOR.md hem "KAPANMADI" hem "onaylı açık FAIL ile kapandı" diyor, rc=1) · ⓑ sağ kalan D1/D2 (commit rc=1 toleransı — gerçek yol: `--no-verify` prepare-commit-msg hook'unu ATLAMAZ, rc=1 döner), E1/E2/E3 (`--kabul` git hatasını örtmez), A3/A6 (izlenen kolu) için 5 hazır test (`test_p2g_ek.py`) · ⓒ `test_guncelle.py:1231-1233` docstring'i yanlış ("rc=1'in ikinci anlamı" — gpg hatası rc=128) · ⓓ M-6 tasarım sorusu: V7 `--karar yerel` kullanıcının izlenmeyen dosyasını kapanış commit'ine alıyor (`e1108f9`'dan beri) · kapsam: A3/A6/D3/E3 tam takımla ölçülmedi (kesildi).
 - **Ertelenenler:** Z8 (fixture `copytree` maliyeti, ortak `_helpers.py`) · Z9
   (`new_project.py` ikili şablonda `UnicodeDecodeError`) · Z10 (`doctor.py` aşırı-iddialı
   docstring) · P8.
