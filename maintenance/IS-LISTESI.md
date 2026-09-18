@@ -6,7 +6,63 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ▶ 2026-09-18 GECE — KURULUM TAMAM (güncel durum; aşağıdaki "AKŞAM" ve "GÜN SONU" blokları TARİHÇEDİR)
+## ▶ 2026-09-18 GECE-2 — DÜZELTME TURU (güncel durum; aşağıdaki "GECE" bloğu kurulum + davranış testi TARİHÇESİDİR)
+
+Dal: `fix/2026-09-18-davranis-duzeltmeleri` (taban `545cdab` = v0.1.0 ağacı). Kullanıcı kararı: *"hepsini yap"*,
+analiz → tek tek karar → uygulama. Her kod düzeltmesi **kırmızı/yeşil** ölçüldü (eski kodda kırmızı, yenide yeşil).
+
+| Madde | Commit | Ne yapıldı (kısa) |
+|---|---|---|
+| K-A | `f683c57` | `kur.ps1` adsız argüman `-Hedef` sayılmaz → DURDU |
+| K-B | `a30c422` | klondaki `kur.cmd -Kaldir` kendi klonunu kaldırır (karar: yalnız `-Kaldir`) |
+| K-C | `fb3168a` | yalnız bayat kayıt varken "Config zaten bu klonu gösteriyor" denmez |
+| K-E | `2c663f6` | aXet'in kendi `.gitignore`'u "proje zaten vardı" sayılmaz (karar: iç değişken) |
+| Z9 | `351e0ab` | ikili şablon dosyası bayt bayt kopyalanır |
+| Z10 | `fdf94ea` | `doctor.py:794` `template_bulgulari` docstring'i gerçek davranışı söyler |
+| yayın ⓑ | `1a58420` | kopyalama `OSError`'ı anlamlı HATA |
+| yayın ⓐ | `be36831` | noreply olmayan yazar/committer kimliğiyle yayın DURUR |
+| P2 M-1 / M-6 / index / ⓑ | `1f52a73` | kapanış rc yalnız kod 3'te "onaylı açık FAIL"; `yerel` kararlı izlenmeyen dosya commit'e girmez; `git add` hatasında plandaki yolların index'i geri alınır |
+| K-F | `2b0aac2` | yayını zaten İÇEREN klonda kalem "bekliyor" sayılmaz; ata testi `guncelle.yayin_durumu` tek kaynak |
+| K-M | `bec9356` | `$TMP` (tam eşleşme) için `adt_post_shell`/`adt_domain_create`/`adt_dtel_create` transport istemez; struct + push istemeye devam eder |
+| K-O | `5b86949` | FAIL anlarında "kuralı değiştirerek geçme" hatırlatması (naming, pre-commit, scaffold, SAP kapısı) + pre-commit `.rules.md` Naming/istisna değişikliğini eski→yeni WARN |
+| P5 ⓐ | `da4505f` | onaysız `isaretle --karar yerel/ertelendi` karar KAYDETMEZ (seçici mutant öldü) |
+| P5 ⓒ | — | süzgeçsiz `-k guncelle_proje` koşumu: 55 test · 0 failure (`530f7b3`, ajan ölçümü) |
+| T1-T8 + K-H/K-K/K-N/K-I/K-J notları | `f3312a3` | CORE 0.4.0 · SAP 0.3.0: açılış adımı ilk mesajın türünden bağımsız (K-K) · kabuk ortamı + kodlama (K-H/K-N) · altyapı değişikliği onayı · "Allow for Session" uyarısı (K-J, README'de de) · yasak A örneği (K-I) · SALV notu · gün-sonu kural değişikliği satırı · verify-done adım 8 |
+| rc taraması ZARARLI-1 | `eb7e7c0` | `Klon.disk_sha`: `git hash-object` rc≠0 artık "dosya yok" sayılmaz → plan ÖLÇÜLEMEDİ deyip durur (önce: okunamayan yerel dosya V7→V2 olup **yedeksiz eziliyordu**, ölçüldü) |
+| Z15 — rapor doğruluğu | `d8c7ce1` `d25fe5c` | `check_env` rc≠0 → ÇALIŞMIYOR · durum çapası status rc≠0 → ÖLÇÜLEMEDİ + ilk dosya adı kırpma hatası · `hazirla` status rc≠0 → DUR (etiket atılmaz) · merge-file rc>127 → hata · sığ-klon rc · paket şablonu / ekip reposu ÖLÇÜLEMEDİ · ölü çağrı + yanlış öncüllü yorum. Hepsi kırmızı/yeşil (sığ-klon dalı testsiz) |
+| Z7 sağ kalanlar | `f3cb62a` | D2, BM1c, G10b, G1b — ajanın FAIL-FIRST önerileri; lider 4/4 yeşil |
+| P5 ⓑ | `30388ff` | 24 seçici mutant → 15 öldü; 7 sağ kalana test (PU8, PU10, PK3, PK6, PK11, PK12, PK13); PU9 eşdeğer, PK10 ikinci katman; tam modül 66/0 |
+| Bug gate (BLOCKER → düzeltildi) | `db86a93` | #1 HIGH: yeniden adlandırmalı V7 + `yerel` → kullanıcının izlenmeyen dosyası (yeni yolda) commit'e giriyordu; kapanış süzgeci artık "motor bu yola yazdı mı" · #2 aynı sınıf `ertelendi`/karar verilmemiş · #3 pre-commit K-O②: stage'lenmemiş ve yeniden adlandırılan `.rules.md` · #4 bütünlük asgari güvence ÖLÇÜLEMEDİ (**testsiz** — fikstür bu yolları içermiyor) · #5 git'siz projede ÖLÇÜLEMEDİ gürültüsü · #6 `new_project` ikili ölçütü uzantı+NUL (+ satır sonu çevirisi korundu). Kırmızı/yeşil: 2/2 · 2/2 · 1/1 · 1/1 |
+| Z7 tarayıcı | `ac47b18` | `vakum_tara` AD-GÖVDE: 4 harften uzun büyük harfli parça ve kısa Türkçe sözcük vaat sayılmaz; kısa etiket yalnız üründe geçiyorsa vaattir. 92 → 57 bulgu (aynı ağaç); 3 kalibrasyon testi (2'si eski tarayıcıda kırmızı) |
+
+**K-J kararı (ölçüm yerine prior-art):** zincirli komutta uzun `allow` deseni kısa `deny`/`ask`'i ezdiği
+`config/permissions.json` `_aciklama`'da zaten ölçülü (prior-art: bulundu). `*sap_adt_cli.py*` gibi bir allow,
+`... && rm -rf ...` zincirinde `*rm -rf *`'ı ezerdi ⇒ **allow kuralı EKLENMEDİ**, yalnız not + README uyarısı.
+⚠ Kullanıcının "laboratuvarda ölç" seçeneğinden sapma: yeni ölçüm koşulmadı, eski ölçüme dayanıldı.
+
+**Eski başlıkların durumu (bu turda kanıtla bakıldı):**
+- 🔴 P5 BLOCKER (BG-1..4) → **KAPALI**: testler duruyor — `test_guncelle_proje.py:479` (BG-1), `:550` (BG-2),
+  `:674` (BG-3), `:698` (BG-4).
+- 🔴/🟡 Z6 → **KAPALI**: BULGU-1/BULGU-2 ve V9 kendi doğrulama hükmünde kapandı (`d67de93`).
+- 🔴 P7 → B1 **KAPALI** (`test_yayin_surumleri.py:305` gerçek yayın yolunu ölçüyor). B2-B6 bu turda
+  **yeniden ölçülmedi** (DOĞRULANMADI).
+- ⛔ MERGE ANINDA md. 2 (`sync-rules.json:2841`) → **KAPALI** (`status: kismi`, not gerçeği söylüyor).
+  md. 1 **AÇIK ve bu tur için yeniden geçerli**: `core/00-temel.md` yine değişti ⇒ merge olduğu an
+  `behavior_manifest.py generate` (**kullanıcının kendi terminalinde**).
+
+**Merge / yayın sonrası kullanıcı adımları:** `%guncelle` + `install.py` + aXet'i yeniden başlat ·
+SAP projelerinde (`C:\AXET_TEST`) `%guncelle-proje` — SAP 0.3.0 kesin-yasak damgasını yeniler
+(beklenen: damga "farklı" görünür, bu `sinif-kesin-yasak-kanonigi` akışıdır).
+
+**Açık kalanlar (bu turdan doğan; ertelenenler §3'te):**
+- K-G (her oturum `session_brief` izni) — zincir-güvenli allow tasarımı bulunmadıkça yok (§3 Z12).
+- K-M kalanı — struct/push hâlâ transport ister; `$TMP`'de corrNr'sız kilit canlı ölçülmedi (§3 Z13).
+- K-I — niyet ölçümü (SAP yazma kapalıyken model yasak A'da ne yapar) sonraki davranış testinde (§3 Z14).
+- K-D — izle (projede tekrarlanmadı).
+- Z15'ten kalan TEK madde: `_reviewer.py:~458` (SAP yazma pre-flight'ı, ADT altyapısı → ayrı açık onay gerekir; toplu onay yetmez) · ~~Z7 AD-GÖVDE yanlış-pozitifi~~ KAPANDI `ac47b18` · bütünlük asgari güvence döngüsünün hiç test kapsamı yok (fikstürde `core/sap/…` yolları yok; `db86a93` #4 testsiz) · DEV_CORE allowlist önerisi Issue olarak gönderildi: ix-works/DEV_CORE#283 · `test_kur` `auth.enc` mtime
+  bekçisi (aXet oturum anahtarı yenilemesi olabilir, DOĞRULANMADI).
+
+## ▶ 2026-09-18 GECE — KURULUM TAMAM (TARİHÇE — güncel durum yukarıda "GECE-2"; aşağıdaki "AKŞAM" ve "GÜN SONU" blokları TARİHÇEDİR)
 
 **Public yayın + ilk gerçek kurulum yapıldı; kurulumda bulunan kusurlar aşağıda "Açık kalemler" → K-A…K-G.**
 
@@ -114,6 +170,10 @@ PASS/WARNING · **5 CI job'ının hepsi yeşil** · ⛔ CI'yi atlatmak için **a
 | **Z6** | `fix/2026-09-18-z6-bulgulari` · `d67de93` | ✅ iki bulgu + V9 MEDIUM kapandı | — |
 | **Z7** | `z7/2026-09-18-vakum` · `33d0746` | ✅ 2 gerçek vakum + 1 maskelenmiş kör nokta; ürün kodu değişmedi | ⬜ **20 aday** kaldı (aşağıda) |
 | **Z11** | `integrasyon` · `d56ac39` | ✅ **tasarım bitti** (Sürüm 2 + ⓑ ölçüldü) | ⛔ **İNŞA BEKLETİLDİ** — kullanıcı kararı |
+| Z12 | **K-G — her oturum `session_brief` izin penceresi.** Allow kuralı EKLENMEDİ: zincirli komutta uzun allow kısa deny/ask'i ezer (`config/permissions.json` `_aciklama`, prior-art). | zincire dayanıklı bir izin tasarımı (ör. yalnız tek-komut eşleşmesi) bulunursa |
+| Z13 | **K-M kalanı** — `adt_struct_create` ve düzenleme/push araçları `$TMP`'de de transport ister; `$TMP`'de corrNr'sız kilit/yaratma CANLI ölçülmedi (`bec9356` yalnız birim testli). | sonraki davranış testi (SAP bağlı) |
+| Z14 | **K-I niyet ölçümü** — SAP yazma KAPALIYKEN standart tabloya alan isteğinde model ne yapıyor (yeni "Örnek (A)" metninin etkisi). | sonraki davranış testi |
+| Z15 | ✅ **KAPANDI (GECE-2: `d8c7ce1`, `d25fe5c`) — biri hariç:** `skills-sap/sap-adt-foundation/scripts/sapadt/_reviewer.py:~458` rc≠1 + JSON yok → verdict SKIP, `skip_reason` boş (SAP yazma pre-flight'ı; dar pencere: Python çökmesi rc=1 → BLOCKER). Öneri: `skip_reason=f"reviewer rc={proc.returncode}: {stderr[-300:]}"`. ADT altyapısı olduğu için AYRI açık onayla yapılır. Tam tablo + deneyler: scratchpad `rc-tara/` (oturum 7cfc8cc9). | kullanıcının açık onayı |
 | **P8** | — | 🟡 ERTELENDİ (kullanıcı kararı) | — |
 
 ✅ **P2 bataryası KAPANDI** (12:36): `Ran 152 tests in 1262.644s` · `OK` ·
@@ -248,7 +308,7 @@ yapısaldır: `CORE-INDEX` `core/claude/` ve `core/tests/` alanlarını kapsamı
 (kalibrasyon: `standards/`=11 · `playbook`=52 kontrol grubu çalışıyor, ama `claude/`=0 ·
 `tests/`=0 · `run_battery`=0). ⇒ **Pull sonrası yeniden doğrulanacak** (yarın sırası №3).
 
-### 🔴 P5 TAZE GATE HÜKMÜ — BLOCKER (2026-09-18)
+### ✅ ~~🔴 P5 TAZE GATE HÜKMÜ — BLOCKER (2026-09-18)~~ — KAPALI (GECE-2: BG-1..4 testleri duruyor)
 
 20 mutasyon · **14 öldü** · **4 geçerli sağ kalan** · 1 ÖLÇÜLEMEDİ · 0 no-op · 0 çöken.
 Taban: `-k guncelle_proje` → **50 test / 0 failure / rc=0**.
@@ -272,7 +332,7 @@ denetleyicisi `"çakışma işareti"` alt dizesini arıyordu ve **RAPOR.md'nin K
 aynı ifadeye takılıp yanlış "EVET" dedi; `"çakışma işareti duruyor"` ile daraltınca gerçek
 fark çıktı. Bu, [ölçüm aracı kendini kanıtlamasın] sınıfının **üçüncü** ölçülmüş örneği.
 
-### 🟡 Z6 DOĞRULAMA HÜKMÜ — WARNING (2026-09-18)
+### ✅ ~~🟡 Z6 DOĞRULAMA HÜKMÜ — WARNING (2026-09-18)~~ — KAPALI
 
 9 mutasyon · **8 öldü** · 1 sağ kaldı. Gate **beyanı devralmadı, kendi ölçtü**: ürün blob'ları
 taban↔fix birebir aynı (`kur.ps1` `8262896f`, `siniflandir.py` `a765521b`), `git diff --numstat`
@@ -290,7 +350,7 @@ mutant `RED` → `KABUL 3.12`'ye dönüyor ⇒ **ölü kod değil, etikete dayal
 (fark orijinalin daha muhafazakâr yanlış-negatifi yönünde) ama ileride *"zaten `:126` tekrar
 bakıyor, gereksiz"* diye **silinmemeli**.
 
-### ⛔ MERGE ANINDA YAPILACAKLAR — unutulursa sessizce bayatlar
+### ⛔ MERGE ANINDA YAPILACAKLAR — md. 2 KAPALI; md. 1 GECE-2 dalı için YENİDEN geçerli (yukarıda)
 
 1. **`behavior_manifest.py generate`** — P4 `config/permissions.json` üzerinden kullanıcının
    GLOBAL config'ine yansıyan bir değişiklik yapıyor (`install.load_rules()` artık `edit`
@@ -308,7 +368,7 @@ bakıyor, gereksiz"* diye **silinmemeli**.
    ⚠ **Şimdi düzeltilmez** — `clone_rules` henüz entegrasyonda duruyor; şimdi yazılan not
    entegrasyonun bugünkü hâlini YANLIŞ anlatır.
 
-### 🔴 P7 TAZE GATE HÜKMÜ — WARNING (2026-09-18)
+### 🟡 P7 TAZE GATE HÜKMÜ — WARNING (2026-09-18) — B1 KAPALI; B2-B6 yeniden ölçülmedi
 
 16 mutasyon · 15 geçerli · **6 geçerli sağ kalan** · 1 nötr elendi · 9 öldü. **Ürün kodunda
 HATA YOK**; altısı da test-kapsamı boşluğu. En ağırı **B1**: `yayin_hazirla.py:475-480`
@@ -323,7 +383,7 @@ gerçekten **vakum** — korunan dal tamamen silindiğinde test **yine yeşil**,
 `rc=1` artık kuralın kendisinden değil **60 satır aşağıdaki bir `assert`'ten** doğuyor.
 Tarayıcı bir **daraltma aracıdır**; kusur kararını mutasyon verdi ve bu adayda **haklı çıktı**.
 
-### 🔴 Z6 HÜKMÜ — BLOCKER (2026-09-18, bağımsız mutasyon denetimi)
+### ✅ ~~🔴 Z6 HÜKMÜ — BLOCKER (2026-09-18, bağımsız mutasyon denetimi)~~ — KAPALI (Z6 doğrulama hükmü)
 
 Bağlam: **27 mutasyonun 26'sı geçerliydi, 24'ü öldü** — P1 ve P6 takımları genel olarak sağlam.
 **Ürün kodunda hata YOK.** Bulunan şey **test kapsamı boşluğu**: bugün doğru çalışan iki kural
@@ -1341,11 +1401,11 @@ Windows MAX_PATH'e duyarlı — 260+ karakterlik kökte **sahte FAIL** (ölçül
 | Z4 | Agentic connector ölçümü (`docs/agentic-connectors.md` §6) | kullanıcı ayrı onayı |
 | Z5 | **doctor `template_denetle` gürültü düzeltmesi** — ✅ **KAPANDI: P4'E DAHİL EDİLDİ (kullanıcı kararı 2026-09-18, "Z5'i de P4'e dahil et").** Gerekçe ölçüldü: Z5 ile P4'ün doctor bilgi satırı `scripts/doctor.py:777-785` — **birebir aynı 9 satırlık bloğu** hedefliyor; ayrı dallarda yapılsa metinsel çakışma kesindi. TASARIM §13 DÜZELTME-2'nin kendi tavsiyesi de buydu. Uygulama: dal `feat/2026-09-18-p4-baslatici` (FAZ A/A1). | ~~K12 merge sonrası~~ → P4 ile birlikte |
 | Z6 | **P1 ve P6'nın test takımlarına geriye dönük BAĞIMSIZ MUTASYON denetimi** — ikisi de `main`'e merge edildi (P1 eski tarihçede `313d126`, içerik main'de; P6 `8f9b5cd`) ve gate'lerinden geçti, ama gate'leri P2'de ölçülen "vakum assertion" sınıfını aramıyordu (o sınıf 2026-09-18'de keşfedildi). Kapsam: **P1** = `guncelle/harita.json` + `guncelle/siniflandir.py` + `tests/test_guncelle_harita.py` · **P6** = `kur.ps1` + `kur.cmd` + `tests/test_kur.py`. Yöntem: paketin korumak istediği kuralı **tamamen kaldır** → test yeşil kalıyorsa bulgu; mutasyonu **gate seçer**, yazarın listesine bakılmaz; paket başına ≥6 mutasyon. | 🔵 **KOŞUYOR (2026-09-18)** — kullanıcı kararı: *"merge'den ÖNCE, paralel koşsun"*. Taze `bug-expert`, izole worktree `.wt/axet/z6-denetim` (dal `denetim/2026-09-18-z6`, HEAD `1777e99` = `origin/main`). **Lider ön ölçümü (tarayıcı, aday — kusur değil):** `test_guncelle_harita.py` **3 aday** (`:98`, `:106`, `:199` — üçü de adında `s3` var, gövdede yok) · `test_kur.py` **0 aday** ⚠ *0 bulgu ≠ temiz* (tarayıcı iki dar yüzeye bakıyor) → P6'ya da **tam mutasyon turu** emredildi. |
-| Z7 | **Test hijyeni turu — kalan 19 vakum-assertion adayı + tarayıcının repoya alınması.** Lider `vakum_tara.py`'yi yazdı, **kalibre etti** ve entegrasyon dalında koşturdu: **18 dosya · 419 test fonksiyonu · 43 bulgu** (`ASSERT-YOK` 0 · `AD-GOVDE` 18 · `RC-AYIRT-EDİLEMEZ` 25). ⚠ **Aracın kendisinde iki kusur bulundu ve düzeltildi (2026-09-18):** ① gövde dilimi `def` satırını içeriyordu ⇒ **her test kendi vaadini kendi adıyla kanıtlıyordu**, AD-GÖVDE boyutu baştan ölüydü ② sözcük sınırına `_` dahildi ⇒ `s3` simgesi `s3_cekirdek` bileşik adı içinde geçtiği hâlde "yok" sayılıyordu (3 sağlam test yanlışlıkla bulgu oldu, Z6'ya gönderilmişti, **geri çekildi**). İkisi de **kontrol grubuyla** yakalandı: bilinen doğru-pozitif (`test_V6_silinir_ama_V6d_silinmez`) + bilinen doğru-negatif (`test_s3_*`). Ders hafızaya yazıldı. ⇒ **Araç repoya girerken bu iki kalibrasyon kontrolü TESTİ olacak.** Bunların bir bölümü P2-fix ajanına verildi (`test_guncelle.py`, **10 kalem** — düzeltmeden etkilenmediler, yeniden ölçüldü); **kalan 33'ü** `test_doctor` · `test_install` · `test_yayin_surumleri` · `test_new_package` · `test_precommit` · `test_behavior_manifest` · `test_package_naming` · `test_new_project` · `test_yeni_proje` dosyalarında. **Şimdi yapılmıyor çünkü** bu dosyalar P4 ve P5 ajanlarının elinde — iki lane çakışır. ⚠ **Aday ≠ kusur:** her biri mutasyonla ölçülecek (kuralı kaldır → test yeşilse bulgu), sağlam çıkanlar rapora *"ölçüldü, sağlam"* diye yazılacak. Ayrıca `maintenance/vakum_tara.py` kendi testiyle repoya girer — ⛔ **GATE DEĞİL**, elle koşulan teşhis aracı (gate açmak ADR 0019 onay zinciri ister, istenmedi). | 🟢 **KISMEN KAPANDI 2026-09-18** — çakışmayan 6 dosyadaki **23 aday ölçüldü** (dal `z7/2026-09-18-vakum`, commit `33d0746`): **2 GERÇEK VAKUM + 1 maskelenmiş kör nokta** düzeltildi, 20 aday **ölçüldü-SAĞLAM**. ① `test_bos_legacy_statuses_HICBIR_SEY_uretmez` — kural `rest_pr_oku`'nun kabloladığı yerde yaşıyordu, test sabit argümanla `rest_rollup`'u çağırdığı için sızıntı noktası **hiç koşmuyordu**; mutant altında ürün hayalet *bekleyen kontrol* üretti = araç sonsuza dek kilitlenir ② `test_gecersiz_adlar_red` — rc=2 ad kuralından değil *“modül çıkarılamadı”* korumasından geliyordu; ad kuralı tümden silinince **5/5 yeşil kaldı** ve ürün `MM001` (⚠ **standart ad alanı**) klasörünü fiilen yarattı ③ `test_ayni_paket_ikinci_kez_red` — çapraz-modül kolu yol-çarpışması guard'ı tarafından maskeleniyordu (zayıf mutant). Ürün kodu **değişmedi**; +106/−14, 3 yeni test (2'si kontrol grubu). **Kalan 20 aday** (`test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 · `test_behavior_manifest` 2 · `test_yayin_surumleri` 1) hâlâ lane'lerin elinde → **merge sonrası, Z11 mimarisiyle**. |
+| Z7 | 🟡 **GECE-2 durumu:** öncelik-1 5 dosya ölçüldü (27 mutant, 4 sağ kalan → `f3cb62a` ile kapandı); öncelik-2 37 mutant, 37'si öldü — 32 aday `vakum_tara` AD-GÖVDE'nin **büyük harfli Türkçe vurgu kelimesi** yanlış-pozitifiydi (tarayıcı düzeltmesi KAPANDI `ac47b18`). 5 dosya dışındaki adaylar ölçülmedi. ⟶ eski metin: **Test hijyeni turu — kalan 19 vakum-assertion adayı + tarayıcının repoya alınması.** Lider `vakum_tara.py`'yi yazdı, **kalibre etti** ve entegrasyon dalında koşturdu: **18 dosya · 419 test fonksiyonu · 43 bulgu** (`ASSERT-YOK` 0 · `AD-GOVDE` 18 · `RC-AYIRT-EDİLEMEZ` 25). ⚠ **Aracın kendisinde iki kusur bulundu ve düzeltildi (2026-09-18):** ① gövde dilimi `def` satırını içeriyordu ⇒ **her test kendi vaadini kendi adıyla kanıtlıyordu**, AD-GÖVDE boyutu baştan ölüydü ② sözcük sınırına `_` dahildi ⇒ `s3` simgesi `s3_cekirdek` bileşik adı içinde geçtiği hâlde "yok" sayılıyordu (3 sağlam test yanlışlıkla bulgu oldu, Z6'ya gönderilmişti, **geri çekildi**). İkisi de **kontrol grubuyla** yakalandı: bilinen doğru-pozitif (`test_V6_silinir_ama_V6d_silinmez`) + bilinen doğru-negatif (`test_s3_*`). Ders hafızaya yazıldı. ⇒ **Araç repoya girerken bu iki kalibrasyon kontrolü TESTİ olacak.** Bunların bir bölümü P2-fix ajanına verildi (`test_guncelle.py`, **10 kalem** — düzeltmeden etkilenmediler, yeniden ölçüldü); **kalan 33'ü** `test_doctor` · `test_install` · `test_yayin_surumleri` · `test_new_package` · `test_precommit` · `test_behavior_manifest` · `test_package_naming` · `test_new_project` · `test_yeni_proje` dosyalarında. **Şimdi yapılmıyor çünkü** bu dosyalar P4 ve P5 ajanlarının elinde — iki lane çakışır. ⚠ **Aday ≠ kusur:** her biri mutasyonla ölçülecek (kuralı kaldır → test yeşilse bulgu), sağlam çıkanlar rapora *"ölçüldü, sağlam"* diye yazılacak. Ayrıca `maintenance/vakum_tara.py` kendi testiyle repoya girer — ⛔ **GATE DEĞİL**, elle koşulan teşhis aracı (gate açmak ADR 0019 onay zinciri ister, istenmedi). | 🟢 **KISMEN KAPANDI 2026-09-18** — çakışmayan 6 dosyadaki **23 aday ölçüldü** (dal `z7/2026-09-18-vakum`, commit `33d0746`): **2 GERÇEK VAKUM + 1 maskelenmiş kör nokta** düzeltildi, 20 aday **ölçüldü-SAĞLAM**. ① `test_bos_legacy_statuses_HICBIR_SEY_uretmez` — kural `rest_pr_oku`'nun kabloladığı yerde yaşıyordu, test sabit argümanla `rest_rollup`'u çağırdığı için sızıntı noktası **hiç koşmuyordu**; mutant altında ürün hayalet *bekleyen kontrol* üretti = araç sonsuza dek kilitlenir ② `test_gecersiz_adlar_red` — rc=2 ad kuralından değil *“modül çıkarılamadı”* korumasından geliyordu; ad kuralı tümden silinince **5/5 yeşil kaldı** ve ürün `MM001` (⚠ **standart ad alanı**) klasörünü fiilen yarattı ③ `test_ayni_paket_ikinci_kez_red` — çapraz-modül kolu yol-çarpışması guard'ı tarafından maskeleniyordu (zayıf mutant). Ürün kodu **değişmedi**; +106/−14, 3 yeni test (2'si kontrol grubu). **Kalan 20 aday** (`test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 · `test_behavior_manifest` 2 · `test_yayin_surumleri` 1) hâlâ lane'lerin elinde → **merge sonrası, Z11 mimarisiyle**. |
 
 | Z8 | **Test fixture'ı her testte sıfırdan proje üretiyor — `setUp` maliyeti ÖLÇÜLDÜ.** `tests/_helpers.py:75` `GeciciTest.proje()` her test için `git init` + `new_project.py` + `new_package.py` **alt süreçlerini** koşuyor. Ölçüm (5 tur ort., 2026-09-18): `git init` **0,40 sn** · `new_project.py` **1,24 sn** · `new_package.py` **0,47 sn** = **test başına 2,10 sn**. Ölçülmüş alternatif: kalıbı bir kez üretip `shutil.copytree` ile kopyalamak = **0,25 sn** (46 dosya / 51 KB) ⇒ test başına **1,85 sn** kazanç. Etkilenen: `setUp`'ında proje kuran 3 sınıf — `PrecommitTest` (16 test) · `PackageNamingTest` (13) · `ProjeManifestTest` (10) = **39 test**, toplam kazanç **~1,2 dk**. ⚠ **Kaldıraç mütevazı, abartma:** `-k precommit` profili = **111 sn / 16 test**; bunun 34 sn'si `setUp`, kalan **77 sn test gövdelerinde** ve orası indirilemez — her test `git add` + `project_precommit.py` + `git commit` alt süreçleri koşuyor, suitin işi zaten bu (Python yorumlayıcı açılışı tek başına **216 ms**). **Elenen hipotezler (ölçüldü, tekrar kovalanmasın):** OneDrive senkronu (yaratma 10,8 ms vs yerel 10,4 ms; `git status` 0,35 sn) · test keşif/import maliyeti (**1,1 sn**) · koşucunun "N sn"i ile duvar süresi farkı (sabit **1,1–1,5 sn**) · eşzamanlılık çekişmesi (aynı süzgeç 23,4 → 31,6 sn = **1,35x**, gerçek ama küçük). ⛔ **ŞİMDİ YAPILMADI, bilinçli:** `tests/_helpers.py` **beş lane'in de kullandığı** paylaşılan dosya; şimdi dokunmak hepsiyle çakışır. | **tüm lane'ler merge olduktan sonra**, tek turda |
-| Z9 | **`scripts/new_project.py:95` — `templates/project/**` altındaki ikili dosya `new_project.py`'yi çökertiyor.** `text = _doldur(src.read_text(encoding="utf-8"), name)` → `UnicodeDecodeError: 'utf-8' codec can't decode byte 0x89 in position 0`, traceback ile. **PRE-EXISTING** (P5 gate'i ölçtü: `bf1489f^` sürümünde de aynı satır, P5 diff'i dokunmuyor) ⇒ hiçbir lane'i bloklamaz. **Etkisi:** `guncelle_proje.py`'nin V4B / `ikili_mi` yolunun (`:81-86`, `:246-252`, `:168-170`) test edilebilirliğini engelliyor — düzeltilmeden o yol **hiçbir zaman uçtan uca ölçülemez**. | ikili şablon dosyası ihtiyacı doğduğunda ya da V4B yolu ölçülmek istendiğinde |
-| Z10 | **`scripts/doctor.py:794` docstring'i fazla iddialı.** *"Bilgi kaybı yok: dosya yolları satırda aynen listelenir."* P4 gate'i ölçtü: `_kisalt` varsayılan sınırı **8**; **10 dosyalık girdide `core/d8.md` ve `core/d9.md` satırda YOK**, yerine `…` var. Bilgi kurtarılabilir (dosya **sayısı** + `git -C <template> log -p --author=guncelle@yerel` inceleme komutu satırda duruyor) ama *"aynen listelenir"* yanlış. WARN dalında da aynı kırpma var; **pre-existing**. `behavior_manifest --template` CLI'si kırpmıyor, tüm yolları basıyor. | belge doğruluk turu |
+| Z9 | ✅ **KAPANDI `351e0ab` (GECE-2).** **`scripts/new_project.py:95` — `templates/project/**` altındaki ikili dosya `new_project.py`'yi çökertiyor.** `text = _doldur(src.read_text(encoding="utf-8"), name)` → `UnicodeDecodeError: 'utf-8' codec can't decode byte 0x89 in position 0`, traceback ile. **PRE-EXISTING** (P5 gate'i ölçtü: `bf1489f^` sürümünde de aynı satır, P5 diff'i dokunmuyor) ⇒ hiçbir lane'i bloklamaz. **Etkisi:** `guncelle_proje.py`'nin V4B / `ikili_mi` yolunun (`:81-86`, `:246-252`, `:168-170`) test edilebilirliğini engelliyor — düzeltilmeden o yol **hiçbir zaman uçtan uca ölçülemez**. | ikili şablon dosyası ihtiyacı doğduğunda ya da V4B yolu ölçülmek istendiğinde |
+| Z10 | ✅ **KAPANDI `fdf94ea` (GECE-2).** **`scripts/doctor.py:794` docstring'i fazla iddialı.** *"Bilgi kaybı yok: dosya yolları satırda aynen listelenir."* P4 gate'i ölçtü: `_kisalt` varsayılan sınırı **8**; **10 dosyalık girdide `core/d8.md` ve `core/d9.md` satırda YOK**, yerine `…` var. Bilgi kurtarılabilir (dosya **sayısı** + `git -C <template> log -p --author=guncelle@yerel` inceleme komutu satırda duruyor) ama *"aynen listelenir"* yanlış. WARN dalında da aynı kırpma var; **pre-existing**. `behavior_manifest --template` CLI'si kırpmıyor, tüm yolları basıyor. | belge doğruluk turu |
 | **Z11** | ⭐ **ORTAK MUTASYON KOŞUCUSU — `maintenance/mutasyon_kos.py`.** **KULLANICI KARARI 2026-09-18:** *"yeni ajan başlatma, çalışan ajanlar bitince ilk iş Z11'i yap, kalan adımlar Z11'li mimari ile koşsun."* **ÖLÇÜLEN GEREKÇE:** bu oturumda 24 ajan **90 ayrı `.py` dosyası** yazdı (K12-gate 13 · G/P4+Z5 12 · D17-gate 11 · P7-gate 8 · P5-gate 6 …). Bunların çoğu **aynı kalıbın kopyası**: **11 ajan** `run_tests.py` alt-süreç sarmalayıcısını, **13 ajan** sha256'lı geri-alma düzeneğini **bağımsız olarak yeniden yazdı**. Bedel ölçüldü: GATE-P4'ün ürettiği 60.704 token'ın **~14.800'ü (%24) Python kaynak kodu** — yani ajanın en büyük tek üretim kalemi testler değil, **her seferinde sıfırdan yazdığı alet**. ⚠ **Mükerrer iş testlerde DEĞİL, alet yapımındadır** — kullanıcının *"mükerrer iş yapıyor olabilir"* hipotezi burada doğrulandı. **ARAÇ, BU OTURUMDA PAHALIYA ÖĞRENİLEN 7 TUZAĞI İÇİNDE TAŞIR** (her biri bir ajanın sessiz körleşmesine mal oldu): ① kırılan test adı **`(stderr + stdout)` birleşik havuzundan** okunur — `unittest.TextTestRunner` FAIL/ERROR özetini **stderr**'e, `SONUÇ:` satırını stdout'a yazar; yalnız stdout'u ayrıştıran düzenek *"doğru test mi kırıldı"* sorusunu **sessizce cevapsız** bırakır ② `rc=2` (hiç test eşleşmedi) ve `rc=124` (zaman aşımı) **asla** "geçti" sayılmaz — sinyaldir, ölçüm değil ③ geri alma **DAİMA repo-dışı kopyadan + sha256 doğrulamasıyla**; `git checkout -- / restore / stash / reset` **YASAK** (commit'siz lane'in tümünü siler) ④ mutasyondan **ÖNCE** `yedek_dogrula()` — yedek var mı **ve** diskle aynı mı (Z7'de sürücünün yedek-adı üretimi `replace("/","__")` iken kabuk `tr '/' '_'` yapıyordu; `scripts/yeni_proje.py` **0 bayta düştü**, repo-dışı yedek olmasa kurtarılamazdı) ⑤ `geri_al` **önce kaynağı okur, sonra** hedefe yazar — ters sıra hedefi truncate eder ⑥ her mutasyondan sonra `py_compile` — çöken mutant **geçersizdir**, "öldü" sayılmaz ⑦ **dar süzgeçle "öldü" denebilir, "sağ kaldı" DENEMEZ** — sağ kalma iddiası tam modül ister, yoksa hüküm `ÖLÇÜLEMEDİ` (ölçüldü: sağ kalmayı kanıtlamak ölmeyi kanıtlamaktan **~20x** pahalı — 8,6 sn dar vs 191,6 sn tam modül). **AYRICA Z7'NİN YAPISAL BULGUSUNU ÇÖZER:** fixture'lar repo-dışı `mkdtemp` kullandığı için izole, ama mutasyon **paylaşılan `scripts/*.py`** üzerinde yapılıyor ⇒ o pencerede koşan başka bir lane'in ölçümü bozulabilir (Z7 ajanı bunu bildirdi, **DOĞRULANMADI** — ölçemedi). Araç ya lane'in kendi worktree'sinde mutasyon yapar ya da ürün-dosyası mutasyonlarını **kilitle serileştirir**. ⛔ **GATE DEĞİL** (ADR 0019 moratoryumu) — `vakum_tara.py` gibi **elle koşulan teşhis aracı**; kendi kalibrasyon testleriyle repoya girer (bilinen ölen mutant + bilinen sağ kalan mutant + bilinen çöken mutant). ⛔ **ŞİMDİ YAPILMADI, bilinçli:** 4 ajan (GATE-P2B · GATE-P7B · P4-FIX · P5-FIX) hâlâ eski kalıpla koşuyor; altlarındaki zemini değiştirmek ölçümlerini bozar. | **koşan 4 ajan bitince — SIRADAKİ İLK İŞ**; sonraki tüm adımlar (kalan 20 Z7 adayı, kalan gate'ler) bu mimariyle koşar |
 
 ## 4. Kapananlar (bu denetimde bayat bulunup düzeltilen kayıtlar, 2026-09-14)
@@ -1382,3 +1442,4 @@ Windows MAX_PATH'e duyarlı — 260+ karakterlik kökte **sahte FAIL** (ölçül
   · Sonra **P3 ∥ P5 ∥ P7** entegrasyon dalından başlatıldı (+ P2 bug gate). P8 BAŞLATILMADI: TASARIM §13 onu "P2 + kullanıcı onayı" ve "yayından önce: hayır" diye işaretliyor, ayrıca "B1–B4 (K3 kararı)" atfı K3 satırının içeriğiyle (adt_search_objects truncated) uyuşmuyor → kapsam netleşmeden ajan açılmadı.
   · TASARIM düzeltmeleri: §13 P2 12→14 komut · §4 R100 vakası · §14 bitişik-satır çakışma ölçümü · §3 sınıf sayısı 36/12 → **38/13** (ölçüldü; üst sınıf 15) · §6 `uygulanan.json` iki boyutlu şema (P7 buna bağlanacak) · §13 doctor `template_denetle` P2'den çıkarıldı → **Z5**.
   · **Sıradaki:** P3/P5/P7 + P2 gate biter → entegrasyona al → `scripts/session_brief.py` birleştirmesi (P5 tetik satırı + P7 günlük/kritik satırı) → **tek toplu CI** → merge → `behavior_manifest.py generate` (F2: `config/permissions.json` değişti) → Z5 (doctor `template_denetle`) → P4.
+- 2026-09-18 — (oturum 7cfc8cc9, GECE-2) Davranış testi bulguları düzeltildi: K-A/B/C/E/F/M/O · Z9/Z10 · yayın ⓐ/ⓑ · P2 M-1/M-6/index · P5 ⓐ/ⓒ · T1-T8 (CORE 0.4.0, SAP 0.3.0) · rc taraması ZARARLI-1 (disk_sha) · Z15 rapor doğruluğu (`_reviewer` hariç) · Z7 öncelik-1 sağ kalanları · P5 ⓑ 7 test. Her kod düzeltmesi kırmızı/yeşil ölçüldü. K-J: allow eklenmedi (prior-art). Yayın kataloğu v0.2.0 (11 kalem). DEV_CORE#283 (allowlist önerisi) açıldı. Bug gate BLOCKER verdi → 6 bulgu düzeltildi (`db86a93`), Z7 tarayıcı düzeltildi (`ac47b18`). Açık: Z12-Z14, Z15'te `_reviewer`.
