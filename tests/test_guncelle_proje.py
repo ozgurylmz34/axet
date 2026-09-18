@@ -643,6 +643,16 @@ class AkisTest(ProjeTemel):
         self.kur_v4()
         r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "ertelendi")
         self.assertEqual(r.returncode, 2, self.cikti(r))
+        # rc=2 başka bir DUR'dan da gelebilir → hatanın KİMLİĞİ ölçülür (vakum koruması)
+        self.assertIn("GEREKÇE ister", self.cikti(r))
+        # kontrol grubu + kapanış kolu: gerekçeyle kabul edilir, kapanışta WARN (PASS DEĞİL) basılır
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "ertelendi", "--gerekce", "elle bakılacak")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.f.calistir("kapanis")
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertTrue(any(s.startswith("[WARN] AGENTS.md") and "atlandi (elle bakılacak)" in s
+                            for s in rapor.splitlines()), rapor)
 
     def test_kapanis_bekleyen_dosya_varsa_cikis_1(self):
         self.kur_v4()
@@ -670,6 +680,25 @@ class AkisTest(ProjeTemel):
         self.f.yerel_degistir("proje-recetesi.ornek.md", "# elle bozuldu\n")
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
+
+    def test_kapanis_durum_UYGULANDI_kalan_dosyayi_KAPATMAZ(self):
+        """`uygula` yazıp DOĞRULAYAMADIĞI dosyayı `durum: uygulandi` bırakır. Kapanış bu kaydı
+        eksik saymazsa dosya `[PASS]` basılır, çıkış 0 olur ve sürüm kaydı ilerler. Diskten yeniden
+        doğrulama bu durumu yakalamaz (yalnız `dogrulandi` kaydına bakar). Mutasyon PK6
+        (`("bekliyor",)`'a daraltma) bu testten önce modülün TAMAMINI yeşil bırakıyordu."""
+        self.f.ilerlet()
+        self.planla()
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        y = self.f.durum_dizini() / "durum.json"
+        veri = json.loads(y.read_text(encoding="utf-8"))
+        veri["dosyalar"]["proje-recetesi.ornek.md"]["durum"] = "uygulandi"
+        y.write_text(json.dumps(veri, ensure_ascii=False), encoding="utf-8")
+        once = self.f.kayit()
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        self.assertIn("proje-recetesi.ornek.md: durum 'uygulandi'", self.cikti(r))
+        self.assertEqual(self.f.kayit(), once, "doğrulanmamış yazımla sürüm kaydı İLERLEMEMELİ")
 
     def test_kapanis_CAKISMA_ISARETI_kalan_dosyayi_KAPATMAZ(self):
         """`test_kapanis_diskten_YENIDEN_dogrular`ın İKİNCİ kolu. O test yalnız HASH kolunu
@@ -715,6 +744,12 @@ class AkisTest(ProjeTemel):
         self.f.calistir("uygula", "--otomatik")
         r = self.f.calistir("kapanis", "--kabul", "kullanıcı bilerek yarım bıraktı")
         self.assertEqual(r.returncode, 3, self.cikti(r))
+        # `--kabul` bir KAPANIŞTIR: sürüm kaydı hedef şablona ilerler (komut_kapanis `kod in (0, 3)`).
+        # Bu dal ölçülmüyordu — `kod == 0`a daraltmak modülü YEŞİL bırakıyordu (mutasyon PK3).
+        self.assertEqual(self.f.kayit()["template_commit"], self.f.plan()["yeni_commit"],
+                         self.cikti(r))
+        self.assertIn("kullanıcı bilerek yarım bıraktı",
+                      (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8"))
 
     def test_geri_al_yedekten_geri_yazar(self):
         self.f.ilerlet()
@@ -768,6 +803,89 @@ class PaketSablonuRcTest(unittest.TestCase):
 
     def test_kontrol_grubu_bos_diff_degisiklik_yok(self):
         self.assertIn("değişiklik yok", self._satir(0, ""))
+
+
+class DamgaKapanisTest(ProjeTemel):
+    """Kapanışın damga bölümü (yeniden basma + bozuk damga) hiç ölçülmüyordu: SAP projesinde
+    kapanış koşan test yoktu. Mutasyon PK11/PK12 modülün TAMAMINI yeşil bırakıyordu (2026-09-18)."""
+    sap = True
+
+    def _uygulanmis(self) -> None:
+        self.f.ilerlet()
+        self.planla()
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+
+    def test_kapanis_elle_degismis_damgayi_YENIDEN_BASAR(self):
+        self._uygulanmis()
+        m = self.f.oku("AGENTS.md")
+        i = m.index("\n", m.index("AXET-SAP-YASAKLAR:BASLA")) + 1
+        self.f.yerel_degistir("AGENTS.md", m[:i] + "ELLE EKLENDI\n" + m[i:])
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("ELLE EKLENDI", self.f.oku("AGENTS.md"), "damga yeniden basılmadı")
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn("damga: guncel", rapor)
+
+    def test_kapanis_bozuk_damgada_KAPANMAZ(self):
+        self._uygulanmis()
+        m = self.f.oku("AGENTS.md")
+        self.f.yerel_degistir("AGENTS.md", m + "\n" + m)   # iki BASLA/BITIR → bozuk
+        once = self.f.kayit()
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        # RAPOR'un `## Damga` satırı da "BOZUK" der ⇒ ölçüt `EKSİK:` satırıdır (vakum koruması).
+        eksikler = [x for x in r.stderr.splitlines() if x.startswith("EKSİK:")]
+        self.assertTrue(any("damgası BOZUK" in x for x in eksikler), eksikler)
+        self.assertEqual(self.f.kayit(), once, "bozuk damgayla sürüm kaydı İLERLEMEMELİ")
+
+
+class UygulaSavunmaDaliTest(ProjeTemel):
+    """`uygula`nın iki savunma dalı fixture ile tetiklenemiyor (yazım her zaman tutuyor, yeni içerik
+    her zaman okunuyor) ⇒ dallar tamamen silinse de modül YEŞİL kalıyordu (mutasyon PU8/PU10,
+    2026-09-18). Arıza süreç İÇİNDE enjekte edilir; motor `--klon` ile sahte klona yönlendirilir."""
+
+    def _uygula_icerde(self, **yamalar):
+        import contextlib
+        import io
+        from unittest import mock
+        if str(GERCEK_SCRIPTS) not in sys.path:
+            sys.path.insert(0, str(GERCEK_SCRIPTS))
+        import guncelle_proje as gp
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as st:
+            for ad, yeni in yamalar.items():
+                sinif, oznitelik = ad.split("__")
+                st.enter_context(mock.patch.object(getattr(gp, sinif), oznitelik, yeni))
+            st.enter_context(contextlib.redirect_stdout(out))
+            st.enter_context(contextlib.redirect_stderr(err))
+            rc = gp.main(["--proje", str(self.f.proje), "--klon", str(self.f.home),
+                          "uygula", "--otomatik"])
+        return rc, out.getvalue() + err.getvalue()
+
+    def test_yazim_dogrulanamazsa_FAIL_ve_durum_uygulandi(self):
+        self.f.ilerlet()
+        self.planla()
+        self.assertEqual(self.f.vakalar().get("proje-recetesi.ornek.md"), "V1", "fixture ön koşulu")
+
+        def bozuk_yaz(proje, rel, veri_lf):
+            (proje.kok / rel).parent.mkdir(parents=True, exist_ok=True)
+            (proje.kok / rel).write_bytes(b"# yazim sessizce bozuldu\n")
+        rc, c = self._uygula_icerde(Proje__yaz=bozuk_yaz)
+        self.assertEqual(rc, 1, c)
+        self.assertIn("proje-recetesi.ornek.md: yazıldı ama doğrulanamadı", c)
+        d = json.loads((self.f.durum_dizini() / "durum.json").read_text(encoding="utf-8"))["dosyalar"]
+        self.assertEqual(d["proje-recetesi.ornek.md"]["durum"], "uygulandi", d)
+
+    def test_yeni_icerik_okunamazsa_dosyaya_DOKUNMAZ(self):
+        self.f.ilerlet()
+        self.planla()
+        once = self.f.oku("proje-recetesi.ornek.md")
+        rc, c = self._uygula_icerde(Baglam__yeni_icerik=lambda b, rel: None)
+        self.assertEqual(rc, 1, c)
+        self.assertIn("yeni sürümde içerik okunamadı", c)
+        self.assertEqual(self.f.oku("proje-recetesi.ornek.md"), once,
+                         "yeni içerik yokken dosya boşaltıldı/ezildi")
 
 
 class PaylasimTest(unittest.TestCase):
