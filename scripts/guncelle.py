@@ -225,12 +225,22 @@ class Klon:
         if not tam.is_file():
             return None
         r = self.git("hash-object", "--path", yol, "--", str(tam))
-        return r.stdout.strip() or None
+        sha = r.stdout.strip()
+        if r.returncode != 0 or not sha:
+            # ⛔ Dosya VAR ama hash'lenemedi. None döndürmek "dosya yok" demektir: V7 → V2
+            # (otomatik ezme) olur ve `_yedeksiz_mi` "ezilecek içerik yok" deyip yedek almaz.
+            raise Dur(f"`git hash-object {yol}` başarısız (rc={r.returncode}): "
+                      f"{' '.join((r.stderr or '').split())[:300]} — dosya diskte VAR ama "
+                      f"okunamadı; durumu ÖLÇÜLEMEDİ, dokunulmadı.")
+        return sha
 
     def stdin_sha(self, yol: str, veri: bytes) -> str:
         komut = ["git", "-C", str(self.kok), "hash-object", "--path", yol, "--stdin"]
         r = subprocess.run(komut, cwd=str(self.kok), input=veri, capture_output=True)
-        return r.stdout.decode("ascii", "replace").strip()
+        sha = r.stdout.decode("ascii", "replace").strip()
+        if r.returncode != 0 or not sha:
+            raise Dur(f"`git hash-object --stdin` ({yol}) başarısız (rc={r.returncode})")
+        return sha
 
     def crlf_mi(self, yol: str) -> bool:
         r = self.git("check-attr", "eol", "--", yol)
@@ -939,7 +949,7 @@ def komut_uygula(b: Baglam, args) -> int:
             hata = 1
             continue
 
-        gercek = k.disk_sha(hedef)
+        gercek = _yazim_sonrasi_sha(k, hedef)
         if gercek != beklenen:
             print(f"FAIL {yol}: yazıldı ama doğrulanamadı (beklenen {beklenen}, disk {gercek})",
                   file=sys.stderr)
@@ -1149,9 +1159,19 @@ def _yerel_kopya(k: Klon, yol: str) -> str | None:
     return aday.relative_to(k.kok).as_posix()
 
 
+def _yazim_sonrasi_sha(k: Klon, hedef: str) -> str | None:
+    """Yazım SONRASI geri okuma. `disk_sha` hash'leyemezse `Dur` atar; yazım olmuş olduğu için
+    burada akışı kesmek dosyayı durum kaydı olmadan bırakırdı ⇒ "doğrulanamadı" say (hiçbir
+    beklenen sha'ya eşit olmayan bir metin döner)."""
+    try:
+        return k.disk_sha(hedef)
+    except Dur as e:
+        return f"ÖLÇÜLEMEDİ ({e})"
+
+
 def _dogrula_ve_kaydet(k: Klon, kid: str, yol: str, hedef: str, vaka: str,
                        karar: str, beklenen: str | None) -> int:
-    gercek = k.disk_sha(hedef)
+    gercek = _yazim_sonrasi_sha(k, hedef)
     if gercek != beklenen:
         print(f"FAIL {yol}: yazıldı ama geri okunduğunda farklı "
               f"(beklenen {beklenen}, disk {gercek}).", file=sys.stderr)

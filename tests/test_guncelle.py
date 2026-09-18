@@ -1462,6 +1462,49 @@ class OlcumOlculemediTest(GuncelleTemel):
                         [t for t in veri["testler"] if t["cikis"] is not None])
 
 
+class DiskShaOlculemediTest(GuncelleTemel):
+    """rc taraması 2026-09-18 (ZARARLI-1): `Klon.disk_sha` `git hash-object` rc≠0'ını yutup
+    `None` ("dosya yok") döndürüyordu ⇒ kullanıcının İZLENMEYEN dosyası V7 (yargı) yerine V2
+    (otomatik) sınıflanıyor, `_yedeksiz_mi` "ezilecek içerik yok" diyor ve `uygula --otomatik`
+    dosyayı YEDEKSİZ eziyordu (ölçüldü: `ALINDI … (V2)`, `.yerel` yok).
+
+    Arıza enjeksiyonu: yalnız o yola bağlı, `required` ve clean komutu başarısız bir filtre —
+    `hash-object --path`'i rc≠0 yaptırmanın deterministik yolu (gerçek karşılığı: okunamayan
+    dosya, eksik LFS/filtre, kilit).
+    KAPSAM — bakılmayan: `stdin_sha` dalı (aynı düzeltme, ayrı test yok) · yazım sonrası geri
+    okumanın hash'leyemediği dal (`_yazim_sonrasi_sha`).
+    """
+
+    YOL = "skills/cakisan/SKILL.md"
+    KULLANICI = "---\nname: cakisan\n---\nKULLANICININ dosyasi\n"
+
+    def _filtreyi_boz(self) -> None:
+        t = self.f.tuketici
+        (t / ".git" / "info").mkdir(exist_ok=True)
+        (t / ".git" / "info" / "attributes").write_text(f"{self.YOL} filter=kirik\n", encoding="utf-8")
+        self.git(t, "config", "filter.kirik.clean", "false")
+        self.git(t, "config", "filter.kirik.smudge", "cat")
+        self.git(t, "config", "filter.kirik.required", "true")
+        r = self.git(t, "hash-object", "--path", self.YOL, "--", str(t / self.YOL), kontrol=False)
+        self.assertNotEqual(r.returncode, 0, "enjeksiyon tutmadı — test hiçbir şey ölçmez")
+
+    def test_kontrol_grubu_saglam_gitte_yerel_dosya_V7(self):
+        self.f.yerel_degistir(self.YOL, self.KULLANICI)
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.vakalar().get(self.YOL), "V7")
+
+    def test_hash_object_duserse_plan_DUR_ve_dosya_dokunulmaz(self):
+        self.f.yerel_degistir(self.YOL, self.KULLANICI)
+        self._filtreyi_boz()
+        r = self.hazirla_ve_planla()
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("ÖLÇÜLEMEDİ", self.cikti(r))
+        if (self.f.durum_dizini() / "plan.json").is_file():
+            self.assertNotEqual(self.f.vakalar().get(self.YOL), "V2",
+                                "okunamayan yerel dosya otomatik ezme vakasına düştü")
+        self.assertEqual((self.f.tuketici / self.YOL).read_text(encoding="utf-8"), self.KULLANICI)
+
+
 class ButunlukTest(GuncelleTemel):
     def setUp(self) -> None:
         super().setUp()
