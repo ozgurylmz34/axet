@@ -2,7 +2,10 @@
 """behavior_manifest.py — proje modu (hash manifest) ve template modu (git)."""
 from __future__ import annotations
 
+import contextlib
+import io
 import json
+import sys
 
 from _helpers import AXET_HOME, GeciciTest  # önce: scripts/ yolunu ekler
 import behavior_manifest as bm
@@ -96,6 +99,62 @@ class ProjeManifestTest(GeciciTest):
     def test_template_modunda_generate_reddedilir(self):
         r = self.calistir("behavior_manifest.py", "generate", "--project-dir", str(AXET_HOME))
         self.assertEqual(r.returncode, 2, self.cikti(r))
+
+
+class TemplateCliCiktiTest(GeciciTest):
+    """`check --template` CLI'ının STDOUT'u (main()'in template dalı).
+
+    Sınıflandırmanın kendisi `TemplateGuncelleSinifTest`te ölçülüyor; burada ölçülen YALNIZ CLI'ın o
+    sınıfları BASMASI. Bu dal korumasızdı: `guncelle_anlik`/`guncelle_uygulama` döngüleri silinince
+    satırlar sessizce düşüyor, rc yine 0 kalıyordu (bug-gate 2026-09-18 · M14).
+    `template_sinifla` sentetik bir dönüşle değiştirilir → git'e/diske bağımlılık yok.
+    ⚠ KAPSAM: yalnız template dalı + `check`; `generate` reddi ve proje dalı ayrı testlerin alanı.
+    """
+
+    SENTETIK = {"durum": "es", "kullanici": [],
+                "guncelle_anlik": ["skills/sentetik-anlik/SKILL.md"],
+                "guncelle_uygulama": ["core/sentetik-uygulama.md"],
+                "notlar": ["sentetik not satırı"]}
+
+    def kos(self, olc: dict, *argv: str):
+        eski_sinifla, eski_argv = bm.template_sinifla, sys.argv
+        bm.template_sinifla = lambda *a, **k: dict(olc)
+        sys.argv = ["behavior_manifest.py", *argv]
+        tampon = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(tampon):
+                rc = bm.main()
+        finally:
+            bm.template_sinifla = eski_sinifla
+            sys.argv = eski_argv
+        return rc, tampon.getvalue()
+
+    def test_guncelle_siniflari_stdoutta_gorunur(self):
+        """Dal SESSİZCE DÜŞEMEZ: iki sınıfın da YOLU ve etiketi çıktıda olmalı, rc 0 kalmalı."""
+        rc, cikti = self.kos(self.SENTETIK, "check", "--template")
+        self.assertEqual(rc, 0, cikti)
+        self.assertIn("skills/sentetik-anlik/SKILL.md", cikti)
+        self.assertIn("anlık commit", cikti)
+        self.assertIn("core/sentetik-uygulama.md", cikti)
+        self.assertIn("uyguladığı template güncellemesinde", cikti)
+
+    def test_kontrol_grubu_sinif_bossa_yol_basilmaz(self):
+        """Yanlış-pozitif yönü: sınıflar boşken bu yollar ÇIKMAMALI (yoksa üstteki test, çıktı
+        sabit bir metin bassa bile yeşil kalırdı). Notlar dalı kontrol amaçlı hâlâ basılır."""
+        rc, cikti = self.kos({**self.SENTETIK, "guncelle_anlik": [], "guncelle_uygulama": []},
+                             "check", "--template")
+        self.assertEqual(rc, 0, cikti)
+        self.assertNotIn("sentetik-anlik", cikti)
+        self.assertNotIn("sentetik-uygulama", cikti)
+        self.assertIn("sentetik not satırı", cikti)
+
+    def test_kullanici_sapmasi_satiri_ve_rc(self):
+        """Kontrol grubu 2: kullanıcı sapması dalı hem basılır hem rc'yi 1 yapar (INFO sınıfları yapmaz)."""
+        rc, cikti = self.kos({**self.SENTETIK, "durum": "sapma",
+                              "kullanici": ["commit edilmemiş değişiklik [M]: sentetik-kullanici.md"]},
+                             "check", "--template")
+        self.assertEqual(rc, 1, cikti)
+        self.assertIn("sentetik-kullanici.md", cikti)
 
 
 class TemplateYuzeyTest(GeciciTest):

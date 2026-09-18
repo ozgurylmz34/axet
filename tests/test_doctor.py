@@ -1283,6 +1283,48 @@ class TemplateSapmaSinifTest(GeciciTest):
         self.assertEqual(self.durumlar(b, "ÖLÇÜLEMEDİ"), ["INFO"], b)
         self.assertEqual([d for d, _ in b if d == "PASS"], [], b)
 
+    def test_olculemedi_notu_PASS_satirinda_KAYBOLMAZ(self):
+        """Failure-mode: `@{u}` tanımsız (ya da `git diff`i hata veren) bir klonda commit dalı HİÇ
+        ölçülmez ama durum yine `es` gelir. Not PASS satırından düşerse çıktı gerçekten temiz bir
+        koşumla BİREBİR aynı görünür ⇒ 'ölçülemedi' sessizce 'temiz' diye okunur (core §7)."""
+        n = "upstream tanımlı değil — ÖLÇÜLEMEDİ"
+        pas = [m for d, m in doctor.template_bulgulari(self.olc(notlar=[n])) if d == "PASS" and "sapma yok" in m]
+        self.assertEqual(len(pas), 1, pas)
+        self.assertIn(n, pas[0], "PASS satırı ölçülemedi notunu yutuyor: temiz koşumdan ayırt edilemez")
+
+    def test_kontrol_grubu_not_yokken_PASS_satiri_sade_kalir(self):
+        """Üstteki testin kontrol grubu: not YOKken PASS satırına boş parantez/gürültü eklenmemeli
+        (aksi hâlde üstteki test davranış yanlışken de yeşil kalabilirdi)."""
+        pas = [m for d, m in doctor.template_bulgulari(self.olc()) if d == "PASS" and "sapma yok" in m]
+        self.assertEqual(len(pas), 1, pas)
+        self.assertNotIn("ÖLÇÜLEMEDİ", pas[0], pas)
+        self.assertNotIn("()", pas[0], pas)
+
+    def test_sapma_dalinda_olculemedi_notu_AYRI_INFO_satiri_olur(self):
+        """WARN satırı yalnız dosyaları listeler; not oraya sığmaz. Ayrı INFO satırı düşerse sapma
+        çıktısında 'commit dalı hiç ölçülmedi' bilgisi tümden kaybolur."""
+        n = "upstream tanımlı değil — ÖLÇÜLEMEDİ"
+        b = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["AGENTS.md"], notlar=[n]))
+        satir = [m for d, m in b if d == "INFO" and "yüzeyi notları" in m]
+        self.assertEqual(len(satir), 1, b)
+        self.assertIn(n, satir[0])
+        # kontrol grubu (yanlış-pozitif yönü): not yokken bu satır HİÇ basılmaz
+        b2 = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["AGENTS.md"]))
+        self.assertEqual([m for d, m in b2 if "yüzeyi notları" in m], [], b2)
+
+    def test_kapsam_beyani_iki_kritik_uyariyi_icerir(self):
+        """KAPSAM satırının ADI değil GÖVDESİ ölçülür: iki kritik uyarı silinse de 'bakılmayan'
+        kelimesi satırda kalır ve beyan testi yeşil kalırdı (bug-gate 2026-09-18 · M15).
+        Aranan dizgeler dar ve ayırt edici — metin yeniden yazılabilir, ANLAM korunmalı."""
+        for o in (self.olc(), self.olc(durum="sapma", kullanici=["x"]), self.olc(durum="olculemedi", notlar=["n"])):
+            kapsam = [m for d, m in doctor.template_bulgulari(o) if d == "INFO" and "KAPSAM" in m]
+            self.assertEqual(len(kapsam), 1, o)
+            self.assertIn(doctor.bm.GUNCELLE_EPOSTA, kapsam[0], kapsam)
+            self.assertIn("TAKLİT EDİLEBİLİR", kapsam[0],
+                          "kimliğin GÜVENLİK SINIRI OLMADIĞI uyarısı düştü → okuyucu onu sınır sanır")
+            self.assertIn("upstream", kapsam[0], "'upstream tanımsızsa ÖLÇÜLMEZ' uyarısı düştü")
+            self.assertIn("ÖLÇÜLMEZ", kapsam[0], "'upstream tanımsızsa ÖLÇÜLMEZ' uyarısı düştü")
+
     def test_kapsam_beyani_her_kosumda_basilir(self):
         """En kritik an sıfır-bulgu anı: temiz koşuda da neye BAKILMADIĞI yazılır (core §7)."""
         for o in (self.olc(), self.olc(durum="sapma", kullanici=["x"]), self.olc(guncelle_uygulama=["y"])):

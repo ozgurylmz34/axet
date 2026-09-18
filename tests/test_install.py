@@ -529,11 +529,19 @@ class KlonKorumasiKaldirildiTest(GeciciTest):
         return json.loads(self.cfg.read_text(encoding="utf-8"))
 
     def eski_edit_kurallari(self) -> dict:
-        """Kaldırmadan ÖNCEKİ sürümün yazdığı desenler (install.py:93-108'in o günkü biçimi)."""
+        """Kaldırmadan ÖNCEKİ sürümün yazdığı desenler — üretici `clone_rules()`'un o günkü gövdesinin
+        (04c3bd9^ · scripts/install.py:102-108) AYNISI, yalnız kökü klon fixture'ına bağlanmış.
+
+        ⚠ Bu döngü `{yol, yol.lower()}` kümesinin HER İKİ üyesine sürücü-harfi swapcase'i uygular →
+        **4** varyant (× 6 klasör = 24 desen). Elle yazılmış eski 3'lü küme `C:` + tamamen küçük harfli
+        yol varyantını kaçırıyordu; göç yolunun gerçek yüzeyinin 1/4'ü ölçülmüyordu
+        (bug-gate 2026-09-18: ürün 24, fixture 18)."""
         home = self.klon.as_posix()
-        varyantlar = {home, home.lower()}
-        if len(home) > 1 and home[1] == ":":
-            varyantlar |= {home[0].swapcase() + home[1:]}
+        varyantlar = set()
+        for base in {home, home.lower()}:
+            varyantlar.add(base)
+            if len(base) > 1 and base[1] == ":":
+                varyantlar.add(base[0].swapcase() + base[1:])
         return {f"{v}/{d}/*": "deny" for v in sorted(varyantlar)
                 for d in ("core", "skills", "skills-sap", "scripts", "config", "templates")}
 
@@ -570,3 +578,22 @@ class KlonKorumasiKaldirildiTest(GeciciTest):
         kurallar = self.oku()["permissions"]["rules"]
         self.assertEqual(kurallar.get("edit"), {"D:/benim/*": "deny"},
                          "klon edit deny'ları silinmedi ya da kullanıcının kendi kuralı da silindi")
+
+    def test_eski_kurulumun_edit_denyleri_uninstall_da_da_temizlenir(self):
+        """install.py:106-108 yorumu göçün `--uninstall`'da DA işlediğini söylüyor; hiçbir test bu yolu
+        koşmuyordu (bug-gate 2026-09-18). `--uninstall` `apply_ours`'u atlar, yalnız `strip_ours` koşar →
+        ayrı bir yürütme yolu. Ölçülen ikisi birden: (a) klon `edit` deny'ları gider, (b) kullanıcının
+        kendi kuralları (edit + bash) KALIR — "hepsini sil" de testi geçerdi, o yüzden (b) şart."""
+        eski = self.eski_edit_kurallari()
+        self.assertTrue(eski)
+        self.cfg.parent.mkdir(parents=True, exist_ok=True)
+        self.cfg.write_text(json.dumps({"permissions": {"rules": {
+            "edit": {**eski, "D:/benim/*": "deny"},
+            "bash": {"Bash(benim-komutum:*)": "allow"}}}}), encoding="utf-8")
+        r = self.install("--uninstall")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        kurallar = self.oku()["permissions"]["rules"]
+        self.assertEqual(kurallar.get("edit"), {"D:/benim/*": "deny"},
+                         "--uninstall klon edit deny'larını silmedi ya da kullanıcının kendi kuralını da sildi")
+        self.assertEqual(kurallar.get("bash"), {"Bash(benim-komutum:*)": "allow"},
+                         "--uninstall kullanıcının kendi bash kuralına dokundu")
