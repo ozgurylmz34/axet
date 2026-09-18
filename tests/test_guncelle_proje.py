@@ -448,20 +448,43 @@ class OnayTest(ProjeTemel):
     def test_onaysiz_isaretle_karar_yeni_dosyaya_DOKUNMAZ(self):
         """`uygula` gibi `isaretle --karar yeni|birlesik|yeniden-adlandir` de bir YAZMA yoludur:
         kullanıcının dosyasını EZER ⇒ onay kapısı burada da geçerli (Q1 · SKILL.md §"onay
-        olmadan dosya yazmak"). Kapanış `onay.json` SİLİNEREK kurulur; tek değişken onaydır."""
+        olmadan dosya yazmak"). Kapanış `onay.json` SİLİNEREK kurulur; tek değişken onaydır.
+
+        ⚠ ÜÇ YAZMA KOLUNUN HEPSİ ölçülür. Tek kol ölçmek YETMEZ: `onay_dogrula`yı
+        `if args.karar == "yeni":` ile SEÇİCİ hâle getiren bir kusur, yalnız `yeni` kolunu
+        ölçen bir testin altında SAĞ KALIR — `birlesik` ve `yeniden-adlandir` onaysız yazmaya
+        devam eder (ölçüldü: rc=0 · dosya değişti · `.yerel` kopya oluştu).
+        (Test adı tarihseldir; kapsam üç karara genişletildi.)
+
+        ⚠ VAKUM TUZAĞI: `birlesik` kolu, öneri dosyası YOKSA onay kapısına hiç varmadan
+        "öneri dosyası yok" diye ZATEN rc=2 döner ⇒ o hâlde rc assertion'ı onay kapısını
+        DEĞİL, eksik dosyayı ölçerdi. Bu yüzden öneri dosyası ÖNCEDEN üretilir ve her kolda
+        hatanın KİMLİĞİ ("proje onayı YOK") ayrıca assert edilir."""
         self.f.yerel_degistir("AGENTS.md", self.f.oku("AGENTS.md").replace("son\n", "son yerel\n"))
         self.f.ilerlet()
         self.planla()
         self.assertIn("AGENTS.md", self.f.vakalar(), "fixture ön koşulu: dosya planda olmalı")
+        # `oneri` onaya BAĞLI DEĞİLDİR → `birlesik` kolunun ön koşulu olarak şimdi üretilir.
+        r = self.f.calistir("oneri", "AGENTS.md")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue((self.f.durum_dizini() / "oneri" / "AGENTS.md").is_file(),
+                        "fixture ön koşulu: `birlesik` kolu öneri dosyası ister")
         once = self.f.oku("AGENTS.md")
         self.assertIn("son yerel", once, "fixture ön koşulu: yerel satır diskte olmalı")
+        yerel_kopya = self.f.proje / "AGENTS.md.yerel"
+
         (self.f.durum_dizini() / "onay.json").unlink()
-        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yeni")
-        # rc=2 başka bir arızadan da gelebilir → HANGİ hata olduğunu da ölç (vakum koruması).
-        self.assertEqual(r.returncode, 2, self.cikti(r))
-        self.assertIn("proje onayı YOK", self.cikti(r), self.cikti(r))
-        self.assertEqual(self.f.oku("AGENTS.md"), once,
-                         "onaysız `isaretle` kullanıcının dosyasına DOKUNMAMALI")
+        for karar in ("yeni", "birlesik", "yeniden-adlandir"):
+            with self.subTest(karar=karar):
+                r = self.f.calistir("isaretle", "AGENTS.md", "--karar", karar)
+                # rc=2 başka bir arızadan da gelebilir → HANGİ hata olduğunu da ölç (vakum koruması).
+                self.assertEqual(r.returncode, 2, self.cikti(r))
+                self.assertIn("proje onayı YOK", self.cikti(r), self.cikti(r))
+                self.assertEqual(self.f.oku("AGENTS.md"), once,
+                                 "onaysız `isaretle` kullanıcının dosyasına DOKUNMAMALI")
+                self.assertFalse(yerel_kopya.exists(),
+                                 "onaysız `yeniden-adlandir` `.yerel` kopya da ÜRETMEMELİ")
+
         # KONTROL GRUBU: tek fark onaydır — geri verilince aynı komut gerçekten YAZAR.
         self.assertEqual(self.f.onayla().returncode, 0)
         r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yeni")
