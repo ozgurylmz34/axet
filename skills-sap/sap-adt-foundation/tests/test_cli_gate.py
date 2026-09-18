@@ -207,8 +207,25 @@ class Kapi(unittest.TestCase):
                  project=p, rc=2, code="ADR_0005_A")
         self.kos("6a adt_delete standart obje", ["adt_delete", "--args-json",
                  json.dumps({"name": "VBAK", "object_type": "tabl"}), *S1], project=p, rc=2, code="ADR_0005_A")
-        self.kos("6b transport'suz post_shell", ["adt_post_shell", "--args-json",
-                 json.dumps(post_shell_args(transport="")), *S1], project=p, rc=2, code="ADR_0005_C")
+        self.kos("6b transport'suz post_shell (Z paketi)", ["adt_post_shell", "--args-json",
+                 json.dumps({**post_shell_args(transport=""), "package": "ZAXET_PKG"}), *S1],
+                 project=p, rc=2, code="ADR_0005_C")
+        # K-M (2026-09-18): `$TMP` TAM eşleşmede transport istenmez; benzer adlar istisna DEĞİL
+        for paket in ("$TMPX", "$tmp", " $TMP"):
+            self.kos(f"6b K-M − post_shell paket={paket!r}", ["adt_post_shell", "--args-json",
+                     json.dumps({**post_shell_args(transport=""), "package": paket}), *S1],
+                     project=p, rc=2, code="ADR_0005_C")
+        for arac, args in (("adt_post_shell", post_shell_args(transport="")),
+                           ("adt_domain_create", {"name": "ZAXET_D", "datatype": "CHAR", "length": 10,
+                                                  "description": "Alan", "package": "$TMP", "transport": ""})):
+            d, _o, _e = self.kos(f"6b K-M + {arac} $TMP transport'suz", [arac, "--args-json",
+                                 json.dumps(args), *S1], project=p)
+            self.assertNotEqual(((d or {}).get("error") or {}).get("code"), "ADR_0005_C",
+                                f"{arac} $TMP'de hâlâ transport istiyor: {d}")
+        self.kos("6b K-M − adt_struct_create $TMP (istisna DIŞI)", ["adt_struct_create", "--args-json",
+                 json.dumps({"name": "ZAXET_S", "fields": [{"name": "F", "type": "char10"}],
+                             "description": "Yapı", "package": "$TMP", "transport": ""}), *S1],
+                 project=p, rc=2, code="ADR_0005_C")
 
     def test_06_language_env_reviewer(self):
         p_en = proje(language="EN")
