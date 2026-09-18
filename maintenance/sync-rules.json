@@ -2834,11 +2834,11 @@
       "pattern": "scripts/hooks/infra_write_guard.py",
       "decision": "telafi",
       "targets": [
-        "scripts/install.py"
+        "scripts/doctor.py"
       ],
       "party": 1,
-      "status": "tamam",
-      "note": "Merkezi klon edit deny (clone_rules), canli olculdu."
+      "status": "kismi",
+      "note": "2026-09-18 (P4/A3): eski telafi (install.py clone_rules, merkezi klon edit deny) KALDIRILDI. Yerine ENGELLEME DEGIL GORUNURLUK: doctor check_template -> template_bulgulari(behavior_manifest.template_sinifla()) merkezi klondaki izinsiz degisikligi raporlar, yazmayi durdurmaz. Bu yuzden kismi."
     },
     {
       "source": "DEV_CORE",
