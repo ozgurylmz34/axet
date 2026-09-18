@@ -6,25 +6,124 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## 🔴 CANLI DURUM — 2026-09-18 GECE (oturum kesilirse BURADAN devam et)
+## ⭐ GÜN SONU 2026-09-18 — YARIN BURADAN BAŞLA
 
-> Aşağıdaki "DEVAM NOKTASI 2026-09-15" bölümü **TARİHÇEDİR**. Bugünün işi budur.
+> Bundan önceki **"GÜN SONU 2026-09-16 / YARIN SIRASI"** tablosu (aşağıda, ~satır 500)
+> artık **TARİHÇEDİR**: oradaki 2·6·7 maddeleri bugün kapandı. Yarının işi BU bölümdür.
 
-**Kullanıcı ekrandan kalktı, otonom devir yapıldı** (kararlar §2 "KULLANICI KARARLARI" bloğunda).
-Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
+### Bilanço (ölçüldü, beyan değil)
 
-| Lane | Dal / commit | Durum | Sıradaki adım |
+| Ölçüm | Değer | Nasıl ölçüldü |
+|---|---|---|
+| Bugün atılan commit | **40** | `git log --all --since="2026-09-18 00:00"` |
+| `integrasyon/2026-09-17` ↔ `origin/main` | **+50 / -0** | `rev-list --count` |
+| Birikmiş fark | **65 dosya · +7930 / -189** | `diff --stat origin/main...integrasyon` |
+| `main`'e giden | **HİÇBİR ŞEY** | — |
+| Commit'siz iş | **YOK** (15 worktree'nin 15'i temiz) | her ağaçta `status --short --untracked-files=all` |
+| Yetim worktree | **YOK** | disk ↔ `worktree list` karşılaştırması |
+
+⛔ **Hiçbir şey push/merge EDİLMEDİ.** Plan değişmedi: **tek toplu CI + merge** (kullanıcı
+kararı ①). Merge şartı üç maddedir ve üçü birden aranır: her paketin **taze** kapısı
+PASS/WARNING · **5 CI job'ının hepsi yeşil** · ⛔ CI'yi atlatmak için **asla `--admin`**.
+
+### Lane durumu — gün sonu
+
+| Lane | Dal / commit | Hüküm | Kalan |
 |---|---|---|---|
-| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · **`e1108f9`** | ✅ 16 kalem kapandı (2 BLOCKER · 3 HIGH · 6 MEDIUM · 3 LOW + EK-1/EK-3) · `-k guncelle` **146 test / 0 failure / rc=0** · gate'in sağ bıraktığı M1/M2/M4 **üçü de artık KIRMIZI** | 🔵 **TAZE GATE-P2B koşuyor** (kapsam büyüdü ⇒ taze) |
-| **P3** | `feat/2026-09-17-p3-kartlar` · **`c4a8e2e`** | ✅ gate 2. tur WARNING → 2 MEDIUM + 4 LOW **kapandı** | ⛔ merge P2'nin `V1R` BLOCKER'ına bağlıydı → **P2'de kapandı**, gate sonucu bekleniyor |
-| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · **`04c3bd9`** | ✅ FAZ A+B bitti · tam suite 460 test / 0 failure / 1 skip / rc=0 | 🔵 **TAZE GATE-P4 koşuyor** |
-| **P5** | `feat/2026-09-17-p5-guncelle-proje` · **`bf1489f`** | 🔴 taze gate **BLOCKER** — 20 mutasyon, 14 öldü, **4 geçerli sağ kalan**. ⚠ **Ürün kodunda kusur YOK**, dördü de test-kapsamı boşluğu | 🔵 **P5-FIX koşuyor** — BG-1…BG-4 |
-| **P7** | `feat/2026-09-17-p7-yayin` · **`7187c92`** | ✅ 5 zorunlu + 1 isteğe bağlı bulgu kapandı · ürün kodunda **tek satır değişiklik yok** · `-k yayin_surumleri` 32→**37 test / 0 failure / rc=0** | 🔵 **TAZE GATE-P7B koşuyor** |
-| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` · **`d67de93`** | ✅ gate doğrulaması **WARNING** — BULGU-1 + BULGU-2 **kapandı** (9 mutasyon, 8 öldü) · kalan tek MEDIUM (V9) de kapatıldı | 🔵 **Z6-GATE2 doğruluyor** (aynı gate sürdürüldü — kapsam büyümedi) |
-| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi entegrasyonda (`ca4ae88`) · **merge-öncesi taban: 43 aday** (`<scratchpad>/z7/taban-merge-oncesi.txt`) | P4+P5 merge sonrası, PR'dan ÖNCE |
-| **P8** | — | 🟡 **ERTELENDİ** (kullanıcı kararı) | — |
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · **`e34ab81`** | ✅ 7/7 kalem + GATE-P2B'nin **BLOCKER**'ı kapandı · tam batarya **`152 test · 0 failure · 0 error · 0 skip` rc=0** (bağımsız doğrulandı) | ❓ **TAZE GATE kararı** — kapsam büyüdü (aşağıda) |
+| **P3** | `feat/2026-09-17-p3-kartlar` · `c4a8e2e` | ✅ gate 2. tur: 2 MEDIUM + 4 LOW kapandı | — |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · `3fe2e0d` | ✅ GATE-P4'ün 5 WARNING'i kapandı (B1-B5, 8 yeni test) | — |
+| **P5** | `feat/2026-09-17-p5-guncelle-proje` · `fd302dc` | ✅ gate BLOCKER + KG-1 kapandı | ⬜ §14/B'deki 3 açık kalem (aşağıda) |
+| **P7** | `feat/2026-09-17-p7-yayin` · `7187c92` | ✅ **GATE-P7B → PASS** (14 mutasyon, geçerli sağ kalan yok) | — |
+| **Z6** | `fix/2026-09-18-z6-bulgulari` · `d67de93` | ✅ iki bulgu + V9 MEDIUM kapandı | — |
+| **Z7** | `z7/2026-09-18-vakum` · `33d0746` | ✅ 2 gerçek vakum + 1 maskelenmiş kör nokta; ürün kodu değişmedi | ⬜ **20 aday** kaldı (aşağıda) |
+| **Z11** | `integrasyon` · `d56ac39` | ✅ **tasarım bitti** (Sürüm 2 + ⓑ ölçüldü) | ⛔ **İNŞA BEKLETİLDİ** — kullanıcı kararı |
+| **P8** | — | 🟡 ERTELENDİ (kullanıcı kararı) | — |
 
-⭐ **Lane'lerin hiçbiri `main`'e gitmedi; entegrasyon dalı `a649d9c`'de temiz, `origin/main`+46.**
+✅ **P2 bataryası KAPANDI** (12:36): `Ran 152 tests in 1262.644s` · `OK` ·
+`SONUÇ: 152 test · 0 failure · 0 error · 0 skip · 1263 sn`. **Lider bağımsız doğruladı**
+(beyan kanıt değildir): iz dosyası `…/scratchpad/p2fix/kosumlar/TAM-guncelle.txt` ·
+`FAIL:`/`ERROR:` satır sayısı **0** · `... ok/FAIL/ERROR` satırlarının bağımsız sayımı
+**152** ⇒ beyanla birebir, `rc=2` ("hiç test eşleşmedi") vakası elendi.
+
+#### ❓ P2 — MERGE ÖNCESİ LİDER/KULLANICI KALEMLERİ (4 adet, hiçbiri hata değil)
+
+1. **TAZE GATE gerekiyor mu?** GATE-P2B'den sonra kapsam **büyüdü**: mühür sırası
+   (stage→commit→SONRA mühür), `rc in (0,1)` toleransının kaldırılması, `--kabul`
+   semantiğinin sıkılaşması, `_kapanis_git()` yapısal taşıması. Protokol *"kapsam büyürse
+   TAZE gate"* diyor; ama kullanıcı talimatı **"yeni ajan başlatma"**. ⇒ **Kullanıcı kararı.**
+2. ⚠ **`--kabul` artık git başarısızlığını ÖRTMÜYOR** (`_kapanis_git` hatada koşulsuz 1
+   döner). Bilinçli sıkılaştırma, ama `--kabul`'ü *"her şeyi kabul et"* diye okuyan bir
+   kullanım varsa **davranış değişti**. Mevcut test yeşil.
+3. ⚠ **`git add` patlayınca commit hiç denenmiyor** ve index **kısmen stage'li** kalıyor.
+   Kasıtlı fail-loud; "yarım stage" bir sonraki koşumda kullanıcıyı karşılar. Temizleme
+   adımı **eklenmedi** (kapsam genişletmemek için) — ayrı kalem olabilir.
+4. **Aynı sessiz-hata deseni diğer motorlarda TARANMADI** (`install.py` · `doctor.py` ·
+   `kur.ps1`). Kapanan sınıf tek satır değil: *"alt-süreç başarısızlığını `UYARI:`le
+   geçiştirme"* + *"çıkış kodunu ölçüm sanma"* + *"sonucu, onu üreten işten önce
+   mühürleme"*. `guncelle.py` içinde desen tükendi (2 vaka, ikisi de kapandı); **başka
+   motorlar ölçülmedi** ⇒ ayrı tur konusu.
+   *(`maintenance/guncelle-mimari/TASARIM.md §261` sözleşmeyle çelişmiyor ama commit↔mühür
+   sırasını **pinlemiyor**; oraya yazılması istenirse ayrı kalem.)*
+
+### Bugün kapanan asıl kusur — P2 BLOCKER (sessiz veri kaybı)
+
+Gönderilmiş kodda, mutasyondan değil:
+
+```python
+add_yollari = [y for y in add_yollari
+               if (k.kok / y).exists() or k.blob_sha("HEAD", y)]   # ← HEAD YANLIŞ ÖLÇÜT
+```
+
+`git add <pathspec>` eşleşmeyi **çalışma ağacı + INDEX** üzerinde yapar, **HEAD'e bakmaz**.
+`Klon.sil()` ise `git rm -q --cached` çalıştırır: yol index'ten düşer, **HEAD'de kalır**.
+Eski ölçüt yolu listede tuttuğu için `git add` çağrısının **tamamı** `fatal` ile düşüyor,
+**hiçbir yol stage edilmiyordu** — birleştirilmiş içerik diske yazılıp commit'e girmiyor ve
+kapanış **rc=0** dönüyordu ("temiz kapandı" görünümü).
+
+**İzole arenada kontrol grubuyla kanıtlandı:** `git rm --cached` + dosya silindikten sonra
+HEAD=**EVET** · `ls-files` (index)=**boş** · disk=**HAYIR** ⇒ eski ölçütle
+`fatal: pathspec … did not match any files`, yeni ölçütle (`git ls-files`) sağlam.
+
+### Yarın sırası
+
+| # | İş | Neden bu sırada |
+|---|---|---|
+| 1 | **P2 taze-gate kararı** (yukarıdaki ❓ blok) | Batarya ✅ yeşil; kalan tek soru kapsam büyümesi ⇒ taze gate mi, kullanıcı onayıyla geçiş mi |
+| 2 | **`git -C core pull`** (core `origin/main`'in **8 commit gerisinde**) | DEV_CORE sahibi bildirdiğim bulguları uyguluyor |
+| 3 | **Pull sonrası İKİ ölçümü tekrarla** | İkisi de core 8 commit geride iken yapıldı ⇒ bayat olabilir: ⓐ CORE-INDEX kapsamı (kalibrasyon: `standards/`=11 kontrol grubu) ⓑ `run_battery.py` ↔ aXet uyumu |
+| 4 | **Z11 kısmını gözden geçir → ne gerekiyorsa karar ver** | ⛔ Kullanıcı kararı: *"z11 ile ilgili şimdilik bişey yapma… pull edip z11 kısmını kontrol edip ne gerekir karar veririz"* |
+| 5 | **Toplu CI + merge** | Kullanıcı kararı ①: her değişiklikte CI yok, sonda tek CI |
+| 6 | MERGE ANINDA: `behavior_manifest.py generate` + `sync-rules.json:2841` bozuk telafi iddiası | Gün sonuna bırakılırsa ertesi açılışta "manifest-onaysız" alarmı çıkar (core §1.1) |
+
+### Açık kalemler (kanonik yer BURASI — başka yerde tutulmaz)
+
+- **Z7'nin kalan 20 adayı:** `test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 ·
+  `test_behavior_manifest` 2 · `test_yayin_surumleri` 1. Merge sonrası, Z11 ile.
+- **P5'in kendi kapsam beyanında açık bıraktıkları:** ⓐ `--karar ertelendi` / `--karar yerel`
+  kolları **ölçülmedi** ⓑ `uygula` ve `kapanis` onay kapıları için **seçici mutasyon
+  koşulmadı** — ajan bunu kod okuyarak çıkardı, **ölçmedi** (⚠ KG-1 tam olarak böyle bir
+  çıkarımın yanlış çıkmasıydı) ⓒ süzgeçsiz tam paket koşumu yapılmadı.
+- **Ertelenenler:** Z8 (fixture `copytree` maliyeti, ortak `_helpers.py`) · Z9
+  (`new_project.py` ikili şablonda `UnicodeDecodeError`) · Z10 (`doctor.py` aşırı-iddialı
+  docstring) · P8.
+
+### Kullanıcı kararı bekleyenler
+
+1. **Z11 dağıtılsın mı?** Şu an şablon reposunun bakım aracı; `maintenance/` ölçüldü —
+   `CLONE_PROTECTED` kümesinde **değil** ⇒ tüketici projelere gitmiyor. Bilinçli, geri alınabilir.
+2. **D16** — yayın sızıntı taraması daraltılsın mı (EXIT=1 / 17 bulgu, sayı stabil).
+3. **`axet-template` public reposu** — `README.md:39,44` + `kur.ps1:38` oraya işaret ediyor,
+   repo **HTTP 404**.
+4. **`team_setup.py` cherry düzeltmesi** — yama hazır, **DEV_CORE yetkisi** gerekiyor.
+
+### DEV_CORE bildirimi — durum
+
+Sahibe **Sürüm 2** iletildi ve sahip bulguları DEV_CORE'da uyguluyor. Sürüm 1'de 6 bulgu
+vardı; **core'a karşı doğrulanınca 4'ü yanlış, 1'i zayıf çıktı** — ayakta kalan tek bulgu
+yapısaldır: `CORE-INDEX` `core/claude/` ve `core/tests/` alanlarını kapsamıyor
+(kalibrasyon: `standards/`=11 · `playbook`=52 kontrol grubu çalışıyor, ama `claude/`=0 ·
+`tests/`=0 · `run_battery`=0). ⇒ **Pull sonrası yeniden doğrulanacak** (yarın sırası №3).
 
 ### 🔴 P5 TAZE GATE HÜKMÜ — BLOCKER (2026-09-18)
 
