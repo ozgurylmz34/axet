@@ -18,6 +18,8 @@ yeni_proje.py); başka hiçbir çıktı ve davranış değişmez.
 from __future__ import annotations
 
 import argparse
+import datetime
+import json
 import os
 import subprocess
 import sys
@@ -32,10 +34,104 @@ TEMPLATE_SAP = AXET_HOME / "templates" / "project-sap"
 PLACEHOLDER = "<PROJE_ADI>"
 AXET_DEFAULT_GITIGNORE = ".axet-code/.gitignore"
 
+# --- şablon sürüm kaydı (TASARIM §2b seçenek A) ----------------------------------------------------
+# Projenin hangi template sürümünden doğduğu. `%guncelle-proje`nin 3-yollu birleştirmesi TABAN
+# İÇERİĞİNİ bu commit'ten geri kurar (`git show <commit>:templates/project/<rel>` + `_doldur`).
+# Kayıt YOKSA taban bilinmez ⇒ `guncelle_proje.py` içerik eşleştirmesiyle geri düşer, o da
+# tutmazsa vaka VTB olur. Bu yüzden kayıt İLK projelerden başlamalı (yayından önce).
+SURUM_KAYDI = ".axet-code/sablon-surumu.json"
+SURUM_KAYDI_SURUMU = 1
 
-def _doldur(text: str, name: str) -> str:
-    """Şablon yer tutucuları: proje adı + template klonunun mutlak yolu (session_brief.py komutu için)."""
-    return text.replace(PLACEHOLDER, name).replace("<AXET_HOME>", AXET_HOME.as_posix())
+
+def sablon_yollari(sap: bool) -> list[str]:
+    """Projeye kurulan şablon dizinleri (klon-göreli). Tek kaynak: doctor ve guncelle_proje da bunu çağırır."""
+    return ["templates/project"] + (["templates/project-sap"] if sap else [])
+
+
+def sablon_commit(sap: bool, axet_home: Path | None = None) -> str | None:
+    """Şablon dizinlerine DOKUNAN son commit. Git yoksa/klon değilse None (ÖLÇÜLEMEDİ)."""
+    kok = axet_home or AXET_HOME
+    try:
+        r = subprocess.run(["git", "-C", str(kok), "log", "-1", "--format=%H", "--",
+                            *sablon_yollari(sap)],
+                           capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                           encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return (r.stdout.strip() or None) if r.returncode == 0 else None
+
+
+def surum_kaydi_oku(target: Path) -> dict | None:
+    f = target / SURUM_KAYDI
+    if not f.is_file():
+        return None
+    try:
+        veri = json.loads(f.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    return veri if isinstance(veri, dict) else None
+
+
+def surum_kaydi_yaz(target: Path, name: str, sap: bool, commit: str | None, kaynak: str,
+                    axet_home: Path | None = None) -> dict:
+    """Kaydı yazar ve GERİ OKUYUP doğrular. Döner: yazılan kayıt."""
+    kok = (axet_home or AXET_HOME).resolve()
+    kayit = {"surum": SURUM_KAYDI_SURUMU, "template_commit": commit,
+             "sablon_yollari": sablon_yollari(sap), "sap": sap, "ad": name,
+             "axet_home": kok.as_posix(), "kaynak": kaynak,
+             "zaman": datetime.datetime.now().isoformat(timespec="seconds")}
+    f = target / SURUM_KAYDI
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(kayit, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if json.loads(f.read_text(encoding="utf-8")) != kayit:
+        raise RuntimeError(f"{SURUM_KAYDI} yazıldı ama geri okunduğunda farklı çıktı.")
+    return kayit
+
+
+def sablon_surumu_durumu(target: Path, axet_home: Path | None = None) -> tuple[str, str]:
+    """Projenin şablon sürümü klondakiyle aynı mı (TASARIM §9 tetiği).
+
+    Döner: (durum, mesaj). durum ∈ guncel · eski · kayitsiz · cozulemedi · olculemedi.
+    TEK KAYNAK: `doctor.py` ve `session_brief.py` ikisi de bunu çağırır (iki yerde ayrı ölçüm
+    yapılırsa biri bayatlar). §9 "N yayın" der; yayın listesi (`guncelle/yayinlar.json`, P7)
+    henüz yokken ÖLÇÜLEBİLİR birim ŞABLONA DOKUNAN COMMİT sayısıdır — metin bunu böyle söyler.
+    """
+    kok = (axet_home or AXET_HOME).resolve()
+    sap = (target / "sap-project.json").is_file()
+    guncel = sablon_commit(sap, kok)
+    if guncel is None:
+        return "olculemedi", (f"proje şablonu güncelliği ÖLÇÜLEMEDİ ({kok.as_posix()} git klonu "
+                              "değil ya da git yok) — 'güncel' DEĞİL")
+    kayit = surum_kaydi_oku(target)
+    if kayit is None:
+        return "kayitsiz", ("proje şablon sürümü kayıtlı değil → %guncelle-proje "
+                            "(taban eşleştirmesiyle)")
+    kayitli = kayit.get("template_commit")
+    if kayitli == guncel:
+        return "guncel", f"proje şablonu güncel ({str(guncel)[:10]})"
+    try:
+        r = subprocess.run(["git", "-C", str(kok), "rev-list", "--count",
+                            f"{kayitli}..{guncel}", "--", *sablon_yollari(sap)],
+                           capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                           encoding="utf-8", errors="replace")
+        sayi = r.stdout.strip() if r.returncode == 0 else None
+    except OSError:
+        sayi = None
+    if sayi is None:
+        return "cozulemedi", (f"proje şablon kaydındaki commit klonda çözülemedi "
+                              f"({str(kayitli)[:10]}) → %guncelle-proje (taban bilinmiyor: VTB)")
+    return "eski", (f"proje şablonu eski ({sayi} şablon commit'i geride; "
+                    f"{str(kayitli)[:10]} → {str(guncel)[:10]}) → %guncelle-proje")
+
+
+def _doldur(text: str, name: str, axet_home: Path | None = None) -> str:
+    """Şablon yer tutucuları: proje adı + template klonunun mutlak yolu (session_brief.py komutu için).
+
+    `axet_home`: `%guncelle-proje` TABAN içeriğini geri kurarken, klon o günden beri taşınmış olabilir
+    diye kayıttaki yolu verir (`sablon-surumu.json` `axet_home`). Verilmezse bugünkü klon kullanılır.
+    """
+    kok = (axet_home or AXET_HOME).resolve() if axet_home else AXET_HOME
+    return text.replace(PLACEHOLDER, name).replace("<AXET_HOME>", kok.as_posix())
 
 
 def git_hook_kablola(target: Path, dry_run: bool) -> str:
@@ -138,6 +234,30 @@ def main() -> int:
             print(f"  {etiket} AGENTS.md — kesin yasaklar (SAP)")
             if onceki != "guncel" and not args.dry_run:
                 agents.write_text(yeni, encoding="utf-8")
+
+    # --- şablon sürüm kaydı (TASARIM §2b) ---------------------------------------------------------
+    # Kayıt DOĞUM sürümüdür: yalnız kaydı olmayan ve bu koşumda BAŞTAN kurulan projeye yazılır.
+    # · Kayıt varsa dokunulmaz — yeniden çalıştırmada bugünü yazmak, dosyalar eski sürümde kalmışken
+    #   tabanı ileri kaydırır (yanlış 3-yollu birleştirme).
+    # · Dosyalar zaten varken (atlandı/değiştirildi > 0) doğum sürümü BİLİNMİYOR ⇒ uydurulmaz;
+    #   `%guncelle-proje` içerik eşleştirmesiyle geri düşer (SHA'sız geri düşüş).
+    mevcut_kayit = surum_kaydi_oku(target)
+    onceden_vardi = counts["atlandı"] > 0 or counts["değiştirildi"] > 0
+    if args.dry_run:
+        print(f"  [şablon sürüm kaydı] {SURUM_KAYDI} " +
+              ("var, dokunulmaz" if mevcut_kayit else "yazılacak" if not onceden_vardi
+               else "YAZILMAYACAK (proje dosyaları zaten vardı)") + " (dry-run)")
+    elif mevcut_kayit:
+        print(f"  [şablon sürüm kaydı var] {SURUM_KAYDI} "
+              f"({str(mevcut_kayit.get('template_commit'))[:10]}) — dokunulmadı")
+    elif onceden_vardi:
+        print(f"  [şablon sürüm kaydı yazılmadı] {SURUM_KAYDI} — proje dosyaları zaten vardı, "
+              "doğum sürümü bilinmiyor; %guncelle-proje tabanı içerik eşleştirmesiyle bulur")
+    else:
+        commit = sablon_commit(args.sap)
+        surum_kaydi_yaz(target, name, args.sap, commit, "new_project")
+        print(f"  [şablon sürüm kaydı] {SURUM_KAYDI} = "
+              f"{commit[:10] if commit else 'ÖLÇÜLEMEDİ (git yok ya da klon değil)'}")
 
     print(git_hook_kablola(target, args.dry_run))
 

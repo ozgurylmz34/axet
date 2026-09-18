@@ -24,6 +24,7 @@ import install as inst  # noqa: E402  (aynı klasördeki kurulum sabitleri)
 import sap_stamp  # noqa: E402  (kesin yasak damgası)
 import new_package as npk  # noqa: E402  (paket katmanı)
 import behavior_manifest as bm  # noqa: E402  (davranış yüzeyi)
+import new_project as nprj  # noqa: E402  (proje şablonu sürüm kaydı — TASARIM §9 tetiği)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -991,6 +992,7 @@ def check_project(cwd: Path, sap_global: bool = False) -> None:
                 + (" …" if len(eksik) > 5 else "") + " → proje bilgisiyle doldur")
         else:
             add("PASS", "AGENTS.md yer tutucuları doldurulmuş")
+    check_sablon_surumu(cwd)
     is_listesi = cwd / ".axet-code" / "memory" / "project_is-listesi.md"
     add("PASS" if is_listesi.exists() else "WARN", "proje iş listesi var" if is_listesi.exists()
         else "proje iş listesi (.axet-code/memory/project_is-listesi.md) yok → new_project.py (var olanı ezmez)")
@@ -1085,6 +1087,17 @@ def check_project(cwd: Path, sap_global: bool = False) -> None:
     else:
         add("WARN", "proje .axet-code.json yok (proje hafızası yüklenmez)")
     add("INFO", f".axetcode-denylist {'var' if (cwd / '.axetcode-denylist').exists() else 'yok'}")
+
+
+def check_sablon_surumu(cwd: Path) -> None:
+    """Proje şablonu klondakiyle aynı sürümde mi (TASARIM §9 tetiği → `%guncelle-proje`).
+
+    Ölçüm `new_project.sablon_surumu_durumu`'ndadır; `session_brief.py` de AYNI fonksiyonu
+    çağırır (iki ayrı ölçüm yazılırsa biri bayatlar). Damga ayrıca `check_stamp` ile ölçülür.
+    """
+    durum, mesaj = nprj.sablon_surumu_durumu(cwd)
+    add({"guncel": "PASS", "eski": "WARN", "kayitsiz": "WARN",
+         "cozulemedi": "WARN", "olculemedi": "INFO"}[durum], mesaj)
 
 
 def check_stamp(agents_metni: str, sap_proje: bool) -> None:

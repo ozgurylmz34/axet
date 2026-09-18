@@ -112,6 +112,21 @@ def saglik(proj: Path) -> list[str]:
     return kotu or ["doctor statik kontroller: FAIL/WARN yok"]
 
 
+def sablon_surumu(proj: Path) -> list[str]:
+    """PROJE ŞABLONU bölümü — TASARIM §9 tetiği: "proje şablonu eski → %guncelle-proje".
+
+    Ölçüm `new_project.sablon_surumu_durumu`'ndadır; `doctor.py check_sablon_surumu` AYNI
+    fonksiyonu çağırır (tek kaynak; iki ayrı ölçüm yazılırsa biri bayatlar). Bu fonksiyon
+    yalnız sunum yapar, hiçbir şey YAZMAZ ve ağa ÇIKMAZ.
+    """
+    import new_project as nprj  # aynı klasör
+    durum, mesaj = nprj.sablon_surumu_durumu(proj)
+    satirlar = [("⚠ " if durum in ("eski", "kayitsiz", "cozulemedi") else "") + mesaj]
+    if durum in ("eski", "kayitsiz", "cozulemedi"):
+        satirlar.append("her proje AYRI onaylanır — toplu tarama yok (Q1)")
+    return satirlar
+
+
 def son_kayit(notes: Path) -> list[str]:
     if not notes.is_file():
         return ["SESSION_NOTES.md yok"]
@@ -211,6 +226,8 @@ def main() -> int:
                      ("İŞ LİSTESİ", lambda: is_listesi(proj)),
                      ("DEVİR NOTLARI", lambda: devir_notlari(proj)),
                      ("AGENTS.md AÇIK İŞLER", lambda: agents_acik_isler(proj))]
+        # P5 tetiği (TASARIM §9) — ayrı bölüm, ayrı fonksiyon (paylaşılan dosya: satır serpiştirme yok)
+        bolumler.append(("PROJE ŞABLONU", lambda: sablon_surumu(proj)))
 
     print(f"[OTURUM ÖZETİ — session_brief.py · {datetime.now():%Y-%m-%d %H:%M} · {proj}]")
     for ad, fn in bolumler:
