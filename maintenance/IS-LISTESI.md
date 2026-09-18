@@ -94,7 +94,7 @@ oturum scratchpad'inde `lane-yedek-0129/` altında.
 Sağlık (ölçüldü): `-k guncelle_harita` 28/0 · `guncelle_kartlar` 12/0 · `doctor` 69/0 ·
 `install` 24/0(1 skip) · `session_brief` 7/0 · `yayin_surumleri` 32/0 · `yayin_hazirla` 9/0
 = **181 test 0 failure** · `siniflandir.py` 481 dosya 0 sorun rc=0.
-⚠ **`-k kur` ÖLÇÜLEMEDİ** — `rc=124` (600 sn zaman aşımı; 6 ajan aynı makinede CPU paylaşıyordu). **Bu bir test kırmızısı DEĞİL, ama yeşil de değil**: ölçülemedi ≠ temiz. 2400 sn ile yeniden koşuluyor; sonuç gelmeden `kur` (P6'nın ~70 testlik takımı) sağlıklı sayılmaz. CI zaten koşacak, ama PR'dan önce yerel taban isteniyor.
+✅ **`-k kur` ÖLÇÜLDÜ (2026-09-18):** `71 test · 0 failure · 0 error · 0 skip · rc=0` (926 sn, entegrasyon worktree'sinde, ağaç temizken). Önceki iki deneme `rc=124` (600/2400 sn zaman aşımı) idi — o **kırmızı değil, ÖLÇÜLEMEDİ**ydi ve öyle kaydedilmişti. ⚠ Z6 denetiminin `68 test / 747 sn` yeşili bu boşluğu KAPATMIYORDU: o ölçüm `denetim/2026-09-18-z6` (`1777e99`) ağacındaydı ve `kur.ps1` ile `tests/test_kur.py` blob'ları entegrasyon HEAD'inden FARKLIYDI (ölçüldü: `22a72f0d`≠`8262896f`, `55b2d3f4`≠`1d6d880`). Başka bir ağacın yeşili bu ağacın kanıtı değildir.
 
 **BİTİŞ SIRASI:** her lane bitince → lider commit → gate → PASS → entegrasyona merge →
 (hepsi bitince) **Z7 test hijyeni turu** → entegrasyonu push → **`main`'e PR** (CI 5 job, ~6.6 dk) →
