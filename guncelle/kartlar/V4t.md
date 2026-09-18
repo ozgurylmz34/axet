@@ -38,8 +38,11 @@ akışın 11. adımı (hüküm karşılaştırması) ZORUNLUDUR ve şöyle ÖLÇ
      — adım 6 (önce-ölçüm) ve adım 10 (sonra-ölçüm) çıktılarını karşılaştır; her validator için
      `bad` tarafı FAIL, `good` tarafı PASS olmalı ve bu İKİSİNDE DE tutmalı.
    - **Fixture'ı olmayan validator:** taban sürümünü `git show <taban>:<yol>` ile geçici bir dosyaya
-     al; iki sürümü de AYNI örnek proje kökünde `AXET_SAP_PROJECT_DIR=<kök>` ortam değişkeniyle koş,
-     çıkış kodunu ve `[İHLAL]` satırlarını karşılaştır.
+     al; iki sürümü de AYNI örnek proje kökünde koş. Ortam değişkenini PowerShell'de AYRI
+     SATIR olarak ver — `$env:AXET_SAP_PROJECT_DIR = '<kök>'`, sonra `python <validator yolu>`.
+     (Ölçüldü 2026-09-18: POSIX öneki *AXET_SAP_PROJECT_DIR=<kök> python …* bu evde birincil
+     kabuk olan PowerShell'de koşMAZ — *The term 'AXET_SAP_PROJECT_DIR=…' is not recognized*.)
+     Çıkış kodunu ve `[İHLAL]` satırlarını karşılaştır.
    - **Zincir dosyası** (`run_review.py`, `_reviewer.py`, `gate.py`): aynı örnek dosyayla
      `python skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/run_review.py --task <görev> --artifact <örnek> --cevrimdisi --json`
      komutunu önce ve sonra koş; hükmü (PASS / WARNING / BLOCKER) karşılaştır.

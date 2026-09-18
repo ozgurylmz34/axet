@@ -16,7 +16,11 @@ Plandaki dosya `config/permissions.json`, `.axetcode-denylist` ya da proje şabl
    kapanış 0 dönmez. `proje-sablon-config` için özel adım MANUEL'dir (`%guncelle-proje`) ve
    `install.py` koşmaz — o satırı kullanıcıya aynen aktarmak yeter.
 3. `python tests/run_tests.py -k install` koş.
-4. Kullanıcıya söyle: **aXet'i kapatıp aç** — izinler oturum başında okunur.
+4. **Etkinleşme de alt sınıfa göre değişir (yukarıdaki tablo):** `config-izin-kok` için
+   (`etkin = install-sonra-yeni-oturum`) kullanıcıya söyle: önce `install.py`, sonra **aXet'i
+   kapatıp aç** — izinler oturum başında okunur. `proje-sablon-config` için ayrı bir etkinleşme
+   anı YOKTUR (`etkin = null`): kapat-aç İSTEME; o dosya şablondur, değişiklik mevcut projelere
+   ancak `%guncelle-proje` ile ulaşır.
 
 ## DUR
 Kullanıcının kendi izin kuralı template'in bir `deny` satırını eziyorsa bu RAPOR'a yazılır,
