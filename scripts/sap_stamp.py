@@ -36,6 +36,28 @@ def _sinirlar(metin: str) -> tuple[int, int] | None:
     return (i, j + len(BITIR)) if i >= 0 and j > i else None
 
 
+def govde(agents_metni: str) -> str:
+    """Damga bloğu ÇIKARILMIŞ gövde (TASARIM §2b).
+
+    `%guncelle-proje` üç sürümü (taban/yerel/yeni) bu gövde üzerinden karşılaştırır ve birleştirir;
+    damgayı sonra `damgala()` yeniden basar. Blok çıkarılmazsa template'te damga olmadığı için her
+    SAP projesinin `AGENTS.md`'si sonsuza dek "yerelde değişmiş" görünürdü.
+
+    ⚠ `damgala()`nın TAM TERSİ olmalı, yoksa tek bir boş satır farkı bile dosyayı "değişmiş"
+    gösterir (ölçüldü 2026-09-17: ilk sürüm `ust`u `rstrip`liyordu → her SAP AGENTS.md'si V4c
+    çıktı). `damgala` başlıklı dosyada `<ust> + blok + "\\n\\n" + <alt>` yazar ⇒ tersi
+    `<ust> + <alt'ın baştaki boş satırları atılmış hâli>`; `ust`a DOKUNULMAZ.
+    """
+    s = _sinirlar(agents_metni)
+    if not s:
+        return agents_metni
+    # `lstrip("\r\n")`: CRLF'li bir dosyada yalnız "\n" atılırsa geride `\r` kalır ve gövde
+    # tabandan farklı görünür (ölçüldü 2026-09-17).
+    ust, alt = agents_metni[:s[0]], agents_metni[s[1]:].lstrip("\r\n")
+    # Başlıksız dosyada `damgala` gövdeyi `rstrip()`leyip sonuna eklemişti; orada da simetrik ol.
+    return (ust + alt) if alt else (ust.rstrip() + "\n")
+
+
 def durum(agents_metni: str) -> str:
     """'yok' | 'farkli' | 'guncel'"""
     s = _sinirlar(agents_metni)

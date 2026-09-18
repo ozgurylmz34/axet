@@ -62,7 +62,7 @@
     {
       "sinif": "guncelleme-motoru",
       "ust_sinif": "guncelleme-motoru",
-      "glob": ["GUNCELLE.md", "guncelle/*", "scripts/guncelle.py"],
+      "glob": ["GUNCELLE.md", "guncelle/*", "scripts/guncelle.py", "scripts/guncelle_proje.py"],
       "yukleme": "%guncelle skill'i ve scripts/guncelle.py çalışma zamanında okur; aXet bağlamına yüklenmez",
       "etkin": "aninda",
       "esler": ["tests/test_guncelle_harita.py"],
