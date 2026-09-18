@@ -85,6 +85,13 @@ def _ozet(veri: bytes | None) -> str | None:
     return None if n is None else hashlib.sha256(n).hexdigest()
 
 
+def _yazilacak(rel: str, veri: bytes) -> bytes:
+    """Diske yazılacak içerik: metin LF'e normalize edilir, İKİLİ dosya ASLA (bug gate 2026-09-19
+    ikinci tur). `_norm` baytlardaki `\\r\\n`'yi siler — PNG başlığı bile `\\r\\n` içerir — ve doğrulama
+    iki tarafı da normalize ettiği için bozulma SESSİZ geçerdi."""
+    return veri if ikili_mi(rel, [veri]) else (_norm(veri) or b"")
+
+
 def ikili_mi(yol: str, ornekler) -> bool:
     """`guncelle.IKILI_UZANTI` + NUL taraması. (P2'nin `check-attr` kolu burada UYGULANMAZ:
     proje dosyaları template deposunda değildir, `.gitattributes` beyanı onlara sorulamaz.)"""
@@ -170,6 +177,12 @@ class Proje:
         tam.parent.mkdir(parents=True, exist_ok=True)
         if rel == "AGENTS.md" and self.damga_gerekli:
             veri_lf = self._damgala(veri_lf)
+        # İkili ölçütü `ikili_mi` (uzantı + NUL) — yalnız UnicodeDecodeError DEĞİL: geçerli UTF-8 olan
+        # ikili dosya metin sayılıp `write_text` ile satır sonu çevrilerek BOZULUYORDU (bug gate
+        # 2026-09-19 ikinci tur, ölçüldü: LF satır sonu CRLF'e döndü). new_project ile aynı ölçüt.
+        if ikili_mi(rel, [veri_lf]):
+            tam.write_bytes(veri_lf)
+            return
         try:
             metin = veri_lf.decode("utf-8")
         except UnicodeDecodeError:
@@ -253,6 +266,8 @@ class Baglam:
             ham = self.k.icerik(commit, kaynak)
             if ham is None:
                 continue
+            if ikili_mi(rel, [ham]):
+                return ham          # ikili: yer tutucu ikame edilmez (new_project ile aynı ölçüt)
             try:
                 metin = ham.decode("utf-8")
             except UnicodeDecodeError:
@@ -527,7 +542,7 @@ def komut_uygula(b: Baglam, args) -> int:
                 durum_kaydet(p, rel, vaka=kod, durum="bekliyor", not_="yeni içerik yok")
                 hata = 1
                 continue
-            p.yaz(rel, _norm(y) or b"")
+            p.yaz(rel, _yazilacak(rel, y))
             beklenen = _ozet(b.govde(rel, y))
         gercek = _ozet(b.govde(rel, p.oku(rel)))
         if gercek != beklenen:
@@ -630,7 +645,7 @@ def komut_isaretle(b: Baglam, args) -> int:
             tam = p.kok / rel
             shutil.move(str(tam), str(tam.with_name(tam.name + ".yerel")))
             print(f"Senin dosyan korundu: {rel}.yerel")
-        p.yaz(rel, _norm(y) or b"")
+        p.yaz(rel, _yazilacak(rel, y))
         return _dogrula_ve_kaydet(b, rel, d["vaka"], args.karar, _ozet(b.govde(rel, y)))
 
     # birlesik

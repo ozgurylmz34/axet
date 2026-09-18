@@ -1280,6 +1280,27 @@ class AkisTest(GuncelleTemel):
         # kontrol grubu: aynı kapanışta DİĞER değişiklikler commit'e girdi (süzgeç aşırı değil)
         self.assertNotIn("docs/silinecek2.md", agac, "V6 silmesi kapanış commit'ine girmedi")
 
+    def test_V4R_birlesik_sonra_ertelendi_yarim_tasima_uretmez(self):
+        """Bug gate 2026-09-19 ikinci tur (ölçüldü): "motor yazmadıysa her izlenmeyen yolu koru"
+        süzgeci, `birlesik` ile YENİ yola yazılmış V4R dosyası sonradan `ertelendi` yapılınca yeni yolu
+        commit dışı bırakıyordu; eski yolun silmesi ise stage'liydi ⇒ HEAD'de İKİ yol da yoktu."""
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self.birlesik_isaretle("docs/tasinan2.md")
+        self._tum_yargilari_kapat(haric="docs/tasinan2.md")
+        r = self.f.calistir("isaretle", "docs/tasinan2.md", "--karar", "ertelendi", "--gerekce", "vazgectim")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        # kontrol grubu: yeni yol motor tarafından yazıldı ve henüz izlenmiyor
+        self.assertTrue((self.f.tuketici / "docs/tasindi2.md").is_file())
+        self.assertEqual(self.git(self.f.tuketici, "ls-files", "--", "docs/tasindi2.md").stdout.strip(), "")
+        self.ozel_adimlari_kostur()
+        self.f.calistir("olc", "--asama", "sonra")
+        self.f.calistir("butunluk")
+        r = self.f.calistir("kapanis")
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertTrue("docs/tasindi2.md" in agac or "docs/tasinan2.md" in agac,
+                        f"yarım taşıma: iki yol da HEAD'de yok\n{self.cikti(r)}")
+
     def test_kapanis_COMMIT_BASARISIZSA_eksik_olur_ve_muhur_basilmaz(self):
         """⛔ BLOCKER-3 (kardeş vaka): commit'in kendisi patlarsa da yalnız `UYARI:` basılıyordu.
 
@@ -1948,6 +1969,19 @@ class M6YenidenAdlandirmaTest(GuncelleTemel):
 
     def test_V7_yeniden_adlandirmali_ertelendi_yeni_yolu_korur(self):
         r = self._karar_ver_ve_kapat("--karar", "ertelendi", "--gerekce", "sonra bakarim")
+        self._kullanici_dosyasi_commite_girmedi(r)
+
+    def test_V7_karar_verilmeden_kabul_ile_kapanis_yeni_yolu_korur(self):
+        """Bug gate 2026-09-19 #2'nin üçüncü kolu: yargı verilmemiş (`bekliyor`) V7 + `kapanis --kabul`."""
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.f.calistir("uygula", "--otomatik")
+        AkisTest._tum_yargilari_kapat(self)
+        self.ozel_adimlari_kostur()
+        self.f.calistir("olc", "--asama", "sonra")
+        self.f.calistir("butunluk")
+        self.assertEqual(self.git(self.f.tuketici, "ls-files", "--", "docs/tasindi.md").stdout.strip(), "")
+        r = self.f.calistir("kapanis", "--kabul", "kabul ediyorum")
+        self.assertEqual(r.returncode, 3, self.cikti(r))   # kullanıcı onaylı açık FAIL ile kapandı
         self._kullanici_dosyasi_commite_girmedi(r)
 
 

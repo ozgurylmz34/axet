@@ -244,13 +244,18 @@ def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> 
                         "kuralı gevşetmektir (core/00-temel.md §3)")
     # ⛔ Adlandırma denetimi `.rules.md`'yi DİSKTEN okur, yukarıdaki karşılaştırma ise STAGED içerikten
     # (bug gate 2026-09-19 #3, ölçüldü): stage'lenmemiş bir regex genişletmesi denetimi geçirir ama
-    # commit'e girmediği için hiç WARN üretmezdi. Disk ≠ index olan her izlenen `.rules.md` uyarılır.
+    # commit'e girmediği için hiç WARN üretmezdi. Disk ≠ index olan izlenen `.rules.md` uyarılır —
+    # YALNIZ o pakette staged bir dosya varsa (ikinci tur, ölçüldü: aksi hâlde ilgisiz her commit'te
+    # uyarı çıkıyordu; o kuralı bu commit'te hiçbir denetim okumadı).
     try:
         kirli = _git(proj, "diff", "-z", "--name-only", "--", ":(glob)**/.rules.md").decode("utf-8", "replace")
     except GitHatasi as e:
         rapor.add("WARN", f"kural değişikliği: stage'lenmemiş `.rules.md` denetimi ÖLÇÜLEMEDİ ({e})")
         return
     for yol in filter(None, kirli.split("\0")):
+        paket = yol[: -len(".rules.md")]
+        if not any(d.startswith(paket) and d != yol for d in dosyalar):
+            continue
         rapor.add("WARN", f"kural değişikliği: {yol} diskte STAGE'LENMEMİŞ değişiklik var — adlandırma "
                           "denetimi diskteki içeriği okudu, commit'e girecek kural bu DEĞİL. Değişiklik "
                           "kasıtlıysa stage'le (yukarıdaki fark denetimi ona da bakar), değilse geri al.")

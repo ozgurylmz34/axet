@@ -269,6 +269,26 @@ class SurumKaydiTest(GeciciTest):
         self.f.uret(ikili={"templates/project/veri.bin": veri})
         self.assertEqual((self.f.proje / "veri.bin").read_bytes(), veri)
 
+    def test_ikili_sablon_guncellemesi_bayt_bayt_yazilir(self):
+        """Bug gate 2026-09-19 ikinci tur (ölçüldü): `%guncelle-proje uygula` ikili dosyayı `_norm` ile
+        CRLF→LF çevirip (PNG başlığı `\\r\\n` içerir) ya da `write_text` ile LF→CRLF çevirip yazıyordu;
+        doğrulama iki tarafı da normalize ettiği için bozulma SESSİZDİ."""
+        png_eski, png_yeni = b"\x89PNG\r\n\x1a\n\x00ESKI", b"\x89PNG\r\n\x1a\n\x00YENI\r\n"
+        bin_eski, bin_yeni = b"AXB1\x00\x01sabit\n\x00son\n", b"AXB2\x00\x01sabit\n\x00son\n"
+        self.f.uret(ikili={"templates/project/logo.png": png_eski, "templates/project/veri.bin": bin_eski})
+        (self.f.home / "templates/project/logo.png").write_bytes(png_yeni)
+        (self.f.home / "templates/project/veri.bin").write_bytes(bin_yeni)
+        self.f.ilerlet({})
+        self.assertEqual(self.f.onayla().returncode, 0)
+        r = self.f.calistir("plan")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        # kontrol grubu: iki dosya da otomatik uygulanan vakada (yoksa `uygula` onlara dokunmaz)
+        self.assertEqual((self.f.vakalar().get("logo.png"), self.f.vakalar().get("veri.bin")), ("V1", "V1"))
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual((self.f.proje / "logo.png").read_bytes(), png_yeni)
+        self.assertEqual((self.f.proje / "veri.bin").read_bytes(), bin_yeni)
+
 
 # =====================================================================================================
 # 2. PLAN / VAKA KODLARI

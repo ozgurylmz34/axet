@@ -198,6 +198,17 @@ class PrecommitTest(GeciciTest):
         self.assertEqual(len(uyari), 1, r.stdout)
         self.assertIn(self.KURAL, uyari[0])
 
+    def test_stagelenmemis_kural_ilgisiz_committe_WARN_uretmez(self):
+        """Kontrol grubu (ikinci tur, ölçüldü): pakette staged dosya yoksa o kuralı bu commit'te hiçbir
+        denetim okumaz ⇒ uyarı gürültüdür."""
+        self._ilk_commit()
+        self._class_satiri_genislet()
+        self.git(self.d, "reset", "-q", "--", self.KURAL)
+        self.stage("notlar/ilgisiz.md", "ilgisiz\n")
+        r = self.denetle()
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("STAGE'LENMEMİŞ", r.stdout, self.cikti(r))
+
     def test_yeniden_adlandirilan_rules_md_ilk_kayit_sayilmaz(self):
         """Bug gate 2026-09-19 #3: paket klasörü taşınıp kural aynı commit'te genişletilirse `.rules.md`
         HEAD'de yeni yolda yoktur ⇒ eskiden "ilk kayıt" sayılıp WARN atlanıyordu."""

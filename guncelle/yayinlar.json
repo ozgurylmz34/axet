@@ -67,12 +67,13 @@
     },
     {
      "id": "0.2.0-02",
-     "baslik": "Yeni proje: aXet'in kendi .gitignore'u 'proje vardı' sayılmaz, ikili şablon bayt bayt",
+     "baslik": "Yeni proje ve %guncelle-proje: aXet'in kendi .gitignore'u 'proje vardı' sayılmaz, ikili dosya bayt bayt",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "K-E: yalnız aXet'in yazdığı .gitignore varken şablon sürüm kaydı yazılmıyordu. Z9: ikili şablon dosyası metin olarak okunup bozuluyordu. Geçerli UTF-8 olarak çözülebilen ikili dosya (NUL içerir) da artık metin sayılmaz; ölçüt %guncelle-proje ile aynı (uzantı + NUL).",
+     "neden": "K-E: yalnız aXet'in yazdığı .gitignore varken şablon sürüm kaydı yazılmıyordu. Z9: ikili şablon dosyası metin olarak okunup bozuluyordu. Geçerli UTF-8 olarak çözülebilen ikili dosya (NUL içerir) da artık metin sayılmaz; ölçüt %guncelle-proje ile aynı (uzantı + NUL). %guncelle-proje ikili dosyayı güncellerken satır sonlarını çeviriyordu (PNG başlığındaki \\r\\n bile siliniyordu) ve doğrulama bunu yakalamıyordu; artık bayt bayt yazılır.",
      "dosyalar": [
       "scripts/new_project.py",
+      "scripts/guncelle_proje.py",
       "tests/test_guncelle_proje.py"
      ],
      "gerektirir": [],
