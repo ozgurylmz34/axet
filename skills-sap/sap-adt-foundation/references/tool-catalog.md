@@ -357,13 +357,14 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   **yazma öncesi DTEL denetimi (2026-09-14'ten beri, artefakt verilsin verilmesin):** tier, Z/Y, transport, açıklama ve her alanda `name`+`type`
   denetimine ek olarak, SAP'ye yazılacak `fields[]`'teki Z/Y ve `/ad-alanı/` tipleri çıkarılır ve `check_struct_field_dtel_active.py` koşar
   (`struct_fields_dtel`): DTEL yok ya da inaktif → `reviewer_blocker`; ad DTEL değil ama yapı/tablo/tablo tipi olarak varsa kapsam dışı; SAP okunamazsa
-  ÖLÇÜLEMEDİ → yine `reviewer_blocker` (PASS sayılmaz). Gate'in istemci kurulumu ve tüm SAP okumaları tek, gerçek toplam süre bütçesiyle (15 sn; istek bir iplikte koşar, ana akış
+  ÖLÇÜLEMEDİ → yine `reviewer_blocker` (PASS sayılmaz). Gate'in istemci kurulumu ve tüm SAP okumaları tek, gerçek toplam süre bütçesiyle (varsayılan 28 sn; istek bir iplikte koşar, ana akış
   yalnız kalan süre kadar bekler → damlayan ya da asılı yanıt bütçeyi aşamaz — ölçüldü, bütçe 3 sn: 1 bayt/1,5 sn damlayan yanıt ve 30 sn asılı
   istemci kurulumu → gate süreci 3,3-3,7 sn, süreç açılışı dahil; tekrar deneme yok; yapı ve alan açıklamaları dahil yazılacak DDL'in aynısı
-  denetlenir; env
-  `AXET_DTEL_GATE_BUTCE_SN` yalnız düşürür, geçersiz değer → varsayılan + uyarı) koşar; bütçe dolarsa denetlenemeyen adaylar ÖLÇÜLEMEDİ →
-  `reviewer_blocker` ("süre bütçesi (N sn) doldu, M aday denetlenmedi"). Zincir 30 sn'yi aşarsa `reviewer_timeout` → `reviewer_blocker`
-  (ÖLÇÜLEMEDİ; yalnız bu gate'i taşıyan zincirlerde — `table_creation`, `table_update`, `struct_creation`, `struct_fields_dtel` — diğerlerinde WARNING).
+  denetlenir; K10'dan beri bütçe YAPILANDIRILABİLİR: `AXET_REVIEWER_BUTCE_SN` üç katmanı birlikte yükseltir/düşürür,
+  `AXET_DTEL_GATE_BUTCE_SN` yalnız gate payını ayarlar — üst sınırı artık sabit değil zincir bütçesi; geçersiz değer → varsayılan + uyarı) koşar; bütçe dolarsa denetlenemeyen adaylar ÖLÇÜLEMEDİ →
+  `reviewer_blocker` ("süre bütçesi (N sn) doldu, M aday denetlenmedi"). Zincir sarmalayıcı bütçesini (varsayılan 60 sn) aşarsa `reviewer_timeout` → `reviewer_blocker`
+  (ÖLÇÜLEMEDİ; canlı — SAP'ye bağlanan — BLOCKER gate taşıyan HER zincirde: `table_creation`, `table_update`, `struct_creation`, `struct_fields_dtel`,
+  `struct_post_create`, `sap_active_check`; canlı BLOCKER taşımayanlarda WARNING). Ayrıntı + ölçümler: IMPLEMENTATION §20.9.
   `artifact_path` verilirse: yol bulunamazsa `artifact_not_found` → `reviewer_blocker` (ağa gidilmez); varsa `fields[]` denetimi BLOCKER değilse
   artefaktın `struct_creation` zinciri de koşar, hükümler birleşir (`reviewer.results[].girdi` = `fields` | `artifact`). Boş `fields[]` →
   `validation_error` (reviewer'dan önce). Standart DTEL'ler (ör. MATNR) denetlenmez. Önceden (2026-09-13 ölçümü) artefaktsız çağrıda bu denetim yoktu;

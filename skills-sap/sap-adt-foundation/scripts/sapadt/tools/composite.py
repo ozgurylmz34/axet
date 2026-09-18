@@ -555,9 +555,10 @@ def adt_struct_create(
     """Create + activate + verify a DDIC structure (INTTAB) atomically.
 
     Reviewer (ADR 0006): the DDL actually written (`fields[]` + descriptions, same renderer as create_structure) ALWAYS
-    runs `struct_fields_dtel` (Z/Y + /ns/ DTEL existence/activity, 15 s total budget incl. client setup, no retry); if artifact_path is given it must
+    runs `struct_fields_dtel` (Z/Y + /ns/ DTEL existence/activity; configurable total budget incl. client setup, default 28 s, no retry); if artifact_path is given it must
     exist (else BLOCKER artifact_not_found) and run_review.py struct_creation runs too, verdicts merged.
-    BLOCKER rejects (must fix and retry). Unmeasured DTEL gate / budget exhausted / 30 s wrapper timeout = BLOCKER. Strongly recommended for Sprint 6 flow:
+    BLOCKER rejects (must fix and retry). Unmeasured DTEL gate / budget exhausted / wrapper timeout (default 60 s,
+    `AXET_REVIEWER_BUTCE_SN`) = BLOCKER. Strongly recommended for Sprint 6 flow:
     coordinator generates a local .asddls via sprint6_adapt_struct.py, then passes
     that path here so the reviewer can validate DTEL activity and annotations.
 
@@ -610,7 +611,8 @@ def adt_struct_create(
     # artefakt verilsin verilmesin. `artifact_path` verilirse: yol yoksa BLOCKER (artifact_not_found; ağa gidilmez),
     # varsa `struct_creation` zinciri de koşar, hükümler birleşir (`_reviewer.run_reviewer_struct`). Fail-closed:
     # DTEL yok/inaktif → BLOCKER · SAP okunamadı ya da gate'in süre bütçesi doldu (measured=false) → SKIP = BLOCKER ·
-    # 30 sn sarmalayıcı zaman aşımı → BLOCKER (ÖLÇÜLEMEDİ; yalnız DTEL gate'li zincirlerde, B1 (a)).
+    # sarmalayıcı zaman aşımı (varsayılan 60 sn, `AXET_REVIEWER_BUTCE_SN` ile ayarlanır) → BLOCKER
+    # (ÖLÇÜLEMEDİ; K10'dan beri canlı BLOCKER gate taşıyan HER zincirde — IMPLEMENTATION §20.9).
     # Boş `fields[]` yukarıda `validation_error` ile reviewer'dan ÖNCE reddedilir (yazma yok).
     on_sonuc = run_reviewer_struct(name, fields, artifact_path, description=description)
     blocker, warn = _maybe_reviewer("adt_struct_create", name, obj_type, artifact_path, result=on_sonuc)

@@ -161,6 +161,49 @@ class KurTest(GeciciTest):
         env["LOCALAPPDATA"] = str(lad)
         return env, kayit
 
+    def sahte_python_ortami(self, surum: str) -> tuple[dict, Path]:
+        """Sürümünü <surum> diye bildiren, GERÇEKTEN ÇALIŞAN sahte bir python'un tek başına PATH'te olduğu ortam.
+
+        dar_ortam()'ın 0 baytlık sahtesinden farkı: bu aday `Python-Dene`de rc=0 döner, sürümünü bildirir ve
+        bildirdiği yol diskte gerçekten vardır → aday asgari sürüm karşılaştırmasına (`$surum -lt $script:PyAsgari`,
+        kur.ps1) ULAŞIR ve karar YALNIZ orada verilir. Gerçek yorumlayıcı, py launcher ve git PATH dışındadır;
+        `-WingetKapali` ile `Python-Bul -BilinenYerler` koluna hiç girilmez (ProgramFiles'taki gerçek Python
+        sonucu bulandırmasın). LOCALAPPDATA sahte: gerçek aXet görünmez, sahte axet-code.exe konur."""
+        etiket = surum.replace(".", "_")
+        bin_ = self.tmp / f"_py{etiket}"
+        bin_.mkdir()
+        sahte = bin_ / "python.cmd"
+        # `-c <kod>` argümanı okunmaz; çıktı Python-Dene'nin beklediği "MAJ.MIN|<yol>" biçimindedir ve bildirilen yol
+        # betiğin kendisidir (Test-Path -PathType Leaf geçsin diye diskte var olan bir dosya olmalı).
+        sahte.write_text(f"@echo off\r\necho {surum}^|%~f0\r\nexit /b 0\r\n", encoding="ascii", newline="")
+        lad = self.tmp / f"_lad{etiket}"
+        (lad / "axet-code" / "bin").mkdir(parents=True)
+        (lad / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(SYS32), str(POWERSHELL.parent)]))
+        env["LOCALAPPDATA"] = str(lad)
+        return env, sahte
+
+    def sahte_py_launcher_ortami(self) -> tuple[dict, Path, Path]:
+        """`py` launcher kolunun TEK yol olarak kaldığı ortam: PATH'te python/python3 YOK, yalnız `-0p` listesi
+        veren sahte bir `py` var ve o liste bu testi koşan GERÇEK yorumlayıcıyı gösterir.
+
+        Sahte py YALNIZ `-0p`yi tanır, başka her argümanda rc=1 döner: böylece `py -3` yedek kolu ÇALIŞMAZ ve
+        "aday listeden seçildi mi" sorusu tek başına ölçülebilir. Gerçek py.exe (%LOCALAPPDATA%\\Programs\\Python\\Launcher) PATH dışıdır;
+        git de yoktur (2. adımda durulur, sahte liste hiç kullanılmadan kurulum ilerlemez)."""
+        bin_ = self.tmp / "_pylauncher"
+        bin_.mkdir()
+        gercek = Path(sys.executable).resolve()
+        surum = f"{sys.version_info.major}.{sys.version_info.minor}"
+        sahte_py = bin_ / "py.cmd"
+        satirlar = ["@echo off", 'if not "%~1"=="-0p" exit /b 1', f"echo  -V:{surum} *        {gercek}", "exit /b 0"]
+        sahte_py.write_text("\r\n".join(satirlar) + "\r\n", encoding="ascii", newline="")
+        lad = self.tmp / "_lad_pylauncher"
+        (lad / "axet-code" / "bin").mkdir(parents=True)
+        (lad / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(SYS32), str(POWERSHELL.parent)]))
+        env["LOCALAPPDATA"] = str(lad)
+        return env, sahte_py, gercek
+
     def yabanci_repo(self, ad: str) -> tuple[Path, Path]:
         """scripts/install.py + scripts/doctor.py + skills-sap/ + core/00-temel.md taşıyan ama `CORE-ID: AXET-CORE-`
         imzası OLMAYAN yabancı bare repo; (bare, işaret dosyası). Yabancı betik çalışırsa işaret dosyasını yazar."""
@@ -807,9 +850,12 @@ class KurTest(GeciciTest):
             ("harf + ters bölü + sondaki ayraç", "C:\\axet\\", r"C:\yeni",
              {"options": {"skills_paths": ["c:\\AXET\\skills\\"]}, "permissions": {"rules": {"edit": {"C:/Axet/core/*": "deny"}}}},
              ["options.skills_paths: c:\\AXET\\skills\\", "permissions.rules.edit: C:/Axet/core/*"]),
-            ("ASCII dışı", r"C:\Users\Özgür\İş", r"C:\yeni",
-             {"options": {"context_paths": ["C:/Users/Özgür/İş/core/00-temel.md"]}},
-             ["options.context_paths: C:/Users/Özgür/İş/core/00-temel.md"]),
+            # Ad bilerek YER TUTUCUDUR (gerçek bir kişi adı değil): bu dosya public yayın paketine girer ve
+            # yayın öncesi sızıntı taramasından geçer — gerçek kullanıcı adı BLOCKER'dır. Türkçe karakterler
+            # testin ÖLÇTÜĞÜ şeydir (ASCII dışı yol), o yüzden korunur.
+            ("ASCII dışı", r"C:\Users\ÖRNEK\İş", r"C:\yeni",
+             {"options": {"context_paths": ["C:/Users/ÖRNEK/İş/core/00-temel.md"]}},
+             ["options.context_paths: C:/Users/ÖRNEK/İş/core/00-temel.md"]),
         ]
         vakalar = []
         for i, (ad, kok, aktif, cfg, _) in enumerate(tablo):
@@ -940,6 +986,60 @@ class KurTest(GeciciTest):
         self.assertFalse(kayit.exists(), "winget soru onaylanmadan çağrıldı")
         self.assertFalse(self.hedef.exists())
         self.assertFalse(self.cfg.exists())
+
+    def test_asgari_python_surum_kapisi_karari(self):
+        """Asgari sürüm kapısının KARARI (mesajı değil): 3.11 RED · 3.12 KABUL · 3.14 KABUL.
+
+        Kontrol grubu ZORUNLU: yalnız "3.11 reddedildi"yi ölçmek yetmez — aday yanlış bir sebepten de (rc != 0,
+        bildirilen yol diskte yok) elenmiş olabilirdi. 3.12/3.14 kolunun KABUL dönmesi, sahte yorumlayıcının
+        gerçekten çalıştığının ve kararın asgari sürüm karşılaştırmasında verildiğinin kanıtıdır.
+        Neden var: mutasyon denetimi Z6/B1 — karşılaştırma `if ($false)` yapıldığında (= 3.12 kapısı tümüyle
+        kaldırıldığında) takımın tamamı yeşil kalıyordu; 3.12'yi anan iki test yalnız mesaj metnini ölçüyor ve
+        girdileri (0 baytlık sahte, Store yönlendirmesi) karşılaştırmaya hiç ULAŞMIYORDU.
+
+        KAPSAM — bakılmayanlar: py launcher (`py -0p`) listesindeki ön eleme · `-BilinenYerler` taraması ·
+        3.12'nin altındaki GERÇEK bir yorumlayıcının install.py'de nasıl davranacağı (burada Git eksik olduğu
+        için 2. adımda durulur, sahte yorumlayıcı hiç çalıştırılmaz)."""
+        for surum, kabul in (("3.11", False), ("3.12", True), ("3.14", True)):
+            with self.subTest(surum=surum, kabul=kabul):
+                env, sahte = self.sahte_python_ortami(surum)
+                r = self.kur(env=env)  # git PATH'te yok -> her iki kolda da 2. adımda durulur
+                c = self.cikti(r)
+                self.assertEqual(r.returncode, 2, c)
+                self.assertIn("EKSİK: Git bulunamadı", c)  # kontrol: durma sebebi git; Python kararı ayrıca ölçülür
+                if kabul:
+                    self.assertIn(f"OK Python: {surum} ({sahte})", c)
+                    self.assertNotIn("ya da üstü gerekli", c)
+                    self.assertNotIn("EKSİK: Python", c)
+                else:
+                    self.assertIn(f"Python {surum} bulundu ama 3.12 ya da üstü gerekli: {sahte}", c)
+                    self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
+                    self.assertNotIn("OK Python", c)
+                self.assertFalse(self.hedef.exists(), c)
+
+    def test_py_launcher_listesinden_yorumlayici_secilir(self):
+        """py launcher kolu (İKİNCİ asgari sürüm karşılaştırması) gerçekten koşar ve adayı SEÇER.
+
+        Neden var: mutasyon denetimi Z6/B1 yalnız `Python-Dene` içindeki kapıya baktı; aynı karşılaştırma py
+        launcher kolunda da var ve kaynak taramasına göre o kolu HİÇBİR test koşturmuyordu (PATH'i değiştiren
+        testlerin tümü ya çalışan bir python'u PATH'te bırakıyor ya da py'yi dışarıda bırakıyor). Bu test o
+        kolu koşturur: listedeki aday denenmez olursa `py -3` yedeğine düşülür, sahte py orada rc=1 verir ve
+        sonuç "bulunamadı"ya döner — yani kol mutasyona karşı ölçülür hâle gelir.
+
+        KAPSAM — bakılmayanlar: bu koldaki REDDETME tarafı ÖLÇÜLEMEDİ (regex yalnız gerçek bir `.exe` yolunu
+        kabul eder, bu makinede 3.12'nin ALTINDA gerçek yorumlayıcı yok: `py -0p` tek satır, 3.12) · birden çok
+        adayın sıralanması · `py -0p` çıktısındaki ASCII olmayan yollar (modül docstring'i bunu zaten yazar)."""
+        if sys.version_info < (3, 12):
+            self.skipTest("bu testi koşan yorumlayıcı 3.12'nin altında — kabul kolu ölçülemez")
+        env, sahte_py, gercek = self.sahte_py_launcher_ortami()
+        self.assertTrue(sahte_py.is_file())
+        r = self.kur(env=env)  # git PATH'te yok -> 2. adımda durulur
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 2, c)
+        self.assertIn("EKSİK: Git bulunamadı", c)
+        self.assertIn(f"OK Python: {sys.version_info.major}.{sys.version_info.minor} ({gercek})", c)
+        self.assertNotIn("EKSİK: Python", c)
+        self.assertFalse(self.hedef.exists(), c)
 
     def test_winget_hata_verirse_tarif_basar_durur(self):
         env, kayit = self.dar_ortam(axet=True)
@@ -1424,6 +1524,32 @@ class KurTest(GeciciTest):
         metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
         self.assertIn("-File $f -Sifirla", metin)
         self.assertIn("kur.cmd -Sifirla", metin)
+
+    # --- statik: tüketici-yüzü depo işaretçileri ----------------------------------------------------------------
+    def test_tuketici_isaretcileri_public_depoyu_gosterir(self):
+        """Kurulum yolundaki her GitHub işaretçisi PUBLIC yayın deposuna (`ozgurylmz34/axet-template`) gitmeli.
+
+        Kullanıcı kararı (2026-09-18): kurulum public depodan yapılır. `ozgurylmz34/axet` PRIVATE geliştirme
+        deposudur; tüketicinin izlediği bir yolda kalırsa yetkisiz hesap 404 alır ve kurulum başlamaz.
+        Sayım alt sınırı testin kör kalmasını önler (işaretçiler silinirse NotIn tek başına yeşil kalırdı)."""
+        dosyalar = {"README.md": "utf-8", "kur.ps1": "utf-8-sig", "docs/onboarding.md": "utf-8"}
+        toplam = 0
+        for yol, kodlama in dosyalar.items():
+            metin = (AXET_HOME / yol).read_text(encoding=kodlama)
+            eski = re.findall(r"ozgurylmz34/axet(?!-template)", metin)
+            self.assertEqual([], eski, f"{yol}: tüketici-yüzü işaretçi PRIVATE geliştirme deposunu gösteriyor")
+            toplam += metin.count("ozgurylmz34/axet-template")
+        self.assertGreaterEqual(toplam, 5, "işaretçiler kayboldu — test kör kaldı")
+        # kur.ps1'in klonladığı varsayılan kaynak
+        ps1 = KUR_PS1.read_text(encoding="utf-8-sig")
+        self.assertIn("$Kaynak = 'https://github.com/ozgurylmz34/axet-template.git'", ps1)
+
+    def test_readme_ve_onboarding_private_notu_tasimaz(self):
+        """Depo public olduktan sonra "private / yetki gerekir / 404" notu YANILTICIDIR ve belgede kalmamalı."""
+        for yol, kodlama in (("README.md", "utf-8"), ("docs/onboarding.md", "utf-8")):
+            metin = (AXET_HOME / yol).read_text(encoding=kodlama)
+            self.assertNotIn("Depo şu an private", metin, f"{yol}: bayat private notu duruyor")
+            self.assertNotIn("private dönemde", metin, f"{yol}: bayat private notu duruyor")
 
 
 if __name__ == "__main__":

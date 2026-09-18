@@ -6,6 +6,352 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## ▶ 2026-09-18 AKŞAM — KURULUMA GİDİŞ (güncel durum; altındaki "GÜN SONU 2026-09-18" bloğu TARİHÇEDİR)
+
+> Kullanıcı (2026-09-18 akşam): *"bayat satırları düzelt ve 7 dalı entegrasyona al, aXet kurulumundan önce
+> mutlaka yapılması gerekenleri yap, CI'yı en son koştur, her adımda CI çalıştırma."*
+
+| # | Adım | Durum |
+|---|---|---|
+| 1 | 7 lane entegrasyona (`6fb557e` P2-fix · `15cfd9a` P3 · `b6453fe` P4+Z5 · `8897e3a` P5 · `214b868` P7 · `43da5b0` Z6 · `71ca6f2` Z7) | ✅ metinsel çakışma 0 |
+| 2 | Birleşik tam takım (tek koşum, lider) | 🔵 koşuyor — **1 birleşim kırmızısı yakalandı ve kapandı**: P7'nin `belge-changelog` alt sınıfı P3'ün `sinif-belge-lisans.md` kapsam tablosunda yoktu (P3 lane'i P7'siz açılmıştı) → satır eklendi, `test_guncelle_kartlar` 25/25 |
+| 3 | P2 TAZE gate (kapsam büyüdüğü için; kullanıcı onayı) | 🔵 koşuyor (mutasyon, `e34ab81`) |
+| 4 | Bayat satırlar (G tablosu P3/P4/P5/P7 · §2b · `gh` ön koşulu · D16 · karar listesi) | ✅ bu commit |
+| 5 | `sync-rules.json` `infra_write_guard` telafi kaydı (P4 `clone_rules`'u kaldırdı) | ⬜ |
+| 6 | **Public geçiş:** tüketici-yüzü işaretçiler (`README.md` · `kur.ps1 $Kaynak` · `docs/onboarding.md`) `ozgurylmz34/axet` → `ozgurylmz34/axet-template`; "depo private" uyarıları kalkar; `test_kur.py` işaretçi testi tersine döner | ⬜ |
+| 7 | Tek PR → `main`, **CI tek sefer** (5 job) → yeşilse merge (`--admin` CI atlatmak için ASLA) | ⬜ |
+| 8 | `yayin_hazirla.py --yalniz-tara` → sonuç kullanıcıya · şirket içeriği **yazılı izin teyidi** (Y2a şartı) → `--ilk` → `gh repo create ozgurylmz34/axet-template --public` + push (**geri alınamaz**, ayrı onay) | ⬜ |
+| 9 | Kurulum: README tek satırı (public'ten) · test projesi **`C:\AXET_TEST`** | ⬜ |
+
+**Kullanıcı kararları (2026-09-18 akşam, tek tek soruldu):**
+- P2 taze gate → **evet, paralel**. `--kabul` sıkılaştırması → **kalsın**. P2 ⓐ yarım-stage temizliği + ⓑ diğer
+  motorlarda sessiz-hata taraması → **kurulumdan SONRA** (aşağıda Açık kalemler).
+- Z11 → kurulumu etkilemiyor (yalnız bakım aracı, `maintenance/` public'e/tüketiciye gitmez); **kurulumdan sonra**.
+- Public repo (`axet-template`) → **kurulumdan ÖNCE aç; kurulum public repodan yapılacak** (normal kullanıcı yolu).
+- Kurulum klonu yeri **sabitlenmez** — `kur.ps1 -Hedef` ile kullanıcı seçer; varsayılan `%USERPROFILE%\axet`.
+- Test projesi yeri → **`C:\AXET_TEST`** (eski `C:\projeler\axet-sap-test` makine taşınmasında kayboldu).
+- `team_setup.py` cherry düzeltmesi → **DEV_CORE Issue** açıldı: ix-works/DEV_CORE#280 (sahibi onayladı, Q340;
+  #274–#278 turundan sonra). `maintenance/core-cherry-squash-kurali.patch` artık yalnız tarihçe.
+
+## ⭐ GÜN SONU 2026-09-18 — (TARİHÇE; güncel durum yukarıda)
+
+> Bundan önceki **"GÜN SONU 2026-09-16 / YARIN SIRASI"** tablosu (aşağıda, ~satır 500)
+> artık **TARİHÇEDİR**: oradaki 2·6·7 maddeleri bugün kapandı. Yarının işi BU bölümdür.
+
+### Bilanço (ölçüldü, beyan değil)
+
+| Ölçüm | Değer | Nasıl ölçüldü |
+|---|---|---|
+| Bugün atılan commit | **40** | `git log --all --since="2026-09-18 00:00"` |
+| `integrasyon/2026-09-17` ↔ `origin/main` | **+50 / -0** | `rev-list --count` |
+| Birikmiş fark | **65 dosya · +7930 / -189** | `diff --stat origin/main...integrasyon` |
+| `main`'e giden | **HİÇBİR ŞEY** | — |
+| Commit'siz iş | **YOK** (15 worktree'nin 15'i temiz) | her ağaçta `status --short --untracked-files=all` |
+| Yetim worktree | **YOK** | disk ↔ `worktree list` karşılaştırması |
+
+⛔ **Hiçbir şey push/merge EDİLMEDİ.** Plan değişmedi: **tek toplu CI + merge** (kullanıcı
+kararı ①). Merge şartı üç maddedir ve üçü birden aranır: her paketin **taze** kapısı
+PASS/WARNING · **5 CI job'ının hepsi yeşil** · ⛔ CI'yi atlatmak için **asla `--admin`**.
+
+### Lane durumu — gün sonu
+
+| Lane | Dal / commit | Hüküm | Kalan |
+|---|---|---|---|
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · **`e34ab81`** | ✅ 7/7 kalem + GATE-P2B'nin **BLOCKER**'ı kapandı · tam batarya **`152 test · 0 failure · 0 error · 0 skip` rc=0** (bağımsız doğrulandı) | ❓ **TAZE GATE kararı** — kapsam büyüdü (aşağıda) |
+| **P3** | `feat/2026-09-17-p3-kartlar` · `c4a8e2e` | ✅ gate 2. tur: 2 MEDIUM + 4 LOW kapandı | — |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · `3fe2e0d` | ✅ GATE-P4'ün 5 WARNING'i kapandı (B1-B5, 8 yeni test) | — |
+| **P5** | `feat/2026-09-17-p5-guncelle-proje` · `fd302dc` | ✅ gate BLOCKER + KG-1 kapandı | ⬜ §14/B'deki 3 açık kalem (aşağıda) |
+| **P7** | `feat/2026-09-17-p7-yayin` · `7187c92` | ✅ **GATE-P7B → PASS** (14 mutasyon, geçerli sağ kalan yok) | — |
+| **Z6** | `fix/2026-09-18-z6-bulgulari` · `d67de93` | ✅ iki bulgu + V9 MEDIUM kapandı | — |
+| **Z7** | `z7/2026-09-18-vakum` · `33d0746` | ✅ 2 gerçek vakum + 1 maskelenmiş kör nokta; ürün kodu değişmedi | ⬜ **20 aday** kaldı (aşağıda) |
+| **Z11** | `integrasyon` · `d56ac39` | ✅ **tasarım bitti** (Sürüm 2 + ⓑ ölçüldü) | ⛔ **İNŞA BEKLETİLDİ** — kullanıcı kararı |
+| **P8** | — | 🟡 ERTELENDİ (kullanıcı kararı) | — |
+
+✅ **P2 bataryası KAPANDI** (12:36): `Ran 152 tests in 1262.644s` · `OK` ·
+`SONUÇ: 152 test · 0 failure · 0 error · 0 skip · 1263 sn`. **Lider bağımsız doğruladı**
+(beyan kanıt değildir): iz dosyası `…/scratchpad/p2fix/kosumlar/TAM-guncelle.txt` ·
+`FAIL:`/`ERROR:` satır sayısı **0** · `... ok/FAIL/ERROR` satırlarının bağımsız sayımı
+**152** ⇒ beyanla birebir, `rc=2` ("hiç test eşleşmedi") vakası elendi.
+
+#### ❓ P2 — MERGE ÖNCESİ LİDER/KULLANICI KALEMLERİ (4 adet, hiçbiri hata değil)
+
+1. **TAZE GATE gerekiyor mu?** GATE-P2B'den sonra kapsam **büyüdü**: mühür sırası
+   (stage→commit→SONRA mühür), `rc in (0,1)` toleransının kaldırılması, `--kabul`
+   semantiğinin sıkılaşması, `_kapanis_git()` yapısal taşıması. Protokol *"kapsam büyürse
+   TAZE gate"* diyor; ama kullanıcı talimatı **"yeni ajan başlatma"**. ⇒ **Kullanıcı kararı.**
+2. ⚠ **`--kabul` artık git başarısızlığını ÖRTMÜYOR** (`_kapanis_git` hatada koşulsuz 1
+   döner). Bilinçli sıkılaştırma, ama `--kabul`'ü *"her şeyi kabul et"* diye okuyan bir
+   kullanım varsa **davranış değişti**. Mevcut test yeşil.
+3. ⚠ **`git add` patlayınca commit hiç denenmiyor** ve index **kısmen stage'li** kalıyor.
+   Kasıtlı fail-loud; "yarım stage" bir sonraki koşumda kullanıcıyı karşılar. Temizleme
+   adımı **eklenmedi** (kapsam genişletmemek için) — ayrı kalem olabilir.
+4. **Aynı sessiz-hata deseni diğer motorlarda TARANMADI** (`install.py` · `doctor.py` ·
+   `kur.ps1`). Kapanan sınıf tek satır değil: *"alt-süreç başarısızlığını `UYARI:`le
+   geçiştirme"* + *"çıkış kodunu ölçüm sanma"* + *"sonucu, onu üreten işten önce
+   mühürleme"*. `guncelle.py` içinde desen tükendi (2 vaka, ikisi de kapandı); **başka
+   motorlar ölçülmedi** ⇒ ayrı tur konusu.
+   *(`maintenance/guncelle-mimari/TASARIM.md §261` sözleşmeyle çelişmiyor ama commit↔mühür
+   sırasını **pinlemiyor**; oraya yazılması istenirse ayrı kalem.)*
+
+### Bugün kapanan asıl kusur — P2 BLOCKER (sessiz veri kaybı)
+
+Gönderilmiş kodda, mutasyondan değil:
+
+```python
+add_yollari = [y for y in add_yollari
+               if (k.kok / y).exists() or k.blob_sha("HEAD", y)]   # ← HEAD YANLIŞ ÖLÇÜT
+```
+
+`git add <pathspec>` eşleşmeyi **çalışma ağacı + INDEX** üzerinde yapar, **HEAD'e bakmaz**.
+`Klon.sil()` ise `git rm -q --cached` çalıştırır: yol index'ten düşer, **HEAD'de kalır**.
+Eski ölçüt yolu listede tuttuğu için `git add` çağrısının **tamamı** `fatal` ile düşüyor,
+**hiçbir yol stage edilmiyordu** — birleştirilmiş içerik diske yazılıp commit'e girmiyor ve
+kapanış **rc=0** dönüyordu ("temiz kapandı" görünümü).
+
+**İzole arenada kontrol grubuyla kanıtlandı:** `git rm --cached` + dosya silindikten sonra
+HEAD=**EVET** · `ls-files` (index)=**boş** · disk=**HAYIR** ⇒ eski ölçütle
+`fatal: pathspec … did not match any files`, yeni ölçütle (`git ls-files`) sağlam.
+
+### Yarın sırası
+
+| # | İş | Neden bu sırada |
+|---|---|---|
+| 1 | **P2 taze-gate kararı** (yukarıdaki ❓ blok) | Batarya ✅ yeşil; kalan tek soru kapsam büyümesi ⇒ taze gate mi, kullanıcı onayıyla geçiş mi |
+| 2 | **`git -C core pull`** (core `origin/main`'in **8 commit gerisinde**) | DEV_CORE sahibi bildirdiğim bulguları uyguluyor |
+| 3 | **Pull sonrası İKİ ölçümü tekrarla** | İkisi de core 8 commit geride iken yapıldı ⇒ bayat olabilir: ⓐ CORE-INDEX kapsamı (kalibrasyon: `standards/`=11 kontrol grubu) ⓑ `run_battery.py` ↔ aXet uyumu |
+| 4 | **Z11 kısmını gözden geçir → ne gerekiyorsa karar ver** | ⛔ Kullanıcı kararı: *"z11 ile ilgili şimdilik bişey yapma… pull edip z11 kısmını kontrol edip ne gerekir karar veririz"* |
+| 5 | **Toplu CI + merge** | Kullanıcı kararı ①: her değişiklikte CI yok, sonda tek CI |
+| 6 | MERGE ANINDA: `behavior_manifest.py generate` + `sync-rules.json:2841` bozuk telafi iddiası | Gün sonuna bırakılırsa ertesi açılışta "manifest-onaysız" alarmı çıkar (core §1.1) |
+
+### ✅ ÇÖZÜLDÜ — `gh` ön koşulu (2026-09-18 akşam: `gh issue create` / `gh pr list` bu makinede çalıştı ⇒ kurulu ve yetkili)
+
+*Aşağısı tarihçe:*
+
+
+**Kullanıcı kuracak** ("birazdan gh kuracağım"). Bulgu burada duruyor çünkü **merge adımının
+ön koşuludur** ve kurulmadan fark edilmezse yarın ortasında patlar.
+
+| Ölçüm | Sonuç |
+|---|---|
+| PATH'te `gh.exe` | **YOK** |
+| PATH'te `git.exe` *(kontrol grubu)* | **VAR** → arama yöntemi çalışıyor |
+| `winget list --id GitHub.cli` | kayıt yok |
+| Derin arama (`LOCALAPPDATA` · `Program Files` · `Program Files (x86)` · `scoop` · `chocolatey`, derinlik 4) | **0 sonuç** |
+
+**Neden önemli:** `core/scripts/merge_pr.py:36` doğrudan `subprocess.run(["gh", *args])`
+çağırıyor ⇒ `gh` olmadan merge aracı `FileNotFoundError` ile düşer. Ayrıca CI durumunu
+(`statusCheckRollup`) okumanın yolu da `gh`'tan geçiyor.
+
+⚠ **Çelişki notu:** 2026-09-16'da 7 PR `gh` ile merge edilmişti ⇒ `gh` o gün **vardı**.
+Aradaki tek bilinen olay **makine/yol taşınması** (tüm repolar OneDrive altına alındı).
+Kaybın sebebi **ÖLÇÜLMEDİ** — kurulum sonrası `gh auth status` ile yetkinin de döndüğü
+doğrulanmalı, "kuruldu = çalışıyor" sayılmamalı.
+
+### Açık kalemler (kanonik yer BURASI — başka yerde tutulmaz)
+
+- **Z7'nin kalan 20 adayı:** `test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 ·
+  `test_behavior_manifest` 2 · `test_yayin_surumleri` 1. Merge sonrası, Z11 ile.
+- **P5'in kendi kapsam beyanında açık bıraktıkları:** ⓐ `--karar ertelendi` / `--karar yerel`
+  kolları **ölçülmedi** ⓑ `uygula` ve `kapanis` onay kapıları için **seçici mutasyon
+  koşulmadı** — ajan bunu kod okuyarak çıkardı, **ölçmedi** (⚠ KG-1 tam olarak böyle bir
+  çıkarımın yanlış çıkmasıydı) ⓒ süzgeçsiz tam paket koşumu yapılmadı.
+- **P2 kurulum-sonrası (kullanıcı 2026-09-18 akşam):** ⓐ `git add` patlayınca yarım stage'li index için temizleme adımı · ⓑ "alt-süreç başarısızlığını `UYARI:`le geçiştirme" deseninin `install.py` · `doctor.py` · `kur.ps1`'de taranması.
+- **Ertelenenler:** Z8 (fixture `copytree` maliyeti, ortak `_helpers.py`) · Z9
+  (`new_project.py` ikili şablonda `UnicodeDecodeError`) · Z10 (`doctor.py` aşırı-iddialı
+  docstring) · P8.
+
+### Kullanıcı kararı bekleyenler
+
+1. ✅ *(2026-09-18 akşam: kurulumdan sonra; dağıtılmaz)* **Z11 dağıtılsın mı?** Şu an şablon reposunun bakım aracı; `maintenance/` ölçüldü —
+   `CLONE_PROTECTED` kümesinde **değil** ⇒ tüketici projelere gitmiyor. Bilinçli, geri alınabilir.
+2. ~~**D16** — yayın sızıntı taraması daraltılsın mı~~ → **BAYATTI:** D tablosu 2026-09-17'de KAPANDI (kullanıcı: "öneriyi uygula"), dal entegrasyonda.
+3. ✅ *(2026-09-18 akşam: kurulumdan ÖNCE açılacak, kurulum oradan)* **`axet-template` public reposu** — `README.md:39,44` + `kur.ps1:38` oraya işaret ediyor,
+   repo **HTTP 404**.
+4. ✅ *(2026-09-18 akşam: DEV_CORE#280)* **`team_setup.py` cherry düzeltmesi** — yama hazır, **DEV_CORE yetkisi** gerekiyor.
+
+### DEV_CORE bildirimi — durum
+
+Sahibe **Sürüm 2** iletildi ve sahip bulguları DEV_CORE'da uyguluyor. Sürüm 1'de 6 bulgu
+vardı; **core'a karşı doğrulanınca 4'ü yanlış, 1'i zayıf çıktı** — ayakta kalan tek bulgu
+yapısaldır: `CORE-INDEX` `core/claude/` ve `core/tests/` alanlarını kapsamıyor
+(kalibrasyon: `standards/`=11 · `playbook`=52 kontrol grubu çalışıyor, ama `claude/`=0 ·
+`tests/`=0 · `run_battery`=0). ⇒ **Pull sonrası yeniden doğrulanacak** (yarın sırası №3).
+
+### 🔴 P5 TAZE GATE HÜKMÜ — BLOCKER (2026-09-18)
+
+20 mutasyon · **14 öldü** · **4 geçerli sağ kalan** · 1 ÖLÇÜLEMEDİ · 0 no-op · 0 çöken.
+Taban: `-k guncelle_proje` → **50 test / 0 failure / rc=0**.
+⚠ **Nüans aksiyonu belirliyor: çalışan bir ürün kusuru YOK.** Ürün kodu ölçülen her kuralda
+doğru davranıyor. Blok **regresyon korumasının yokluğundan** geliyor: Q1 onay kapısının
+(kullanıcının açık kararı, "veri kaybı sınıfı") **üç yazma yolundan yalnız BİRİ** test ediliyor.
+
+| # | Kural | Ürün satırı | Mutant ne yapıyor |
+|---|---|---|---|
+| **BG-1** HIGH | Q1 onay kapısı `isaretle` yolunda | `guncelle_proje.py:597` | onaysız `isaretle --karar yeni` → rc 2→**0**, kullanıcının yerel satırı **KAYBOLUYOR** |
+| **BG-2** HIGH | Q1 onay kapısı `kapanis` yolunda | `guncelle_proje.py:691` | onaysız `kapanis` → **sürüm kaydı İLERLİYOR** |
+| **BG-3** MEDIUM | kapanışın "çakışma işareti duruyor" denetimi | `guncelle_proje.py:705-709` | çakışma işareti duran dosya "temiz kapandı" sayılıyor **ve** taban ilerliyor |
+| **BG-4** MEDIUM | "planda olmayan dosyaya dokunulmaz" (§7) | `guncelle_proje.py:344` | plan dışı dosyaya öneri **yazılıyor** |
+
+⭐ **BG-2 neden HIGH:** sürüm kaydı **tüm gelecekteki 3-yollu birleştirmelerin TABANI**dır.
+Taban sessizce ileri kayarsa sonraki `%guncelle-proje` kullanıcının **hiç almadığı**
+değişiklikleri "zaten sende var" sayar ⇒ **sessiz veri kaybı**.
+
+⚠ **Gate kendi ölçüm aracının bir kez vakuma düştüğünü DÜRÜSTÇE yazdı:** BG-3'ü ölçerken
+denetleyicisi `"çakışma işareti"` alt dizesini arıyordu ve **RAPOR.md'nin KAPSAM beyanındaki**
+aynı ifadeye takılıp yanlış "EVET" dedi; `"çakışma işareti duruyor"` ile daraltınca gerçek
+fark çıktı. Bu, [ölçüm aracı kendini kanıtlamasın] sınıfının **üçüncü** ölçülmüş örneği.
+
+### 🟡 Z6 DOĞRULAMA HÜKMÜ — WARNING (2026-09-18)
+
+9 mutasyon · **8 öldü** · 1 sağ kaldı. Gate **beyanı devralmadı, kendi ölçtü**: ürün blob'ları
+taban↔fix birebir aynı (`kur.ps1` `8262896f`, `siniflandir.py` `a765521b`), `git diff --numstat`
+**sıfır silme**.
+- **BULGU-1 (BLOCKER, `kur.ps1:126`) KAPANDI** — asıl mutant kırmızı; üstelik **eşik-kaydırma**
+  mutantı da kırmızı ⇒ test "bir şey reddedildi"yi değil **3.12 eşiğinin kendisini** çiviliyor.
+- **BULGU-2 (HIGH, `siniflandir.py:43`) KAPANDI** — iki sağ kalanın ikisi de kırmızı; geniş kol
+  ve ters yön (genişleme) de kırmızı.
+- **Sağ kalan V9 (MEDIUM)** → `d67de93` ile kapatıldı: geniş-kol testi artık ayırt edici girdiyi
+  (geçici izlenmeyen sonda) **kendi üretiyor** + kalibrasyon assertion'ı taşıyor.
+
+⭐ **`kur.ps1:154` — SİLMEYİN.** Gate "eşdeğer mutant" iddiasını **iki kollu** ölçümle daralttı:
+etiketi gerçek sürümle ayrışan bir launcher'da (bayat `py` kaydı, yerinde yükseltilmiş kurulum)
+mutant `RED` → `KABUL 3.12`'ye dönüyor ⇒ **ölü kod değil, etikete dayalı ön eleme**. Kusur değil
+(fark orijinalin daha muhafazakâr yanlış-negatifi yönünde) ama ileride *"zaten `:126` tekrar
+bakıyor, gereksiz"* diye **silinmemeli**.
+
+### ⛔ MERGE ANINDA YAPILACAKLAR — unutulursa sessizce bayatlar
+
+1. **`behavior_manifest.py generate`** — P4 `config/permissions.json` üzerinden kullanıcının
+   GLOBAL config'ine yansıyan bir değişiklik yapıyor (`install.load_rules()` artık `edit`
+   yazmıyor) ve `core/00-temel.md` değişti. Çekirdek "kapanış disiplini" md. 4: **merge olduğu
+   AN** koşulur, gün sonuna bırakılmaz. Ajan koşamaz (aXet'e deny) ⇒ **lider koşar.**
+2. **`maintenance/sync-rules.json:2841` — bu bayat bir NOT değil, KIRILMIŞ BİR TELAFİ İDDİASI.**
+   Kayıt: `source: DEV_CORE` · `pattern: scripts/hooks/infra_write_guard.py` ·
+   `decision: telafi` · `targets: [scripts/install.py]` · `status: tamam` ·
+   `note: "Merkezi klon edit deny (clone_rules), canli olculdu."`
+   P4 `clone_rules()`'u **kaldırdı** ⇒ o telafi artık **yok**. `sync_check` mekanik olarak
+   kırılmıyor (hedef dosya hâlâ var) ama kayıt **var olmayan bir korumayı var gösteriyor** —
+   tam da bu belgenin önlemek için tutulduğu şey. P4 merge olunca `note` + `status`
+   gerçeğe çekilecek: telafi kaldırıldı, yerine **engelleme değil görünürlük**
+   (doctor `check_template` → `template_sinifla`) kondu.
+   ⚠ **Şimdi düzeltilmez** — `clone_rules` henüz entegrasyonda duruyor; şimdi yazılan not
+   entegrasyonun bugünkü hâlini YANLIŞ anlatır.
+
+### 🔴 P7 TAZE GATE HÜKMÜ — WARNING (2026-09-18)
+
+16 mutasyon · 15 geçerli · **6 geçerli sağ kalan** · 1 nötr elendi · 9 öldü. **Ürün kodunda
+HATA YOK**; altısı da test-kapsamı boşluğu. En ağırı **B1**: `yayin_hazirla.py:475-480`
+şema doğrulamasının **gerçek yayın yoluna kablolandığını hiçbir test ölçmüyor** — `return 1`
+kaldırılınca `.git` kuruluyor ve **`YAYINLANDI! etiket: v0.1.0`** basılıyor, **41 testin
+hiçbiri kırmızı olmuyor**. Kök neden: `SemaTest`'in 13 dalının **tamamı** `--yalniz-dogrula`
+ile koşuyor, o bayrak kopyalamadan ÖNCE ayrı bir kolda dönüyor ⇒ yayın kolundaki dala
+**hiçbir test hiç girmiyor**. Bu, bu repoda adı konmuş **"kod ≠ kablolama"** sınıfı.
+
+⭐ **Lider'in vakum tarayıcısının adayı DOĞRULANDI (B2):** `test_yayinlar_json_yoksa_yayin_yapilmaz`
+gerçekten **vakum** — korunan dal tamamen silindiğinde test **yine yeşil**, çünkü beklenen
+`rc=1` artık kuralın kendisinden değil **60 satır aşağıdaki bir `assert`'ten** doğuyor.
+Tarayıcı bir **daraltma aracıdır**; kusur kararını mutasyon verdi ve bu adayda **haklı çıktı**.
+
+### 🔴 Z6 HÜKMÜ — BLOCKER (2026-09-18, bağımsız mutasyon denetimi)
+
+Bağlam: **27 mutasyonun 26'sı geçerliydi, 24'ü öldü** — P1 ve P6 takımları genel olarak sağlam.
+**Ürün kodunda hata YOK.** Bulunan şey **test kapsamı boşluğu**: bugün doğru çalışan iki kural
+yarın bozulursa takım **yeşil kalır**.
+
+1. **[BLOCKER] P6 — asgari Python 3.12 kapısının uygulanması hiç ölçülmüyor.** `kur.ps1:126`
+   `if ($surum -lt $script:PyAsgari)` → `if ($false)` yapıldı: `-k kur` **rc=0 · 68 test · 0 failure**.
+   3.12'yi anan iki test (`test_kur.py:936`, `:872`) yalnız **mesaj metnini** ölçüyor; girdileri
+   0-baytlık/9009 sahteler olduğu için `:121`'de eleniyor ve `:126`'ya **hiç ulaşmıyor**. Test
+   ortamında 3.12'nin ALTINDA hiçbir yorumlayıcı yok. Mutantın geçerliliği kontrol grubuyla
+   kanıtlandı (orijinal `SONUC|RED`, mutant `SONUC|KABUL surum=3.9`).
+   ⚠ Aynı karşılaştırma `kur.ps1:154` py-launcher kolunda da var — **ÖLÇÜLMEDİ**.
+2. **[HIGH] P1 — denetimin EVRENİ sessizce daralabilir.** `siniflandir.py:43` `EVREN_KOMUTU`'na
+   dışlama pathspec'i eklendi: `LICENSES/*` (443→442) ve `sap-adt-foundation/references/*` (443→438)
+   ile takım **rc=0 · 21 test · 0 failure** ve denetim **"0 sorun"** dedi. Tek evren assertion'ı
+   `test_guncelle_harita.py:65-67` → `assertGreater(len(yollar), 100)`; bugünkü evren **443**, yani
+   **342 dosya kaybolsa bile yeşil**. Modül docstring'i *"git index'indeki HER yol"* iddia ediyor ama
+   `evren()` ile `git ls-files` eşitliğini doğrulayan **hiçbir assertion yok**. Yakalanan varyantlar
+   (`docs/*`, `sap-adt-foundation/*`) yalnız **bir sınıfı tamamen boşalttıkları** için kırmızı oldu ⇒
+   **bir sınıfı boşaltmayan hiçbir daralma yakalanmıyor.**
+
+Sağlam çıkıp adıyla anılanlar: 2026-09-15'te kapatılan §3 vakumu **gerçekten kapalı** (M4b ölçtü) ·
+`clean -fd` / `Remove-Item` ayrımı yalıtılmış · lider'in geri çektiği 3 `s3` adayı mutasyonla
+ölçüldü, **üçü de sağlam**.
+
+### ⛔ SÜREÇ BULGUSU — bekçi çaldı, DÜZELTİCİ EYLEM DOĞRULANMADI (2026-09-18)
+
+**Olay:** `GATE-P7` **16844 sn (4.7 saat)** akışsız kaldı ve hiçbir çıktı üretmeden öldü.
+**Bekçi ÇALIŞTI** — `TAKILMA? GATE-P7` alarmı **1525 sn**'de düştü. Kusur alarmda değil,
+**lider'in tepkisindeydi**: düzeltici `SendMessage` `classifier timed out` ile **başarısız döndü**,
+lider başka işe geçti ve **gönderildiğini hiç doğrulamadı** — yani kendi kuralı
+*"araç başarısızlığını zararsız sayma"* ihlal edildi. Araya makine askıya alınması
+(duvar saati ~4 saat sıçraması; `timed out after -629 seconds` NEGATİF süre) girdi.
+
+**Çare (uygulandı, bekçi v13):** ① ikinci eşikte (2100 sn) **`OLU-SAY`** — "düzeltme TUTMADI,
+TaskStop + taze ajan aç, BEKLEME" ② ihlalden sonra akış geri gelince **`TOPARLANDI`** — düzeltmenin
+tuttuğunu artık lider **varsaymıyor**, bekçi ölçüyor ③ izlenen ajan listesi **dosyadan** okunuyor
+(`bekci/izlenen.txt`), ajan eklenince monitör yeniden başlatılmıyor ⇒ "izlemeyi güncellemeyi unutma"
+sınıfı kapandı ④ saat sıçraması dedektörü korundu.
+
+### ⚠ SÜREÇ BULGUSU 3 — eşzamanlı test koşumu: SÜRE gürültülü, SONUÇ değil (ölçüldü)
+
+`Get-CimInstance Win32_Process` (2026-09-18 08:46): aynı makinede **4 ayrı `run_tests.py`
+süreci paralel** koşuyordu, biri **filtresiz tam koşum**. Etkisi ölçüldü: aynı 4 test bir
+koşumda **6778 sn**, hemen ardından **4 sn**.
+
+⭐ **Kritik ayrım — bu bir ölçüm geçersizliği DEĞİL:** testler `tempfile.mkdtemp` ile repo
+DIŞI izole fixture kuruyor ⇒ paralel koşumlar birbirinin **PASS/FAIL'ini bozmuyor**, yalnız
+yavaşlatıyor. Yani **süreler gürültülü, sonuçlar geçerli**. Bunu karıştırmak iki yönde de
+hata üretir: gerçek bir kırmızıyı "ortam gürültüsü" diye elemek, ya da bir zaman aşımını
+"kırmızı" saymak. Kural: `rc=124` → **ÖLÇÜLEMEDİ** · kırmızı → **önce tek başına tekrar koş**,
+ikinci koşumda da kırmızıysa **bulgudur**.
+
+**Alınan önlem (süreç öldürülmedi — ⛔ ajanların birbirinin sürecini öldürmesi yasak):**
+gate'lere *"filtresiz koşma, yalnız kendi yüzeyini süz"* talimatı gönderildi; P3-fix2 kendi
+kapsamı dışındaki motor takımını beklemekten çıkarıldı (değiştirdiği hiçbir dosya motor
+değildi ve o worktree **P2-fix ÖNCESİ** motoru taşıyordu ⇒ ölçümü bayat doğacaktı).
+**Birleşim ölçümü lider'dedir**, lane'lerde değil.
+
+⚠ Dar süzgeçte kritikleşen kural: **"öldü" dar süzgeçle söylenebilir** (kırmızı = öldü),
+**"sağ kaldı" söylenemez** — sağ kalma iddiası ilgili TAM modülü ister; koşulamıyorsa hüküm
+`ÖLÇÜLEMEDİ`dir.
+
+### ⛔ SÜREÇ BULGUSU 2 — paylaşılan scratchpad ÇAKIŞMASI (ölçüldü, tahmin değil)
+
+İki ajan aynı adı (`mutasyon.py`) kullandı; biri diğerinin **aracını ezdi**. Sonuçları:
+**3 ölçüm turu geçersiz oldu** ("0 failure" sahte yeşildi — mutasyon hiç uygulanmamıştı) ve
+**bir lane, yabancı bir worktree'de (`p3-kartlar`) 6 kez mutasyon koşturdu** ⇒ o lane'in o
+sıradaki ölçümleri kirlenmiş olabilir. Bir ajanın **yedek dizinine** de yabancı dosya yazıldı;
+yedek ezilseydi geri-alma kanıtı anlamsızlaşacaktı.
+**Kural (tüm brifinglere girdi):** her ajan **YALNIZ `<scratchpad>/<benzersiz-lane>/`** altına yazar;
+`mutasyon.py`/`kos.py`/`yedek.py`/`orijinal/` gibi ortak adlar YASAK.
+⇒ P3-FIX2 brifingine gate'in mutasyonlarını **birebir tekrar ölçme** emri kondu, kirlenme bu yolla kapanıyor.
+
+**⚠ P2-fix'e neden TAZE gate:** düzeltme turu yalnız bulgu kapatmıyor, **yeni mantık ekliyor**
+(V7 dalı · `VAKA_IZINLI_KARARLAR` matrisi · `_yedeksiz_mi()` · `olc` rc=2 · `|||||||`). §2'deki gate
+ölçütüne göre *"düzeltme turunda kapsam büyüdüyse → TAZE gate"*.
+
+**⚠ ÖLÇÜLMÜŞ ÇAKIŞMA RİSKİ — `scripts/doctor.py` iki lane'de:** P4 `check_template`
+(`@@ -777,7 +777,27 @@`, `@@ -785 +805,19 @@`) · P5 import + `check_project`
+(`@@ -26,0 +27 @@`, `@@ -993,0 +995 @@`, `@@ -1089,0 +1092,11 @@`). **Metinsel çakışma YOK**
+(200+ satır ayrık) ama **ikisi de doctor'ın bastığı satır sayısını artırıyor** = K11×K12 sınıfı.
+İki ajana da *"aşırı-belirtilmiş assertion taraması"* emredildi. `README.md` şu an yalnız P4'te.
+
+**Emniyet kopyası (repo dışı):** commit'siz 4 lane'in yaması + yeni dosyaları
+oturum scratchpad'inde `lane-yedek-0129/` altında.
+
+**Entegrasyon dalı `integrasyon/2026-09-17`** — `origin/main`'in **önünde, 0 gerisinde** (sayı her commit'te değişir; ölç: `git rev-list --left-right --count origin/main...HEAD`).
+Sağlık (ölçüldü): `-k guncelle_harita` 28/0 · `guncelle_kartlar` 12/0 · `doctor` 69/0 ·
+`install` 24/0(1 skip) · `session_brief` 7/0 · `yayin_surumleri` 32/0 · `yayin_hazirla` 9/0
+= **181 test 0 failure** · `siniflandir.py` 481 dosya 0 sorun rc=0.
+✅ **`-k kur` ÖLÇÜLDÜ (2026-09-18):** `71 test · 0 failure · 0 error · 0 skip · rc=0` (926 sn, entegrasyon worktree'sinde, ağaç temizken). Önceki iki deneme `rc=124` (600/2400 sn zaman aşımı) idi — o **kırmızı değil, ÖLÇÜLEMEDİ**ydi ve öyle kaydedilmişti. ⚠ Z6 denetiminin `68 test / 747 sn` yeşili bu boşluğu KAPATMIYORDU: o ölçüm `denetim/2026-09-18-z6` (`1777e99`) ağacındaydı ve `kur.ps1` ile `tests/test_kur.py` blob'ları entegrasyon HEAD'inden FARKLIYDI (ölçüldü: `22a72f0d`≠`8262896f`, `55b2d3f4`≠`1d6d880`). Başka bir ağacın yeşili bu ağacın kanıtı değildir.
+
+**BİTİŞ SIRASI:** her lane bitince → lider commit → gate → PASS → entegrasyona merge →
+(hepsi bitince) **Z7 test hijyeni turu** → entegrasyonu push → **`main`'e PR** (CI 5 job, ~6.6 dk) →
+5'i de yeşilse **lider merge eder** → `behavior_manifest.py generate` → worktree'leri kapat.
+
+---
+
 ## ▶ DEVAM NOKTASI — sonraki oturum buradan başlar (gün sonu 2026-09-15 GECE — İKİNCİ tur, TX-01+P6 fix)
 
 > İlk iş bu bölümü oku. İş ilerledikçe güncelle; kalıcı bilgi ilgili satırlarda durur (§2 **G** güncelleme mimarisi, **D12–D15** açıklar, **K10–K12** kararlar, **X** diğer bilgisayar).
@@ -156,6 +502,58 @@ Push edilenler: `main` (`15f9716` + `32ee4d3`) · `feat/2026-09-15-p6-sifirla` (
 3. 🟠 **Test takımının yapısal kırılganlığı duruyor.** `test_kur.py:72-73` `setUpClass` fixture'ını **çalışılan deponun kendisini** `git clone --bare` ederek kuruyor ⇒ fixture ortam durumunu (dal var mı, detached mi) **devralıyor**. CI adımı (`git checkout -B main`) CI'yi normal bir çalışma klonuna benzetir, o **bağlantıyı KALDIRMAZ**. Kalıcı çözüm: `uzakta_commit`in `HEAD` yerine **tam refname** itmesi ya da bare şablonun dalını garanti etmesi.
 4. 🟡 **Belge ↔ kod eşliğinin otomatik bekçisi YOK** (⑫'de de yazılı). Yeni gate ADR 0019 moratoryumuna tabi ⇒ gözlem olarak duruyor.
 
+**⑮ ⑭'ün üç kaleminden İKİSİ KAPANDI (PR #6, #5, #7).**
+- ✅ **⑭-1 kapandı — Python eşiği 3.12.** Yalnız metin değildi: `kur.ps1:113` ve `:141` gerçek çalışma-zamanı kapısıydı. **Tek doğruluk kaynağı** konuldu — `$script:PyAsgari = [version]'3.12'`; iki karşılaştırma + dört kullanıcı mesajı onu okuyor. **13 dağılmış sabit → 1 tanım**, yani ⑭-4'teki "belge ↔ kod ayrışması" sınıfı bu dosyada mekanik olarak kapandı. Değişen 6 dosya: `kur.ps1` · `README.md:23` · `docs/onboarding.md:21` · `requirements.txt:1` · `yeni-proje.cmd:12` · `tests/test_kur.py:872,936`.
+  **Mutasyon kanıtı:** sabit `3.99` yapılınca test KIRMIZI ve gerçek `kur.cmd` hem `EKSİK: Python 3.99 ya da üstü bulunamadı` hem `Kurulacak: Python 3 (3.99 ya da üstü…)` bastı ⇒ sabit kapıyı **ve iki ayrı mesajı** fiilen sürüyor, dekoratif değil. Bayt-bayt geri alındı (`write_bytes`), BOM + CRLF korundu, PowerShell parse 0 hata.
+  **PowerShell sürüm karşılaştırması ölçüldü:** `3.2 -ge 3.12` → **False** (leksik olsaydı True olurdu).
+- 🔴 **⑭-2 AÇIK — `yeni_proje.depo_onerisi` fail-open.** Bu turda **kasıtlı olarak dokunulmadı**. 3.12+ katı olduğu için testler yeşil, ama kod *"güvenle ayrıştırılamayan bir origin'i reddet"* kararını hâlâ **urllib'in sürüm davranışına devrediyor**. Yeşil CI bu kusuru **gizliyor**. Fixture: `tests/test_yeni_proje.py:556-582`, literal `"https://[SECRETTOKEN]/r"`.
+- 🔴 **⑭-3 AÇIK — test fixture'ının ortam bağımlılığı.** `tests/test_kur.py:72-73` `setUpClass`, fixture'ını **çalışılan deponun kendisini** `git clone --bare` ederek kuruyor ⇒ dal var mı / detached mı durumunu devralıyor. CI adımı (`git checkout -B main`) bunu **maskeler, kaldırmaz**. Kalıcı çözüm: `uzakta_commit`in `HEAD` yerine **tam refname** itmesi ya da bare şablonun dalını garanti etmesi.
+- ✅ **K2b kapandı (PR #7).** `merge_pr.py` artık `--yol oto|gh|rest`. REST çıktısı gh'nin şekline çevriliyor (`rest_pr_oku`) ⇒ **tek karar yolu**, iki backend ayrı kurala göre hüküm veremez. **gh'de olmayan bir güvence eklendi:** doğrulanan head SHA merge isteğine konuyor; arada dala commit gelirse GitHub **409** ile reddeder. Testler 8 → **17**. **Dogfood:** PR #6, #5 ve #7'in kendisi bu araçla merge edildi (gerçek `PUT …/merge` yolu ve SHA kilidi canlı ölçüldü).
+  📌 Ölçülmüş tuzak, testle çivilendi (`test_bos_legacy_statuses_HICBIR_SEY_uretmez`): legacy `/commits/<sha>/status` **toplu `state`** alanı, repoda hiç legacy status yokken bile `"pending"` döner. `rest_rollup` o alanı okumaz, yalnız `statuses` dizisini çevirir. Sızsaydı yalnız check-run kullanan repo **sonsuza dek "bekleyen kontrol var"** derdi (sessiz kilitlenme).
+- ✅ **CI süresi kapandı (PR #5).** Ölçüm (koşum #14): job 674/710 sn, içinde kök 275/293 + foundation 375/393 = **668 sn seri**; kablolamanın tamamı 25 sn ⇒ sürenin **%99'u iki takım**. Matrise `takim: [kok, foundation]` eklendi, 2 job → **4 job**. **Canlı kanıt:** PR #5 (5 job) PR #7'den (3 job) **daha önce bitti**. Maliyet +%6 toplam derleme süresi. ⚠ Hesabın Actions kotası **ÖLÇÜLEMEDİ** (billing ucu 404 — token kapsamı yok).
+
+**⑯ `git cherry` ÇOK COMMIT'Lİ squash-merge'de YANILIYOR — çekirdek kuralı eksik (ölçüldü).**
+Worktree'leri kapatmadan önce çekirdeğin dediği gibi `git cherry -v main <dal>` koşuldu ve **dört squash-merge'li dalın dördünde de** her commit `+` ("main'de yok") çıktı. 4 kollu kontrol grubu (izole depo, `%TEMP%/cherrytest`) sebebi buldu:
+
+| Kol | `git cherry` | `--is-ancestor` | **içerik karşılaştırması** |
+|---|---|---|---|
+| 1 commit + squash | `-` ✅ | ata değil ❌ | 0 dosya ✅ |
+| **2 commit + squash** | **`+` ❌ YANLIŞ ALARM** | ata değil ❌ | 0 dosya ✅ |
+| fast-forward | (boş) ✅ | ATA ✅ | 0 dosya ✅ |
+| gerçekten birleşmemiş | `+` ✅ | ata değil ✅ | **1 dosya ✅** |
+
+- **Sebep:** squash **tek** commit üretir; çok commit'li dalın hiçbir patch-id'si tutmaz. Çekirdekteki 2026-08-28 ölçümü **yanlış değildi — kolu dardı** (o beş dal tek commit'liydi).
+- **Dört kolun dördünde de doğru olan TEK yöntem içerik karşılaştırması:** dalın **kendi** dokunduğu dosyalar (`diff --name-only $(merge-base main <dal>) <dal>`) main'de birebir mi. Sınırı: main o dosyaları sonradan değiştirdiyse **yanlış ALARM** üretir, sessiz onay ÜRETMEZ (fail-safe).
+- Bu turdaki 8 dalın hepsi bu yöntemle doğrulandı ⇒ worktree'ler güvenle kapatıldı.
+- 🔴 **YAMA BEKLİYOR:** kural metni yazıldı ama **DEV_CORE'a push edilemiyor** (yetki yok + kullanıcı kararı). Dosya: `maintenance/core-cherry-squash-kurali.patch`.
+- 🔴 **AÇIK KALEM:** `core/scripts/team_setup.py:498-517` `--wt-denetim` ⓑ adımı hâlâ **yalnız cherry** kullanıyor ⇒ çok commit'li dalda yanlış alarm verir ve gün-sonu denetimi *"nasılsa kırmızı"* diye okunmaz hâle gelebilir (D16'nın aynı sınıfı). Kod düzeltmesi **ayrı iş**, DEV_CORE yetkisi gerektirir.
+
+**⑰ K2a KARARI: `axet` PRIVATE kalır, `axet-template` PUBLIC açılır (kullanıcı kararı 2026-09-16).**
+Kullanıcı önce *"tüketiciler kuracaksa public olması gerekmiyor mu"* dedi — haklıydı, ama ölçüm dağıtım ihtiyacının **bu repoyu** public yapmayı gerektirmediğini gösterdi:
+
+| Repo | Ölçülen durum |
+|---|---|
+| `ozgurylmz34/axet` (bu repo, geliştirme) | private · 2.3 MB |
+| `ozgurylmz34/axet-template` (tüketicinin çektiği) | **HTTP 404 — HENÜZ YOK** |
+
+`README.md:39` ve `:44` tüketiciyi `raw.githubusercontent.com/ozgurylmz34/**axet-template**/main/kur.ps1`'e yolluyor; `kur.ps1:38` varsayılan `-Kaynak` da `axet-template.git`. Yani **mimari zaten iki repo varsayıyor** ve `yayin_hazirla.py` tam bunun için var (428 dosya kopyalar, `maintenance/` + `_lab/` + iki `docs/` dosyasını **dışlar**).
+
+**Bu repo public yapılsaydı, yayın hattının bilerek dışladığı şeyler açılırdı** (ölçüldü):
+
+| Ne | Nerede |
+|---|---|
+| `NTT DATA Business Solutions AG` | `maintenance/IS-LISTESI.md:21` (2 satır) |
+| **"Proprietary - NTT DATA Business Solutions"** lisanslı iç plugin atfı | `maintenance/IS-LISTESI.md:586` |
+| `tr11718` iç kullanıcı kimliği | `IS-LISTESI.md`, 3 satır |
+| Tüm iç çalışma notları / kararlar / yarım işler | `maintenance/IS-LISTESI.md` |
+| Commit yazarı e-postaları (`…@gmail.com`, `…@hotmail.com`) | git geçmişi, public'te görünür |
+
+Yan fayda: `axet-template` public olacağı için **dal koruması orada ücretsiz gelir**. Bu geliştirme reposunda koruma yok; bugün fail-closed merge disiplini **7 PR'ın 7'sinde de elle uygulandı** (her merge öncesi head SHA + check-run doğrulandı, `merge_pr.py` son üçünü kendi doğruladı).
+
+**⑱ D16 YENİDEN ÖLÇÜLDÜ (merge edilmiş main üzerinde) — HÂLÂ KIRMIZI, karar hâlâ kullanıcıda.**
+`python maintenance/yayin_hazirla.py --hedef <tmp> --calisma-agaci --yalniz-tara` → **gerçek çıkış kodu 1**, **17 bulgu** (428 dosya kopyalandı). Dağılım değişmedi: **16'sı *dışlanan dosyaya atıf*** (`guncelle/harita.json` 6 · `guncelle/siniflandir.py` 3 · `scripts/doctor.py` 4 · `README.md` 1 · `tests/test_guncelle_harita.py` 1 · +1) ve **1'i yanlış pozitif** (`tests/test_kur.py:789` `C:\Users\u` yer tutucusu). P6 merge'i sayıyı değiştirmedi ⇒ D16'daki *"P6 sonrası yine değişebilir"* uyarısı **kapandı**, sayı stabil.
+⚠ Ölçüm yaparken kendi hatamı yakaladım: ilk koşumda `| tail -40` ardından `$?` okudum — o **tail'in** çıkış kodudur, ölçümüm geçersizdi. Yeniden, borusuz ölçüldü.
+
 **⑩ Lider hatası (kayda geçiyor, ders):** TX-01'de kendi eklediği assert'i mutasyonla sınarken dosyayı `read_text`/`write_text` ile geri yazdı → Windows'ta **LF→CRLF** çevirdi, `quality_scorecard.py` sha256 `833ceb42` → `ec4552ef` oldu. **Testler yeşil kaldı** (Python satır sonunu umursamaz) ⇒ ölçüm bunu yakalamazdı; yalnız sha256 kontrolü yakaladı. `git checkout --` ile geri alındı. **Mutasyon geri alma DAİMA `read_bytes`/`write_bytes` ya da `git checkout --` ile yapılır.**
 
 ### Durum — lider ölçtü (2026-09-15 gece, oturum sonu)
@@ -201,6 +599,83 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 ⚠ **Kök takımın SON tam-paket doğrulaması SONUÇLANMADI** — ajan bunu arka planda başlatıp (aynı P6 tuzağı: `run_in_background` + tur biter) bir kez "canlı çocuğu yok" sayılıp bildirim gelmedi; `SendMessage` ile uyandırıldı, checkpoint gönderdi ("sırada: kök takımın sonucu + nihai rapor"), sonra **kullanıcının gün-sonu talebiyle DURDURULDU** kök takım sonucu gelmeden. **Bu turdan eksik kalan TEK ölçüm budur** — dosyalar yukarıdaki 9+2 kalemin hepsini içeriyor, yalnız son "kök takım 0 failure" teyidi yok. **İkinci kapı (taze bug-expert) da HİÇ BAŞLATILMADI** (P6 sırasına girdi, TX-01'e sıra gelmeden gün bitti).
 
+### ⭐ GÜN SONU 2026-09-16 — YARIN BURADAN BAŞLA
+
+**Tek cümle:** CI ilk kez yeşillendi, **7 PR merge edildi**, depo temiz, açık PR yok, açık worktree yok. Yarın sıradaki iş **K12 → K10/K11 → D16 → G paketleri**.
+
+**SAP işlemi YAPILMADI** — bu oturumda hiçbir transport, kilit, aktivasyon, yarım obje yok. (PROVA'nın `.conn_adt`'si bilinçli olarak yok.)
+
+#### Bugün merge edilen 7 PR (sırayla)
+
+| PR | Ne | Squash SHA |
+|---|---|---|
+| #2 | CI ön koşulları + Python matrisi 3.12+3.14 | `73f1f16` |
+| #3 | P6 — `kur.cmd -Sifirla` + gitlink veri kaybı BLOCKER'ı | `8f9b5cd` |
+| #4 | TX-01 — kod kalite karnesi + kapı defteri | `8a95490` |
+| #1 | iş listesi (remote + CI + P6/TX-01 turu) | `863998b` |
+| #6 | asgari Python 3.9 → **3.12**, tek doğruluk kaynağı | `af474fa` |
+| #5 | CI: kök + foundation ayrı matris koluna | `4096e9a` |
+| #7 | `merge_pr.py` — `gh` yoksa REST yolu | `1777e99` |
+
+**main = `1777e99`** · çalışma ağacı temiz · worktree yalnız ana ağaç · **açık PR yok**.
+
+#### Doğrulanan durum (ölçüldü, varsayılmadı)
+
+- **Merge edilmiş sonuç CI'da yeşil** (koşum #18, 3/3 job) + `siniflandir.py` **443 dosya / 0 sorun** ⇒ eski ⑤ maddesi kapandı.
+- Kök takım son hâlde **282 test · 0 failure · 0 error · 2 skip** (273 + merge_pr'ın 9 yeni testi).
+- **CI süresi:** 11.8 dk → bölünmüş kolla ölçülen kanıt — PR #5 (5 job) PR #7'den (3 job) **daha önce bitti**.
+
+#### 🔴 Yarın ilk iş — ENGELLER ve TEMİZLİK
+
+1. **DEV_CORE'a yazılamıyor — cherry kuralı YAMA olarak bekliyor.** Ölçüldü: git kimliği `ozgurylmz34`, `ix-works/DEV_CORE` üzerinde **`push: False`** (`remote: Permission to ix-works/DEV_CORE.git denied`). Kullanıcı ayrıca *"devcore'a sen yazamazsın"* dedi. DEV_CORE ana ağacı bulunduğu hâle döndürüldü (`main` = `540ba19`, origin ile birebir, çalışma ağacı temiz).
+   → Kuralın tam metni: **`maintenance/core-cherry-squash-kurali.patch`** (2 dosya, +35 satır: `CLAUDE.core.md` §1.1 madde 3 ⓑ + `governance/infra-changelog.md` kaydı). Yetkili makinede `git am < …patch` ile uygulanır.
+   → Silinecek yerel dal (DEV_CORE): `docs/2026-09-16-cherry-squash-yanilmasi`.
+2. **Birleşmiş dallar duruyor** — silme izin katmanınca reddedildi (`Git Destructive`), kullanıcının silmesi gerekiyor. **Yeniden ölçüldü 2026-09-16 akşamı** (aşağıdaki liste artık gerçek durumu yansıtıyor):
+   ```
+   # AXET — 8 yerel dal (hepsi hâlâ duruyor, ölçüldü)
+   git branch -D feat/2026-09-14-kurulum feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
+   # AXET — 7 uzak dal (`git ls-remote --heads` ile teyit edildi; `docs/2026-09-16-gun-sonu` PR #8 merge OLANA KADAR SİLİNMEZ)
+   git push origin --delete feat/2026-09-15-p6-sifirla feat/2026-09-15-tx01-karne docs/2026-09-16-remote-ve-wip fix/2026-09-16-k2c-ci-onkosul ci/2026-09-16-job-bolme fix/2026-09-16-python-esigi-3-12 feat/2026-09-16-merge-pr-rest
+   # DEV_CORE — yerel dal (AMA önce 3. maddeyi oku: worktree'de commit'siz iş var)
+   git -C "…\AI_WORKS\IX\DEV_CORE" branch -D docs/2026-09-16-cherry-squash-yanilmasi
+   ```
+   ✅ **Zaten temizlenmiş, komut GEREKMİYOR** (ölçüldü, eski satırlar yanlıştı): `…\AI_WORKS\.wt\axet` **artık YOK** (`.wt` boş kaldı) · `…\AI_WORKS\IX\PROVA\.tmp\d3-fix` **artık YOK**.
+   ⚠ Sekiz dalın da main'de olduğu **içerik karşılaştırmasıyla** doğrulandı (aşağıda ⑯).
+
+3. 🔴 **YENİ BULGU — DEV_CORE worktree'sinde COMMIT'SİZ İŞ DURUYOR (2026-09-14'ten kalma).** Gün-sonu `--wt-denetim` PROVA için `TEMİZ` dedi (0 worktree), **ama DEV_CORE'u ölçmedi** — denetim `--project` ile verilen projeye bakıyor. DEV_CORE elle denetlendi:
+   - Worktree: `…\AI_WORKS\IX\.wt\DEV_CORE\2026-09-14-ajan-bekcisi` · dal `infra/2026-09-14-ajan-bekcisi` (`85a1dad`).
+   - **Dal main'in ATASI** (`--is-ancestor` → evet; pozitif cevabı squash'tan etkilenmez) ⇒ **commit edilmiş iş main'de**.
+   - **AMA çalışma ağacı temiz DEĞİL** — 6 izlenen dosyada **+21 / −10 satır** commit'siz: `CLAUDE.core.md` · `MAINTENANCE.md` · `governance/agent-teams-operating-model.md` · `governance/infra-changelog.md` · `governance/removed-controls.md` · `scripts/hooks/README.md`. Ayrıca **izlenmeyen yeni dosya `scripts/agent_stall_watch.sh` (185 satır)**.
+   - Bu iş **main'de YOK** (ölçüldü: `git diff main --stat` ile iki örnek dosyada fark var) ⇒ **worktree silinirse KAYBOLUR.**
+   - **Ben dokunmuyorum** — kullanıcı kararı: *"devcore'a sen yazamazsın"* + ölçülen `push: False`. Karar kullanıcıya: ① yetkili makinede commit'le ② yamaya çevir ③ bilinçli olarak at.
+   - ⚠ Bu, ⑯'daki açık kalemin **ikinci yüzü**: `--wt-denetim` yalnız tek projeye bakıyor; çok-repolu bir makinede *"gün-sonu temiz"* demek **diğer repoları kapsamıyor**.
+
+#### Kullanıcı kararları — bu oturumda ALINDI
+
+| Karar | Sonuç |
+|---|---|
+| ⑭-1 Python eşiği | **Hem metin hem kapı 3.12** → uygulandı (PR #6) |
+| K2b `merge_pr.py` | **REST'e düşen yol eklensin** → uygulandı (PR #7) |
+| CI süresi | **Ayrı job'lara böl** → uygulandı (PR #5) |
+| K2a dal koruması | **`axet` private kalır · `axet-template` public açılır** (aşağıda ⑰) |
+
+#### 📋 YARIN SIRASI (aşağıdaki eski numaralı listenin YERİNE bunu kullan)
+
+| # | İş | Durum / neden bu sırada | Nerede anlatılıyor |
+|---|---|---|---|
+| 1 | Kullanıcı temizliği (dallar · `.wt/axet` · `.tmp/d3-fix` · DEV_CORE yerel dalı) | 🔴 **kullanıcı elinde** — izin katmanı reddetti | yukarıda "ENGELLER ve TEMİZLİK" |
+| 2 | **K12** — `doctor.py` override-by-length WARN | ✅ **ARTIK BLOKE DEĞİL**: beklediği P6 merge oldu (`8f9b5cd`) | §2 K12 |
+| 3 | **D16 kararı** — yayın sızıntı taraması daraltılsın mı | 🔴 kullanıcı kararı; yeniden ölçüldü EXIT=1 / 17 bulgu, sayı **stabil** | ⑱ + §2 D16 |
+| 4 | **`axet-template` public reposunu aç** | ⑰ kararının uygulanmamış yarısı; repo bugün **HTTP 404** ama `README.md:39,44` + `kur.ps1:38` oraya işaret ediyor | ⑰ |
+| 5 | `team_setup.py` cherry düzeltmesi + kural yaması | 🔴 **DEV_CORE yetkisi** gerekiyor; yama hazır | ⑯ |
+| 6 | K10 / K11 · D17 kalan yarısı | sıradaki normal kalemler | §2 K, D |
+| 7 | G paketleri (P2→P3∥P5∥P7→P4, P8, P9) | P1 ✅ merge; gerisi sırada | §2 G tablosu |
+| 8 | TX-10 · TX-02+03 · TX-06 · `.github/` tüketici paketine girsin mi | ayrı onay / ayrı sprint | §2 TX |
+
+⚠ **Yarın açılışta İLK komut:** `git -C "…\AI_WORKS\AXET" fetch -q origin && git checkout -b <yeni-dal> origin/main` — çıplak `checkout -b` YASAK (core §1.1: bugün 7 squash-merge oldu, bulunduğun yerden dallanmak CONFLICTING PR üretir).
+
+---
+
 ### SIRADAKİ — tam sıra
 
 > **İLERLEME (2026-09-16, ikinci tur):** ① açılış kontrolü ✅ · ② TX-01 kök takım ölçümü ✅ (**252/2**, ikisi de taban — yukarıda ⑤) · ②b TX-01 taze bug-expert ✅ **WARNING → 2 MEDIUM düzeltildi → commit `5eb3fa8` + push** (yukarıda ⑧) · ③ P6 taze bug-expert ✅ → **BLOCKER** (yukarıda ⑥) · ③b BLOCKER düzeltmesi ✅ **272/1, 4 kalem mutasyonla kanıtlı, COMMIT'SİZ** (yukarıda ⑦+⑨) · ③c fix sonrası TAZE bug-expert ✅ → **BLOCKER** (gitlink veri kaybı ÖLÇÜLDÜ — yukarıda ⑪) · ③d gitlink düzeltmesi ✅ **commit `a9eba2c` + push — P6 YEŞİL** (yukarıda ⑫) · ③e **K2c (CI ön koşulları) ✅ — CI İLK KEZ YEŞİL, PR #2 merge `73f1f16`** (yukarıda ⑬; kullanıcı kararı: *"önce K2c düzeltilsin"*, merge'ler kırmızının değil yeşilin üzerine olsun) · ④ merge 🔵 **DEVAM EDİYOR** — PR #3 (P6) ve PR #4 (TX-01) açıldı, CI paralel koşuyor (ikisi **tek bir ortak dosyaya bile** dokunmuyor, ölçüldü) · ⑤ sonrası ⬜.
@@ -208,19 +683,26 @@ Ajanın kendi ölçümü: skill takımı **115 test** (70'i karne takımı), 1 s
 
 
 
-1. **Açılış kontrolü (~2 dk):** `git -C C:/axet status --short` (temiz olmalı) · `git -C C:/axet worktree list` (P6 + TX-01 hâlâ AÇIK olmalı, ikisi de bu dosyada yukarıda anlatıldı) · her iki worktree'de `git status --short` (yukarıdaki numstat'larla AYNI olmalı — değilse ne değişti araştır, kayıp/bozulma ihtimaline karşı).
-2. **TX-01'i BİTİR:** worktree'de `cd C:/.wt/axet/tx01-karne && python tests/run_tests.py` (ön planda, timeout ≥1500000) — kök takım 0 failure mi ölçül. Sonra **TAZE bug-expert** (core §5 — aynı ajan kendi düzeltmesini onaylamaz): brif = yukarıdaki "TX-01" bölümünün tamamı + H1/H2 orijinal BLOCKER bulguları + "AÇIK BIRAKILAN" 3 kalemin bilinçli olduğunu söyle (bunları BULGU diye tekrar yazmasın, ama gerçekten kapatılıp kapatılmadığını ölçsün). PASS/WARNING → lider commit → `feat/2026-09-14-kurulum`'a merge → worktree kapat.
+> **⛔ AŞAĞIDAKİ 1-4 MADDESİ 2026-09-16'DA TAMAMEN KAPANDI** (P6 · TX-01 · K2c · merge). Tarihçe olarak duruyor; **yarının işi için ⭐ GÜN SONU 2026-09-16 bölümündeki "YARIN SIRASI" tablosuna bak**, bu numaralı listeye değil. 5. madde kısmen açıktır (aşağıda güncellendi).
+
+1. ~~**Açılış kontrolü (~2 dk):** `git -C C:/axet status --short` (temiz olmalı) · `git -C C:/axet worktree list` (P6 + TX-01 hâlâ AÇIK olmalı, ikisi de bu dosyada yukarıda anlatıldı) · her iki worktree'de `git status --short`~~ ✅ yapıldı; **iki worktree de KAPATILDI** (içerik karşılaştırmasıyla main'e geçtiği doğrulandıktan sonra — bkz. ⑯).
+2. ~~**TX-01'i BİTİR:**~~ worktree'de `cd C:/.wt/axet/tx01-karne && python tests/run_tests.py` (ön planda, timeout ≥1500000) — kök takım 0 failure mi ölçül. Sonra **TAZE bug-expert** (core §5 — aynı ajan kendi düzeltmesini onaylamaz): brif = yukarıdaki "TX-01" bölümünün tamamı + H1/H2 orijinal BLOCKER bulguları + "AÇIK BIRAKILAN" 3 kalemin bilinçli olduğunu söyle (bunları BULGU diye tekrar yazmasın, ama gerçekten kapatılıp kapatılmadığını ölçsün). PASS/WARNING → lider commit → `feat/2026-09-14-kurulum`'a merge → worktree kapat.
 3. **P6'yı bitir:** **TAZE bug-expert** (bu tur hiç ölçüm yapmadı, sıfırdan başlar): brif = yukarıdaki "P6" bölümünün tamamı + ajan raporundaki 6 kalem + özellikle *"yeşil koşmamış test → geçersiz mutasyon kanıtı"* sınıfını ayrıca ara (test_kur.py:271 emsali) + #L1/#L3/yedek-yerelde-kalıyor/3-yetim-dizin açık kalemlerini TEYİT ET (yeni bulgu değiller, ajan zaten yazdı — ama doğrulanmadılar). PASS/WARNING → lider commit → merge → worktree kapat.
 4. **Merge sırası:** P6 önce ya da TX-01 önce fark etmez (ayak izleri ayrık, tek ortak dosya `TASARIM.md`, hunk'lar çakışmıyor — P6 ~satır 26-29, lider ~satır 90-191, önceden ölçüldü). **İkisi merge olduktan SONRA** kök + foundation + sap-code-review + `siniflandir.py` YENİDEN koşulur (merge edilmiş sonuç üzerinde — hiçbiri tek başına yeterli değil).
-5. **Ardından sırada:** K12 (`doctor.py` override-by-length WARN — P6 ile AYNI dosyaya dokunuyor, P6 merge'i BEKLER) · D16 kararı kullanıcıya sorulur (yayın sızıntı taraması daraltma önerisi, bkz. §2 D16 satırı) · D17 kalan yarısı (opsiyonel, düşük öncelik) · K10/K11 (§2 K) · TX-10/TX-02+03 (ayrı onay) · TX-06 (ayrı sprint, P1-P7 sonrası) · `.github/` tüketici pakete giriyor mu kararı.
+5. **Ardından sırada (2026-09-16 akşamı güncellendi):** **K12 ARTIK BLOKE DEĞİL** — beklediği P6 merge oldu (`8f9b5cd`), `doctor.py` main'de, çakışma kalmadı ⇒ yarın doğrudan başlanabilir · **D16 kararı HÂLÂ kullanıcıda** (yeniden ölçüldü, EXIT=1 / 17 bulgu, sayı stabil — ⑱) · D17 kalan yarısı (opsiyonel, düşük öncelik) · K10/K11 (§2 K) · TX-10/TX-02+03 (ayrı onay) · TX-06 (ayrı sprint, P1-P7 sonrası) · `.github/` tüketici pakete giriyor mu kararı · **YENİ: `axet-template` public reposunun açılması** (⑰ kararı; `README.md:39,44` ve `kur.ps1:38` oraya işaret ediyor, repo henüz YOK — HTTP 404) · **YENİ: `core/scripts/team_setup.py:498-517` cherry düzeltmesi** (⑯; DEV_CORE yetkisi gerektirir).
 6. **G/P1 zaten ✅ merge (`313d126`)** — bu satırın referans aldığı eski "P1 ∥ P6" planı GEÇERSİZ, P1 bitti. Kalan G paketleri (P2→P3∥P5∥P7→P4, P8, P9) TX-01+P6 merge'inden SONRA sırada — ayrıntı §2 G tablosu.
 
-### Kullanıcıdan beklenenler (değişmedi, hâlâ açık)
+### Kullanıcıdan beklenenler (2026-09-16 akşamı YENİDEN ÖLÇÜLDÜ)
 
-- `gh auth refresh -h github.com -s workflow` — token kapsamında `workflow` YOK ⇒ `.github/workflows/` push edilemez.
-- `ozgurylmz34/axet` PRIVATE repo yaratma onayı (dışa dönük; push anında şirket izni AYRICA teyit edilecek).
-- Elle: `C:\IX\PROVA\.tmp\d3-fix\tmp\node-compile-cache` klasörünü sil (ajanın silmesi izin katmanında reddedildi).
-- D16 kararı: yayın sızıntı taramasını daralt mı (öneri §2'de yazılı) yoksa mevcut hâliyle mi bırak.
+**✅ KAPANDI — bu satırlar artık DOĞRU DEĞİL, tarihçe için bırakıldı:**
+- ~~`gh auth refresh -h github.com -s workflow` — token kapsamında `workflow` YOK~~ → **YANLIŞ**. Token'da `workflow` kapsamı **var**; `.github/workflows/` bugün **dört kez** push edildi (PR #2, #5 ve merge'leri). Bu satır makine taşınmasından önceki duruma aitti ve bütün gün bayat kaldı.
+- ~~`ozgurylmz34/axet` PRIVATE repo yaratma onayı~~ → repo **açıldı** (private, 2.3 MB), 7 PR merge edildi.
+
+**🔴 HÂLÂ AÇIK — kullanıcı eylemi bekliyor:**
+1. **Temizlik komutları** (izin katmanı `Git Destructive` diye reddetti; hepsinin main'de olduğu ⑯'daki içerik karşılaştırmasıyla doğrulandı) — tam komut listesi yukarıda **"🔴 Yarın ilk iş — ENGELLER ve TEMİZLİK"** başlığında; kısaca: 8 yerel + 7 uzak dal, `.wt/axet` kalıntı dizini, `PROVA/.tmp/d3-fix` (3.4 MB), DEV_CORE yerel dalı `docs/2026-09-16-cherry-squash-yanilmasi`.
+2. **D16 kararı** — yayın sızıntı taraması daraltılsın mı, yoksa mevcut hâliyle mi kalsın. Yeni ölçüm ⑱'de: **EXIT=1, 17 bulgu**, 16'sı zaten dışlanan dosyaya atıf + 1 yanlış pozitif. P6 merge'i sayıyı değiştirmedi ⇒ beklenecek bir şey kalmadı, karar verilebilir.
+3. **`axet-template` public reposunun açılması** (⑰ kararı) — bugün **HTTP 404**; tüketici `README.md:39,44` ve `kur.ps1:38` üzerinden oraya yönlendiriliyor, yani tüketici kurulumu bu repo açılana kadar **fiilen çalışmaz**. Dal koruması da ücretsiz olarak orada gelecek.
+4. **DEV_CORE yazma yetkisi ya da yamanın yetkili makinede uygulanması** — `maintenance/core-cherry-squash-kurali.patch` (`git am` ile). Ölçüldü: `ix-works/DEV_CORE` üzerinde bu kimliğin `push` izni **False**.
 
 ### Ajan işletim dersleri (bu oturumda ölçüldü)
 
@@ -339,9 +821,18 @@ Plan kaynağı: karar matrisi §9 (parti 0–8). Uygulamada numaralar kaydı: ma
 | K9 | doctor: AGENTS.md `- SAP` satırı ↔ `sap-project.json` (profil/dil) tutarlılığı | ekle | ✅ **"doctor'a ekle"** (kullanıcı 2026-09-14). ADR 0019 5 şartı soruda açıklandı. Yalnız rapor eder, yazma kapısı değil. Ayrıştırıcı yeni_proje ile ortak. Uygulama ajanda (C:\axet ana ağaç), sonra bug gate.<br>**UYGULAMA BİTTİ (ajan):**<br>• `doctor.py:578` check_sap_satiri: tutarlı → PASS; profil/dil çelişkisi → FAIL; satır yok ya da okunamıyor → FAIL ÖLÇÜLEMEDİ; release farkı → WARN.<br>• Ayrıştırıcı doctor.py:488-551'e taşındı; yeni_proje.py'de yalnız alias kaldı.<br>• Bug gate bulguları: Y-a (anahtarsız `- SAP` satırı atlanır; farklı değerli satırlar → ÖLÇÜLEMEDİ) ve Y-b (ayrıştırılamayan URL → sır var sayılır; fragment token) düzeltildi.<br>• Testler: test_doctor 44/44, test_yeni_proje 31/31, tam takım 181/0. Kontrol grubu eski kodda 18+12 failure. Bellekte mutasyon: M1 11, M2 2 failure.<br>• Açık kalem: `profili?` deseni "- SAP profilini değiştirme" maddesini anahtarlı sayar → sahte ÖLÇÜLEMEDİ (önceden vardı, ölçülmedi).<br>**BUG GATE (K9+D6+Y-b): BLOCKER.**<br>• **HIGH (gerileme):** `yeni_proje.py:151-157` `http_kimlik`. Fragment kesimi kısmi parola sızdırıyor: `https://kul:Pa#password=x@host/r.git` → öneri `https://kul:Pa` (eski HEAD `https://host/r.git`). d_repo kabul ediyor, AGENTS.md Depo satırına yazılır; `--dry-run` uçtan uca ölçüldü.<br>• **MEDIUM:** `doctor.py:676` `_PROFIL_ANAHTARI` sözcük sınırı yok. 9 doğal dil kural satırından 5'i sahte ÖLÇÜLEMEDİ → FAIL, rc 1 (İngilizce `profile` anahtarı da bozuk). Yukarıdaki açık kalem doğrulandı.<br>• LOW: symlink'li alt klasör sessizce üst sınır dışı. 20.000 dosya = 35 sn (limit yok).<br>• Tutanlar: D6 fail-open yok; alias'lar tek nesne; test yalıtımı temiz.<br>**Düzeltme** K9 ajanında (HIGH + MEDIUM zorunlu, LOW isteğe bağlı). Sonra dar kapsamlı yeniden gate.<br>**DÜZELTME BİTTİ (K9 ajanı, üçü de):**<br>• HIGH: userinfo önce ham metinden sökülüyor, sonra query/fragment denetleniyor. Ölçerken ek bulgu: `ssh://u:p#a@host` HEAD'de de parolayı açıkta bırakıyordu. Http dışı şemada query/fragment içindeki `@` → fail-closed. Tablo 4 sır + 4 geçerli satır + sızıntı döngüsü; `--dry-run` temiz.<br>• MEDIUM: anahtar yalnız sözcük sınırıyla. Değer iki durumda sayılıyor: anahtar biçiminde (bozuk değer ÖLÇÜLEMEDİ kalır) ya da değer kendi başına geçerliyse (PROFILLER / BÜYÜK harf 2 harf dil). Serbest metin atlanıyor. Sapma: serbest biçimde dil BÜYÜK harf olmalı ("ve" sahte dil olmasın diye).<br>• LOW: giriş başına 5000 dosya sınırı → ÖLÇÜLEMEDİ/WARN. Üst sınır adayı için yalnız stat. KAPSAM'a symlink notu.<br>• Kontrol grubu eski kodda 31 failure + 1 error. Mutasyon M1 11, M2 2, M3 50. Hedefli `-k` grupları yeşil; tam takım koşulmadı.<br>• Açık kalemler: `@` path'te; `%`/`$`/`[` yanlış WARN; küçük harfli anahtarsız `master language tr` artık atlanıyor.<br>**Dar kapsamlı yeniden gate koşuyor** (adversarial URL tablosu + serbest metin fail-open).<br>**YENİDEN GATE: WARNING.** Önceki HIGH kapandı: 40+ satırlık adversarial URL tablosu temiz, ikinci yol (bypass) yok, ReDoS yok.<br>• MEDIUM fail-open (düzeltmeden doğdu): kanonik satırın yanında serbest biçimde farklı değerli ikinci `- SAP` satırı (`master language en`, `sistem profili ecc.`) → tutarli/PASS. Düzeltme öncesi kural ÖLÇÜLEMEDİ veriyordu.<br>• LOW güvenlik gerilemesi: başta C0 kontrol karakterli origin (`\x1bhttps://ghp_TOK@…`) token'ı öneride bırakıyor, d_repo kabul ediyor (e2e dry-run ile ölçüldü).<br>• LOW test eksiği: sözcük sınırı hiçbir testle sabitlenmemiş (Mf kaçtı).<br>• Önceden var: `ssh://u:p/q@host` parolayı açıkta bırakıyor; scp biçimi; bozuk `://`; `api_key`/`;token=` anahtar listesi.<br>• Dosya sınırı giriş başına (sahte PASS yok); boş klasör yürüyüşü sınırsız (ÖNERİ).<br>**Karar (lider):** MEDIUM + iki LOW son tur olarak K9 ajanında. ssh `/` sızıntısı küçükse aynı turda, değilse açık kalem.<br>**SON TUR BİTTİ:**<br>• MEDIUM: değere benzeyen serbest değer (profil `s4|ecc|btp`; dil 2 harf, cümle sonunda) artık sayılıyor → ÖLÇÜLEMEDİ. Ayraç kuralı stopword yerine seçildi, çünkü "de"/"da" da ISO kodu. "ve" satırı PASS kalıyor.<br>• LOW: d_metin C0 ve \x7f'i reddediyor; http_kimlik şemayı temizlenmiş metinden okuyor.<br>• LOW: sözcük sınırı testi eklendi (`userprofile: SAP_ALL`).<br>• İsteğe bağlı kalem de yapıldı: http dışı şemada ham userinfo ile urlsplit userinfo'su farklıysa sır sayılıyor (`ssh://u:p/q@host` temiz).<br>• Mutasyonlar M4/M4b/M4c/Mf/M6/M7/M8 hepsi yakalandı. Hedefli gruplar yeşil; tam takım koşulmadı.<br>• Ölçülen yan etkiler:<br>  – `master_language: TR.` artık tutarlı.<br>  – Yanlış pozitif: `ssh://host:22/a@b` → host düşüyor (güvenli yön, yorumda yazılı).<br>• Açık kalemler: scp biçimi, bozuk `://`, `api_key`/`;token=`, boş klasör yürüyüşü, http path'te `@`, d_komut kontrol karakteri.<br>**Karar (lider):** tüm bulgular kapandı ve kaçan mutasyon yok. Dördüncü gate açılmadı; tam takım ajansız doğrulamada koşacak. | ✅ uygulama · ✅ gate bulguları kapandı |
 | K8b | DEV_CORE 15 commit'in template'e taşınması | — | ✅ **"Hepsini yayından önce"** (kullanıcı 2026-09-14). Sıra: `AXET-GATE-STATUS` ajanı ve yeni_proje ajanı bitince expert taşıma (template'e uyan tüm DEĞİŞEN/YENİ satırlar) → bug gate → foundation testleri → `sync_check --update-lock`. K3 (`truncated`) bu taşımayla ölçülüp kapanabilir.<br>**Ara karar (kullanıcı 2026-09-14): aktivasyon hükmü.**<br>• Bayraksız gövde için `None` (kaynakla aynı): karar bağımsız inaktif-liste sondasına bırakılır.<br>• ŞART: sonda çalışmazsa, hata verirse ya da ayrıştırılamazsa sonuç asla success olmaz (FAIL/ölçülemedi).<br>• lib ve rap_service yolları aynı hükmü verir.<br>• Aynı karar kapsamında yalnız generation gövdesi (`activationExecuted=false` + `generationExecuted=true`, mesajsız) de None + sonda. Lib yolunda sıkılaşma: bugün success, canlıda FUGR sahte yeşil ölçülmüştü. rap_service/ENQU yolunda gevşetme: sonda temizse success; kaynaktaki ⚠GEVSETME vektörleri D5/D8b/E4/F3 bug gate'te ayrıca incelenecek.<br>• Test (a)–(d) + mutasyon kontrolü; bug gate'te ayrıca incelenecek.<br>Ölçülen öncelik (ajan başlangıcı): template'te lib bayraksız gövdeyi FAIL, rap_service SUCCESS sayıyordu (tutarsızdı).<br>**PORT BİTTİ (ajan, worktree `C:\.wt\axet\core-port`, commit yok):**<br>• Taşınanlar: aktivasyon hükmü tek kaynak + worklist sondası (lib/rap_service/atom ENQU); syntax_check NOT MEASURED; push ön kontrol `olculemedi`; sorgu araçları (SAP hata gövdesi, `truncated`, where_used belirsiz, TADIR 5'li parçalama); reviewer fugr istisnası; referans metinleri; brief-template.<br>• Lider ekleri: G-a (bozuk `AXET-GATE-STATUS` satırı → measured=false) ve E3 (ADT_* ortam yalıtımı).<br>• Testler: foundation 244 test / 0 failure (sahte `.conn_adt` kökü, yalıtılmış TMP); kök takım 170/0 (1263 sn); sap-code-review 44 OK / 1 skip; fs-ts-docs 55 OK / 1 skip.<br>• Kontrol grubu: push 5 FAIL → 11/11; sorgu 26/36 FAIL → 36/36. Mutasyonların hepsi yakalandı.<br>• sync_check: YENİ 13 / DEĞİŞEN 65 → 0 / 0 (`--update-lock` en son). IMPLEMENTATION.md §17 eklendi.<br>• Taşınmayanlar (gerekçeli): CLI parçaları, populate `--force-recreate` (→ D3), init_project/team_setup mesajları, a6ec4c6 temp temizliği (ölçüldü: gerek yok), fixture çapaları.<br>• DOĞRULANMADI: canlı SAP (worklist gövdesi, FUGR faz 2, 400/500 gövdeleri, parça boyutu); `_aktivasyon_yaniti_ok` özel testi yok.<br>• Açık kalemler: TADIR satırı olmayan ad → `tadir_deleted:false`; README değişiklik notu (UPDATE-PROCEDURE §6.3, lider).<br>**Bug gate iki parça paralel koşuyor:** A = aktivasyon/syntax/reviewer/G-a; B = sorgu/push/E3/referanslar/sync.<br>**PARÇA B: WARNING** (0 BLOCKER/HIGH):<br>• MEDIUM (test eksiği): onaylı TADIR koşulu (3)/(4) boş ya da süzgece takılan ad listesi için testsiz. B4 mutasyonu (süzgeçli adları `tadir_deleted:False` damgala) 47/47 OK ile kaçtı. Bugünkü davranış doğru (prob: boş worklist ok/0 SQL; yalnız süzgeçli → ok:false belirsiz; karışık → ok:false; boş 200 → unexpected).<br>• LOW: `body_excerpt` 500 bayt sınırı testsiz (B3 kaçtı); tek üretici zaten keserek veriyor.<br>• ÖNERİ: FM takma adı arama aracında `/fmodules/` koruması yok (FUGR yanlış "bulundu" olasılığı, canlı ölçülmedi); karışık listede süzgeç sebebi yazılmıyor.<br>• Doğrulananlar: fail-open yok; 'olculemedi' yalnız bildiriyor (DEV_CORE ile aynı); sır sızıntısı yok; referanslarda iç ad yok, olmayan CLI'ya yönlendirme yok; sync-rules yalnız note; lock tutarlı.<br>• DOĞRULANMADI: E3'ün "önce FAIL" kontrolü gate'te yeniden üretilemedi (döngü silinse de OK).<br>**PARÇA A: WARNING** (0 BLOCKER/HIGH, fail-open yok):<br>• MEDIUM (test eksiği): `sap_adt_lib.py:4004` `'yok'` varsayılanı. X1 mutasyonuyla POST 500/403 + temiz worklist → success=True oluyor; hiçbir test kırılmıyor.<br>• LOW: G-a ters sıra (bozuk önce + geçerli sonra) testsiz (G1 kaçtı).<br>• LOW: `rap_service._aktivasyon_yaniti_ok` ölü ve testsiz (X3 kaçtı).<br>• Doğrulananlar: sonda 401/HTML/boş/timeout → FAIL; parse edilmiş boş liste ile parse edilemeyen gövde ayrı tutuluyor; başka kullanıcının girdisi temiz sayılmıyor; lib ve rap aynı hükmü veriyor; FUGR sahte yeşili yakalanıyor; G-a regex kenar vakaları doğru. Taban 62 test OK.<br>• Açık kalemler (önceden var): run_review küçük harf önek → None → rc 0'da PASS; BOM + geçerli satır → sahte SKIP; worklist kullanıcıya özel mi ve tip dizgesi eşliği canlı ölçülmedi.<br>**Karar (lider):** A1-A3 + B1-B3 test boşlukları tek brifle port ajanında; kaçan her mutasyon yakalanır hâle getirilecek. README §6.3 değişiklik notu da port ajanında. Sonra sync_check (kilit kayarsa lidere sorulacak). Üçüncü tam gate açılmayacak: kanıt kaçan mutasyonların artık yakalanması.<br>**TEST DÜZELTMELERİ BİTTİ (port ajanı):**<br>• Kaçan 5 mutasyonun 4'ü artık yakalanıyor:<br>  – X1 → K1/K2 (POST 500/403 + temiz worklist → success False, 0 GET)<br>  – G1 → test_7 ters sıra<br>  – B4 → T8<br>  – B3 → S10<br>• X3 eşdeğer mutasyon (`_hukmu_kesinlestir` her dalda bool döndürüyor); öldürülebilir varyantları X3b/c/d L1 tablosunda yakalanıyor. `_aktivasyon_yaniti_ok` DEV_CORE eşliği için silinmedi, testlendi.<br>• E3: gate'in yeniden üretemediği "önce FAIL" yalnız `run_tests.py -k` modunda geçerliydi (aynı süreçte sap_adt_lib import + load_dotenv). Yeni E3b 4 modun hepsinde döngüsüz FAIL, döngülü geçiyor.<br>• ENQU hata mesajı gövde bayrağını ve kesin hükmü ayrı basıyor (yalnız metin).<br>• İlgili 6 modül 144 test OK. sync_check kilidi kaymadı (0/0/0, 673 değişmeyen).<br>• README "Değişiklik notu 0.3.0 (hüküm dürüstlüğü)" eklendi. IMPLEMENTATION §17.6-17.7.<br>• Açık kalemler §17.7'de: FM `/fmodules/` koruması, run_review küçük harf önek, BOM sahte SKIP, karışık liste süzgeç sebebi, worklist kullanıcı kapsamı (canlı).<br>⚠ Birleştirme notu: port worktree'si de README.md'yi değiştirdi; ana ağaçta da README değişikliği var → birleştirmede çakışma kontrolü. **COMMIT + BİRLEŞTİRME (lider, dal `feat/2026-09-14-kurulum`, uzak depo yok):**<br>• Ana ağaçta 5 konu commit'i: ce843df kurulum · 6dd5d00 doctor · 8ae999d izin · 4e80a72 fs-ts-docs · 0517ca2 docs.<br>• Port dalı 8c0dc8d, `--no-ff` birleştirme f086444, çakışmasız. kur.ps1 BOM + 696 CRLF korundu.<br>• PROVA commit mesajı koruması `-m` metnini `-F` sanıp reddetti ve `$değişken`li `-F` yolunu açmadı. Çözüm: mesaj dosyası + açık yol.<br>• doctor (şablon kökü): 0 FAIL · 2 WARN. İlk WARN, gerçek global config'in eski kurallarla durması (yeniden kurulmadı); ikincisi rg yok.<br>• Ajansız tam doğrulama (merge `f086444` üstünde, ajan yokken):<br>– foundation (sahte bağlantı dosyalı kök, izole TMP): 255 unittest OK · senaryo satırı 598/598 OK. İlk koşuda testler geçti ama `run_tests.py:42` özet yazdırırken çöktü (rc=1): port testleri (HÜKÜM C4b, L1a/L1b) `beklenen`e bool veriyor. Düzeltme: `str()` dönüşümü; yeniden koşu rc=0.<br>– fs-ts-docs 97 OK (1 atlandı) · ui5-fiori 38 OK · abapgit-delivery 23 OK · code-review 44 OK (1 atlandı).<br>– Kök takım (`tests/run_tests.py`): 209 test · 0 failure · 0 error · 0 skip · 2470 sn · rc=0 (test_kur 35/35 dahil; tam geçmişli repoda emekli-desen geçmiş testi atlanmadı). KAPSAM — bakılmayanlar: aXet'in bağlamı fiilen yüklemesi (doctor --live), canlı SAP, izin kurallarının aXet'te fiilen bloklaması, Linux/macOS hook.<br>– Sonuç: bu makinede `kur`/`install.py` yeniden koşmak artık güvenli (K4b + doğrulama tamam). | ✅ port + gate düzeltmeleri kapandı · ✅ commit/birleştirme · ✅ ajansız tam doğrulama (kök 209 · foundation 255/598 · skill takımları) |
 | K8 | DEV_CORE yerel klon origin'in 15 commit gerisinde → pull + `sync_check` yeniden değerlendirme | pull edilince yeni DEĞİŞEN satırları işle | ✅ pull (kullanıcı 2026-09-14): `e34b2b2 → 85a1dad`, ff-only.<br>**sync_check** DEV_CORE: KURALSIZ 0 · YENİ 13 (12'si test fixture'ı) · DEĞİŞEN 65 · SİLİNEN 0. PROVA: 0 değişiklik. Çıktı: oturum scratchpad'i `sync_k8.txt`.<br>Aktarılmış hedefi olan önemli değişiklikler:<br>• syntax_check: kontrol koşmadıysa "hata var" yerine NOT MEASURED (Q307/Q313/Q317)<br>• aktivasyon hükmü tek kaynak, `adt_activate ok=activated` (Q187/Q188)<br>• push: ön kontrol ölçülemediyse sonuç işaretlenir (Q312)<br>• sorgu araçları: SAP hata gövdesi + `truncated` sondası (Q304 → K3'e değer)<br>• populate `--force-recreate` fix'leri<br>• init_project / team_setup mesajları<br>• playbook adt-cds/fugr/lock/mcp/rap/tables/known-errors<br>Taşıma kararı: ayrı soru. ⚠ Kilit (`--update-lock`) taşıma bitmeden güncellenmez. |
-| K10 | 30 sn sarmalayıcı zaman aşımı → WARNING → yazma sınıfının genel düzeltmesi. Bugün yalnız DTEL gate'li 4 zincirde BLOCKER (K1/D1 B1 a); diğer canlı BLOCKER validator'larda zaman aşımı hâlâ WARNING | — | ✅ **"Süreyi ölç + uzat, sonra BLOCKER"** (kullanıcı 2026-09-15). Sıra: ① gerçek kontrol sürelerini ölç ② bütçeyi gerçekçi ve yapılandırılabilir yap ③ tüm canlı BLOCKER validator'larda zaman aşımı = BLOCKER, mesaj süreyi uzatma yolunu söyler. Dayanak: "ölçülemedi ≠ temiz" + DEV_CORE'un aynı yöndeki kararı (syntax_check koşmadıysa NOT MEASURED, Q307/Q313/Q317). Yavaş sistem riski (D12) yapılandırılabilir bütçeyle karşılanır. |
-| K11 | Ek deny desenleri | — | ✅ **"Önce ölç, sonra dar ekle"** (kullanıcı 2026-09-15). Yeni desen EKLENMEZ; önce bugün yalnız simülasyonla denetlenmiş desenler (`git clean -df/-fdx/-d -f/--force`, `git -C x push --force`, `rm -fr`, `rm -R`, `del /q /s`, `rmdir /s`) ve büyük/küçük harf duyarlılığı (`RD /S`) gerçek negatif testle ölçülür; ancak ölçüm sonrası dar ekleme yapılır. Gerekçe: ölçülmemiş desen sahte korumadır ve her yeni desen K12'deki uzunluk-önceliği yüzeyini büyütür. Aday genişletmeler (ölçümden sonra değerlendirilecek): `git branch -D`, `git checkout -- .`, `git stash drop`, `gh repo delete`. |
-| K12 | doctor: override-by-length kontrolü | — | ✅ **"Ekle, yalnız WARN"** (kullanıcı 2026-09-15). doctor, kullanıcının CANLI global config'inde bir template `deny` deseninden UZUN bir `ask`/`allow` deseni varsa WARN üretir ve hangi deny'ı ezebileceğini yazar; engellemez.<br>ADR 0019 şartları: ① gerçekten yaşandı — eski `*Remove-Item*-Recurse*` ask'ı `*git reset --hard*` deny'ını uzunlukla ezdi, komut sorulmadan çalıştı ② sonuç geri alınamaz + sessiz ③ bugünkü iki kontrol açığı kapatmıyor: `tests/test_install.py` `IzinDesenUzunlukTest` TEMPLATE dosyasına bakıyor, `doctor.py:96` yalnız emekli template desenlerini sayıyor — kullanıcının kendi yazdığı uzun ask deseni hiçbir yerde görünmüyor ④ rapor eder, engellemez → moratoryumla uyumlu.<br>⚠ `doctor.py` P6 paketiyle çakışır (yedek sayısı bilgi satırı) → P6 merge edildikten SONRA uygulanır. |
+| K10 | 30 sn sarmalayıcı zaman aşımı → WARNING → yazma sınıfının genel düzeltmesi. Bugün yalnız DTEL gate'li 4 zincirde BLOCKER (K1/D1 B1 a); diğer canlı BLOCKER validator'larda zaman aşımı hâlâ WARNING | — | ✅ **"Süreyi ölç + uzat, sonra BLOCKER"** (kullanıcı 2026-09-15). Sıra: ① gerçek kontrol sürelerini ölç ② bütçeyi gerçekçi ve yapılandırılabilir yap ③ tüm canlı BLOCKER validator'larda zaman aşımı = BLOCKER, mesaj süreyi uzatma yolunu söyler. Dayanak: "ölçülemedi ≠ temiz" + DEV_CORE'un aynı yöndeki kararı (syntax_check koşmadıysa NOT MEASURED, Q307/Q313/Q317). Yavaş sistem riski (D12) yapılandırılabilir bütçeyle karşılanır.<br>✅ **UYGULANDI 2026-09-17** — dal `fix/2026-09-17-k10-zaman-asimi`, commit `fdd2982`, entegrasyonda. Yeni tek kaynak `scripts/sapadt/lib/utils/butce.py`; üç katman HİZALANDI (L1 sarmalayıcı 60 sn / `AXET_REVIEWER_BUTCE_SN` 5-900 · L2 zincir 56 · L3 gate-içi 28). Önceden `run_validator` validator başına sabit 60 sn veriyordu ama sarmalayıcı zinciri 30 sn'de kesiyordu ⇒ iç dal ULAŞILAMAZDI (ölü dal). 60 = ESKİ iç zaman aşımı ⇒ hiçbir katman eskisinden az süre almaz. **D12 iddiası doğrulandı ve sayısallaştı:** gate hızı ≈1 aday/sn; eski 15 sn bütçede 14 aday PASS ama 16/20/30 aday BLOCKER — SAP doğru cevap verirken yanlış BLOCKER. BLOCKER görevleri 4 → **6** (+`struct_post_create`, +`sap_active_check`); küme artık KODDAN türüyor (`SAPADTClient` geçen validator; ad→yol çözümü `HARICI_VALIDATORLER`i de AST ile okur). ⚠ `itg_s2_signoff` kapsam DIŞI — ajanın fail-closed kararını lider ölçüp çürüttü (ağ gate'i değil: `check_intake_signoff.py` importları `argparse, re, sys, pathlib`). Fail-first 2 failure + 9 error · mutasyon 5/5 · foundation 403 test/935 senaryo 0 fail · kök 282 test 0 fail. ⛔ KAPSAM: canlı SAP'ye karşı HİÇBİR süre ölçülmedi (gecikmeler benzetim). Açık kalem: geçersiz `AXET_REVIEWER_BUTCE_SN` varsayılana düşer, aralığa kırpmaz. |
+| K11 | Ek deny desenleri | — | ✅ **"Önce ölç, sonra dar ekle"** (kullanıcı 2026-09-15). Yeni desen EKLENMEZ; önce bugün yalnız simülasyonla denetlenmiş desenler (`git clean -df/-fdx/-d -f/--force`, `git -C x push --force`, `rm -fr`, `rm -R`, `del /q /s`, `rmdir /s`) ve büyük/küçük harf duyarlılığı (`RD /S`) gerçek negatif testle ölçülür; ancak ölçüm sonrası dar ekleme yapılır. Gerekçe: ölçülmemiş desen sahte korumadır ve her yeni desen K12'deki uzunluk-önceliği yüzeyini büyütür. Aday genişletmeler (ölçümden sonra değerlendirilecek): `git branch -D`, `git checkout -- .`, `git stash drop`, `gh repo delete`.<br>✅ **ÖLÇÜLDÜ + UYGULANDI + GATE KAPANDI 2026-09-17** — dal `fix/2026-09-17-k11-deny-olcum`, commit `06bfcdf` (8 desen) + `60808f9` (gate bulguları) + `2400b4a` (`git -C`), entegrasyonda.<br>① 8 dar deny eklendi (32→40), canlı motor iziyle ölçüldü.<br>② **Bug gate BLOCKER verdi** — 1 HIGH + 4 MEDIUM + 2 LOW, **hepsi BELGE düzeyinde** (kod/config/test tarafında HATA yok; 8 desen doğru, dar, test-kilitli). Lider beş iddiayı da bağımsız ölçtü (fnmatch, 40 desenin tamamına karşı) — **beşi de doğru**: (a) HIGH — `git -C <yol>` biçimi yeni 4 deseni ATLIYOR ve kapsam beyanında yok; üstelik **aXet'in KENDİ çıktısının önerdiği biçim** (`kur.ps1` → `git -C "$hedef" branch -D …`) ⇒ sınır teorik değil. (b) README 'hepsi reddetti' diyordu, o 5 desenin gerçek kararı **ask** (run kipinde bloklanmıyor). (c) Kapsam beyanındaki 21'lik liste hatalıydı: `*git reset --hard*` + `*git clean -f*` eksik, `*rd /s *` yanlış dahil → hesapla doğrulandı (40 − 18 adlı − 1 pozitif kontrol = 21), aile kısaltmasız tam liste yazıldı. (d) Çürütülmüş 'eşitlikte ask kazanır' iddiası şerhsiz 3. kez tekrarlanıyordu. (e) `git checkout .` / `checkout -f .` / `restore .` / `restore --staged .` açık ama README kapalı sandırıyordu.<br>③ **KULLANICI KARARI 2026-09-17: 'git -C desenlerini de ekle'** → 6 dar desen (40→**46**): `*git -C * branch -D*`, `*git -C * checkout -- .*`, `*git -C * stash drop*`, `*git -C * push origin +*`, `*git -C * reset *--hard*`, `*git -C * clean -*f*`. Ölçüm: 13 hedef biçimin 13'ü serbest→deny (clean ailesinin 6 varyantı dâhil; `-*f*` hepsini TEK desenle tutuyor, 6 ayrı desen uzunluk-ezme yüzeyini gereksiz büyütürdü) · 12 komutluk `git -C` kontrol grubunda **yanlış pozitif YOK** · uzunluk kuralı ihlali YOK (en kısa yeni desen sabit 16/toplam 20; en uzun ask `*deploy_ui*` sabit 9/toplam 11) · **mutasyon 2/2** (deseni sil → kapsam testi kırmızı; `branch -D`→`branch -*` genişlet → kontrol grubu kırmızı) · `-k install` 23 test 0 failure.<br>⚠ **HÂLÂ AÇIK — bilinçli, `test_git_c_disi_kacis_bicimleri_hala_acik` ile KİLİTLİ** (kapanırsa test FAIL verip belgeyi güncellemeye zorlar): `git -c ayar=değer <altkomut>` (kombinatoryal, desenle kapatılamaz) · `git --git-dir=<yol>` yalnız yol `.git` ile bitiyorsa **kazara** eşleşir (koruma değil, tesadüf) · `git checkout .` / `restore .` aileleri · 6 yeni desenin tamamı **simülasyonla** ölçüldü, canlı `axet-code run` ile **DOĞRULANMADI** (kardeşi `*git -C * push -f*` canlı ölçülmüştü, biçim birebir aynı). Bilinen yanlış pozitif: `git -C x clean -n <içinde 'f' geçen yol>`.<br>✅ **Merge sonrası doğrulama kalemi KAPANDI** (entegrasyon dalında ölçüldü): K11'in 14 yeni deny'ı K12 WARN'ını taze kurulumda **tetiklemiyor** (0 bulgu); eski uzun `*Remove-Item*-Recurse*` ask deseni yakalanıyor. ⚠ `config/permissions.json` davranış yüzeyi (F2) ⇒ **merge olur olmaz** `behavior_manifest.py generate`.
+<br>**① ÖLÇÜM (canlı `axet-code run`, kanıt motor tarafında):** 10 desenin **10'u da gerçek** (RED + `rule bash:"<desen>"=deny`), kontrol grubu 5/5 çalıştı (yanlış pozitif yok) ⇒ "sahte koruma" şüphesi KAPANDI, brifing listesi için eklenecek desen yok. ⚠ **Kanıt yöntemi:** ilk toplu koşumda model **hiç araç çağırmadan** eksiksiz bir RED/OK tablosu **uydurdu**; motor logunda `BgJob started` satırı ve işaret dosyası YOKTU. Ayrıca logdaki `"tool_call_count":0` alanı **güvenilmez** (gerçekten bash çağıran koşumda da 0). Tek kullanılabilir sinyal: `BgJob started` + dosya sistemi. Kurallar `XDG_CONFIG_HOME` ile cwd dışına alındı (model config'i okuyup uyduramasın). Ders hafızaya yazıldı: `feedback_canli-olcumde-model-beyani-kanit-degil`.
+<br>**② 8 DAR DENY EKLENDİ** (kullanıcı kararı 2026-09-17): `*git -C * push -f*` · `*git push origin +*` · `*git reset *--hard*` · `*rm --recursive*` · `*git stash drop*` · `*gh repo delete*` · `*git branch -D*` · `*git checkout -- .*`. Önce hepsinin **kapsanmadığı ölçüldü** (8/8 çalıştı), eklendikten sonra **8/8 reddedildi**, yanlış-pozitif kontrol grubu **8/8 çalıştı** (`git checkout -- src/foo.py` DÂHİL ⇒ dar desen gerçekten dar). Bilinen yanlış pozitif gizlenmedi: `git checkout -- .gitignore` ve `git checkout -- ./yol` da uyar. Kullanıcı ölçütü: commit'siz iş için **reflog YOKTUR** ⇒ `checkout -- .` setin en geri alınamazı.
+<br>**③ HARF AÇIĞI — BİLİNEN SINIR olarak BELGELENDİ** (kullanıcı: "sadece belgele"): eşleşme harfe DUYARLI, 32 desenin hepsi küçük harfli ⇒ **`RD /S x` ÇALIŞTI**, `rd /s x` REDDEDİLDİ; `RM -RF` de çalıştı. Varyant EKLENMEDİ (kombinatoryal + eksik liste sahte koruma üretir + uzunluk-ezme yüzeyini büyütür). Satıcı talebi/açık kalem AÇILMADI. Bir test bu sınırı **kilitliyor** (motor harf-duyarsız olursa ya da biri varyant eklerse FAIL verip kararı masaya getirir).
+<br>**④ ⚠ YENİ ÖLÇÜM — `allow` ÖNCELİĞİ (K12 ajanının bulduğu boşluk):** uzun `allow` kısa `deny`'ı **EZDİ** (ölçüldü); uzunluk kuralı simetrik. **Eşitlikte sonuç TUTARSIZ:** kazananı karar türü değil **anahtar sırası — ya da alfabetik sıra, ikisi ayırt edilemedi** belirledi (Go map yinelemesi sırasızsa nondeterministik olabilir). ⛔ Bu, `_aciklama`'daki 2026-09-14 cümlesiyle (*"eşitlikte ask kazanır, **kural sırası etkisizdir**"*) **ÇELİŞİYOR** — farklı karar çifti, hangisinin genel olduğu ÖLÇÜLMEDİ. Pratik kural: **eşit uzunlukta desen yazma.** ⇒ K12'nin WARN mesajındaki "eşitlikte ask" ifadesi de bu ölçümle güncellenmeli (bug gate sonrası, açık kalem).
+<br>**ÖLÇÜLMEYENLER (KAPSAM BEYANI):** 40 bash deseninin **19'u** ölçüldü, **21'i bu turda ÖLÇÜLMEDİ** · TUI'de `ask` davranışı DOĞRULANMADI · global↔proje seviye farkı ÖLÇÜLMEDİ · `bash -c` ve değişkenle kurulan komut (`C="rm -rf x"; $C`) ÖLÇÜLMEDİ (**muhtemel ikinci atlatma yolu**) · her sonuç tek koşum, tekrarlanabilirlik ölçülmedi.
+<br>**⑤ EK TUR (2026-09-17, aynı dal): `IzinDesenUzunlukTest` artık `allow`'u da kapsıyor.** Açık ÖLÇÜLDÜ (kırmızı-önce: `AssertionError: 0 != 1 : uzun allow deseni yakalanmadı`) → `IZIN_VERICI_KARARLAR = ("ask", "allow")`. Mutasyon 3/3 yakalandı; M2 **gerçek `config/permissions.json`'a** uzun allow ekleyerek testin fixture'a değil **dosyaya** bağlı olduğunu kanıtladı. `-k install` **22/0/0 (2 skip)**.
+<br>**⚠ KAPSAM GENİŞLEYİNCE GERÇEK BİR KUSUR ÇIKTI:** birleşik config testindeki kullanıcı kuralı `*benim-aracim*`=allow (sabit 12) beş template deny'ından UZUN (`*git push -f*` 11 · `*git push * -f*` 12 · `*git clean -f*` 12 · `*--no-verify*` 11 · `*fiori deploy*` 12) ⇒ ZK1 ölçümüne göre o beş koruma **fiilen delinir**. Test gevşetilmedi, **İKİYE AYRILDI**: (a) bizim desenlerimiz → ihlal SIFIR olmalı · (b) kullanıcının kuralı → ihlalin **VAR OLDUĞU** assert ediliyor (gerçeği kilitler; M3'te kapsam regresyonunu bu satır yakaladı).
+<br>**⑥ ÇAPRAZ-LANE DÜZELTME (lider ölçtü):** K11 ajanı *"kullanıcı config'indeki uzun allow'u bugün hiçbir şey ölçmüyor (doctor birebir anahtar karşılaştırıyor)"* diye açık kalem açtı. **Bu iddia yalnız kendi dalı için doğru** — o worktree `origin/main` doctor'ını taşıyor (`grep -c ezebilen_izin_desenleri` → **0**). **K12 dalı tam bu vakayı kapatıyor:** `doctor.py:205 ezebilen_izin_desenleri()` + `:219 karar not in ("ask", "allow")` ⇒ canlı config'in ask/allow desenlerini template deny'larıyla uzunluk bazında karşılaştırıyor. **Yeni kalem AÇILMADI.** ⇒ **MERGE SONRASI DOĞRULAMA KALEMİ:** K11'in senaryosunu (uzun kullanıcı allow'u) birleşik ağaçta koştur, K12'nin WARN satırının **gerçekten tetiklendiğini** ölç — bunu iki ajanın hiçbiri yapamazdı (her biri yalnız kendi dalını gördü).
+<br>**⑦ K12'YE AÇIK KALEM:** K12'nin WARN mesajı *"eşitlikte ask"* diyor; ④'teki ölçüm bunu çürüttü ⇒ mesaj metni güncellenmeli (doctor'ın MANTIĞI doğru — eşitliği zaten riskli sayıyor, M5 mutasyonuyla pinli; yalnız açıklama metni bayat). |
+| K12 | doctor: override-by-length kontrolü | — | ✅ **"Ekle, yalnız WARN"** (kullanıcı 2026-09-15). doctor, kullanıcının CANLI global config'inde bir template `deny` deseninden UZUN bir `ask`/`allow` deseni varsa WARN üretir ve hangi deny'ı ezebileceğini yazar; engellemez.<br>ADR 0019 şartları: ① gerçekten yaşandı — eski `*Remove-Item*-Recurse*` ask'ı `*git reset --hard*` deny'ını uzunlukla ezdi, komut sorulmadan çalıştı ② sonuç geri alınamaz + sessiz ③ bugünkü iki kontrol açığı kapatmıyor: `tests/test_install.py` `IzinDesenUzunlukTest` TEMPLATE dosyasına bakıyor, `doctor.py:96` yalnız emekli template desenlerini sayıyor — kullanıcının kendi yazdığı uzun ask deseni hiçbir yerde görünmüyor ④ rapor eder, engellemez → moratoryumla uyumlu.<br>⚠ `doctor.py` P6 paketiyle çakışır (yedek sayısı bilgi satırı) → P6 merge edildikten SONRA uygulanır.<br>✅ **UYGULANDI 2026-09-17** (P6 merge oldu, blokaj kalktı) — dal `fix/2026-09-17-k12-doctor-override`, commit `cef0877` + `74829b7` (gate BLOCKER'ı) + `449ba39` (çapraz kırılma), entegrasyonda. `scripts/doctor.py` +122 / `tests/test_doctor.py` +89. Ölçüm: `-k doctor` **66 test 0 failure rc=0** · fail-first 3 kırmızı · **mutasyon 7/7 yakalandı** · taze kurulumda **0 bulgu** (yanlış pozitif yok) · WARN exit kodunu DEĞİŞTİRMİYOR (testle pinlendi). Çakışma ölçütü iki glob'un çarpım otomatıyla hesaplanıyor (20000 durum sınırı → aşılırsa fail-loud 'çakışıyor'). **Bizden doğan regresyon bulundu ve düzeltildi:** üç emekli testinin süzgeci (`"emekli" in m`) yeni WARN satırına da takılıyordu → süzgeç `"emekli template izin deseni"`ne daraltıldı; eski hâl emekli mantığı bozulsa bile yeşil kalırdı. <br>⚠ **AÇIK KALEM (yeni, ölçüldü):** 2026-09-14 öncelik serisi yalnız **ask vs deny** ölçmüş — **`allow`'un uzunlukla kazanıp kazanmadığı ve eşitlikte ne olduğu HİÇ ÖLÇÜLMEDİ**. Bugün hem `install.py` hem doctor `allow`'u ask ile aynı sınıfta işliyor; bu bir VARSAYIM. K11 lane'ine "zaten toplu koşum yapacaksan ölç" diye iletildi. <br>⚠ Ayrıca DOĞRULANMADI (kayıtta zaten vardı, doctor da böyle işliyor): uzunluğun `*` hariç **sabit karakterle mi** toplam uzunlukla mı sayıldığı — kontrol ikisini de riskli sayıyor (geniş uyarma yönünde hata payı).<br>🔴→✅ **BUG GATE BLOCKER VERDİ, AYNI TURDA KAPATILDI (2026-09-17).** İki bulgu da gerçekti.<br>• **BLOCKER — test kurulum yolunun UZUNLUĞUNA bağlıydı.** `test_ezme_allow_sayilir_arac_alani_ayri` `edit` alanına 39 karakterlik bir allow deseni koyup 'hiç ezme satırı olmamalı' diyordu. Ama `edit` deny desenlerinin TAMAMI `install.clone_rules()` tarafından **AXET_HOME'un disk yolundan** türetiliyor: bu ağaçta en kısa `edit` deny 103 kr → yeşil; `C:xxet` kurulumunda 17 kr → **KIRMIZI** (yeniden üretildi). CI `runs-on: windows-latest`, çalışma dizini `D:xetxet` ⇒ **deterministik kırmızı** — 'sonda tek toplu CI' planında merge'i bloklayacaktı. Düzeltme: alan ayrımı artık SABİT template fixture'ıyla BİRİM seviyesinde ölçülüyor (`ezebilen_izin_desenleri`'nin var olan `template_kurallari` parametresi). Kanıt: kısa yolda (17 kr) 67 test 0 failure, asıl ağaçta da 67/0.<br>• **MEDIUM — `_kesin_kisa`'daki `and`→`or` mutasyonu 66 testin TAMAMINDAN kaçıyordu**, yani 'sabit mi toplam mı DOĞRULANMADI' belirsizliğine karşı alınan **tek savunmanın** regresyon koruması yoktu. Ayırt edici vakayı pinleyen test eklendi (`*g*i*t* *p*u*s*h*` sabit 8/toplam 17 vs `*git push -f*` 11/13); mutasyon tekrar uygulandı → tam o test kırmızı.<br>• **ÇAPRAZ-LANE KIRILMASI (entegrasyon dalında bulundu, lane'lerde görünmüyordu):** K11 ve K12 tek başlarına YEŞİL, birleşince `test_ezme_uzun_ask_deny_ezebilir_warn` KIRMIZI — K11'in `*git reset *--hard*` deseni aynı komuta uyan ikinci bir deny yarattı, testin 'tam olarak TEK deny listelenir' çivisi kırıldı. Davranış DOĞRU, çivi kırılgandı: ölçüt 'deny ADIYLA geçiyor **ve** satır …ve N deny daha özetine düşmüyor' olarak sağlamlaştırıldı (ikincisi `*X*` biçiminden ayırmayı sürdürüyor). 📌 **Ders: lane'ler tek tek yeşilken birleşim kırmızı olabilir ⇒ entegrasyon dalı ERKEN kurulmalı.** |
 
 ### D — Kod/içerik açıkları (canlı test dışı)
 | # | Madde | Kaynak | Durum |
@@ -361,8 +852,8 @@ Plan kaynağı: karar matrisi §9 (parti 0–8). Uygulamada numaralar kaydı: ma
 | D13 | **Kilit politikası sonrası açıklar** (merge `56db2f3`):<br>• Push yanıtında kilit alanlarının üst seviyeye taşınması (sözleşme değişikliği).<br>• Aktivasyon öncesi unlock False iken aktivasyonun koşmaması.<br>• L3 yolları.<br>• Birleşik kodda `KilitSirasi` T1–T3 ayrı ölçümü koşulmadı (tam foundation yeşil). | IMPLEMENTATION §18 · `C:\IX\PROVA\.tmp\kilit-fix\RAPOR.md` | ⬜ |
 | D14 | **D3 populate sonrası açıklar** (merge `c1a0d6f`):<br>• `_err_from_exc` status_code yapısal alan değil (~50 çağrı).<br>• Durum taşımayan 13 `SAPADTError`.<br>• Gate önerisi 5 (ön geçiş yalnız kapı).<br>• D3 L1 mutasyonu birleşik kodda tek başına yeniden koşulmadı.<br>• DOĞRULANMADI (canlı SAP yok): akışların canlı davranışı, enqu GET 200/404 ayrımı, gerçek kilit çakışması metni. | IMPLEMENTATION §19 · `C:\IX\PROVA\.tmp\d3-fix\RAPOR.md` | ⬜ |
 | D15 | **Adım 4 sonrası açıklar** (merge `95d1357`):<br>• `*core.hooksPath*` deny ↔ `new_project` alt süreci.<br>• http dışı şemada sorgudaki `@`. | `C:\IX\PROVA\.tmp\adim4-fix\RAPOR.md` | ⬜ |
-| D16 | **Yayın sızıntı taraması kırmızı — `yayin_hazirla.py` DESENLER'i fazla geniş** (lider ölçtü 2026-09-15, kuyruk).<br>**YENİDEN ÖLÇÜM (2026-09-15, `cfc91c3` üzerinde): 6 → 17 bulgu, EXIT=1 sürüyor.** Artış yeni sızıntı DEĞİL: P1/K3/D17 işleri sırasında yazdığımız yorum ve harita notları `maintenance/…` yollarını anıyor. **17'nin 16'sı tek sınıf: *dışlanan dosyaya atıf*** (`guncelle/harita.json` 6 satır · `guncelle/siniflandir.py` 3 · `scripts/doctor.py` 4 · `README.md` 1 · `tests/test_guncelle_harita.py` 1). 17.'si `tests/test_kur.py:775` — `C:\Users\u` bir **test yer tutucusu**, `C:\\Users\\(?!<)[A-Za-z]` deseninin yanlış pozitifi (tek harfli ad gerçek kullanıcı adı değildir).<br>**TEŞHİS:** *dışlanan dosyaya atıf* sınıfı ile gerçek sızıntı sınıfları (şirket adı · iç kullanıcı · iç repo · müşteri izi · oturum bağlantısı) **aynı önemde** ele alınıyor ve ikisi de EXIT=1 üretiyor. Oysa bunlar farklı şeyler: birincisi tüketicinin takip edemeyeceği bir **işaretçi** (belge kalitesi sorunu), ikincisi **bilgi sızıntısı**. Üstelik desen kendi kendini ısırıyor — dışlamayı AÇIKLAYAN yorum (`maintenance/` public'e girmez) dışlama kontrolüne takılıyor. Bugünkü hâliyle tarama **her koşumda kırmızı** olduğu için okunmaz hâle gelir ("nasılsa kırmızı").<br>**KARAR KULLANICININ — lider tek taraflı daraltmadı.** Yayın (push) geri alınamaz bir adımdır (Y2a); yayın-öncesi bir sızıntı tarayıcısını zayıflatmak, yeni bir kapı açmaktan daha dikkatli olmayı gerektirir. Öneri: *dışlanan dosyaya atıf* **WARNING** sınıfına insin (listelenir, EXIT'i değiştirmez), gerçek sızıntı sınıfları BLOCKER kalsın; `C:\\Users\\` deseni en az 3 karakterlik ve yer-tutucu olmayan bir ad istesin. **Bu öneri uygulanmadı** — yayın gündeme geldiğinde kullanıcıya sorulacak.<br>⚠ Yeniden ölçüm P6 dalı MERGE EDİLMEDEN yapıldı; P6 `tests/test_kur.py`'ye +330 satır ekliyor, sayı merge sonrası yine değişebilir.<br>Ölçüm: `python maintenance/yayin_hazirla.py --hedef <tmp> --calisma-agaci --yalniz-tara` → **6 bulgu**, EXIT=1. Altısı da taban `b3e7ab5`'ten geliyor, hiçbiri yeni işten değil (lider'in `docs/sap-api-policy.md` + `.github/` + `merge_pr.py` dosyaları taramadan temiz geçti).<br>**Bulgular:** `README.md:249` · `scripts/doctor.py:444,448,449,451` (beşi de *dışlanan dosyaya atıf* — yorum/metin içinde `maintenance/…` ya da `docs/axet-davranis-olcumleri.md` kaynağı gösteriyor) · `tests/test_kur.py:775` (*iç kullanıcı/dizin*: `C:\Users\u` yer tutucusu `C:\\Users\\(?!<)[A-Za-z]` desenine takılıyor) → **yanlış pozitif**.<br>**Kök neden:** desen (`yayin_hazirla.py:37`) *her* `maintenance/` geçişini sayıyor; oysa tüketici klonunda dangling olan şey **markdown link**tir, yorum satırındaki kaynak atfı ya da bir sınıf globu değil. Aynı sınıf P1'in `guncelle/harita.json`'unda da çıkıyor (10 bulgu; 3'ü yapısal — repo-geneli harita `maintenance/` klasörünü adlandırmak ZORUNDA).<br>**Öneri:** deseni "markdown link biçimindeki atıf" ile daralt + `C:\Users\u`-tipi yer tutucuya muafiyet. ⚠ Yayın öncesi kapanmalı (`yayin_hazirla` EXIT=1 veriyor). ⚠ `tests/test_kur.py` P6 tarafından aktif düzenleniyor → P6 merge edildikten SONRA dokunulur. | `yayin_hazirla.py:37` DESENLER · P1 son raporu "AÇIK KALEMLER §1" | ⬜ |
-| D17 | **P1/D5 bug gate sonrası** (verdict **WARNING** — 0 BLOCKER, 0 HIGH, 5 MEDIUM, 5 LOW, 2 öneri; lider düzeltme turu 2026-09-15).<br>**KAPATILANLAR (hepsi ölçüldü, ikisi mutasyonla kanıtlı):**<br>• *Evren aşırı geniş* — `siniflandir.py` evreni `--cached --others --exclude-standard`'dan **`git ls-files`**'e (git index'i) döndü; TASARIM §3 ile aynı. Gate 11 örnek yol ölçmüştü: tüketicinin kök dizine bıraktığı `notlar.md` tüm 234 testlik takımı kırıyordu ve `tests/` public pakete giriyor (`yayin_hazirla.py:27` dışlamıyor). Commit-öncesi yakalama kayboldu sayılmaz: `--izlenmeyenler-de` ile AÇIKÇA istenir.<br>• *Örtüşme beyanı yol-kapsamsız* — `beklenen_ortusme` artık **üçlü**: `[kazanan, golgelenen, yol_glob_listesi]`. 13 beyanın globları tahminle değil, **gerçekleşen yollardan** türetildi. Ölü beyan da FAIL. Böylece kazanan sınıfın globu ileride genişlerse yeni gölgeleme yeniden beyan ister.<br>• *"§3'ün 13 satırı" öz-referanslıydı* — yeni `test_s3_cekirdek_adlari_tasarim_tablosuyla_eslesir` **TASARIM.md §3 tablosunu dosyadan parse edip** ad ad, sıra dahil karşılaştırıyor. **MUTASYON KANITI:** bir `s3_cekirdek` bayrağı doğrudan yanlışa taşındı → sayı yine 13 kaldı, test **FAILED (failures=1)**; eski test bunu geçirirdi. `maintenance/` public'e girmediği için tüketici klonunda `skipTest("… ÖLÇÜLEMEDİ, 'temiz' DEĞİL")`.<br>• *`etkin` enum'unun 5. değeri (`null`) §3'te yoktu* — TASARIM §3'e alan tablosuna eklendi + anlamı yazıldı (36 sınıfın 12'si `null`; ⚠ P2 dört değer varsayarsa o 12 sınıf sessizce "bilinmeyen" kovasına düşer).<br>• *ADR guardrail katmanı `skill-script` (orta/kritik_yol=false) sayılıyordu* — yeni alt sınıf **`guardrail-adr`** (üst sınıf `validator-ailesi`, risk `yuksek`, `kritik_yol: true`): `guardrails.py` (ADR 0005) · `data_guard.py` (ADR 0011 PII) · `std_dml_scan.py` (Yasak B) · `_profile.py` (fail-closed profil yüzeyi). §3 özet tablosuna **satır EKLENMEDİ** (13 sayısı testle çivili) — "validator + zincir + gate motoru" satırının altına düşüyorlar. `_app.py` bilinçli olarak dışarıda: guard değil, guard'ları çağıran sarmalayıcı → `esler`de.<br>• *Fixture kapsam listesi kodla eşitlenmiyordu* — `FIXTURESIZ` serbest metinden **gerekçeli sözlüğe** döndü; yeni `test_kapsam_listesi_kodla_esit` diskteki 22 `check_*.py` ile beyanı eşitliyor (hem beyansız hem hayalet yakalanıyor). **MUTASYON KANITI:** beyandan bir kalem çıkarıldı → `AssertionError: [] != ['check_table_field_drop']`. 12 validator'a "SIRADA — fixture yazılmadı (**ölçülmedi ≠ temiz**)" gerekçesi yazıldı.<br>• *`beklenen_bos` gerekçesiz kaçış deliğiydi* — `beklenen_bos_neden` artık zorunlu; denetim çıktısı muafiyet sayısını basıyor. (Bugün canlı kullanım 0.)<br>• *`olcum.izlenen_dosya: 418` sessizce bayatlayacaktı* — `izlenen_dosya_taban_committe` olarak yeniden adlandırıldı + "bu ANLIK ölçümdür, canlı değişmez DEĞİLDİR" notu.<br>• *`guncelleme-motoru.esler` kendi üyelerini listeliyordu* — temizlendi. (`maintenance/…` yolu eş olarak EKLENMEDİ: tüketici klonunda yok, `esler` disk kontrolü patlardı.)<br>**ÖLÇÜM (düzeltme sonrası):** `python guncelle/siniflandir.py` → **433 dosya · 0 sorun** · `tests/run_tests.py -k guncelle_harita` → **21 test** (16'dan) 0 failure · `test_validator_fixtures` → 4 test OK.<br>**ERTELENENLER (bilinçli, kapanmadı):**<br>• ~~`siniflandir.py:82-90` `-k <filtre>` değeri doğrulanmıyor → "koşuyor ama 0 test" sessiz kalır.~~ **YARISI KAPANDI (2026-09-15).** Kusurun zararlı ucu kaynağında kapatıldı: `unittest.TestResult.wasSuccessful()` **0 test için de True** döndüğü için yazım hatalı bir `-k` deseni "SONUÇ: 0 test" yazıp **çıkış 0** veriyordu — hiçbir şey ölçülmemişken koşum "geçti" görünüyordu. Dört koşucunun **dördünde de** (kök · `sap-fs-ts-docs` · `sap-ui5-fiori` · `sap-adt-foundation`) artık: 0 test → **çıkış 2** (kullanım hatası; 1 = test başarısız) ve hata metni hangi desenin eşleşmediğini söylüyor; değersiz `-k` → traceback yerine çıkış 2 (`sap-fs-ts-docs` bu durumda sessizce TÜM takımı koşuyordu). Ölçüldü: dört koşucu × iki kullanım hatası = 8 koşum, hepsi rc=2; **kontrol** `-k merge_pr` → rc=0, 8 test. Regresyon testi `tests/test_run_tests_cli.py` (5 test, biri kontrol satırı, biri koşucu listesinin bayatlamadığını ölçüyor). Düzeltmeden önceki davranış kanıtı: `unittest.TestResult().wasSuccessful()` → `True` (testsRun=0).<br>&nbsp;&nbsp;⚠ **AÇIK KALAN yarısı:** `siniflandir.py` hâlâ `harita.json`'daki `test.komut` içindeki `-k` DEĞERİNİ doğrulamıyor (`_yol_simgeleri:96` `-` ile başlayanı atlar, filtre değeri yol gibi görünmediği için hiç bakılmaz). Yani haritaya yazım hatalı bir filtre girilirse sınıflandırıcı sessiz kalır — ama artık o komut **koşturulduğunda** çıkış 2 verir. Kaynakta doğrulama (filtre değerini gerçek test adlarıyla karşılaştırma) ayrı ve daha invaziv bir iş, açık kalem.<br>• `siniflandir.py:96` `Path.exists()` Windows'ta harf-duyarsız → yanlış harfli yol burada geçer, Linux/macOS tüketicisinde FAIL olur. Bugün sapma yok (0 sorun), ama kontrol taşınabilir değil.<br>• `AGENTS.md` → `belge-lisans` / risk `dusuk` yargısı: `etkin: "yeni-oturum"` dosyanın bağlama yüklendiğini kabul ediyor (davranış yüzeyi). §3'te bu dosya için satır yok ⇒ ihlal değil, gözden geçirilebilir yargı.<br>• `risk`/`kritik_yol` yargılarının isabeti **ölçülebilir değil** (öznel); §3 ile karşılaştırıldı, bağımsız doğrulanmadı.<br>**GATE'İN KENDİ SINIRI (DOĞRULANMADI):** mutasyon diske yazılarak değil bellekte simüle edildi · haritadaki 30+ `test.komut`'tan yalnız kök + foundation koşturuldu · `yukleme` metinlerinin satır atıfları örneklem bazında bile doğrulanmadı · tüketici senaryosu (`.git`siz klon) denenmedi · Linux/macOS ölçülmedi. | ✅ **merge `313d126`** · bug gate raporu (ajan `ab65c75…`) · `guncelle/siniflandir.py` · `guncelle/harita.json` · `tests/test_guncelle_harita.py` · `skills-sap/sap-adt-foundation/tests/test_validator_fixtures.py` · `maintenance/guncelle-mimari/TASARIM.md` §3 | 🟡 (kapatılanlar ✅, ertelenen 4 kalem açık) |
+| D16 | **Yayın sızıntı taraması kırmızı — `yayin_hazirla.py` DESENLER'i fazla geniş** (lider ölçtü 2026-09-15, kuyruk).<br>**YENİDEN ÖLÇÜM (2026-09-15, `cfc91c3` üzerinde): 6 → 17 bulgu, EXIT=1 sürüyor.** Artış yeni sızıntı DEĞİL: P1/K3/D17 işleri sırasında yazdığımız yorum ve harita notları `maintenance/…` yollarını anıyor. **17'nin 16'sı tek sınıf: *dışlanan dosyaya atıf*** (`guncelle/harita.json` 6 satır · `guncelle/siniflandir.py` 3 · `scripts/doctor.py` 4 · `README.md` 1 · `tests/test_guncelle_harita.py` 1). 17.'si `tests/test_kur.py:775` — `C:\Users\u` bir **test yer tutucusu**, `C:\\Users\\(?!<)[A-Za-z]` deseninin yanlış pozitifi (tek harfli ad gerçek kullanıcı adı değildir).<br>**TEŞHİS:** *dışlanan dosyaya atıf* sınıfı ile gerçek sızıntı sınıfları (şirket adı · iç kullanıcı · iç repo · müşteri izi · oturum bağlantısı) **aynı önemde** ele alınıyor ve ikisi de EXIT=1 üretiyor. Oysa bunlar farklı şeyler: birincisi tüketicinin takip edemeyeceği bir **işaretçi** (belge kalitesi sorunu), ikincisi **bilgi sızıntısı**. Üstelik desen kendi kendini ısırıyor — dışlamayı AÇIKLAYAN yorum (`maintenance/` public'e girmez) dışlama kontrolüne takılıyor. Bugünkü hâliyle tarama **her koşumda kırmızı** olduğu için okunmaz hâle gelir ("nasılsa kırmızı").<br>**KARAR KULLANICININ — lider tek taraflı daraltmadı.** Yayın (push) geri alınamaz bir adımdır (Y2a); yayın-öncesi bir sızıntı tarayıcısını zayıflatmak, yeni bir kapı açmaktan daha dikkatli olmayı gerektirir. Öneri: *dışlanan dosyaya atıf* **WARNING** sınıfına insin (listelenir, EXIT'i değiştirmez), gerçek sızıntı sınıfları BLOCKER kalsın; `C:\\Users\\` deseni en az 3 karakterlik ve yer-tutucu olmayan bir ad istesin. **Bu öneri uygulanmadı** — yayın gündeme geldiğinde kullanıcıya sorulacak.<br>⚠ Yeniden ölçüm P6 dalı MERGE EDİLMEDEN yapıldı; P6 `tests/test_kur.py`'ye +330 satır ekliyor, sayı merge sonrası yine değişebilir.<br>Ölçüm: `python maintenance/yayin_hazirla.py --hedef <tmp> --calisma-agaci --yalniz-tara` → **6 bulgu**, EXIT=1. Altısı da taban `b3e7ab5`'ten geliyor, hiçbiri yeni işten değil (lider'in `docs/sap-api-policy.md` + `.github/` + `merge_pr.py` dosyaları taramadan temiz geçti).<br>**Bulgular:** `README.md:249` · `scripts/doctor.py:444,448,449,451` (beşi de *dışlanan dosyaya atıf* — yorum/metin içinde `maintenance/…` ya da `docs/axet-davranis-olcumleri.md` kaynağı gösteriyor) · `tests/test_kur.py:775` (*iç kullanıcı/dizin*: `C:\Users\u` yer tutucusu `C:\\Users\\(?!<)[A-Za-z]` desenine takılıyor) → **yanlış pozitif**.<br>**Kök neden:** desen (`yayin_hazirla.py:37`) *her* `maintenance/` geçişini sayıyor; oysa tüketici klonunda dangling olan şey **markdown link**tir, yorum satırındaki kaynak atfı ya da bir sınıf globu değil. Aynı sınıf P1'in `guncelle/harita.json`'unda da çıkıyor (10 bulgu; 3'ü yapısal — repo-geneli harita `maintenance/` klasörünü adlandırmak ZORUNDA).<br>**Öneri:** deseni "markdown link biçimindeki atıf" ile daralt + `C:\Users\u`-tipi yer tutucuya muafiyet. ⚠ Yayın öncesi kapanmalı (`yayin_hazirla` EXIT=1 veriyor). ⚠ `tests/test_kur.py` P6 tarafından aktif düzenleniyor → P6 merge edildikten SONRA dokunulur. | `yayin_hazirla.py:37` DESENLER · P1 son raporu "AÇIK KALEMLER §1" · dal `fix/2026-09-17-yayin-d16-isaretci` commit `86e052c` | ✅ **2026-09-17 KAPANDI** (kullanıcı: "öneriyi uygula"). *Dışlanan dosyaya atıf* → **WARNING** ve yalnız **markdown link** biçimiyle sınırlı; 6 gerçek sızıntı sınıfı BLOCKER kaldı. **17 bulgu EXIT=1 → 0 bulgu / 0 WARNING / EXIT=0** (429 dosya). Sentetik pozitif: 6 sınıfın her biri ayrı ayrı BLOCKER + EXIT=1. İç kullanıcı deseni **unicode**'a genişletildi — `C:/Users/Özgür/İş/...` biçimi hiçbir desene takılmıyordu; genişletme 429 dosyada **sıfır yeni yanlış pozitif** üretti ve yalnız hedefi vurdu (3 BLOCKER, üçü de fixture satırı). Fixture nötrleştirildi (`Özgür`→`ÖRNEK`; Türkçe karakterler KORUNDU, test hâlâ ASCII-dışı yol davranışını ölçüyor). `yayin_hazirla.py` için **test YOKTU** → `tests/test_yayin_hazirla.py` (9 test, betiği gerçek giriş noktasından subprocess ile çağırıyor). FAIL-FIRST 18 failure → 0 · **mutasyon 11/11**. ⚠ Tarayıcı **kendi fixture'larını** gerçek sızıntı sanıp yayını blokluyordu → sentetik örnekler artık PARÇALI yazılıyor (çalışma anında birleşiyor). **GÖREV 2 (kullanıcı: "işaretçileri private repoya çevir"):** `ozgurylmz34/axet-template` → `ozgurylmz34/axet` (README ×3, `kur.ps1:38` `$Kaynak` varsayılanı BOM korunarak, `docs/onboarding.md:43`) + **dürüstlük notu**: bu değişiklik 404'ü KAPATMAZ (depo private; tek satır `Invoke-WebRequest` yolu private'ta çalışmaz, çalışan yol `git clone`). `-k kur` 70/70. ⛔ KAPSAM: `--ref`/`git archive` yolu, gerçek push/klon ve deponun private olduğu ÖLÇÜLMEDİ (`gh` PATH'te yok); kişi adları sözlüğü hâlâ kapsam dışı. Entegrasyon dalında yeniden ölçüldü: **431 dosya · 0 bulgu · EXIT=0**. |
+| D17 | **P1/D5 bug gate sonrası** (verdict **WARNING** — 0 BLOCKER, 0 HIGH, 5 MEDIUM, 5 LOW, 2 öneri; lider düzeltme turu 2026-09-15).<br>**KAPATILANLAR (hepsi ölçüldü, ikisi mutasyonla kanıtlı):**<br>• *Evren aşırı geniş* — `siniflandir.py` evreni `--cached --others --exclude-standard`'dan **`git ls-files`**'e (git index'i) döndü; TASARIM §3 ile aynı. Gate 11 örnek yol ölçmüştü: tüketicinin kök dizine bıraktığı `notlar.md` tüm 234 testlik takımı kırıyordu ve `tests/` public pakete giriyor (`yayin_hazirla.py:27` dışlamıyor). Commit-öncesi yakalama kayboldu sayılmaz: `--izlenmeyenler-de` ile AÇIKÇA istenir.<br>• *Örtüşme beyanı yol-kapsamsız* — `beklenen_ortusme` artık **üçlü**: `[kazanan, golgelenen, yol_glob_listesi]`. 13 beyanın globları tahminle değil, **gerçekleşen yollardan** türetildi. Ölü beyan da FAIL. Böylece kazanan sınıfın globu ileride genişlerse yeni gölgeleme yeniden beyan ister.<br>• *"§3'ün 13 satırı" öz-referanslıydı* — yeni `test_s3_cekirdek_adlari_tasarim_tablosuyla_eslesir` **TASARIM.md §3 tablosunu dosyadan parse edip** ad ad, sıra dahil karşılaştırıyor. **MUTASYON KANITI:** bir `s3_cekirdek` bayrağı doğrudan yanlışa taşındı → sayı yine 13 kaldı, test **FAILED (failures=1)**; eski test bunu geçirirdi. `maintenance/` public'e girmediği için tüketici klonunda `skipTest("… ÖLÇÜLEMEDİ, 'temiz' DEĞİL")`.<br>• *`etkin` enum'unun 5. değeri (`null`) §3'te yoktu* — TASARIM §3'e alan tablosuna eklendi + anlamı yazıldı (36 sınıfın 12'si `null`; ⚠ P2 dört değer varsayarsa o 12 sınıf sessizce "bilinmeyen" kovasına düşer).<br>• *ADR guardrail katmanı `skill-script` (orta/kritik_yol=false) sayılıyordu* — yeni alt sınıf **`guardrail-adr`** (üst sınıf `validator-ailesi`, risk `yuksek`, `kritik_yol: true`): `guardrails.py` (ADR 0005) · `data_guard.py` (ADR 0011 PII) · `std_dml_scan.py` (Yasak B) · `_profile.py` (fail-closed profil yüzeyi). §3 özet tablosuna **satır EKLENMEDİ** (13 sayısı testle çivili) — "validator + zincir + gate motoru" satırının altına düşüyorlar. `_app.py` bilinçli olarak dışarıda: guard değil, guard'ları çağıran sarmalayıcı → `esler`de.<br>• *Fixture kapsam listesi kodla eşitlenmiyordu* — `FIXTURESIZ` serbest metinden **gerekçeli sözlüğe** döndü; yeni `test_kapsam_listesi_kodla_esit` diskteki 22 `check_*.py` ile beyanı eşitliyor (hem beyansız hem hayalet yakalanıyor). **MUTASYON KANITI:** beyandan bir kalem çıkarıldı → `AssertionError: [] != ['check_table_field_drop']`. 12 validator'a "SIRADA — fixture yazılmadı (**ölçülmedi ≠ temiz**)" gerekçesi yazıldı.<br>• *`beklenen_bos` gerekçesiz kaçış deliğiydi* — `beklenen_bos_neden` artık zorunlu; denetim çıktısı muafiyet sayısını basıyor. (Bugün canlı kullanım 0.)<br>• *`olcum.izlenen_dosya: 418` sessizce bayatlayacaktı* — `izlenen_dosya_taban_committe` olarak yeniden adlandırıldı + "bu ANLIK ölçümdür, canlı değişmez DEĞİLDİR" notu.<br>• *`guncelleme-motoru.esler` kendi üyelerini listeliyordu* — temizlendi. (`maintenance/…` yolu eş olarak EKLENMEDİ: tüketici klonunda yok, `esler` disk kontrolü patlardı.)<br>**ÖLÇÜM (düzeltme sonrası):** `python guncelle/siniflandir.py` → **433 dosya · 0 sorun** · `tests/run_tests.py -k guncelle_harita` → **21 test** (16'dan) 0 failure · `test_validator_fixtures` → 4 test OK.<br>**ERTELENENLER (bilinçli, kapanmadı):**<br>• ~~`siniflandir.py:82-90` `-k <filtre>` değeri doğrulanmıyor → "koşuyor ama 0 test" sessiz kalır.~~ **YARISI KAPANDI (2026-09-15).** Kusurun zararlı ucu kaynağında kapatıldı: `unittest.TestResult.wasSuccessful()` **0 test için de True** döndüğü için yazım hatalı bir `-k` deseni "SONUÇ: 0 test" yazıp **çıkış 0** veriyordu — hiçbir şey ölçülmemişken koşum "geçti" görünüyordu. Dört koşucunun **dördünde de** (kök · `sap-fs-ts-docs` · `sap-ui5-fiori` · `sap-adt-foundation`) artık: 0 test → **çıkış 2** (kullanım hatası; 1 = test başarısız) ve hata metni hangi desenin eşleşmediğini söylüyor; değersiz `-k` → traceback yerine çıkış 2 (`sap-fs-ts-docs` bu durumda sessizce TÜM takımı koşuyordu). Ölçüldü: dört koşucu × iki kullanım hatası = 8 koşum, hepsi rc=2; **kontrol** `-k merge_pr` → rc=0, 8 test. Regresyon testi `tests/test_run_tests_cli.py` (5 test, biri kontrol satırı, biri koşucu listesinin bayatlamadığını ölçüyor). Düzeltmeden önceki davranış kanıtı: `unittest.TestResult().wasSuccessful()` → `True` (testsRun=0).<br>&nbsp;&nbsp;⚠ **AÇIK KALAN yarısı:** `siniflandir.py` hâlâ `harita.json`'daki `test.komut` içindeki `-k` DEĞERİNİ doğrulamıyor (`_yol_simgeleri:96` `-` ile başlayanı atlar, filtre değeri yol gibi görünmediği için hiç bakılmaz). Yani haritaya yazım hatalı bir filtre girilirse sınıflandırıcı sessiz kalır — ama artık o komut **koşturulduğunda** çıkış 2 verir. Kaynakta doğrulama (filtre değerini gerçek test adlarıyla karşılaştırma) ayrı ve daha invaziv bir iş, açık kalem.<br>• `siniflandir.py:96` `Path.exists()` Windows'ta harf-duyarsız → yanlış harfli yol burada geçer, Linux/macOS tüketicisinde FAIL olur. Bugün sapma yok (0 sorun), ama kontrol taşınabilir değil.<br>• `AGENTS.md` → `belge-lisans` / risk `dusuk` yargısı: `etkin: "yeni-oturum"` dosyanın bağlama yüklendiğini kabul ediyor (davranış yüzeyi). §3'te bu dosya için satır yok ⇒ ihlal değil, gözden geçirilebilir yargı.<br>• `risk`/`kritik_yol` yargılarının isabeti **ölçülebilir değil** (öznel); §3 ile karşılaştırıldı, bağımsız doğrulanmadı.<br>**GATE'İN KENDİ SINIRI (DOĞRULANMADI):** mutasyon diske yazılarak değil bellekte simüle edildi · haritadaki 30+ `test.komut`'tan yalnız kök + foundation koşturuldu · `yukleme` metinlerinin satır atıfları örneklem bazında bile doğrulanmadı · tüketici senaryosu (`.git`siz klon) denenmedi · Linux/macOS ölçülmedi. | ✅ **merge `313d126`** · bug gate raporu (ajan `ab65c75…`) · `guncelle/siniflandir.py` · `guncelle/harita.json` · `tests/test_guncelle_harita.py` · `skills-sap/sap-adt-foundation/tests/test_validator_fixtures.py` · `maintenance/guncelle-mimari/TASARIM.md` §3 | 🟡→ **2026-09-17: ertelenen 4 kalemin İKİ KOD KALEMİ worktree'de KAPANDI** (dal `fix/2026-09-17-d17-kalan`, **COMMIT YOK, bug gate bekliyor**): `-k` filtre değeri artık gerçek test adlarına karşı doğrulanıyor (ayrı süreçte `unittest.discover`, 0,7 sn/289 ad, hiçbir test koşturulmadan) · harf-duyarlı varlık denetimi (düz yol **+ glob dalı** — glob kusuru bu turda bulundu, kayıtta yoktu). Ölçüm: `siniflandir.py` öncesi/sonrası 443 dosya 0 sorun rc=0 · `-k guncelle_harita` 21→28 test 0 failure · fail-first 4 kırmızı · **mutasyon 4/4 kırmızı** (M2 kontrol grubunun dişli olduğunu kanıtlıyor) · canlı pozitif: bozuk harita kopyasıyla 2 sorun rc=1, gerçek haritayla 0 sorun rc=0. ⚠ **Bu satırdaki satır numaraları BAYATTI** — kayıt `_yol_simgeleri:96` ve `siniflandir.py:96` diyordu, gerçekleri `_yol_simgeleri:93` ve `_var_mi:104` (koddan doğrulandı). **YARGI-1 kabul edildi** (lider): `bakim-repo-agents.risk` `dusuk`→`orta` + gerekçe `not` alanına — kanıt: `behavior_manifest.py:40` TEMPLATE_DOSYALAR + `yayin_hazirla.py:31` ZORUNLU_DOSYALAR (yani public sürüme zorunlu giriyor ⇒ "yalnız bakımcıya ait" karşı-argümanı çürük); `kritik_yol: false` KALIYOR. **YARGI-2 açık kalmaya devam** (öznel; outlier'ları mekanik bulma yöntemi kayda geçti, gate'e çevirmek ADR 0019 kapsamında = ayrı onay). Kalan açık: Linux/macOS ÖLÇÜLEMEDİ, tüketici (`.git`siz) senaryo denenmedi.<br>✅ **2026-09-17 COMMIT'LENDİ** — `b6a3b9a`, entegrasyonda; entegrasyon dalında `-k guncelle_harita` **28 test 0 failure**. |
 
 ### P — Proje kurulum akışının kalıcı düzeltmeleri (2026-09-14, kullanıcı: "başka projede aynı hatalar oluşmasın")
 Ölçüm: scratchpad'de git'siz boş klasöre `new_project.py --sap` (yer tutucular doldurulmadan) ↔ kontrol grubu `C:\projeler\axet-sap-test` (git + dolu profil).
@@ -384,16 +875,76 @@ Başlangıç koşulu ✅ (adım 4 `95d1357`, K1/D1 `50570d1`). Her paket ayrı d
 | Paket | İçerik (TASARIM §13) | Bağımlı | Yayından önce? | Tahmin | Durum |
 |---|---|---|---|---|---|
 | P1 | `guncelle/harita.json` + sınıflandırıcı + `test_guncelle_harita` | — | evet | 1–1,5 sa | ✅ **merge `313d126`** (36 alt/14 üst sınıf → merge sonrası 37 alt/15 üst; 21 test; bug gate WARNING kapatıldı → D17). Ölçüldü: 438 dosya 0 sorun · kök 239 test 0 failure 1197 sn · foundation 387 test + 905/905 senaryo 790 sn |
-| P2 | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, oneri, isaretle, butunluk, geri-al, kapanis, durum) + fixture üreteci + doctor `template_denetle` gürültü düzeltmesi | P1 | evet | — | ⬜ |
-| P3 | vaka kartları + sınıf kartları + `GUNCELLE.md` | P2 | evet | — | ⬜ |
-| P4 | `%guncelle` başlatıcı + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | — | ⬜ |
-| P5 | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet | — | ⬜ |
+| P2 | `scripts/guncelle.py` — **14 alt komut** (onkontrol, hazirla, plan, sec, olc, uygula, **kart**, oneri, isaretle, **ozel-adim**, butunluk, geri-al, kapanis, durum; §6 sözleşme tablosuyla birebir) + fixture üreteci. ⚠ doctor `template_denetle` gürültü düzeltmesi **P2'den ÇIKARILDI** (DÜZELTME-2, 2026-09-17) → Z5 → **P4'e dahil** (2026-09-18) | P1 | evet | — | ✅ **merge `4e8717e`** (entegrasyon dalı); 1562 satır; bug gate koşuyor |
+| P3 | vaka kartları + sınıf kartları + `GUNCELLE.md` | P2 | evet | — | ✅ **ENTEGRASYONDA** (`c4a8e2e`, merge `15cfd9a`, 2026-09-18 akşam; gate 2. tur kapandı). *Aşağısı tarihçe:* ~~DÜZELTME TURU BİTTİ, GATE DOĞRULAMASI KOŞUYOR — MERGE EDİLMEDİ.~~ Build `27c5476` (13 vaka + 15 sınıf kartı + kabul testi) entegrasyona alınmıştı; sonra doküman gate'i **BLOCKER** verdi → düzeltme turu **`c58ec1e`** (22 dosya, 375/25). Kapatılanlar: [HIGH] adım 8'den `oneri` zinciri çıkarıldı (ölçülmüştü: V7'de yanlış vaka etiketi, küçük V6d'de **V6d kartının silme yasağını atlatıyordu**) · [MEDIUM] otomatik vakalarda sınıf kartı okuma · [MEDIUM] iki commit beyanı (`hazirla`+`kapanis`) · [MEDIUM] adım 11'e somut kontrol-grubu reçetesi · [LOW×5] **yapısal çözüm**: 15 kartın 15'ine `## Kapsam (harita.json)` tablosu (iddia alt sınıf başına bağlandı, genelleşemez). Test 12→20, FAIL-FIRST 8 failure, mutasyon 8/8. ⭐ **M11 ilk denemede SAĞ KALDI** → ajan kendi testinin zayıf olduğunu ölçüp daralttı (regex çıplak dosya adını "somut komut" sayıyordu). **Lider bağımsız doğrulaması:** 22 dosya 375/25 · `V1R.md` diff **BOŞ** (P2 bölgesi, dokunulmamış) · `-k guncelle_kartlar` **20/0** · çalışma ağacında CRLF yok. ⏳ Bulan gate (`GATE-P3`) doğrulamaya çağrıldı; **kapsam büyüdüğü** (15 kapsam tablosu + 3 yeni test sınıfı) açıkça bildirildi ve o yüzey "hiç görülmemiş" muamelesi istendi + ≥5 bağımsız mutasyon. ⛔ **Hüküm gelmeden entegrasyona merge YOK.** |
+| P4 | `%guncelle` başlatıcı skill + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı **+ Z5 (doctor `template_denetle` gürültüsü — kullanıcı kararı 2026-09-18)** | P3 (yalnız FAZ B) | evet | — | ✅ **ENTEGRASYONDA** (`3fe2e0d`, merge `b6453fe`, 2026-09-18 akşam; GATE-P4'ün 5 WARNING'i kapandı). *Aşağısı tarihçe:* 🔵 **BAŞLADI** `feat/2026-09-18-p4-baslatici`. **FAZ A (P3'süz koşuyor):** Z5 + doctor INFO satırı + `CLONE_PROTECTED` + çekirdek §11. **FAZ B (P3 merge sonrası):** `skills/guncelle/SKILL.md` + motor sürüm testi + README satırı |
+| P5 | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet | — | ✅ **ENTEGRASYONDA** (`fd302dc`, merge `8897e3a`, 2026-09-18 akşam; gate BLOCKER + KG-1 kapandı) · ⬜ kapsam beyanındaki 3 açık kalem → üstteki "Açık kalemler" |
 | P6 | `kur.cmd -Sifirla` + bayraksız mesajlar + README tek satır varyantı + sığ klon statik testi | — | evet | 2–3 sa | ✅ **YEŞİL — commit `a9eba2c` + push (2026-09-16), merge'e hazır.** Üç kapı koştu; sonuncusunun BLOCKER'ı (gitlink veri kaybı) kapatıldı, lider son baytlar üzerinde bağımsız doğruladı (rc dağılımı HEAD ile birebir, `-k axet_guncelleme` 4/0). Ayrıntı: DEVAM NOKTASI ⑪/⑫. ~~🔴 ÜÇÜNCÜ KAPI → BLOCKER (2. tur)~~: ikinci kapının HIGH'ı kapandı, ama bir katman derini açık çıktı — `.axet-guncelleme/` içinde **commit'li gömülü depo** varsa yedeğe yalnız **gitlink** girer, bayrak "yedekte var" der ve depo **geçmişiyle birlikte sessizce, geri alınamaz** silinir (A/B/C ile ölçüldü). Kök neden `kur.ps1:520` `--name-only` ⇒ mod kaybı. Düzeltme dağıtıldı. Worktree `…\AI_WORKS\.wt\axet\p6-sifirla`, hâlâ **COMMIT'SİZ**. Ayrıntı: DEVAM NOKTASI "İKİNCİ TUR" ⑨/⑪. |
-| P7 | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` + `session_brief` günlük/kritik satırı | P1, P2 | evet | — | ⬜ |
-| P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | ⬜ |
+| P7 | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` + `session_brief` günlük/kritik satırı | P1, P2 | evet | — | ✅ **ENTEGRASYONDA** (`7187c92`, merge `214b868`, 2026-09-18 akşam; GATE-P7B → PASS). *Aşağısı tarihçe:* 🔵 **commit `4f77760`** (dal `feat/2026-09-17-p7-yayin`). Ölçüldü (lider bağımsız): `-k yayin_surumleri` 29/0 · `-k session_brief` 7/0 · `-k yayin_hazirla` 9/0 · sızıntı 436 dosya 0 bulgu EXIT=0 · mutasyon 9/9. 🔴 **DÜZELTME TURU:** lider ölçtü — `yayinlar.json` boş liste iken `template_bolumu` klonun geride olduğunu GİZLİYOR ("5 commit geride" → "template güncel"); merge olunca canlıya çıkardı. Fail-first + düzeltme + mutasyon istendi. |
+| P8 | B3 testi + B1/B2/B4 WARN (K3 kararı) | P2 | hayır | — | 🟡 **ERTELENDİ — kullanıcı kararı 2026-09-18.** Gerekçe: **kapsam belirsiz** — §13'teki *"B1–B4 (K3 kararı)"* atfı K3'ün içeriğiyle tutmuyor, hangi B maddeleri kastediliyor çözülemedi. Lider kapsamı kendi yorumuyla doldurmadı (seçenek sunuldu, kullanıcı *"P8'i ertele, kalan 7 maddeyi bitir"* dedi). **Yayını BLOKLAMAZ.** Açılış koşulu: kullanıcı B1–B4'ün ne olduğunu netleştirir. |
 | P9 | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası) | — | ⬜ |
 
 Paralel: P1 ∥ P6 → P2 → P3 ∥ P5 ∥ P7 → P4. Kod gate'i: P2, P4, P5, P6, P7 · doküman gate'i: P3 ve §11 metni.
+
+> 🟠 **LİDER KARARI — GATE TİPİ: "taze gate" mi, "aynı gate'in doğrulaması" mı (2026-09-18, otonom).**
+> *Kullanıcı yetkilendirdi ("sen karar al"); kuralı GEVŞETMİYOR, hangi durumda hangisinin geçerli
+> olduğunu ölçütlere bağlıyor.* Kullanıcının asıl şikâyeti şuydu: **düzelten kendi ödevini kendi
+> okuyor.* Koruması gereken değişmez de bu: **DOĞRULAYAN ≠ DÜZELTEN.** İki ayrı durum var:
+>
+> | Durum | Gate tipi | Gerekçe |
+> |---|---|---|
+> | **Hiç gate görmemiş build** (P4, P5) | 🔴 **TAZE gate** — sıfır bağlam, yeni ajan | Kodu ilk kez bağımsız bir göz okumalı; mutasyonu **gate seçer**, yazarın listesine bakmaz. |
+> | **Düzeltme turu** — bir gate'in KENDİ bulgularını kapatıyor (P2-fix, P3-fix) | 🟡 **Bulguyu bulan AYNI gate ajanı devam ettirilir** (`SendMessage`) ve düzeltmeyi kendi ölçümüyle doğrular | Bağımsızlık korunuyor: **doğrulayan yine düzelten değil.** Gate zaten fixture'larını kurmuş; sıfırdan taze gate her turda tüm paketi yeniden türetir ⇒ tur başına bir tam döngü kaybı. |
+> | **Düzeltme turunda KAPSAM BÜYÜDÜYSE** (bulgu dışı yeni kod/yeni komut geldi) | 🔴 **TAZE gate** | Eski gate o yüzeyi hiç görmedi; devam ettirmek "ölçülmemişi ölçülmüş saymak" olur. |
+>
+> ⛔ **Üç durumda da değişmeyenler:** ① mutasyonu **gate seçer**, yazan değil ② `rc=2` asla "geçti"
+> sayılmaz ③ **KAPSAM BEYANI** zorunlu ④ merge yalnız gate PASS/WARNING döndükten SONRA.
+> ⚠ Bu satır, P2'nin **93 yeşil testi + yazarın "10/10 mutasyon kırmızı" raporuna** rağmen taze
+> gate'in **4 mutasyondan 3'ünü sağ bulmasıyla** doğdu — "yeşil" ve "yazarın mutasyon raporu"
+> ikisi de kanıt değildir.
+
+> ⭐ **KULLANICI KARARLARI — 2026-09-18, OTONOM DEVİR.** Kullanıcı ekrandan kalkarken üç soru soruldu
+> ve üçü de cevaplandı; *"otonom devam et, sen karar al, bu maddelerin yarına bitmiş olması gerek"*.
+>
+> | # | Soru | **Karar** | Sonuç |
+> |---|---|---|---|
+> | 1 | Toplu CI yeşilse `main`'e merge'ü lider mi yapsın? | ✅ **Lider merge eder** | **Şartlar (hepsi, tek tek ölçülür):** ① entegrasyon dalındaki **HER** paketin taze gate'i PASS/WARNING ② toplu CI'ın **5 job'ı da** yeşil ③ ⛔ `gh pr merge --admin` **CI atlatmak için kullanılmaz**. Tek kırmızı varsa merge YOK — PR açık bırakılır, kullanıcıya raporlanır. Merge **geri alınamaz**. |
+> | 2 | P8 kapsamı belirsiz, ne yapılsın? | ✅ **Ertele** | Lider kapsamı **kendi yorumuyla doldurmaz**. §2 G tablosu P8 satırı 🟡; yayını bloklamaz. |
+> | 3 | Z6 ne zaman koşsun? | ✅ **Merge'den ÖNCE, paralel** | Z6 başlatıldı (§3 Z6). P1/P6 zaten main'de olsa da, vakum sınıfı orada da varsa `main`'e bir şey daha eklemeden görülecek. |
+>
+> **Ayrıca (kullanıcı talebi, aynı mesaj):** *"ajanlar benden onay istemesinler, bash onayı vs."* →
+> `PROVA/.claude/settings.local.json` `permissions.allow` **18 → 82 desen**. Eklenen sınıflar: okuma/arama
+> (`cat`/`grep`/`rg`/`find`/`diff`/`sha256sum`…), **salt-okuma git** (`status`/`diff`/`log`/`show`/`hash-object`/
+> `cat-file`/`ls-tree`… ve `git -C *` karşılıkları), test koşma (`run_tests.py`/`unittest`/`python -c`),
+> scratch yazımı (`mkdir -p`/`cp`/`touch`). ⛔ **BİLEREK DIŞARIDA BIRAKILANLAR:** `rm` · `git push` ·
+> `git commit` · `git checkout` · `git restore` · `git stash` · `git reset` · `gh` · `curl` · `pip install`.
+> Gerekçe: bunlar ya **geri alınamaz** ya da ajanın hiç yapmaması gereken işler (commit = lider). Dosya
+> **gitignore'lu ve behavior-manifest'te değil** (ölçüldü) ⇒ manifest yenilemesi ve PR gerekmiyor.
+
+> 🔴 **SÜREÇ KURALI — GATE'SİZ MERGE YOK (kullanıcı uyarısı 2026-09-18, lider hatası kabul edildi).**
+> **İhlal edildi:** lider P2'yi (`4e8717e`), P3'ü (`4601ee4`) ve P7'yi (`d980c48`) **taze gate'leri
+> koşarken** entegrasyon dalına aldı. Gerekçe (P3/P5/P7 P2'ye bağlıydı, beklemek üç ajanı boş
+> bırakırdı) hatayı ortadan kaldırmıyor. Sonuç ölçüldü: P2'nin gate'i **BLOCKER** verdi ve
+> entegrasyon dalı bir süre 2 BLOCKER + 3 HIGH taşıdı. `main`'e hiçbir şey gitmedi — geri alınamaz
+> zarar yok, ama sıralama yanlıştı.
+> **Bundan sonra:** ① lane biter → lider **commit'ler** (commit'siz iş penceresi kapanır)
+> ② **taze gate** koşar → PASS/WARNING ③ **ancak o zaman** entegrasyona merge. Commit ≠ merge.
+> ④ Entegrasyon dalında gate'i dönmemiş paket varsa **`main`'e PR AÇILMAZ**.
+
+> 🔴 **TEST STANDARDI — "yeşil" kanıt değildir; BAĞIMSIZ MUTASYON zorunlu (2026-09-18, P2 gate'inde ölçüldü).**
+> P2'nin **93 testi yeşildi** ve yazan ajan **10/10 mutasyon kırmızı** demişti. Taze gate **kendi
+> seçtiği** 4 mutasyonu denedi: **3'ü SAĞ KALDI**. Yani yazan ajanın mutasyon iddiası, testlerin
+> gerçek koruma gücü hakkında hiçbir şey söylemiyor — mutasyonu **yazan değil, gate seçmeli**.
+> Ölçülen üç tuzak biçimi (hepsi P2'de gerçek):
+> - **Adı ölçmediği şeyi vaat eden test:** `test_V6_silinir_ama_V6d_silinmez` içinde tek bir V6
+>   iddiası yok; V6 dalı 30 testin hiçbirinde yürütülmemiş.
+> - **Beklenen hatanın ölçülmek istenen koşuldan ÖNCE tetiklenmesi:** `kapanis`'in atlanamazlık
+>   kuralı TAMAMEN silindiğinde 15 testin 15'i yeşil kaldı (test zaten başka bir eksiğe takılıyordu).
+> - **Mutasyonun güven veren YANLIŞ çıktı üretmesi:** WARN üretimi silinince satır *"hiçbirinde
+>   sapma yok"* oldu — çekirdek §7 KAPSAM BEYANI tuzağının birebir örneği. En tehlikeli biçim budur.
+> **Zorunlu:** her gate brifingi "kuralı tamamen KALDIR, test hâlâ yeşilse kural korumasızdır"
+> mutasyonunu + **kontrol grubunu** (mutasyonun etkili olduğunun kanıtı) içerir. Mutasyonla
+> ölçülmemiş PASS kabul edilmez.
 
 **Karar ve tasarım kaydı** (2026-09-15 gün sonunda DEVAM NOKTASI'ndan taşındı):
 **✅ KARAR (kullanıcı onayı 2026-09-15, "7 madde ok") — tüketici güncelleme mimarisi.** Bu blok aşağıdaki eski "yerel katman" tartışmasının YERİNE geçer; eski metin tarihçe olarak altta.
@@ -643,6 +1194,73 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 - PROVA hook yanlış pozitifleri (PostToolUse "SAP işlemi BAŞARISIZ" kod metni gösteriminde).
 - Env mirası sınıfı: süreç içinde `.conn_adt` değişince bağlantı eski sistemde kalıyor ve ADR 0010 guard'ı env'i env ile karşılaştırıyor (aXet'te ölçüldü → D12). DEV_CORE'daki uzun yaşayan MCP sunucusunda aynı sınıf daha etkili olabilir — ÖLÇÜLMEDİ.
 
+## 2b. ✅ KAPANDI — P2 `kapanis` sessiz `git add` iptali (GATE-P2B, 2026-09-18)
+
+> **KAPANDI (`e34ab81`, merge `6fb557e`):** süzgeç artık index/çalışma ağacına göre, `git add` hatası `eksikler`'e giriyor. P2 bataryası 152/0. Taze gate (kapsam büyüdüğü için) 2026-09-18 akşam koşuyor → hükmü üstteki güncel bölümde. Aşağısı **tarihçedir**.
+
+**Dal `fix/2026-09-18-p2-gate-bulgulari` (`e1108f9`) MERGE EDİLEMEZ.** Taze gate 27 mutasyon
+koştu; 25 öldü, 2 sağ kalan da geçersiz (biri ikinci guard'la maskeli, biri eşdeğer) ⇒
+**düzeltme turunun kendisi doğru**. BLOCKER mutasyondan değil: gate, sağ kalan mutantı
+kovalarken **mutasyonsuz, sevk edilecek kodda** yeni bir HIGH kusur ölçtü.
+
+**Kusur — `scripts/guncelle.py`, `kapanis` komutunun `git add -- <yollar>` daraltması
+(bu diff'te EKLENDİ; taban `git add -A -- :!…` kullanıyordu ⇒ PRE-EXISTING DEĞİL):**
+
+```python
+add_yollari = [y for y in add_yollari
+               if (k.kok / y).exists() or k.blob_sha("HEAD", y)]   # ← HEAD YANLIŞ ÖLÇÜT
+```
+
+`git add` pathspec'i **index + çalışma ağacına** göre eşler, **HEAD'e göre DEĞİL**.
+`Klon.sil()` `git rm -q --cached` yaptığı için silinen yol **index'ten düşer**; dosya HEAD'de
+durduğundan süzgeç onu **elemiyor** → `git add` `fatal: pathspec '…' did not match any files`
+verip **hiçbir yolu stage etmeden komple iptal ediyor**.
+
+**Ölçülen sessiz-hata zinciri (`--karar birlesik` ile, gate'in arena fixture'ında):**
+```
+kapanis rc = 0                                   ← "temiz kapandı" diyor
+git add uyarisi: fatal: pathspec 'docs/silinecek2.md' did not match any files
+core/00-temel.md commit'te mi      : False       ← BİRLEŞTİRME SONUCU COMMIT'E GİRMEDİ
+HEAD'de 'Çekirdek v3' var mı        : False
+diskte  'Çekirdek v3' var mı        : True
+```
+⇒ Kullanıcının birleştirdiği içerik commit'lenmiyor, `uygulanan.json`'a *"v3'te uygulandı"*
+yazılıyor ve `kapanis` **0** dönüyor. **Kayıp sessiz.**
+
+**Nedensellik kanıtlandı (kontrol grubu + fix-probe):**
+- Kontrol grubu: V6'yı V6d'ye çevirip otomatik silmeyi kaldırınca kusur **devam etti**, bu kez
+  suçlu `docs/tasinacak.md` ⇒ V6'ya özgü değil, **`k.sil()`'in dokunduğu her yola** ait
+  (V6 · V1R · `--karar yeniden-adlandir`/`yeni`/`birlesik`'in taşıma kaynağı).
+- Fix-probe: süzgeç `if (k.kok / y).exists()` yapılınca → `git add` uyarısı YOK,
+  `core/00-temel.md` commit'te **True**, HEAD'de v3 **True**.
+
+**Mevcut koruma neden yetmiyor:** `r_add.returncode != 0` yalnız `UYARI:` basıyor,
+**`eksikler`'e girmiyor** ⇒ `kapanis` 0/3 kalıyor, `uygulanan.json` mühürleniyor,
+`RAPOR.md` "KAPANMADI" demiyor. Hiçbir test `git add` çıkışını ölçmüyor.
+
+**Karşılanması gereken (3 madde):**
+1. `add_yollari` süzgeci **çalışma ağacında VAR olan** yollara kurulmalı (silmeler
+   `Klon.sil()` tarafından zaten stage'li).
+2. `git add` başarısızlığı **sessiz UYARI olamaz** — `eksikler`'e girip `kapanis`'i 1'e
+   düşürmeli (**ölçülemedi ≠ temiz**).
+3. `--karar birlesik` sonrası içeriğin kapanış commit'inde olduğunu doğrulayan test —
+   bugün 146 testin **hiçbiri** bu yolu kapanışa kadar sürmüyor.
+
+⚠ **Ayrıca gate, `tests/test_guncelle.py`'deki "daraltma, iptal DEĞİL" kanıtının YANILTICI
+olduğunu ölçtü** (vakum sınıfı ③): `assertIn("scripts/sap_stamp.py", dosyalar)` `git add`
+tümden patlamışken de geçiyor — çünkü o dosyayı `checkout_yol` stage'lemiş. [MEDIUM]
+
+**Gate'in diğer bulguları:** `olc` harita komutunu **allowlist'siz** koşuyor (asimetrik guard)
+[MEDIUM] · 3 vakum dizge assertion'ı (rc kolu sağlam, yalnız yanıltıcı güven) [LOW] ·
+`cozulemeyen` DUR'u yalnız `komut_plan`'da [LOW] · `VAKA_IZINLI_KARARLAR` otomatik vakaları
+daraltmıyor [LOW] · allowlist bayrak kolu yalnız birleşimde ölçülüyor [LOW].
+
+**Pre-existing, ayrı kalem:** `tests/test_guncelle_harita.py` `(AXET_HOME / yol).exists()`
+Windows MAX_PATH'e duyarlı — 260+ karakterlik kökte **sahte FAIL** (ölçüldü: 269 char → False,
+159 char → True). Bu değişimi bloklamaz.
+
+**SIRA:** Kullanıcı kararı gereği **önce Z11**, P2 düzeltme turu **Z11 mimarisiyle** koşar.
+
 ## 3. Ertelenmiş tetikler
 | # | Madde | Tetik |
 |---|---|---|
@@ -650,6 +1268,14 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 | Z2 | Pretty printer aracı | ihtiyaç doğarsa (değer düşük) |
 | Z3 | aXet LSP config desteği ölçümü | LSP gerektiren iş |
 | Z4 | Agentic connector ölçümü (`docs/agentic-connectors.md` §6) | kullanıcı ayrı onayı |
+| Z5 | **doctor `template_denetle` gürültü düzeltmesi** — ✅ **KAPANDI: P4'E DAHİL EDİLDİ (kullanıcı kararı 2026-09-18, "Z5'i de P4'e dahil et").** Gerekçe ölçüldü: Z5 ile P4'ün doctor bilgi satırı `scripts/doctor.py:777-785` — **birebir aynı 9 satırlık bloğu** hedefliyor; ayrı dallarda yapılsa metinsel çakışma kesindi. TASARIM §13 DÜZELTME-2'nin kendi tavsiyesi de buydu. Uygulama: dal `feat/2026-09-18-p4-baslatici` (FAZ A/A1). | ~~K12 merge sonrası~~ → P4 ile birlikte |
+| Z6 | **P1 ve P6'nın test takımlarına geriye dönük BAĞIMSIZ MUTASYON denetimi** — ikisi de `main`'e merge edildi (P1 eski tarihçede `313d126`, içerik main'de; P6 `8f9b5cd`) ve gate'lerinden geçti, ama gate'leri P2'de ölçülen "vakum assertion" sınıfını aramıyordu (o sınıf 2026-09-18'de keşfedildi). Kapsam: **P1** = `guncelle/harita.json` + `guncelle/siniflandir.py` + `tests/test_guncelle_harita.py` · **P6** = `kur.ps1` + `kur.cmd` + `tests/test_kur.py`. Yöntem: paketin korumak istediği kuralı **tamamen kaldır** → test yeşil kalıyorsa bulgu; mutasyonu **gate seçer**, yazarın listesine bakılmaz; paket başına ≥6 mutasyon. | 🔵 **KOŞUYOR (2026-09-18)** — kullanıcı kararı: *"merge'den ÖNCE, paralel koşsun"*. Taze `bug-expert`, izole worktree `.wt/axet/z6-denetim` (dal `denetim/2026-09-18-z6`, HEAD `1777e99` = `origin/main`). **Lider ön ölçümü (tarayıcı, aday — kusur değil):** `test_guncelle_harita.py` **3 aday** (`:98`, `:106`, `:199` — üçü de adında `s3` var, gövdede yok) · `test_kur.py` **0 aday** ⚠ *0 bulgu ≠ temiz* (tarayıcı iki dar yüzeye bakıyor) → P6'ya da **tam mutasyon turu** emredildi. |
+| Z7 | **Test hijyeni turu — kalan 19 vakum-assertion adayı + tarayıcının repoya alınması.** Lider `vakum_tara.py`'yi yazdı, **kalibre etti** ve entegrasyon dalında koşturdu: **18 dosya · 419 test fonksiyonu · 43 bulgu** (`ASSERT-YOK` 0 · `AD-GOVDE` 18 · `RC-AYIRT-EDİLEMEZ` 25). ⚠ **Aracın kendisinde iki kusur bulundu ve düzeltildi (2026-09-18):** ① gövde dilimi `def` satırını içeriyordu ⇒ **her test kendi vaadini kendi adıyla kanıtlıyordu**, AD-GÖVDE boyutu baştan ölüydü ② sözcük sınırına `_` dahildi ⇒ `s3` simgesi `s3_cekirdek` bileşik adı içinde geçtiği hâlde "yok" sayılıyordu (3 sağlam test yanlışlıkla bulgu oldu, Z6'ya gönderilmişti, **geri çekildi**). İkisi de **kontrol grubuyla** yakalandı: bilinen doğru-pozitif (`test_V6_silinir_ama_V6d_silinmez`) + bilinen doğru-negatif (`test_s3_*`). Ders hafızaya yazıldı. ⇒ **Araç repoya girerken bu iki kalibrasyon kontrolü TESTİ olacak.** Bunların bir bölümü P2-fix ajanına verildi (`test_guncelle.py`, **10 kalem** — düzeltmeden etkilenmediler, yeniden ölçüldü); **kalan 33'ü** `test_doctor` · `test_install` · `test_yayin_surumleri` · `test_new_package` · `test_precommit` · `test_behavior_manifest` · `test_package_naming` · `test_new_project` · `test_yeni_proje` dosyalarında. **Şimdi yapılmıyor çünkü** bu dosyalar P4 ve P5 ajanlarının elinde — iki lane çakışır. ⚠ **Aday ≠ kusur:** her biri mutasyonla ölçülecek (kuralı kaldır → test yeşilse bulgu), sağlam çıkanlar rapora *"ölçüldü, sağlam"* diye yazılacak. Ayrıca `maintenance/vakum_tara.py` kendi testiyle repoya girer — ⛔ **GATE DEĞİL**, elle koşulan teşhis aracı (gate açmak ADR 0019 onay zinciri ister, istenmedi). | 🟢 **KISMEN KAPANDI 2026-09-18** — çakışmayan 6 dosyadaki **23 aday ölçüldü** (dal `z7/2026-09-18-vakum`, commit `33d0746`): **2 GERÇEK VAKUM + 1 maskelenmiş kör nokta** düzeltildi, 20 aday **ölçüldü-SAĞLAM**. ① `test_bos_legacy_statuses_HICBIR_SEY_uretmez` — kural `rest_pr_oku`'nun kabloladığı yerde yaşıyordu, test sabit argümanla `rest_rollup`'u çağırdığı için sızıntı noktası **hiç koşmuyordu**; mutant altında ürün hayalet *bekleyen kontrol* üretti = araç sonsuza dek kilitlenir ② `test_gecersiz_adlar_red` — rc=2 ad kuralından değil *“modül çıkarılamadı”* korumasından geliyordu; ad kuralı tümden silinince **5/5 yeşil kaldı** ve ürün `MM001` (⚠ **standart ad alanı**) klasörünü fiilen yarattı ③ `test_ayni_paket_ikinci_kez_red` — çapraz-modül kolu yol-çarpışması guard'ı tarafından maskeleniyordu (zayıf mutant). Ürün kodu **değişmedi**; +106/−14, 3 yeni test (2'si kontrol grubu). **Kalan 20 aday** (`test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 · `test_behavior_manifest` 2 · `test_yayin_surumleri` 1) hâlâ lane'lerin elinde → **merge sonrası, Z11 mimarisiyle**. |
+
+| Z8 | **Test fixture'ı her testte sıfırdan proje üretiyor — `setUp` maliyeti ÖLÇÜLDÜ.** `tests/_helpers.py:75` `GeciciTest.proje()` her test için `git init` + `new_project.py` + `new_package.py` **alt süreçlerini** koşuyor. Ölçüm (5 tur ort., 2026-09-18): `git init` **0,40 sn** · `new_project.py` **1,24 sn** · `new_package.py` **0,47 sn** = **test başına 2,10 sn**. Ölçülmüş alternatif: kalıbı bir kez üretip `shutil.copytree` ile kopyalamak = **0,25 sn** (46 dosya / 51 KB) ⇒ test başına **1,85 sn** kazanç. Etkilenen: `setUp`'ında proje kuran 3 sınıf — `PrecommitTest` (16 test) · `PackageNamingTest` (13) · `ProjeManifestTest` (10) = **39 test**, toplam kazanç **~1,2 dk**. ⚠ **Kaldıraç mütevazı, abartma:** `-k precommit` profili = **111 sn / 16 test**; bunun 34 sn'si `setUp`, kalan **77 sn test gövdelerinde** ve orası indirilemez — her test `git add` + `project_precommit.py` + `git commit` alt süreçleri koşuyor, suitin işi zaten bu (Python yorumlayıcı açılışı tek başına **216 ms**). **Elenen hipotezler (ölçüldü, tekrar kovalanmasın):** OneDrive senkronu (yaratma 10,8 ms vs yerel 10,4 ms; `git status` 0,35 sn) · test keşif/import maliyeti (**1,1 sn**) · koşucunun "N sn"i ile duvar süresi farkı (sabit **1,1–1,5 sn**) · eşzamanlılık çekişmesi (aynı süzgeç 23,4 → 31,6 sn = **1,35x**, gerçek ama küçük). ⛔ **ŞİMDİ YAPILMADI, bilinçli:** `tests/_helpers.py` **beş lane'in de kullandığı** paylaşılan dosya; şimdi dokunmak hepsiyle çakışır. | **tüm lane'ler merge olduktan sonra**, tek turda |
+| Z9 | **`scripts/new_project.py:95` — `templates/project/**` altındaki ikili dosya `new_project.py`'yi çökertiyor.** `text = _doldur(src.read_text(encoding="utf-8"), name)` → `UnicodeDecodeError: 'utf-8' codec can't decode byte 0x89 in position 0`, traceback ile. **PRE-EXISTING** (P5 gate'i ölçtü: `bf1489f^` sürümünde de aynı satır, P5 diff'i dokunmuyor) ⇒ hiçbir lane'i bloklamaz. **Etkisi:** `guncelle_proje.py`'nin V4B / `ikili_mi` yolunun (`:81-86`, `:246-252`, `:168-170`) test edilebilirliğini engelliyor — düzeltilmeden o yol **hiçbir zaman uçtan uca ölçülemez**. | ikili şablon dosyası ihtiyacı doğduğunda ya da V4B yolu ölçülmek istendiğinde |
+| Z10 | **`scripts/doctor.py:794` docstring'i fazla iddialı.** *"Bilgi kaybı yok: dosya yolları satırda aynen listelenir."* P4 gate'i ölçtü: `_kisalt` varsayılan sınırı **8**; **10 dosyalık girdide `core/d8.md` ve `core/d9.md` satırda YOK**, yerine `…` var. Bilgi kurtarılabilir (dosya **sayısı** + `git -C <template> log -p --author=guncelle@yerel` inceleme komutu satırda duruyor) ama *"aynen listelenir"* yanlış. WARN dalında da aynı kırpma var; **pre-existing**. `behavior_manifest --template` CLI'si kırpmıyor, tüm yolları basıyor. | belge doğruluk turu |
+| **Z11** | ⭐ **ORTAK MUTASYON KOŞUCUSU — `maintenance/mutasyon_kos.py`.** **KULLANICI KARARI 2026-09-18:** *"yeni ajan başlatma, çalışan ajanlar bitince ilk iş Z11'i yap, kalan adımlar Z11'li mimari ile koşsun."* **ÖLÇÜLEN GEREKÇE:** bu oturumda 24 ajan **90 ayrı `.py` dosyası** yazdı (K12-gate 13 · G/P4+Z5 12 · D17-gate 11 · P7-gate 8 · P5-gate 6 …). Bunların çoğu **aynı kalıbın kopyası**: **11 ajan** `run_tests.py` alt-süreç sarmalayıcısını, **13 ajan** sha256'lı geri-alma düzeneğini **bağımsız olarak yeniden yazdı**. Bedel ölçüldü: GATE-P4'ün ürettiği 60.704 token'ın **~14.800'ü (%24) Python kaynak kodu** — yani ajanın en büyük tek üretim kalemi testler değil, **her seferinde sıfırdan yazdığı alet**. ⚠ **Mükerrer iş testlerde DEĞİL, alet yapımındadır** — kullanıcının *"mükerrer iş yapıyor olabilir"* hipotezi burada doğrulandı. **ARAÇ, BU OTURUMDA PAHALIYA ÖĞRENİLEN 7 TUZAĞI İÇİNDE TAŞIR** (her biri bir ajanın sessiz körleşmesine mal oldu): ① kırılan test adı **`(stderr + stdout)` birleşik havuzundan** okunur — `unittest.TextTestRunner` FAIL/ERROR özetini **stderr**'e, `SONUÇ:` satırını stdout'a yazar; yalnız stdout'u ayrıştıran düzenek *"doğru test mi kırıldı"* sorusunu **sessizce cevapsız** bırakır ② `rc=2` (hiç test eşleşmedi) ve `rc=124` (zaman aşımı) **asla** "geçti" sayılmaz — sinyaldir, ölçüm değil ③ geri alma **DAİMA repo-dışı kopyadan + sha256 doğrulamasıyla**; `git checkout -- / restore / stash / reset` **YASAK** (commit'siz lane'in tümünü siler) ④ mutasyondan **ÖNCE** `yedek_dogrula()` — yedek var mı **ve** diskle aynı mı (Z7'de sürücünün yedek-adı üretimi `replace("/","__")` iken kabuk `tr '/' '_'` yapıyordu; `scripts/yeni_proje.py` **0 bayta düştü**, repo-dışı yedek olmasa kurtarılamazdı) ⑤ `geri_al` **önce kaynağı okur, sonra** hedefe yazar — ters sıra hedefi truncate eder ⑥ her mutasyondan sonra `py_compile` — çöken mutant **geçersizdir**, "öldü" sayılmaz ⑦ **dar süzgeçle "öldü" denebilir, "sağ kaldı" DENEMEZ** — sağ kalma iddiası tam modül ister, yoksa hüküm `ÖLÇÜLEMEDİ` (ölçüldü: sağ kalmayı kanıtlamak ölmeyi kanıtlamaktan **~20x** pahalı — 8,6 sn dar vs 191,6 sn tam modül). **AYRICA Z7'NİN YAPISAL BULGUSUNU ÇÖZER:** fixture'lar repo-dışı `mkdtemp` kullandığı için izole, ama mutasyon **paylaşılan `scripts/*.py`** üzerinde yapılıyor ⇒ o pencerede koşan başka bir lane'in ölçümü bozulabilir (Z7 ajanı bunu bildirdi, **DOĞRULANMADI** — ölçemedi). Araç ya lane'in kendi worktree'sinde mutasyon yapar ya da ürün-dosyası mutasyonlarını **kilitle serileştirir**. ⛔ **GATE DEĞİL** (ADR 0019 moratoryumu) — `vakum_tara.py` gibi **elle koşulan teşhis aracı**; kendi kalibrasyon testleriyle repoya girer (bilinen ölen mutant + bilinen sağ kalan mutant + bilinen çöken mutant). ⛔ **ŞİMDİ YAPILMADI, bilinçli:** 4 ajan (GATE-P2B · GATE-P7B · P4-FIX · P5-FIX) hâlâ eski kalıpla koşuyor; altlarındaki zemini değiştirmek ölçümlerini bozar. | **koşan 4 ajan bitince — SIRADAKİ İLK İŞ**; sonraki tüm adımlar (kalan 20 Z7 adayı, kalan gate'ler) bu mimariyle koşar |
 
 ## 4. Kapananlar (bu denetimde bayat bulunup düzeltilen kayıtlar, 2026-09-14)
 - sync-rules `PROVA:conn/*` planlı → kısmi (`switch_tier`/`setup_credentials` var, canlı yok).
@@ -676,3 +1302,12 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 - 2026-09-14 — Gün sonu: K8b tam doğrulama (`0087228`) · K1/D1 uygulandı, bug gate BLOCKER (`0f18b30` WIP) · D11 kilit politikası uygulandı (`4bc95a5` WIP) · uygulandı, tam foundation 677/677 (`4ceed2f` WIP) · lock satırı D10→D11 (numara çakışması) · devam noktası en üstte.
 - 2026-09-15 — (oturum 62b9776f, 09-14 akşam → 09-15 gece) Kilit, D3, adım 4 ve K1/D1 dalları kurulum dalına birleştirildi (Kapananlar 2026-09-15); birleşik foundation 895/895 · 383, kök 218 test · 0 failure · 522 sn. Güncelleme mimarisi kararları (7 madde, Q1–Q4, K1–K4) + Aşama 1 envanter + Aşama 2 tasarım → §2 G, belgeler `maintenance/guncelle-mimari/`. Açıklar D12–D15, kararlar K10–K12, diğer bilgisayar X. DEVAM NOKTASI yeniden yazıldı, eski hâli arşivde. Sıradaki: G/P1 ∥ G/P6 (+D5), başlatma teyidi kullanıcıdan.
 - 2026-09-15 — (oturum 77a15ab5, aynı gece devamı) P1 merge (`313d126`) + `C:\test_axet` karşılaştırma kataloğu TX-01..28 kullanıcı tek tek onayladı → TX-04/05/09/11/12/13/14/15 uygulandı (7 commit, `b77b3bd`..`2f6cb99`) + K3 (`adt_search_objects` truncated) + D17-① (sessiz 0-test kapatıldı, 4 koşucu) + D16 yeniden ölçüm (kullanıcıya soru olarak bırakıldı). Sonra G/P6 (`-Sifirla`) ve TX-01 (kalite karnesi) paralel worktree'de başlatıldı: TX-01 ilk bug gate BLOCKER verdi → düzeltme turu; P6 kendi turunu bitirdi. **Kullanıcı gün sonu istedi** — P6'nın ikinci-kapı doğrulaması ~20 sn'de, TX-01'in kendi son doğrulaması kök-takım sonucu gelmeden DURDURULDU (ikisi de `TaskStop`, worktree dosyaları KORUNDU, commit YOK). DEVAM NOKTASI ikinci kez yeniden yazıldı (P6+TX-01 ayrıntılı durum + yarının tam sırası). Sıradaki: TX-01'i bitir (kök takım + taze bug-expert) → P6'yı bitir (taze bug-expert) → merge ikisi de → birleşik takım yeniden → K12/D16/D17-kalan/K10/K11.
+- 2026-09-17 — (oturum e3ec997b) **Kullanıcı: "bunları yapıp kapatmaya başla; her defasında CI koşturma, en son toplu CI + merge; mümkün olduğunca paralel iş yaptır."** 6 lane paralel koştu, hepsi bitti ve dalına commit'lendi: **K12** (`cef0877`,`74829b7`,`449ba39`) · **K11** (`06bfcdf`,`60808f9`,`2400b4a`) · **K10** (`fdd2982`) · **D17** (`b6a3b9a`) · **D16** (`86e052c`) · **G/P2** (`4e8717e`, 1562+955 satır, 14 alt komut, kök takım 346 test 0 failure).
+  · **İki bug gate de BLOCKER verdi, ikisi de aynı turda kapatıldı.** K12'ninki GERÇEKTİ ve CI'ı kıracaktı (test kurulum yolunun UZUNLUĞUNA bağlıydı; CI `D:xetxet` → deterministik kırmızı). K11'inki tamamen BELGE düzeyindeydi; lider beş iddiayı da bağımsız ölçtü, beşi de doğru çıktı.
+  · **KULLANICI KARARI: `git -C` desenleri de eklensin** → 6 dar desen (40→46), 13/13 hedef deny, 12'lik kontrol grubunda yanlış pozitif yok, mutasyon 2/2. `-c ayar=değer` ve `checkout .`/`restore .` aileleri bilinçli açık, testle kilitli.
+  · ⭐ **ENTEGRASYON DALI ERKEN KURULDU (`integrasyon/2026-09-17`) ve bu bir kırılma yakaladı:** 6 lane metinsel çakışmasız birleşti AMA **K11 ve K12 tek başlarına yeşilken birleşimleri KIRMIZIYDI** (`test_ezme_uzun_ask_deny_ezebilir_warn`; K11'in `*git reset *--hard*` deseni testin 'tam olarak TEK deny' çivisini kırdı). Davranış doğruydu, çivi kırılgandı → ölçüt sağlamlaştırıldı. **Ders: lane-yeşili birleşim-yeşili DEMEK DEĞİL; entegrasyon dalı sonda değil ERKEN kurulur.**
+  · Entegrasyon ağacında ölçüldü: `-k doctor` 67/0 · `-k install` 23/0 · `-k guncelle_harita` 28/0 · sızıntı taraması 431 dosya **0 bulgu EXIT=0** · K11×K12 çapraz doğrulama temiz (K11 kaydındaki "merge sonrası doğrula" kalemi kapandı).
+  · **Lider hatası (kayda geçsin):** gate brifinglerine "mutasyonu `git checkout -- <dosya>` ile geri al" yazmıştım; iş COMMIT'SİZ olduğu için bu K12'de 211, K11'de 230 satırı YOK EDEBİLİRDİ. K12 gate'i fark edip scratchpad kopyası kullandı, K11 gate'i zamanında uyarıldı. **Kalıcı çare: lane işi biter bitmez lider commit'ler** (feature dalı CI tetiklemiyor) ve gate brifingi scratchpad yedeği ister.
+  · Sonra **P3 ∥ P5 ∥ P7** entegrasyon dalından başlatıldı (+ P2 bug gate). P8 BAŞLATILMADI: TASARIM §13 onu "P2 + kullanıcı onayı" ve "yayından önce: hayır" diye işaretliyor, ayrıca "B1–B4 (K3 kararı)" atfı K3 satırının içeriğiyle (adt_search_objects truncated) uyuşmuyor → kapsam netleşmeden ajan açılmadı.
+  · TASARIM düzeltmeleri: §13 P2 12→14 komut · §4 R100 vakası · §14 bitişik-satır çakışma ölçümü · §3 sınıf sayısı 36/12 → **38/13** (ölçüldü; üst sınıf 15) · §6 `uygulanan.json` iki boyutlu şema (P7 buna bağlanacak) · §13 doctor `template_denetle` P2'den çıkarıldı → **Z5**.
+  · **Sıradaki:** P3/P5/P7 + P2 gate biter → entegrasyona al → `scripts/session_brief.py` birleştirmesi (P5 tetik satırı + P7 günlük/kritik satırı) → **tek toplu CI** → merge → `behavior_manifest.py generate` (F2: `config/permissions.json` değişti) → Z5 (doctor `template_denetle`) → P4.

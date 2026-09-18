@@ -70,10 +70,13 @@ class DoctorTest(GeciciTest):
         self.assertIn("emekli izin deseni yalnız global config'te aranır", kapsam, "kapsam beyanı eksik")
         self.emekli_ekle({"git reset --hard*": "deny", "*deploy_ui.py*deploy *": "ask"})
         r = self.doctor(d)
-        self.var(r, "WARN", "emekli template izin deseni kaldı (2)")
-        self.var(r, "WARN", "bash:git reset --hard*")
-        self.var(r, "WARN", "bash:*deploy_ui.py*deploy *")
-        self.var(r, "WARN", "install.py")
+        # NOT: desen adları EMEKLİ satırında aranır — K12 ezme kontrolü de aynı desen adını yazabilir (o satır
+        # emekli mantığından bağımsızdır); süzgeç dar tutulmazsa bu test emekli mantığı bozulsa da geçerdi.
+        emekli_satir = [s for s in self.satirlar(r) if "emekli template izin deseni kaldı (2)" in s]
+        self.assertEqual(len(emekli_satir), 1, r.stdout)
+        self.assertTrue(emekli_satir[0].startswith("[WARN]"), emekli_satir[0])
+        for parca in ("bash:git reset --hard*", "bash:*deploy_ui.py*deploy *", "install.py"):
+            self.assertIn(parca, emekli_satir[0])
         self.assertFalse([s for s in self.satirlar(r) if s.startswith("[INFO]") and "emekli" in s])
         self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
 
@@ -82,7 +85,8 @@ class DoctorTest(GeciciTest):
         self.emekli_ekle({"rm -rf *": "deny"})  # install'ın yazdığı karar 'ask'; kullanıcı 'deny' yapmış
         r = self.doctor(d)
         self.var(r, "INFO", "bash:rm -rf *")
-        self.assertFalse([s for s in self.satirlar(r) if s.startswith("[WARN]") and "emekli" in s], r.stdout)
+        self.assertFalse([s for s in self.satirlar(r) if s.startswith("[WARN]") and "emekli template izin" in s],
+                         r.stdout)
 
     def test_emekli_listesi_install_py_den_gelir(self):
         self.global_config()
@@ -90,11 +94,119 @@ class DoctorTest(GeciciTest):
         with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(self.xdg)}):
             with mock.patch.object(doctor, "results", []) as sonuc:
                 doctor.check_global()
-            self.assertFalse([m for _, m in sonuc if "emekli" in m], "kontrol: listede olmayan desen emekli sayılmamalı")
+            # süzgeç "emekli template izin deseni"dir, düz "emekli" değil: desen adı 'emekli' içeriyor ve K12 ezme
+            # kontrolü de aynı adı yazıyor → dar süzgeç olmadan bu test emekli mantığından bağımsız geçerdi
+            self.assertFalse([m for _, m in sonuc if "emekli template izin deseni" in m],
+                             "kontrol: listede olmayan desen emekli sayılmamalı")
             with mock.patch.object(doctor, "results", []) as sonuc, \
                     mock.patch.object(doctor.inst, "RETIRED_RULES", {"bash": {"*sahte-emekli*": "ask"}}):
                 doctor.check_global()
-            self.assertTrue([m for s, m in sonuc if s == "WARN" and "bash:*sahte-emekli*" in m], sonuc)
+            self.assertTrue([m for s, m in sonuc if s == "WARN" and "emekli template izin deseni kaldı" in m
+                             and "bash:*sahte-emekli*" in m], sonuc)
+
+    # --- K12: canlı config'teki ask/allow deseni template deny'ını uzunlukla ezebilir (yalnız WARN) -------------
+    EZME = "uzunlukla ezebilir"
+
+    def kural_ekle(self, arac: str, kurallar: dict) -> None:
+        f = self.xdg / "axet-code" / "axet-code.json"
+        cfg = json.loads(f.read_text(encoding="utf-8"))
+        cfg["permissions"]["rules"].setdefault(arac, {}).update(kurallar)
+        f.write_text(json.dumps(cfg, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    def ezme_satirlari(self, r) -> list[str]:
+        return [s for s in self.satirlar(r) if self.EZME in s]
+
+    def test_ezme_uzun_ask_deny_ezebilir_warn(self):
+        d = self.sap_proje()
+        kontrol = self.doctor(d)
+        self.assertEqual(self.ezme_satirlari(kontrol), [],
+                         f"kontrol: taze kurulumda ezme satırı olmamalı:\n{kontrol.stdout}")
+        kapsam = next((s for s in self.satirlar(kontrol) if s.startswith("KAPSAM")), "")
+        self.assertIn("uzunluk-önceliği yalnız global config'te aranır", kapsam, "kapsam beyanı eksik")
+        # ① gerçekten yaşandı: bu ask deseni '*git reset --hard*' deny'ını ezip komutu sorulmadan çalıştırmıştı
+        self.kural_ekle("bash", {"*Remove-Item*-Recurse*": "ask"})
+        r = self.doctor(d)
+        self.var(r, "WARN", self.EZME)
+        self.var(r, "WARN", "bash:*Remove-Item*-Recurse* (ask; sabit 19, toplam 22)")
+        self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
+        self.assertFalse([s for s in self.ezme_satirlari(r) if not s.startswith("[WARN]")], r.stdout)
+        # DARALT: jokersiz (yalnız kendi metnine uyan) desen AZ SAYIDA deny ile çakışır → o deny'lar ADIYLA yazılır.
+        # `*X*` biçimli desenler zincirli komut yüzünden hemen her deny ile çakışır (yukarıdaki vakada 29) ve liste
+        # "… ve N deny daha" özetine düşer; ölçülmüş vaka da zincirliydi. Ayırt edici ölçüt İSİM + ÖZETE DÜŞMEME.
+        # ⚠ "TAM OLARAK TEK deny" diye çivilenMEZ: K11 `*git reset *--hard*` desenini ekleyince aynı komuta uyan
+        # ikinci bir template deny'ı oluştu ve satır iki deny listeledi — davranış DOĞRU, eski çivi kırılgandı.
+        # (Ölçüldü 2026-09-17 entegrasyon dalında: K11 ve K12 tek başına yeşil, birleşince bu test kırmızıydı.)
+        self.kural_ekle("bash", {"git reset --hard --quiet": "ask"})
+        r = self.doctor(d)
+        self.var(r, "WARN", "bash:git reset --hard --quiet (ask; sabit 24, toplam 24) → ezebileceği deny: "
+                            "*git reset --hard* (sabit 16, toplam 18)")
+        satir = next(s for s in self.ezme_satirlari(r) if "git reset --hard --quiet" in s)
+        self.assertNotIn("deny daha", satir,
+                         "jokersiz desen özet satırına düşmemeli (az deny ile çakışır): " + satir)
+
+    def test_ezme_cakismayan_ya_da_kisa_desen_uretmez(self):
+        """Yanlış pozitif kontrol grubu: (a) uzun ama hiçbir deny ile çakışmayan desen, (b) çakışan ama kısa desen."""
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"git status --short --branch --untracked-files=all": "allow",  # jokersiz, uzun
+                                 "*Rm-It*": "ask"})                                             # çakışır ama kısa
+        r = self.doctor(d)
+        self.assertEqual(self.ezme_satirlari(r), [], f"yanlış pozitif:\n{r.stdout}")
+
+    def test_ezme_allow_sayilir_arac_alani_ayri(self):
+        """Alan ayrımı ('edit' deseni 'bash' deny'larıyla karşılaştırılMAZ) + 'allow' da 'ask' gibi sayılır.
+
+        ⚠ Alan ayrımı CLI üzerinden ölçülemez: kurulum artık HİÇ `edit` kuralı yazmıyor (`CLONE_PROTECTED`
+        2026-09-18'de kaldırıldı, install.py `load_rules` üstündeki not) → canlı config'te karşılaştırılacak
+        `edit` deny'ı yok. Kaldırmadan ÖNCE de CLI'den ölçülemiyordu, çünkü o desenler AXET_HOME'un DİSK
+        YOLUNDAN türetiliyordu (ölçüldü: bu ağaçta en kısa `edit` deny 103 kr, `C:/ax/axet` kurulumunda 17 kr
+        → beklenti kurulum yolunun UZUNLUĞUNA bağlı kırmızıya dönüyordu; CI `runs-on: windows-latest`).
+        İki gerekçe de aynı sonuca çıkar: alan ayrımı SABİT template fixture'ıyla birim seviyesinde ölçülür.
+        """
+        uzun = "*edit-cok-uzun-bir-desen-ornegi-burada*"
+        sabit_template = {"bash": {"*bash-cok-uzun-bir-deny-deseni-buraya*": "deny"},
+                          "edit": {"*/core/*": "deny"}}
+        bulgular = doctor.ezebilen_izin_desenleri(
+            {"permissions": {"rules": {"edit": {uzun: "allow"}}}}, template_kurallari=sabit_template)
+        self.assertEqual([b["arac"] for b in bulgular], ["edit"], bulgular)
+        # asıl iddia: desen YALNIZ kendi alanının deny'larıyla kıyaslandı — bash deny'ı sızmadı
+        self.assertEqual(bulgular[0]["denyler"], ["*/core/*"], bulgular)
+        # ... ve 'allow' kararı da 'ask' gibi riskli sayılıyor
+        self.assertEqual(bulgular[0]["karar"], "allow", bulgular)
+        # CLI ucu: 'bash' deny'ları yola bağlı DEĞİL (sabit template metni) → orada uçtan uca ölçülebilir
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"*bash-cok-uzun-bir-desen-ornegi-burada*": "allow"})
+        r = self.doctor(d)
+        self.var(r, "WARN", "bash:*bash-cok-uzun-bir-desen-ornegi-burada*")
+        self.assertIn("allow", next(s for s in self.ezme_satirlari(r) if "bash-cok-uzun" in s))
+
+    def test_ezme_sabit_kisa_ama_toplam_uzun_desen_riskli(self):
+        """`_kesin_kisa` HEM sabit HEM toplam uzunluk ister (`and`) — mutasyon koruması.
+
+        Ayırt edici vaka: `*g*i*t* *p*u*s*h*` SABİT uzunlukta (8) `*git push -f*`dan (11) kısa ama
+        TOPLAMDA uzun (17 > 13). `and` → "kesin kısa" DEĞİL → WARN. `or` mutantı sessiz kalır.
+        Bu WARN, "eşleştirmede sabit mi toplam mı belirleyici" sorusu DOĞRULANMADI kaldığı için alınan
+        tek savunmadır; regresyon koruması olmadan sessizce gevşeyebilir (ölçüldü: bu test yokken
+        `and`→`or` mutasyonu 66 testin TAMAMINDAN kaçtı).
+        """
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"*g*i*t* *p*u*s*h*": "ask"})
+        self.var(self.doctor(d), "WARN", "bash:*g*i*t* *p*u*s*h* (ask; sabit 8, toplam 17)")
+
+
+    def test_ezme_esit_uzunluk_da_riskli(self):
+        """Ölçüldü: eşitlikte ask kazanır → 'kesin kısa' değilse risklidir."""
+        d = self.sap_proje()
+        self.kural_ekle("bash", {"*git push -X*": "ask"})  # sabit 11 = '*git push -f*' (11), toplam 13 = 13
+        self.var(self.doctor(d), "WARN", "bash:*git push -X*")
+
+    def test_ezme_cok_bulgu_ozet_satirina_duser(self):
+        """Gürültü sınırı: en çok EZME_EN_COK_SATIR satır + 1 özet."""
+        d = self.sap_proje()
+        fazla = doctor.EZME_EN_COK_SATIR + 2
+        self.kural_ekle("bash", {f"*kullanici-deseni-{i:02d}-cok-uzun*": "ask" for i in range(fazla)})
+        r = self.doctor(d)
+        self.assertEqual(len(self.ezme_satirlari(r)), doctor.EZME_EN_COK_SATIR + 1, "\n".join(self.ezme_satirlari(r)))
+        self.var(r, "WARN", "… ve 2 izin deseni daha template deny'ını uzunlukla ezebilir")
 
     # --- negatif ---
     def test_gitignore_eksik(self):
@@ -1093,3 +1205,159 @@ class BaglamBoyutuTest(GeciciTest):
         self.assertIn("ÖLÇÜLEMEDİ (1)", satir[0])
         self.assertIn(str(d / "yok.md"), satir[0])
         self.assertIn("proje-config " + kib(1048576) + "/1 dosya", satir[0])
+
+
+class TemplateSapmaSinifTest(GeciciTest):
+    """doctor `check_template` sapma yönlendirmesi (Z5 + P4 bilgi satırı).
+
+    Birim seviyesinde ölçülür: `check_template()` GERÇEK klonun git durumuna bakar (`bm.template_sinifla()`
+    argümansız), o da koşulan ağaca göre değişir → CLI üzerinden deterministik ölçülemez. Bu yüzden
+    yönlendirme saf bir fonksiyona (`doctor.template_bulgulari`) ayrıldı ve sentetik girdiyle ölçülüyor.
+    """
+
+    @staticmethod
+    def olc(**kw) -> dict:
+        o = {"durum": "es", "kullanici": [], "guncelle_anlik": [], "guncelle_uygulama": [], "notlar": []}
+        o.update(kw)
+        return o
+
+    @staticmethod
+    def durumlar(bulgular, parca: str) -> list[str]:
+        """Bulgu satirlarinin durumlari. KAPSAM satiri sabit bir katalog (yuzey dosyalarini sayar) -> bulgu degil."""
+        return [d for d, m in bulgular if parca in m and "KAPSAM" not in m]
+
+    def test_guncelle_uygulama_sapmasi_warn_degil_info(self):
+        """Dal SESSİZCE DÜŞEMEZ: satır üretilmeli, dosya SAYISI ve YOLLARI satırda olmalı."""
+        b = doctor.template_bulgulari(self.olc(guncelle_uygulama=["core/00-temel.md", "skills/b/SKILL.md"]))
+        satir = [m for d, m in b if d == "INFO" and "uyguladığı template güncellemesi" in m]
+        self.assertEqual(len(satir), 1, b)
+        self.assertIn("2 dosya", satir[0])
+        self.assertIn("core/00-temel.md", satir[0])
+        self.assertIn("skills/b/SKILL.md", satir[0])
+        self.assertEqual(self.durumlar(b, "core/00-temel.md"), ["INFO"], b)
+        self.assertEqual([d for d, _ in b if d == "WARN"], [], b)
+
+    def test_guncelle_anlik_sapmasi_info_ama_icerik_kullanicinin_denir(self):
+        """Dal SESSİZCE DÜŞEMEZ + gevşetmenin şartı: satır içeriğin KULLANICININ olduğunu söylemeli."""
+        b = doctor.template_bulgulari(self.olc(guncelle_anlik=["skills/a/SKILL.md", "AGENTS.md"]))
+        satir = [m for d, m in b if d == "INFO" and "anlık commit" in m]
+        self.assertEqual(len(satir), 1, b)
+        self.assertIn("2 dosya", satir[0])
+        self.assertIn("skills/a/SKILL.md", satir[0])
+        self.assertIn("AGENTS.md", satir[0])
+        self.assertIn("İÇERİK KULLANICININ", satir[0])
+        self.assertIn("git -C <template> log -p --author=", satir[0], "inceleme komutu düştü")
+        self.assertEqual(self.durumlar(b, "skills/a/SKILL.md"), ["INFO"], b)
+        self.assertEqual([d for d, _ in b if d == "WARN"], [], b)
+
+    def test_sinif_bossa_INFO_satiri_HIC_basilmaz(self):
+        """Yanlış-pozitif yönü: sapma YOKken `%guncelle` satırı basılırsa kullanıcı olmayan bir işi arar."""
+        b = doctor.template_bulgulari(self.olc())
+        self.assertEqual([m for d, m in b if "anlık commit" in m or "uyguladığı template güncellemesi" in m], [], b)
+
+    def test_kullanici_sapmasi_varken_PASS_basilmaz(self):
+        """Güven veren YANLIŞ satır tuzağı: sapma varken 'sapma yok' diyen bir satır ASLA çıkmamalı."""
+        b = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["commit edilmemiş değişiklik [M]: AGENTS.md"],
+                                               guncelle_uygulama=["core/00-temel.md"]))
+        self.assertEqual([m for d, m in b if d == "PASS"], [], b)
+        self.assertEqual([m for d, m in b if "sapma yok" in m], [], b)
+
+    def test_temizken_PASS_basilir(self):
+        """Yukarıdakinin kontrol grubu: gerçekten temizken PASS ÇIKAR (aksi hâlde üstteki test boş yere yeşil)."""
+        b = doctor.template_bulgulari(self.olc())
+        self.assertEqual(len([m for d, m in b if d == "PASS" and "sapma yok" in m]), 1, b)
+
+    def test_kontrol_grubu_kullanici_sapmasi_warn_kalir(self):
+        """Gevşetme yalnız %guncelle sınıfına: kullanıcı sapması hâlâ WARN."""
+        b = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["commit edilmemiş değişiklik [M]: core/00-temel.md"]))
+        self.assertEqual(self.durumlar(b, "core/00-temel.md"), ["WARN"], b)
+
+    def test_karisik_hem_warn_hem_info(self):
+        b = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["commit edilmemiş değişiklik [M]: AGENTS.md"],
+                                               guncelle_uygulama=["core/00-temel.md"]))
+        self.assertEqual(self.durumlar(b, "AGENTS.md"), ["WARN"], b)
+        self.assertEqual(self.durumlar(b, "core/00-temel.md"), ["INFO"], b)
+
+    def test_olculemedi_info_ve_pass_basmaz(self):
+        b = doctor.template_bulgulari(self.olc(durum="olculemedi", notlar=["x git reposu değil — ÖLÇÜLEMEDİ"]))
+        self.assertEqual(self.durumlar(b, "ÖLÇÜLEMEDİ"), ["INFO"], b)
+        self.assertEqual([d for d, _ in b if d == "PASS"], [], b)
+
+    def test_olculemedi_notu_PASS_satirinda_KAYBOLMAZ(self):
+        """Failure-mode: `@{u}` tanımsız (ya da `git diff`i hata veren) bir klonda commit dalı HİÇ
+        ölçülmez ama durum yine `es` gelir. Not PASS satırından düşerse çıktı gerçekten temiz bir
+        koşumla BİREBİR aynı görünür ⇒ 'ölçülemedi' sessizce 'temiz' diye okunur (core §7)."""
+        n = "upstream tanımlı değil — ÖLÇÜLEMEDİ"
+        pas = [m for d, m in doctor.template_bulgulari(self.olc(notlar=[n])) if d == "PASS" and "sapma yok" in m]
+        self.assertEqual(len(pas), 1, pas)
+        self.assertIn(n, pas[0], "PASS satırı ölçülemedi notunu yutuyor: temiz koşumdan ayırt edilemez")
+
+    def test_kontrol_grubu_not_yokken_PASS_satiri_sade_kalir(self):
+        """Üstteki testin kontrol grubu: not YOKken PASS satırına boş parantez/gürültü eklenmemeli
+        (aksi hâlde üstteki test davranış yanlışken de yeşil kalabilirdi)."""
+        pas = [m for d, m in doctor.template_bulgulari(self.olc()) if d == "PASS" and "sapma yok" in m]
+        self.assertEqual(len(pas), 1, pas)
+        self.assertNotIn("ÖLÇÜLEMEDİ", pas[0], pas)
+        self.assertNotIn("()", pas[0], pas)
+
+    def test_sapma_dalinda_olculemedi_notu_AYRI_INFO_satiri_olur(self):
+        """WARN satırı yalnız dosyaları listeler; not oraya sığmaz. Ayrı INFO satırı düşerse sapma
+        çıktısında 'commit dalı hiç ölçülmedi' bilgisi tümden kaybolur."""
+        n = "upstream tanımlı değil — ÖLÇÜLEMEDİ"
+        b = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["AGENTS.md"], notlar=[n]))
+        satir = [m for d, m in b if d == "INFO" and "yüzeyi notları" in m]
+        self.assertEqual(len(satir), 1, b)
+        self.assertIn(n, satir[0])
+        # kontrol grubu (yanlış-pozitif yönü): not yokken bu satır HİÇ basılmaz
+        b2 = doctor.template_bulgulari(self.olc(durum="sapma", kullanici=["AGENTS.md"]))
+        self.assertEqual([m for d, m in b2 if "yüzeyi notları" in m], [], b2)
+
+    def test_kapsam_beyani_iki_kritik_uyariyi_icerir(self):
+        """KAPSAM satırının ADI değil GÖVDESİ ölçülür: iki kritik uyarı silinse de 'bakılmayan'
+        kelimesi satırda kalır ve beyan testi yeşil kalırdı (bug-gate 2026-09-18 · M15).
+        Aranan dizgeler dar ve ayırt edici — metin yeniden yazılabilir, ANLAM korunmalı."""
+        for o in (self.olc(), self.olc(durum="sapma", kullanici=["x"]), self.olc(durum="olculemedi", notlar=["n"])):
+            kapsam = [m for d, m in doctor.template_bulgulari(o) if d == "INFO" and "KAPSAM" in m]
+            self.assertEqual(len(kapsam), 1, o)
+            self.assertIn(doctor.bm.GUNCELLE_EPOSTA, kapsam[0], kapsam)
+            self.assertIn("TAKLİT EDİLEBİLİR", kapsam[0],
+                          "kimliğin GÜVENLİK SINIRI OLMADIĞI uyarısı düştü → okuyucu onu sınır sanır")
+            self.assertIn("upstream", kapsam[0], "'upstream tanımsızsa ÖLÇÜLMEZ' uyarısı düştü")
+            self.assertIn("ÖLÇÜLMEZ", kapsam[0], "'upstream tanımsızsa ÖLÇÜLMEZ' uyarısı düştü")
+
+    def test_kapsam_beyani_her_kosumda_basilir(self):
+        """En kritik an sıfır-bulgu anı: temiz koşuda da neye BAKILMADIĞI yazılır (core §7)."""
+        for o in (self.olc(), self.olc(durum="sapma", kullanici=["x"]), self.olc(guncelle_uygulama=["y"])):
+            b = doctor.template_bulgulari(o)
+            kapsam = [m for d, m in b if d == "INFO" and "KAPSAM" in m]
+            self.assertEqual(len(kapsam), 1, b)
+            self.assertIn("bakılmayan", kapsam[0])
+
+    def test_hicbir_sinif_FAIL_uretmez(self):
+        """Gate moratoryumu: bu blok çıkış kodunu değiştiren bir kapı AÇMAZ."""
+        for o in (self.olc(), self.olc(durum="sapma", kullanici=["x"]), self.olc(durum="olculemedi", notlar=["n"]),
+                  self.olc(guncelle_anlik=["a"], guncelle_uygulama=["b"])):
+            self.assertEqual([d for d, _ in doctor.template_bulgulari(o) if d == "FAIL"], [], o)
+
+
+class CekirdekMetniTest(GeciciTest):
+    """`core/00-temel.md` §11 — `%guncelle` dar istisnası (P4/A4)."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.metin = (doctor.inst.CORE_FILE).read_text(encoding="utf-8")
+
+    def test_cekirdek_satir_siniri(self):
+        """doctor'ın kendi eşiği (doctor.py:758) — istisna metni çekirdeği eşiğin üstüne çıkarmamalı."""
+        self.assertLessEqual(len(self.metin.splitlines()), 150)
+
+    def test_guncelle_istisnasi_dar_yazilmis(self):
+        i = self.metin.find("## 11. Güvenlik")
+        j = self.metin.find("\n## ", i + 1)
+        bolum = self.metin[i:j if j > 0 else len(self.metin)]
+        self.assertIn("Dış kaynaktan gelen içerik", bolum)
+        self.assertIn("İstisna", bolum)
+        for parca in ("%guncelle", "%guncelle-proje", "origin", "GUNCELLE.md", "guncelle/**",
+                      "scripts/guncelle.py", "gevşetemez", "DUR"):
+            self.assertIn(parca, bolum, f"§11 istisnasında eksik: {parca}")
+        self.assertIn("Başka hiçbir dış içerik", bolum)

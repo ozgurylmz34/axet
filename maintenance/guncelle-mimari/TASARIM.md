@@ -52,6 +52,8 @@ Bugün proje dosyaları için taban yok: `new_project.py:91-102` yalnız "aynı 
 
 - `_doldur` hem proje adını hem `AXET_HOME` yolunu yerleştirir (`new_project.py:35`); ikisi de kayda yazılır, çünkü klon taşınırsa yol değişir.
 - **SHA'sız eski projeler için geri düşüş:** her şablon dosyası için klon geçmişinde `git log --format=%H -- templates/project/<rel>` sürümleri gezilir; `_doldur(ad)` uygulanmış hâli proje dosyasıyla birebir eşleşen en yeni commit taban sayılır. Eşleşme yoksa (kullanıcı değiştirmiş) o dosya **VTB (taban bilinmiyor)** vakası olur. Kayıt ilk başarılı `%guncelle-proje` sonunda yazılır.
+- **⚠ Kayıt VAR ama commit klonda YOK ⇒ HEPSİ VTB (içerik eşleştirmesine DÜŞÜLMEZ).** Bu bilinçli bir daraltmadır, kaza değil (P5'te ölçüldü, `guncelle_proje.py::Baglam.taban_bul`): kayıt bir taban **iddia ediyorsa** ve o iddia doğrulanamıyorsa, araç sessizce *başka* bir tabana oturmaz — çünkü yanlış taban, 3-yollu birleştirmeyi **güven veren ama yanlış** bir sonuca götürür (kullanıcının değişikliği "şablondan geliyor" sanılıp ezilebilir). `taban_kaynagi = "cozulemedi"` durumunda `Baglam.adaylar` boş bırakılır ⇒ tüm dosyalar **VTB**. Kullanıcı yüzeyinde iki yerde uyarılır: `plan` tablosunun başlığı ve `onkontrol` çıktısı. Tipik sebep: sığ klon ya da `main`'in yeniden yazılması.
+- **Proje adı bilinmiyorsa `_doldur` ne yapar — `--ad` / `ad_kaynagi`:** taban içeriği `_doldur(ad, axet_home)` uygulanmadan projedekiyle karşılaştırılamaz, ama **kayıtsız** projede `ad` bilinmez. Karar: **dizin adı VARSAYILIR** ve bu varsayım `ad_kaynagi` alanında taşınır (`kayit` | `--ad` | `dizin-adi-varsayildi`). Plan çıktısı varsayımı **uyarı tonuyla** basar; varsayım yanlışsa `_doldur` hiçbir dosyayı eşleştiremez ve **her şey VTB çıkar** — bu gürültülü bir başarısızlıktır, sessiz değil. Bu durumda çıktı `--ad <gerçek-ad>` öneren bir **İPUCU** satırı basar. ⛔ AI proje adını **tahmin etmez**; varsayım ancak dizin adından türetilir ve daima beyan edilir.
 - **Damga bloğu 3-yollu karşılaştırmaya girmez:** üç sürümden de BASLA/BITIR bloğu çıkarılır, gövde birleştirilir, sonra `sap_stamp.damgala()` (`new_project.py:131`) yeniden basar.
 
 ---
@@ -78,7 +80,7 @@ Bugün proje dosyaları için taban yok: `new_project.py:91-102` yalnız "aynı 
 > davranışına giren ayrı bir "etkinleşme anı" YOKTUR.* İki farklı durumu kapsar ve ikisi de
 > bilinçlidir: ① dosya hiç yüklenmez/çalıştırılmaz (LICENSE, NOTICE, belge) ② etkinleşmesi bir
 > kullanıcı eylemine bağlıdır ve o eylem aXet oturumunun dışındadır (`kur.ps1`'in bir sonraki elle
-> çalıştırılması). Haritadaki 36 sınıfın 12'si `null`'dur. ⚠ P2 (`scripts/guncelle.py`) `etkin`
+> çalıştırılması). Haritadaki **38 alt sınıfın 13'ü** `null`'dur (ÖLÇÜLDÜ 2026-09-17, `guncelle/harita.json`; üst sınıf 15. Eski '36 sınıfın 12'si' kaydı P1 merge'ünden önceye aitti ve BAYATTI — sayıyı haritadan türet, buradan okuma). ⚠ P2 (`scripts/guncelle.py`) `etkin`
 > üzerinden dallanırken bu değeri AYRI bir dal olarak ele almalıdır; dört değer varsayan bir
 > `if/elif` zinciri o 12 sınıfı sessizce "bilinmeyen" kovasına düşürür.
 
@@ -144,6 +146,7 @@ Gösterim: T = taban içeriği, L = yerel, Y = yeni. "yok" = o sürümde dosya y
 
 **Değiştiriciler (yukarıdaki koda eklenir):**
 - **+R yeniden adlandırma:** `git diff -M --name-status <taban> <yeni>` R satırı. L = T eski yolda → yeni yola taşı (V1R). L ≠ T → yerel değişiklik yeni yola birleştirilir (V4R, onaylı). Yeni yolda zaten L varsa → V7.
+  <br>⚠ **R100 (içerik AYNI, yalnız yol değişti) — ÖLÇÜLDÜ 2026-09-17 (P2 fixture'ı yakaladı, motorda kusurdu):** bu vakada taban/yerel/yeni blob'ları **birbirinin aynısıdır**, dolayısıyla yukarıdaki §4 tablosu düz uygulanırsa **V0 "değişiklik yok"** çıkar ve dosya **plandan sessizce düşer** — oysa taşınması gerekir. ⇒ **+R, içerik karşılaştırmasından ÖNCE ve ondan BAĞIMSIZ değerlendirilir: yol değişimi başlı başına bir eylemdir.** İkinci tuzak (aynı ölçümde çıktı): yeniden adlandırmanın **hedef yolu** ayrıca "taban yok + Y var" görünümü verdiği için **V2 olarak ikinci kez** listelenebilir → aynı dosya iki kez uygulanır, `kapanis` iki kez doğrular. Hedef yol, R kaleminin parçasıysa V2 dalına DÜŞMEMELİ.
 - **+B ikili dosya** (`.gitattributes` binary satırları: png/jpg/pdf/zip/exe/xlsx/docx — `.gitattributes:14-23`; ya da git "Binary files differ"): V4 birleştirilemez → **V4B**: kullanıcı yerel ya da yeniyi seçer. V1/V2/V5/V6 değişmez.
 - **VTB taban bilinmiyor:** proje dosyasında geri düşüş eşleşmesi yok (§2b) ya da klonda taban commit'i yok (sığ klon/force push izi). Otomatik işlem yok: L ≠ Y ise fark gösterilir, kullanıcı "yeniyi al / yereli koru / elle birleştir" seçer; L = Y ise V2e.
 - **K kritik:** kalem `kritik: true` ise tüm dosyaları seçili gelir (Q3); kod değişmez.
@@ -192,20 +195,24 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 
 **VTB — taban bilinmiyor:** fark göster, "yeniyi al / yereli koru / elle" sor; otomatik birleştirme **yasak** (taban uydurma).
 
-**Sınıf özel kartları** (`guncelle/kartlar/sinif-<ad>.md`; plan, dosyanın sınıfı bunlardan biriyse vaka kartına ek olarak gösterir):
+**Sınıf özel kartları** (`guncelle/kartlar/sinif-<id>.md`; plan, dosyanın sınıfı bunlardan biriyse vaka kartına ek olarak gösterir).
+
+⭐ **Kanonik ad kaynağı: `guncelle/harita.json` → `ust_siniflar[].id`.** Kart dosyasının adı `sinif-<id>.md`'dir; aşağıdaki tablo o id'leri kullanır. ⚠ *Düzeltildi 2026-09-18 (lider ölçtü):* bu tablo daha önce **10 addan 8'ini yanlış** yazıyordu (`sinif-install`, `sinif-memory`, `sinif-cekirdek`, `sinif-yasak-kanonik`, `sinif-izin-config`, `sinif-validator-zincir`, `sinif-skill-asset`, `sinif-guncelle-motoru` — hiçbiri diskte yok) ve aynı ölü ad §6'daki **makine-okunur `plan.json` şema örneğinde** de duruyordu, yani kopyalanmaya açıktı. Ölçüm: `ust_siniflar` 15 · `guncelle/kartlar/sinif-*.md` 15 · eşleşme 15/15.
+
+**Tabloda olmayan 5 sınıf kartı** (var ama burada anlatılmıyor — kartın kendisi otoritedir): `sinif-bakim-ic` · `sinif-belge-lisans` · `sinif-depo-hijyeni` · `sinif-proje-sablonu` · `sinif-skill-scripti`.
 
 | Kart | Tetik | Zorunlu ek adımlar | DUR |
 |---|---|---|---|
-| `sinif-cekirdek` | `core/00-temel.md` değişti | 1) değişen bölümleri `git diff <taban> <yeni> -- core/` ile oku 2) **diskteki yeni sürüm otoritedir, bağlamındaki eski kopyaya dayanma** 3) raporda "yeni oturum gerekli" | yeni çekirdek bu kartla çelişirse |
-| `sinif-yasak-kanonik` | `core/sap/00-sap.md` KESİN YASAKLAR değişti | 1) klonda al 2) `doctor.py` damga satırlarını göster 3) kullanıcıya: "SAP projelerinde `%guncelle-proje` çalıştır" | yerelde kanonik değiştirilmişse V4c + asgari güvence raporu |
-| `sinif-izin-config` | `config/permissions.json`, denylist | 1) al/birleştir 2) **`python scripts/install.py`** (özel adım; plan zorunlu kılar) 3) `tests/test_install.py` 4) "aXet'i kapat-aç" | kullanıcının kendi kuralı template deny'ını ezerse (`doctor.py:938-949`) → rapor, engelleme |
-| `sinif-install` | `scripts/install.py` | 1) al 2) `python scripts/install.py --dry-run` çıkış 0 olmalı 3) sonra gerçek `install.py` | `--dry-run` hata → dosyayı taban sürüme geri al (`guncelle.py geri-al <yol>`), DUR |
-| `sinif-validator-zincir` | validator, `run_review.py`, `_reviewer.py`, `gate.py`, `validator-map.md` | 1) eş dosyalar aynı pakette (plan birlikte seçer) 2) sap-code-review takımı (`test_checklists.py` zincir↔tablo eşitliği) 3) foundation takımı | eşlerden biri V3 (yerelde değişmiş, yeni gelmiyor) iken diğeri V1 ise → uyumsuzluk riski, kullanıcıya göster |
-| `sinif-memory` | `memory/MEMORY.md` | 1) indeks satır bazında birleşir (ekleme çakışması nadir) 2) yeni `feedback_*.md` aynı kalemde gelir 3) indeks↔dosya eşleşmesi (B1 onaylanırsa script, değilse ajan elle sayar ve rapora yazar) | — |
-| `sinif-skill-asset` | `skills*/*/templates/**`, `assets/**` | `.conn_adt.example` gibi örnek dosyalar: yalnız örnek; gerçek `.conn_adt`'ye asla dokunma ve okuma | — |
+| `sinif-cekirdek-kural` | `core/00-temel.md` değişti | 1) değişen bölümleri `git diff <taban> <yeni> -- core/` ile oku 2) **diskteki yeni sürüm otoritedir, bağlamındaki eski kopyaya dayanma** 3) raporda "yeni oturum gerekli" | yeni çekirdek bu kartla çelişirse |
+| `sinif-kesin-yasak-kanonigi` | `core/sap/00-sap.md` KESİN YASAKLAR değişti | 1) klonda al 2) `doctor.py` damga satırlarını göster 3) kullanıcıya: "SAP projelerinde `%guncelle-proje` çalıştır" | yerelde kanonik değiştirilmişse V4c + asgari güvence raporu |
+| `sinif-config-izin` | `config/permissions.json`, denylist | 1) al/birleştir 2) **`python scripts/install.py`** (özel adım; plan zorunlu kılar) 3) `tests/test_install.py` 4) "aXet'i kapat-aç" | kullanıcının kendi kuralı template deny'ını ezerse (`doctor.py:938-949`) → rapor, engelleme |
+| `sinif-kurulum-bakim-scripti` | `scripts/install.py` | 1) al 2) `python scripts/install.py --dry-run` çıkış 0 olmalı 3) sonra gerçek `install.py` | `--dry-run` hata → dosyayı taban sürüme geri al (`guncelle.py geri-al <yol>`), DUR |
+| `sinif-validator-ailesi` | validator, `run_review.py`, `_reviewer.py`, `gate.py`, `validator-map.md` | 1) eş dosyalar aynı pakette (plan birlikte seçer) 2) sap-code-review takımı (`test_checklists.py` zincir↔tablo eşitliği) 3) foundation takımı | eşlerden biri V3 (yerelde değişmiş, yeni gelmiyor) iken diğeri V1 ise → uyumsuzluk riski, kullanıcıya göster |
+| `sinif-ders-memory` | `memory/MEMORY.md` | 1) indeks satır bazında birleşir (ekleme çakışması nadir) 2) yeni `feedback_*.md` aynı kalemde gelir 3) indeks↔dosya eşleşmesi (B1 onaylanırsa script, değilse ajan elle sayar ve rapora yazar) | — |
+| `sinif-skill-govde-referans-asset` | `skills*/*/templates/**`, `assets/**` | `.conn_adt.example` gibi örnek dosyalar: yalnız örnek; gerçek `.conn_adt`'ye asla dokunma ve okuma | — |
 | `sinif-test-fixture` | `tests/**`, `fixtures/**` | test ettiği dosya aynı kalemde değilse testi alma (plan uyarır) | — |
 | `sinif-kurulum-araci` | `kur.ps1`/`kur.cmd` | çalıştırma; yalnız al. Test: `tests/test_kur.py`. Raporda "bir sonraki `kur.cmd` çalıştırmasında etkin" | — |
-| `sinif-guncelle-motoru` | `GUNCELLE.md`, `guncelle/**`, `guncelle.py` | motor zaten yeni sürümden çalışıyor (§7); klona almak yalnız bir sonraki sefer içindir | — |
+| `sinif-guncelleme-motoru` | `GUNCELLE.md`, `guncelle/**`, `guncelle.py` | motor zaten yeni sürümden çalışıyor (§7); klona almak yalnız bir sonraki sefer içindir | — |
 
 ---
 
@@ -221,7 +228,10 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 **Dosyalar** (`<klon>/.axet-guncelleme/`, gitignore'lu):
 - `plan.json` — script üretir, ajan **yazmaz**.
 - `durum.json` — yalnız `isaretle`/`uygula` yazar; her yazım geri okunup doğrulanır (`install.py:297-299` deseni).
-- `uygulanan.json` — yol → son uygulanan yayın etiketi (§2a taban).
+- `uygulanan.json` — **iki boyutlu** (P2 kararı 2026-09-17; §2a yalnız yol boyutunu tanımlıyordu ama §11 ve §8 `uygulanan.json`'da olmayan **kalem** sayısını sorguluyor ⇒ kalem üyeliği de burada durmalı):
+  `{"surum": 1, "dosyalar": {<yol>: <yayin_etiketi>}, "kalemler": {<id>: {"etiket", "durum", "zaman"}}}`.
+  `dosyalar` §2a tabanını verir; `kalemler` §8/§11'in kalem sorgusunu ve P7'nin CHANGELOG eşlemesini besler.
+  ⚠ **P7 bu şemaya bağlanır** — değiştirilecekse `scripts/guncelle.py` ile birlikte değişir.
 - `olcum-once.json`, `olcum-sonra.json`, `butunluk.json`, `RAPOR.md`.
 
 **`plan.json` şeması (özet):**
@@ -230,7 +240,7 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
  "kalemler": [{"id": "0.5.0-03", "baslik": "…", "tur": "duzeltme|yetenek|kural|guvenlik",
    "kritik": true, "gerektirir": ["0.5.0-01"], "min_axet": "1.3.0", "paket": "P2",
    "dosyalar": [{"yol": "scripts/doctor.py", "sinif": "kurulum-script", "vaka": "V4t",
-     "kart": ["V4t","sinif-install"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
+     "kart": ["V4t","sinif-kurulum-bakim-scripti"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
    "testler": ["kok:test_doctor"], "ozel_adimlar": []}],
  "paketler": {"P2": ["0.5.0-03","0.5.0-05"]},
  "sayaclar": {"V3": 12, "VKD": 40}, "yeniden_baslat": "yeni-oturum"}
@@ -333,6 +343,7 @@ Hiçbiri 1. şartı (gerçekten yaşanmış hata) karşılamıyor. Bu yüzden ö
 - **Damga:** gövde birleşiminden sonra `sap_stamp.damgala()`; `new_project.py:123-129`'daki "bozuk damga" durumunda DUR.
 - **Ekip reposu uyarısı:** projede `git remote` varsa ilk adımda: "Bu değişiklikler proje reposuna commit edilecek; ekip arkadaşların pull edince onlara da gelir." Commit ajanın değil kullanıcının onayıyla atılır; push asla.
 - **Son adım (kullanıcının terminalinde):** davranış yüzeyi değiştiyse `python <AXET_HOME>/scripts/behavior_manifest.py generate` (aXet'e deny).
+- **⛔ `+R` (yeniden adlandırma) proje tarafında UYGULANMADI — ertelenmiş kalem.** Şablonda bir dosya yer değiştirirse proje tarafında **V6** (eski silinir) + **V2** (yeni gelir) olarak görünür; **içerik taşınmaz**. Sonuç: kullanıcının eski yoldaki yerel değişikliği yeni dosyaya geçmez. Bugünkü emniyet: V6 otomatik kapanmaz, kullanıcıya bilgi vakasıdır ⇒ silme kullanıcının gözü önünde olur. Yine de bu bir **veri-kaybı adayıdır** ve kapatılması gerekir; `guncelle_proje.py`'nin `KAPSAM — bakılmayanlar` bloğunda da yazılıdır.
 - **`templates/package/**`:** kapsam dışı (kullanıcı doldurur, taban anlamsız); raporda yalnız "paket şablonunda değişiklik var: <liste>" bilgi satırı → açık karar K5.
 
 ---
@@ -366,17 +377,18 @@ Hiçbiri 1. şartı (gerçekten yaşanmış hata) karşılamıyor. Bu yüzden ö
 
 **`guncelle/yayinlar.json` (yapısal değişiklik listesi; `CHANGELOG.md` bundan üretilir, `README.md:241-271` serbest metni buna bağlanır):**
 ```json
-{"yayinlar": [{"etiket": "v0.5.0", "tarih": "2026-10-01", "min_axet": "1.3.0",
+{"yayinlar": [{"etiket": "v0.5.0", "tarih": "2026-10-01", "min_axet": "1.3.0",   // YAYIN düzeyi = VARSAYILAN (kalemlere miras)
   "kalemler": [{"id": "0.5.0-01", "baslik": "doctor: …", "tur": "duzeltme", "kritik": false,
     "neden": "…", "dosyalar": ["scripts/doctor.py", "tests/test_doctor.py"],
     "gerektirir": [], "test": ["kok:test_doctor"]}]}]}
 ```
 - **Dosyalar diff'ten üretilir:** `yayin_hazirla` önceki public HEAD ile yeni ağacın farkını alır; bakımcı yalnız "hangi kalem" eşlemesini verir (`--kalem-esle esle.json` ya da etkileşimli). Kural: diff'teki **her** dosya ≥1 kaleme ait; kalemdeki her dosya gerçekten değişmiş; yoksa FAIL ve commit yok.
 - `tur: guvenlik` ⇒ `kritik: true` zorunlu (Q3).
+- ⚠ **`min_axet` — KANONİK DÜZEY KALEM (karar 2026-09-17, P7 bulgusu, lider ölçtü).** Bu belge alanı İKİ yerde gösteriyordu (yukarıdaki `:235` kalem nesnesinde, `:373` yayın nesnesinde) ama `scripts/guncelle.py:601` yalnız **`kalem.get("min_axet")`** okuyor ⇒ yayın düzeyine yazılmış bir değer bugün **sessizce yok sayılırdı** (sessiz tüketici hatası). Kural: **kalem düzeyi kanoniktir**; yayın düzeyindeki değer o yayının kalemlerine **varsayılan olarak miras** edilir, kalemde açıkça verilmişse kalemdeki kazanır. Mirası **`yayinlar.json` üretimi/doğrulaması** (P7) uygular — motorun sözleşmesi değişmez, `guncelle.py`'ye dokunulmaz. Miras testle kilitlenir (yayın düzeyinde `min_axet` olan + kalemde olmayan fixture → kalem o değeri almalı).
 - **Force push yasağı:** yayın aracı force komutu üretmez; `GUNCELLE.md` ve bakım prosedürüne yazılır. **Tek istisna sır sızıntısı:** geçmiş temizlenir, `yayinlar.json`'a `"gecmis_yeniden_yazildi": true` kaydı eklenir; `onkontrol` taban commit'ini bulamayınca "`kur.cmd -Sifirla` öner" der (VTB yerine).
 - **Sığ klon yasağı testi:** `tests/test_kur.py`'ye `kur.ps1` metninde `clone` çağrısında `--depth`/`--shallow`/`--filter` bulunmadığını doğrulayan statik test; `onkontrol` çalışma anında `--is-shallow-repository`.
 - **Günde bir kontrol (Q4):** `session_brief.py:32-33` (`FETCH_CACHE`, `FETCH_EVERY_SEC = 3600`) ve `template_durumu()` (`:77-101`). Değişiklik: ayrı önbellek `~/.axet-template-cache/last_guncelle_check`, eşik 86400 sn; birim "N kalem" = `origin/main:guncelle/yayinlar.json`'da `uygulanan.json`'da olmayan kalem sayısı; ağ hatası bugünkü gibi sessiz (`:88-90`); yazma yok. Mevcut saatlik "N commit geride" satırı kalemli satırla **yer değiştirir** (iki bildirim olmasın).
-- **Kritik hatırlatma (Q3):** ayrı liste tutulmaz; `session_brief.py` ve `doctor.py` aynı kaynaktan türetir: `yayinlar.json` `kritik: true` ∧ `uygulanan.json`'da yok ∧ `durum.json`'da `atlandi` değil → her oturum `WARN kritik güncelleme bekliyor: <id> <baslik>`. Kullanıcı `atlandi` işaretlese de satır "atlandı (kritik)" olarak kalır.
+- **Kritik hatırlatma (Q3):** ayrı liste tutulmaz; `session_brief.py` ve `doctor.py` aynı kaynaktan türetir: `yayinlar.json` `kritik: true` ∧ `uygulanan.json`'da yok ∧ `uygulanan.json`'da `atlandi` değil (⚠ **DÜZELTME 2026-09-17:** burası önce `durum.json` diyordu — ama `durum_kaydet` (`scripts/guncelle.py:725-730`) kaydı **yol** anahtarıyla tutuyor, `kalem` yalnız bir ALAN ⇒ `durum.json`'da **kalem bazlı `atlandi` YOK**, ancak türetilebilir. Kalem düzeyinde `durum: uygulandi|atlandi` **`uygulanan.json`**'dadır (`:1326`)) → her oturum `WARN kritik güncelleme bekliyor: <id> <baslik>`. Kullanıcı `atlandi` işaretlese de satır "atlandı (kritik)" olarak kalır.
 
 ---
 
@@ -413,7 +425,7 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | Paket | İçerik | Bağımlı | Yayından önce? | Kabul ölçütü |
 |---|---|---|---|---|
 | **P1** | `guncelle/harita.json` + sınıflandırıcı + `test_guncelle_harita` | — | evet | 412/412 tek sınıf; mutasyon: yeni sınıfsız dosya → FAIL |
-| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, oneri, isaretle, butunluk, geri-al, kapanis, durum) + fixture üreteci + §12a testleri + doctor `template_denetle` gürültü düzeltmesi | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
+| **P2** | `scripts/guncelle.py` (onkontrol, hazirla, plan, sec, olc, uygula, **kart**, oneri, isaretle, **ozel-adim**, butunluk, geri-al, kapanis, durum — **14 komut; §6 sözleşme tablosuyla birebir**) + fixture üreteci + §12a testleri | P1 | evet | tüm vaka senaryoları altın çıktıyla eşit; kapanış mutasyonlarının hepsi yakalanıyor |
 | **P3** | vaka kartları + sınıf kartları + `GUNCELLE.md` (akış tablosu haritadan üretilen özetle) | P2 (kodlar, komutlar) | evet | her plan vaka kodunun kartı var (test); kart dili incelemesi (doküman checklist'i) |
 | **P4** | `%guncelle` başlatıcı skill + çekirdek §11 istisnası + `CLONE_PROTECTED` kaldırma + doctor bilgi satırı | P3 | evet | motor sürüm testi; `doctor.py` testleri; §11 metni bug gate (doküman) |
 | **P5** | `%guncelle-proje` + `new_project.py` sürüm kaydı + SHA'sız geri düşüş + doctor/session_brief tetik | P2 | evet (kayıt ilk projelerden başlamalı) | proje senaryoları (_doldur, damga, geri düşüş, VTB) |
@@ -421,6 +433,10 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 | **P7** | `yayin_hazirla.py` dönüşümü + `yayinlar.json` doğrulayıcısı + `CHANGELOG.md` üretimi + `session_brief` günlük/kritik satırı | P1 (sınıf/test eşlemesi), P2 (uygulanan.json okuma) | evet (ilk yayın `--ilk` ile; biçim baştan) | ikinci yayın simülasyonu: tüketici klonu ff-only ve `%guncelle` ile güncellenir; eşlemesiz dosya → FAIL |
 | **P8** | onaylanan B1–B4 | P2 + kullanıcı onayı | hayır (onaylanırsa) | her kontrol fail-first + WARN çıktısı |
 | **P9** | `_lab` S1–S5 + ek ölçümler | P4, P5, P6 | hayır (yayın sonrası, KARAR 7) | §12b ölçütleri; sonuçlar kart/§11 revizyonuna döner |
+
+> ⚠ **DÜZELTME-2 (2026-09-17):** doctor `template_denetle` gürültü düzeltmesi **P2'den ÇIKARILDI** — `scripts/doctor.py` K12 lane'i tarafından değiştiriliyordu, çakışma olurdu. Ertelenmiş tetik **IS-LISTESI §3 Z5** olarak açıldı (tetik: K12 merge sonrası, P3/P4'ten önce). Kapsam kaybı DEĞİL, sıralama kararı. P2 `scripts/doctor.py`'ye HİÇ dokunmadı (`git status` ile doğrulandı).
+>
+> ⚠ **DÜZELTME (2026-09-17):** Bu hücre önce 12 alt komut sayıyordu, §6 sözleşme tablosunda ise 14 satır var (`kart` ve `ozel-adim` listede yoktu). İkisi de P2'ye dahildir: `kapanis`'in çıkış sözleşmesi özel adımların koşup koşmadığına BAĞLI, `kart` da P3'ün tek girişidir. Bulgu P2 ajanından geldi, lider doğruladı.
 
 **Paralel:** P1 ∥ P6 başlar; P1 bitince P2; P2 bitince P3 ∥ P5 ∥ P7; P3 bitince P4. P8 onaylar geldikçe. P9 en son.
 **Bug gate:** P2, P4, P5, P6, P7 kod gate'i (bug-checklist); P3 ve §11 metni doküman gate'i (doc-checklist).
@@ -460,3 +476,6 @@ Başlangıç koşulu: **adım 4 ve K1/D1 dalları merge edildikten sonra** (çak
 - `new_package.py` ve `yeni_proje.py`'nin projeye yazdığı ek dosyalar (rapor detaylı okumadı) — P5 başında ölçülecek.
 - İkinci yayın senaryosunun uçtan uca çalışması (rapor kod okumasıyla kanıtladı, canlı denenmedi) — P7 kabul testi.
 - Linux/macOS; PYTHONUTF8'siz ortamda Türkçe çıktı.
+
+**ÖLÇÜLDÜ (DOĞRULANMADI listesinden düşenler):**
+- **2026-09-17 (P2 fixture'ı, gerçek git ile):** git birleşmesi **BİTİŞİK satır** değişikliklerini de çakışma sayıyor (satır 4 bizden + satır 5 kullanıcıdan → **V4c**, V4t değil). Bu bir motor kusuru DEĞİL, kartların kalibrasyonudur: **"temiz birleşme (V4t)" beklentisi olduğundan iyimserdi** — vaka kartları ve kullanıcıya verilen beklenti buna göre yazılmalı (P3'ün işi). Fixture bu davranışa göre genişletildi.

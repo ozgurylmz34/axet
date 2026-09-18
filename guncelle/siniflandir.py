@@ -101,11 +101,155 @@ def _yol_simgeleri(komut: str) -> list[str]:
     return simgeler
 
 
+def _k_degerleri(komut: str) -> list[str | None]:
+    """Komut satırındaki her `-k` bayrağının DEĞERİ; değer yoksa None.
+
+    `_yol_simgeleri` `-` ile başlayan her parçayı atladığı için filtre değeri "yol gibi
+    görünmediğinden" hiç denetlenmiyordu: haritaya yazım hatalı bir `-k` girilirse denetim
+    sessiz kalıyordu (D17 açık kalemi, 2026-09-17). Okuma koşucunun kendi sözleşmesiyle AYNI:
+    `tests/run_tests.py` de `-k`'dan sonraki parçayı alır; yoksa ya da `-` ile başlıyorsa
+    "HATA: -k bir desen ister" deyip çıkış 2 verir.
+    """
+    parcalar = komut.split()
+    degerler: list[str | None] = []
+    for i, parca in enumerate(parcalar):
+        if parca != "-k":
+            continue
+        if i + 1 >= len(parcalar) or parcalar[i + 1].startswith("-"):
+            degerler.append(None)
+        else:
+            degerler.append(parcalar[i + 1])
+    return degerler
+
+
+# Keşif sonuçları süreç ömrü boyunca önbelleklenir: `denetle()` tek koşumda onlarca kez
+# çağrılabilir (negatif testler), keşif ise her seferinde alt süreç başlatır.
+_TEST_ADI_ONBELLEK: dict[str, tuple[list[str], str | None]] = {}
+
+# Alt süreçte KOŞAN keşif programı. `unittest.discover` test modüllerini yalnız IMPORT eder,
+# hiçbir testi KOŞTURMAZ — tüm takımı koşturmak 20+ dk sürerdi (ölçüldü: keşif ~0,7 sn / 282 ad).
+# sys.path, `tests/run_tests.py`'nin kendi kurulumuyla aynı (tests dizini + repo `scripts/`).
+_KESIF_PROGRAMI = r"""
+import json, sys, unittest
+test_dizini, kok = sys.argv[1], sys.argv[2]
+for _p in (test_dizini, kok + "/scripts"):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+sys.dont_write_bytecode = True
+loader = unittest.TestLoader()
+paket = loader.discover(test_dizini, pattern="test_*.py", top_level_dir=test_dizini)
+def duzle(s):
+    for x in s:
+        if isinstance(x, unittest.TestSuite):
+            yield from duzle(x)
+        else:
+            yield x
+adlar, kirik = [], []
+for t in duzle(paket):
+    adlar.append(t.id())
+    if type(t).__name__ == "_FailedTest":
+        kirik.append(t.id())
+sys.stdout.write(json.dumps({"adlar": adlar, "kirik": kirik}))
+"""
+
+
+def kesfedilen_test_adlari(test_dizini: Path, kok: Path) -> tuple[list[str], str | None]:
+    """(test adları, ölçülemedi_nedeni). Ad biçimi `modul.Sinif.metot` — unittest'in
+    `testNamePatterns` ile karşılaştırdığı TAM ad (`TestLoader.getTestCaseNames`).
+
+    Testler KOŞTURULMAZ, yalnız keşfedilir. Hata hâlinde ad listesi BOŞ döner ve neden metni
+    dolar; çağıran bunu "temiz" değil "ÖLÇÜLEMEDİ" olarak yazar.
+    """
+    anahtar = str(test_dizini.resolve())
+    if anahtar in _TEST_ADI_ONBELLEK:
+        return _TEST_ADI_ONBELLEK[anahtar]
+    if not test_dizini.is_dir():
+        sonuc: tuple[list[str], str | None] = ([], f"test dizini yok: {test_dizini}")
+    else:
+        ciktı = subprocess.run(
+            [sys.executable, "-c", _KESIF_PROGRAMI, anahtar, str(kok.resolve())],
+            cwd=kok, capture_output=True, text=True, encoding="utf-8")
+        if ciktı.returncode != 0:
+            sonuc = ([], f"keşif başarısız (çıkış {ciktı.returncode}): "
+                         f"{(ciktı.stderr or '').strip()[-300:]}")
+        else:
+            try:
+                veri = json.loads(ciktı.stdout)
+            except ValueError as h:
+                sonuc = ([], f"keşif çıktısı okunamadı: {h}")
+            else:
+                if veri["kirik"]:
+                    sonuc = ([], f"keşif import hatası verdi: {veri['kirik']}")
+                elif not veri["adlar"]:
+                    sonuc = ([], "keşif hiçbir test bulamadı")
+                else:
+                    sonuc = (veri["adlar"], None)
+    _TEST_ADI_ONBELLEK[anahtar] = sonuc
+    return sonuc
+
+
+def _kosucu_test_dizini(calisma: Path, komut: str) -> Path | None:
+    """`python <...>/run_tests.py -k X` komutundaki koşucunun test dizini (betiğin klasörü).
+
+    `-k` yalnız `run_tests.py` biçimli koşucularda modellenmiştir; başka bir çağrı biçimi
+    (ör. `python -m unittest discover ...`) için None döner ve filtre DOĞRULANMAZ.
+    """
+    for parca in komut.split():
+        if parca.endswith("run_tests.py"):
+            return calisma / parca
+    return None
+
+
+_DIZIN_ONBELLEK: dict[str, set[str]] = {}
+
+
+def _dizin_girdileri(dizin: Path) -> set[str]:
+    anahtar = str(dizin)
+    if anahtar not in _DIZIN_ONBELLEK:
+        try:
+            _DIZIN_ONBELLEK[anahtar] = {g.name for g in dizin.iterdir()}
+        except OSError:
+            _DIZIN_ONBELLEK[anahtar] = set()
+    return _DIZIN_ONBELLEK[anahtar]
+
+
+def _harf_duyarli_var_mi(kok: Path, bagil: str) -> bool:
+    """Yol diskte GERÇEK harfleriyle var mı — her parça dizin girdisiyle karşılaştırılır.
+
+    `Path.exists()` Windows'ta ve varsayılan macOS dosya sistemlerinde harf-DUYARSIZdır:
+    yanlış harfli bir yol orada GEÇER, Linux tüketicisinde FAIL olur. Yani eski kontrol
+    taşınabilir değildi (D17 açık kalemi, 2026-09-17); bu kontrol dosya sisteminden bağımsız
+    olarak her yerde aynı cevabı verir.
+    """
+    gecerli = kok
+    for parca in bagil.replace("\\", "/").split("/"):
+        if parca in ("", "."):
+            continue
+        if parca == "..":
+            return False  # harita yollarında üst-dizin atlaması beklenmez
+        if parca not in _dizin_girdileri(gecerli):
+            return False
+        gecerli = gecerli / parca
+    return True
+
+
 def _var_mi(kok: Path, desen: str) -> bool:
-    """Yol ya da glob deseni diskte en az bir şeye karşılık geliyor mu."""
+    """Yol ya da glob deseni diskte en az bir şeye karşılık geliyor mu — HARF-DUYARLI."""
     if not re.search(r"[*?\[]", desen):
-        return (kok / desen).exists()
-    return any(True for _ in kok.glob(desen))
+        return _harf_duyarli_var_mi(kok, desen)
+    # `Path.glob` de Windows'ta harf-duyarsız eşler. Döndürdüğü yolun harfleri SÜRÜME BAĞLIDIR:
+    # 3.12'de diskteki GERÇEK harfler, 3.13+'ta joker içermeyen parçalar DESENDEKİ harflerle gelir
+    # (CI 3.14'te ölçüldü: "Scripts/*.py" yanlış harfle geçti) ⇒ glob sonucunun harflerine
+    # GÜVENİLMEZ; her aday dizin girdileriyle harf-duyarlı yeniden doğrulanır.
+    duzgun = desen.replace("\\", "/")
+    for p in kok.glob(desen):
+        try:
+            bagil = p.relative_to(kok).as_posix()
+        except ValueError:
+            continue
+        if fnmatch.fnmatchcase(bagil, duzgun) and _harf_duyarli_var_mi(kok, bagil):
+            return True
+    return False
 
 
 def denetle(harita: dict, yollar: list[str], kok: Path | None = None) -> list[str]:
@@ -118,12 +262,18 @@ def denetle(harita: dict, yollar: list[str], kok: Path | None = None) -> list[st
       2b. bugün hiçbir yolda gerçekleşmeyen (ölü) örtüşme beyanı var mı = FAIL
       3. birincil olarak 0 dosya eşleyen sınıf var mı (`beklenen_bos: true` değilse FAIL);
          `beklenen_bos` kullanan her sınıf `beklenen_bos_neden` yazmak ZORUNDA
-      4. `esler` ve `test.komut` içinde adı geçen her yol diskte var mı
+      4. `esler` ve `test.komut` içinde adı geçen her yol diskte var mı — HARF-DUYARLI
+         (`Path.exists()` Windows/macOS'ta harf-duyarsızdır; yanlış harfli yol orada geçip
+         Linux tüketicisinde FAIL olurdu)
+      4b. `test.komut` içindeki `-k` filtre DEĞERİ gerçek bir test adıyla eşleşiyor mu
+         (testler KOŞTURULMAZ; unittest KEŞFİ ile ad listesi toplanır)
       5. şema: zorunlu alanlar, `etkin`/`risk` değer kümesi, `ust_sinif` tanımlı mı, sınıf adı tekil mi
       6. TASARIM §3 özet tablosunun çekirdek üst sınıflarının (s3_cekirdek=true) her birinin
          en az bir alt sınıfı var mı
-    BAKMADIKLARI: komutların gerçekten KOŞTUĞU (yalnız yolların varlığı ölçülür) · `yukleme`
-    metinlerinin doğruluğu · `risk`/`kritik_yol` yargısının isabeti · dosya İÇERİĞİ.
+    BAKMADIKLARI: komutların gerçekten KOŞTUĞU / testlerin GEÇTİĞİ (yalnız yol varlığı ve `-k`
+    filtresinin bir test adına denk geldiği ölçülür) · `run_tests.py` dışı koşucularda `-k`
+    (ölçülemez → sorun olarak YAZILIR, sessizce atlanmaz) · `on_kosul` metinlerinin doğruluğu ·
+    `yukleme` metinlerinin doğruluğu · `risk`/`kritik_yol` yargısının isabeti · dosya İÇERİĞİ.
     """
     kok = kok or KOK
     sorunlar: list[str] = []
@@ -227,9 +377,34 @@ def denetle(harita: dict, yollar: list[str], kok: Path | None = None) -> list[st
             if not calisma.is_dir():
                 sorunlar.append(f"test cwd'si yok: {ad} → {t.get('cwd')}")
                 continue
-            for simge in _yol_simgeleri(t.get("komut", "")):
+            komut = t.get("komut", "")
+            for simge in _yol_simgeleri(komut):
                 if not _var_mi(calisma, simge):
                     sorunlar.append(f"test komutundaki yol diskte yok: {ad} → {simge}")
+            # 4b — `-k` filtre DEĞERİ gerçek bir test adıyla eşleşiyor mu
+            for deger in _k_degerleri(komut):
+                if deger is None:
+                    sorunlar.append(
+                        f"test komutunda -k bayrağının değeri yok: {ad} → {komut!r} "
+                        f"(koşucu bu durumda çıkış 2 verir)")
+                    continue
+                kosucu = _kosucu_test_dizini(calisma, komut)
+                if kosucu is None:
+                    sorunlar.append(
+                        f"-k filtresi ÖLÇÜLEMEDİ ('temiz' DEĞİL): {ad} → {komut!r} "
+                        f"(run_tests.py biçimli bir koşucu bulunamadı)")
+                    continue
+                adlar, neden = kesfedilen_test_adlari(kosucu.parent, kok)
+                if neden is not None:
+                    sorunlar.append(
+                        f"-k filtresi ÖLÇÜLEMEDİ ('temiz' DEĞİL): {ad} → {komut!r} ({neden})")
+                    continue
+                # Koşucunun kendi eşleştirmesiyle AYNI: `testNamePatterns = ["*<deger>*"]`,
+                # unittest bunu `modul.Sinif.metot` TAM adına `fnmatchcase` ile uygular.
+                if not any(fnmatch.fnmatchcase(t_ad, f"*{deger}*") for t_ad in adlar):
+                    sorunlar.append(
+                        f"test komutundaki -k filtresi hiçbir test adıyla eşleşmiyor: "
+                        f"{ad} → -k {deger} ({len(adlar)} test adı tarandı: {kosucu.parent})")
 
     return sorunlar
 
@@ -277,8 +452,11 @@ def main(argv: list[str] | None = None) -> int:
         for s in sorunlar:
             print(f"  SORUN: {s}")
         print(f"SONUÇ: {len(sorunlar)} sorun")
-        print("KAPSAM — bakılmayanlar: test komutlarının gerçekten koştuğu (yalnız yol varlığı "
-              "ölçülür) · yukleme metinlerinin doğruluğu · risk/kritik_yol yargısı · dosya içeriği")
+        print("KAPSAM — bakılanlar: sınıflandırma · örtüşme beyanı · şema · §3 çekirdek · yol "
+              "varlığı (HARF-DUYARLI) · -k filtresinin bir test adına denk geldiği")
+        print("KAPSAM — bakılmayanlar: test komutlarının gerçekten koştuğu / testlerin GEÇTİĞİ · "
+              "run_tests.py dışı koşucularda -k · on_kosul ve yukleme metinlerinin doğruluğu · "
+              "risk/kritik_yol yargısı · dosya içeriği")
     return 1 if sorunlar else 0
 
 
