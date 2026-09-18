@@ -260,6 +260,15 @@ class SurumKaydiTest(GeciciTest):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("[aynı]        logo.png", self.cikti(r))  # ikinci koşumda bayt karşılaştırması
 
+    def test_utf8_cozulebilen_ikili_sablon_da_bayt_bayt_kopyalanir(self):
+        """Bug gate 2026-09-19 #6: ölçüt yalnız UnicodeDecodeError'dı ⇒ geçerli UTF-8 olan ikili dosya
+        (NUL içerir) metin sayılıp yer tutucusu dolduruluyor, satır sonu çevriliyordu. Uzantısı ikili
+        listesinde OLMAYAN bir ad seçildi: ölçülen tek ölçüt NUL taramasıdır."""
+        veri = b"AXB1\x00\x01<PROJE_ADI>\n\x00\x02son\n"
+        veri.decode("utf-8")  # kontrol grubu: gerçekten çözülebilir (yoksa eski dal da bayt kopyalardı)
+        self.f.uret(ikili={"templates/project/veri.bin": veri})
+        self.assertEqual((self.f.proje / "veri.bin").read_bytes(), veri)
+
 
 # =====================================================================================================
 # 2. PLAN / VAKA KODLARI
@@ -772,6 +781,17 @@ class AkisTest(ProjeTemel):
         (self.f.proje / ".git" / "config").write_text("[bozuk", encoding="utf-8")
         r = self.f.calistir("onkontrol")
         self.assertIn("ekip reposu denetimi ÖLÇÜLEMEDİ (git remote rc=", self.cikti(r))
+
+    def test_git_deposu_olmayan_proje_OLCULEMEDI_gurultusu_uretmez(self):
+        """Bug gate 2026-09-19 #5: git'siz projede `git remote` de rc=128 döner ⇒ "ÖLÇÜLEMEDİ"
+        gürültüsü basılıyordu. Bozuk `.git/config` (üstteki test) ile ayrım `.git`in varlığıdır."""
+        (self.f.proje / ".git").rename(self.f.proje / ".git_gizli")
+        try:
+            r = self.f.calistir("onkontrol")
+            self.assertIn("ekip reposu: proje bir git deposu değil", self.cikti(r))
+            self.assertNotIn("ekip reposu denetimi ÖLÇÜLEMEDİ", self.cikti(r))
+        finally:
+            (self.f.proje / ".git_gizli").rename(self.f.proje / ".git")
 
     def test_durum_tablosu_basar(self):
         self.f.ilerlet()

@@ -1464,7 +1464,13 @@ def komut_butunluk(b: Baglam, args) -> int:
         y_sha = b.k.blob_sha(b.yeni_ref, yol)
         if y_sha is None:
             continue
-        l_sha = b.k.disk_sha(yol)
+        # disk_sha ölçemezse `Dur` fırlatır; yakalanmazsa `butunluk.json` HİÇ yazılmaz ve kapanış
+        # önceki koşumun bayat dosyasını okur (bug gate 2026-09-19 #4) ⇒ satır ÖLÇÜLEMEDİ olur.
+        try:
+            l_sha = b.k.disk_sha(yol)
+        except Dur as e:
+            guvence.append(f"WARN asgari güvence: {yol} ÖLÇÜLEMEDİ ({e})")
+            continue
         if l_sha is None:
             guvence.append(f"WARN asgari güvence: {yol} YERELDE YOK (yeni sürümde var)")
         elif l_sha != y_sha:
@@ -1580,10 +1586,18 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # daha önce İZLENMİYORSA (V7: kullanıcının kendi dosyası template'in yeni yolunda) kapanış onu
     # git'e ekleyip commit'lemez — eskiden ekliyordu: içerik korunuyor ama dosya sessizce klonun
     # geçmişine giriyordu. İzlenen bir dosyada `yerel` zaten "değişiklik yok" demektir.
-    yerel_izlenmeyen = {durum["dosyalar"].get(d["yol"], {}).get("hedef_yol", d["yol"])
-                        for kalem in plan["kalemler"] if kalem["id"] in secili
-                        for d in kalem["dosyalar"]
-                        if durum["dosyalar"].get(d["yol"], {}).get("karar") == "yerel"} - izlenen
+    # ⛔ Ölçüt "karar == yerel" DEĞİL, "motor bu yola template içeriği YAZDI mı"dır (bug gate
+    # 2026-09-19, ölçüldü): yeniden adlandırmalı V7'de kayıt `hedef_yol` olarak ESKİ yolu tutar,
+    # kullanıcının dosyası ise YENİ yoldadır ⇒ eski süzgeç yanlış yolu koruyordu. Aynı sınıf
+    # `--karar ertelendi` ve karar verilmemiş (`bekliyor` + `--kabul`) dosyada da vardı. Motor bir
+    # yola yalnız `durum ∈ {dogrulandi, uygulandi}` ve karar `yerel` DEĞİLKEN yazar; geri kalan her
+    # izlenmeyen yol (eski VE yeni ad) kullanıcınındır ve commit'e girmez.
+    def _motor_yazdi(d: dict) -> bool:
+        kayit = durum["dosyalar"].get(d["yol"], {})
+        return kayit.get("durum") in ("dogrulandi", "uygulandi") and kayit.get("karar") != "yerel"
+    yerel_izlenmeyen = {y for kalem in plan["kalemler"] if kalem["id"] in secili
+                        for d in kalem["dosyalar"] if not _motor_yazdi(d)
+                        for y in (d["yol"], d.get("yeni_yol")) if y} - izlenen
     plan_yollari = list(add_yollari)   # süzgeçten ÖNCEKİ küme — hata dalında index'i bununla geri al
     add_yollari = [y for y in add_yollari
                    if ((k.kok / y).exists() or y in izlenen) and y not in yerel_izlenmeyen]

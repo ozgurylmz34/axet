@@ -1898,6 +1898,59 @@ class KartTest(GuncelleTemel):
         self.assertNotIn("BOZUK", self.cikti(r))
 
 
+class M6YenidenAdlandirmaTest(GuncelleTemel):
+    """M-6'nın yeniden adlandırmalı V7 kolu (bug gate 2026-09-19, BLOCKER #1-#2 — ölçüldü).
+
+    Template `docs/tasinacak.md`'yi `docs/tasindi.md`'ye taşır; kullanıcının yeni yolda
+    İZLENMEYEN kendi dosyası vardır ⇒ V7. Eski süzgeç yalnız `karar == yerel` kaydının `hedef_yol`unu
+    koruyordu ve o alan ESKİ yolu tutuyordu ⇒ kullanıcının dosyası kapanış commit'ine giriyordu.
+    `ertelendi` kararında süzgeç hiç devreye girmiyordu. Taban AkisTest DEĞİL: onun testleri
+    V1R taşımasını varsayar, bu fikstürde aynı yol V7'dir.
+    """
+    OZEL = "KULLANICININ OZEL NOTU\n"
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.senaryolari_uygula()
+        self.f.yerel_degistir("docs/tasindi.md", self.OZEL)
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+    def _karar_ver_ve_kapat(self, *karar: str):
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.f.calistir("uygula", "--otomatik")
+        AkisTest._tum_yargilari_kapat(self)
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", *karar)
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.ozel_adimlari_kostur()
+        self.f.calistir("olc", "--asama", "sonra")
+        self.f.calistir("butunluk")
+        # kontrol grubu: vaka gerçekten V7 ve kullanıcının dosyası kapanıştan ÖNCE izlenmiyor
+        plan = json.loads((self.f.durum_dizini() / "plan.json").read_text(encoding="utf-8"))
+        kayit = [d for k in plan["kalemler"] for d in k["dosyalar"] if d["yol"] == "docs/tasinacak.md"]
+        self.assertEqual([(d["vaka"], d.get("yeni_yol")) for d in kayit], [("V7", "docs/tasindi.md")])
+        self.assertEqual(self.git(self.f.tuketici, "ls-files", "--", "docs/tasindi.md").stdout.strip(), "")
+        return self.f.calistir("kapanis")
+
+    def _kullanici_dosyasi_commite_girmedi(self, r) -> None:
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertNotIn("docs/tasindi.md", agac,
+                         f"kullanıcının izlenmeyen dosyası kapanış commit'ine girdi:\n{self.cikti(r)}")
+        self.assertEqual((self.f.tuketici / "docs/tasindi.md").read_text(encoding="utf-8"), self.OZEL)
+
+    def test_V7_yeniden_adlandirmali_yerel_yeni_yolu_korur(self):
+        r = self._karar_ver_ve_kapat("--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self._kullanici_dosyasi_commite_girmedi(r)
+        # kontrol grubu: süzgeç aşırı değil — aynı kapanışta V6 silmesi commit'e girdi
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertNotIn("docs/silinecek2.md", agac)
+
+    def test_V7_yeniden_adlandirmali_ertelendi_yeni_yolu_korur(self):
+        r = self._karar_ver_ve_kapat("--karar", "ertelendi", "--gerekce", "sonra bakarim")
+        self._kullanici_dosyasi_commite_girmedi(r)
+
+
 def _uret_elle(hedef: str) -> int:
     """`python tests/test_guncelle.py --uret <dizin>` — fixture'ı elle inceleme için üretir."""
     import tempfile

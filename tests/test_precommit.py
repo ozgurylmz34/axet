@@ -183,6 +183,36 @@ class PrecommitTest(GeciciTest):
         r = self.denetle()
         self.assertIn("yeni istisna: ZCL_YANLIS", r.stdout, self.cikti(r))
 
+    def test_stagelenmemis_genisletme_de_WARN(self):
+        """Bug gate 2026-09-19 #3 (ölçüldü): adlandırma denetimi `.rules.md`'yi DİSKTEN okur, fark
+        denetimi STAGED içerikten ⇒ stage'lenmemiş genişletme denetimi geçiriyor, WARN hiç çıkmıyordu."""
+        self._ilk_commit()
+        self._class_satiri_genislet()
+        self.git(self.d, "reset", "-q", "--", self.KURAL)   # genişletme yalnız diskte
+        self.stage("SOURCE_CODES/SD/ZSD001_CLC/classes/zcl_yanlis.clas.abap", ABAP_TEMIZ)
+        r = self.denetle()
+        # kontrol grubu: adlandırma gerçekten diskteki genişletilmiş regex'le GEÇTİ (yoksa vaka yok)
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        uyari = [s for s in r.stdout.splitlines()
+                 if s.startswith("[WARN] kural değişikliği") and "STAGE'LENMEMİŞ" in s]
+        self.assertEqual(len(uyari), 1, r.stdout)
+        self.assertIn(self.KURAL, uyari[0])
+
+    def test_yeniden_adlandirilan_rules_md_ilk_kayit_sayilmaz(self):
+        """Bug gate 2026-09-19 #3: paket klasörü taşınıp kural aynı commit'te genişletilirse `.rules.md`
+        HEAD'de yeni yolda yoktur ⇒ eskiden "ilk kayıt" sayılıp WARN atlanıyordu."""
+        self._ilk_commit()
+        self._class_satiri_genislet()
+        self.git(self.d, "mv", "SOURCE_CODES/SD/ZSD001_CLC", "SOURCE_CODES/SD/ZSD001_TASINDI")
+        yeni = "SOURCE_CODES/SD/ZSD001_TASINDI/.rules.md"
+        # kontrol grubu: git bunu gerçekten yeniden adlandırma olarak görüyor
+        durum = self.git(self.d, "diff", "--cached", "-M", "--name-status", "HEAD").stdout
+        self.assertTrue(any(s.startswith("R") and s.endswith(yeni) for s in durum.splitlines()), durum)
+        r = self.denetle()
+        uyari = [s for s in r.stdout.splitlines() if s.startswith("[WARN] kural değişikliği") and yeni in s]
+        self.assertEqual(len(uyari), 1, self.cikti(r))
+        self.assertIn("`^Z[A-Z0-9_]+$`", uyari[0])
+
     def test_sap_projesi_degilse_ad_ve_inceleme_atlanir(self):
         d = self.proje("genel")
         self.yaz(d / "SOURCE_CODES/SD/X/classes/zcl_yanlis.clas.abap", ABAP_TYPE_C)

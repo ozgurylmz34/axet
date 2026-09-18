@@ -44,6 +44,11 @@ SURUM_KAYDI = ".axet-code/sablon-surumu.json"
 SURUM_KAYDI_SURUMU = 1
 
 
+def _ikili_sablon_mu(rel: str, ham: bytes) -> bool:
+    import guncelle  # aynı klasör; uzantı listesinin tek kaynağı
+    return Path(rel).suffix.lower() in guncelle.IKILI_UZANTI or b"\0" in ham[:8000]
+
+
 def sablon_yollari(sap: bool) -> list[str]:
     """Projeye kurulan şablon dizinleri (klon-göreli). Tek kaynak: doctor ve guncelle_proje da bunu çağırır."""
     return ["templates/project"] + (["templates/project-sap"] if sap else [])
@@ -194,12 +199,19 @@ def main() -> int:
     for base, src in sources:
         rel = src.relative_to(base).as_posix()
         dst = target / rel
-        try:
-            text = _doldur(src.read_text(encoding="utf-8"), name)
-        except UnicodeDecodeError:
-            # İkili şablon (görsel, arşiv …): yer tutucu doldurulmaz, bayt bayt kopyalanır (Z9 — eskiden
-            # UnicodeDecodeError ile tüm kurulum yarıda kalıyordu; bugün repoda ikili şablon yok, gizli tuzak).
-            text = None
+        # İkili şablon (görsel, arşiv …): yer tutucu doldurulmaz, bayt bayt kopyalanır (Z9 — eskiden
+        # UnicodeDecodeError ile tüm kurulum yarıda kalıyordu; bugün repoda ikili şablon yok, gizli tuzak).
+        # Ölçüt `%guncelle-proje` ile AYNI (uzantı + NUL): UTF-8 olarak çözülebilen ikili dosya (bug gate
+        # 2026-09-19 #6) eskiden metin sayılıp yer tutucusu doldurulur ve satır sonları çevrilirdi.
+        ham = src.read_bytes()
+        text = None
+        if not _ikili_sablon_mu(rel, ham):
+            try:
+                # `read_text()` ile AYNI satır sonu çevirisi (universal newlines): çevrilmezse CRLF şablon
+                # aşağıdaki `write_text` ile Windows'ta `\r\r\n` olur.
+                text = _doldur(ham.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"), name)
+            except UnicodeDecodeError:
+                text = None
         if dst.exists():
             if text is None:
                 current = dst.read_bytes()

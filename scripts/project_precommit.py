@@ -2,7 +2,8 @@
 """Proje pre-commit denetimi — `.githooks/pre-commit` çağırır (`git config core.hooksPath .githooks`).
 
 aXet'te hook yok: düzenleme anındaki denetimler burada commit anında koşar. YALNIZ staged içerik ve yollar
-taranır (`git show :yol`); çalışma ağacındaki kirlilik sonucu değiştirmez.
+taranır (`git show :yol`); çalışma ağacındaki kirlilik sonucu değiştirmez (tek istisna WARN'dır: stage'lenmemiş
+`.rules.md` değişikliği — adlandırma denetimi kuralları diskten okur).
 
 Kontroller (FAIL → commit ENGELLENİR):
   1. Kimlik dosyası: `.conn*` (`*.example` hariç) · kökte `conn/` altı (`*.example`, `README.md` hariç) ·
@@ -11,7 +12,8 @@ Kontroller (FAIL → commit ENGELLENİR):
      tırnaklı parola/sır ataması, yapılandırma dosyasında `…PASSWORD=değer`. Yer tutucular (`<…>`, `${…}`) serbest.
   3. Paket adlandırma (SAP projesi): staged obje dosyaları `.rules.md` Naming regex'leri (check_package_naming.py).
      + WARN (engellemez): staged `.rules.md` Naming tablosu / istisna listesi HEAD'e göre değiştiyse
-       (ilk kez eklenen `.rules.md` hariç) — eski → yeni satırlar gösterilir.
+       (ilk kez eklenen `.rules.md` hariç; yeniden adlandırılanın kaynağıyla karşılaştırılır) — eski → yeni
+       satırlar gösterilir. Diskte stage'lenmemiş değişikliği olan `.rules.md` de WARN alır.
   4. `validators-local/*.py` (varsa): exit 0 geçer · 1 engeller · başka çıkış/zaman aşımı da engeller (koşmadı ≠ temiz).
   5. SAP kaynak incelemesi, çevrimdışı (SAP projesi): staged `.clas.abap` · `.ddls.asddls`/`.cds` · `.bdef` ·
      `.srvd` · `.tabl.*` dosyası yazma kapısının kullandığı reviewer zincirinden (sap-adt-foundation `run_review`)
@@ -223,11 +225,14 @@ def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> 
     for yol in dosyalar:
         if Path(yol).name != ".rules.md":
             continue
-        r = subprocess.run(["git", "-C", str(proj), "cat-file", "-e", f"HEAD:{yol}"],
+        # Yeniden adlandırılan `.rules.md` "ilk kayıt" SAYILMAZ (bug gate 2026-09-19 #3): HEAD'deki
+        # kaynağı `git diff --cached -M` ile bulunur ve karşılaştırma ondan yapılır.
+        eski_yol = _yeniden_adlandirma_kaynagi(proj, yol) or yol
+        r = subprocess.run(["git", "-C", str(proj), "cat-file", "-e", f"HEAD:{eski_yol}"],
                            capture_output=True, stdin=subprocess.DEVNULL)
         if r.returncode != 0:
             continue  # ilk kayıt (HEAD'de yok / hiç commit yok)
-        eski_k, eski_i = cpn.kurallari_oku(_git(proj, "show", f"HEAD:{yol}").decode("utf-8", "replace"))
+        eski_k, eski_i = cpn.kurallari_oku(_git(proj, "show", f"HEAD:{eski_yol}").decode("utf-8", "replace"))
         yeni_k, yeni_i = cpn.kurallari_oku(staged_icerik(proj, yol).decode("utf-8", "replace"))
         fark = _naming_farki(eski_k, yeni_k)
         eklenen_istisna = sorted(yeni_i - eski_i)
@@ -237,6 +242,31 @@ def kontrol_kural_degisikligi(proj: Path, dosyalar: list[str], rapor: Rapor) -> 
             rapor.add("WARN", f"kural değişikliği: {yol} Naming/istisna değişti — " + " · ".join(fark)
                       + " — kullanıcı onayı yoksa geri al: bir denetimi geçmek için kuralı genişletmek "
                         "kuralı gevşetmektir (core/00-temel.md §3)")
+    # ⛔ Adlandırma denetimi `.rules.md`'yi DİSKTEN okur, yukarıdaki karşılaştırma ise STAGED içerikten
+    # (bug gate 2026-09-19 #3, ölçüldü): stage'lenmemiş bir regex genişletmesi denetimi geçirir ama
+    # commit'e girmediği için hiç WARN üretmezdi. Disk ≠ index olan her izlenen `.rules.md` uyarılır.
+    try:
+        kirli = _git(proj, "diff", "-z", "--name-only", "--", ":(glob)**/.rules.md").decode("utf-8", "replace")
+    except GitHatasi as e:
+        rapor.add("WARN", f"kural değişikliği: stage'lenmemiş `.rules.md` denetimi ÖLÇÜLEMEDİ ({e})")
+        return
+    for yol in filter(None, kirli.split("\0")):
+        rapor.add("WARN", f"kural değişikliği: {yol} diskte STAGE'LENMEMİŞ değişiklik var — adlandırma "
+                          "denetimi diskteki içeriği okudu, commit'e girecek kural bu DEĞİL. Değişiklik "
+                          "kasıtlıysa stage'le (yukarıdaki fark denetimi ona da bakar), değilse geri al.")
+
+
+def _yeniden_adlandirma_kaynagi(proj: Path, yol: str) -> str | None:
+    """Staged bir yeniden adlandırmanın HEAD'deki kaynak yolu; yoksa None (ilk kayıt, hiç commit yok)."""
+    try:
+        cikti = _git(proj, "diff", "--cached", "-M", "--name-status", "HEAD").decode("utf-8", "replace")
+    except GitHatasi:
+        return None
+    for satir in cikti.splitlines():
+        parca = satir.split("\t")
+        if len(parca) == 3 and parca[0].startswith("R") and parca[2] == yol:
+            return parca[1]
+    return None
 
 
 def kontrol_yerel_validatorler(proj: Path, dosyalar: list[str], rapor: Rapor) -> None:

@@ -68,6 +68,13 @@ def _simdi() -> str:
     return datetime.datetime.now().isoformat(timespec="seconds")
 
 
+def _git_deposu_mu(kok: Path) -> bool:
+    """`git remote` rc≠0'ı iki sebepten ayırır: proje hiç git deposu değil (bilgi, gürültü değil)
+    ↔ depo var ama okunamadı (ÖLÇÜLEMEDİ). rc tek başına ayırt etmez: bozuk `.git/config` de
+    "not a git repository" gibi 128 döner. Ölçüt `.git`in kökte ya da bir üst dizinde varlığıdır."""
+    return any((d / ".git").exists() for d in (kok, *kok.parents))
+
+
 def _norm(veri: bytes | None) -> bytes | None:
     """CRLF → LF. Proje dosyası platform satır sonuyla, blob LF ile yazılır (ölçülmüş tuzak)."""
     return None if veri is None else veri.replace(b"\r\n", b"\n")
@@ -751,7 +758,9 @@ def komut_kapanis(b: Baglam, args) -> int:
               "", "## Paket şablonu", plan["paket_sablonu"]]
     ekip = subprocess.run(["git", "-C", str(p.kok), "remote"], capture_output=True, text=True,
                           stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
-    if ekip.returncode != 0:
+    if ekip.returncode != 0 and not _git_deposu_mu(p.kok):
+        rapor += ["", "## Ekip reposu", "Proje bir git deposu değil — ekip reposu yok."]
+    elif ekip.returncode != 0:
         rapor += ["", "## Ekip reposu",
                   f"ÖLÇÜLEMEDİ (git remote rc={ekip.returncode}) — proje bir ekip reposuysa bu "
                   "değişiklikler commit'le ekip arkadaşlarına gider; commit KULLANICININ onayıyla atılır."]
@@ -834,7 +843,9 @@ def komut_onkontrol(b: Baglam, args) -> int:
 
     r = subprocess.run(["git", "-C", str(p.kok), "remote"], capture_output=True, text=True,
                        stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
-    if r.returncode != 0:
+    if r.returncode != 0 and not _git_deposu_mu(p.kok):
+        bilgi.append("ekip reposu: proje bir git deposu değil")
+    elif r.returncode != 0:
         bilgi.append(f"ekip reposu denetimi ÖLÇÜLEMEDİ (git remote rc={r.returncode}) — proje bir "
                      "ekip reposuysa değişiklikler commit'le ekibe gider.")
     elif r.stdout.strip():
