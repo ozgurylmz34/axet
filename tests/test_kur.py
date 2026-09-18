@@ -425,6 +425,17 @@ class KurTest(GeciciTest):
         self.assertIn("SİLİNMEDİ", self.cikti(r))
         self.assertIn("SAP'ye yazma iznini de kapatır", self.cikti(r))
 
+    # --- K-A: adsız argüman sessizce -Hedef olmaz ----------------------------------------------------------------
+    def test_adsiz_arguman_reddedilir_hicbir_sey_olusmaz(self):
+        adsiz = self.tmp / "adsiz-hedef"
+        r = self.kur(str(adsiz), "-DenemeModu", varsayilan=False)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("adı verilmemiş argüman", c)
+        self.assertNotIn(f"Klon   : {adsiz}", c)  # eski davranış: adsız değer -Hedef'e bağlanırdı
+        self.assertFalse(adsiz.exists())
+        self.assertFalse(self.cfg.exists())
+
     def test_onceki_baska_klon_uyarilir_ve_iki_cekirdek_kalir(self):
         # Config önce BAŞKA bir klonu (burada AXET_HOME) gösteriyor.
         self.global_config(sap=True)

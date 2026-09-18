@@ -32,7 +32,9 @@ Kullanım (kur.cmd aynı parametreleri geçirir):
 
 Çıkış kodu: 0 tamam · 1 durduruldu/hata · 2 ön koşul eksik · 3 yeni terminal gerekli · 4 doctor FAIL gösterdi
 #>
-[CmdletBinding()]
+# PositionalBinding=$false: adsız argüman ("kur.cmd C:\x") eskiden SESSİZCE -Hedef oluyordu (K-A, ölçüldü 2026-09-18).
+# Artık hiçbir parametre konumdan bağlanmaz; adsız argümanlar $Fazla'ya düşer ve aşağıda DURDU ile reddedilir.
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [string]$Hedef = (Join-Path $env:USERPROFILE 'axet'),
     [string]$Kaynak = 'https://github.com/ozgurylmz34/axet-template.git',
@@ -40,7 +42,9 @@ param(
     [switch]$Sifirla,
     [switch]$DenemeModu,
     [switch]$Evet,
-    [switch]$WingetKapali
+    [switch]$WingetKapali,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$Fazla
 )
 
 Set-StrictMode -Version 2
@@ -662,6 +666,11 @@ function Sifirla-Klon([string]$hedef, [string]$dal) {
 # =================================================================================================================
 try {
     # --- 0. Parametre doğrulama (hiçbir işlemden ÖNCE) -------------------------------------------------------------
+    if (@($Fazla | Where-Object { $_ }).Count -gt 0) {
+        Yaz "DURDU: adı verilmemiş argüman: $($Fazla -join ' ')"
+        Yaz '  Her değer parametre adıyla verilir. Klasör için: kur.cmd -Hedef "C:\klasör"'
+        Bitir 1
+    }
     # Ölçüldü: kur.cmd'ye tırnaklı ve sonu ters bölü ile biten bir yol verilince ("C:\c b\") Windows \" dizisini
     # kaçışlı tırnak sayar; sonraki bütün parametreler (-DenemeModu, -WingetKapali dahil) bu değerin içine düşer.
     foreach ($ciftAd in @(@('-Hedef', $Hedef), @('-Kaynak', $Kaynak))) {
