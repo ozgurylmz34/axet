@@ -13,7 +13,10 @@ KAPSAM — bakılan: şema denetiminin 10 dalı (her biri için KONTROL GRUBU'yl
 `min_axet` yayın→kalem mirası · ilk yayın (git init + commit + etiket + CHANGELOG + trailer) ·
 ikinci yayın (var olan public klona yazma, ff-only tüketici, `guncelle.py plan`) ·
 eşlemesiz dosya FAIL'i · kalemde bildirilen dosya değişmemişse FAIL · etiket yeniden kullanımı ·
-yabancı origin reddi · `session_brief.template_bolumu` satır değişimi ve kritik hatırlatması.
+yabancı origin reddi · `session_brief.template_bolumu` satır değişimi ve kritik hatırlatması ·
+GERÇEK yayın kolundaki üç koruma (şema sorunu · `yayinlar.json` yok · kalem listesi boş) mesajıyla
+birlikte · dolu hedefe yazılmaması · `tur=guvenlik ⇒ kritik` türetmesinin `guncelle.py` ile ayna
+olması · ÖLÇÜLEMEDİ satırlarının kalem satırıyla birlikte korunması.
 
 KAPSAM — bakılmayan: gerçek `git push` (araç push etmez, yalnız komutu yazar) · gerçek GitHub ·
 `guncelle.py`'nin plan SONRASI komutları (sec/uygula/kapanis — P2'nin kendi takımı) ·
@@ -239,11 +242,76 @@ class YayinAkisiTest(YayinTemeli):
                       (hedef / "CHANGELOG.md").read_text(encoding="utf-8"))
 
     def test_yayinlar_json_yoksa_yayin_yapilmaz(self):
+        """VAKUM ÖNLEMİ (ölçüldü 2026-09-18): yalnız `rc==1` + `.git yok` iddia edildiğinde korunan
+        dal TAMAMEN SİLİNSE BİLE test yeşil kalıyordu — beklenen 1, kuralın kendisinden değil çok
+        aşağıdaki `assert yayin is not None`'dan doğuyordu. Bu yüzden dalın KENDİ mesajı da iddia
+        edilir; ham `Traceback` ise bir kullanıcı-yüzeyi kusurudur, çıktıda bulunmamalıdır."""
         d = self.depo(None)
         self.commitle(d)
         hedef, r = self.ilk_yayin(d)
-        self.assertEqual(r.returncode, 1, self.cikti(r))
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("yayın kalemleri olmadan yayın yapılamaz", c)
+        self.assertNotIn("Traceback", c, f"korunan dal yerine ham traceback ile durdu: {c}")
         self.assertFalse((hedef / ".git").exists(), "yayın kalemleri yokken git kuruldu")
+
+    def test_bos_kalem_listesiyle_yayin_yapilmaz(self):
+        """`guncelle/yayinlar.json` VAR ve ŞEMASI GEÇERLİ ama `"yayinlar": []` — ilk gerçek yayına
+        kadarki CANLI hâl. Yayını, aşağıdaki `assert` değil, KENDİ mesajlı dalı durdurmalı
+        (yayin_hazirla.py: "boş — yayınlanacak kalem yok"). Ölçüldü: o dal silindiğinde yayın yine
+        olmuyor ama kullanıcı ham `AssertionError` traceback'i görüyordu.
+
+        ⚠ `SemaTest.test_bos_yayin_listesi_gecerlidir` bu dalı KAPSAMAZ: o yalnız
+        `--yalniz-dogrula` şemasının boş listeyi GEÇERLİ saydığını ölçer (ayrı kol)."""
+        d = self.depo(yayinlar())
+        self.commitle(d)
+        hedef, r = self.ilk_yayin(d)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("yayınlanacak kalem yok", c)
+        self.assertNotIn("Traceback", c, f"korunan dal yerine ham traceback ile durdu: {c}")
+        self.assertFalse((hedef / ".git").exists(), "yayınlanacak kalem yokken git kuruldu")
+
+    def test_sema_sorunu_gercek_yayin_yolunu_durdurur(self):
+        """KABLOLAMA (kod ≠ kablolama): şema denetiminin 10 dalı `--yalniz-dogrula` koluyla
+        ölçülüyor, o bayrak ise kopyalamadan ÖNCE ayrı bir koldan dönüyor. GERÇEK yayın kolundaki
+        dal (yayin_hazirla.py: "YAYIN KALEMLERİ ŞEMA SORUNU" → çıkış 1) böylece TESTSİZ kalmıştı:
+        ölçüldü (2026-09-18), o `return 1` kaldırıldığında takımın hiçbir testi kırmızı olmadı ve
+        şema sorunu ekrana basılmasına rağmen yayın TAMAMLANDI (etiket atıldı).
+
+        Mesaj iddiası ŞARTTIR: `rc==1` çok aşağıdaki bambaşka bir daldan da gelebilir."""
+        bozuk = yayinlar(yayin("v0.1.0", kalem("0.1.0-01", tur="guvenlik", kritik=False,
+                                               gerektirir=["YOK-BOYLE-KALEM"])))
+        d = self.depo(bozuk)
+        self.commitle(d)
+        hedef, r = self.ilk_yayin(d)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 1, c)
+        self.assertIn("YAYIN KALEMLERİ ŞEMA SORUNU", c)
+        self.assertFalse((hedef / ".git").exists(), "şema sorunluyken git geçmişi kuruldu")
+        self.assertNotIn("Yayın commit'i:", c, "şema sorunluyken yayın commit'i atıldı")
+        # KONTROL GRUBU: aynı fixture'ın YALNIZ şeması düzeltilince aynı akış yayına gider
+        iyi = yayinlar(yayin("v0.1.0", kalem("0.1.0-01", tur="guvenlik", kritik=True)))
+        d2 = self.depo(iyi)
+        self.commitle(d2)
+        hedef2, r2 = self.ilk_yayin(d2, "yayin-kontrol")
+        self.assertEqual(r2.returncode, 0, self.cikti(r2))
+        self.assertTrue((hedef2 / ".git").exists(), "kontrol grubunda yayın yapılmadı")
+
+    def test_bos_olmayan_hedefe_yazilmaz(self):
+        """`--ilk` yayında hedefin BOŞ olması korunur (üzerine yazılmaz). PRE-EXISTING guard
+        (d1c35cd'de de vardı); P7 onu yalnız `else:` koluna taşıdı — testi buraya eklendi."""
+        d = self.depo(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        self.commitle(d)
+        hedef = self.tmp / "dolu-hedef"
+        self.yaz(hedef / "onceki.txt", "dokunulmamalı\n")
+        r = self.arac(d, "--hedef", str(hedef), "--ilk")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 2, c)
+        self.assertIn("hedef boş değil", c)
+        self.assertEqual(["onceki.txt"], sorted(p.name for p in hedef.iterdir()),
+                         "dolu hedefin üzerine yazıldı")
+        self.assertEqual("dokunulmamalı\n", (hedef / "onceki.txt").read_text(encoding="utf-8"))
 
     # --- ikinci yayın simülasyonu (P7 kabul ölçütü) ---------------------------------------------
     def ikinci_yayina_hazirla(self) -> tuple[Path, Path, Path]:
@@ -497,14 +565,66 @@ class SessionBriefGuncellemeTest(GeciciTest):
                         satirlar)
 
     def test_guvenlik_turu_kritik_sayilir(self):
-        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01", tur="guvenlik", kritik=True))))
-        self.assertTrue(any("WARN kritik güncelleme" in s for s in self.bolum()))
+        """TÜRETME: `kritik` alanı YOKKEN (varsayılan False) kritiklik YALNIZ `tur="guvenlik"`ten
+        gelmeli (session_brief.py: `bool(k.get("kritik") or k.get("tur") == "guvenlik")`).
+
+        VAKUM ÖNLEMİ (ölçüldü 2026-09-18): fixture `kritik=True` verdiği sürece `or` dalı hiç
+        çalışmıyordu — türetme tamamen silinse bile bu test yeşil kalıyordu."""
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01", tur="guvenlik"))))
+        satirlar = self.bolum()
+        self.assertTrue(any(s.startswith("WARN kritik güncelleme bekliyor: 0.1.0-01") for s in satirlar),
+                        f"tur=guvenlik kalemi kritik sayılmadı: {satirlar}")
+        # KONTROL GRUBU: türetmeyi tetiklemeyen sıradan kalem uyarı ÜRETMEMELİ (aynı klon, yeni içerik)
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01", tur="duzeltme"))))
+        self.assertFalse(any("WARN kritik" in s for s in self.bolum()),
+                         "tur=duzeltme kalemi kritik sayıldı")
+
+    def test_kritik_turetmesi_guncelle_motoruyla_ayni(self):
+        """AYNA: `session_brief` ile `scripts/guncelle.py` kritikliği ELLE KOPYALANMIŞ AYNI
+        ifadeyle türetir. Ayrışırsa motor kalemi kritik sayarken oturum özeti SUSAR — kullanıcı
+        güvenlik kalemini hiç görmez; iki taraf da kendi içinde tutarlı olduğu için hiçbir
+        davranış testi bunu yakalamaz.
+
+        KAPSAM — bakılan: iki dosyada da türetme ifadesinin METİN olarak bulunması.
+        KAPSAM — bakılmayan: ifadenin doğruluğu (onu davranış testleri ölçer) ve ortak bir
+        yardımcıya çıkarılma ihtimali — öyle bir refactor'da bu test bilinçli olarak kırılır ve
+        o an tek kaynağa göre güncellenir."""
+        import re
+        desen = re.compile(r'"kritik":\s*bool\(\s*(\w+)\.get\("kritik"\)\s*or\s*'
+                           r'\1\.get\("tur"\)\s*==\s*"guvenlik"\s*\)')
+        for etiket, yol in (("scripts/session_brief.py", SESSION_BRIEF), ("scripts/guncelle.py", GUNCELLE)):
+            # assertRegex KULLANILMAZ: başarısızlıkta tüm dosyayı çıktıya döker, hata okunamaz olur.
+            self.assertTrue(desen.search(yol.read_text(encoding="utf-8")),
+                            f"{etiket}: `tur=guvenlik ⇒ kritik` türetmesi bulunamadı — iki kural AYRIŞTI "
+                            f"(aranan desen: {desen.pattern})")
 
     def test_atlanan_kritik_kalem_gorunur_kalir(self):
         self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01", kritik=True))))
         self.uygulananlari_yaz({"0.1.0-01": {"etiket": "v0.1.0", "durum": "atlandi"}})
         satirlar = self.bolum()
         self.assertTrue(any("atlandı (kritik): 0.1.0-01" in s for s in satirlar), satirlar)
+
+    def test_olculemedi_satiri_kalem_satiriyla_birlikte_korunur(self):
+        """Kalem satırı üretilirken ÖLÇÜLEMEDİ satırları KORUNUR (session_brief.py:
+        `return yeni + [s for s in satirlar if "ÖLÇÜLEMEDİ" in s ...]`).
+
+        Yalnız "commit sayısı" satırı yer değiştirir; ölçülemeyen bir üstbilgiyi yutmak çıktıyı
+        hak etmediği kadar emin gösterir — 4be5bc9'da düzeltilen regresyonun AYNI SINIFI.
+        Ölçüldü (2026-09-18): `+ [...]` kuyruğu düşürüldüğünde takımın hiçbir testi kırmızı
+        olmadı; `test_bekleyen_kalem_satiri_uretilir` yalnız kalem satırının VAR, commit
+        satırının YOK olduğunu ölçüyor — korunan satırı kimse iddia etmiyordu.
+
+        Bu fixture'da upstream TANIMSIZDIR, o yüzden `template_durumu` ÖLÇÜLEMEDİ satırı üretir
+        (kontrol grubu: aşağıdaki ilk assert o satırın kalemsiz hâlde de var olduğunu gösterir)."""
+        temel = self.bolum()                       # kalem YOK: ÖLÇÜLEMEDİ satırı burada olmalı
+        self.assertTrue(any("ÖLÇÜLEMEDİ" in s for s in temel),
+                        f"fixture ÖLÇÜLEMEDİ satırı üretmiyor — test vakuma düşerdi: {temel}")
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        satirlar = self.bolum()
+        self.assertTrue(any("güncelleme kalemi bekliyor" in s for s in satirlar),
+                        f"kalem satırı üretilmedi: {satirlar}")
+        self.assertTrue(any("ÖLÇÜLEMEDİ" in s for s in satirlar),
+                        f"kalem satırı üretilince ÖLÇÜLEMEDİ satırı sessizce düştü: {satirlar}")
 
     def test_uygulanan_kritik_kalem_uyarmaz(self):
         """KONTROL GRUBU: iş bitince uyarı SUSMALI, yoksa satır gürültüye dönüşür."""
