@@ -21,6 +21,7 @@ import argparse
 import datetime
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -193,13 +194,24 @@ def main() -> int:
     for base, src in sources:
         rel = src.relative_to(base).as_posix()
         dst = target / rel
-        text = _doldur(src.read_text(encoding="utf-8"), name)
+        try:
+            text = _doldur(src.read_text(encoding="utf-8"), name)
+        except UnicodeDecodeError:
+            # İkili şablon (görsel, arşiv …): yer tutucu doldurulmaz, bayt bayt kopyalanır (Z9 — eskiden
+            # UnicodeDecodeError ile tüm kurulum yarıda kalıyordu; bugün repoda ikili şablon yok, gizli tuzak).
+            text = None
         if dst.exists():
-            current = dst.read_text(encoding="utf-8", errors="replace")
-            axet_varsayilani = rel == AXET_DEFAULT_GITIGNORE and current.strip() == "*"
+            if text is None:
+                current = dst.read_bytes()
+                ayni = current == src.read_bytes()
+                axet_varsayilani = False
+            else:
+                current = dst.read_text(encoding="utf-8", errors="replace")
+                ayni = current == text
+                axet_varsayilani = rel == AXET_DEFAULT_GITIGNORE and current.strip() == "*"
             if not axet_varsayilani:
                 onceden_kullanici += 1
-            if current == text:
+            if ayni:
                 print(f"  [aynı]        {rel}")
                 counts["atlandı"] += 1
                 continue
@@ -215,7 +227,9 @@ def main() -> int:
         counts[key] += 1
         if not args.dry_run:
             dst.parent.mkdir(parents=True, exist_ok=True)
-            if rel.startswith(".githooks/"):
+            if text is None:
+                shutil.copy2(src, dst)
+            elif rel.startswith(".githooks/"):
                 # git hook'u her platformda LF olmalı: CRLF'li `#!/bin/sh` satırı hook'u çalıştırmaz.
                 with open(dst, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write(text)

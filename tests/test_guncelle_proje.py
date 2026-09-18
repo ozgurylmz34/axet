@@ -93,8 +93,10 @@ class SahteKlon:
             with open(h, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(icerik)
 
-    def uret(self, sap: bool = False, onceden: dict | None = None) -> "SahteKlon":
-        """onceden: new_project'ten ÖNCE projede duran dosyalar (rel -> içerik); aXet'in kendi yazdıkları gibi."""
+    def uret(self, sap: bool = False, onceden: dict | None = None,
+             ikili: dict | None = None) -> "SahteKlon":
+        """onceden: new_project'ten ÖNCE projede duran dosyalar (rel -> içerik); aXet'in kendi yazdıkları gibi.
+        ikili: şablona eklenecek ikili dosyalar (klon-göreli yol -> bayt)."""
         (self.home / "scripts").mkdir(parents=True)
         for ad in KOPYALANAN_SCRIPTLER:
             shutil.copy2(GERCEK_SCRIPTS / ad, self.home / "scripts" / ad)
@@ -102,6 +104,9 @@ class SahteKlon:
         shutil.copy2(AXET_HOME / "core" / "sap" / "00-sap.md",
                      self.home / "core" / "sap" / "00-sap.md")
         self._yaz(V1_SABLON)
+        for yol, bayt in (ikili or {}).items():
+            (self.home / yol).parent.mkdir(parents=True, exist_ok=True)
+            (self.home / yol).write_bytes(bayt)
         g = self.t.git
         g(self.home, "init", "-q", "-b", "main")
         g(self.home, "add", "-A")
@@ -244,6 +249,16 @@ class SurumKaydiTest(GeciciTest):
         self.f.uret(onceden={".axet-code/.gitignore": "*\n", "AGENTS.md": "# kullanicinin kendi AGENTS'i\n"})
         self.assertFalse(self.f.kayit_yolu().exists(),
                          "kullanıcı dosyası önceden varken doğum sürümü uydurulmamalı")
+
+    def test_ikili_sablon_dosyasi_bayt_bayt_kopyalanir(self):
+        """Z9: şablondaki ikili dosya eskiden UnicodeDecodeError ile tüm kurulumu yarıda bırakıyordu."""
+        png = b"\x89PNG\r\n\x1a\n\x00\xff\xfe<PROJE_ADI>"  # geçersiz UTF-8 + yer tutucu: doldurulMAMALI
+        self.f.uret(ikili={"templates/project/logo.png": png})  # rc != 0 ise uret kendisi FAIL eder
+        self.assertEqual((self.f.proje / "logo.png").read_bytes(), png)
+        r = self.calistir("new_project.py", str(self.f.proje), "--name", "PROJE",
+                          scripts_dir=self.f.home / "scripts")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("[aynı]        logo.png", self.cikti(r))  # ikinci koşumda bayt karşılaştırması
 
 
 # =====================================================================================================
