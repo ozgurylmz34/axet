@@ -1043,6 +1043,71 @@ canlı davranışı ölçülmedi; iki `.docx` (`user_manual`, `sap-baglanti-kila
 - PROVA hook yanlış pozitifleri (PostToolUse "SAP işlemi BAŞARISIZ" kod metni gösteriminde).
 - Env mirası sınıfı: süreç içinde `.conn_adt` değişince bağlantı eski sistemde kalıyor ve ADR 0010 guard'ı env'i env ile karşılaştırıyor (aXet'te ölçüldü → D12). DEV_CORE'daki uzun yaşayan MCP sunucusunda aynı sınıf daha etkili olabilir — ÖLÇÜLMEDİ.
 
+## 2b. ⛔ AÇIK BLOCKER — P2 `kapanis` sessiz `git add` iptali (GATE-P2B, 2026-09-18)
+
+**Dal `fix/2026-09-18-p2-gate-bulgulari` (`e1108f9`) MERGE EDİLEMEZ.** Taze gate 27 mutasyon
+koştu; 25 öldü, 2 sağ kalan da geçersiz (biri ikinci guard'la maskeli, biri eşdeğer) ⇒
+**düzeltme turunun kendisi doğru**. BLOCKER mutasyondan değil: gate, sağ kalan mutantı
+kovalarken **mutasyonsuz, sevk edilecek kodda** yeni bir HIGH kusur ölçtü.
+
+**Kusur — `scripts/guncelle.py`, `kapanis` komutunun `git add -- <yollar>` daraltması
+(bu diff'te EKLENDİ; taban `git add -A -- :!…` kullanıyordu ⇒ PRE-EXISTING DEĞİL):**
+
+```python
+add_yollari = [y for y in add_yollari
+               if (k.kok / y).exists() or k.blob_sha("HEAD", y)]   # ← HEAD YANLIŞ ÖLÇÜT
+```
+
+`git add` pathspec'i **index + çalışma ağacına** göre eşler, **HEAD'e göre DEĞİL**.
+`Klon.sil()` `git rm -q --cached` yaptığı için silinen yol **index'ten düşer**; dosya HEAD'de
+durduğundan süzgeç onu **elemiyor** → `git add` `fatal: pathspec '…' did not match any files`
+verip **hiçbir yolu stage etmeden komple iptal ediyor**.
+
+**Ölçülen sessiz-hata zinciri (`--karar birlesik` ile, gate'in arena fixture'ında):**
+```
+kapanis rc = 0                                   ← "temiz kapandı" diyor
+git add uyarisi: fatal: pathspec 'docs/silinecek2.md' did not match any files
+core/00-temel.md commit'te mi      : False       ← BİRLEŞTİRME SONUCU COMMIT'E GİRMEDİ
+HEAD'de 'Çekirdek v3' var mı        : False
+diskte  'Çekirdek v3' var mı        : True
+```
+⇒ Kullanıcının birleştirdiği içerik commit'lenmiyor, `uygulanan.json`'a *"v3'te uygulandı"*
+yazılıyor ve `kapanis` **0** dönüyor. **Kayıp sessiz.**
+
+**Nedensellik kanıtlandı (kontrol grubu + fix-probe):**
+- Kontrol grubu: V6'yı V6d'ye çevirip otomatik silmeyi kaldırınca kusur **devam etti**, bu kez
+  suçlu `docs/tasinacak.md` ⇒ V6'ya özgü değil, **`k.sil()`'in dokunduğu her yola** ait
+  (V6 · V1R · `--karar yeniden-adlandir`/`yeni`/`birlesik`'in taşıma kaynağı).
+- Fix-probe: süzgeç `if (k.kok / y).exists()` yapılınca → `git add` uyarısı YOK,
+  `core/00-temel.md` commit'te **True**, HEAD'de v3 **True**.
+
+**Mevcut koruma neden yetmiyor:** `r_add.returncode != 0` yalnız `UYARI:` basıyor,
+**`eksikler`'e girmiyor** ⇒ `kapanis` 0/3 kalıyor, `uygulanan.json` mühürleniyor,
+`RAPOR.md` "KAPANMADI" demiyor. Hiçbir test `git add` çıkışını ölçmüyor.
+
+**Karşılanması gereken (3 madde):**
+1. `add_yollari` süzgeci **çalışma ağacında VAR olan** yollara kurulmalı (silmeler
+   `Klon.sil()` tarafından zaten stage'li).
+2. `git add` başarısızlığı **sessiz UYARI olamaz** — `eksikler`'e girip `kapanis`'i 1'e
+   düşürmeli (**ölçülemedi ≠ temiz**).
+3. `--karar birlesik` sonrası içeriğin kapanış commit'inde olduğunu doğrulayan test —
+   bugün 146 testin **hiçbiri** bu yolu kapanışa kadar sürmüyor.
+
+⚠ **Ayrıca gate, `tests/test_guncelle.py`'deki "daraltma, iptal DEĞİL" kanıtının YANILTICI
+olduğunu ölçtü** (vakum sınıfı ③): `assertIn("scripts/sap_stamp.py", dosyalar)` `git add`
+tümden patlamışken de geçiyor — çünkü o dosyayı `checkout_yol` stage'lemiş. [MEDIUM]
+
+**Gate'in diğer bulguları:** `olc` harita komutunu **allowlist'siz** koşuyor (asimetrik guard)
+[MEDIUM] · 3 vakum dizge assertion'ı (rc kolu sağlam, yalnız yanıltıcı güven) [LOW] ·
+`cozulemeyen` DUR'u yalnız `komut_plan`'da [LOW] · `VAKA_IZINLI_KARARLAR` otomatik vakaları
+daraltmıyor [LOW] · allowlist bayrak kolu yalnız birleşimde ölçülüyor [LOW].
+
+**Pre-existing, ayrı kalem:** `tests/test_guncelle_harita.py` `(AXET_HOME / yol).exists()`
+Windows MAX_PATH'e duyarlı — 260+ karakterlik kökte **sahte FAIL** (ölçüldü: 269 char → False,
+159 char → True). Bu değişimi bloklamaz.
+
+**SIRA:** Kullanıcı kararı gereği **önce Z11**, P2 düzeltme turu **Z11 mimarisiyle** koşar.
+
 ## 3. Ertelenmiş tetikler
 | # | Madde | Tetik |
 |---|---|---|
