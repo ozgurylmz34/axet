@@ -9,8 +9,16 @@ UYGULAMASIDIR; sözleşme (alan adları, çıkış kodları, vaka kodları) orad
 ⛔ K4 — MOTOR KENDİ KENDİNE YETER: `%guncelle` bu dosyayı ve `guncelle/**`'yi `git show
 origin/main:` ile repo DIŞI geçici bir dizine çıkarıp oradan çalıştırır. Bu yüzden klondaki
 (eski sürüm olabilecek) `scripts/*.py` modülleri **import EDİLMEZ**; klondaki araçlar yalnız
-ALT SÜREÇ olarak çalıştırılır (`butunluk`, `ozel-adim`). Tek import edilen yardımcı
-`guncelle/siniflandir.py`'dir — o da motorla AYNI geçici kopyada taşınır.
+ALT SÜREÇ olarak çalıştırılır (`butunluk`, `ozel-adim`). Bu dosya **hiçbir yerel modülü import
+etmez** — yalnız stdlib kullanır.
+
+⚠ `guncelle/siniflandir.py` de import EDİLMEZ (eski docstring "tek import edilen yardımcı" diyordu;
+ölçüldü, öyle değildi). Sebep K4 değil API farkıdır: `siniflandir.siniflandir()` SINIF ADINI
+döndürür, motorun ihtiyacı olan `sinif_bul()` ise `etkin`/`esler`/`test`/`ozel_adim` alanlarını
+taşıyan KAYDI döndürür ⇒ ikisi tek fonksiyona indirilemez. Eşleşme kuralı (harita sırası, ilk
+eşleşen kazanır) iki gövdede ayrı yazılıdır ve zamanla SESSİZCE ayrışabilir; bu risk
+`tests/test_guncelle.py::SiniflandirmaTekKaynakTest` ile mekanik olarak kapatılır (izlenen TÜM
+yollarda iki gerçekleştirmenin aynı sınıfı verdiğini ölçer).
 
 Kullanım:
     python scripts/guncelle.py --klon <klon> <altkomut> [...]
@@ -45,7 +53,12 @@ BURASI = Path(__file__).resolve().parent
 MOTOR_KOK = BURASI.parent                      # motorun kendi kopyasının kökü (geçici olabilir)
 DURUM_DIZIN_ADI = ".axet-guncelleme"
 RESMI_ORIGIN = "https://github.com/ozgurylmz34/axet-template.git"
-CAKISMA_ISARETLERI = ("<<<<<<<", "=======", ">>>>>>>")
+# ⚠ DÖRT işaret: `git merge-file --diff3` (bkz. `birlestir`) ÜÇ değil DÖRT satır üretir ve
+# dördüncüsü `||||||| TABAN:<yol>` bloğudur. Dördüncüsü listede yokken üçünü silip TABAN bloğunu
+# bırakan bir öneri dosyası `dogrulandi` sayılıyordu ⇒ tabanın ESKİ satırları sessizce birleşmiş
+# içeriğe karışıyordu (P3 doküman gate'i 2026-09-18; kart `guncelle/kartlar/V4c.md:39-40,52-54`
+# kullanıcıya "dördünü de sil, kalırsa FAIL" diye söz veriyordu — söz kodda karşılanmamıştı).
+CAKISMA_ISARETLERI = ("<<<<<<<", "|||||||", "=======", ">>>>>>>")
 
 # §10/§2a: tüketicide git kimliği tanımsız olabilir → her yazan commit kendi kimliğini taşır.
 GIT_KIMLIK = ["-c", "user.name=axet-guncelle", "-c", "user.email=guncelle@yerel"]
@@ -62,6 +75,27 @@ OTOMATIK_VAKALAR = {"V1", "V2", "V5", "V6", "V1R"}
 YARGI_VAKALARI = {"V4t", "V4c", "V4c+ESIK", "V4B", "V4R", "V6d", "V7", "VTB"}
 
 GECERLI_KARARLAR = ("birlesik", "yerel", "yeni", "yeniden-adlandir", "ertelendi")
+
+# VAKA ↔ İZİNLİ KARAR (TASARIM §5 kartlarından birebir; kapsam: YARGI vakaları).
+# ⛔ Neden gerekli: `GECERLI_KARARLAR` yalnız "böyle bir karar var mı" der, "bu vakada geçerli
+# mi" DEMEZ. §5'in V7 kartı yalnız `yeniden-adlandir|yerel` tanımlarken kod `--karar yeni`yi de
+# kabul ediyordu; `yeni` ise kullanıcının YEDEKLENMEMİŞ dosyasını (izlenmeyen ⇒ `hazirla`nın
+# `git add -u`'su onu commit'lemez ⇒ `guncelle-oncesi-*` etiketinde blob'u YOKTUR) geri
+# alınamaz biçimde eziyordu. Kontrol grubu aynı dosyada vardı: `--karar yeniden-adlandir`
+# içeriği `.yerel` olarak KORUYOR ⇒ kod bunu yapabiliyordu, yalnız bu yolda yapmıyordu.
+# `ertelendi` HER vakada geçerlidir (§6 `atlandi(gerekce)`); burada listelenmez.
+# Listede OLMAYAN bir vaka (V1/V2/V5/V6 gibi otomatikler) daraltılmaz — §5 onlar için karar
+# kartı tanımlamıyor, dolayısıyla kanıtsız daraltma olurdu.
+VAKA_IZINLI_KARARLAR: dict[str, set[str]] = {
+    "V4t": {"birlesik", "yerel", "yeni"},
+    "V4c": {"birlesik", "yerel", "yeni"},
+    "V4c+ESIK": {"yerel", "yeni"},          # §5: birleştirme DENENMEDİ ⇒ öneri dosyası yok
+    "V4B": {"yerel", "yeni"},               # §5: ikili dosya, birleştirme yok
+    "V4R": {"birlesik", "yerel", "yeni"},   # §5: "V4t/V4c kartı, hedef yol yeni ad"
+    "V6d": {"yerel"},                       # §5: "dokunma, bilgi ver"
+    "V7": {"yeniden-adlandir", "yerel"},    # §5 V7 kartı adım 2-3
+    "VTB": {"yerel", "yeni"},               # §4: otomatik birleştirme YASAK (taban uydurma)
+}
 
 
 # =====================================================================================================
@@ -158,6 +192,21 @@ class Klon:
         r = self.git("rev-parse", "--verify", "--quiet", f"{ref}:{yol}")
         return r.stdout.strip() or None
 
+    def izlenen_yollar(self, yollar: list[str]) -> set[str]:
+        """Verilen yollardan INDEX'te İZLENENLER.
+
+        ⚠ Neden HEAD değil index: `git add <pathspec>` eşleşmeyi ÇALIŞMA AĞACI + INDEX
+        üzerinde yapar, HEAD'e BAKMAZ. "Bu yolu `git add` eşleştirebilir mi" sorusunun index
+        yarısı budur; disk yarısı `(kok / yol).exists()`tir. İkisinin birleşimi dışındaki her
+        pathspec `git add`i `fatal` ile düşürür ve o çağrıda HİÇBİR yol stage EDİLMEZ.
+        """
+        if not yollar:
+            return set()
+        r = self.git("ls-files", "-z", "--", *yollar)
+        if r.returncode != 0:
+            return set()
+        return {y for y in r.stdout.split("\0") if y}
+
     def blob(self, sha: str) -> bytes:
         r = self.git("cat-file", "blob", sha, ikili=True)
         if r.returncode != 0:
@@ -214,13 +263,36 @@ class Klon:
 
 
 # --- durum dizini I/O -------------------------------------------------------------------------
+SOZLESME_SURUMU = 1  # §6 durum dosyalarının şema sürümü (plan.json / durum.json / uygulanan.json)
+
+
+def _surum_dogrula(ad: str, veri):
+    """§6 şema sürümü kontrolü. `surum` alanı YAZILIYOR ama hiç OKUNMUYORDU.
+
+    Ölçülen sonuç: `uygulanan.json`'a `surum: 2` verilince motor onu sessizce v1 gibi okuyor,
+    beklediği alanları bulamayınca `dosyalar` BOŞ dönüyor ⇒ dosya-başı taban sessizce
+    merge-base'e düşüyor ⇒ §2a'nın ÖNLEMEK için var olduğu yanlış çakışma geri geliyor.
+    İleri uyumluluk YOKTUR: daha yeni bir şemayı eski alan adlarıyla okumak sessiz kayıptır.
+    """
+    if isinstance(veri, dict):
+        s = veri.get("surum", SOZLESME_SURUMU)
+        if isinstance(s, int) and s > SOZLESME_SURUMU:
+            raise Dur(f"{ad}: `surum` {s} — bu motor yalnız surum {SOZLESME_SURUMU} şemasını "
+                      f"okur. Daha yeni şemayı eski alan adlarıyla okumak SESSİZ veri kaybıdır "
+                      f"(taban merge-base'e düşer, §2a'nın önlediği yanlış çakışma geri gelir). "
+                      f"Motoru tazele (`git -C <klon> fetch --tags origin`) ya da {ad} "
+                      f"dosyasını kaldır.")
+    return veri
+
+
 def _oku(yol: Path, varsayilan):
     if not yol.is_file():
         return varsayilan
     try:
-        return json.loads(yol.read_text(encoding="utf-8"))
+        veri = json.loads(yol.read_text(encoding="utf-8"))
     except (ValueError, OSError):
         return varsayilan
+    return _surum_dogrula(yol.name, veri)
 
 
 def _yaz_json(yol: Path, veri) -> None:
@@ -372,7 +444,23 @@ class Baglam:
         except ValueError as e:
             raise Dur(f"guncelle/yayinlar.json ayrıştırılamadı: {e}") from None
 
+    @property
+    def gecmis_yeniden_yazildi(self) -> bool:
+        """TASARIM §11 force-push istisnası (sır sızıntısı): yayın tarafı geçmişi yeniden yazdı.
+
+        Bugüne dek kodda hiç OKUNMUYORDU. Okunmadığında "etiket çözülemiyor" hatası, çözümü
+        `fetch` olan bir ağ sorunuyla çözümü `kur.cmd -Sifirla` olan bir geçmiş kopuşunu
+        ayırt edemez ve kullanıcı sonsuza dek `fetch` dener.
+        """
+        return bool(self.yayinlar.get("gecmis_yeniden_yazildi"))
+
     def _hedef_ref(self) -> str:
+        """En yeni ÇÖZÜLEBİLEN yayın etiketi.
+
+        ⚠ Buradaki geri düşüş TEK BAŞINA bir hata değildir (eski yayınlar için doğrudur); hata
+        onu SESSİZ bırakmaktı. Çözülemeyen bir yayın hâlâ BEKLİYORSA `komut_plan` durur —
+        yoksa v3 kalemleri v2 içeriğiyle uygulanır ve "uygulandi" mühürlenir (kalıcı kayıp).
+        """
         etiketler = [y["etiket"] for y in self.yayinlar.get("yayinlar", [])]
         for e in reversed(etiketler):
             if self.k.var_mi(e):
@@ -463,6 +551,17 @@ def dosya_vakasi(b: Baglam, yol: str, yeniden_ad: dict[str, str]) -> dict:
     hedef_yol = yeniden_ad.get(yol)
     y_sha = k.blob_sha(b.yeni_ref, hedef_yol or yol)
 
+    if hedef_yol and hedef_yol != yol:
+        # §4 +R son cümlesi: "Yeni yolda zaten L varsa → **V7**" (ad çakışması, DUR).
+        # ⛔ Bu dal kodda YOKTU: `uygula --otomatik` V1R'yi koşulsuz `checkout_yol(yeni, hedef)`
+        # ile yazıyordu ⇒ hedefteki İZLENMEYEN kullanıcı dosyası (hazirla onu commit'lemez,
+        # geri dönüş etiketinde blob'u YOKTUR) uyarısız ve GERİ ALINAMAZ biçimde siliniyordu.
+        # İki bağımsız gate aynı senaryoyu ölçtü (2026-09-18); kart V1R.md:26-27 zaten
+        # "motor üzerine yazmaz" diyordu — kart doğruydu, motor yanlıştı.
+        hedef_disk = k.disk_sha(hedef_yol)
+        if hedef_disk is not None and hedef_disk != y_sha:
+            return {"yol": yol, "vaka": "V7", "yeni_yol": hedef_yol}
+
     if hedef_yol and taban is not None:
         # +R değiştiricisi (§4): yol DEĞİŞTİ ⇒ içerik aynı olsa bile TAŞIMA bir eylemdir.
         # ⚠ Düz `vaka_kodu` burada yanlış cevap verir: %100 benzerlikli bir yeniden
@@ -509,6 +608,11 @@ def dosya_vakasi(b: Baglam, yol: str, yeniden_ad: dict[str, str]) -> dict:
     return kayit
 
 
+def _kart_var_mi(k: Klon, kod: str) -> bool:
+    """Kart YENİ sürümden okunur (`komut_kart` da öyle yapar) — yerel kopya bozuk/eski olabilir."""
+    return k.git("cat-file", "-e", f"origin/main:guncelle/kartlar/{kod}.md").returncode == 0
+
+
 def _kart_listesi(kayit: dict, sinif: dict | None) -> list[str]:
     kartlar = [kayit["vaka"]]
     if kayit.get("birlesme"):
@@ -525,10 +629,14 @@ def komut_plan(b: Baglam, args) -> int:
     kapsam = b.kapsam()
 
     # 1) hangi yayınlar bekliyor
-    bekleyen_yayinlar, beyan, kalem_kaydi = [], {}, {}
+    bekleyen_yayinlar, beyan, kalem_kaydi, cozulemeyen = [], {}, {}, []
     for yayin in b.yayinlar.get("yayinlar", []):
         etiket = yayin["etiket"]
-        if k.var_mi(etiket) and k.git("merge-base", "--is-ancestor", etiket, "HEAD").returncode == 0:
+        if not k.var_mi(etiket):
+            # Etiket çözülemiyorsa bu yayının İÇERİLİP içerilmediği de ÖLÇÜLEMEZ ⇒ bekleyen say.
+            cozulemeyen.append(etiket)
+            continue
+        if k.git("merge-base", "--is-ancestor", etiket, "HEAD").returncode == 0:
             continue  # tüketici bu yayını gerçekten içeriyor (taze klon)
         bekleyen_yayinlar.append(etiket)
         for kalem in yayin.get("kalemler", []):
@@ -537,6 +645,22 @@ def komut_plan(b: Baglam, args) -> int:
                 continue
             beyan[kid] = set(kalem.get("dosyalar", []))
             kalem_kaydi[kid] = (etiket, kalem)
+
+    if cozulemeyen:
+        # ⛔ Buradan sonrası SESSİZ KAYIP olurdu: `yeni_ref` bir ÖNCEKİ yayına düşer, o yayının
+        # kalemleri eski içerikle uygulanır, `kapanis` `uygulanan.json`'a "uygulandi" yazar ve
+        # kalem bir daha plana GİRMEZ — bakımcı etiketi sonradan bassa bile "Klon güncel" denir.
+        ortak = (f"Bekleyen yayın etiketleri klonda çözülemiyor: {', '.join(cozulemeyen)}. "
+                 f"Motor o yayınların İÇERİĞİNİ okuyamaz; en yeni çözülebilen ref "
+                 f"`{b.yeni_ref}`. ")
+        if b.gecmis_yeniden_yazildi:
+            raise Dur(ortak + "`yayinlar.json` `gecmis_yeniden_yazildi: true` diyor (TASARIM "
+                              "§11 force-push istisnası) ⇒ bu klonun geçmişi yayın tarafıyla "
+                              "artık örtüşmüyor; `fetch` bunu DÜZELTMEZ. `kur.cmd -Sifirla` ile "
+                              "klonu yeniden kur.")
+        raise Dur(ortak + "Plan üretilirse o kalemler sessizce ESKİ içerikle uygulanır ve "
+                          "`uygulanan.json`'a 'uygulandi' yazılır (kalıcı kayıp). Önce "
+                          "`git -C <klon> fetch --tags origin` çalıştır.")
 
     if not beyan:
         print("Klon güncel: bekleyen yayın kalemi yok.")
@@ -567,6 +691,8 @@ def komut_plan(b: Baglam, args) -> int:
 
     # 4) kalemleri kur
     kalemler, restart, uyarilar = [], None, []
+    kart_onbellek: dict[str, bool] = {}
+    eksik_kartlar: set[str] = set()
     for kid, (etiket, kalem) in kalem_kaydi.items():
         dosyalar, ozel_adimlar = [], []
         for yol in sorted(beyan[kid]):
@@ -578,6 +704,11 @@ def komut_plan(b: Baglam, args) -> int:
             kayit["etkin"] = sinif["etkin"] if sinif else None
             kayit["esler"] = sinif.get("esler", []) if sinif else []
             kayit["kart"] = _kart_listesi(kayit, sinif)
+            for kod in kayit["kart"]:
+                if kod not in kart_onbellek:
+                    kart_onbellek[kod] = _kart_var_mi(k, kod)
+                if not kart_onbellek[kod]:
+                    eksik_kartlar.add(kod)
             if sinif is None:
                 uyarilar.append(f"WARN sınıfsız dosya (harita bilmiyor): {yol}")
             else:
@@ -602,6 +733,21 @@ def komut_plan(b: Baglam, args) -> int:
             "yayin": etiket, "paket": paketler[kid], "dosyalar": dosyalar,
             "testler": testler, "ozel_adimlar": sorted(set(ozel_adimlar)),
         })
+
+    # Kapsamda EYLEM gerektiren ama hiçbir kalemin `dosyalar` listesinde geçmeyen yollar:
+    # sessizce uygulanmıyor, yalnız sayaçta görünüyordu ⇒ kullanıcı "güncellendi" sanırdı.
+    listelenen = {d["yol"] for kalem in kalemler for d in kalem["dosyalar"]}
+    for yol in sorted(set(vaka_kayitlari) - listelenen):
+        uyarilar.append(f"WARN beyansız EYLEM vakası: {yol} ({vaka_kayitlari[yol]['vaka']}) "
+                        f"kapsamda ama hiçbir kalemin `dosyalar` listesinde geçmiyor — "
+                        f"UYGULANMAYACAK (yayın tarafında kalem beyanı eksik olabilir)")
+
+    # Plan bir kart ADI verdiğinde o kartın gerçekten VAR olduğunu da söylemelidir; yoksa ajan
+    # §7 adım 8'de `kart <KOD>` deyip çıkış 2 alır ve akış orada tıkanır. Kart adları burada
+    # DEĞİŞTİRİLMEZ, yalnız varlıkları ölçülür.
+    for kod in sorted(eksik_kartlar):
+        uyarilar.append(f"WARN kart bulunamadı: guncelle/kartlar/{kod}.md (origin/main) — "
+                        f"ajan bu kartı basamaz (§7 adım 8)")
 
     if not any(k2["dosyalar"] for k2 in kalemler):
         print("Klon güncel: bekleyen kalemlerin hiçbiri dosya değişikliği gerektirmiyor.")
@@ -740,9 +886,18 @@ def komut_uygula(b: Baglam, args) -> int:
               file=sys.stderr)
         return 2
     hata = 0
+    # Bu koşumdan ÖNCE verilmiş kararların anlık görüntüsü (döngü içinde durum.json yeniden
+    # yazıldığı için tek seferde alınır).
+    onceki_durum = durum_oku(k)["dosyalar"]
     for kid, d in secili_dosyalar(k, plan):
         yol, kod = d["yol"], d["vaka"]
         if kod not in OTOMATIK_VAKALAR:
+            # ⛔ Koşulsuz `durum="bekliyor"` yazmak, `uygula` tekrarında VERİLMİŞ bir yargı
+            # kararını `dogrulandi`/`atlandi`'dan düşürüyordu ve geriye ÇELİŞKİLİ bir kayıt
+            # kalıyordu (`durum=bekliyor` + `karar=yerel`). Karar kullanıcınındır; `uygula`
+            # onu geri alamaz.
+            if onceki_durum.get(yol, {}).get("durum") in ("dogrulandi", "atlandi"):
+                continue
             durum_kaydet(k, yol, kalem=kid, vaka=kod, durum="bekliyor")
             continue
         hedef = d.get("yeni_yol") or yol
@@ -862,6 +1017,13 @@ def komut_isaretle(b: Baglam, args) -> int:
     kid, d = _plan_kaydi(plan, yol)
     hedef = d.get("yeni_yol") or yol
 
+    izinli = VAKA_IZINLI_KARARLAR.get(d["vaka"])
+    if izinli is not None and args.karar != "ertelendi" and args.karar not in izinli:
+        print(f"DUR: {d['vaka']} vakasında `--karar {args.karar}` TANIMLI DEĞİL "
+              f"(TASARIM §5 {d['vaka']} kartı: {', '.join(sorted(izinli))}, ayrıca `ertelendi`). "
+              f"{yol} dosyasına DOKUNULMADI.", file=sys.stderr)
+        return 2
+
     if args.karar == "ertelendi":
         if not args.gerekce:
             print("DUR: `--karar ertelendi` GEREKÇE ister (§6 `atlandi(gerekce)`).",
@@ -884,21 +1046,27 @@ def komut_isaretle(b: Baglam, args) -> int:
         if y_sha is None:
             print(f"DUR: {hedef} yeni sürümde yok — `--karar yeni` uygulanamaz.", file=sys.stderr)
             return 2
+        korunan = _yerel_kopya(k, hedef) if _yedeksiz_mi(k, hedef) else None
         k.checkout_yol(b.yeni_ref, hedef)
         if hedef != yol and (k.kok / yol).is_file():
             k.sil(yol)
+        if korunan:
+            print(f"Yedeksiz yerel içerik saklandı: {korunan}")
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeni", y_sha)
 
     if args.karar == "yeniden-adlandir":
-        tam = k.kok / yol
-        if tam.is_file():
-            shutil.move(str(tam), str(tam.with_name(tam.name + ".yerel")))
         y_sha = k.blob_sha(b.yeni_ref, hedef)
         if y_sha is None:
             print(f"DUR: {hedef} yeni sürümde yok.", file=sys.stderr)
             return 2
+        # ⚠ Ezilecek dosya DAİMA `hedef`tir. Yeniden adlandırmalı bir V7'de (`yol` ≠ `hedef`)
+        # kullanıcının dosyası YENİ yolda durur; eski kod `yol`u saklayıp `hedef`i eziyordu.
+        korunan = _yerel_kopya(k, hedef)
+        if hedef != yol and (k.kok / yol).is_file():
+            k.sil(yol)  # taşımanın kaynağı: içeriği geri dönüş etiketinde duruyor
         k.checkout_yol(b.yeni_ref, hedef)
-        print(f"Senin dosyan korundu: {yol}.yerel")
+        if korunan:
+            print(f"Senin dosyan korundu: {korunan}")
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeniden-adlandir", y_sha)
 
     # birlesik
@@ -916,10 +1084,49 @@ def komut_isaretle(b: Baglam, args) -> int:
                      not_="çakışma işareti kaldı")
         return 1
     beklenen = k.stdin_sha(hedef, veri)
+    korunan = _yerel_kopya(k, hedef) if _yedeksiz_mi(k, hedef) else None
     k.yaz(hedef, veri)
     if hedef != yol and (k.kok / yol).is_file():
         k.sil(yol)
+    if korunan:
+        print(f"Yedeksiz yerel içerik saklandı: {korunan}")
     return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "birlesik", beklenen)
+
+
+def _yedeksiz_mi(k: Klon, yol: str) -> bool:
+    """Diskteki içeriğin `guncelle-oncesi-*` etiketinde AYNI blob'u var mı? Yoksa üzerine
+    yazmak GERİ ALINAMAZ (ne `geri-al` ne `git fsck` getirebilir).
+
+    İki yedeksiz sınıf vardır: ① izlenmeyen dosya (`hazirla`nın `git add -u`'su commit'lemez)
+    ② etiket atıldıktan SONRA yapılan düzenleme.
+    """
+    disk = k.disk_sha(yol)
+    if disk is None:
+        return False                      # dosya yok → ezilecek içerik de yok
+    try:
+        etiket = geri_donus_etiketi(k)
+    except Dur:
+        return True                       # geri dönüş noktası hiç yok → her yazma yedeksiz
+    return k.blob_sha(etiket, yol) != disk
+
+
+def _yerel_kopya(k: Klon, yol: str) -> str | None:
+    """Üzerine yazılacak yerel dosyayı `<yol>.yerel` olarak saklar. Döner: saklanan ad (ya da None).
+
+    Var olan bir `.yerel`i EZMEZ — sayı ekler. Yedek yoksa kullanıcı içeriği geri alınamaz
+    biçimde kaybeder: `hazirla` yalnız İZLENEN dosyaları commit'ler (`git add -u`), dolayısıyla
+    izlenmeyen bir kullanıcı dosyasının `guncelle-oncesi-*` etiketinde blob'u YOKTUR.
+    """
+    tam = k.kok / yol
+    if not tam.is_file():
+        return None
+    aday = tam.with_name(tam.name + ".yerel")
+    n = 1
+    while aday.exists():
+        aday = tam.with_name(f"{tam.name}.yerel.{n}")
+        n += 1
+    shutil.move(str(tam), str(aday))
+    return aday.relative_to(k.kok).as_posix()
 
 
 def _dogrula_ve_kaydet(k: Klon, kid: str, yol: str, hedef: str, vaka: str,
@@ -1003,9 +1210,22 @@ def komut_olc(b: Baglam, args) -> int:
               {"asama": args.asama, "zaman": _simdi(), "testler": sonuclar,
                "kapsam_disi": "Bu ölçüm YALNIZ seçili sınıfların haritada yazılı test "
                               "komutlarını koşar; koşulamayanlar 'ÖLÇÜLEMEDİ' yazılır."})
+    # §6: "0 koştu (kırmızı olsa bile) · **2 koşturulamadı**" · §7 adım 6: "2 → DUR".
+    # ⛔ Koşulsuz `return 0`, "ölçülemeyen güncelleme yapılmaz" kuralını mekanik olarak devre
+    # dışı bırakıyordu: hem "haritada hiç test komutu yok" hem de "komutların hiçbiri
+    # koşturulamadı" hâllerinde akış "ölçüldü" sayılıp devam ediyordu. ÖLÇÜLEMEDİ ≠ TEMİZ.
+    kosan = [s for s in sonuclar if s.get("cikis") is not None]
+    if kosan:
+        return 0
     if not sonuclar:
-        print("UYARI: seçili sınıfların haritada test komutu yok — ölçüm BOŞ (temiz DEĞİL).")
-    return 0
+        print("DUR: seçili sınıfların haritada test komutu YOK — hiçbir şey ÖLÇÜLEMEDİ "
+              "('temiz' DEĞİL, §6 çıkış 2).", file=sys.stderr)
+    else:
+        print(f"DUR: {len(sonuclar)} test komutunun HİÇBİRİ koşturulamadı — hepsi ÖLÇÜLEMEDİ "
+              f"('temiz' DEĞİL, §6 çıkış 2). Ayrıntı: "
+              + " · ".join(f"{s['kimlik']}: {s.get('not', '—')}" for s in sonuclar[:5]),
+              file=sys.stderr)
+    return 2
 
 
 def yeni_kirmizilar(k: Klon) -> list[str]:
@@ -1032,6 +1252,50 @@ def yeni_kirmizilar(k: Klon) -> list[str]:
 # =====================================================================================================
 _PY_KOMUT = re.compile(r"python\s+[\w./\\-]+\.py[^,;\n]*")
 
+# ⛔ `ozel-adim` SERBEST METİNDEN çıkardığı komutu koşar; metin `harita.json`'dan gelir.
+# Kabuk enjeksiyonu YOK (`shell=` bu dosyada hiç kullanılmıyor) — sorun başkadır: bir Türkçe
+# cümleye `python scripts/install.py --sap-write` yazılması, `config/permissions.json`'ın
+# `deny`'ını (`*install.py*--sap-write*`) TEK bir izinli `guncelle.py` çağrısı içinden atlatır.
+# Motor, klondaki `permissions.json`'a güvenemez (K4: klon eski/bozuk olabilir) ⇒ karar
+# motorun KENDİ kopyasında, DAR bir allowlist olarak durur: yalnız şu betikler, yalnız şu
+# bayraklar. Listede olmayan her şey koşturulmaz, kullanıcıya MANUEL ADIM olarak bırakılır.
+# Bugün haritadaki tüm özel adım komutları bu listeye sığıyor (ölçüldü: `scripts/install.py`
+# çıplak ve `--dry-run` ile).
+#
+# ⭐ KAPSAM BEYANI — bu allowlist YALNIZ `ozel-adim` yüzeyini kapsar (asimetri BİLİNÇLİDİR).
+# BAKILAN: `komut_ozel_adim`ın `harita.json` → `ozel_adim` SERBEST METNİNDEN `_PY_KOMUT` ile
+#   çıkardığı komutlar. Tehdit modeli: bir Türkçe cümlenin içine sıkıştırılan tehlikeli bayrak
+#   göz denetiminden kaçar ve tek bir izinli `guncelle.py` çağrısı içinden koşar.
+# BAKILMAYAN (ve kasıtlı olarak BAKILMAYACAK): `komut_olc`ün `harita.json` → `test[].komut`
+#   listesi ve `komut_butunluk`un motor kaynağına GÖMÜLÜ komutları. Gerekçe — ölçüldü:
+#   (a) o komutlar serbest metinden ÇIKARILMAZ, yapısal bir listede tek tek durur (gözden
+#       kaçma tehdidi yok, `butunluk`unkiler zaten kodun kendisinde);
+#   (b) `harita_yukle` MOTORUN KENDİ kopyasını okur (K4) — klonunkine hiç bakılmaz;
+#   (c) haritadaki 44 test komutunun çoğu `python -m unittest discover -s ...` ve
+#       `python skills-sap/.../tests/run_tests.py` biçimindedir; bunları bu allowlist'ten
+#       geçirmek `olc`u her sınıfta rc=2 (DUR) yapardı — yani ölçüm mekanizmasını kapatırdı;
+#   (d) `olc` zaten KLONDA duran test betiklerini koşar ve o betiklerin İÇERİĞİ motor
+#       tarafından denetlenemez ⇒ komut-dizgesi allowlist'i orada SAHTE GÜVENCE olurdu.
+# `_ozel_adim_izinli_mi` bu yüzden `komut_olc`ten çağrılmaz. Bu satırları silmeden önce
+# `test_olc_ALLOWLISTTEN_GECMEZ_kapsam_beyani` testini oku.
+OZEL_ADIM_IZINLI: dict[str, set[str]] = {
+    "scripts/install.py": {"--dry-run"},
+}
+
+
+def _ozel_adim_izinli_mi(komut: str) -> tuple[bool, str]:
+    """(izinli mi, red sebebi). Allowlist DIŞINDA kalan her şey reddedilir (fail-closed)."""
+    parcalar = komut.split()
+    if len(parcalar) < 2 or parcalar[0] not in ("python", "python3", "py"):
+        return False, "yorumlayıcı `python` değil"
+    betik = parcalar[1].replace("\\", "/")
+    if betik not in OZEL_ADIM_IZINLI:
+        return False, f"betik allowlist'te yok: {betik}"
+    fazla = [p for p in parcalar[2:] if p not in OZEL_ADIM_IZINLI[betik]]
+    if fazla:
+        return False, f"izinli olmayan bayrak/argüman: {' '.join(fazla)}"
+    return True, ""
+
 
 def komut_ozel_adim(b: Baglam, args) -> int:
     k = b.k
@@ -1050,6 +1314,24 @@ def komut_ozel_adim(b: Baglam, args) -> int:
             durum_yaz(k, d)
             print(f"MANUEL ADIM ({args.ad}): {metin}\n  (koşulacak komut içermiyor — "
                   f"kullanıcıya aynen söyle)")
+            return 0
+        reddedilen = []
+        for komut in komutlar:
+            ok, sebep = _ozel_adim_izinli_mi(komut)
+            if not ok:
+                reddedilen.append({"komut": komut, "sebep": sebep})
+        if reddedilen:
+            # HİÇBİRİ koşulmaz: aynı metindeki izinli komutu koşup diğerini atlamak, adımı
+            # yarım uygulanmış bir durumda bırakırdı.
+            kayit.update({"durum": "manuel", "metin": metin, "zaman": _simdi(),
+                          "izin_disi": reddedilen})
+            durum_yaz(k, d)
+            print(f"MANUEL ADIM ({args.ad}): motor bu adımı KOŞMAZ — çıkarılan komut(lar) "
+                  f"allowlist dışında:")
+            for x in reddedilen:
+                print(f"  · `{x['komut']}` → {x['sebep']}")
+            print(f"  Metin aynen: {metin}\n  (kullanıcı kendi terminalinde, kendi izin "
+                  f"kurallarıyla çalıştırır — `config/permissions.json` orada uygulanır)")
             return 0
         cikislar = []
         for komut in komutlar:
@@ -1208,6 +1490,93 @@ def komut_geri_al(b: Baglam, args) -> int:
 # =====================================================================================================
 # KAPANIŞ
 # =====================================================================================================
+def _tek_satir(metin: str | None) -> str:
+    """Alt-süreç stderr'ini tek satıra indirir: `EKSİK:` satırı ve RAPOR.md madde işareti
+    çok satırlı bir metinle bozulmasın (git'in `.gitignore` hint bloğu 5 satırdır)."""
+    return " ".join((metin or "").split())
+
+
+def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
+                 eksikler: list, kod: int) -> int:
+    """Kapanışın git tarafı: stage → commit → ANCAK SONRA `uygulanan.json` mührü.
+
+    ⛔ Bu fonksiyon `komut_kapanis`in İÇİNDEN, RAPOR.md ÜRETİLMEDEN ÖNCE çağrılır. Eskiden
+    rapordan SONRA koşuyordu ve başarısızlığı yalnız `UYARI:` basıyordu ⇒ `kapanis` 0 dönüyor,
+    RAPOR.md "KAPANMADI" demiyor, kullanıcı "temiz kapandı" sanıyordu. Buradaki her başarısızlık
+    artık `eksikler`e girer ve çıkış kodunu 1'e düşürür — **ölçülemedi ≠ temiz**.
+
+    ⛔ MÜHÜR EN SONA: `uygulanan.json` YÜK TAŞIR (ölçüldü, varsayılmadı):
+      · `komut_plan`: `if kid in b.uygulanan.get("kalemler", {}): continue` ⇒ mühürlü kalem bir
+        daha PLANA GİRMEZ;
+      · `Baglam.taban_ref`: dosya-başı taban o yayın etiketine çekilir ⇒ sonraki 3-yollu
+        karşılaştırma yanlış tabandan yapılır.
+    Commit atılmadan mühürlemek "uygulandı" yalanını KALICILAŞTIRIR. Bu yüzden mühür yalnız
+    (a) commit atıldıysa ya da (b) ÖLÇÜLEREK commit'lenecek bir şey olmadığı görüldüyse basılır.
+    """
+    k = b.k
+    # ⛔ `git add -A` kullanıcının İZLENMEYEN dosyalarını da commit'liyordu (§1/§2a kapsam
+    # ihlali: motor yalnız template yollarına dokunur). Yan etki ölçüldü:
+    # `kullanici_dosya_sayisi()` `--others --exclude-standard` okuduğu için ilk kapanıştan
+    # sonra VKD sayacı 0'a düşüyordu — sayaç bir daha hiç saymıyordu.
+    # Kapsam artık PLANDAKİ yollar (+ yeniden adlandırma hedefleri).
+    add_yollari = sorted({y for kalem in plan["kalemler"] if kalem["id"] in secili
+                          for d in kalem["dosyalar"]
+                          for y in (d["yol"], d.get("yeni_yol")) if y})
+    # ⛔ SÜZGEÇ ÖLÇÜTÜ = `git add`in eşleştirdiği küme: ÇALIŞMA AĞACI ∪ INDEX. HEAD DEĞİL.
+    # Eski ölçüt `blob_sha("HEAD", y)` idi ve sessiz veri kaybı üretiyordu: `Klon.sil()` yolu
+    # `git rm -q --cached` ile index'ten düşürür, dosya diskte de yoktur, ama HEAD'de DURUR ⇒
+    # yol süzgeçten geçer, `git add` `fatal: pathspec ... did not match any files` der ve o
+    # çağrıda HİÇBİR yolu stage etmez (kısmi başarı yoktur) ⇒ o koşumun tüm birleştirme sonucu
+    # commit'e GİRMEZ. Ölçüldü (`--karar birlesik`): `core/00-temel.md` diskte v3, HEAD'de v1,
+    # `kapanis` yine rc=0. Silmeler `Klon.sil()` tarafından ZATEN stage'lidir.
+    izlenen = k.izlenen_yollar(add_yollari)
+    add_yollari = [y for y in add_yollari if (k.kok / y).exists() or y in izlenen]
+    if add_yollari:
+        r_add = k.git("add", "--", *add_yollari)
+        if r_add.returncode != 0:
+            eksikler.append(f"kapanış `git add` başarısız — plandaki değişiklikler commit'e "
+                            f"GİRMEDİ: {_tek_satir(r_add.stderr)}")
+            return 1
+
+    # ⛔ ÇIKIŞ KODU SİNYALDİR, ÖLÇÜM DEĞİL. `git commit` rc=1 "commit edilecek bir şey yok"
+    # anlamına geldiği KADAR "hook reddetti / index kilitli / config bozuk" anlamına da gelir.
+    # rc=1'i koşulsuz tolere etmek, kapatılan sessiz-geçiş sınıfının aynısını yeniden açardı ⇒
+    # karar DURUMDAN okunur: `git diff --cached --quiet` → 0 = stage'de fark YOK · 1 = fark VAR
+    # · başka = ÖLÇÜLEMEDİ ('temiz' DEĞİL).
+    r_stage = k.git("diff", "--cached", "--quiet")
+    if r_stage.returncode not in (0, 1):
+        eksikler.append(f"kapanış: stage durumu ÖLÇÜLEMEDİ ('temiz' DEĞİL) — "
+                        f"`git diff --cached --quiet` rc={r_stage.returncode}: "
+                        f"{_tek_satir(r_stage.stderr)}")
+        return 1
+    if r_stage.returncode == 1:
+        mesaj = (f"guncelle: {plan['yeni_etiket']} kalemler "
+                 + ", ".join(sorted(secili)))
+        r = k.git("commit", "--no-verify", "-q", "-m", mesaj, kimlik=True)
+        if r.returncode != 0:
+            eksikler.append(f"kapanış commit'i atılamadı (stage'de fark VARDI — yani 'commit "
+                            f"edilecek bir şey yok' DEĞİL): {_tek_satir(r.stderr)}")
+            return 1
+
+    u = b.uygulanan
+    u.setdefault("dosyalar", {})
+    u.setdefault("kalemler", {})
+    for kalem in plan["kalemler"]:
+        if kalem["id"] not in secili:
+            continue
+        uygulandi = False
+        for d in kalem["dosyalar"]:
+            kayit = durum["dosyalar"].get(d["yol"], {})
+            if kayit.get("durum") == "dogrulandi":
+                u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
+                uygulandi = True
+        u["kalemler"][kalem["id"]] = {
+            "etiket": plan["yeni_etiket"],
+            "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
+    _yaz_json(k.durum_dizini / "uygulanan.json", u)
+    return kod
+
+
 def komut_kapanis(b: Baglam, args) -> int:
     k, plan = b.k, plan_oku(b.k)
     durum = durum_oku(k)
@@ -1266,6 +1635,13 @@ def komut_kapanis(b: Baglam, args) -> int:
     kabul = bool(args.kabul)
     kod = 0 if not eksikler else (3 if kabul else 1)
 
+    # ⚠ SIRA: git tarafı RAPORDAN ÖNCE koşar. Aksi hâlde `git add`/commit başarısızlığı
+    # `eksikler`e girse bile RAPOR.md zaten yazılmış olur ve "KAPANMADI" bölümüne giremez.
+    # `--kabul` bu başarısızlıkları ÖRTMEZ: kullanıcı açık FAIL'leri kabul eder, motorun
+    # kendi alt-süreç çöküşünü değil ⇒ `_kapanis_git` başarısızlıkta koşulsuz 1 döndürür.
+    if kod in (0, 3):
+        kod = _kapanis_git(b, plan, durum, secili, eksikler, kod)
+
     rapor = [f"# Güncelleme raporu — {plan['yeni_etiket']}", "",
              f"Üretim: {_simdi()} · taban `{plan['taban_commit'][:10]}` · "
              f"seçili kalem: {len(secili)}", ""]
@@ -1307,30 +1683,6 @@ def komut_kapanis(b: Baglam, args) -> int:
 
     for e in eksikler:
         print("EKSİK: " + e, file=sys.stderr)
-
-    if kod in (0, 3):
-        u = b.uygulanan
-        u.setdefault("dosyalar", {})
-        u.setdefault("kalemler", {})
-        for kalem in plan["kalemler"]:
-            if kalem["id"] not in secili:
-                continue
-            uygulandi = False
-            for d in kalem["dosyalar"]:
-                kayit = durum["dosyalar"].get(d["yol"], {})
-                if kayit.get("durum") == "dogrulandi":
-                    u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
-                    uygulandi = True
-            u["kalemler"][kalem["id"]] = {
-                "etiket": plan["yeni_etiket"],
-                "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
-        _yaz_json(k.durum_dizini / "uygulanan.json", u)
-        k.git("add", "-A", "--", ":!" + DURUM_DIZIN_ADI)
-        mesaj = (f"guncelle: {plan['yeni_etiket']} kalemler "
-                 + ", ".join(sorted(secili)))
-        r = k.git("commit", "--no-verify", "-q", "-m", mesaj, kimlik=True)
-        if r.returncode not in (0, 1):
-            print(f"UYARI: kapanış commit'i atılamadı: {r.stderr.strip()}", file=sys.stderr)
 
     print((k.durum_dizini / "RAPOR.md").read_text(encoding="utf-8"))
     return kod
