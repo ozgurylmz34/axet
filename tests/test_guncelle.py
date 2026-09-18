@@ -452,7 +452,7 @@ class PlanKenarTest(GuncelleTemel):
         r = self.f.calistir("plan")
         self.assertEqual(r.returncode, 1, self.cikti(r))
         # EK-3: "1 döndü" ile "BEKLEDİĞİM SEBEPTEN 1 döndü" ayrışsın
-        self.assertIn("Klon güncel", self.cikti(r))
+        self.assertIn("Klon güncel: bekleyen yayın kalemi yok", self.cikti(r))
 
     def test_yayinlar_json_yoksa_cikis_2(self):
         """Eşlemesiz plan üretmek kalem sözleşmesini uydurmak olur → hata (0/1 değil)."""
@@ -601,9 +601,15 @@ class UygulaTest(GuncelleTemel):
     def test_V6d_otomatik_kapanmaz(self):
         """Ad↔içerik uyumu: bu test YALNIZ V6d'yi ölçer (eski adı V6'yı da ölçtüğünü ima
         ediyordu; gövdede tek bir V6 assertion'ı yoktu)."""
-        self.f.calistir("uygula", "--otomatik")
+        r = self.f.calistir("uygula", "--otomatik")
+        # V6d otomatik yola HİÇ girmemeli: dosyanın korunması tek başına kanıt değildir
+        # (otomatik yol denenip `git checkout` rastlantıyla patlasa da dosya yerinde kalır).
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("docs/silinecek.md", r.stderr, self.cikti(r))
         d = self.f.durum()["dosyalar"]
         self.assertEqual(d["docs/silinecek.md"]["vaka"], "V6d")
+        self.assertEqual(d["docs/silinecek.md"]["durum"], "bekliyor", d["docs/silinecek.md"])
+        self.assertNotIn("not_", d["docs/silinecek.md"], "otomatik yol denenmiş")
         self.assertNotIn(d["docs/silinecek.md"]["durum"], ("dogrulandi",),
                          "V6d otomatik kapanamaz — kullanıcıya bilgi vakasıdır")
         self.assertTrue((self.f.tuketici / "docs/silinecek.md").exists())
