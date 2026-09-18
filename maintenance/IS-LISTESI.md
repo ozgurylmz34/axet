@@ -13,17 +13,50 @@
 **Kullanıcı ekrandan kalktı, otonom devir yapıldı** (kararlar §2 "KULLANICI KARARLARI" bloğunda).
 Hedef: **7 madde yarına bitecek**. `main`'e HİÇBİR ŞEY gitmedi.
 
-| Lane | Dal | Durum | Sıradaki adım |
+| Lane | Dal / commit | Durum | Sıradaki adım |
 |---|---|---|---|
-| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` | 🔵 koşuyor · **B1–B11 + EK-1 kapandı** (her biri fail-first + mutasyon) · B12–B15 + EK-3 kaldı · **COMMIT'SİZ** | bitince lider commit → **TAZE gate** (aşağıdaki gerekçe) |
-| **P3** | `feat/2026-09-17-p3-kartlar` | ✅ `c58ec1e` · **GATE-P3 2. tur = WARNING** — 1. turun 10 bulgusunun **10'u kapandı**, 14 bağımsız mutasyon (9 kırmızı / 4 sağ / 1 geçersiz) | 🔵 **P3-FIX2** koşuyor: 2 MEDIUM + 4 LOW. ⛔ merge P2'nin `V1R` BLOCKER'ına bağlı |
-| **P4+Z5** | `feat/2026-09-18-p4-baslatici` | 🔵 FAZ A bitti (16/16 mutasyon) · **FAZ B** · COMMIT'SİZ | bitince lider commit → **TAZE gate** (build hiç gate görmedi) |
-| **P5** | `feat/2026-09-17-p5-guncelle-proje` | 🔵 mutasyon turunda · COMMIT'SİZ (176 satır + 3 yeni dosya) | bitince lider commit → **TAZE gate** |
-| **P7** | `feat/2026-09-17-p7-yayin` | ✅ entegrasyonda (`d980c48`) · ⛔ **ilk gate öldü** (aşağıda "SÜREÇ BULGUSU") | 🔵 **TAZE GATE-P7** koşuyor |
-| **Z6** | `denetim/2026-09-18-z6` | ✅ **BİTTİ — hüküm BLOCKER** (aşağıda) | → **Z6-FIX** lane'i açıldı |
-| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` (`452f1e8`'den) | 🔵 koşuyor — B1 Python-3.12 kapısı testi · B2 evren-eşitliği testi | bitince lider commit → entegrasyona merge |
-| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi hazır, 33 aday | P4+P5 merge olduktan sonra, PR'dan ÖNCE |
-| **P8** | — | 🟡 **ERTELENDİ** (kullanıcı kararı: kapsamı belirsiz, AI doldurmadı) | — |
+| **P2-fix** | `fix/2026-09-18-p2-gate-bulgulari` · COMMİT'SİZ | 🔵 **kod işi BİTTİ** — B1–B15 + EK-1/EK-3 kapandı | tam koşum + rapor → lider commit → **TAZE gate** |
+| **P3** | `feat/2026-09-17-p3-kartlar` · **`c4a8e2e`** | ✅ gate 2. tur WARNING → 2 MEDIUM + 4 LOW **kapandı** | ⛔ merge P2'nin `V1R` BLOCKER'ına bağlı |
+| **P4+Z5** | `feat/2026-09-18-p4-baslatici` · **`04c3bd9`** | ✅ FAZ A+B bitti · **tam suite 460 test / 0 failure / 1 skip / rc=0** | 🔵 **TAZE GATE-P4 koşuyor** |
+| **P5** | `feat/2026-09-17-p5-guncelle-proje` · **`bf1489f`** | ✅ 50 test, 11/11 mutasyon kırmızı | 🔵 **TAZE GATE-P5 koşuyor** |
+| **P7** | `feat/2026-09-17-p7-yayin` · `4be5bc9` | ✅ taze gate **WARNING** (16 mutasyon, 6 geçerli sağ kalan) | 🔵 **P7-FIX koşuyor** — 5 zorunlu bulgu |
+| **Z6** | `denetim/2026-09-18-z6` | ✅ hüküm BLOCKER (aşağıda) | 🔵 **kendi düzeltmesini doğruluyor** |
+| **Z6-fix** | `fix/2026-09-18-z6-bulgulari` · **`94d60dc`** | ✅ iki mutant da öldü · salt ekleme (+51/+97, 0 silme) · `-k kur` **73 test / 0 failure / rc=0** | Z6 hükmü → entegrasyona merge |
+| **Z7** | — | ⬜ açılmadı · tarayıcı + 11 kalibrasyon testi entegrasyonda (`ca4ae88`) | P4+P5 merge sonrası, PR'dan ÖNCE |
+| **P8** | — | 🟡 **ERTELENDİ** (kullanıcı kararı) | — |
+
+### ⛔ MERGE ANINDA YAPILACAKLAR — unutulursa sessizce bayatlar
+
+1. **`behavior_manifest.py generate`** — P4 `config/permissions.json` üzerinden kullanıcının
+   GLOBAL config'ine yansıyan bir değişiklik yapıyor (`install.load_rules()` artık `edit`
+   yazmıyor) ve `core/00-temel.md` değişti. Çekirdek "kapanış disiplini" md. 4: **merge olduğu
+   AN** koşulur, gün sonuna bırakılmaz. Ajan koşamaz (aXet'e deny) ⇒ **lider koşar.**
+2. **`maintenance/sync-rules.json:2841` — bu bayat bir NOT değil, KIRILMIŞ BİR TELAFİ İDDİASI.**
+   Kayıt: `source: DEV_CORE` · `pattern: scripts/hooks/infra_write_guard.py` ·
+   `decision: telafi` · `targets: [scripts/install.py]` · `status: tamam` ·
+   `note: "Merkezi klon edit deny (clone_rules), canli olculdu."`
+   P4 `clone_rules()`'u **kaldırdı** ⇒ o telafi artık **yok**. `sync_check` mekanik olarak
+   kırılmıyor (hedef dosya hâlâ var) ama kayıt **var olmayan bir korumayı var gösteriyor** —
+   tam da bu belgenin önlemek için tutulduğu şey. P4 merge olunca `note` + `status`
+   gerçeğe çekilecek: telafi kaldırıldı, yerine **engelleme değil görünürlük**
+   (doctor `check_template` → `template_sinifla`) kondu.
+   ⚠ **Şimdi düzeltilmez** — `clone_rules` henüz entegrasyonda duruyor; şimdi yazılan not
+   entegrasyonun bugünkü hâlini YANLIŞ anlatır.
+
+### 🔴 P7 TAZE GATE HÜKMÜ — WARNING (2026-09-18)
+
+16 mutasyon · 15 geçerli · **6 geçerli sağ kalan** · 1 nötr elendi · 9 öldü. **Ürün kodunda
+HATA YOK**; altısı da test-kapsamı boşluğu. En ağırı **B1**: `yayin_hazirla.py:475-480`
+şema doğrulamasının **gerçek yayın yoluna kablolandığını hiçbir test ölçmüyor** — `return 1`
+kaldırılınca `.git` kuruluyor ve **`YAYINLANDI! etiket: v0.1.0`** basılıyor, **41 testin
+hiçbiri kırmızı olmuyor**. Kök neden: `SemaTest`'in 13 dalının **tamamı** `--yalniz-dogrula`
+ile koşuyor, o bayrak kopyalamadan ÖNCE ayrı bir kolda dönüyor ⇒ yayın kolundaki dala
+**hiçbir test hiç girmiyor**. Bu, bu repoda adı konmuş **"kod ≠ kablolama"** sınıfı.
+
+⭐ **Lider'in vakum tarayıcısının adayı DOĞRULANDI (B2):** `test_yayinlar_json_yoksa_yayin_yapilmaz`
+gerçekten **vakum** — korunan dal tamamen silindiğinde test **yine yeşil**, çünkü beklenen
+`rc=1` artık kuralın kendisinden değil **60 satır aşağıdaki bir `assert`'ten** doğuyor.
+Tarayıcı bir **daraltma aracıdır**; kusur kararını mutasyon verdi ve bu adayda **haklı çıktı**.
 
 ### 🔴 Z6 HÜKMÜ — BLOCKER (2026-09-18, bağımsız mutasyon denetimi)
 
