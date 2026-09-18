@@ -133,7 +133,7 @@ def guncelleme_kalemleri() -> list[dict] | None:
     """`origin/main:guncelle/yayinlar.json` x `.axet-guncelleme/uygulanan.json` -> kalem durumları.
 
     Döner: her kalem için {id, baslik, kritik, durum} — `durum` None ise kalem hiç uygulanmamış
-    (bekliyor). ÖLÇÜLEMEZSE None döner (dosya yok / bozuk / git okuyamadı): "0 kalem" ile
+    (bekliyor); "icerildi" ise kalemin yayını klonda zaten var (`guncelle.yayin_durumu`). ÖLÇÜLEMEZSE None döner (dosya yok / bozuk / git okuyamadı): "0 kalem" ile
     "ölçemedim" karıştırılmasın diye ayrı değer. Hiçbir yere YAZMAZ.
     Alan adları `scripts/guncelle.py`'nin yazdığı/okuduğu adlardır (koddan doğrulandı: :529-539, :1312-1327).
     """
@@ -155,10 +155,19 @@ def guncelleme_kalemleri() -> list[dict] | None:
             kayit = u.get("kalemler") if isinstance(u, dict) and isinstance(u.get("kalemler"), dict) else {}
         except ValueError:
             kayit = {}
+    try:
+        from guncelle import yayin_durumu  # K-F: motorla TEK KAYNAK (aynı klasör)
+    except Exception:  # noqa: BLE001 — motor içe aktarılamıyorsa ata testi ÖLÇÜLEMEZ
+        return None
     kalemler = []
     for yayin in veri["yayinlar"]:
         if not isinstance(yayin, dict):
             continue
+        # Yayın klonda zaten İÇERİLİYORSA (taze klon) motor onu plana hiç almaz ⇒ kalemi
+        # "bekliyor" saymak kalıcı sahte bildirim üretir. Çözülemeyen etiket bekleyen sayılır
+        # (motorla aynı: içerilip içerilmediği ölçülemez).
+        icerildi = yayin_durumu(lambda *a: _git(AXET_HOME, *a, timeout=8)[0],
+                                str(yayin.get("etiket") or "")) == "icerildi"
         for k in yayin.get("kalemler") or []:
             if not isinstance(k, dict) or not k.get("id"):
                 continue
@@ -167,7 +176,8 @@ def guncelleme_kalemleri() -> list[dict] | None:
                 "id": k["id"], "baslik": k.get("baslik", ""),
                 # tur=guvenlik ise kritik (scripts/guncelle.py:600 ile AYNI türetme)
                 "kritik": bool(k.get("kritik") or k.get("tur") == "guvenlik"),
-                "durum": kd.get("durum") if isinstance(kd, dict) else None,
+                "durum": ("icerildi" if icerildi else
+                          kd.get("durum") if isinstance(kd, dict) else None),
             })
     return kalemler
 
@@ -199,7 +209,7 @@ def template_bolumu(fetch: bool) -> list[str]:
             else [f"template güncel{not_} (bekleyen güncelleme kalemi yok)"])
     # Q3: kritik kalemler ayrı liste tutulmaz, aynı kaynaktan türetilir; `atlandi` işaretlense de görünür kalır.
     for k in kalemler:
-        if not k["kritik"] or k["durum"] == "uygulandi":
+        if not k["kritik"] or k["durum"] in ("uygulandi", "icerildi"):
             continue
         durum = "atlandı (kritik)" if k["durum"] == "atlandi" else "bekliyor"
         yeni.append(f"WARN kritik güncelleme {durum}: {k['id']} {k['baslik']}".rstrip())

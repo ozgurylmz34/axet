@@ -662,6 +662,46 @@ class SessionBriefGuncellemeTest(GeciciTest):
         self.uygulananlari_yaz({"0.1.0-01": {"etiket": "v0.1.0", "durum": "uygulandi"}})
         self.assertFalse(any("WARN kritik" in s for s in self.bolum()))
 
+    # --- K-F (2026-09-18): yayını ZATEN içeren klon kalemi "bekliyor" saymaz ---------------------
+    def test_iceren_klonda_kalem_bekliyor_sayilmaz(self):
+        """ÖLÇÜLMÜŞ KUSUR (davranış testi 2026-09-18): taze klon v0.1.0'ı içerdiği hâlde oturum
+        özeti "1 güncelleme kalemi bekliyor" diyordu; motor o yayını plana almadığı için kalem
+        hiç `uygulandi` olmuyor ⇒ satır `%guncelle` sonrasında bile KALICIYDI."""
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        # kontrol grubu: etiket YOKKEN (çözülemez) kalem bekleyen sayılır — motorla aynı
+        self.assertTrue(any("1 güncelleme kalemi bekliyor" in s for s in self.bolum()))
+        self.git(self.klon, "tag", "v0.1.0", "HEAD")
+        satirlar = self.bolum()
+        self.assertTrue(any("bekleyen güncelleme kalemi yok" in s for s in satirlar), satirlar)
+        self.assertFalse(any("kalemi bekliyor" in s for s in satirlar), satirlar)
+
+    def test_icermeyen_klonda_kalem_bekliyor_kalir(self):
+        """TERS YÖN: etiket origin/main'de, HEAD onun GERİSİNDE ⇒ kalem gerçekten bekliyor."""
+        self.klon_geride(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        self.git(self.klon, "tag", "v0.1.0", "refs/remotes/origin/main")
+        satirlar = self.bolum()
+        self.assertTrue(any("1 güncelleme kalemi bekliyor" in s for s in satirlar), satirlar)
+
+    def test_iceren_klonda_kritik_kalem_uyarmaz(self):
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01", kritik=True))))
+        self.git(self.klon, "tag", "v0.1.0", "HEAD")
+        self.assertFalse(any("WARN kritik" in s for s in self.bolum()))
+
+    def test_motor_ice_aktarilamazsa_kalem_satiri_OLCULEMEDI_sayilir(self):
+        """Ata testi yapılamıyorsa "kalem bekliyor" ya da "güncel" DENMEZ — eski satır aynen kalır."""
+        self.yayinlari_yaz(yayinlar(yayin("v0.1.0", kalem("0.1.0-01"))))
+        with mock.patch.dict(sys.modules, {"guncelle": None}):
+            satirlar = self.bolum()
+        self.assertFalse(any("güncelleme kalemi" in s for s in satirlar), satirlar)
+
+    def test_ata_testi_motorla_TEK_KAYNAK(self):
+        """AYNA: iki taraf da `guncelle.yayin_durumu`'nu çağırır; ata testi elle kopyalanmaz."""
+        self.assertIn("yayin_durumu(", SESSION_BRIEF.read_text(encoding="utf-8"))
+        motor = GUNCELLE.read_text(encoding="utf-8")
+        self.assertIn("durum_y = yayin_durumu(", motor)
+        self.assertEqual(motor.count('"merge-base", "--is-ancestor"'), 1,
+                         "ata testi motorda birden fazla yerde — tek kaynak bozuldu")
+
     def test_main_template_bolumunu_cagirir(self):
         """KABLOLAMA: `main()` TEMPLATE bölümünü artık `template_bolumu`'ndan alıyor mu."""
         import contextlib

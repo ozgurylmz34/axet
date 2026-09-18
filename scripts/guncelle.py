@@ -262,6 +262,25 @@ class Klon:
             ana = ana.parent
 
 
+def yayin_durumu(git_rc, etiket: str) -> str:
+    """Bir yayının klonda İÇERİLİP içerilmediği — TEK KAYNAK (K-F, 2026-09-18).
+
+    `git_rc(*args) -> int` çağıranın git koşucusudur (motor `Klon.git`, `session_brief` kendi
+    kısa zaman aşımlı `_git`i) — ölçüm kuralı ortak, koşucu değil. Döner:
+      "icerildi"   etiket HEAD'in atası (taze klon / yayından sonra `kur.cmd` ile çekilmiş)
+      "bekliyor"   etiket çözülüyor ama HEAD'de değil (ya da ata testi hata verdi — güvenli taraf)
+      "cozulemedi" etiket klonda yok ⇒ içerilip içerilmediği ÖLÇÜLEMEZ
+    Neden ortak: `session_brief` ata testini YAPMIYORDU ⇒ yayını zaten içeren taze klonda
+    "1 güncelleme kalemi bekliyor" satırı `%guncelle` sonrasında bile KALICI kalıyordu
+    (motor o yayını plana hiç almadığı için kalem hiçbir zaman `uygulandi` olmuyordu).
+    """
+    if not etiket or git_rc("rev-parse", "--verify", "--quiet", f"{etiket}^{{commit}}") != 0:
+        return "cozulemedi"
+    if git_rc("merge-base", "--is-ancestor", etiket, "HEAD") == 0:
+        return "icerildi"
+    return "bekliyor"
+
+
 # --- durum dizini I/O -------------------------------------------------------------------------
 SOZLESME_SURUMU = 1  # §6 durum dosyalarının şema sürümü (plan.json / durum.json / uygulanan.json)
 
@@ -632,11 +651,12 @@ def komut_plan(b: Baglam, args) -> int:
     bekleyen_yayinlar, beyan, kalem_kaydi, cozulemeyen = [], {}, {}, []
     for yayin in b.yayinlar.get("yayinlar", []):
         etiket = yayin["etiket"]
-        if not k.var_mi(etiket):
+        durum_y = yayin_durumu(lambda *a: k.git(*a).returncode, etiket)
+        if durum_y == "cozulemedi":
             # Etiket çözülemiyorsa bu yayının İÇERİLİP içerilmediği de ÖLÇÜLEMEZ ⇒ bekleyen say.
             cozulemeyen.append(etiket)
             continue
-        if k.git("merge-base", "--is-ancestor", etiket, "HEAD").returncode == 0:
+        if durum_y == "icerildi":
             continue  # tüketici bu yayını gerçekten içeriyor (taze klon)
         bekleyen_yayinlar.append(etiket)
         for kalem in yayin.get("kalemler", []):
