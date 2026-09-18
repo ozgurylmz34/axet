@@ -3,6 +3,13 @@
 ## Tetik
 Plandaki dosya bir test dosyası ya da test verisi.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `test-kok` | `aninda` | yok | anında geçerli |
+| `skill-fixture-sample` | `aninda` | yok | anında geçerli |
+| `skill-test` | `aninda` | yok | anında geçerli |
+
 ## Zorunlu ek adımlar
 1. Dosyayı al/birleştir.
 2. Test ettiği dosya AYNI kalemde değilse testi almadan önce kullanıcıya söyle: yeni test eski

@@ -3,6 +3,11 @@
 ## Tetik
 Plandaki dosya `kur.ps1`, `kur.cmd` ya da `yeni-proje.cmd`.
 
+## Kapsam (harita.json)
+| Alt sınıf | `etkin` | Özel adım | Ne demek |
+|---|---|---|---|
+| `kurulum-araci-kok` | `null` | yok | ayrı etkinleşme anı yok |
+
 ## Zorunlu ek adımlar
 1. Yalnız dosyayı al/birleştir — **bu araçları güncelleme sırasında ÇALIŞTIRMA**.
 2. Test: `python tests/run_tests.py -k kur`.
