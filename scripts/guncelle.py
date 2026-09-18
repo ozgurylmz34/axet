@@ -1530,12 +1530,33 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # commit'e GİRMEZ. Ölçüldü (`--karar birlesik`): `core/00-temel.md` diskte v3, HEAD'de v1,
     # `kapanis` yine rc=0. Silmeler `Klon.sil()` tarafından ZATEN stage'lidir.
     izlenen = k.izlenen_yollar(add_yollari)
-    add_yollari = [y for y in add_yollari if (k.kok / y).exists() or y in izlenen]
+    # ⛔ M-6 (kullanıcı kararı 2026-09-18, TASARIM §6): `--karar yerel` = "bu dosyaya DOKUNMA". Dosya
+    # daha önce İZLENMİYORSA (V7: kullanıcının kendi dosyası template'in yeni yolunda) kapanış onu
+    # git'e ekleyip commit'lemez — eskiden ekliyordu: içerik korunuyor ama dosya sessizce klonun
+    # geçmişine giriyordu. İzlenen bir dosyada `yerel` zaten "değişiklik yok" demektir.
+    yerel_izlenmeyen = {durum["dosyalar"].get(d["yol"], {}).get("hedef_yol", d["yol"])
+                        for kalem in plan["kalemler"] if kalem["id"] in secili
+                        for d in kalem["dosyalar"]
+                        if durum["dosyalar"].get(d["yol"], {}).get("karar") == "yerel"} - izlenen
+    plan_yollari = list(add_yollari)   # süzgeçten ÖNCEKİ küme — hata dalında index'i bununla geri al
+    add_yollari = [y for y in add_yollari
+                   if ((k.kok / y).exists() or y in izlenen) and y not in yerel_izlenmeyen]
     if add_yollari:
         r_add = k.git("add", "--", *add_yollari)
         if r_add.returncode != 0:
+            # Index kapanıştan önceki yarım hâlinde bırakılmaz: `Klon.sil()` silmeleri ÖNCEDEN
+            # stage'lemişti. Kullanıcının sonraki elle `git commit`i bu yarım durumu commit'lemesin
+            # diye YALNIZ plandaki yollar HEAD'e geri alınır (çalışma ağacına dokunulmaz; kapanış
+            # yeniden koşunca silmeleri `izlenen_yollar` üzerinden yeniden stage'ler).
+            # ⚠ SÜZGEÇLİ liste YETMEZ: `Klon.sil()`in stage'lediği silme yolu ne diskte ne
+            # index'tedir ⇒ süzgeçten düşer; geri alma onu kaçırırdı. `git reset -- <yol>` HEAD'de
+            # ve index'te olmayan yolda da rc=0 döner (ölçüldü 2026-09-18) ⇒ tüm plan kümesi verilir.
+            r_reset = k.git("reset", "-q", "--", *plan_yollari)
+            geri = ("plandaki yolların index'i HEAD'e geri alındı, çalışma ağacı değişmedi"
+                    if r_reset.returncode == 0 else
+                    f"index geri ALINAMADI (elle: git reset -- <yollar>): {_tek_satir(r_reset.stderr)}")
             eksikler.append(f"kapanış `git add` başarısız — plandaki değişiklikler commit'e "
-                            f"GİRMEDİ: {_tek_satir(r_add.stderr)}")
+                            f"GİRMEDİ: {_tek_satir(r_add.stderr)} · {geri}")
             return 1
 
     # ⛔ ÇIKIŞ KODU SİNYALDİR, ÖLÇÜM DEĞİL. `git commit` rc=1 "commit edilecek bir şey yok"
@@ -1671,7 +1692,9 @@ def komut_kapanis(b: Baglam, args) -> int:
 
     if eksikler:
         rapor += ["", "## KAPANMADI — eksikler"] + [f"- {e}" for e in eksikler]
-    if kabul:
+    # M-1: koşul `kod`dur, `kabul` bayrağı DEĞİL. `--kabul` + git hatasında `kod` 1'e düşer; eskiden
+    # rapor hem "KAPANMADI" hem "onaylı açık FAIL ile kapandı" diyordu.
+    if kod == 3:
         rapor += ["", f"## Kullanıcı onaylı açık FAIL ile kapandı\n{args.kabul}"]
     rapor += ["", "KAPSAM — bakılanlar: plandaki seçili dosyaların disk durumu ve çakışma "
                   "işareti · özel adımların koşumu · önce/sonra ölçümünün YENİ kırmızıları · "
