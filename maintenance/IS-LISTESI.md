@@ -96,6 +96,27 @@ HEAD=**EVET** · `ls-files` (index)=**boş** · disk=**HAYIR** ⇒ eski ölçüt
 | 5 | **Toplu CI + merge** | Kullanıcı kararı ①: her değişiklikte CI yok, sonda tek CI |
 | 6 | MERGE ANINDA: `behavior_manifest.py generate` + `sync-rules.json:2841` bozuk telafi iddiası | Gün sonuna bırakılırsa ertesi açılışta "manifest-onaysız" alarmı çıkar (core §1.1) |
 
+### 🔧 ÖN KOŞUL — `gh` bu makinede KURULU DEĞİL (gün sonu 2026-09-18'de bulundu)
+
+**Kullanıcı kuracak** ("birazdan gh kuracağım"). Bulgu burada duruyor çünkü **merge adımının
+ön koşuludur** ve kurulmadan fark edilmezse yarın ortasında patlar.
+
+| Ölçüm | Sonuç |
+|---|---|
+| PATH'te `gh.exe` | **YOK** |
+| PATH'te `git.exe` *(kontrol grubu)* | **VAR** → arama yöntemi çalışıyor |
+| `winget list --id GitHub.cli` | kayıt yok |
+| Derin arama (`LOCALAPPDATA` · `Program Files` · `Program Files (x86)` · `scoop` · `chocolatey`, derinlik 4) | **0 sonuç** |
+
+**Neden önemli:** `core/scripts/merge_pr.py:36` doğrudan `subprocess.run(["gh", *args])`
+çağırıyor ⇒ `gh` olmadan merge aracı `FileNotFoundError` ile düşer. Ayrıca CI durumunu
+(`statusCheckRollup`) okumanın yolu da `gh`'tan geçiyor.
+
+⚠ **Çelişki notu:** 2026-09-16'da 7 PR `gh` ile merge edilmişti ⇒ `gh` o gün **vardı**.
+Aradaki tek bilinen olay **makine/yol taşınması** (tüm repolar OneDrive altına alındı).
+Kaybın sebebi **ÖLÇÜLMEDİ** — kurulum sonrası `gh auth status` ile yetkinin de döndüğü
+doğrulanmalı, "kuruldu = çalışıyor" sayılmamalı.
+
 ### Açık kalemler (kanonik yer BURASI — başka yerde tutulmaz)
 
 - **Z7'nin kalan 20 adayı:** `test_guncelle` 10 · `test_doctor` 4 · `test_install` 3 ·
