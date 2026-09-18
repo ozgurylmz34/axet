@@ -12,6 +12,8 @@
   5. Şema: zorunlu alanlar, etkin/risk değer kümesi, tekil sınıf adı, tanımlı ust_sinif.
   6. TASARIM §3 sınır kararları uygulanmıştır (_gate_status.py, check_package_naming.py).
   7. Denetimin KENDİSİ boş değildir: sentetik bozuk girdilerde gerçekten FAIL verir (negatif test).
+  8. EVRENİN KENDİSİ: `evren()` çıktısı, BAĞIMSIZ koşulan `git ls-files` çıktısına küme olarak EŞİTTİR
+     (1-7'nin hepsi evrenin üzerinde ölçülür; evren sessizce daralırsa hepsi "0 sorun" der).
 
 KAPSAM — bakılmayanlar: `test.komut`'ların gerçekten koştuğu (yalnız yol varlığı ölçülür) ·
 `yukleme` metinlerinin doğruluğu · `risk`/`kritik_yol` yargısının isabeti · dosya içeriği.
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import copy
 import fnmatch
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -56,6 +59,20 @@ def s3_tablo_adlari() -> list[str]:
     return adlar
 
 
+def bagimsiz_git_yollari(*argv: str) -> set[str]:
+    """`git ls-files`i DOĞRUDAN çalıştırır — `siniflandir.evren()` üzerinden DEĞİL.
+
+    İki bağımsızlık kuralı (ikisi de zorunlu, yoksa ölçüm kendini kanıtlar):
+      · Çıktı `evren()`den okunmaz; ayrı bir subprocess'ten gelir.
+      · Komut burada ELLE yazılır, `siniflandir.EVREN_KOMUTU`dan OKUNMAZ — okunsaydı komuta eklenen bir
+        dışlama pathspec'i karşılaştırmanın İKİ tarafına birden yansır ve daralma yine görünmez olurdu.
+    """
+    c = subprocess.run(["git", *argv], cwd=AXET_HOME, capture_output=True, text=True, encoding="utf-8")
+    if c.returncode != 0:
+        raise AssertionError(f"git {' '.join(argv)} rc={c.returncode}: {(c.stderr or '').strip()}")
+    return {s.strip() for s in c.stdout.splitlines() if s.strip()}
+
+
 class HaritaTemelTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -65,6 +82,40 @@ class HaritaTemelTest(unittest.TestCase):
     def test_evren_bos_degil(self) -> None:
         self.assertGreater(len(self.yollar), 100,
                            "git evren komutu beklenenden az dosya döndürdü — ölçüm geçersiz")
+
+    def test_evren_git_ls_files_ciktisiyla_birebir_esit(self) -> None:
+        """Evren = `git ls-files` (KÜME OLARAK EŞİT) — "yeterince çok dosya var" DEĞİL.
+
+        Neden: bu modülün tüm değişmezleri (1-7) `evren()` NE DÖNERSE onun üzerinde ölçülür; evren
+        sessizce daralırsa denetim "0 sorun", takım da yeşil der — ikna edici ama YANLIŞ bir çıktı.
+        Mutasyon denetimi Z6/B2 bunu ölçtü: `EVREN_KOMUTU`ya `':(exclude)LICENSES/*'` eklenince evren
+        443 -> 442 düştü, denetim "SONUÇ: 0 sorun" verdi ve 21 testin hiçbiri kırılmadı; aynısı
+        `':(exclude)skills-sap/sap-adt-foundation/references/*'` ile (443 -> 438) tekrarlandı.
+        Tek doğrudan güvence `assertGreater(len, 100)` idi: 342 dosya kaybolsa bile yeşil kalıyordu.
+        Eşiği büyütmek çözüm DEĞİLDİR — sayı bayatlar ve kavramsal olarak yanlış şeyi ölçer; ölçülmesi
+        gereken, evrenin git index'ine EŞİT olduğudur (modül docstring'inin iddiası da budur)."""
+        self.assertEqual(bagimsiz_git_yollari("ls-files"), set(self.yollar),
+                         "evren() git index'ine eşit değil — EVREN_KOMUTU daraltılmış/genişletilmiş olabilir")
+
+    def test_evren_genis_kolu_izlenenlerin_ust_kumesi(self) -> None:
+        """`--izlenmeyenler-de` kolu (`EVREN_KOMUTU_GENIS`): izlenen evrenin ÜST KÜMESİ ve kendi git
+        komutuyla aynı.
+
+        Yarış-güvenli: izlenmeyen dosyalar ölçüm sırasında doğabilir/silinebilir (paralel testler), bu
+        yüzden bağımsız komut ÖNCE ve SONRA koşulur; kesişim = ölçüm boyunca kararlı kalan yollar ve
+        yalnız o küme zorunlu tutulur. Dışlama pathspec'i eklenmesi (izlenen dosya düşer) her iki
+        yönde de yakalanır."""
+        izlenen = set(self.yollar)
+        onceki = bagimsiz_git_yollari("ls-files", "--cached", "--others", "--exclude-standard")
+        genis = set(siniflandir.evren(AXET_HOME, izlenmeyenler=True))
+        sonraki = bagimsiz_git_yollari("ls-files", "--cached", "--others", "--exclude-standard")
+        self.assertEqual(set(), izlenen - genis,
+                         f"izlenen dosya geniş evrenden düştü: {sorted(izlenen - genis)[:10]}")
+        kararli = onceki & sonraki
+        self.assertEqual(set(), kararli - genis,
+                         f"geniş evren git'in verdiği kararlı yolları kapsamıyor: {sorted(kararli - genis)[:10]}")
+        self.assertEqual(set(), genis - (onceki | sonraki),
+                         f"geniş evrende git'in hiç vermediği yol var: {sorted(genis - (onceki | sonraki))[:10]}")
 
     def test_denetim_temiz(self) -> None:
         """Haritanın tüm değişmezleri tek seferde: sorun listesi BOŞ olmalı."""
