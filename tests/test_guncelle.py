@@ -917,6 +917,14 @@ class AkisTest(GuncelleTemel):
         self.assertEqual(self.hazirla_ve_planla().returncode, 0)
         self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
 
+    def birlesik_isaretle(self, yol: str) -> None:
+        """`oneri` + `isaretle --karar birlesik`: sonucu `Klon.yaz` ile YALNIZ çalışma ağacına
+        yazar (stage ETMEZ) ⇒ kapanışın `git add`i için tek geçerli ölçüm çapası."""
+        r = self.f.calistir("oneri", yol)
+        self.assertIn(r.returncode, (0, 1), self.cikti(r))
+        r = self.f.calistir("isaretle", yol, "--karar", "birlesik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+
     def _tum_yargilari_kapat(self, haric: str | None = None) -> None:
         for yol, karar in (("core/00-temel.md", "yeni"), ("scripts/doctor.py", "yeni"),
                            ("kur.cmd", "yeni"), ("docs/logo.png", "yeni"),
@@ -1032,7 +1040,8 @@ class AkisTest(GuncelleTemel):
         --exclude-standard` kullandığı için ilk kapanıştan sonra VKD sayacı 0'a düşüyordu."""
         self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
         self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
-        self._tum_yargilari_kapat()
+        self.birlesik_isaretle("core/00-temel.md")
+        self._tum_yargilari_kapat(haric="core/00-temel.md")
         self.ozel_adimlari_kostur()
         self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
         self.assertEqual(self.f.calistir("butunluk").returncode, 0)
@@ -1046,8 +1055,17 @@ class AkisTest(GuncelleTemel):
         self.assertIn("kendi-notum.md", izlenmeyen,
                       "VKD sayacının okuduğu küme boşaldı — sayaç bir daha hiç saymaz")
         # yine de plandaki dosyalar commit'lendi (kural daraltma, iptal DEĞİL)
+        # ⛔ VAKUM KANIT onarımı: eski hâl `scripts/sap_stamp.py`yi arıyordu; o yolu kapanışın
+        # `git add`i DEĞİL, `uygula`nın `checkout_yol`u (`git checkout ref -- <yol>`) stage'ler
+        # ⇒ `git add` `fatal` ile tamamen düşmüşken bile assertion GEÇİYORDU (ölçüldü).
+        # `--karar birlesik` sonucu `Klon.yaz` ile YALNIZ çalışma ağacına yazılır; onu commit'e
+        # sokabilen TEK şey kapanışın `git add`idir ⇒ ölçüm çapası odur.
         dosyalar = self.git(self.f.tuketici, "show", "--name-only", "--format=", "HEAD").stdout
-        self.assertIn("scripts/sap_stamp.py", dosyalar)
+        self.assertIn("core/00-temel.md", dosyalar,
+                      "`git add` ile stage'lenebilen TEK yol commit'e girmedi")
+        # ve `git add`in ÇIKIŞI ayrıca ölçülür — dolaylı kanıt yetmez
+        self.assertNotIn("`git add` başarısız", self.cikti(r))
+        self.assertNotIn("did not match any files", self.cikti(r))
 
     def test_kapanis_butunluk_kosmamissa_1(self):
         self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
@@ -1057,7 +1075,10 @@ class AkisTest(GuncelleTemel):
         self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
-        self.assertIn("bütünlük", self.cikti(r).lower())
+        # ⛔ VAKUM ASSERTION onarımı: RAPOR.md "## Bütünlük turu" başlığını HER koşulda basar
+        # ⇒ `assertIn("bütünlük", ...)` ihlal YOKKEN de geçiyordu. Ölçüt `EKSİK:` satırıdır.
+        eksikler = [x for x in self.cikti(r).splitlines() if x.startswith("EKSİK:")]
+        self.assertTrue(any("bütünlük turu koşmadı" in x for x in eksikler), eksikler)
 
     def test_kapanis_yeni_kirmizi_testte_1(self):
         self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
@@ -1074,7 +1095,9 @@ class AkisTest(GuncelleTemel):
         y.write_text(json.dumps(veri, ensure_ascii=False), encoding="utf-8")
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
-        self.assertIn("kırmızı", self.cikti(r).lower())
+        # ⛔ VAKUM ASSERTION onarımı: "## Yeni kırmızı testler" başlığı HER koşulda basılır.
+        eksikler = [x for x in self.cikti(r).splitlines() if x.startswith("EKSİK:")]
+        self.assertTrue(any("YENİ kırmızı" in x for x in eksikler), eksikler)
 
     def test_kapanis_ozel_adim_kosmamissa_1(self):
         """config/permissions.json sınıfının özel adımı (install.py) koşmadan kapanmaz."""
@@ -1089,7 +1112,10 @@ class AkisTest(GuncelleTemel):
         self.assertEqual(self.f.calistir("butunluk").returncode, 0)
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
-        self.assertIn("özel adım", self.cikti(r).lower())
+        # ⛔ VAKUM ASSERTION onarımı: "özel adım" dizgesi raporun/çıktının başka yerlerinde de
+        # geçiyordu ⇒ ölçüt `EKSİK:` satırının kendisidir.
+        eksikler = [x for x in self.cikti(r).splitlines() if x.startswith("EKSİK:")]
+        self.assertTrue(any("özel adım koşmadı" in x for x in eksikler), eksikler)
 
     def test_kapanis_TEK_eksik_dosya_icin_bile_1(self):
         """⛔ VAKUM ASSERTION onarımı (gate mutasyonu M1): `kapanis`'in atlanamazlık kuralı
@@ -1119,6 +1145,117 @@ class AkisTest(GuncelleTemel):
             self.f.calistir("isaretle", "docs/silinecek.md", "--karar", "yerel").returncode, 0)
         r2 = self.f.calistir("kapanis")
         self.assertEqual(r2.returncode, 0, self.cikti(r2))
+
+    def test_kapanis_BIRLESIK_sonucu_KAPANIS_COMMITINE_girer(self):
+        """⛔ SESSİZ VERİ KAYBI kapsayıcısı (BLOCKER-1/4).
+
+        Bugüne dek 146 testin HİÇBİRİ `--karar birlesik` yolunu kapanışa kadar sürmüyordu.
+        Ölçülen kusur: `add_yollari` süzgeci `blob_sha("HEAD", y)` kullanıyordu; `Klon.sil()`in
+        dokunduğu yol (V6 `docs/silinecek2.md`, V1R `docs/tasinacak.md`) index'ten düşer ama
+        HEAD'de DURUR ⇒ süzgeçten geçer ⇒ `git add` `fatal: pathspec … did not match any files`
+        der ve o çağrıda HİÇBİR yolu stage etmez ⇒ birleştirilmiş içerik commit'e GİRMEZ,
+        `kapanis` yine rc=0 döner ("temiz kapandı" yalanı).
+        """
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self.birlesik_isaretle("core/00-temel.md")
+        self._tum_yargilari_kapat(haric="core/00-temel.md")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+
+        # kontrol grubu: diskte birleşme GERÇEKTEN var (yoksa aşağıdaki ölçüm anlamsız)
+        diskte = (self.f.tuketici / "core/00-temel.md").read_text(encoding="utf-8")
+        self.assertIn("Çekirdek v3", diskte)
+        self.assertIn("son yerel", diskte)
+
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        # ① `git add`in ÇIKIŞI ölçülür
+        self.assertNotIn("did not match any files", self.cikti(r))
+        self.assertNotIn("`git add` başarısız", self.cikti(r))
+        # ② asıl ölçüm: birleştirme sonucu KAPANIŞ COMMİT'İNDE mi
+        head = self.git(self.f.tuketici, "show", "HEAD:core/00-temel.md").stdout
+        self.assertIn("Çekirdek v3", head, "birleştirme sonucu kapanış commit'ine GİRMEDİ")
+        self.assertIn("son yerel", head, "kullanıcının satırı commit'te yok")
+        # ③ commit ile çalışma ağacı ayrışmıyor
+        kirli = self.git(self.f.tuketici, "status", "--porcelain",
+                         "--", "core/00-temel.md").stdout.strip()
+        self.assertEqual(kirli, "", "kapanıştan sonra dosya hâlâ değişmiş görünüyor")
+        # ④ silmeler ve taşımalar da commit'te (`Klon.sil` stage'lemişti)
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertNotIn("docs/silinecek2.md", agac, "V6 silmesi kapanış commit'ine girmedi")
+        self.assertNotIn("docs/tasinacak.md", agac, "V1R taşımasının kaynağı commit'te duruyor")
+        self.assertIn("docs/tasindi.md", agac, "V1R taşımasının hedefi commit'te yok")
+
+    def test_kapanis_git_add_BASARISIZSA_eksik_olur_ve_1_doner(self):
+        """⛔ BLOCKER-2: `git add` başarısızlığı SESSİZ `UYARI:` idi ⇒ `kapanis` 0 dönüyor,
+        `uygulanan.json` mühürleniyor, RAPOR.md "KAPANMADI" demiyordu.
+
+        Başarısızlık burada BAŞKA bir yolla zorlanır (düzeltilen kusurla değil): V7 kararı
+        `yerel` bırakılan `skills/cakisan/SKILL.md` İZLENMEYEN kalır; `.gitignore`a eklenince
+        `git add -- <yol>` `rc=1` + "ignored by one of your .gitignore files" verir.
+        """
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self._tum_yargilari_kapat(haric="skills/cakisan/SKILL.md")
+        r = self.f.calistir("isaretle", "skills/cakisan/SKILL.md", "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+
+        # kontrol grubu: yol gerçekten İZLENMİYOR (yoksa .gitignore `git add`i etkilemez)
+        self.assertEqual(self.git(self.f.tuketici, "ls-files", "--",
+                                  "skills/cakisan/SKILL.md").stdout.strip(), "")
+        gi = self.f.tuketici / ".gitignore"
+        gi.write_text(gi.read_text(encoding="utf-8") + "/skills/cakisan/\n", encoding="utf-8")
+
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        eksikler = [x for x in self.cikti(r).splitlines() if x.startswith("EKSİK:")]
+        # ⚠ SEBEP de ölçülür: aksi hâlde test, düzeltilen ESKİ kusur yüzünden de geçerdi
+        self.assertTrue(any("`git add` başarısız" in x
+                            and "ignored by one of your .gitignore files" in x
+                            and "skills/cakisan" in x for x in eksikler), eksikler)
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn("KAPANMADI", rapor)
+        self.assertIn("`git add` başarısız", rapor)
+        # mühür BASILMAMALI — "uygulandı" yalanı `komut_plan`da kalemi kalıcı olarak düşürür
+        self.assertFalse((self.f.durum_dizini() / "uygulanan.json").exists(),
+                         "git add patladığı hâlde uygulanan.json mühürlendi")
+
+    def test_kapanis_COMMIT_BASARISIZSA_eksik_olur_ve_muhur_basilmaz(self):
+        """⛔ BLOCKER-3 (kardeş vaka): commit'in kendisi patlarsa da yalnız `UYARI:` basılıyordu.
+
+        Ayrıca `rc=1` KOŞULSUZ tolere ediliyordu ("commit edilecek bir şey yok" varsayımı).
+        Burada stage'de fark VAR ve commit `gpg.program` yok diye patlar ⇒ rc=1'in ikinci
+        anlamı ölçülür. `--no-verify` bunu ATLAMAZ (hook değil, imzalama).
+        """
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self.birlesik_isaretle("core/00-temel.md")
+        self._tum_yargilari_kapat(haric="core/00-temel.md")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        self.git(self.f.tuketici, "config", "commit.gpgsign", "true")
+        self.git(self.f.tuketici, "config", "gpg.program", "boyle-bir-program-yok-xyz")
+
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        eksikler = [x for x in self.cikti(r).splitlines() if x.startswith("EKSİK:")]
+        self.assertTrue(any("commit'i atılamadı" in x for x in eksikler), eksikler)
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn("KAPANMADI", rapor)
+        self.assertIn("commit'i atılamadı", rapor)
+        self.assertFalse((self.f.durum_dizini() / "uygulanan.json").exists(),
+                         "commit patladığı hâlde uygulanan.json mühürlendi")
+        # kontrol grubu: imzalama kapatılınca AYNI akış 0 döner ve mühür basılır
+        self.git(self.f.tuketici, "config", "commit.gpgsign", "false")
+        r2 = self.f.calistir("kapanis")
+        self.assertEqual(r2.returncode, 0, self.cikti(r2))
+        self.assertTrue((self.f.durum_dizini() / "uygulanan.json").exists())
 
     def test_rapor_kapsam_beyani_iceriyor(self):
         self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
@@ -1357,6 +1494,30 @@ class OzelAdimIzinTest(GuncelleTemel):
                          "betik KOŞTU — izin kontrolü atlandı")
         self.assertEqual(self.f.durum()["ozel_adimlar"]["config-izin-kok"]["durum"], "manuel")
 
+    def test_izinli_betik_izinsiz_BAYRAKLA_KOSTURULMAZ_bayrak_kolu_izole(self):
+        """⛔ LOW-2: `--sap-write`i allowlist'e EKLEMEK hiçbir testi kırmıyordu.
+
+        Sebep: var olan testte metin `… --sap-write yapılmalı` idi ve `_PY_KOMUT`in
+        `[^,;\\n]*` kuyruğu cümlenin son kelimesini de komuta katıyordu ⇒ ret, bayrak
+        allowlist'inden DEĞİL, `yapılmalı` argümanından geliyordu (bayrak kolu ÖLÇÜLMEMİŞTİ).
+        Burada komut VİRGÜLDE biter ⇒ çıkarılan dizge tam olarak üç parçadır ve reddin TEK
+        sebebi bayrak allowlist'idir. Kontrol grubu: `test_kontrol_grubu_izinli_komut_KOSAR`
+        (aynı betik, `--dry-run` ile KOŞAR).
+        """
+        h = self._harita("İzinleri tazele: python scripts/install.py --sap-write, sonra devam et")
+        self.f.yerel_degistir("scripts/install.py",
+                              "import pathlib\n"
+                              "pathlib.Path('KOSTU.txt').write_text('kostu')\n")
+        r = self.f.calistir("--harita", h, "ozel-adim", "config-izin-kok")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        # çıkarılan komutun SINIRI ölçülür: cümlenin kalanı komuta KARIŞMAMIŞ
+        self.assertIn("`python scripts/install.py --sap-write` →", self.cikti(r))
+        # ve ret sebebi BAYRAK kolu
+        self.assertIn("izinli olmayan bayrak/argüman: --sap-write", self.cikti(r))
+        self.assertFalse((self.f.tuketici / "KOSTU.txt").exists(),
+                         "betik KOŞTU — bayrak allowlist'i atlandı")
+        self.assertEqual(self.f.durum()["ozel_adimlar"]["config-izin-kok"]["durum"], "manuel")
+
     def test_allowlist_disi_betik_KOSTURULMAZ(self):
         h = self._harita("python scripts/kotu.py çalıştır")
         (self.f.tuketici / "scripts" / "kotu.py").write_text(
@@ -1365,6 +1526,67 @@ class OzelAdimIzinTest(GuncelleTemel):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("MANUEL ADIM", self.cikti(r))
         self.assertFalse((self.f.tuketici / "KOSTU.txt").exists())
+
+
+class OlcKapsamBeyaniTest(GuncelleTemel):
+    """⭐ MEDIUM-2 — `OZEL_ADIM_IZINLI` allowlist'i YALNIZ `ozel-adim` yüzeyini kapsar.
+
+    Ölçülen boşluk: `komut_olc`, `harita.json`daki `test[].komut`u `_ozel_adim_izinli_mi`den
+    GEÇİRMEDEN koşturur. Seçilen çözüm allowlist'i `olc`e yaymak DEĞİL, kapsamı AÇIKÇA
+    daraltmaktır (asimetri bilinçli). Gerekçe ölçüldü: haritadaki 44 test komutunun çoğu
+    `python -m unittest discover -s …` / `python skills-sap/…/tests/run_tests.py` biçiminde ve
+    allowlist'e sığmıyor ⇒ ① seçeneği `olc`u her sınıfta rc=2 (DUR) yapar, yani ölçüm
+    mekanizmasını kapatırdı. Ayrıca `harita_yukle` motorun KENDİ kopyasını okur (K4), `olc`
+    komutları serbest METİNDEN çıkarılmaz, ve `olc` zaten klonda duran test betiklerini koşar
+    (içerikleri motorca denetlenemez ⇒ dizge allowlist'i orada sahte güvence olurdu).
+
+    Bu sınıf iki şeyi birden çivi ler: ① kaynaktaki KAPSAM BEYANI metni duruyor mu
+    ② beyan edilen sınır GERÇEK sınır mı (davranışsal karakterizasyon).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        for p in (AXET_HOME / "scripts",):
+            if str(p) not in sys.path:
+                sys.path.insert(0, str(p))
+        import guncelle  # noqa: PLC0415
+        cls.g = guncelle
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.senaryolari_uygula()
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+    def _harita_test(self, komut: str) -> str:
+        harita = json.loads(HARITA.read_text(encoding="utf-8"))
+        for s in harita["siniflar"]:
+            if s.get("test"):
+                s["test"] = [{"komut": komut, "cwd": "."}]
+        yol = self.tmp / "harita-olc.json"
+        yol.write_text(json.dumps(harita, ensure_ascii=False), encoding="utf-8")
+        return str(yol)
+
+    def test_kaynakta_KAPSAM_BEYANI_yazili(self):
+        """Beyan sessizce silinemesin: metin mekanik olarak çivilenir."""
+        metin = GUNCELLE_PY.read_text(encoding="utf-8")
+        self.assertIn("KAPSAM BEYANI — bu allowlist YALNIZ `ozel-adim` yüzeyini kapsar", metin)
+        self.assertIn("BAKILMAYAN", metin)
+
+    def test_olc_ALLOWLISTTEN_GECMEZ_kapsam_beyani(self):
+        # ① kontrol grubu: aynı dizge `ozel-adim` yüzeyinde REDDEDİLİR
+        ok, sebep = self.g._ozel_adim_izinli_mi("python scripts/olc_isareti.py")
+        self.assertFalse(ok, f"kontrol grubu çöktü — dizge allowlist'ten geçti: {sebep}")
+        # ② aynı dizge `olc` yüzeyinde KOŞAR (beyan edilen asimetri)
+        h = self._harita_test("python scripts/olc_isareti.py")
+        (self.f.tuketici / "scripts" / "olc_isareti.py").write_text(
+            "import pathlib\npathlib.Path('OLC_KOSTU.txt').write_text('kostu')\n",
+            encoding="utf-8")
+        r = self.f.calistir("--harita", h, "olc", "--asama", "once")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue((self.f.tuketici / "OLC_KOSTU.txt").exists(),
+                        "`olc` haritadaki komutu koşmadı — KAPSAM BEYANI artık YANLIŞ, "
+                        "beyanı güncelle ya da davranışı geri al")
 
 
 class MotorBagimsizligiTest(GuncelleTemel):

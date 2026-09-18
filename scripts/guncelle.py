@@ -192,6 +192,21 @@ class Klon:
         r = self.git("rev-parse", "--verify", "--quiet", f"{ref}:{yol}")
         return r.stdout.strip() or None
 
+    def izlenen_yollar(self, yollar: list[str]) -> set[str]:
+        """Verilen yollardan INDEX'te İZLENENLER.
+
+        ⚠ Neden HEAD değil index: `git add <pathspec>` eşleşmeyi ÇALIŞMA AĞACI + INDEX
+        üzerinde yapar, HEAD'e BAKMAZ. "Bu yolu `git add` eşleştirebilir mi" sorusunun index
+        yarısı budur; disk yarısı `(kok / yol).exists()`tir. İkisinin birleşimi dışındaki her
+        pathspec `git add`i `fatal` ile düşürür ve o çağrıda HİÇBİR yol stage EDİLMEZ.
+        """
+        if not yollar:
+            return set()
+        r = self.git("ls-files", "-z", "--", *yollar)
+        if r.returncode != 0:
+            return set()
+        return {y for y in r.stdout.split("\0") if y}
+
     def blob(self, sha: str) -> bytes:
         r = self.git("cat-file", "blob", sha, ikili=True)
         if r.returncode != 0:
@@ -1246,6 +1261,23 @@ _PY_KOMUT = re.compile(r"python\s+[\w./\\-]+\.py[^,;\n]*")
 # bayraklar. Listede olmayan her şey koşturulmaz, kullanıcıya MANUEL ADIM olarak bırakılır.
 # Bugün haritadaki tüm özel adım komutları bu listeye sığıyor (ölçüldü: `scripts/install.py`
 # çıplak ve `--dry-run` ile).
+#
+# ⭐ KAPSAM BEYANI — bu allowlist YALNIZ `ozel-adim` yüzeyini kapsar (asimetri BİLİNÇLİDİR).
+# BAKILAN: `komut_ozel_adim`ın `harita.json` → `ozel_adim` SERBEST METNİNDEN `_PY_KOMUT` ile
+#   çıkardığı komutlar. Tehdit modeli: bir Türkçe cümlenin içine sıkıştırılan tehlikeli bayrak
+#   göz denetiminden kaçar ve tek bir izinli `guncelle.py` çağrısı içinden koşar.
+# BAKILMAYAN (ve kasıtlı olarak BAKILMAYACAK): `komut_olc`ün `harita.json` → `test[].komut`
+#   listesi ve `komut_butunluk`un motor kaynağına GÖMÜLÜ komutları. Gerekçe — ölçüldü:
+#   (a) o komutlar serbest metinden ÇIKARILMAZ, yapısal bir listede tek tek durur (gözden
+#       kaçma tehdidi yok, `butunluk`unkiler zaten kodun kendisinde);
+#   (b) `harita_yukle` MOTORUN KENDİ kopyasını okur (K4) — klonunkine hiç bakılmaz;
+#   (c) haritadaki 44 test komutunun çoğu `python -m unittest discover -s ...` ve
+#       `python skills-sap/.../tests/run_tests.py` biçimindedir; bunları bu allowlist'ten
+#       geçirmek `olc`u her sınıfta rc=2 (DUR) yapardı — yani ölçüm mekanizmasını kapatırdı;
+#   (d) `olc` zaten KLONDA duran test betiklerini koşar ve o betiklerin İÇERİĞİ motor
+#       tarafından denetlenemez ⇒ komut-dizgesi allowlist'i orada SAHTE GÜVENCE olurdu.
+# `_ozel_adim_izinli_mi` bu yüzden `komut_olc`ten çağrılmaz. Bu satırları silmeden önce
+# `test_olc_ALLOWLISTTEN_GECMEZ_kapsam_beyani` testini oku.
 OZEL_ADIM_IZINLI: dict[str, set[str]] = {
     "scripts/install.py": {"--dry-run"},
 }
@@ -1458,6 +1490,93 @@ def komut_geri_al(b: Baglam, args) -> int:
 # =====================================================================================================
 # KAPANIŞ
 # =====================================================================================================
+def _tek_satir(metin: str | None) -> str:
+    """Alt-süreç stderr'ini tek satıra indirir: `EKSİK:` satırı ve RAPOR.md madde işareti
+    çok satırlı bir metinle bozulmasın (git'in `.gitignore` hint bloğu 5 satırdır)."""
+    return " ".join((metin or "").split())
+
+
+def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
+                 eksikler: list, kod: int) -> int:
+    """Kapanışın git tarafı: stage → commit → ANCAK SONRA `uygulanan.json` mührü.
+
+    ⛔ Bu fonksiyon `komut_kapanis`in İÇİNDEN, RAPOR.md ÜRETİLMEDEN ÖNCE çağrılır. Eskiden
+    rapordan SONRA koşuyordu ve başarısızlığı yalnız `UYARI:` basıyordu ⇒ `kapanis` 0 dönüyor,
+    RAPOR.md "KAPANMADI" demiyor, kullanıcı "temiz kapandı" sanıyordu. Buradaki her başarısızlık
+    artık `eksikler`e girer ve çıkış kodunu 1'e düşürür — **ölçülemedi ≠ temiz**.
+
+    ⛔ MÜHÜR EN SONA: `uygulanan.json` YÜK TAŞIR (ölçüldü, varsayılmadı):
+      · `komut_plan`: `if kid in b.uygulanan.get("kalemler", {}): continue` ⇒ mühürlü kalem bir
+        daha PLANA GİRMEZ;
+      · `Baglam.taban_ref`: dosya-başı taban o yayın etiketine çekilir ⇒ sonraki 3-yollu
+        karşılaştırma yanlış tabandan yapılır.
+    Commit atılmadan mühürlemek "uygulandı" yalanını KALICILAŞTIRIR. Bu yüzden mühür yalnız
+    (a) commit atıldıysa ya da (b) ÖLÇÜLEREK commit'lenecek bir şey olmadığı görüldüyse basılır.
+    """
+    k = b.k
+    # ⛔ `git add -A` kullanıcının İZLENMEYEN dosyalarını da commit'liyordu (§1/§2a kapsam
+    # ihlali: motor yalnız template yollarına dokunur). Yan etki ölçüldü:
+    # `kullanici_dosya_sayisi()` `--others --exclude-standard` okuduğu için ilk kapanıştan
+    # sonra VKD sayacı 0'a düşüyordu — sayaç bir daha hiç saymıyordu.
+    # Kapsam artık PLANDAKİ yollar (+ yeniden adlandırma hedefleri).
+    add_yollari = sorted({y for kalem in plan["kalemler"] if kalem["id"] in secili
+                          for d in kalem["dosyalar"]
+                          for y in (d["yol"], d.get("yeni_yol")) if y})
+    # ⛔ SÜZGEÇ ÖLÇÜTÜ = `git add`in eşleştirdiği küme: ÇALIŞMA AĞACI ∪ INDEX. HEAD DEĞİL.
+    # Eski ölçüt `blob_sha("HEAD", y)` idi ve sessiz veri kaybı üretiyordu: `Klon.sil()` yolu
+    # `git rm -q --cached` ile index'ten düşürür, dosya diskte de yoktur, ama HEAD'de DURUR ⇒
+    # yol süzgeçten geçer, `git add` `fatal: pathspec ... did not match any files` der ve o
+    # çağrıda HİÇBİR yolu stage etmez (kısmi başarı yoktur) ⇒ o koşumun tüm birleştirme sonucu
+    # commit'e GİRMEZ. Ölçüldü (`--karar birlesik`): `core/00-temel.md` diskte v3, HEAD'de v1,
+    # `kapanis` yine rc=0. Silmeler `Klon.sil()` tarafından ZATEN stage'lidir.
+    izlenen = k.izlenen_yollar(add_yollari)
+    add_yollari = [y for y in add_yollari if (k.kok / y).exists() or y in izlenen]
+    if add_yollari:
+        r_add = k.git("add", "--", *add_yollari)
+        if r_add.returncode != 0:
+            eksikler.append(f"kapanış `git add` başarısız — plandaki değişiklikler commit'e "
+                            f"GİRMEDİ: {_tek_satir(r_add.stderr)}")
+            return 1
+
+    # ⛔ ÇIKIŞ KODU SİNYALDİR, ÖLÇÜM DEĞİL. `git commit` rc=1 "commit edilecek bir şey yok"
+    # anlamına geldiği KADAR "hook reddetti / index kilitli / config bozuk" anlamına da gelir.
+    # rc=1'i koşulsuz tolere etmek, kapatılan sessiz-geçiş sınıfının aynısını yeniden açardı ⇒
+    # karar DURUMDAN okunur: `git diff --cached --quiet` → 0 = stage'de fark YOK · 1 = fark VAR
+    # · başka = ÖLÇÜLEMEDİ ('temiz' DEĞİL).
+    r_stage = k.git("diff", "--cached", "--quiet")
+    if r_stage.returncode not in (0, 1):
+        eksikler.append(f"kapanış: stage durumu ÖLÇÜLEMEDİ ('temiz' DEĞİL) — "
+                        f"`git diff --cached --quiet` rc={r_stage.returncode}: "
+                        f"{_tek_satir(r_stage.stderr)}")
+        return 1
+    if r_stage.returncode == 1:
+        mesaj = (f"guncelle: {plan['yeni_etiket']} kalemler "
+                 + ", ".join(sorted(secili)))
+        r = k.git("commit", "--no-verify", "-q", "-m", mesaj, kimlik=True)
+        if r.returncode != 0:
+            eksikler.append(f"kapanış commit'i atılamadı (stage'de fark VARDI — yani 'commit "
+                            f"edilecek bir şey yok' DEĞİL): {_tek_satir(r.stderr)}")
+            return 1
+
+    u = b.uygulanan
+    u.setdefault("dosyalar", {})
+    u.setdefault("kalemler", {})
+    for kalem in plan["kalemler"]:
+        if kalem["id"] not in secili:
+            continue
+        uygulandi = False
+        for d in kalem["dosyalar"]:
+            kayit = durum["dosyalar"].get(d["yol"], {})
+            if kayit.get("durum") == "dogrulandi":
+                u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
+                uygulandi = True
+        u["kalemler"][kalem["id"]] = {
+            "etiket": plan["yeni_etiket"],
+            "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
+    _yaz_json(k.durum_dizini / "uygulanan.json", u)
+    return kod
+
+
 def komut_kapanis(b: Baglam, args) -> int:
     k, plan = b.k, plan_oku(b.k)
     durum = durum_oku(k)
@@ -1516,6 +1635,13 @@ def komut_kapanis(b: Baglam, args) -> int:
     kabul = bool(args.kabul)
     kod = 0 if not eksikler else (3 if kabul else 1)
 
+    # ⚠ SIRA: git tarafı RAPORDAN ÖNCE koşar. Aksi hâlde `git add`/commit başarısızlığı
+    # `eksikler`e girse bile RAPOR.md zaten yazılmış olur ve "KAPANMADI" bölümüne giremez.
+    # `--kabul` bu başarısızlıkları ÖRTMEZ: kullanıcı açık FAIL'leri kabul eder, motorun
+    # kendi alt-süreç çöküşünü değil ⇒ `_kapanis_git` başarısızlıkta koşulsuz 1 döndürür.
+    if kod in (0, 3):
+        kod = _kapanis_git(b, plan, durum, secili, eksikler, kod)
+
     rapor = [f"# Güncelleme raporu — {plan['yeni_etiket']}", "",
              f"Üretim: {_simdi()} · taban `{plan['taban_commit'][:10]}` · "
              f"seçili kalem: {len(secili)}", ""]
@@ -1557,46 +1683,6 @@ def komut_kapanis(b: Baglam, args) -> int:
 
     for e in eksikler:
         print("EKSİK: " + e, file=sys.stderr)
-
-    if kod in (0, 3):
-        u = b.uygulanan
-        u.setdefault("dosyalar", {})
-        u.setdefault("kalemler", {})
-        for kalem in plan["kalemler"]:
-            if kalem["id"] not in secili:
-                continue
-            uygulandi = False
-            for d in kalem["dosyalar"]:
-                kayit = durum["dosyalar"].get(d["yol"], {})
-                if kayit.get("durum") == "dogrulandi":
-                    u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
-                    uygulandi = True
-            u["kalemler"][kalem["id"]] = {
-                "etiket": plan["yeni_etiket"],
-                "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
-        _yaz_json(k.durum_dizini / "uygulanan.json", u)
-        # ⛔ `git add -A` kullanıcının İZLENMEYEN dosyalarını da commit'liyordu (§1/§2a kapsam
-        # ihlali: motor yalnız template yollarına dokunur). Yan etki ölçüldü:
-        # `kullanici_dosya_sayisi()` `--others --exclude-standard` okuduğu için ilk kapanıştan
-        # sonra VKD sayacı 0'a düşüyordu — sayaç bir daha hiç saymıyordu.
-        # Kapsam artık PLANDAKİ yollar (+ yeniden adlandırma hedefleri).
-        add_yollari = sorted({y for kalem in plan["kalemler"] if kalem["id"] in secili
-                              for d in kalem["dosyalar"]
-                              for y in (d["yol"], d.get("yeni_yol")) if y})
-        # `git add -- <yol>` eşleşmeyen pathspec'te hata verir: yalnız diskte VAR olan ya da
-        # HEAD'de İZLENEN yolları ver (silinenler İZLENEN koluna girer, silme yine stage'lenir).
-        add_yollari = [y for y in add_yollari
-                       if (k.kok / y).exists() or k.blob_sha("HEAD", y)]
-        if add_yollari:
-            r_add = k.git("add", "--", *add_yollari)
-            if r_add.returncode != 0:
-                print(f"UYARI: kapanış `git add` başarısız: {r_add.stderr.strip()}",
-                      file=sys.stderr)
-        mesaj = (f"guncelle: {plan['yeni_etiket']} kalemler "
-                 + ", ".join(sorted(secili)))
-        r = k.git("commit", "--no-verify", "-q", "-m", mesaj, kimlik=True)
-        if r.returncode not in (0, 1):
-            print(f"UYARI: kapanış commit'i atılamadı: {r.stderr.strip()}", file=sys.stderr)
 
     print((k.durum_dizini / "RAPOR.md").read_text(encoding="utf-8"))
     return kod
