@@ -522,6 +522,31 @@ class OnayTest(ProjeTemel):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertNotEqual(self.f.oku("AGENTS.md"), once, self.cikti(r))
 
+    def test_onaysiz_isaretle_yerel_ve_ertelendi_KARAR_KAYDETMEZ(self):
+        """P5 ⓐ: `yerel`/`ertelendi` dosyaya yazmaz ama DURUMA yazar — kaydedilen karar `kapanis`ın
+        o dosyayı "kapandı" saymasına yeter. Onay kapısı tek çağrı noktasında (tüm dallardan önce);
+        SEÇİCİ bir kusur (`if args.karar in ("yeni", ...)`) yazma-kolu testinin altında SAĞ KALIR
+        ⇒ bu iki kol ayrıca ölçülür. Hata kimliği de assert edilir (rc=2 başka arızadan gelebilir)."""
+        self.f.yerel_degistir("AGENTS.md", self.f.oku("AGENTS.md").replace("son\n", "son yerel\n"))
+        self.f.ilerlet()
+        self.planla()
+        self.assertIn("AGENTS.md", self.f.vakalar(), "fixture ön koşulu: dosya planda olmalı")
+        durum_f = self.f.durum_dizini() / "durum.json"
+        once = durum_f.read_bytes() if durum_f.exists() else None
+        (self.f.durum_dizini() / "onay.json").unlink()
+        for karar, ek in (("yerel", ()), ("ertelendi", ("--gerekce", "sonra bakilacak"))):
+            with self.subTest(karar=karar):
+                r = self.f.calistir("isaretle", "AGENTS.md", "--karar", karar, *ek)
+                self.assertEqual(r.returncode, 2, self.cikti(r))
+                self.assertIn("proje onayı YOK", self.cikti(r), self.cikti(r))
+                self.assertEqual(durum_f.read_bytes() if durum_f.exists() else None, once,
+                                 f"onaysız `--karar {karar}` durum.json'a karar yazdı")
+        # KONTROL GRUBU: onay geri verilince aynı komut kararı KAYDEDER
+        self.assertEqual(self.f.onayla().returncode, 0)
+        r = self.f.calistir("isaretle", "AGENTS.md", "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn('"yerel"', durum_f.read_text(encoding="utf-8"))
+
     def test_onaysiz_kapanis_SURUM_KAYDINI_ilerletmez(self):
         """Sürüm kaydı gelecekteki TÜM 3-yollu birleştirmelerin TABANI'dır. Onaysız bir kapanış
         tabanı ilerletirse sonraki `%guncelle-proje` kullanıcının hiç almadığı değişiklikleri
