@@ -8,6 +8,22 @@
 
 ## ▶ 2026-09-18 GECE-2 — DÜZELTME TURU (güncel durum; aşağıdaki "GECE" bloğu kurulum + davranış testi TARİHÇESİDİR)
 
+> ✅ **KAPANDI 2026-09-19 — merge + public yayın (oturum 7cfc8cc9, kullanıcı ön-onaylı otonom tur).**
+> - PR #10 squash-merge → `main` `333bd99`. CI 5/5 yeşil, head `81ae153` doğrulandı; `--admin` gerekmedi.
+>   Squash mesajı açıkça verildi: dalda 3 commit (`cb8c503`, `bec9356`, `5b86949`) şirket e-postası taşıyordu ve varsayılan
+>   squash mesajı `Co-authored-by` satırı eklerdi. `main` commit'inde şirket izi 0 (ölçüldü). Bu dal geçmişi yalnız private `axet`'te.
+> - Tam koşum (`aa1f438`): kök 665 test · 0 failure · 1 skip. SAP 955/955 senaryo + 404 test · 0 failure.
+> - Public **v0.2.0**: `axet-template` `4d2e666` + etiket `v0.2.0`.
+>   - Sızıntı taraması 0 BLOCKER / 0 WARNING (473 dosya). Ek grep'te de şirket izi 0.
+>   - Kalem-diff kapsamı 38 yol · 0 sorun. Yazar/committer noreply.
+>   - Anonim `raw …/v0.2.0/kur.ps1` → 200; katalog `[v0.1.0: 1, v0.2.0: 11]`.
+> - ⏳ **Kullanıcının kendi terminalinde:**
+>   - `behavior_manifest.py generate` (MERGE ANINDA md. 1).
+>   - Ardından `%guncelle` + `install.py` + aXet'i yeniden başlat.
+>   - SAP projelerinde `%guncelle-proje`.
+>   - Sonra yeni davranış testi.
+
+
 Dal: `fix/2026-09-18-davranis-duzeltmeleri` (taban `545cdab` = v0.1.0 ağacı). Kullanıcı kararı: *"hepsini yap"*,
 analiz → tek tek karar → uygulama. Her kod düzeltmesi **kırmızı/yeşil** ölçüldü (eski kodda kırmızı, yenide yeşil).
 
