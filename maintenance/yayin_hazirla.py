@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -100,20 +101,59 @@ def dislanan_mi(yol: str) -> bool:
     return any(yol == d or (d.endswith("/") and yol.startswith(d)) for d in DISLANANLAR)
 
 
+NOREPLY_SONEK = "@users.noreply.github.com"
+
+
+def kimlik_sorunlari(cwd: Path) -> list[str]:
+    """Yayın commit'inin ETKİN yazar/committer e-postası noreply değilse sorun listesi (yayın ⓐ, ölçüldü 2026-09-18:
+    yayın provasında commit yazarı kurumsal adres çıktı; tarama yalnız dosya İÇERİĞİNE bakıyordu).
+
+    `git var` ortam değişkenlerini (GIT_AUTHOR_EMAIL …) ve config'i birlikte çözer — commit'in kullanacağı kimliğin
+    ta kendisi. GIT_CEILING_DIRECTORIES: `--ilk`te hedef henüz depo değil; üst dizindeki başka bir deponun yerel
+    config'i okunmasın. E-posta ÇIKTIYA BASILMAZ (kimlik izi log'a da düşmesin); yalnız 'noreply değil' denir."""
+    ortam = dict(os.environ, GIT_CEILING_DIRECTORIES=str(cwd.parent))
+    sorunlar = []
+    for ad in ("GIT_AUTHOR_IDENT", "GIT_COMMITTER_IDENT"):
+        r = subprocess.run(["git", "var", ad], cwd=cwd, env=ortam, capture_output=True)
+        if r.returncode != 0:
+            sorunlar.append(f"{ad}: okunamadı ({r.stderr.decode(errors='replace').strip()})")
+            continue
+        m = re.search(r"<([^>]*)>", r.stdout.decode(errors="replace"))
+        if not (m and m.group(1).lower().endswith(NOREPLY_SONEK)):
+            sorunlar.append(f"{ad}: e-posta GitHub noreply adresi değil")
+    return sorunlar
+
+
+def kopya_hatasi(yol: Path, e: OSError) -> SystemExit:
+    """Kopyalama OSError'ını ham traceback yerine anlamlı bir HATA'ya çevirir (yayın ⓑ, ölçüldü 2026-09-18:
+    uzun hedef yolunda ham FileNotFoundError basılıyordu; sebebin MAX_PATH olduğu okunamıyordu)."""
+    ipucu = ""
+    if len(str(yol)) >= 260:
+        ipucu = (f" Yol {len(str(yol))} karakter: Windows'un 260 karakter sınırı (MAX_PATH) aşılmış olabilir —"
+                 " hedefi kısa bir klasöre ver (örn. C:\\yayin).")
+    return SystemExit(f"HATA: kopyalanamadı: {yol} ({type(e).__name__}: {e}).{ipucu}")
+
+
 def kopyala(hedef: Path, ref: str, calisma_agaci: bool) -> list[str]:
     if calisma_agaci:
         yollar = git("ls-files", "--cached", "--others", "--exclude-standard", "-z").decode().split("\0")
         yollar = sorted({y for y in yollar if y and (KOK / y).is_file()})
         for y in yollar:
             if not dislanan_mi(y):
-                (hedef / y).parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(KOK / y, hedef / y)
+                try:
+                    (hedef / y).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(KOK / y, hedef / y)
+                except OSError as e:
+                    raise kopya_hatasi(hedef / y, e) from e
         return [y for y in yollar if not dislanan_mi(y)]
     arsiv = tarfile.open(fileobj=io.BytesIO(git("archive", "--format=tar", ref)))
     alinan = []
     for uye in arsiv.getmembers():
         if uye.isfile() and not dislanan_mi(uye.name):
-            arsiv.extract(uye, hedef)
+            try:
+                arsiv.extract(uye, hedef)
+            except OSError as e:
+                raise kopya_hatasi(hedef / uye.name, e) from e
             alinan.append(uye.name)
     return sorted(alinan)
 
@@ -457,6 +497,20 @@ def main() -> int:
             print(f"HATA: hedef boş değil: {hedef} (üzerine yazılmaz)", file=sys.stderr)
             return 2
         hedef.mkdir(parents=True, exist_ok=True)
+
+    # Kimlik kopyalamadan ÖNCE denetlenir: `--ilk` tekrar koşulabilsin diye hedef hâlâ boşken durulur.
+    if yayin_kipi:
+        kimlik = kimlik_sorunlari(hedef)
+        if kimlik:
+            print("HATA: yayın commit'inin kimliği public repoya uygun değil — commit public'te GERİ ALINAMAZ:",
+                  file=sys.stderr)
+            for s in kimlik:
+                print("  " + s, file=sys.stderr)
+            print("  Yalnız bu komut için ortam değişkeniyle ver (PowerShell), sonra tekrar çalıştır:\n"
+                  "    $env:GIT_AUTHOR_NAME='<ad>'; $env:GIT_AUTHOR_EMAIL='<id>+<kullanıcı>" + NOREPLY_SONEK + "'\n"
+                  "    $env:GIT_COMMITTER_NAME='<ad>'; $env:GIT_COMMITTER_EMAIL='<id>+<kullanıcı>" + NOREPLY_SONEK + "'\n"
+                  "  noreply adresin: GitHub → Settings → Emails. Global git ayarına dokunulmaz.", file=sys.stderr)
+            return 1
 
     kaynak = "çalışma ağacı" if a.calisma_agaci else f"{a.ref} ({git('rev-parse', '--short', a.ref).decode().strip()})"
     yollar = kopyala(hedef, a.ref, a.calisma_agaci)

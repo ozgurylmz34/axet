@@ -269,6 +269,11 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 
 **Rapor biçimi** (doctor `add()` + `KAPSAM —` deseni, `doctor.py:1066-1077`): `[PASS|WARN|FAIL] <kalem> <yol> <vaka> <karar>` satırları · sayaçlar · yeni kırmızı testler · bütünlük sonuçları · **asgari güvence** (§8) · "aXet'i kapat-aç: gerekli/gerekmez (neden: sınıf X)" · `KAPSAM — bakılanlar/bakılmayanlar`. Ajan raporu **kendisi yazmaz**; `RAPOR.md`'yi aynen gösterir.
 
+**`kapanis` git tarafının üç kuralı (P2 kurulum-sonrası turu, 2026-09-18):**
+- **M-6 — `--karar yerel` = "bu dosyaya DOKUNMA" (kullanıcı kararı):** `yerel` kararlı bir dosya **izlenmiyorsa** kapanış onu `git add` ile commit'e ALMAZ; dosya diskte kullanıcının içeriğiyle, izlenmeyen olarak kalır. Gerekçe: kullanıcının hiç izletmediği bir dosyayı aXet commit'iyle depoya sokmak, `yerel` kararının anlamını tersine çevirir. İzlenen bir `yerel` dosyası süzgeçten etkilenmez (commit'te zaten var). Test: `test_V7_yerel_izlenmeyen_dosya_kapanis_commitine_GIRMEZ`.
+- **`git add` başarısızsa index geri alınır:** yalnız plandaki yollar `git reset -q -- <yollar>` ile HEAD'e döner (çalışma ağacı değişmez); rapor bunu ya da geri alınamadığını yazar. Aksi hâlde yarım stage (ör. `Klon.sil` silmeleri) bir sonraki kullanıcı commit'ine sızar.
+- **M-1 — "onaylı açık FAIL ile kapandı" satırı yalnız çıkış 3'te basılır:** `--kabul` verilip git tarafı (add/commit) patlarsa çıkış 1'dir ve rapor yalnız "KAPANMADI" der; eskiden aynı raporda iki çelişik hüküm duruyordu.
+
 **Atlanamazlık neden mekanik:** kalem planda var → durumu `dogrulandi` ya da gerekçeli `atlandi` olmadan `kapanis` 0 dönmez; ajanın "yaptım" demesi durum değiştirmez, yalnız `isaretle`'nin diskten doğrulaması değiştirir.
 
 ---
