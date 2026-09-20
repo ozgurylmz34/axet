@@ -267,6 +267,29 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 | `kapanis [--kabul "<gerekce>"]` | plan↔durum: `bekliyor`/`uygulandi` kalan var mı · sonra-test'te **yeni kırmızı** var mı · bütünlük geçti mi · özel adımlar koştu mu → `RAPOR.md` üretir, `uygulanan.json`'u günceller, `guncelle: <yayın> kalemler …` commit'i | **0** tamam · **1** eksik/FAIL (rapor "KAPANMADI") · **3** kullanıcı onaylı açık FAIL ile kapandı (gerekçe raporda) |
 | `durum` | tablo: kalem × dosya × durum | 0 |
 
+**`olc --asama once` — CI ikamesi (Z16, 2026-09-20).** `once` turu, planda **yargı vakası**
+yokken ve `origin/main:guncelle/ci-durum.json` bu etiket için `hepsi_yesil: true` derken **test
+koşmaz**: tabanı CI hükmünden alır (`scripts/guncelle.py::_ci_tabani`) ve `olcum-once.json`'a
+`kaynak: "ci"` yazar. Gerekçe hız DEĞİL **doğruluk**: `once` ESKİ, `sonra` YENİ test kodunu koşar —
+`tests/**` güncellemenin parçası olabildiği için testlerin kendisi değişirken *"fark = regresyon"*
+çıkarımı kurulamaz; CI ise yeni testleri yeni ürüne karşı temiz ortamda ölçmüştür. Yerel değişiklik
+varsa (= yargı vakası) ikame **devreye girmez**, normal ölçüm koşar. Her belirsizlik (kayıt yok ·
+etiket tutmuyor · tek takım kırmızı · CI hâlâ koşuyor) normal ölçüme döner — *ölçülemedi ≠ yeşil*.
+⚠ `kapanis`'in **yeni kırmızı** kuralı bu tabanda farklı çalışır: `once["testler"]` boş olduğu için
+kimlik eşlemesi hiçbir şey bulamaz ⇒ `yeni_kirmizilar` bu dalda **`sonra`'daki her kırmızıyı** yeni
+sayar (aksi hâlde sessiz sahte-yeşil). CI üretimi: `maintenance/yayin_hazirla.py::ci_durum_uret`.
+
+**`olc` — kapsanan komut ayıklaması (Z16/A, 2026-09-20).** Aynı `cwd`'de hem filtresiz
+`python tests/run_tests.py` hem `… -k <desen>` seçilmişse filtreli olan **koşulmaz**
+(`scripts/guncelle.py::_kapsananlari_ayikla`) ve `[KAPSANDI] …` satırı basılır. Kapsama ilişkisi
+çalıştırıcının semantiğinden okunur — `-k`, `loader.testNamePatterns = ["*<desen>*"]` olur
+(`tests/run_tests.py:38`), yani yalnız süzer ⇒ filtreli koşum filtresizin **öz alt kümesidir**.
+Düşürme koşulları dar: aynı `cwd` · aynı taban argv · filtresiz eş AYNI ölçümde koşuyor ·
+değersiz `-k` dokunulmaz. Ölçülen israf (v0.3.0 planı, gerçek klon): tur başına 18 komuttan 6'sı.
+⚠ Kaybedilmeyen tanı: bayat/yazım hatalı `-k` deseni **bağımsız** bir katmanda ölçülür
+(`tests/test_guncelle_harita.py` — hiçbir testle eşleşmeyen desen ve değersiz `-k` ayrı ayrı) ve
+o katman CI'da koşar; ayıklama o katmanı körleştirmez.
+
 **Rapor biçimi** (doctor `add()` + `KAPSAM —` deseni, `doctor.py:1066-1077`): `[PASS|WARN|FAIL] <kalem> <yol> <vaka> <karar>` satırları · sayaçlar · yeni kırmızı testler · bütünlük sonuçları · **asgari güvence** (§8) · "aXet'i kapat-aç: gerekli/gerekmez (neden: sınıf X)" · `KAPSAM — bakılanlar/bakılmayanlar`. Ajan raporu **kendisi yazmaz**; `RAPOR.md`'yi aynen gösterir.
 
 **`kapanis` git tarafının üç kuralı (P2 kurulum-sonrası turu, 2026-09-18):**
@@ -289,6 +312,7 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 | 4 | Plan | `guncelle.py plan` | 0 (1 ise "güncel" de, bitir) | DUR |
 | 5 | Seçim | plan tablosunu göster (kritikler işaretli, paketler birlikte); kullanıcı cevabı → `guncelle.py sec …` | 0 | 2 → tutarsızlığı açıkla, yeniden sor |
 | 6 | Önce-ölçüm | `guncelle.py olc --asama once` | 0 | 2 → DUR (ölçülemeyen güncelleme yapılmaz) |
+| 6b | *(6'nın İÇİNDE, otomatik)* CI ikamesi — yargı vakası yoksa ve `ci-durum.json` bu etiket için yeşilse test koşulmaz | `[İKAME]` + `KAPSAM` satırları basılır (kullanıcıya AYNEN aktarılır) | belirsizlikte normal ölçüme döner |
 | 7 | Otomatik vakalar | `guncelle.py uygula --otomatik` | 0 | 1 → `durum` göster, DUR |
 | 8 | Yargı vakaları | plandaki her V4t/V4c/V4B/V7/VTB dosyası için: `kart <KOD>` → kartı uygula → `isaretle` | her biri 0 | kart DUR koşulu |
 | 9 | Özel adımlar | plandaki her `ozel_adim` için `guncelle.py ozel-adim <ad>` | 0 | kart talimatı (ör. install `--dry-run` hata → `geri-al`) |
