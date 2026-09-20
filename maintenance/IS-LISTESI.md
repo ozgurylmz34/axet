@@ -60,12 +60,66 @@ placeholder'ı kalmadı. Düzeltme gelince ölçüm **sentetik ReadOnly öznitel
 | 1 | `behavior_manifest.py generate` | kullanıcı terminali — **hâlâ açık** (MERGE ANINDA md. 1) |
 | 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde `%guncelle-proje` | kullanıcı |
 | 3 | Yeni davranış testi (K-I niyet ölçümü / Z14) | kullanıcı + lider |
-| 4 | Yukarıdaki 7 kararın uygulanması | lider |
-| 5 | Bu PR'ın (`docs/2026-09-20-gun-sonu`) merge'ü — CI doğrulanarak | lider |
+| 4 | ~~Yukarıdaki 7 kararın uygulanması~~ | ✅ **6/7 TAMAM** (md. 5 ölçüldü→kural gerekmedi); ayrıntı aşağıda |
+| 5 | ~~Bu PR'ın (`docs/2026-09-20-gun-sonu`) merge'ü~~ | ✅ **TAMAM** — CI 5/5 SUCCESS (head `494e413`), squash-merge → `main` `1c44ddf` |
 
 ⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor
 (MAINTENANCE §6c) — **sahibinin işi, bizde iş YOK.**
 ⛔ **tooling radar — KAPANDI (kullanıcı kararı 2026-09-20):** *"bu bilgisayarda yapılmayacak, DEV_CORE sahibi yapar."* Bayatlık (23 gün / eşik 21) bu klonun sorunu DEĞİL. **Yeniden açılmaz**; açılışta "cevapsız" diye listelenmez.
+
+
+### ✅ 7 KARARIN UYGULANMASI — SONUÇ (lider, 2026-09-20; dal `fix/2026-09-20-karar-turu-7-kalem`)
+
+Her kalem **kırmızı-önce + kontrol grubu** ile ölçüldü. Mutasyonlar scratchpad kopyasından geri
+alındı, her turda geri almanın `sha256` özdeşliği doğrulandı (⛔ `git checkout --` KULLANILMADI —
+commit'siz işi siler).
+
+| # | Madde | Durum | Kırmızı-önce kanıtı |
+|---|---|---|---|
+| 1 | `_reviewer` SKIP teşhisi | ✅ `9630d7f` | fixsiz 4 kırmızı → fixli 6/6; foundation 410 test / 0 failure |
+| 7 | işaretlemeyi plana sabitle | ✅ `9630d7f` | fixsiz 2 kırmızı → fixli 4/4 (sahte fetch'li sürüklenme) |
+| 6 | kapanış commit'i pathspec'siz | ✅ `9601099` | mutasyon `yabanci = []` → test_2/3/4 **FAILED**, KONTROL test_1 OK |
+| 4 | bayat `butunluk.json` mührü | ✅ `9601099` | mutasyon `_muhur_sorunu→None` → test_2 **FAILED**, KONTROL test_1 + test_4 OK |
+| 3 | tek-başına CR (K1) | ✅ `66f88ae` | mutasyon `_norm`→CRLF-only → test_2 + test_4 **FAILED**, KONTROL test_1 + test_3 OK; regresyon 125/0 |
+| 2 | Z12 izin penceresi | ✅ `f6e12d8` | canlı S0-S4 (aşağıda) + mutasyon A/B → 5 kırmızı, 2 kontrol OK; `test_install` 34/34 |
+| 5 | K3 uzun yol | ✅ **ölçüldü — kural GEREKMEDİ** | aşağıda |
+
+**Madde 2 — Z12 CANLI ölçüm** (aXet.code `run`, `XDG_CONFIG_HOME` ile proje dışı lab config;
+kanıt **motor tarafında**: komutun yazdığı işaret dosyası — model beyanı kanıt sayılmadı):
+
+| senaryo | sonuç | ne kanıtlıyor |
+|---|---|---|
+| S0 kuralsız + birebir komut | ÇALIŞTI | düzenek sağlam (yanlış-negatif yok) |
+| S1 aday=**DENY** + birebir komut | REDDEDİLDİ | desen bu metne **uyuyor** |
+| S2 aday=**DENY** + zincirli komut | ÇALIŞTI | desen zincire **uymuyor** ⇒ tırmanış yüzeyi yok |
+| S3 aday=**ALLOW** + reset deny + zincir | REDDEDİLDİ | `… && git reset --hard` hâlâ bloklu |
+| S4 aday=**ALLOW** + birebir komut | ÇALIŞTI | amaç sağlandı |
+
+Desen tüm deny'lardan **uzun** (uzunluk kuralının görünür ihlali) ama **jokersiz**; dayanak budur.
+Muafiyetin bedeli yeni `uretilen_izin_ihlalleri()` denetimidir: üretilen bir izin deseni joker
+içerirse muafiyet düşer. Ayrı denetim şarttı — `IzinDesenUzunlukTest` yalnız statik dosyayı okur,
+`load_rules()`ın **ürettiğini görmez**. ⚠ Kural kullanıcının **GLOBAL** aXet config'ine kurulum
+anında yazılır; `config/permissions.json` değişmedi.
+
+**Madde 5 — K3 uzun yol: ÖLÇÜLDÜ, hipotez ÇÜRÜDÜ.** Kayıt "MAX_PATH şüphesi, DOĞRULANMADI"
+diyordu; asıl korku *"aynı desen ürün kodunda da varsa kontrol sessizce atlanır = **fail-open**"*idi.
+
+1. *Sınıf gerçek ve tekrarlanabilir.* `LongPathsEnabled=0`. Sentetik kontrol grubu: 258 char yol
+   yazılıyor, **260 char YAZILAMIYOR** (`FileNotFoundError`) ⇒ dosyayı Python yaratamaz. Ama **git
+   yaratır**: aynı depo kısa yola klonlanınca `.exists()=True`, **365 char** yola klonlanınca
+   klon `rc=0`, `git ls-files=1`, `git status` **temiz** — ve `.exists()=False`. `core.longpaths`
+   fark etmiyor (git tarafı ayarıdır): iki uzun vakada da Python kör.
+2. *Ama yön fail-**CLOSED**.* `run_review.py:494` eksik validator'ı `SKIP` yapar ve
+   `blocker_count = failed_blocker + **skipped_blocker**` ⇒ BLOCKER'a sayılır; `--cevrimdisi`
+   indirimi de bu dalı kapsamaz (`olcum_yok=False`, bilinçli). `project_precommit.py:385`
+   aynı durumu `FAIL`/`WARN` + *"temiz sayılmaz"* yapar. Sessiz atlama **yok**.
+3. ⇒ **Kod değişikliği gerekmedi** (ADR 0019: gate yok, düzeltme yok). Artık kalan tek kusur
+   **teşhis kalitesi**: mesaj *"bulunamadı"* diyor, oysa dosya **diskte duruyor** ve okunamayan
+   şey yolun uzunluğu. Madde 1'le aynı sınıf. ⛔ `run_review.py` ADT altyapısıdır → **ayrı açık
+   onay ister**, bu turda DOKUNULMADI. Öneri: mesaja "yol uzunluğu N > 259, MAX_PATH" ipucu.
+
+⛔ KAPSAM — bakılmayanlar: Linux/macOS (Windows'ta ölçüldü) · TUI izin davranışı · gerçek tüketici
+klonunda uçtan uca `%guncelle` koşumu · `LongPathsEnabled=1` olan makine.
 
 ## ⭐ GÜN SONU 2026-09-20 — (TARİHÇE; güncel durum yukarıda)
 
