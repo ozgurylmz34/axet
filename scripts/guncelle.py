@@ -324,6 +324,32 @@ def _oku(yol: Path, varsayilan):
     return _surum_dogrula(yol.name, veri)
 
 
+def _plan_muhru(plan: dict) -> dict:
+    """Döngü kimliği (K2 kararı 2026-09-20): bu durum dosyası HANGİ turun ürünü.
+
+    `durum_dizini`'ni temizleyen HİÇBİR yer yok (20 kullanım tarandı) ve bu BİLERÇEDİR:
+    `uygulanan.json` döngüler-üstüdür (`:458`), kör temizlik onu götürürdü. Dolayısıyla
+    çare SİLMEK değil MÜHÜRLEMEK: döngü-kapsamlı dosya kendi turunu söyler, kapanış
+    uymayanı "koştu" saymaz — "ÖLÇÜLMEDİ" sayar (ölçülmedi ≠ temiz).
+    """
+    return {"taban_commit": plan.get("taban_commit"), "yeni_etiket": plan.get("yeni_etiket")}
+
+
+def _muhur_sorunu(ad: str, veri: dict | None, plan: dict) -> str | None:
+    """None = mühür UYUYOR. Aksi hâlde neden. (`veri is None` çağıranın dalıdır.)"""
+    if veri is None:
+        return None
+    m = veri.get("plan")
+    if not isinstance(m, dict):
+        return f"{ad} plan damgası TAŞIMIYOR (önceki sürümden kalmış olabilir)"
+    bekl = _plan_muhru(plan)
+    if m != bekl:
+        return (f"{ad} BAŞKA bir güncelleme turuna ait — damga "
+                f"`{m.get('yeni_etiket')}`/{str(m.get('taban_commit'))[:10]}, "
+                f"bu tur `{bekl['yeni_etiket']}`/{str(bekl['taban_commit'])[:10]}")
+    return None
+
+
 def _yaz_json(yol: Path, veri) -> None:
     """Yazar ve GERİ OKUYUP doğrular (`install.py:297-299` deseni, §6)."""
     yol.parent.mkdir(parents=True, exist_ok=True)
@@ -798,6 +824,12 @@ def komut_plan(b: Baglam, args) -> int:
         "uretim": _simdi(),
     }
     _yaz_json(k.durum_dizini / "plan.json", plan)
+    # K2: durum.json döngü-kapsamlıdır ama SİLİNMEZ (bkz. `_plan_muhru`) → bu turun damgasını
+    # taşır. Önceki turun kayıtları KORUNUR; kapanış damgaya bakarak "bu tur ölçüldü mü"
+    # sorusunu cevaplayabilir (eskiden cevaplayamadan "koştu" sayıyordu).
+    d = durum_oku(k)
+    d["plan"] = _plan_muhru(plan)
+    durum_yaz(k, d)
     _plan_tablosu(plan)
     return 0
 
@@ -1494,7 +1526,8 @@ def komut_butunluk(b: Baglam, args) -> int:
     fail = [a for a in adimlar if a.get("cikis") not in (0, None)]
     olculemedi = [a for a in adimlar if a.get("cikis") is None]
     _yaz_json(k.durum_dizini / "butunluk.json", {
-        "zaman": _simdi(), "adimlar": adimlar, "asgari_guvence": guvence,
+        "zaman": _simdi(), "plan": _plan_muhru(plan), "adimlar": adimlar,
+        "asgari_guvence": guvence,
         "kapsam_disi": "B1–B4 kontrolleri (memory indeksi, skill referansları, ters yön "
                        "validator, markdown link) BU TURDA YOK — iş paketi P8. Koşulamayan "
                        "adımlar 'ÖLÇÜLEMEDİ' yazılır; ölçülemedi ≠ temiz.",
@@ -1667,6 +1700,30 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
                         f"{_tek_satir(r_stage.stderr)}")
         return 1
     if r_stage.returncode == 1:
+        # ⛔ PATHSPEC'SİZ COMMIT SINIFI (karar B — "DUR + uyar", 2026-09-20).
+        # Aşağıdaki `git commit` pathspec ALMAZ: index'te NE VARSA commit'ler. Kullanıcının
+        # kapanıştan ÖNCE kendi stage'lediği iş, ARACIN mesajıyla ve `--no-verify` ile
+        # (yani pre-commit gate'i KOŞMADAN) commit'e girerdi — PRE-EXISTING sınıf.
+        # ⛔ Seçenek A (commit'e pathspec vermek) REDDEDİLDİ: aracın kendi dosya listesi
+        # eksik kalırsa kendi değişikliğini SESSİZCE commit'lemez ve kapanış "atildı" der ⇒
+        # YENİ bir sessiz kayıp sınıfı doğardı. Bu yüzden araç DURUR ve kullanıcıya söyler.
+        r_isim = k.git("diff", "--cached", "--name-only", "-z")
+        if r_isim.returncode != 0:
+            eksikler.append("kapanış: index kapsamı ÖLÇÜLEMEDİ ('yalnız aracın dosyaları' DEĞİL) — "
+                            f"`git diff --cached --name-only` rc={r_isim.returncode}: "
+                            f"{_tek_satir(r_isim.stderr)}")
+            return 1
+        yabanci = sorted({y for y in (r_isim.stdout or "").split("\0") if y} - set(plan_yollari))
+        if yabanci:
+            ornek = ", ".join(yabanci[:5]) + (" …" if len(yabanci) > 5 else "")
+            eksikler.append(
+                f"kapanış commit'i ATILMADI — index'te aracın kendi dosyaları DIŞINDA "
+                f"{len(yabanci)} yol var: {ornek}. Bu commit `--no-verify` ile ve aracın "
+                f"mesajıyla atılırdı ⇒ senin işin araç commit'ine karışır ve pre-commit gate'i "
+                f"o dosyalar için KOŞMAZDI. Çözüm: `git restore --staged <yol>` ile kendi "
+                f"dosyalarını index'ten çıkar, sonra kapanışı yeniden koş. "
+                f"(Araç senin dosyalarına DOKUNMADI; planın yolları index'te hazır duruyor.)")
+            return 1
         mesaj = (f"guncelle: {plan['yeni_etiket']} kalemler "
                  + ", ".join(sorted(secili)))
         r = k.git("commit", "--no-verify", "-q", "-m", mesaj, kimlik=True)
@@ -1744,10 +1801,23 @@ def komut_kapanis(b: Baglam, args) -> int:
     for t in kirmizi:
         eksikler.append(f"sonra-ölçümde YENİ kırmızı: {t}")
     butunluk = _oku(k.durum_dizini / "butunluk.json", None)
+    # ⛔ K2 (2026-09-20): eskiden BURADA yalnız "dosya var mı" soruluyordu. `durum_dizini`
+    # döngüler arası temizlenmediği için ÖNCEKİ turdan kalan `butunluk.json` "bütünlük turu
+    # koştu" sayılıyordu = SAHTE YEŞİL, üstelik NORMAL akışla tetikleniyordu (`%guncelle`'yi
+    # ikinci kez koşmak). Artık damga bu turun plan kimliğine uymak ZORUNDA.
+    bayat = _muhur_sorunu("butunluk.json", butunluk, plan)
     if butunluk is None:
         eksikler.append("bütünlük turu koşmadı (§7 adım 12)")
+    elif bayat:
+        eksikler.append(f"bütünlük turu BU TUR İÇİN ÖLÇÜLMEDİ — {bayat}. "
+                        f"`butunluk` komutunu bu tur için yeniden koş (ölçülmedi ≠ temiz).")
     elif any(a.get("cikis") not in (0, None) for a in butunluk["adimlar"]):
         eksikler.append("bütünlük turunda FAIL var")
+
+    d_bayat = _muhur_sorunu("durum.json", durum, plan)
+    if d_bayat:
+        eksikler.append(f"dosya yargıları BU TURA ait DEĞİL — {d_bayat}. "
+                        f"`hazirla` bu turun damgasını basar; kapanışı ondan sonra koş.")
 
     kabul = bool(args.kabul)
     kod = 0 if not eksikler else (3 if kabul else 1)
