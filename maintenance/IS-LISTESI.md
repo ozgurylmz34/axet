@@ -6,6 +6,22 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## ⭐ GÜN SONU 2026-09-19 — YARIN BURADAN BAŞLA
+
+**Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). Açık dal yok, koşan iş yok.
+Ayrıntı: aşağıdaki GECE-2 bloğu ve "✅ KAPANDI 2026-09-19" kutusu. Maddeler **orada** yaşar; bu tablo yalnız SIRADIR.
+
+| Sıra | İş | Kim | Not |
+|---|---|---|---|
+| 1 | `behavior_manifest.py generate` | kullanıcı terminali | MERGE ANINDA md. 1 (`core/00-temel.md` değişti) |
+| 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde (`C:\AXET_TEST`) `%guncelle-proje` | kullanıcı | tüketici tarafı v0.2.0'ı alır; SAP 0.3.0 damgası "farklı" görünür (beklenen) |
+| 3 | Yeni davranış testi | kullanıcı + lider | K-I niyet ölçümü (Z14) bu testte |
+| 4 | `_reviewer.py:~458` rc≠1 → SKIP düzeltmesi | lider | ⛔ ADT altyapısı: **ayrı açık onay** olmadan yapılmaz |
+| 5 | Kapsam dışı bulgular için karar: K1 · K2 · K3 · pathspec'siz kapanış commit'i · `komut_isaretle` canlı `yeni_ref` | kullanıcı kararı | GECE-2 "Açık kalanlar" |
+| 6 | Z12 (K-G zincir-güvenli allow) · Z13 (K-M kalanı: struct/push hâlâ transport ister) | lider | §3 |
+
+⚠ Yerel `…\AI_WORKS\AXET` klonu 2026-09-19'da `docs/2026-09-16-gun-sonu` dalındaydı (oradaki bu dosya BAYAT) → `git switch main && git pull`.
+
 ## ▶ 2026-09-18 GECE-2 — DÜZELTME TURU (güncel durum; aşağıdaki "GECE" bloğu kurulum + davranış testi TARİHÇESİDİR)
 
 > ✅ **KAPANDI 2026-09-19 — merge + public yayın (oturum 7cfc8cc9, kullanıcı ön-onaylı otonom tur).**
