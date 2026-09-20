@@ -444,7 +444,8 @@
      "dosyalar": [
       "CHANGELOG.md",
       "guncelle/yayinlar.json",
-      "guncelle/ci-durum.json"
+      "guncelle/ci-durum.json",
+      "tests/test_yayin_surumleri.py"
      ],
      "gerektirir": [],
      "test": [
