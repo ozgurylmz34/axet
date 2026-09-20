@@ -6,7 +6,110 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ⭐ GÜN SONU 2026-09-19 — YARIN BURADAN BAŞLA
+## ⭐ 2026-09-20 (2. tur) — KARAR TURU · **TAŞIMA TAMAM** — BURADAN BAŞLA
+
+> Aşağıdaki "GÜN SONU 2026-09-20" bloğu artık TARİHÇEdir. Güncel durum budur.
+
+**Bu turda KOD DEĞİŞMEDİ.** Tur, 2026-09-19'dan devreden sıranın **lider maddelerini karara
+bağlamak** ve **klasör taşıması** için hazırlık yapmaktı. Her karar kullanıcıdan tek tek alındı;
+kararların dayandığı kanıtlar aşağıda (hepsi bu turda kodun kendisinden okundu, hafızadan değil).
+
+### ✅ KLASÖR TAŞIMASI — TAMAMLANDI (2026-09-20, ölçüldü)
+
+`…\OneDrive - NTT DATA Business Solutions AG\AI_WORKS` → **`C:\AI_WORKS`** yapıldı.
+Çapa PROVA'da `governance/archive/2026-09-20-tasima-RESUME.md`'ye arşivlendi; **§4 kontrol
+listesi 10/10** koşuldu. Kapanış ölçümü: `ix_doctor` **FAIL yok** (tek WARN K1
+`managed-policy`, admin ister · taşımadan bağımsız) · `run_all_validators` TAM PASS ·
+üç repo (AXET/PROVA/DEV_CORE) temiz ve remote'uyla senkron · hafiza 279 ders, push'lu.
+
+**Plandan SAPAN dört ölçüm** (ders: PROVA `feedback_makine-tasinmasi-yol-kaymasi`):
+
+| Beklenen | Gerçek |
+|---|---|
+| Junction'lar ölü kalır → `--repair-junctions` onarır | `Move-Item` 4 junction'ı **boş GERÇEK klasöre** çevirdi; araç fail-safe durdu. Önce `rmdir` (özyinelemesiz), sonra onarım |
+| Onarımı lider koşar | Kopuk `core` junction'ı `pre_tool_guard` fail-closed üzerinden **tüm Bash'i** kapattı ⇒ kendi kendini onaramıyor; kullanıcının terminali + DEV_CORE **mutlak** yolu gerekti |
+| Hafiza klasörü yeniden adlandırılır | Kopyalanmış: **3 özdeş klon** (hepsi `a1de5d6`, içerik farkı 0). 2 fazlalık silindi, transkriptler bırakıldı |
+| 0 açık worktree | DEV_CORE'da 1 **prunable** kayıt; hedef dizin yok ⇒ `repair` imkânsız. 3 kanıtla (dizin yok + `git cherry` boş + dal geride) `prune`, **dal korundu** |
+
+Ayrıca: `.tmp` silme adımı taşımadan önce atlanmış, sonra silindi (7668 dosya / 85 MB /
+4 artık git deposu) · PROVA `settings.local.json` 89→81 kural (8 ölü yol) · PROVA'ya
+`.conn_adt` eklendi (SAP bağlantısı artık **VAR**, `ix_doctor` K5 PASS).
+
+⚠ `--wt-kapat` ReadOnly kolu (DEV_CORE#284) artık **doğal olarak tetiklenmez** — OneDrive
+placeholder'ı kalmadı. Düzeltme gelince ölçüm **sentetik ReadOnly özniteliğiyle** yapılmalı.
+
+### Kararlar (7 onay + 1 iptal)
+
+| # | Madde | KARAR | Kanıt / not |
+|---|---|---|---|
+| 1 | `sapadt/_reviewer.py:459` — `verdict = raw.get("verdict", "BLOCKER" if rc==1 else "SKIP")`, `skip_reason` HİÇ verilmiyor | ✅ **A: yalnız teşhis** | rc∉(0,1) + JSON yok → SKIP; `passed` = PASS∪SKIP (`:325`) ⇒ **pre-flight koşmadan SAP yazımı sürüyor** ve not `PRE-FLIGHT KOŞMADI ()` diye boş çıkıyor (`:620`). Düzeltme: `skip_reason=f"reviewer rc={rc}: {stderr[-300:]}"`. **Verdict semantiği DEĞİŞMEZ.** ⛔ ADT altyapısı → ayrı açık onay ALINDI |
+| 1b | Aynı yerde fail-closed (rc≠0 + JSON yok → BLOCKER) | ⏸ **ayrı karar** | A'nın ürettiği teşhis verisi olmadan rc uzayı bilinmiyor; yavaş/erişilemez SAP'de yanlış BLOCKER riski var. A koştuktan sonra yeniden gündeme gelir |
+| 2 | **Z12** — K-G `session_brief` izin penceresi | ✅ **tasarla + CANLI ölç** | Tasarım: **joker-siz çıpalı** tek allow deseni. Dayanak: desen komut metninin TAMAMINA uyuyor (`permissions.json` `_aciklama`) ⇒ `*` içermeyen desen zincire uzatılmış metinle eşleşemez, yani "uzun allow kısa deny'ı ezer" tırmanışı **yapısal olarak** kapanır (hipotez, ölçülecek). Kontrol grubu ZORUNLU: ⓐ birebir komut sorulmadan koşar ⓑ `… && git reset --hard` **REDDEDİLİR** ⓒ eşit-uzunluk yasağı korunur. Ölçüm kırmızıysa **kural EKLENMEZ**, madde "ölçüldü, olmuyor" diye kapanır |
+| 3 | **K1** — tek-başına CR: `new_project` çeviriyor, `guncelle_proje.icerik` çevirmiyor → sahte V3 | ✅ **düzelt (düşük öncelik)** | Bugün **0/791 dosyada** tek-başına CR var (bu turda ölçüldü, ikili hariç; kapsam: yalnız bu depo/bu dal) ⇒ sınıf teorik. Ama V3 "listelenmez, yalnız sayılır" olduğu için sonucu **sessiz güncelleme kaybı**. İki yol tek normalizasyona bağlanır + 1 test. ⛔ Yeni gate AÇILMAZ (ADR 0019: hata gerçek hayatta yaşanmadı) |
+| 4 | **K2** — `butunluk.json`/`durum.json` döngüler arası silinmiyor | ✅ **mühürle (fail-closed)** | `durum_dizini`'ni temizleyen **hiçbir yer yok** (20 kullanım tarandı). Kapanış `:1736` bayat dosyayı okuyup "bütünlük turu koştu" sayar = sahte yeşil, üstelik **normal akışla** tetiklenir (`%guncelle`'yi ikinci kez koşmak). Çözüm: her döngü-kapsamlı durum dosyasına plan kimliği (`taban_commit`+`yeni_etiket`) damgası; uymuyorsa "ölçülmedi". ⛔ **Silme YOK** — `uygulanan.json` bilinçli olarak döngüler-üstü (`:458`), kör temizlik onu götürürdü |
+| 5 | **K3** — uzun yollu klonda 4 pre-commit testi FAIL ("validator bulunamadı") | ✅ **önce ölç** | Kayıt "MAX_PATH şüphesi, DOĞRULANMADI" diyor. Prior-art ölçülmüş: `test_guncelle_harita.py` `(AXET_HOME/yol).exists()` → 269 char False / 159 char True. **Asıl soru:** aynı desen ÜRÜN kodunda da varsa "validator yok" sanılıp kontrol sessizce atlanır = fail-**open**. Kontrol grubu **sentetik** uzun/kısa yol (taşımadan sonra da geçerli) |
+| 6 | `guncelle.py:1662` kapanış commit'i **pathspec'siz** | ✅ **B: DUR + uyar** | `git commit --no-verify -q -m <mesaj>` index'te ne varsa commit'liyor ⇒ kullanıcının önceden stage'lediği iş, araç mesajıyla ve pre-commit'siz commit'e giriyor (PRE-EXISTING). Seçenek A (pathspec ver) **reddedildi**: aracın dosya listesi eksik kalırsa kendi değişikliğini sessizce commit'lemez = yeni sessiz kayıp sınıfı |
+| 7 | `komut_isaretle` **canlı** `yeni_ref` kullanıyor | ✅ **plana sabitle** | Plan hedefi çiviliyor (`:791 plan["yeni_etiket"]=b.yeni_ref`) ama işaretleme canlı ref'i okuyor (`:1079/:1084/:1092`, `Baglam` kurulurken yeniden hesaplanıyor `:463`) ⇒ plan ile işaretleme arasında fetch olursa **içerik yeni sürümden, mühür eski sürümü der**. Geriye sürüklenme için DUR var (`:684-689`), **ileri** sürüklenme korumasız. Düzeltme: plana sabitle + sahte fetch'li kırmızı/yeşil test. K2'nin mühür kararıyla aynı ilke |
+| — | **Z13** — K-M kalanı: `$TMP`'de corrNr'sız kilit/yaratma canlı ölçümü | ⛔ **İPTAL** | Kullanıcı kararı 2026-09-20: *"`$TMP`'de transport'suz yol hedeflenmiyor; araç corrNr istemeye devam eder."* `bec9356` birim testli hâliyle kalır, **canlı ölçüm yapılmayacak**. Madde KAPANDI, yeniden açılmaz |
+
+### Sıra (taşıma BİTTİ — sıradaki: 1)
+
+| Sıra | İş | Kim |
+|---|---|---|
+| 0 | ~~Klasör taşıması + kontrol listesi~~ | ✅ **TAMAM** (2026-09-20; §4 10/10, çapa arşivlendi) |
+| 1 | `behavior_manifest.py generate` | kullanıcı terminali — **hâlâ açık** (MERGE ANINDA md. 1) |
+| 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde `%guncelle-proje` | kullanıcı |
+| 3 | Yeni davranış testi (K-I niyet ölçümü / Z14) | kullanıcı + lider |
+| 4 | Yukarıdaki 7 kararın uygulanması | lider |
+| 5 | Bu PR'ın (`docs/2026-09-20-gun-sonu`) merge'ü — CI doğrulanarak | lider |
+
+⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor
+(MAINTENANCE §6c) — **sahibinin işi, bizde iş YOK.**
+⛔ **tooling radar — KAPANDI (kullanıcı kararı 2026-09-20):** *"bu bilgisayarda yapılmayacak, DEV_CORE sahibi yapar."* Bayatlık (23 gün / eşik 21) bu klonun sorunu DEĞİL. **Yeniden açılmaz**; açılışta "cevapsız" diye listelenmez.
+
+## ⭐ GÜN SONU 2026-09-20 — (TARİHÇE; güncel durum yukarıda)
+
+**Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). **Açık PR yok · açık dal yok ·
+açık worktree yok · koşan iş yok.** Bu depoda bugün KOD değişmedi — tur temizlik + bildirim turuydu.
+
+**Bugün ölçülenler (beyan değil):**
+- **PR #12 squash-merge** → `main` `8f7a14a` (yalnız `maintenance/IS-LISTESI.md`; CI 5/5 SUCCESS, head `e4aa66b` doğrulandı,
+  `--admin` gerekmedi). Yerel klon `docs/2026-09-16-gun-sonu` dalındaydı → `main`'e alındı, `origin/main` ile senkron.
+- **15 worktree kapatıldı, denetim TEMİZ** (`① git'e kayıtlı: 0 · diskte: 0 · KAYITSIZ YETİM: 0`).
+  Kapatmadan önce "main'e gitmemiş iş var mı" sorusu **dört yöntemle** ölçüldü; üçü yanlış alarm verdi:
+  `git cherry` 13/15 "yok" (çok commit'li squash körlüğü) · iki-noktalı `git diff` yön-belirsiz · delta'nın
+  `git apply --reverse` ile sınanması bağlam kaymasından düştü. **Ayırt eden tek ölçüm:** dal ucu ⊆ birleşmiş PR head'i
+  (`git fetch origin pull/<N>/head` + `merge-base --is-ancestor`) — 14 lane'in 14'ü PR #9 head'i `18e3f8a` içinde,
+  ve `18e3f8a` ↔ `main@545cdab` içerik farkı **boş**. Commit'siz iş: 0.
+- **Kapatma yolunda gerçek kusur çıktı:** `--wt-kapat` 15'inde de dosyaları sildi ama **boş dizin iskeletlerini bırakamadı**
+  ve `.git/worktrees/<ad>` bayat metadata'sı kaldı. Kök neden ölçüldü: **ReadOnly özniteliği** (OneDrive placeholder:
+  `ReadOnly, Directory, Archive, ReparsePoint, Pinned`) — aracın "handle kilidi?" teşhisi yanlış, 3 tekrar-deneme
+  yapısal olarak çözemez. `chmod`+`rmdir` ile 15'i de anında gitti; `git worktree prune` de aynı temizlikten sonra tek
+  seferde koştu. İzole depoda 2 kollu kontrol grubuyla yeniden üretildi (ReadOnly yok → araç tek seferde başarılı).
+- **DEV_CORE'a bildirildi (çekirdeğe DOKUNULMADI — tüketici klonuyuz, kanal yalnız Issue):**
+  - **yeni** `ix-works/DEV_CORE#284` — `--wt-kapat` ReadOnly kusuru (kanıt formatı + kontrol grubu + düzeltme ölçümü).
+  - `#280`'e yorum — `git cherry` körlüğü zaten açık ve sahibi onaylamış; bugünkü ölçek verisi (13/14 yanlış alarm) ve
+    "içerik karşılaştırması main ilerlediyse AYIRT ETMEZ" bulgusu eklendi.
+- **Çekirdek güncellendi** (`/core-guncelle`): `772256a` → `b612469`, `team_setup TAMAM`, `ix_doctor` FAIL **3 → 1**
+  (kalan K5 `.conn_adt` = gerekçeli kabul). Bu aXet deposunu etkilemez, ölçümün tazeliği için yapıldı: #284'ün iddiası
+  güncel çekirdekle **yeniden ölçüldü**, kusur aynen duruyor.
+
+| Sıra | İş | Kim | Not |
+|---|---|---|---|
+| 1 | `behavior_manifest.py generate` | kullanıcı terminali | MERGE ANINDA md. 1 (`core/00-temel.md` değişti) — **hâlâ açık** |
+| 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde (`C:\AXET_TEST`) `%guncelle-proje` | kullanıcı | tüketici tarafı v0.2.0'ı alır; SAP 0.3.0 damgası "farklı" görünür (beklenen) |
+| 3 | Yeni davranış testi | kullanıcı + lider | K-I niyet ölçümü (Z14) bu testte |
+| 4 | `_reviewer.py:~458` rc≠1 → SKIP düzeltmesi | lider | ⛔ ADT altyapısı: **ayrı açık onay** olmadan yapılmaz |
+| 5 | Kapsam dışı bulgular için karar: K1 · K2 · K3 · pathspec'siz kapanış commit'i · `komut_isaretle` canlı `yeni_ref` | kullanıcı kararı | GECE-2 "Açık kalanlar" |
+| 6 | Z12 (K-G zincir-güvenli allow) · Z13 (K-M kalanı: struct/push hâlâ transport ister) | lider | §3 |
+
+**1-6 arası maddelerin HİÇBİRİ bugün tüketilmedi** — sıra 2026-09-19'dan aynen devrediyor. Maddeler aşağıdaki
+GECE-2 bloğunda yaşar; bu tablo yalnız SIRADIR.
+
+⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor (MAINTENANCE §6c).
+Düzeltme geldiğinde `--wt-kapat` ReadOnly kolunu bu makinede **yeniden ölç** ("merge edildi" ≠ "bende düzeldi").
+
+## ⭐ GÜN SONU 2026-09-19 — (TARİHÇE; güncel durum yukarıda)
 
 **Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). Açık dal yok, koşan iş yok.
 Ayrıntı: aşağıdaki GECE-2 bloğu ve "✅ KAPANDI 2026-09-19" kutusu. Maddeler **orada** yaşar; bu tablo yalnız SIRADIR.
@@ -999,7 +1102,7 @@ Plan kaynağı: karar matrisi §9 (parti 0–8). Uygulamada numaralar kaydı: ma
 <br>**⚠ KAPSAM GENİŞLEYİNCE GERÇEK BİR KUSUR ÇIKTI:** birleşik config testindeki kullanıcı kuralı `*benim-aracim*`=allow (sabit 12) beş template deny'ından UZUN (`*git push -f*` 11 · `*git push * -f*` 12 · `*git clean -f*` 12 · `*--no-verify*` 11 · `*fiori deploy*` 12) ⇒ ZK1 ölçümüne göre o beş koruma **fiilen delinir**. Test gevşetilmedi, **İKİYE AYRILDI**: (a) bizim desenlerimiz → ihlal SIFIR olmalı · (b) kullanıcının kuralı → ihlalin **VAR OLDUĞU** assert ediliyor (gerçeği kilitler; M3'te kapsam regresyonunu bu satır yakaladı).
 <br>**⑥ ÇAPRAZ-LANE DÜZELTME (lider ölçtü):** K11 ajanı *"kullanıcı config'indeki uzun allow'u bugün hiçbir şey ölçmüyor (doctor birebir anahtar karşılaştırıyor)"* diye açık kalem açtı. **Bu iddia yalnız kendi dalı için doğru** — o worktree `origin/main` doctor'ını taşıyor (`grep -c ezebilen_izin_desenleri` → **0**). **K12 dalı tam bu vakayı kapatıyor:** `doctor.py:205 ezebilen_izin_desenleri()` + `:219 karar not in ("ask", "allow")` ⇒ canlı config'in ask/allow desenlerini template deny'larıyla uzunluk bazında karşılaştırıyor. **Yeni kalem AÇILMADI.** ⇒ **MERGE SONRASI DOĞRULAMA KALEMİ:** K11'in senaryosunu (uzun kullanıcı allow'u) birleşik ağaçta koştur, K12'nin WARN satırının **gerçekten tetiklendiğini** ölç — bunu iki ajanın hiçbiri yapamazdı (her biri yalnız kendi dalını gördü).
 <br>**⑦ K12'YE AÇIK KALEM:** K12'nin WARN mesajı *"eşitlikte ask"* diyor; ④'teki ölçüm bunu çürüttü ⇒ mesaj metni güncellenmeli (doctor'ın MANTIĞI doğru — eşitliği zaten riskli sayıyor, M5 mutasyonuyla pinli; yalnız açıklama metni bayat). |
-| K12 | doctor: override-by-length kontrolü | — | ✅ **"Ekle, yalnız WARN"** (kullanıcı 2026-09-15). doctor, kullanıcının CANLI global config'inde bir template `deny` deseninden UZUN bir `ask`/`allow` deseni varsa WARN üretir ve hangi deny'ı ezebileceğini yazar; engellemez.<br>ADR 0019 şartları: ① gerçekten yaşandı — eski `*Remove-Item*-Recurse*` ask'ı `*git reset --hard*` deny'ını uzunlukla ezdi, komut sorulmadan çalıştı ② sonuç geri alınamaz + sessiz ③ bugünkü iki kontrol açığı kapatmıyor: `tests/test_install.py` `IzinDesenUzunlukTest` TEMPLATE dosyasına bakıyor, `doctor.py:96` yalnız emekli template desenlerini sayıyor — kullanıcının kendi yazdığı uzun ask deseni hiçbir yerde görünmüyor ④ rapor eder, engellemez → moratoryumla uyumlu.<br>⚠ `doctor.py` P6 paketiyle çakışır (yedek sayısı bilgi satırı) → P6 merge edildikten SONRA uygulanır.<br>✅ **UYGULANDI 2026-09-17** (P6 merge oldu, blokaj kalktı) — dal `fix/2026-09-17-k12-doctor-override`, commit `cef0877` + `74829b7` (gate BLOCKER'ı) + `449ba39` (çapraz kırılma), entegrasyonda. `scripts/doctor.py` +122 / `tests/test_doctor.py` +89. Ölçüm: `-k doctor` **66 test 0 failure rc=0** · fail-first 3 kırmızı · **mutasyon 7/7 yakalandı** · taze kurulumda **0 bulgu** (yanlış pozitif yok) · WARN exit kodunu DEĞİŞTİRMİYOR (testle pinlendi). Çakışma ölçütü iki glob'un çarpım otomatıyla hesaplanıyor (20000 durum sınırı → aşılırsa fail-loud 'çakışıyor'). **Bizden doğan regresyon bulundu ve düzeltildi:** üç emekli testinin süzgeci (`"emekli" in m`) yeni WARN satırına da takılıyordu → süzgeç `"emekli template izin deseni"`ne daraltıldı; eski hâl emekli mantığı bozulsa bile yeşil kalırdı. <br>⚠ **AÇIK KALEM (yeni, ölçüldü):** 2026-09-14 öncelik serisi yalnız **ask vs deny** ölçmüş — **`allow`'un uzunlukla kazanıp kazanmadığı ve eşitlikte ne olduğu HİÇ ÖLÇÜLMEDİ**. Bugün hem `install.py` hem doctor `allow`'u ask ile aynı sınıfta işliyor; bu bir VARSAYIM. K11 lane'ine "zaten toplu koşum yapacaksan ölç" diye iletildi. <br>⚠ Ayrıca DOĞRULANMADI (kayıtta zaten vardı, doctor da böyle işliyor): uzunluğun `*` hariç **sabit karakterle mi** toplam uzunlukla mı sayıldığı — kontrol ikisini de riskli sayıyor (geniş uyarma yönünde hata payı).<br>🔴→✅ **BUG GATE BLOCKER VERDİ, AYNI TURDA KAPATILDI (2026-09-17).** İki bulgu da gerçekti.<br>• **BLOCKER — test kurulum yolunun UZUNLUĞUNA bağlıydı.** `test_ezme_allow_sayilir_arac_alani_ayri` `edit` alanına 39 karakterlik bir allow deseni koyup 'hiç ezme satırı olmamalı' diyordu. Ama `edit` deny desenlerinin TAMAMI `install.clone_rules()` tarafından **AXET_HOME'un disk yolundan** türetiliyor: bu ağaçta en kısa `edit` deny 103 kr → yeşil; `C:xxet` kurulumunda 17 kr → **KIRMIZI** (yeniden üretildi). CI `runs-on: windows-latest`, çalışma dizini `D:xetxet` ⇒ **deterministik kırmızı** — 'sonda tek toplu CI' planında merge'i bloklayacaktı. Düzeltme: alan ayrımı artık SABİT template fixture'ıyla BİRİM seviyesinde ölçülüyor (`ezebilen_izin_desenleri`'nin var olan `template_kurallari` parametresi). Kanıt: kısa yolda (17 kr) 67 test 0 failure, asıl ağaçta da 67/0.<br>• **MEDIUM — `_kesin_kisa`'daki `and`→`or` mutasyonu 66 testin TAMAMINDAN kaçıyordu**, yani 'sabit mi toplam mı DOĞRULANMADI' belirsizliğine karşı alınan **tek savunmanın** regresyon koruması yoktu. Ayırt edici vakayı pinleyen test eklendi (`*g*i*t* *p*u*s*h*` sabit 8/toplam 17 vs `*git push -f*` 11/13); mutasyon tekrar uygulandı → tam o test kırmızı.<br>• **ÇAPRAZ-LANE KIRILMASI (entegrasyon dalında bulundu, lane'lerde görünmüyordu):** K11 ve K12 tek başlarına YEŞİL, birleşince `test_ezme_uzun_ask_deny_ezebilir_warn` KIRMIZI — K11'in `*git reset *--hard*` deseni aynı komuta uyan ikinci bir deny yarattı, testin 'tam olarak TEK deny listelenir' çivisi kırıldı. Davranış DOĞRU, çivi kırılgandı: ölçüt 'deny ADIYLA geçiyor **ve** satır …ve N deny daha özetine düşmüyor' olarak sağlamlaştırıldı (ikincisi `*X*` biçiminden ayırmayı sürdürüyor). 📌 **Ders: lane'ler tek tek yeşilken birleşim kırmızı olabilir ⇒ entegrasyon dalı ERKEN kurulmalı.** |
+| K12 | doctor: override-by-length kontrolü | — | ✅ **"Ekle, yalnız WARN"** (kullanıcı 2026-09-15). doctor, kullanıcının CANLI global config'inde bir template `deny` deseninden UZUN bir `ask`/`allow` deseni varsa WARN üretir ve hangi deny'ı ezebileceğini yazar; engellemez.<br>ADR 0019 şartları: ① gerçekten yaşandı — eski `*Remove-Item*-Recurse*` ask'ı `*git reset --hard*` deny'ını uzunlukla ezdi, komut sorulmadan çalıştı ② sonuç geri alınamaz + sessiz ③ bugünkü iki kontrol açığı kapatmıyor: `tests/test_install.py` `IzinDesenUzunlukTest` TEMPLATE dosyasına bakıyor, `doctor.py:96` yalnız emekli template desenlerini sayıyor — kullanıcının kendi yazdığı uzun ask deseni hiçbir yerde görünmüyor ④ rapor eder, engellemez → moratoryumla uyumlu.<br>⚠ `doctor.py` P6 paketiyle çakışır (yedek sayısı bilgi satırı) → P6 merge edildikten SONRA uygulanır.<br>✅ **UYGULANDI 2026-09-17** (P6 merge oldu, blokaj kalktı) — dal `fix/2026-09-17-k12-doctor-override`, commit `cef0877` + `74829b7` (gate BLOCKER'ı) + `449ba39` (çapraz kırılma), entegrasyonda. `scripts/doctor.py` +122 / `tests/test_doctor.py` +89. Ölçüm: `-k doctor` **66 test 0 failure rc=0** · fail-first 3 kırmızı · **mutasyon 7/7 yakalandı** · taze kurulumda **0 bulgu** (yanlış pozitif yok) · WARN exit kodunu DEĞİŞTİRMİYOR (testle pinlendi). Çakışma ölçütü iki glob'un çarpım otomatıyla hesaplanıyor (20000 durum sınırı → aşılırsa fail-loud 'çakışıyor'). **Bizden doğan regresyon bulundu ve düzeltildi:** üç emekli testinin süzgeci (`"emekli" in m`) yeni WARN satırına da takılıyordu → süzgeç `"emekli template izin deseni"`ne daraltıldı; eski hâl emekli mantığı bozulsa bile yeşil kalırdı. <br>⚠ **AÇIK KALEM (yeni, ölçüldü):** 2026-09-14 öncelik serisi yalnız **ask vs deny** ölçmüş — **`allow`'un uzunlukla kazanıp kazanmadığı ve eşitlikte ne olduğu HİÇ ÖLÇÜLMEDİ**. Bugün hem `install.py` hem doctor `allow`'u ask ile aynı sınıfta işliyor; bu bir VARSAYIM. K11 lane'ine "zaten toplu koşum yapacaksan ölç" diye iletildi. <br>⚠ Ayrıca DOĞRULANMADI (kayıtta zaten vardı, doctor da böyle işliyor): uzunluğun `*` hariç **sabit karakterle mi** toplam uzunlukla mı sayıldığı — kontrol ikisini de riskli sayıyor (geniş uyarma yönünde hata payı).<br>🔴→✅ **BUG GATE BLOCKER VERDİ, AYNI TURDA KAPATILDI (2026-09-17).** İki bulgu da gerçekti.<br>• **BLOCKER — test kurulum yolunun UZUNLUĞUNA bağlıydı.** `test_ezme_allow_sayilir_arac_alani_ayri` `edit` alanına 39 karakterlik bir allow deseni koyup 'hiç ezme satırı olmamalı' diyordu. Ama `edit` deny desenlerinin TAMAMI `install.clone_rules()` tarafından **AXET_HOME'un disk yolundan** türetiliyor: bu ağaçta en kısa `edit` deny 103 kr → yeşil; `C:\ax\axet` kurulumunda 17 kr → **KIRMIZI** (yeniden üretildi). CI `runs-on: windows-latest`, çalışma dizini `D:\a\axet\axet` ⇒ **deterministik kırmızı** — 'sonda tek toplu CI' planında merge'i bloklayacaktı. Düzeltme: alan ayrımı artık SABİT template fixture'ıyla BİRİM seviyesinde ölçülüyor (`ezebilen_izin_desenleri`'nin var olan `template_kurallari` parametresi). Kanıt: kısa yolda (17 kr) 67 test 0 failure, asıl ağaçta da 67/0.<br>• **MEDIUM — `_kesin_kisa`'daki `and`→`or` mutasyonu 66 testin TAMAMINDAN kaçıyordu**, yani 'sabit mi toplam mı DOĞRULANMADI' belirsizliğine karşı alınan **tek savunmanın** regresyon koruması yoktu. Ayırt edici vakayı pinleyen test eklendi (`*g*i*t* *p*u*s*h*` sabit 8/toplam 17 vs `*git push -f*` 11/13); mutasyon tekrar uygulandı → tam o test kırmızı.<br>• **ÇAPRAZ-LANE KIRILMASI (entegrasyon dalında bulundu, lane'lerde görünmüyordu):** K11 ve K12 tek başlarına YEŞİL, birleşince `test_ezme_uzun_ask_deny_ezebilir_warn` KIRMIZI — K11'in `*git reset *--hard*` deseni aynı komuta uyan ikinci bir deny yarattı, testin 'tam olarak TEK deny listelenir' çivisi kırıldı. Davranış DOĞRU, çivi kırılgandı: ölçüt 'deny ADIYLA geçiyor **ve** satır …ve N deny daha özetine düşmüyor' olarak sağlamlaştırıldı (ikincisi `*X*` biçiminden ayırmayı sürdürüyor). 📌 **Ders: lane'ler tek tek yeşilken birleşim kırmızı olabilir ⇒ entegrasyon dalı ERKEN kurulmalı.** |
 
 ### D — Kod/içerik açıkları (canlı test dışı)
 | # | Madde | Kaynak | Durum |
@@ -1470,7 +1573,7 @@ Windows MAX_PATH'e duyarlı — 260+ karakterlik kökte **sahte FAIL** (ölçül
 - 2026-09-15 — (oturum 62b9776f, 09-14 akşam → 09-15 gece) Kilit, D3, adım 4 ve K1/D1 dalları kurulum dalına birleştirildi (Kapananlar 2026-09-15); birleşik foundation 895/895 · 383, kök 218 test · 0 failure · 522 sn. Güncelleme mimarisi kararları (7 madde, Q1–Q4, K1–K4) + Aşama 1 envanter + Aşama 2 tasarım → §2 G, belgeler `maintenance/guncelle-mimari/`. Açıklar D12–D15, kararlar K10–K12, diğer bilgisayar X. DEVAM NOKTASI yeniden yazıldı, eski hâli arşivde. Sıradaki: G/P1 ∥ G/P6 (+D5), başlatma teyidi kullanıcıdan.
 - 2026-09-15 — (oturum 77a15ab5, aynı gece devamı) P1 merge (`313d126`) + `C:\test_axet` karşılaştırma kataloğu TX-01..28 kullanıcı tek tek onayladı → TX-04/05/09/11/12/13/14/15 uygulandı (7 commit, `b77b3bd`..`2f6cb99`) + K3 (`adt_search_objects` truncated) + D17-① (sessiz 0-test kapatıldı, 4 koşucu) + D16 yeniden ölçüm (kullanıcıya soru olarak bırakıldı). Sonra G/P6 (`-Sifirla`) ve TX-01 (kalite karnesi) paralel worktree'de başlatıldı: TX-01 ilk bug gate BLOCKER verdi → düzeltme turu; P6 kendi turunu bitirdi. **Kullanıcı gün sonu istedi** — P6'nın ikinci-kapı doğrulaması ~20 sn'de, TX-01'in kendi son doğrulaması kök-takım sonucu gelmeden DURDURULDU (ikisi de `TaskStop`, worktree dosyaları KORUNDU, commit YOK). DEVAM NOKTASI ikinci kez yeniden yazıldı (P6+TX-01 ayrıntılı durum + yarının tam sırası). Sıradaki: TX-01'i bitir (kök takım + taze bug-expert) → P6'yı bitir (taze bug-expert) → merge ikisi de → birleşik takım yeniden → K12/D16/D17-kalan/K10/K11.
 - 2026-09-17 — (oturum e3ec997b) **Kullanıcı: "bunları yapıp kapatmaya başla; her defasında CI koşturma, en son toplu CI + merge; mümkün olduğunca paralel iş yaptır."** 6 lane paralel koştu, hepsi bitti ve dalına commit'lendi: **K12** (`cef0877`,`74829b7`,`449ba39`) · **K11** (`06bfcdf`,`60808f9`,`2400b4a`) · **K10** (`fdd2982`) · **D17** (`b6a3b9a`) · **D16** (`86e052c`) · **G/P2** (`4e8717e`, 1562+955 satır, 14 alt komut, kök takım 346 test 0 failure).
-  · **İki bug gate de BLOCKER verdi, ikisi de aynı turda kapatıldı.** K12'ninki GERÇEKTİ ve CI'ı kıracaktı (test kurulum yolunun UZUNLUĞUNA bağlıydı; CI `D:xetxet` → deterministik kırmızı). K11'inki tamamen BELGE düzeyindeydi; lider beş iddiayı da bağımsız ölçtü, beşi de doğru çıktı.
+  · **İki bug gate de BLOCKER verdi, ikisi de aynı turda kapatıldı.** K12'ninki GERÇEKTİ ve CI'ı kıracaktı (test kurulum yolunun UZUNLUĞUNA bağlıydı; CI `D:\a\axet\axet` → deterministik kırmızı). K11'inki tamamen BELGE düzeyindeydi; lider beş iddiayı da bağımsız ölçtü, beşi de doğru çıktı.
   · **KULLANICI KARARI: `git -C` desenleri de eklensin** → 6 dar desen (40→46), 13/13 hedef deny, 12'lik kontrol grubunda yanlış pozitif yok, mutasyon 2/2. `-c ayar=değer` ve `checkout .`/`restore .` aileleri bilinçli açık, testle kilitli.
   · ⭐ **ENTEGRASYON DALI ERKEN KURULDU (`integrasyon/2026-09-17`) ve bu bir kırılma yakaladı:** 6 lane metinsel çakışmasız birleşti AMA **K11 ve K12 tek başlarına yeşilken birleşimleri KIRMIZIYDI** (`test_ezme_uzun_ask_deny_ezebilir_warn`; K11'in `*git reset *--hard*` deseni testin 'tam olarak TEK deny' çivisini kırdı). Davranış doğruydu, çivi kırılgandı → ölçüt sağlamlaştırıldı. **Ders: lane-yeşili birleşim-yeşili DEMEK DEĞİL; entegrasyon dalı sonda değil ERKEN kurulur.**
   · Entegrasyon ağacında ölçüldü: `-k doctor` 67/0 · `-k install` 23/0 · `-k guncelle_harita` 28/0 · sızıntı taraması 431 dosya **0 bulgu EXIT=0** · K11×K12 çapraz doğrulama temiz (K11 kaydındaki "merge sonrası doğrula" kalemi kapandı).
