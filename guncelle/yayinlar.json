@@ -411,7 +411,8 @@
       "scripts/guncelle.py",
       "GUNCELLE.md",
       "tests/test_guncelle.py",
-      "tests/test_yayin_hazirla.py"
+      "tests/test_yayin_hazirla.py",
+      "tests/test_guncelle_kartlar.py"
      ],
      "gerektirir": [],
      "test": [
