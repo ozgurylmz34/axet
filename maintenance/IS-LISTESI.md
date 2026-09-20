@@ -64,7 +64,8 @@ placeholder'ı kalmadı. Düzeltme gelince ölçüm **sentetik ReadOnly öznitel
 | 5 | Bu PR'ın (`docs/2026-09-20-gun-sonu`) merge'ü — CI doğrulanarak | lider |
 
 ⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor
-(MAINTENANCE §6c). **Cevapsız:** tooling radar (23 gün bayat, eşik 21 gün).
+(MAINTENANCE §6c) — **sahibinin işi, bizde iş YOK.**
+⛔ **tooling radar — KAPANDI (kullanıcı kararı 2026-09-20):** *"bu bilgisayarda yapılmayacak, DEV_CORE sahibi yapar."* Bayatlık (23 gün / eşik 21) bu klonun sorunu DEĞİL. **Yeniden açılmaz**; açılışta "cevapsız" diye listelenmez.
 
 ## ⭐ GÜN SONU 2026-09-20 — (TARİHÇE; güncel durum yukarıda)
 
