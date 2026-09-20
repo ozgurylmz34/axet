@@ -6,7 +6,49 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ⭐ GÜN SONU 2026-09-19 — YARIN BURADAN BAŞLA
+## ⭐ GÜN SONU 2026-09-20 — YARIN BURADAN BAŞLA
+
+**Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). **Açık PR yok · açık dal yok ·
+açık worktree yok · koşan iş yok.** Bu depoda bugün KOD değişmedi — tur temizlik + bildirim turuydu.
+
+**Bugün ölçülenler (beyan değil):**
+- **PR #12 squash-merge** → `main` `8f7a14a` (yalnız `maintenance/IS-LISTESI.md`; CI 5/5 SUCCESS, head `e4aa66b` doğrulandı,
+  `--admin` gerekmedi). Yerel klon `docs/2026-09-16-gun-sonu` dalındaydı → `main`'e alındı, `origin/main` ile senkron.
+- **15 worktree kapatıldı, denetim TEMİZ** (`① git'e kayıtlı: 0 · diskte: 0 · KAYITSIZ YETİM: 0`).
+  Kapatmadan önce "main'e gitmemiş iş var mı" sorusu **dört yöntemle** ölçüldü; üçü yanlış alarm verdi:
+  `git cherry` 13/15 "yok" (çok commit'li squash körlüğü) · iki-noktalı `git diff` yön-belirsiz · delta'nın
+  `git apply --reverse` ile sınanması bağlam kaymasından düştü. **Ayırt eden tek ölçüm:** dal ucu ⊆ birleşmiş PR head'i
+  (`git fetch origin pull/<N>/head` + `merge-base --is-ancestor`) — 14 lane'in 14'ü PR #9 head'i `18e3f8a` içinde,
+  ve `18e3f8a` ↔ `main@545cdab` içerik farkı **boş**. Commit'siz iş: 0.
+- **Kapatma yolunda gerçek kusur çıktı:** `--wt-kapat` 15'inde de dosyaları sildi ama **boş dizin iskeletlerini bırakamadı**
+  ve `.git/worktrees/<ad>` bayat metadata'sı kaldı. Kök neden ölçüldü: **ReadOnly özniteliği** (OneDrive placeholder:
+  `ReadOnly, Directory, Archive, ReparsePoint, Pinned`) — aracın "handle kilidi?" teşhisi yanlış, 3 tekrar-deneme
+  yapısal olarak çözemez. `chmod`+`rmdir` ile 15'i de anında gitti; `git worktree prune` de aynı temizlikten sonra tek
+  seferde koştu. İzole depoda 2 kollu kontrol grubuyla yeniden üretildi (ReadOnly yok → araç tek seferde başarılı).
+- **DEV_CORE'a bildirildi (çekirdeğe DOKUNULMADI — tüketici klonuyuz, kanal yalnız Issue):**
+  - **yeni** `ix-works/DEV_CORE#284` — `--wt-kapat` ReadOnly kusuru (kanıt formatı + kontrol grubu + düzeltme ölçümü).
+  - `#280`'e yorum — `git cherry` körlüğü zaten açık ve sahibi onaylamış; bugünkü ölçek verisi (13/14 yanlış alarm) ve
+    "içerik karşılaştırması main ilerlediyse AYIRT ETMEZ" bulgusu eklendi.
+- **Çekirdek güncellendi** (`/core-guncelle`): `772256a` → `b612469`, `team_setup TAMAM`, `ix_doctor` FAIL **3 → 1**
+  (kalan K5 `.conn_adt` = gerekçeli kabul). Bu aXet deposunu etkilemez, ölçümün tazeliği için yapıldı: #284'ün iddiası
+  güncel çekirdekle **yeniden ölçüldü**, kusur aynen duruyor.
+
+| Sıra | İş | Kim | Not |
+|---|---|---|---|
+| 1 | `behavior_manifest.py generate` | kullanıcı terminali | MERGE ANINDA md. 1 (`core/00-temel.md` değişti) — **hâlâ açık** |
+| 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde (`C:\AXET_TEST`) `%guncelle-proje` | kullanıcı | tüketici tarafı v0.2.0'ı alır; SAP 0.3.0 damgası "farklı" görünür (beklenen) |
+| 3 | Yeni davranış testi | kullanıcı + lider | K-I niyet ölçümü (Z14) bu testte |
+| 4 | `_reviewer.py:~458` rc≠1 → SKIP düzeltmesi | lider | ⛔ ADT altyapısı: **ayrı açık onay** olmadan yapılmaz |
+| 5 | Kapsam dışı bulgular için karar: K1 · K2 · K3 · pathspec'siz kapanış commit'i · `komut_isaretle` canlı `yeni_ref` | kullanıcı kararı | GECE-2 "Açık kalanlar" |
+| 6 | Z12 (K-G zincir-güvenli allow) · Z13 (K-M kalanı: struct/push hâlâ transport ister) | lider | §3 |
+
+**1-6 arası maddelerin HİÇBİRİ bugün tüketilmedi** — sıra 2026-09-19'dan aynen devrediyor. Maddeler aşağıdaki
+GECE-2 bloğunda yaşar; bu tablo yalnız SIRADIR.
+
+⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor (MAINTENANCE §6c).
+Düzeltme geldiğinde `--wt-kapat` ReadOnly kolunu bu makinede **yeniden ölç** ("merge edildi" ≠ "bende düzeldi").
+
+## ⭐ GÜN SONU 2026-09-19 — (TARİHÇE; güncel durum yukarıda)
 
 **Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). Açık dal yok, koşan iş yok.
 Ayrıntı: aşağıdaki GECE-2 bloğu ve "✅ KAPANDI 2026-09-19" kutusu. Maddeler **orada** yaşar; bu tablo yalnız SIRADIR.
