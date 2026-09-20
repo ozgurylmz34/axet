@@ -45,9 +45,13 @@ ZORUNLU_DOSYALAR = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apa
 
 # Yayın anında ÜRETİLEN / normalize edilen dosyalar: kalem-dosya eşlemesinden MUAFtırlar, çünkü
 # bakımcının elle dokunduğu bir değişiklik değil, bu aracın çıktısıdırlar. Muafiyet KAPSAM'da basılır.
-URETILEN_DOSYALAR = ("CHANGELOG.md", "guncelle/yayinlar.json")
+URETILEN_DOSYALAR = ("CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json")
 YAYINLAR_YOLU = "guncelle/yayinlar.json"
 CHANGELOG_YOLU = "CHANGELOG.md"
+CI_DURUM_YOLU = "guncelle/ci-durum.json"
+# `%guncelle`nin `once` turunu ikame edebilmesi için gereken ASGARİ takım adları. Bir yayın
+# bunlardan birini taşımıyorsa `hepsi_yesil` YAZILMAZ ⇒ tüketici normal ölçer (fail-safe).
+CI_ASGARI_TAKIMLAR = ("Testler (kok · Python 3.12)", "Testler (foundation · Python 3.12)")
 RESMI_ORIGIN = "https://github.com/ozgurylmz34/axet-template.git"
 
 TURLER = ("duzeltme", "yetenek", "kural", "guvenlik")
@@ -294,9 +298,6 @@ def sema_dogrula(veri) -> list[str]:
                         s.append(f"şema: {kyer}({kid}).dosyalar yolu göreli/posix olmalı: {d}")
                     if dislanan_mi(d):
                         s.append(f"şema: {kyer}({kid}).dosyalar public'e girmeyen yolu bildiriyor: {d}")
-                    if d in URETILEN_DOSYALAR:
-                        s.append(f"şema: {kyer}({kid}).dosyalar üretilen dosyayı bildiriyor: {d} "
-                                 f"(bu dosyalar yayın aracının çıktısıdır, kaleme ait değildir)")
             if not _liste_mi(kalem.get("gerektirir")):
                 s.append(f"şema: {kyer}({kid}).gerektirir metin listesi olmalı")
             if not _liste_mi(kalem.get("test")):
@@ -327,19 +328,127 @@ def sema_dogrula(veri) -> list[str]:
 
 
 def kapsam_dogrula(yayin: dict, degisen: set[str]) -> list[str]:
-    """TASARIM §11: diff'teki HER dosya en az 1 kaleme ait · kalemdeki her dosya gerçekten değişmiş."""
+    """TASARIM §11: diff'teki HER dosya en az 1 kaleme ait · kalemdeki her dosya gerçekten değişmiş.
+
+    ⛔ ÜRETİLEN DOSYALAR DA KAPSAMA DAHİLDİR (Z17 düzeltmesi, 2026-09-20). Eskiden
+    `URETILEN_DOSYALAR` bu denetimden TÜMDEN muaftı; gerekçe *"zaten her yayında değişirler,
+    elle kalem yazmak gürültü olur"*du. Ama muafiyet gerekçesinden GENİŞ yazılmıştı ve iki
+    sonucu vardı: ⓐ beyan edilmedikleri için tüketici klonuna **hiç ulaşmadılar** (ölçüldü:
+    v0.1.0 · v0.2.0 · v0.3.0 → üçünde de `%guncelle plan` *"kapsamda ama hiçbir kalemin
+    dosyalar listesinde geçmiyor — UYGULANMAYACAK"* dedi) ⓑ ikinci kural onları `olculen`
+    dışında gördüğü için, beyan etmeye ÇALIŞAN biri *"bu yayında DEĞİŞMEMİŞ"* hatası alırdı
+    — yani kapı düzeltmenin kendisini de engelliyordu.
+    `degisen` bu noktada hedef ağaç `git add -A`'dan SONRA ölçülür ⇒ üretilen dosyalar
+    gerçekten değişmiş görünür, beyan etmek ikinci kuralı ihlal etmez.
+    """
     beyan: dict[str, list[str]] = {}
     for kalem in yayin.get("kalemler", []):
         for yol in kalem.get("dosyalar", []):
             beyan.setdefault(yol, []).append(kalem.get("id", "?"))
-    olculen = {y for y in degisen if y not in URETILEN_DOSYALAR}
+    olculen = set(degisen)
     s = []
     for yol in sorted(olculen - set(beyan)):
-        s.append(f"kapsam: eşlemesiz dosya (hiçbir kaleme ait değil): {yol}")
+        ek = ("  ⛔ ÜRETİLEN DOSYA: beyan edilmezse tüketici klonuna HİÇ ULAŞMAZ (Z17)."
+              if yol in URETILEN_DOSYALAR else "")
+        s.append(f"kapsam: eşlemesiz dosya (hiçbir kaleme ait değil): {yol}{ek}")
     for yol in sorted(set(beyan) - olculen):
         s.append(f"kapsam: kalemde bildirilen dosya bu yayında DEĞİŞMEMİŞ: {yol} "
                  f"(kalem: {', '.join(beyan[yol])})")
     return s
+
+
+def ci_durum_uret(kaynak_sha: str, etiket: str, mevcut: dict | None, kapali: bool) -> dict:
+    """Kaynak commit'in CI hükmünü `gh` ile okur; yayına taşınacak kaydı üretir (Z16).
+
+    ⛔ NEDEN: tüketici klonunda `%guncelle` `once` turunu ancak GÜVENİLİR bir tabanla ikame
+    edebilir. O taban CI'dır — yeni testleri yeni ürüne karşı TEMİZ ortamda ölçmüştür; yerel
+    `once` turu ise ESKİ test koduyla ölçtüğü için karşılaştırılabilir bir taban üretmiyordu.
+
+    ⛔ FAIL-SAFE: ölçemezsek `hepsi_yesil` **True yazılmaz** ve `not` alanına sebebi yazılır.
+    Tüketici `hepsi_yesil is not True` gördüğü an normal ölçüme döner (`guncelle.py::_ci_tabani`).
+    "Ölçemedim" asla "yeşil say" demek değildir.
+
+    ⛔ HEDEF AÇIK: `gh api repos/<ORG>/<REPO>/...` tam yolla çağrılır; `{owner}`/`{repo}`
+    yer tutucusu cwd'den çözüleceği için KULLANILMAZ.
+    """
+    kayit = dict(mevcut or {})
+    temel = {"kaynak_commit": kaynak_sha, "olcum_zamani": _simdi_iso(), "hepsi_yesil": False}
+    if kapali:
+        temel["not"] = "--ci-durum-yok verildi: CI hükmü SORULMADI (ölçülemedi ≠ yeşil)."
+        kayit[etiket] = temel
+        return kayit
+    depo = _kaynak_depo()
+    if not depo:
+        temel["not"] = "kaynak deponun origin'i GitHub deposu olarak çözülemedi."
+        kayit[etiket] = temel
+        return kayit
+    temel["depo"] = depo
+    kod, cikti, hata = git_sessiz_komut(
+        ["gh", "api", f"repos/{depo}/commits/{kaynak_sha}/check-runs",
+         "--jq", ".check_runs[] | \"\\(.name)\\t\\(.conclusion)\""])
+    if kod != 0:
+        temel["not"] = f"gh check-runs okunamadi (rc={kod}): {(hata or '').strip()[:200]}"
+        kayit[etiket] = temel
+        return kayit
+    takimlar = []
+    for satir in (cikti or "").splitlines():
+        if "\t" not in satir:
+            continue
+        ad, sonuc = satir.split("\t", 1)
+        takimlar.append({"ad": ad.strip(), "sonuc": sonuc.strip()})
+    temel["takimlar"] = takimlar
+    eksik = [t for t in CI_ASGARI_TAKIMLAR if not any(x["ad"] == t for x in takimlar)]
+    if not takimlar:
+        temel["not"] = "commit icin hic check-run yok (CI kosmamis olabilir)."
+    elif eksik:
+        temel["not"] = "asgari takimlar eksik: " + ", ".join(eksik)
+    elif any(t["sonuc"] in ("", "None", "null") for t in takimlar):
+        # `conclusion` null = is HALA KOSUYOR. Bunu "kirmizi" diye raporlamak yanlis teshistir:
+        # yayinci "CI kirildi" sanip kod arar, oysa yalnizca beklemesi gerekiyordu.
+        temel["not"] = ("CI hala kosuyor (conclusion bos) — yayindan ONCE bitmesini bekle, "
+                        "sonra bu araci yeniden calistir.")
+    elif any(t["sonuc"] != "success" for t in takimlar):
+        kirmizi = [t["ad"] for t in takimlar if t["sonuc"] != "success"]
+        temel["not"] = "yesil olmayan takim(lar): " + ", ".join(kirmizi)
+    else:
+        temel["hepsi_yesil"] = True
+        temel["isletim_sistemi"] = _ci_os()
+        temel["python"] = _ci_python(takimlar)
+    kayit[etiket] = temel
+    return kayit
+
+
+def _simdi_iso() -> str:
+    import datetime
+    return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+def _kaynak_depo() -> str | None:
+    kod, cikti, _ = git_sessiz_komut(["git", "-C", str(KOK), "remote", "get-url", "origin"])
+    if kod != 0:
+        return None
+    m = re.search(r"github\.com[:/]([^/]+/[^/\s.]+)", (cikti or "").strip())
+    return m.group(1) if m else None
+
+
+def _ci_os() -> str:
+    """CI matrisinin `runs-on` değeri — workflow'dan OKUNUR, sabit yazılmaz (bayatlamasın)."""
+    for wf in sorted((KOK / ".github" / "workflows").glob("*.yml")):
+        m = re.search(r"^\s*runs-on:\s*(\S+)", wf.read_text(encoding="utf-8"), re.M)
+        if m:
+            return m.group(1)
+    return "OLCULEMEDI"
+
+
+def _ci_python(takimlar: list[dict]) -> list[str]:
+    """Takım adlarından Python sürümlerini çıkarır (ad biçimi workflow'un `name:` alanından)."""
+    return sorted({m.group(1) for t in takimlar
+                   if (m := re.search(r"Python\s+(\d+\.\d+)", t["ad"]))})
+
+
+def git_sessiz_komut(argv: list[str]) -> tuple[int, str, str]:
+    r = subprocess.run(argv, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return r.returncode, r.stdout, r.stderr
 
 
 def changelog_uret(veri: dict) -> str:
@@ -453,6 +562,9 @@ def main() -> int:
     ap.add_argument("--ilk", action="store_true", help="İLK yayın: boş hedefte `git init` + commit + etiket")
     ap.add_argument("--origin", default=RESMI_ORIGIN, help="sonraki yayınlarda beklenen public klon adresi")
     ap.add_argument("--mesaj", default="", help="commit gövdesine eklenecek serbest not")
+    ap.add_argument("--ci-durum-yok", action="store_true",
+                    help="CI hükmünü `gh` ile SORMA (çevrimdışı/otomatik testler). "
+                         "Kayıt yine yazılır ama `hepsi_yesil: false` olur ⇒ tüketici normal ölçer.")
     a = ap.parse_args()
 
     # --- yalnız şema doğrulama: hedef gerekmez ---------------------------------------------------
@@ -464,7 +576,7 @@ def main() -> int:
         sorunlar = sema_dogrula(veri)
         print(f"Doğrulanan: {KOK / YAYINLAR_YOLU}")
         print("KAPSAM — bakılan: şema (alan adları/tipleri), kalem id tekilliği, tur=guvenlik ise kritik "
-              "kuralı, `gerektirir` çözünürlüğü ve sırası, yayın sürüm sırası, dışlanan/üretilen yol beyanı.")
+              "kuralı, `gerektirir` çözünürlüğü ve sırası, yayın sürüm sırası, dışlanan yol beyanı. (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
         print("KAPSAM — bakılmayan: kalem-diff kapsamı (yalnız gerçek yayında ölçülür), `baslik`/`neden` "
               "metinlerinin doğruluğu, `test` kimliklerinin gerçekten koştuğu.")
         for s in sorunlar:
@@ -538,6 +650,34 @@ def main() -> int:
         (hedef / CHANGELOG_YOLU).write_text(changelog_uret(veri), encoding="utf-8", newline="\n")
         if CHANGELOG_YOLU not in yollar:
             yollar.append(CHANGELOG_YOLU)
+        # --- ci-durum.json (Z16): tüketicinin `once` turunu ikame edebilmesi için CI hükmü ----
+        if veri.get("yayinlar"):
+            _etiket = veri["yayinlar"][-1]["etiket"]
+            _sha = ("CALISMA-AGACI" if a.calisma_agaci
+                    else git("rev-parse", a.ref).decode().strip())
+            _eski = None
+            _var = hedef / CI_DURUM_YOLU
+            if _var.is_file():
+                try:
+                    _eski = (json.loads(_var.read_text(encoding="utf-8")) or {}).get("yayinlar")
+                except ValueError:
+                    _eski = None
+            _kayitlar = ci_durum_uret(_sha, _etiket, _eski, bool(a.ci_durum_yok))
+            _var.parent.mkdir(parents=True, exist_ok=True)
+            _var.write_text(json.dumps(
+                {"surum": 1,
+                 "aciklama": ("Yayin basina CI hukmu. `%guncelle` bunu `origin/main` uzerinden "
+                              "okur ve YARGI VAKASI YOKKEN `olc --asama once` turunu ikame eder "
+                              "(scripts/guncelle.py::_ci_tabani). `hepsi_yesil` True DEGILSE "
+                              "tuketici normal olcer — olculemedi != yesil."),
+                 "yayinlar": _kayitlar}, ensure_ascii=False, indent=1) + "\n",
+                encoding="utf-8", newline="\n")
+            if CI_DURUM_YOLU not in yollar:
+                yollar.append(CI_DURUM_YOLU)
+            _y = _kayitlar[_etiket]
+            print(f"CI durumu: {_etiket} · hepsi_yesil={_y['hepsi_yesil']}"
+                  + (f" · NOT: {_y['not']}" if _y.get("not") else
+                     f" · {len(_y.get('takimlar', []))} takim · {_y.get('isletim_sistemi')}"))
         if veri.get("yayinlar"):
             yayin = veri["yayinlar"][-1]
         elif yayin_kipi:
@@ -559,9 +699,11 @@ def main() -> int:
           (" + kalem-diff kapsamı (eşlemesiz dosya = FAIL)" if sonraki_yayin
            else " (kalem-diff kapsamı bu kipte ÖLÇÜLMEZ: karşılaştırılacak önceki yayın yok)"))
     print("KAPSAM — bakılmayan: ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + "), kişi adları sözlüğü, "
-          "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu, "
-          f"kalem-diff kapsamında üretilen dosyalar ({', '.join(URETILEN_DOSYALAR)}). "
+          "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu. "
           "Bu tarama tam sızıntı denetiminin yerine geçmez.")
+    print(f"KAPSAM — üretilen dosyalar ({', '.join(URETILEN_DOSYALAR)}) 2026-09-20'den beri "
+          "kalem-diff kapsamına DAHİL: beyan edilmezlerse yayın durur (Z17 — eskiden muaftılar "
+          "ve tüketici klonuna hiç ulaşmıyorlardı).")
     engelleyen = [b for siddet, b in bulgular if siddet == BLOCKER]
     uyari = [b for siddet, b in bulgular if siddet == WARNING]
     if uyari:
