@@ -6,7 +6,55 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ⭐ GÜN SONU 2026-09-20 — YARIN BURADAN BAŞLA
+## ⭐ 2026-09-20 (2. tur) — KARAR TURU + TAŞIMA HAZIRLIĞI — BURADAN BAŞLA
+
+> Aşağıdaki "GÜN SONU 2026-09-20" bloğu artık TARİHÇEdir. Güncel durum budur.
+
+**Bu turda KOD DEĞİŞMEDİ.** Tur, 2026-09-19'dan devreden sıranın **lider maddelerini karara
+bağlamak** ve **klasör taşıması** için hazırlık yapmaktı. Her karar kullanıcıdan tek tek alındı;
+kararların dayandığı kanıtlar aşağıda (hepsi bu turda kodun kendisinden okundu, hafızadan değil).
+
+### ⛔ ÖNCE: klasör taşıması (iş turundan ÖNCE)
+
+`…\OneDrive - NTT DATA Business Solutions AG\AI_WORKS` → **`C:\AI_WORKS`** (kullanıcı kararı).
+Runbook + taşıma sonrası kontrol listesi **PROVA reposunda**: `governance/TASIMA-RESUME.md`
+(bu depo taşınmanın kendisinden etkilenmediği için çapa orada; aXet tarafı yalnız bu satırı bilir).
+
+Ölçülen gerekçe: yol 67 → 11 karakter (**56 karakter kazanç**, MAX_PATH baskısı kalkar) ·
+OneDrive placeholder `ReadOnly` sınıfı (DEV_CORE#284) ve placeholder'ı symlink sanan araçların
+sahte "0 dosya" ölçümleri yapısal olarak biter · **0 açık worktree + 3 repo temiz/push'lu** ⇒
+en ucuz pencere. ⚠ Taşımadan sonra `--wt-kapat` ReadOnly kolu **doğal olarak tetiklenmez**;
+#284 düzeltmesi gelince ölçüm **sentetik ReadOnly özniteliğiyle** yapılmalı.
+
+### Kararlar (7 onay + 1 iptal)
+
+| # | Madde | KARAR | Kanıt / not |
+|---|---|---|---|
+| 1 | `sapadt/_reviewer.py:459` — `verdict = raw.get("verdict", "BLOCKER" if rc==1 else "SKIP")`, `skip_reason` HİÇ verilmiyor | ✅ **A: yalnız teşhis** | rc∉(0,1) + JSON yok → SKIP; `passed` = PASS∪SKIP (`:325`) ⇒ **pre-flight koşmadan SAP yazımı sürüyor** ve not `PRE-FLIGHT KOŞMADI ()` diye boş çıkıyor (`:620`). Düzeltme: `skip_reason=f"reviewer rc={rc}: {stderr[-300:]}"`. **Verdict semantiği DEĞİŞMEZ.** ⛔ ADT altyapısı → ayrı açık onay ALINDI |
+| 1b | Aynı yerde fail-closed (rc≠0 + JSON yok → BLOCKER) | ⏸ **ayrı karar** | A'nın ürettiği teşhis verisi olmadan rc uzayı bilinmiyor; yavaş/erişilemez SAP'de yanlış BLOCKER riski var. A koştuktan sonra yeniden gündeme gelir |
+| 2 | **Z12** — K-G `session_brief` izin penceresi | ✅ **tasarla + CANLI ölç** | Tasarım: **joker-siz çıpalı** tek allow deseni. Dayanak: desen komut metninin TAMAMINA uyuyor (`permissions.json` `_aciklama`) ⇒ `*` içermeyen desen zincire uzatılmış metinle eşleşemez, yani "uzun allow kısa deny'ı ezer" tırmanışı **yapısal olarak** kapanır (hipotez, ölçülecek). Kontrol grubu ZORUNLU: ⓐ birebir komut sorulmadan koşar ⓑ `… && git reset --hard` **REDDEDİLİR** ⓒ eşit-uzunluk yasağı korunur. Ölçüm kırmızıysa **kural EKLENMEZ**, madde "ölçüldü, olmuyor" diye kapanır |
+| 3 | **K1** — tek-başına CR: `new_project` çeviriyor, `guncelle_proje.icerik` çevirmiyor → sahte V3 | ✅ **düzelt (düşük öncelik)** | Bugün **0/791 dosyada** tek-başına CR var (bu turda ölçüldü, ikili hariç; kapsam: yalnız bu depo/bu dal) ⇒ sınıf teorik. Ama V3 "listelenmez, yalnız sayılır" olduğu için sonucu **sessiz güncelleme kaybı**. İki yol tek normalizasyona bağlanır + 1 test. ⛔ Yeni gate AÇILMAZ (ADR 0019: hata gerçek hayatta yaşanmadı) |
+| 4 | **K2** — `butunluk.json`/`durum.json` döngüler arası silinmiyor | ✅ **mühürle (fail-closed)** | `durum_dizini`'ni temizleyen **hiçbir yer yok** (20 kullanım tarandı). Kapanış `:1736` bayat dosyayı okuyup "bütünlük turu koştu" sayar = sahte yeşil, üstelik **normal akışla** tetiklenir (`%guncelle`'yi ikinci kez koşmak). Çözüm: her döngü-kapsamlı durum dosyasına plan kimliği (`taban_commit`+`yeni_etiket`) damgası; uymuyorsa "ölçülmedi". ⛔ **Silme YOK** — `uygulanan.json` bilinçli olarak döngüler-üstü (`:458`), kör temizlik onu götürürdü |
+| 5 | **K3** — uzun yollu klonda 4 pre-commit testi FAIL ("validator bulunamadı") | ✅ **önce ölç** | Kayıt "MAX_PATH şüphesi, DOĞRULANMADI" diyor. Prior-art ölçülmüş: `test_guncelle_harita.py` `(AXET_HOME/yol).exists()` → 269 char False / 159 char True. **Asıl soru:** aynı desen ÜRÜN kodunda da varsa "validator yok" sanılıp kontrol sessizce atlanır = fail-**open**. Kontrol grubu **sentetik** uzun/kısa yol (taşımadan sonra da geçerli) |
+| 6 | `guncelle.py:1662` kapanış commit'i **pathspec'siz** | ✅ **B: DUR + uyar** | `git commit --no-verify -q -m <mesaj>` index'te ne varsa commit'liyor ⇒ kullanıcının önceden stage'lediği iş, araç mesajıyla ve pre-commit'siz commit'e giriyor (PRE-EXISTING). Seçenek A (pathspec ver) **reddedildi**: aracın dosya listesi eksik kalırsa kendi değişikliğini sessizce commit'lemez = yeni sessiz kayıp sınıfı |
+| 7 | `komut_isaretle` **canlı** `yeni_ref` kullanıyor | ✅ **plana sabitle** | Plan hedefi çiviliyor (`:791 plan["yeni_etiket"]=b.yeni_ref`) ama işaretleme canlı ref'i okuyor (`:1079/:1084/:1092`, `Baglam` kurulurken yeniden hesaplanıyor `:463`) ⇒ plan ile işaretleme arasında fetch olursa **içerik yeni sürümden, mühür eski sürümü der**. Geriye sürüklenme için DUR var (`:684-689`), **ileri** sürüklenme korumasız. Düzeltme: plana sabitle + sahte fetch'li kırmızı/yeşil test. K2'nin mühür kararıyla aynı ilke |
+| — | **Z13** — K-M kalanı: `$TMP`'de corrNr'sız kilit/yaratma canlı ölçümü | ⛔ **İPTAL** | Kullanıcı kararı 2026-09-20: *"`$TMP`'de transport'suz yol hedeflenmiyor; araç corrNr istemeye devam eder."* `bec9356` birim testli hâliyle kalır, **canlı ölçüm yapılmayacak**. Madde KAPANDI, yeniden açılmaz |
+
+### Sıra (taşımadan sonra)
+
+| Sıra | İş | Kim |
+|---|---|---|
+| 0 | Klasör taşıması + taşıma sonrası kontrol listesi | kullanıcı taşır · lider `TASIMA-RESUME.md` §4'ü koşar |
+| 1 | `behavior_manifest.py generate` | kullanıcı terminali — **hâlâ açık** (MERGE ANINDA md. 1) |
+| 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde `%guncelle-proje` | kullanıcı |
+| 3 | Yeni davranış testi (K-I niyet ölçümü / Z14) | kullanıcı + lider |
+| 4 | Yukarıdaki 7 kararın uygulanması | lider |
+| 5 | Bu PR'ın (`docs/2026-09-20-gun-sonu`) merge'ü — CI doğrulanarak | lider |
+
+⚠ Kapanmamış dış kalem: DEV_CORE **#284** ve **#280** sahibinin değerlendirmesini bekliyor
+(MAINTENANCE §6c). **Cevapsız:** tooling radar (23 gün bayat, eşik 21 gün).
+
+## ⭐ GÜN SONU 2026-09-20 — (TARİHÇE; güncel durum yukarıda)
 
 **Durum:** v0.2.0 `main`'de (`333bd99`) ve PUBLIC yayında (`axet-template` `4d2e666`). **Açık PR yok · açık dal yok ·
 açık worktree yok · koşan iş yok.** Bu depoda bugün KOD değişmedi — tur temizlik + bildirim turuydu.
