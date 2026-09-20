@@ -353,6 +353,26 @@ PASS/WARNING · **CI job'larının hepsi yeşil** · ⛔ CI'yi atlatmak için **
 
 > ⚠ **2026-09-20 gece — SÜRELİ İSTİSNA (kullanıcı onayı: "Yerel tam ölçümle merge et").** CI **hiç koşmuyor** (Z18 kota duvarı: 3-5 sn'de `steps: 0` failure). Bu durumda *"CI yeşil"* şartı sağlanamaz ama *"ölçülmeden merge yok"* şartı **düşmez**: yerine **yerel tam ölçüm** geçer ve sonucu PR gövdesine YAZILIR (komut + sayı + süre). `--admin` burada kırmızı CI'yi atlatmak için DEĞİL, **hiç koşmamış** CI'nin bekleme kilidini açmak içindir. Z18 kapanınca bu istisna da kapanır — kalıcı gevşetme DEĞİLDİR.
 
+
+### ✅ v0.4.0 YAYINLANDI — 2026-09-21 00:05
+
+| | |
+|---|---|
+| Kaynak commit | `ec1ea2a` (PR #18, squash) |
+| Public commit / etiket | `ozgurylmz34/axet-template` `551d0c5` · `v0.4.0` |
+| Kalem | 6 (kritik 3) · **14 değişen yol · 0 kapsam sorunu** |
+| Sızıntı taraması | 476 dosya · **0 BLOCKER · 0 WARNING** |
+| Merge kanıtı | **yerel tam ölçüm** — 1298 test · 0 failure · 3 komutun üçü de rc=0 |
+| | kök `768 test / 0 failure / 1 skip / 1217 sn / 8 iş / 101 küme` |
+| | sap-code-review `115 test / 19 sn` · foundation `415 test / 423 sn` |
+| CI | **KOŞMADI** (Z18 kota duvarı) ⇒ `ci-durum.json` `hepsi_yesil: false` |
+| Tüketiciye etkisi | `once` turu **ikame EDİLMEZ**, normal ölçülür (fail-safe doğru çalışıyor); |
+| | paralel koşucu · zaman aşımı hükmü · kapsanan komut ayıklaması **hemen gelir** |
+
+⚠ **`--admin` kullanıldı** — kırmızı CI'yi atlatmak için değil, *hiç koşmamış* CI'nin bekleme
+kilidini açmak için. Kanıt PR #18 yorumunda: `steps=0`, 2-4 sn, annotation = harcama limiti.
+Kullanıcı onayı: *"Yerel tam ölçümle merge et."* Bu **süreli istisnadır**, Z18 kapanınca biter.
+
 ### Lane durumu — gün sonu
 
 | Lane | Dal / commit | Hüküm | Kalan |
@@ -376,6 +396,7 @@ PASS/WARNING · **CI job'larının hepsi yeşil** · ⛔ CI'yi atlatmak için **
 | Z20 | — | **`python tests/run_tests.py -k kur` canlı klonda KIRMIZI döndü (rc=1).** Çöken `olc` turunda tamamlanan tek komut buydu ve kırmızı geldi (`olc` çıktısı: `[RED] .::python tests/run_tests.py -k kur (rc=1)`). Hangi testin kırıldığı ÖLÇÜLMEDİ — koşum traceback'le öldüğü için ayrıntı kaydı yazılmadı. Klon o an v0.1.0'daydı, yani **eski** `test_kur.py` koşuyordu; bugünkü depoda `-k kur` yeşil. Yani bu ya v0.1.0'a özgü bir kusur ya da yerel ortam farkı — **ayırt EDİLMEDİ**. | `%guncelle` yeniden koşturulunca (artık zaman aşımı kayıt bırakıyor) |
 | Z21 | — | **Fixture maliyeti düşürülmedi, yalnız paralelleştirildi.** Her test kendi sahte yayın + tüketici klonunu `git` ile kuruyor; sıralı toplam iş yükü aynı kaldı (duvar saati bölündü). Sonraki kaldıraç: sınıf düzeyinde yeniden kullanılabilir fixture (`setUpClass`) ya da hazır bir şablon depodan `git clone --local`. **Ölçüm önce:** hangi testlerin kurulum maliyeti baskın (profil turu başlatıldı, sonucu bu satıra yazılacak).  **ÖLÇÜLDÜ 2026-09-20 gece (commit `64e5389`, 14 CPU):** sıralı ≈**3200 sn** (yüzde payından türetildi — `TOPLAM:` satırı `tail -60` ile kesildi, DOĞRUDAN ÖLÇÜLMEDİ) → paralel **1217 sn / 768 test / 0 failure / 8 iş / 101 küme** = **≈2.6×**. Sayı **kötümser**: paralel turun ilk ~10 dk'sında `KurTest` (614 sn, sıralı) aynı makinede koşuyordu. **İkinci kaldıraç görünür oldu:** koşucu `min(cpu, 8, küme)` ile **8'de tavanlı**, makinede 14 CPU ve 101 küme var ⇒ dağıtacak iş duruyor. ⛔ Tavan bu gece DEĞİŞTİRİLMEDİ — ölçülmemiş bir gevşetme olurdu; önce `-j 12` ile kontrollü ölçüm. | sonraki tur |
 | Z22 | — | **SÜRE REGRESYONU 4 GÜN BOYUNCA GÖRÜNMEDİ — kök sebep budur.** Kök takımı **275/293 sn** (koşum #14, 2026-09-16 · workflow yorumunda kayıtlı) → **2411 sn** (2026-09-20). Aynı runner sınıfı, aynı komut ⇒ **8.8×** ve karşılaştırma geçerli. Sayı her koşumda ekrana basılıyordu; **eşiği olmadığı için kimse okumadı**. Fark ancak ikinci dereceden sonuç (Z18 kota duvarı) patlayınca anlaşıldı. Yani Z16/Z18/Z21 aynı kökün üç yüzü: *ölçülen ama bütçesi olmayan sayı sessizce büyür* ([[feedback_olculen-ama-butcesiz-sayi-sessizce-buyur]]). **Kayıt disiplini önce:** her yayında kök+foundation süresi `<bugün> / <taban> = <kat>` olarak `IS-LISTESI`'ne yazılır; 2× aşımı **bulgu**dur. ⚠ Gate ÖNERİSİ DEĞİL (ADR 0019): önce hatırlatma, yetmediği ÖLÇÜLÜRSE gate tartışılır. | her yayında |
+| Z23 | — | **`ci-durum.json`'un `not` metni YANILTICI — kota duvarında "kırmızı takım" diyor.** v0.4.0 kaydı: `hepsi_yesil: false` + `not: "yesil olmayan takim(lar): …"`. **Davranış DOĞRU** (tüketici fail-safe ile tam ölçüme döner), yanlış olan **teşhis metni**: işler kırılmadı, **hiç başlamadı** (`steps=0`, 2-4 sn, annotation = harcama limiti). Aracın *"CI hâlâ koşuyor"* dalı için zaten bir önceden vardı; bu da aynı sınıf. Bu metin **tüketiciye gidiyor** ⇒ Z18 sürdükçe her yayın onu taşır. **Çare:** `conclusion=failure` + `steps==0` + kısa süre üçlüsü görülünce `not` alanı "CI işleri BAŞLAMADI (kota/ödeme duvarı) — kod hakkında hüküm YOK" desin. ⛔ Bu gece YAPILMADI bilerek: merge kanıtı `64e5389` üzerinde ölçüldü, yayın aracına o ölçümden sonra dokunmak kanıtın kapsamı dışına çıkardı. | Z18 sürerken ilk fırsatta |
 | **P8** | — | 🟡 ERTELENDİ (kullanıcı kararı) | — |
 
 ✅ **P2 bataryası KAPANDI** (12:36): `Ran 152 tests in 1262.644s` · `OK` ·
