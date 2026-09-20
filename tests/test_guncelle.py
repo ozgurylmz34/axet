@@ -2046,3 +2046,70 @@ if __name__ == "__main__":
     if "--uret" in sys.argv:
         raise SystemExit(_uret_elle(sys.argv[sys.argv.index("--uret") + 1]))
     unittest.main()
+
+
+class IsaretlemePlanaSabitTest(GuncelleTemel):
+    """Madde 7 (karar 2026-09-20) — `isaretle` PLANIN hedefini uygular, canlı ref'i değil.
+
+    Kusur: plan `yeni_etiket`i çiviliyordu (`plan["yeni_etiket"] = b.yeni_ref`) ama
+    `komut_isaretle` `b.yeni_ref`i okuyordu; `Baglam` her çağrıda onu YENİDEN hesaplar.
+    Plan ile işaretleme arasında bir `fetch` olursa İÇERİK yeni sürümden yazılır, MÜHÜR
+    eski sürümü der. Geriye sürüklenme için DUR vardı; İLERİ sürüklenme korumasızdı.
+
+    KONTROL GRUBU: ① sürüklenme YOKken davranış değişmemeli ② sürüklenmenin GERÇEKTEN
+    oluştuğu ölçülmeli (yoksa test sürüklenmeyi hiç kurmamış olabilir ve boşuna yeşil kalır).
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.senaryolari_uygula()
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+    def _v4_yayinla(self) -> None:
+        """Sahte `fetch`: public v4 basar, tüketici onu görür (plan ZATEN kurulmuştu)."""
+        yayinlar = json.loads(json.dumps(YAYINLAR))
+        yayinlar["yayinlar"].append({
+            "etiket": "v4", "tarih": "2026-03-01", "min_axet": "1.0.0",
+            "kalemler": [{"id": "4-01", "baslik": "çekirdek v4", "tur": "kural", "kritik": False,
+                          "neden": "—", "dosyalar": ["core/00-temel.md"], "gerektirir": [],
+                          "test": []}],
+        })
+        self.f._yaz(self.f.public, {
+            "core/00-temel.md": "# Çekirdek v4\nsatır1\nsatır2 net\n",
+            "guncelle/yayinlar.json": json.dumps(yayinlar, ensure_ascii=False, indent=1) + "\n",
+        })
+        self.git(self.f.public, "add", "-A")
+        self.git(self.f.public, "commit", "-q", "-m", "v4")
+        self.git(self.f.public, "tag", "v4")
+        self.git(self.f.tuketici, "fetch", "-q", "--tags", "origin")
+
+    def test_1_fetch_plandan_SONRA_gelirse_plan_surumu_uygulanir(self):
+        self.assertEqual(self.f.plan()["yeni_etiket"], "v3", "ön koşul: plan v3 ile kuruldu")
+        self._v4_yayinla()
+        r = self.f.calistir("isaretle", "core/00-temel.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        govde = (self.f.tuketici / "core/00-temel.md").read_text(encoding="utf-8")
+        self.assertIn("# Çekirdek v3", govde, "PLANIN hedefi uygulanmalı")
+        self.assertNotIn("# Çekirdek v4", govde, "canlı ref SESSİZCE uygulanmamalı")
+
+    def test_2_suruklenme_kullaniciya_SOYLENIR(self):
+        self._v4_yayinla()
+        r = self.f.calistir("isaretle", "core/00-temel.md", "--karar", "yeni")
+        self.assertIn("PLANA sabitlendi", r.stderr, self.cikti(r))
+        self.assertIn("v3", r.stderr)
+
+    def test_3_KONTROL_suruklenme_GERCEKTEN_olustu(self):
+        """Sürüklenme kurulmadıysa test 1 boşuna yeşil kalır: v4'ün sonra GÖRÜNDÜĞÜNÜ ölç."""
+        onceki = self.git(self.f.tuketici, "tag", "-l").stdout
+        self._v4_yayinla()
+        sonraki = self.git(self.f.tuketici, "tag", "-l").stdout
+        self.assertNotIn("v4", onceki, "plan kurulurken v4 GÖRÜNMEMELİYDİ")
+        self.assertIn("v4", sonraki, "sahte fetch v4'ü getirmeliydi")
+
+    def test_4_KONTROL_suruklenme_YOKken_davranis_ayni(self):
+        """Yanlış pozitif yok: fetch olmadan not basılmaz, içerik yine v3."""
+        r = self.f.calistir("isaretle", "core/00-temel.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("PLANA sabitlendi", r.stderr)
+        self.assertIn("# Çekirdek v3", (self.f.tuketici / "core/00-temel.md").read_text(encoding="utf-8"))

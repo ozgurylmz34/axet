@@ -1043,6 +1043,16 @@ def komut_oneri(b: Baglam, args) -> int:
 # =====================================================================================================
 def komut_isaretle(b: Baglam, args) -> int:
     k, plan = b.k, plan_oku(b.k)
+    # ⛔ REF PLANA SABİTLENİR (karar 2026-09-20). `b.yeni_ref` CANLIdir: `Baglam` kurulurken
+    # yeniden hesaplanır. Plan hedefi çivilerken (`plan["yeni_etiket"]`) işaretleme canlı ref'i
+    # okursa, plan ile işaretleme arasında bir `fetch` olması hâlinde İÇERİK yeni sürümden
+    # yazılır ama MÜHÜR (beklenen_sha/durum kaydı) ESKİ sürümü der. Geriye sürüklenme için
+    # zaten DUR var; İLERİ sürüklenme korumasızdı. K2'nin mühür kararıyla aynı ilke.
+    plan_ref = plan.get("yeni_etiket") or b.yeni_ref
+    if plan_ref != b.yeni_ref:
+        print(f"NOT: plan `{plan_ref}` hedefiyle kuruldu, klonun canlı hedefi artık "
+              f"`{b.yeni_ref}`. İşaretleme PLANA sabitlendi — yeni hedefi uygulamak için "
+              f"planı yeniden kur (`hazirla`).", file=sys.stderr)
     yol = args.yol.replace("\\", "/")
     if args.karar not in GECERLI_KARARLAR:
         print(f"DUR: geçersiz karar {args.karar!r}. Geçerli: {', '.join(GECERLI_KARARLAR)}",
@@ -1076,12 +1086,12 @@ def komut_isaretle(b: Baglam, args) -> int:
         return 0
 
     if args.karar == "yeni":
-        y_sha = k.blob_sha(b.yeni_ref, hedef)
+        y_sha = k.blob_sha(plan_ref, hedef)
         if y_sha is None:
             print(f"DUR: {hedef} yeni sürümde yok — `--karar yeni` uygulanamaz.", file=sys.stderr)
             return 2
         korunan = _yerel_kopya(k, hedef) if _yedeksiz_mi(k, hedef) else None
-        k.checkout_yol(b.yeni_ref, hedef)
+        k.checkout_yol(plan_ref, hedef)
         if hedef != yol and (k.kok / yol).is_file():
             k.sil(yol)
         if korunan:
@@ -1089,7 +1099,7 @@ def komut_isaretle(b: Baglam, args) -> int:
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeni", y_sha)
 
     if args.karar == "yeniden-adlandir":
-        y_sha = k.blob_sha(b.yeni_ref, hedef)
+        y_sha = k.blob_sha(plan_ref, hedef)
         if y_sha is None:
             print(f"DUR: {hedef} yeni sürümde yok.", file=sys.stderr)
             return 2
@@ -1098,7 +1108,7 @@ def komut_isaretle(b: Baglam, args) -> int:
         korunan = _yerel_kopya(k, hedef)
         if hedef != yol and (k.kok / yol).is_file():
             k.sil(yol)  # taşımanın kaynağı: içeriği geri dönüş etiketinde duruyor
-        k.checkout_yol(b.yeni_ref, hedef)
+        k.checkout_yol(plan_ref, hedef)
         if korunan:
             print(f"Senin dosyan korundu: {korunan}")
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeniden-adlandir", y_sha)
