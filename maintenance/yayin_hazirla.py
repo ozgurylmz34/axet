@@ -298,9 +298,6 @@ def sema_dogrula(veri) -> list[str]:
                         s.append(f"şema: {kyer}({kid}).dosyalar yolu göreli/posix olmalı: {d}")
                     if dislanan_mi(d):
                         s.append(f"şema: {kyer}({kid}).dosyalar public'e girmeyen yolu bildiriyor: {d}")
-                    if d in URETILEN_DOSYALAR:
-                        s.append(f"şema: {kyer}({kid}).dosyalar üretilen dosyayı bildiriyor: {d} "
-                                 f"(bu dosyalar yayın aracının çıktısıdır, kaleme ait değildir)")
             if not _liste_mi(kalem.get("gerektirir")):
                 s.append(f"şema: {kyer}({kid}).gerektirir metin listesi olmalı")
             if not _liste_mi(kalem.get("test")):
@@ -331,15 +328,29 @@ def sema_dogrula(veri) -> list[str]:
 
 
 def kapsam_dogrula(yayin: dict, degisen: set[str]) -> list[str]:
-    """TASARIM §11: diff'teki HER dosya en az 1 kaleme ait · kalemdeki her dosya gerçekten değişmiş."""
+    """TASARIM §11: diff'teki HER dosya en az 1 kaleme ait · kalemdeki her dosya gerçekten değişmiş.
+
+    ⛔ ÜRETİLEN DOSYALAR DA KAPSAMA DAHİLDİR (Z17 düzeltmesi, 2026-09-20). Eskiden
+    `URETILEN_DOSYALAR` bu denetimden TÜMDEN muaftı; gerekçe *"zaten her yayında değişirler,
+    elle kalem yazmak gürültü olur"*du. Ama muafiyet gerekçesinden GENİŞ yazılmıştı ve iki
+    sonucu vardı: ⓐ beyan edilmedikleri için tüketici klonuna **hiç ulaşmadılar** (ölçüldü:
+    v0.1.0 · v0.2.0 · v0.3.0 → üçünde de `%guncelle plan` *"kapsamda ama hiçbir kalemin
+    dosyalar listesinde geçmiyor — UYGULANMAYACAK"* dedi) ⓑ ikinci kural onları `olculen`
+    dışında gördüğü için, beyan etmeye ÇALIŞAN biri *"bu yayında DEĞİŞMEMİŞ"* hatası alırdı
+    — yani kapı düzeltmenin kendisini de engelliyordu.
+    `degisen` bu noktada hedef ağaç `git add -A`'dan SONRA ölçülür ⇒ üretilen dosyalar
+    gerçekten değişmiş görünür, beyan etmek ikinci kuralı ihlal etmez.
+    """
     beyan: dict[str, list[str]] = {}
     for kalem in yayin.get("kalemler", []):
         for yol in kalem.get("dosyalar", []):
             beyan.setdefault(yol, []).append(kalem.get("id", "?"))
-    olculen = {y for y in degisen if y not in URETILEN_DOSYALAR}
+    olculen = set(degisen)
     s = []
     for yol in sorted(olculen - set(beyan)):
-        s.append(f"kapsam: eşlemesiz dosya (hiçbir kaleme ait değil): {yol}")
+        ek = ("  ⛔ ÜRETİLEN DOSYA: beyan edilmezse tüketici klonuna HİÇ ULAŞMAZ (Z17)."
+              if yol in URETILEN_DOSYALAR else "")
+        s.append(f"kapsam: eşlemesiz dosya (hiçbir kaleme ait değil): {yol}{ek}")
     for yol in sorted(set(beyan) - olculen):
         s.append(f"kapsam: kalemde bildirilen dosya bu yayında DEĞİŞMEMİŞ: {yol} "
                  f"(kalem: {', '.join(beyan[yol])})")
@@ -565,7 +576,7 @@ def main() -> int:
         sorunlar = sema_dogrula(veri)
         print(f"Doğrulanan: {KOK / YAYINLAR_YOLU}")
         print("KAPSAM — bakılan: şema (alan adları/tipleri), kalem id tekilliği, tur=guvenlik ise kritik "
-              "kuralı, `gerektirir` çözünürlüğü ve sırası, yayın sürüm sırası, dışlanan/üretilen yol beyanı.")
+              "kuralı, `gerektirir` çözünürlüğü ve sırası, yayın sürüm sırası, dışlanan yol beyanı. (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
         print("KAPSAM — bakılmayan: kalem-diff kapsamı (yalnız gerçek yayında ölçülür), `baslik`/`neden` "
               "metinlerinin doğruluğu, `test` kimliklerinin gerçekten koştuğu.")
         for s in sorunlar:
@@ -688,9 +699,11 @@ def main() -> int:
           (" + kalem-diff kapsamı (eşlemesiz dosya = FAIL)" if sonraki_yayin
            else " (kalem-diff kapsamı bu kipte ÖLÇÜLMEZ: karşılaştırılacak önceki yayın yok)"))
     print("KAPSAM — bakılmayan: ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + "), kişi adları sözlüğü, "
-          "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu, "
-          f"kalem-diff kapsamında üretilen dosyalar ({', '.join(URETILEN_DOSYALAR)}). "
+          "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu. "
           "Bu tarama tam sızıntı denetiminin yerine geçmez.")
+    print(f"KAPSAM — üretilen dosyalar ({', '.join(URETILEN_DOSYALAR)}) 2026-09-20'den beri "
+          "kalem-diff kapsamına DAHİL: beyan edilmezlerse yayın durur (Z17 — eskiden muaftılar "
+          "ve tüketici klonuna hiç ulaşmıyorlardı).")
     engelleyen = [b for siddet, b in bulgular if siddet == BLOCKER]
     uyari = [b for siddet, b in bulgular if siddet == WARNING]
     if uyari:
