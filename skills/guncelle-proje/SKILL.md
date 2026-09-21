@@ -25,6 +25,8 @@ Hükmü ve raporu SCRIPT verir; sen yalnız yargı gereken yerde kullanıcıya s
 ## ⛔ Değişmezler
 1. **Her proje AYRI onaylanır.** Toplu tarama YOKTUR. Onay tek proje yoluna ve tek şablon sürümüne
    bağlanır; script bunu zorlar (`onay.json`). Başka projede "zaten onaylamıştı" diye devam etme.
+   Onay kesin yasak kanoniğine de bağlıdır: onaydan sonra kanonik değişirse onay düşer (yeni
+   damga kalemi eski onayla yazılmaz) → yeniden planla, yeniden onay iste.
 2. **Önce klon güncel olmalı** (`%guncelle`). `onkontrol` ölçer; DUR derse önce onu çöz.
 3. **Taban uydurma YASAK.** `VTB` (taban bilinmiyor) dosyada otomatik birleştirme yapılmaz;
    kullanıcı "yeniyi al / yereli koru / elle" seçer.
