@@ -60,6 +60,34 @@ RESMI_ORIGIN = "https://github.com/ozgurylmz34/axet-template.git"
 # kullanıcıya "dördünü de sil, kalırsa FAIL" diye söz veriyordu — söz kodda karşılanmamıştı).
 CAKISMA_ISARETLERI = ("<<<<<<<", "|||||||", "=======", ">>>>>>>")
 
+
+# Git işareti YALNIZ satır başında durur: `<<<<<<< ad`, `||||||| ad`, `>>>>>>> ad` (ad isteğe
+# bağlı) ve TEK BAŞINA `=======`. ⛔ Alt-dizi araması yanlıştı (v0.4.1, gerçek güncellemede
+# ölçüldü): `# =====…` ayracı taşıyan 7 ürün dosyası — motorun kendisi dahil — FAIL veriyordu.
+_CAKISMA_DESENI = re.compile(
+    r"^(<<<<<<<|\|\|\|\|\|\|\||>>>>>>>)(?:[ \t].*)?\r?$|^(=======)[ \t]*\r?$", re.M)
+
+
+def _isaret_sayilari(metin: str) -> dict[str, int]:
+    sayac: dict[str, int] = {}
+    for m in _CAKISMA_DESENI.finditer(metin):
+        i = m.group(1) or m.group(2)
+        sayac[i] = sayac.get(i, 0) + 1
+    return sayac
+
+
+def cakisma_isaretleri(metin: str, referans: str | None = None) -> list[str]:
+    """Metinde satır başında duran git çakışma işaretleri (tekrarsız, `CAKISMA_ISARETLERI` sırasıyla).
+
+    `referans` (yayının o dosyadaki içeriği) verilirse yalnız referanstakinden FAZLA olan işaretler
+    sayılır: ürünün kendisi satır başında işaret taşıyabilir (`guncelle/kartlar/V4c.md` örnek
+    bloğu — bug gate 2026-09-21) ve yayınla bayt-bayt aynı dosya "çakışma kaldı" sayılmamalı.
+    Gerçek bir çakışma bloğu her işaretten en az birini EKLER ⇒ sayı karşılaştırması onu kaçırmaz.
+    """
+    sayac = _isaret_sayilari(metin)
+    taban = _isaret_sayilari(referans) if referans is not None else {}
+    return [i for i in CAKISMA_ISARETLERI if sayac.get(i, 0) > taban.get(i, 0)]
+
 # §10/§2a: tüketicide git kimliği tanımsız olabilir → her yazan commit kendi kimliğini taşır.
 GIT_KIMLIK = ["-c", "user.name=axet-guncelle", "-c", "user.email=guncelle@yerel"]
 
@@ -1152,7 +1180,9 @@ def komut_isaretle(b: Baglam, args) -> int:
         return 2
     veri = oneri.read_bytes()
     metin = veri.decode("utf-8", "replace")
-    kalanlar = [i for i in CAKISMA_ISARETLERI if i in metin]
+    y_sha_ref = k.blob_sha(plan_ref, hedef)
+    kalanlar = cakisma_isaretleri(
+        metin, k.blob(y_sha_ref).decode("utf-8", "replace") if y_sha_ref else None)
     if kalanlar:
         print(f"FAIL {yol}: öneri dosyasında çakışma işareti duruyor ({', '.join(kalanlar)}). "
               f"Çakışmaları çöz, sonra yeniden işaretle.", file=sys.stderr)
@@ -1998,7 +2028,10 @@ def komut_kapanis(b: Baglam, args) -> int:
                     tam = k.kok / hedef
                     if tam.is_file():
                         metin = tam.read_text(encoding="utf-8", errors="replace")
-                        if any(i in metin for i in CAKISMA_ISARETLERI):
+                        y_sha_ref = k.blob_sha(plan["yeni_etiket"], hedef)
+                        ref_metin = (k.blob(y_sha_ref).decode("utf-8", "replace")
+                                     if y_sha_ref else None)
+                        if cakisma_isaretleri(metin, ref_metin):
                             dv = "uygulandi"
                             eksikler.append(f"{yol}: çakışma işareti duruyor")
             if dv in ("bekliyor", "uygulandi"):

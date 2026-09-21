@@ -213,3 +213,35 @@ jobs:
 
       - name: doctor.py
         run: python scripts/doctor.py
+
+  # YAYIN PROVASI (Z28, 2026-09-21) — aday yayini GERCEK public gecmisin ustune (yalniz runner'daki
+  # gecici klona, push KAPALI) kurar; son yayindan ve v0.1.0'dan temiz tuketici klonlarinda gercek
+  # `%guncelle` motorunu adim 2-14 kosar, ardindan eski surumle acilmis projede `guncelle_proje`.
+  # NEDEN: birim testleri kurallari yapay girdiyle dener; kullanicinin akisini hicbiri kosmuyordu.
+  # Olculdu: v0.4.0 (public agacta 20 kirmizi) ve v0.4.1 (kapanista sahte "cakisma isareti",
+  # `%guncelle-proje` "klon geride") kusurlarini kullanici buldu — ucu de bu akistaydi.
+  # Katalogda yayinlanmamis etiket yoksa "ATLANDI" der ve yesil doner (hukum YOK).
+  # Paralel kostugu icin bekleme suresini uzatmaz. Kapsam beyani aracin ciktisindadir.
+  # YALNIZ gelistirme deposunda: public agacta maintenance/ yoktur (DISLANANLAR) ve bu dosya
+  # public'e de gider — kosulsuz olsaydi her yayin push'unda "can't open file" ile kirmizi
+  # yanardi (bug gate 2026-09-21).
+  prova:
+    name: Yayin provasi (guncelle uctan uca)
+    if: github.repository == 'ozgurylmz34/axet'
+    runs-on: windows-latest
+    timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: 'utf-8'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: On kosul - Python bagimliliklari
+        run: python -m pip install --quiet -r skills-sap/sap-adt-foundation/scripts/requirements.txt
+
+      - name: Yayin provasi
+        run: python maintenance/yayin_provasi.py
