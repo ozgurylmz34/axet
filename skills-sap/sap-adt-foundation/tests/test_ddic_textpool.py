@@ -253,6 +253,34 @@ class DdicTextpool(unittest.TestCase):
         self.kaydet("T6 tablo: reviewer BLOCKER → yazma yok (denetlenen = yazılacak DDL)", "reviewer_blocker",
                     f"{r.get('error')} çağrı={len(adt.cagri)}", ok)
 
+    def test_T7_tablo_kardes_yapi_ucu_olculemedi(self):
+        """Bug gate L2 (2026-09-22): tablo ucu 404 + kardeş yapı ucu 503 → `exists_unmeasured`, POST YOK.
+
+        Kontrol grubu: iki uç da 404 → sonda `checked_absent` (yaratma kapısı açık)."""
+        self.ddic._varlik = self._eski[1]  # gerçek sonda (setUp sahtesi değil)
+
+        def yon_kur(yapi_kod):
+            def yon(c):
+                if c["method"] == "GET" and c["path"] == "/sap/bc/adt/ddic/tables/zaxet_t_den/source/main":
+                    return Yanit(404, "yok")
+                if c["method"] == "GET" and c["path"] == "/sap/bc/adt/ddic/structures/zaxet_t_den/source/main":
+                    return Yanit(yapi_kod, "geçici" if yapi_kod != 404 else "yok")
+                return Yanit(500, "beklenmedik")
+            return yon
+
+        adt, _ = self.kur(yon_kur(503))
+        r = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        yazma = [c for c in adt.cagri if c["method"] in ("POST", "PUT") or c["path"].startswith("activate")]
+        self.kur(yon_kur(404))
+        kontrol = self.ddic._varlik("ZAXET_T_DEN", "table")
+        ok = (r.get("ok") is False and r.get("error") == "exists_unmeasured" and yazma == []
+              and str(r["steps"].get("pre_check", "")).startswith("unavailable:sibling")
+              and kontrol[0] is False and kontrol[1] == "checked_absent")
+        self.kaydet("T7 tablo: tablo ucu 404 + kardeş yapı ucu ÖLÇÜLEMEDİ (503) → exists_unmeasured, yazma YOK",
+                    "exists_unmeasured · yazma 0 · kontrol checked_absent",
+                    f"ok={r.get('ok')} err={r.get('error')} pre={r['steps'].get('pre_check')} "
+                    f"yazma={len(yazma)} kontrol={kontrol[:2]}", ok)
+
     # ── Z40 adt_ttyp_create ────────────────────────────────────────────────────────────────
     @staticmethod
     def _ttyp_xml(type_name="ZAXET_S_SATIR", data_type="", access="standard", kdef="standard", kind="nonUnique",

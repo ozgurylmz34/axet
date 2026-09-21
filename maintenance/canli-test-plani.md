@@ -319,6 +319,21 @@ SAP profili/release: <sap-project.json'dan>        Sistem: <DEV sistemi>
 
 Durdurma olayı (401/yetki/kilit) olduysa ayrı satır: zaman, kalem #, görülen hata metni, sonrasında yapılan tek şey "durdu".
 
+### 21a. Kayıtlı sonuçlar — DDIC yazma araçları (Z38-Z41, Z51)
+
+Ölçüm 1: 2026-09-21 · Ölçüm 2: 2026-09-22 · DEV, `$TMP`, test objeleri yaratılıp silindi (TADIR/DD02L/DD03L/DD40L/REPOSRC
+`ZAXET_%` = 0 satır). Ayrıntı ve ham çıktı yeri: `maintenance/IS-LISTESI.md` Z38-Z41, Z51, Z53 satırları.
+
+| Kalem | Sonuç | Kanıt özü | Not |
+|---|---|---|---|
+| W12 (Z tablo) | GEÇTİ, yöntem değişti | `adt_table_create`: kabuk 201 → LOCK → PUT 200 → aktivasyon → readback 3/3; DD03L/DD02L teyit (iki ölçümde de) | Eclipse ara yolu artık gerekmiyor. `$TMP` dışı transportsuz muafiyet ölçülmedi |
+| W7 (ttyp, yapı satırlı) | GEÇTİ | Kabuk ROWTYPE'ı sessizce boş bıraktı (canlıda üretildi) → If-Match onarımı → DD40L doğru | Ölçüm 1 |
+| W7b (ttyp, ilkel) | GEÇTİ (ölçüm 2) | CHAR10 + DEC15,2: ilk POST CHAR/1 → onarım `uyumsuz` → DD40L CHAR/10/0, DEC/15/2 | Ölçüm 1'de KALDI; 09d5c15 düzeltti. Onarım fiilen zorunlu adım |
+| W11 (yapı yaratma) | GEÇTİ (ölçüm 2) | `adt_struct_create` `ok:true`, verify `ddic/structures`, DD03L 2 alan | Ölçüm 1'de başarılı yaratımda sahte `ok:false`. Push tuzağı/yorum alt kalemleri ölçülmedi |
+| W11b (Z51: üzerine yazma yok) | GEÇTİ (ölçüm 2) | Aynı adla farklı alanlar → `already_exists`, POST/PUT izi 0, DD03L değişmedi · tablo adıyla → `already_exists`, yazma 0 | Tablo için `existing_kind` yanlış (`structure`) → Z53 |
+| Textpool (Z39) | GEÇTİ (ölçüm 2) | PUT 200 ×2, `activation_final ok`, inaktif 0, REPOSRC A | Metin içeriği yalnız aracın readback'i; bağımsız okuma aracı yok (ÖLÇÜLEMEDİ) |
+| ccdef/ccmac (Z41) | GEÇTİ | PUT + sınıf aktivasyonu + aktif readback eşit; kontrol grubu ccimp | Ölçüm 1 |
+
 ## 22. Sonuçlar nereye yazılır
 
 1. **İlgili referans:** kalemin "Kaynak" hücresindeki dosyada DOĞRULANMADI etiketi kaldırılır ve yerine ölçüm yazılır:

@@ -383,7 +383,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   400/405 `AlreadyExists` ile reddederse kütüphane artık kaynağı PUT ETMEZ (`SAPObjectExistsError`) → `already_exists`, kilit/PUT/aktivasyon yok.
   Önceden: ön kontrol hata/None'da "yok" diyordu ve POST 405'ten sonra LOCK → PUT → aktivasyon yapılıyordu ⇒ mevcut yapı yeni alanlarla ezilebiliyordu
   (15f9716'dan beri tüm sürümlerde). `steps.pre_check` = `checked_found` | `checked_absent` | `unavailable:<sebep>`.
-  **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` ·
+  **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `description_too_long` · `create_failed` · `activation_failed` ·
   `verify_failed` (metadata okunamadı ya da sürüm `active` değil) · `content_verify_failed` (yer tutucu kabuk / alan yok / kaynak okunamadı) ·
   `post_check_blocker`. Obje hiçbir durumda silinmez.
   **Satır sonu yasağı (2026-09-15):** `description` ile her alanın `description`/`name`/`type` değeri tek satır olmalı — CR, LF, U+2028, U+2029 ya da U+0085 varsa ağa ve reviewer'a gitmeden `validation_error` (mesaj yeri ve karakter kodunu söyler, ör. `fields[0].description … U+000A`); aynı kural render'da `ValueError` → gate'te `reviewer_blocker` (`ddl_render_hatasi`).
@@ -419,7 +419,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   `package` · `transport` (**`$TMP` dahil zorunlu**) · `delivery_class="A"` · `data_maintenance="RESTRICTED"`.
 - **Akış:** ağsız ön kontrol (T1 ad ≤ 16 · T2 ilk alan `MANDT`/`mandt`/anahtar · T3 alan biçimi · T4 tekil ad · T5/T6 teslimat sınıfı / veri bakımı · T7 birim referansı ·
   T8 satır sonu · T9 `key` bool) → DDL render (`#NOT_EXTENSIBLE`, anahtarlarda `not null`, nitelikli `'tablo.alan'` birim/para referansı) → reviewer `table_creation` **yazılacak DDL'in kendisi** üzerinde →
-  varlık sondası (ölçülemezse `exists_unmeasured`, yaratma yok) → kabuk POST (**DDL'siz**) → aynı stateful oturumda LOCK → PUT `source/main` (**If-Match yok**; corrNr = kilit yanıtındaki CORRNR) → UNLOCK (finally) →
+  varlık sondası (ölçülemezse `exists_unmeasured`, yaratma yok; tablo ucu 404 verip kardeş `/ddic/structures/` ucu ölçülemezse de `exists_unmeasured` — aynı adlı yapı orada olabilir, `pre_check: unavailable:sibling_…`) → kabuk POST (**DDL'siz**) → aynı stateful oturumda LOCK → PUT `source/main` (**If-Match yok**; corrNr = kilit yanıtındaki CORRNR) → UNLOCK (finally) →
   aktivasyon + `version=active` → aktif DDL readback (alan/anahtar dizisi).
 - **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}, unlock_warning?}` — `steps.create.unlock_ok:false` (UNLOCK yanıtı 200/204 değil) → `unlock_warning`; `ok`'u bozmaz, kullanıcıya ilet (SM12; AI kilit silmez).
 - **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `validation_error` (ad/paket kütüphane doğrulaması; SAP'ye gidilmedi) · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi, kilit öncesi CSRF/ağ istisnası ya da yabancı transport; silinmez, kullanıcı karar verir) ·
