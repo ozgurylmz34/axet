@@ -375,7 +375,15 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   ve `content_verify` yapıyı `/ddic/structures/` ucundan okur. Önceden `tabl` → `/ddic/tables/` ucuna soruluyordu: canlıda yapı AKTİF
   yaratıldığı hâlde (DD02L INTTAB/A, DD03L 2 satır) araç `ok:false` + `verify.reason: metadata_not_found` dönüyordu ve ön kontrol mevcut
   yapıyı "yok" görüyordu (kusur ilk sürümden beri `main`'de). Aktivasyon adresi değişmedi (`tabl` — canlıda çalıştı). Yanıttaki `type` hâlâ `tabl`.
-  **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `activation_failed` ·
+  ⚠ **Düzeltme sonrası `/ddic/structures/` yolu (varlık sondası, metadata doğrulaması, `content_verify`) canlıda henüz ÖLÇÜLMEDİ** — canlı kanıt
+  yalnız "yapı aktifti, eski `tables` ucu bulamadı" yönündedir; yeni yolun `ok:true` verdiği sahte istemci testleriyle gösterildi.
+  **Üzerine yazma kapısı (2026-09-21, bug gate):** ön kontrol ÜÇ DEĞERLİDİR — yapı ucu (`/ddic/structures/<ad>/source/main`) 200 ya da 404 sonrası
+  kardeş `/ddic/tables/` ucu 200 → `already_exists` (`existing_kind: structure|table`; aynı adlı şeffaf tablo da çakışmadır) · uç ölçülemedi
+  (5xx/403/istisna/ağ; kardeş uç ölçülemedi) → `exists_unmeasured`, **POST atılmaz** · iki uç da 404 → yaratılır. Ön kontrol "yok" deyip SAP POST'u
+  400/405 `AlreadyExists` ile reddederse kütüphane artık kaynağı PUT ETMEZ (`SAPObjectExistsError`) → `already_exists`, kilit/PUT/aktivasyon yok.
+  Önceden: ön kontrol hata/None'da "yok" diyordu ve POST 405'ten sonra LOCK → PUT → aktivasyon yapılıyordu ⇒ mevcut yapı yeni alanlarla ezilebiliyordu
+  (15f9716'dan beri tüm sürümlerde). `steps.pre_check` = `checked_found` | `checked_absent` | `unavailable:<sebep>`.
+  **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` ·
   `verify_failed` (metadata okunamadı ya da sürüm `active` değil) · `content_verify_failed` (yer tutucu kabuk / alan yok / kaynak okunamadı) ·
   `post_check_blocker`. Obje hiçbir durumda silinmez.
   **Satır sonu yasağı (2026-09-15):** `description` ile her alanın `description`/`name`/`type` değeri tek satır olmalı — CR, LF, U+2028, U+2029 ya da U+0085 varsa ağa ve reviewer'a gitmeden `validation_error` (mesaj yeri ve karakter kodunu söyler, ör. `fields[0].description … U+000A`); aynı kural render'da `ValueError` → gate'te `reviewer_blocker` (`ddl_render_hatasi`).
@@ -416,7 +424,8 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}, unlock_warning?}` — `steps.create.unlock_ok:false` (UNLOCK yanıtı 200/204 değil) → `unlock_warning`; `ok`'u bozmaz, kullanıcıya ilet (SM12; AI kilit silmez).
 - **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `validation_error` (ad/paket kütüphane doğrulaması; SAP'ye gidilmedi) · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi, kilit öncesi CSRF/ağ istisnası ya da yabancı transport; silinmez, kullanıcı karar verir) ·
   `activation_failed` · `verify_failed` (aktive oldu ama metadata `active` doğrulanamadı) · `readback_mismatch` (`default_shell_client_field` = varsayılan `client : abap.clnt` kabuğu duruyor, DDL sessizce kaybolmuş).
-- **Kapsam:** mevcut tabloyu DEĞİŞTİRMEZ. Canlı DOĞRULANMADI (çevrimdışı sahte istemci testleri; canlı ölçüm planı lider onayında). `adt_push_source(tabl)` ile DDL yazma kaynak çekirdekte "invalid lock handle" verdi — bu araç kilidi kendi içinde tutar.
+- **Kapsam:** mevcut tabloyu DEĞİŞTİRMEZ. Canlı 2026-09-21 (DEV): yaratma `ok:true` — aktif, aktif DDL readback 3/3 alan. Ölçülmeyen dallar
+  (`partial_shell`, yabancı transport, `exists_unmeasured`, UNLOCK hatası) yalnız çevrimdışı sahte istemci testleriyle gösterildi. `adt_push_source(tabl)` ile DDL yazma kaynak çekirdekte "invalid lock handle" verdi — bu araç kilidi kendi içinde tutar.
 
 ### `adt_ttyp_create` (tablo tipi — YAZMA, 2026-09-21)
 - **Amaç:** DDIC tablo tipi (TTYP) yarat + aktive et + **iki kanallı** doğrula; satır tipi boş ya da tanım istenenden farklı kaldıysa bir kez düzelt. Profil: yalnız `s4_private`. Ayrıntı: `sap-cds-ddic/references/table-types.md`.
@@ -444,10 +453,13 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   PX sonrası bağımsız worklist sondası (`steps.activation_final`) → `?version=active` readback (eksik / farklı / `=?` / `allow_remove` ile silinmesi onaylanan giriş hâlâ duruyor (`remove_not_applied`) → `readback_mismatch`).
 - **`steps.activate_prog`:** program zaten aktifse SAP yalnız generation koşar ve metin havuzunu terfi ettirmez (canlı 2026-09-21: her çağrıda) —
   bu BEKLENEN durumdur: `outcome:"generation_only"`, `ok` = `activation_final.ok`. Gövdede gerçek hata varsa `outcome:"failed"` + `errors`.
-  `ok` = aktif readback doğru **ve** PX sonrası worklist'te program/metin havuzu kalmadı; sonda ölçülemezse yalnız readback + `activation_notice`.
+  `ok` = aktif readback doğru **ve** PX sonrası worklist'te program/metin havuzu kalmadı; sonda ölçülemezse yalnız readback + `activation_notice`
+  (program aktivasyonu gerçek hata verdiyse ölçülemeyen sonda başarı sayılmaz → `activation_unverified`).
   `written` yalnız PUT'u başarılı alt kaynakları listeler (yazılmadıysa `[]`).
 - **Hatalar:** `preflight_blocker` · `not_found` · `read_failed` · `would_remove_entries` · `lock_failed` (gerçek tutamaç yoksa yazmaz) · `put_failed` · `readback_mismatch` ·
-  `activation_incomplete` (metinler aktif ama PX sonrası worklist program/metin havuzunu hâlâ inaktif gösteriyor) · `unlock_warning`.
+  `activation_incomplete` (metinler aktif ama PX sonrası worklist program/metin havuzunu hâlâ inaktif gösteriyor) ·
+  `activation_unverified` (program aktivasyonu gerçek hata verdi — `activate_prog.outcome:"failed"` — ve PX sonrası worklist sondası ölçülemedi;
+  metinler aktif görünse de `ok:false`, mesaj program hatasını taşır) · `unlock_warning`.
 - **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı 2026-09-21 (DEV): yazma + PX terfisi + aktif readback `ok:true`, `would_remove_entries` yazmadan döndü;
   `activation_final` ve `generation_only` sınıflaması bu turda eklendi — canlıda henüz ÖLÇÜLMEDİ.
 

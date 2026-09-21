@@ -94,15 +94,15 @@ def _capture():
 
 
 def _exists(client, name: str, object_type: str) -> bool:
-    """Return True if object already exists (even inactive).
+    """Return True if object already exists (even inactive). Çağıranlar: `adt_domain_create`, `adt_dtel_create`.
 
-    ⚠ ÖLÇÜLDÜ, BİLİNÇLİ BIRAKILDI (2026-08-01 bug-avı, "doğrulama koşamadı = doğrulandı"):
-    `get_object_metadata` her istisnayı yutup None döndürdüğü için buradaki `md is not None`
-    de hata durumunda "yok" der (sınıfın 6. örneği). FARK: buradaki yanlış "yok", tek
-    başına yıkıcı DEĞİL — çağıran hemen create'e gider ve SAP zaten var olan objeyi
-    reddeder (SAPObjectExistsError → yapılandırılmış hata; ikinci katman SAP'nin kendisi).
-    Üç-değerliye çevirmek 3 çağıranın sözleşmesini değiştirir; kanıtsız genişletme yapılmadı.
-    Değiştirilirse `_bos_sonuc_sinifi` (atom.py) kullanılmalı. Kayıt: infra-findings [ÖNERİ].
+    ⚠ FAIL-OPEN (2026-08-01 bug-avı, "doğrulama koşamadı = doğrulandı"): `get_object_metadata` her istisnayı
+    yutup None döndürdüğü için buradaki `md is not None` hata durumunda da "yok" der.
+    ⛔ DÜZELTME (2026-09-21): eski not "yanlış 'yok' yıkıcı değil, SAP var olan objeyi reddeder" diyordu — kodla
+    ÇELİŞİYOR: kütüphanenin `create_domain` / `create_dataelement`'i POST 405 AlreadyExists'i `success:True`
+    döndürür (yazma yok ama araç ardından MEVCUT objeyi aktive edip `ok:true` "yaratıldı" der). Yapı yolu
+    (`create_structure`) aynı durumda üzerine PUT ediyordu → `adt_struct_create` artık bu fonksiyonu KULLANMAZ
+    (üç değerli `_yapi_varligi`). Domain/DTEL için üç değerliye geçiş ayrı açık kalem (sözleşme değişikliği).
     """
     try:
         with _capture():
@@ -115,6 +115,21 @@ def _exists(client, name: str, object_type: str) -> bool:
         # On other errors, assume not-known and let create handle.
         log.warning("exists-check failed for %s/%s: %s", object_type, name, e)
         return False
+
+
+def _yapi_varligi(name: str) -> tuple:
+    """Yapı ön kontrolü — ÜÇ DEĞERLİ: (True|False|None, sonda, bulunan tür 'structure'|'table'|None).
+
+    `atom._varlik_olcumu(name, "structure")` = `adt_get(structure)`: `/ddic/structures/<ad>/source/main`; 404 ise KARDEŞ
+    `/ddic/tables/` ucu da sorulur (aynı adlı ŞEFFAF TABLO da ad çakışmasıdır). `None` = ÖLÇÜLEMEDİ (HTTP 5xx/403, istisna,
+    ağ; kardeş uç ölçülemedi) — "yok" DEĞİL ⇒ çağıran yaratma DENEMEZ (fail-closed).
+    """
+    from sapadt.tools.atom import _varlik_olcumu
+    var, sonda, p = _varlik_olcumu(name, "structure")
+    tur = None
+    if var is True:
+        tur = "table" if (p or {}).get("resolved_type") == "table" else "structure"
+    return var, sonda, tur
 
 
 def _activate_and_verify(client, name: str, object_type: str, verify_type: str | None = None) -> dict:
@@ -577,6 +592,8 @@ def adt_struct_create(
 
     Returns:
         {ok, name, type:'tabl', steps, fields_count, reviewer?, ...}
+        Ön kontrol üç değerli (üzerine yazma YOK): var → `already_exists` (`existing_kind: structure|table`) ·
+        ölçülemedi → `exists_unmeasured` (POST atılmaz) · POST 400/405 AlreadyExists → `already_exists` (PUT/aktivasyon yok).
     """
     obj_type = "tabl"  # yanıt/reviewer sözleşmesindeki tip (TABL ana tipi; yapı = INTTAB kategorisi)
     # ⛔ ADRES tipi AYRI (canlı 2026-09-21, DEV): yapılar ADT'de `/ddic/structures/` altında yaşar. `tabl` ile
@@ -632,16 +649,36 @@ def adt_struct_create(
     client = _get_client()
     steps: dict[str, Any] = {}
 
-    if _exists(client, name, adres_tipi):
+    # ⛔ ÜZERİNE YAZMA KAPISI (2026-09-21, bug gate): eski `_exists` hata/None'da "yok" diyordu (fail-open) ve
+    # `create_structure` POST 405 AlreadyExists'te kaynağı yine PUT edip aktive ediyordu ⇒ ön kontrol yanlış "yok"
+    # derse MEVCUT yapı yeni alanlarla EZİLİYORDU. Artık üç değerli: var → already_exists · ölçülemedi →
+    # exists_unmeasured (POST YOK) · yok → yarat. Aynı adlı şeffaf tablo da `already_exists` (existing_kind: table).
+    var, sonda, tur = _yapi_varligi(name)
+    steps["pre_check"] = sonda
+    if var is True:
         return {
             "ok": False,
             "error": "already_exists",
-            "message": f"Structure {name} zaten mevcut.",
+            "existing_kind": tur,
+            "message": (f"Structure {name} zaten mevcut — üzerine YAZILMADI." if tur == "structure" else
+                        f"{name} adında bir ŞEFFAF TABLO zaten var (/ddic/tables/) — yapı yaratılmadı, hiçbir şey "
+                        "yazılmadı. Farklı bir ad seç."),
             "name": name,
             "type": obj_type,
+            "steps": steps,
             "reviewer": warn["reviewer"],
         }
-    steps["pre_check"] = "not_exists"
+    if var is None:
+        return {
+            "ok": False,
+            "error": "exists_unmeasured",
+            "message": (f"Yapı varlığı ÖLÇÜLEMEDİ ({sonda}) — bu 'yok' DEĞİL; yaratma denenmedi (fail-closed, mevcut "
+                        "bir yapının üzerine yazma riski). Bağlantıyı kontrol edip tekrar dene ya da adt_get(structure) ile ölç."),
+            "name": name,
+            "type": obj_type,
+            "steps": steps,
+            "reviewer": warn["reviewer"],
+        }
 
     try:
         with _capture() as buf:
@@ -658,8 +695,17 @@ def adt_struct_create(
         return {"ok": False, "name": name, "type": obj_type, "steps": steps, "reviewer": warn["reviewer"]}
 
     if not created:
+        from sapadt.tools.atom import _create_hata_sinifi
+        kod, _aciklama = _create_hata_sinifi(steps["create"]["log"])
+        if kod == "already_exists":
+            # Ön kontrol "yok" dedi ama SAP POST'u "zaten var" diye reddetti (yarış ya da görünmeyen uç).
+            # `create_structure` bu durumda artık PUT ETMEZ (SAPObjectExistsError) → yazma / aktivasyon YOK.
+            return {"ok": False, "error": "already_exists", "existing_kind": None, "name": name, "type": obj_type,
+                    "steps": steps, "reviewer": warn["reviewer"],
+                    "message": (f"SAP yaratma isteğini 'zaten var' (AlreadyExists) diye reddetti — {name} mevcut; "
+                                "kaynak YAZILMADI, aktivasyon yapılmadı. ⛔ Tekrar deneme; adt_get(structure) ile incele.")}
         return {"ok": False, "name": name, "type": obj_type, "steps": steps, "reviewer": warn["reviewer"],
-                "message": "create_structure returned False"}
+                "error": kod, "message": "create_structure returned False — steps.create.log'a bak."}
 
     tail = _activate_and_verify(client, name, obj_type, verify_type=adres_tipi)
     steps["activate"] = {"ok": tail.get("activated", False), "log": tail.get("activate_log", "")}
