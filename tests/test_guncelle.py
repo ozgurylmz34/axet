@@ -2538,9 +2538,13 @@ class TopluOkumaTest(GeciciTest):
         yollar = ["a.txt", "d/b.txt", "d", "yok.txt"]
         tek = {y: (k.blob_sha("HEAD", y), k.disk_sha(y) if y != "d" else None) for y in yollar}
         with k.toplu_okuma(yollar):
-            self.assertIsNotNone(k._disk, "kalibrasyon: önbellek blok içinde açık olmalı")
+            # Kalibrasyon SOMUT (bug gate 2026-09-21): `_disk` toplu çağrı düşse de `{}` olur ve
+            # her soru tek-tek yola düşse bile "cevaplar aynı" kendiliğinden doğru çıkar ⇒ önbelleğin
+            # GERÇEKTEN dolduğu ölçülmezse hız kazancı (Z31) sessizce geri kayabilir.
+            self.assertEqual({"a.txt", "d/b.txt"}, set(k._disk), "disk önbelleği dolmadı")
             toplu = {y: (k.blob_sha("HEAD", y), k.disk_sha(y) if y != "d" else None)
                      for y in yollar}
+            self.assertTrue(k._agaclar, "ağaç önbelleği kullanılmadı")
         self.assertEqual(tek, toplu)
         self.assertIsNotNone(tek["d"][0], "dizin yolu tree sha döndürmeli (rev-parse ile aynı)")
 

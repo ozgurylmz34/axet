@@ -175,6 +175,8 @@ jobs:
       # uretmiyordu ⇒ yalniz yayinlanan agacta kirmizi olan bir test (ci-durum.json'un diskte
       # OLMADIGINI varsayan) public CI'da 3 yayin boyunca kirmiziydi, burada gorunmedi. Artik ayni
       # arac (`--yalniz-tara --ci-durum-yok`) calistirilip uretilenler agaca konur.
+      # BILINCLI YAN ETKI: `--yalniz-tara` yayin sizinti taramasini da kosar; BLOCKER (rc=1)
+      # bulursa bu kol KIRMIZI olur — yayinda zaten duracak bir sizinti PR'da gorunur.
       # Public depoda bu adim ATLANIR (maintenance/ yok, agac ZATEN public) — orada `kok` kolu
       # yayinlanan agacin kendisini olcer.
       - name: Public duzen - dislananlari sil + uretilenleri koy
@@ -195,9 +197,14 @@ jobs:
           Write-Host "uretilen: $u"
           git rm -r -q --ignore-unmatch $d.Split(' ')
           git add -A -- $u.Split(' ')
+          if ($LASTEXITCODE -ne 0) { throw "uretilen dosyalar stage edilemedi (rc=$LASTEXITCODE)" }
           git -c user.name=ci -c user.email=ci@example.invalid commit -q -m public-duzen
           if (Test-Path maintenance) { throw "maintenance/ hala var - public duzen kurulamadi" }
-          foreach ($f in $u.Split(' ')) { if (-not (Test-Path $f)) { throw "uretilen dosya yok: $f" } }
+          # Diskte olmasi yetmez: test_kur fixture'i HEAD'den klonlar ⇒ dosya COMMIT'te olmali.
+          foreach ($f in $u.Split(' ')) {
+            git ls-files --error-unmatch -- $f | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "uretilen dosya commit'te yok: $f" }
+          }
 
       - name: Kok takim
         if: matrix.takim == 'kok' || matrix.takim == 'kok-public'
