@@ -632,18 +632,48 @@ class DdicTextpool(unittest.TestCase):
                 "define structure zaxet_s_den {\n  belge    : abap.char(10);\n  aciklama : abap.char(40);\n}\n")
     YAPI_ALANLARI = [{"name": "BELGE", "type": "char10"}, {"name": "ACIKLAMA", "type": "char40"}]
 
-    def _yapi(self, var_once=False, kaynak=None, md_yapi=AKTIF_MD):
+    YAPI_SRC = "/sap/bc/adt/ddic/structures/zaxet_s_den/source/main"
+    TABLO_SRC = "/sap/bc/adt/ddic/tables/zaxet_s_den/source/main"
+
+    def _yapi(self, var_once=False, kaynak=None, md_yapi=AKTIF_MD, yon_ek=None, gercek_lib=False):
+        """`yon_ek(c)` None dışında bir Yanit dönerse o kullanılır (ön kontrol / POST senaryoları).
+
+        Varlık sondası (2026-09-21 düzeltmesi) `adt_get(structure)` = `/ddic/structures/<ad>/source/main` GET'i (+ 404'te
+        kardeş `/ddic/tables/` ucu); yapı yaratılmadan önce ikisi de 404, yaratıldıktan sonra yapı ucu 200.
+        `gercek_lib=True`: `create_structure` kütüphanenin GERÇEK `SAPClient` + `SAPADTClient` gövdesiyle koşar (POST/LOCK/PUT
+        çağrı listesine düşer)."""
         from sapadt.tools import composite
         eski = composite.run_reviewer_struct
         composite.run_reviewer_struct = lambda *a, **k: _pass()
         self.addCleanup(setattr, composite, "run_reviewer_struct", eski)
+        ref = {}
 
         def yon(c):
-            if c["method"] == "GET" and c["path"] == "/sap/bc/adt/ddic/structures/zaxet_s_den/source/main":
+            if yon_ek is not None:
+                y = yon_ek(c)
+                if y is not None:
+                    return y
+            if c["method"] == "GET" and c["path"] == self.YAPI_SRC:
+                if not ref["ist"].yaratildi:
+                    return Yanit(404, "")
                 return Yanit(200, self.YAPI_DDL if kaynak is None else kaynak)
+            if c["method"] == "POST" and c["path"] == "/sap/bc/adt/ddic/structures":
+                ref["ist"].yaratildi = True
+                return Yanit(201, "")
+            if c["method"] == "PUT":
+                return Yanit(200, "")
             return Yanit(404, "")
         adt, ist = self.kur(yon)
+        ref["ist"] = ist
         ist.yaratildi = var_once
+        if gercek_lib:
+            from sap_adt_lib import SAPADTClient  # type: ignore
+            from sap_client import SAPClient  # type: ignore
+            k = SAPADTClient
+            for m in ("create_structure", "_validate_structure_fields", "_validate_transport"):
+                setattr(adt, m, getattr(k, m).__get__(adt))
+            adt._retry_request = lambda fn, *_a, **_k: fn()
+            ist.create_structure = lambda *a, **kw: SAPClient.create_structure(ist, *a, **kw)
 
         def md(name, tip):
             if tip == "structure" and ist.yaratildi:
@@ -680,6 +710,100 @@ class DdicTextpool(unittest.TestCase):
               and r2.get("steps", {}).get("verify", {}).get("reason", "").startswith("sap_version=inactive"))
         self.kaydet("S3 yapı: aktif ama yer tutucu kabuk / sürüm inactive → FAIL (asla sahte OK)",
                     "placeholder_shell · inactive", f"{cv} · {r2.get('steps', {}).get('verify')}", ok)
+
+    # ── Üzerine yazma kapısı (2026-09-21, bug gate): `_exists` hata/None'da "yok" diyordu (fail-open) ve
+    # `create_structure` POST 405 AlreadyExists'te `pass` → LOCK → PUT → aktivasyon yapıyordu ⇒ ön kontrol yanlış "yok"
+    # derse kullanıcının MEVCUT yapısı yeni alanlarla ezilip aktive ediliyordu. Kırmızı-önce (a)(b)(c) + kardeş uç.
+    @staticmethod
+    def _yazma_izi(adt):
+        return [c["method"] + " " + c["path"] for c in adt.cagri
+                if c["path"] in ("create_structure", "lock_object") or c["method"] in ("PUT",)
+                or c["path"].startswith("activate") or (c["method"] == "POST" and "/ddic/" in c["path"])]
+
+    def test_S4_yapi_on_kontrol_olculemedi_POST_yok(self):
+        def ek(c):
+            if c["method"] == "GET" and c["path"] == self.YAPI_SRC:
+                return Yanit(500, "sunucu hatası")
+            return None
+        adt, r = self._yapi(yon_ek=ek)
+        iz = self._yazma_izi(adt)
+        ok = (r.get("ok") is False and r.get("error") == "exists_unmeasured" and iz == []
+              and str(r.get("steps", {}).get("pre_check", "")).startswith("unavailable"))
+        self.kaydet("S4 yapı (a): ön kontrol ÖLÇÜLEMEDİ (GET 500) → exists_unmeasured, POST/kilit/PUT/aktivasyon YOK",
+                    "exists_unmeasured · yazma 0", f"ok={r.get('ok')} err={r.get('error')} "
+                    f"pre={r.get('steps', {}).get('pre_check')} iz={iz}", ok)
+
+    def test_S5_yapi_POST_zaten_var_PUT_yok(self):
+        def ek(c):
+            if c["method"] == "POST" and c["path"] == "/sap/bc/adt/ddic/structures":
+                return Yanit(405, "<exc:exception><type id=\"ExceptionResourceAlreadyExists\"/>"
+                                  "<localizedMessage>AlreadyExists</localizedMessage></exc:exception>")
+            return None
+        adt, r = self._yapi(yon_ek=ek, gercek_lib=True)
+        put = [c for c in adt.cagri if c["method"] == "PUT"]
+        kilit = [c for c in adt.cagri if c["path"] == "lock_object"]
+        akt = [c for c in adt.cagri if c["path"].startswith("activate")]
+        post = [c for c in adt.cagri if c["method"] == "POST" and c["path"] == "/sap/bc/adt/ddic/structures"]
+        ok = (r.get("ok") is False and r.get("error") == "already_exists" and len(post) == 1
+              and put == [] and kilit == [] and akt == [] and "YAZILMADI" in str(r.get("message")))
+        self.kaydet("S5 yapı (b): ön kontrol 'yok' ama POST 405 AlreadyExists → already_exists, LOCK/PUT/aktivasyon YOK",
+                    "already_exists · PUT 0 · kilit 0 · akt 0",
+                    f"ok={r.get('ok')} err={r.get('error')} post={len(post)} put={len(put)} kilit={len(kilit)} "
+                    f"akt={len(akt)}", ok)
+
+    def test_S6_yapi_ayni_adli_seffaf_tablo_var(self):
+        def ek(c):
+            if c["method"] == "GET" and c["path"] == self.TABLO_SRC:
+                return Yanit(200, "define table zaxet_s_den {\n  key mandt : mandt not null;\n}\n")
+            return None
+        adt, r = self._yapi(yon_ek=ek)
+        iz = self._yazma_izi(adt)
+        ok = (r.get("ok") is False and r.get("error") == "already_exists" and iz == []
+              and r.get("existing_kind") == "table")
+        self.kaydet("S6 yapı (c): aynı adlı ŞEFFAF TABLO var (/ddic/tables 200) → already_exists(table), yazma YOK",
+                    "already_exists · table · yazma 0",
+                    f"ok={r.get('ok')} err={r.get('error')} kind={r.get('existing_kind')} iz={iz}", ok)
+
+    def test_S7_yapi_kardes_tablo_ucu_olculemedi(self):
+        def ek(c):
+            if c["method"] == "GET" and c["path"] == self.TABLO_SRC:
+                return Yanit(503, "geçici")
+            return None
+        adt, r = self._yapi(yon_ek=ek)
+        iz = self._yazma_izi(adt)
+        ok = r.get("ok") is False and r.get("error") == "exists_unmeasured" and iz == []
+        self.kaydet("S7 yapı: yapı ucu 404 ama kardeş tablo ucu ÖLÇÜLEMEDİ (503) → exists_unmeasured, yazma YOK",
+                    "exists_unmeasured · yazma 0", f"ok={r.get('ok')} err={r.get('error')} "
+                    f"pre={r.get('steps', {}).get('pre_check')} iz={iz}", ok)
+
+    def test_S8_lib_create_structure_zaten_var_PUT_etmez(self):
+        """Kütüphane düzeyi: POST 405 / 400 + AlreadyExists → SAPObjectExistsError, kilit/PUT YOK; 201 → PUT var (kontrol)."""
+        import sap_adt_lib  # type: ignore
+        from types import SimpleNamespace
+        sonuc = []
+        for kod in (405, 400, 201):
+            iz = []
+            c = object.__new__(sap_adt_lib.SAPADTClient)
+            c.url, c.language, c.csrf_token, c.timeout_default = "http://127.0.0.1:9", "TR", "t", 1
+            c._get_headers = lambda *_a, **_k: {}
+            c._retry_request = lambda fn, *_a, **_k: fn()
+            c.lock_object = lambda *_a, **_k: iz.append("lock") or "kilit"
+            c.unlock_object = lambda *_a, **_k: iz.append("unlock")
+            govde = "AlreadyExists" if kod != 201 else ""
+            c.session = SimpleNamespace(
+                post=lambda *_a, _k=kod, _g=govde, **_kw: SimpleNamespace(status_code=_k, headers={}, text=_g),
+                put=lambda *_a, **_k: iz.append("put") or SimpleNamespace(status_code=200, text=""))
+            try:
+                c.create_structure("ZAXET_S_DEN", self.YAPI_ALANLARI, "KKD deneme yapısı", "ZAXET_PKG", TR)
+                hata = None
+            except Exception as exc:  # noqa: BLE001
+                hata = exc
+            sonuc.append((kod, type(hata).__name__ if hata else None, iz))
+        ok = (sonuc[0][1] == "SAPObjectExistsError" and sonuc[0][2] == []
+              and sonuc[1][1] == "SAPObjectExistsError" and sonuc[1][2] == []
+              and sonuc[2][1] is None and "put" in sonuc[2][2])
+        self.kaydet("S8 lib create_structure: POST 405/400 AlreadyExists → SAPObjectExistsError, kilit/PUT YOK (201'de PUT)",
+                    "Exists ×2 · iz [] · 201 PUT", str(sonuc), ok)
 
     # Canlı (r2_21_ttyp2 / r2_23_ttyp4): ilkel satırda POST tanımı düşürdü; SAP varsayılanı CHAR·000001 kaldı →
     # `durum:"uyumsuz"` → onarım hiç denenmedi. Readback istenenden FARKLIYSA da bir kez If-Match PUT denenmeli.
@@ -803,6 +927,19 @@ class DdicTextpool(unittest.TestCase):
               and ap.get("ok") is None and bool(r.get("activation_notice")))
         self.kaydet("P10 textpool: son worklist sondası ölçülemedi → readback hükmü + ÖLÇÜLEMEDİ notu görünür",
                     "ok · final None · notice", f"ok={r.get('ok')} ap={ap} af={af} n={r.get('activation_notice')}", ok)
+
+    def test_P12_textpool_prog_hatasi_ve_son_sonda_olculemedi_FAIL(self):
+        """P10'un kardeşi: PROG/P gövdesinde GERÇEK E mesajı + son worklist sondası ölçülemedi → ok:false
+        (`activation_unverified`); aktif readback doğru görünse de program aktivasyon hatası 'başarı' sayılmaz."""
+        akt = {"success": False, "aktivasyon_hukmu": False, "hukum_sebep": "hata_mesaji",
+               "errors": [{"type": "E", "message": "Sözdizimi hatası satır 3"}]}
+        adt, r = self._tp_wl(Yanit(500, "x"), akt, symbols=self.SEM)
+        ap, af = r["steps"].get("activate_prog", {}), r["steps"].get("activation_final", {})
+        ok = (r.get("ok") is False and r.get("error") == "activation_unverified"
+              and ap.get("outcome") == "failed" and af.get("ok") is None
+              and "Sözdizimi hatası satır 3" in str(r.get("message")) and bool(r.get("activation_notice")))
+        self.kaydet("P12 textpool: PROG/P gerçek E hatası + son sonda ölçülemedi → activation_unverified (ok:false)",
+                    "activation_unverified", f"ok={r.get('ok')} err={r.get('error')} msg={str(r.get('message'))[:80]}", ok)
 
     def test_P11_textpool_yazilmadiysa_written_bos(self):
         adt, r = self._tp(canli={"symbols": "@MaxLength:5\r\nB99=Eski!"}, symbols=self.SEM, selections=self.SEC)

@@ -292,6 +292,17 @@ def adt_textpool_write(
         out["activation_notice"] = (f"PX sonrası worklist sondası ÖLÇÜLEMEDİ ({son_sonda}) — program/metin havuzunun "
                                     "aktive-bekleyen listesinde kalmadığı DOĞRULANMADI; hüküm yalnız aktif sürüm "
                                     "readback'ine dayanıyor. `adt_inactive_objects` ile elle bak.")
+    if tamam and son_ok is None and steps["activate_prog"].get("outcome") == "failed":
+        # Bug gate (2026-09-21): PROG/P gövdesinde GERÇEK hata (E mesajı / istisna) + PX sonrası sonda ölçülemedi →
+        # eskiden `ok:true` (yalnız readback'e dayanıyordu). Program aktivasyon hatası doğrulanmadan başarı sayılmaz.
+        hatalar = steps["activate_prog"].get("errors") or [
+            steps["activate_prog"].get("message") or steps["activate_prog"].get("reason") or "ayrıntı yok"]
+        out["ok"] = False
+        out["error"] = "activation_unverified"
+        out["message"] = ("Metinler aktif sürümde doğru görünüyor AMA program aktivasyonu HATA verdi ("
+                          + "; ".join(str(h) for h in hatalar if h)
+                          + ") ve PX sonrası worklist sondası ÖLÇÜLEMEDİ — aktivasyonun tamamlandığı doğrulanamadı. "
+                            "steps.activate_prog'u düzelt, adt_inactive_objects ile bak.")
     if tamam and eksik_aktivasyon:
         out["error"] = "activation_incomplete"
         out["message"] = ("Metinler aktif sürümde doğru AMA PX sonrası worklist şunları hâlâ inaktif gösteriyor: "

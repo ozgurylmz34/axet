@@ -1312,21 +1312,36 @@ def _yeni_kabuk(tip: str, object_type: str, name: str, package: str, transport: 
             "exists_after": s["var"], "exists_probe": s["sonda"], "client_log": log_text}
 
 
+def _varlik_olcumu(name: str, object_type: str) -> tuple[Optional[bool], str, dict]:
+    """`_varlik_sondasi` + ham `adt_get` yanıtı (ör. tablo/yapı kardeş ucunda bulunduysa `resolved_type`).
+
+    ⛔ Tablo/yapı kardeş ucu (2026-09-21): ilk uç 404 verip KARDEŞ uç ÖLÇÜLEMEDİYSE (`sibling_probe: unavailable:…`)
+    `adt_get` `exists:false` döner ama yokluk yalnız ilk uç için kanıtlıdır → burada `None` (ÖLÇÜLEMEDİ). Eskiden
+    `False` dönüyordu: aynı adlı tablo/yapı orada duruyor olabilirken yaratma kapısı "yok" okuyordu.
+    """
+    try:
+        p = adt_get(name=name, object_type=object_type, include_source=False)
+    except Exception as exc:  # noqa: BLE001 — teshis bozulmasin
+        return None, "unavailable:%s" % type(exc).__name__, {}
+    if p.get("ok") is True and p.get("exists") is True:
+        return True, "checked_found", p
+    if p.get("ok") is True and p.get("exists") is False:
+        kardes = p.get("sibling_probe")
+        if isinstance(kardes, str) and kardes.startswith("unavailable"):
+            return None, "unavailable:sibling_%s" % kardes.split(":", 1)[-1], p
+        return False, "checked_absent", p
+    return None, "unavailable:%s" % (p.get("error") or "bilinmeyen"), p
+
+
 def _varlik_sondasi(name: str, object_type: str) -> tuple[Optional[bool], str]:
     """Create hatasi SONRASI objenin GERCEKTEN var olup olmadigini olc.
 
     Uc-degerli: `True` (var) · `False` (yok) · `None` (OLCULEMEDI — "yok" DEGIL).
     ⛔ `None`'i "yaratilmadi" diye okuma; bu ayrimin kaybi kaydin ta kendisidir.
+    Tablo/yapıda kardeş uç ölçülemezse de `None` (bkz. `_varlik_olcumu`).
     """
-    try:
-        p = adt_get(name=name, object_type=object_type, include_source=False)
-    except Exception as exc:  # noqa: BLE001 — teshis bozulmasin
-        return None, "unavailable:%s" % type(exc).__name__
-    if p.get("ok") is True and p.get("exists") is True:
-        return True, "checked_found"
-    if p.get("ok") is True and p.get("exists") is False:
-        return False, "checked_absent"
-    return None, "unavailable:%s" % (p.get("error") or "bilinmeyen")
+    var, sonda, _p = _varlik_olcumu(name, object_type)
+    return var, sonda
 
 
 @profil_tool()

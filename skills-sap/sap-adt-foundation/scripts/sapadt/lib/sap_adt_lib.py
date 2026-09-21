@@ -5803,8 +5803,18 @@ class SAPADTClient:
         object_url = f'/sap/bc/adt/ddic/structures/{name.lower()}'
         if response.status_code in [200, 201]:
             object_url = response.headers.get('Location', object_url)
-        elif response.status_code == 405 and 'AlreadyExists' in response.text:
-            pass  # zaten var → source'u yine deterministik PUT ile (yeniden) yaz
+        elif response.status_code in (400, 405) and 'AlreadyExists' in (response.text or ''):
+            # ⛔ ÜZERİNE YAZMA YOK (2026-09-21, bug gate): eskiden `pass` → LOCK → PUT ile MEVCUT yapının kaynağı
+            # yeni alanlarla EZİLİYORDU (çağıran aracın ön kontrolü yanlış "yok" derse — bkz. `adt_struct_create`).
+            # Tek çağıran `SAPClient.create_structure` → `adt_struct_create`; "idempotent yeniden yaz"a dayanan
+            # başka çağıran YOK (grep 2026-09-21). Mevcut yapıyı değiştirmek bilinçli ayrı yoldur (adt_push_source).
+            raise SAPObjectExistsError(
+                f"Structure {name} already exists (SAP {response.status_code} AlreadyExists) — "
+                f"üzerine YAZILMADI (kilit/PUT yok)",
+                status_code=response.status_code,
+                response_text=(response.text or '')[:500],
+                endpoint='/sap/bc/adt/ddic/structures'
+            )
         else:
             raise SAPADTError(
                 f"Failed to create structure {name}",
