@@ -199,8 +199,9 @@ jobs:
           git add -A -- $u.Split(' ')
           if ($LASTEXITCODE -ne 0) { throw "uretilen dosyalar stage edilemedi (rc=$LASTEXITCODE)" }
           git -c user.name=ci -c user.email=ci@example.invalid commit -q -m public-duzen
+          if ($LASTEXITCODE -ne 0) { throw "public-duzen commit'i basarisiz (rc=$LASTEXITCODE)" }
           if (Test-Path maintenance) { throw "maintenance/ hala var - public duzen kurulamadi" }
-          # Diskte olmasi yetmez: test_kur fixture'i HEAD'den klonlar ⇒ dosya COMMIT'te olmali.
+          # Diskte olmasi yetmez: test_kur fixture'i HEAD'den klonlar ⇒ dosya IZLENIYOR olmali (commit sonrasi index = HEAD).
           foreach ($f in $u.Split(' ')) {
             git ls-files --error-unmatch -- $f | Out-Null
             if ($LASTEXITCODE -ne 0) { throw "uretilen dosya commit'te yok: $f" }
