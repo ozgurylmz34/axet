@@ -2104,7 +2104,8 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md",
-        "skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py"
+        "skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py",
+        "skills-sap/sap-ui5-user-guide/references/tuzaklar.md"
       ],
       "party": 4,
       "status": "tamam",
