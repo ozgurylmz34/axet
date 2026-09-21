@@ -243,7 +243,7 @@ class KdOrtamConfigTest(unittest.TestCase):
     def test_config_farkli_sayilanlar(self):
         for veri in ({"browser": {"browserName": "firefox", "launchOptions": {"channel": "chrome"}}},
                      {"browser": {"launchOptions": {"channel": "chrome", "executablePath": "C:/x/chrome.exe"}}},
-                     {"browser": {"cdpEndpoint": "http://x", "launchOptions": {"channel": "chrome"}}},
+                     {"browser": {"cdpEndpoint": "cdp-uc-noktasi", "launchOptions": {"channel": "chrome"}}},
                      {"browser": {"browserName": "chromium"}}, {"allowUnrestrictedFileAccess": True}, []):
             self.assertFalse(kd_ortam._uygun_mu(veri), veri)
         self.assertTrue(kd_ortam._uygun_mu(HEDEF))
