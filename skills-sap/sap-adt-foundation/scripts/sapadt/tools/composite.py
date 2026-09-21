@@ -121,22 +121,37 @@ def _paket_reddi(name, obj_type) -> dict:
             "message": "package boş ya da yalnız boşluk — hedef paket zorunlu (paket yaratılmaz). SAP'ye gidilmedi."}
 
 
-# Z52: kütüphanenin `_retry_request`'i 5xx / zaman aşımında aynı POST'u SESSİZCE yeniden dener; tek iz stdout'taki
-# `[RETRY] … Server error 5xx` / `Timeout` satırıdır (araç bunu `_capture` ile yakalar).
-_RETRY_5XX_IZI = re.compile(r"\[RETRY\][^\n]*(?:Server error 5\d\d|Timeout)", re.IGNORECASE)
+# Z52: kütüphanenin `_retry_request`'i 5xx / zaman aşımı / bağlantı hatasında aynı POST'u SESSİZCE yeniden dener.
+# İki iz, AYNI kümeye hizalı (bug gate v0.5.1: bağlantı hatası kolu eskiden kaçıyordu, log "ÖNCEKİ DENEME" derken kod düz
+# `already_exists` diyordu):
+#  ① BİRİNCİL — kütüphanenin kendi hükmü: `_zaten_var_hatasi` eki `ONCEKI_DENEME_IZI` ile başlar ve YALNIZ
+#    `_son_yeniden_denemeler` doluysa konur (sarmalayıcı istisnayı yutar, `[ERROR] <mesaj>` basar → log'da görünür).
+#  ② YEDEK — `[RETRY]` satırı, kütüphanenin kaydettiği ÜÇ sebeple sınırlı (CSRF hariç: istek işlenmedi).
+_RETRY_IZI = re.compile(r"\[RETRY\][^\n]*(?:Server error 5\d\d|Timeout|Connection error)", re.IGNORECASE)
+
+
+def _yeniden_deneme_izi(log_text: str) -> bool:
+    metin = log_text or ""
+    try:
+        from sap_adt_lib import ONCEKI_DENEME_IZI  # type: ignore
+    except Exception:  # noqa: BLE001 — kütüphane içe alınamazsa yalnız yedek iz
+        ONCEKI_DENEME_IZI = None
+    if ONCEKI_DENEME_IZI and ONCEKI_DENEME_IZI in metin:
+        return True
+    return bool(_RETRY_IZI.search(metin))
 
 
 def _zaten_var_yaniti(tur: str, name: str, obj_type: str, log_text: str, **ek) -> dict:
     """POST AlreadyExists ile reddedildi (ön kontrol "yok" demişti) → yazma/aktivasyon YOK. İki ayrı kod:
 
-    · `already_exists_after_retry` — aynı çağrıda önce 5xx/zaman aşımı + yeniden deneme oldu: ilk POST'u SAP işlemiş ve
+    · `already_exists_after_retry` — aynı çağrıda önce 5xx/zaman aşımı/bağlantı hatası + yeniden deneme oldu: ilk POST'u SAP işlemiş ve
       kabuğu BU çağrı yaratmış olabilir (Z52; başkasının objesi olduğu KANITLANMADI).
     · `already_exists` — yeniden deneme izi yok: yarış ya da ön kontrolün görmediği uç.
     """
-    if _RETRY_5XX_IZI.search(log_text or ""):
+    if _yeniden_deneme_izi(log_text):
         return {"ok": False, "error": "already_exists_after_retry", "existing_kind": None, "own_shell_possible": True,
                 "name": name, "type": obj_type, **ek,
-                "message": (f"İlk yaratma isteği sunucu hatası / zaman aşımı aldı, kütüphane yeniden denedi ve SAP 'zaten var' "
+                "message": (f"İlk yaratma isteği sunucu hatası / zaman aşımı / bağlantı hatası aldı, kütüphane yeniden denedi ve SAP 'zaten var' "
                             f"(AlreadyExists) dedi — {tur} {name} büyük olasılıkla ÖNCEKİ DENEMENİN yarattığı kabuk "
                             "(başkasının objesi olduğu kanıtlanmadı). Kaynak YAZILMADI, aktivasyon yapılmadı. "
                             f"adt_get ile bak: inaktif/boş kabuksa kullanıcı onayıyla silip yeniden yarat. ⛔ Kör tekrar yapma.")}
