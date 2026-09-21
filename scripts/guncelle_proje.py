@@ -256,6 +256,23 @@ class Proje:
             ana.rmdir()
             ana = ana.parent
 
+    def damga_plani(self) -> dict | None:
+        """Damga yenilenmeli mi — şablon dosyalarından BAĞIMSIZ ölçülür (Z55).
+
+        ⛔ Z55 (2026-09-22, canlı vaka): v0.5.0 kanonik metni `AXET-SAP-0.4.0` yaptı ama şablon
+        dosyaları v0.1.0'dan beri değişmemişti ⇒ `plan` "işlem gerektiren dosya yok" deyip rc=1
+        ile plan.json YAZMADAN çıkıyordu; damgayı yenileyen tek yer (`kapanis`) plan.json istediği
+        için hiç koşmuyordu. Proje `SAP-STAMP-ID: AXET-SAP-0.3.0` ile kaldı, `doctor` FAIL verdi.
+        Artık eski/eksik damga planın AYRI bir kalemidir: plan onu gösterir, onay onu da kapsar,
+        `kapanis` onu basar. Döner: None (damga güncel ya da ilgisiz) | {durum, ayrinti}.
+        Bozuk damga buraya gelmez — `damga_denetle` DURDURUR (çağıran önce onu koşar)."""
+        if not self.damga_gerekli or not self.agents.is_file():
+            return None
+        st, ayrinti = sap_stamp.denetle(self.agents.read_text(encoding="utf-8", errors="replace"))
+        if st in ("farkli", "yok"):
+            return {"durum": st, "ayrinti": ayrinti or "AGENTS.md'de damga yok"}
+        return None
+
     def damga_denetle(self) -> None:
         """Bozuk damga: `new_project.py:132` ile aynı hüküm — DUR, dokunma."""
         if not self.damga_vardi:
@@ -506,7 +523,8 @@ def komut_plan(b: Baglam, args) -> int:
             dosyalar.append(kayit)
 
     paket_satiri = _paket_sablonu_satiri(b)
-    if not dosyalar:
+    damga = p.damga_plani()     # Z55: şablon güncel olsa da damga eskiyse plan YAZILIR
+    if not dosyalar and not damga:
         print(f"Proje şablonu güncel: işlem gerektiren dosya yok "
               f"(şablon {b.yeni_commit[:10]}, sayaçlar: "
               + ", ".join(f"{k}={v}" for k, v in sorted(sayaclar.items())) + ")")
@@ -517,7 +535,8 @@ def komut_plan(b: Baglam, args) -> int:
         "surum": 1, "proje": p.kok.as_posix(), "ad": p.ad, "sap": p.sap,
         "taban_kaynagi": b.taban_kaynagi, "taban_commit": b.taban_commit,
         "yeni_commit": b.yeni_commit, "sablon_yollari": b.sablon_yollari,
-        "damgali": p.damga_gerekli, "ad_kaynagi": p.ad_kaynagi, "dosyalar": dosyalar,
+        "damgali": p.damga_gerekli, "damga": damga,
+        "ad_kaynagi": p.ad_kaynagi, "dosyalar": dosyalar,
         "sayaclar": dict(sorted(sayaclar.items())),
         "paket_sablonu": paket_satiri, "uretim": _simdi(),
     }
@@ -539,6 +558,9 @@ def _plan_tablosu(plan: dict) -> None:
           f"taban: {taban}")
     for d in plan["dosyalar"]:
         print(f"  {d['vaka']:9s} {d['yol']}")
+    if plan.get("damga"):
+        print(f"  {'DAMGA':9s} AGENTS.md — kesin yasak damgası {plan['damga']['durum']}: "
+              f"{plan['damga']['ayrinti']} → onaydan sonra `kapanis` kanonik damgayı yeniden basar")
     print("Sayaçlar: " + ", ".join(f"{k}={v}" for k, v in plan["sayaclar"].items()))
     print("  " + plan["paket_sablonu"])
     if plan["taban_kaynagi"] != "kayit":
@@ -790,6 +812,7 @@ def komut_kapanis(b: Baglam, args) -> int:
 
     # damga: gövde birleşiminden SONRA yeniden basılır ve denetlenir (§2b + §9)
     damga_satiri = "damga: proje SAP değil ve damga yok — ilgisiz"
+    damga_yenilendi = False
     if p.damga_gerekli:
         try:
             p.damga_denetle()
@@ -797,6 +820,7 @@ def komut_kapanis(b: Baglam, args) -> int:
             yeni, onceki = sap_stamp.damgala(metin)
             if onceki != "guncel":
                 p.agents.write_text(yeni, encoding="utf-8")
+                damga_yenilendi = True
             st, ayrinti = sap_stamp.denetle(
                 p.agents.read_text(encoding="utf-8", errors="replace"))
             damga_satiri = f"damga: {st} {ayrinti}".strip()
@@ -828,8 +852,24 @@ def komut_kapanis(b: Baglam, args) -> int:
         rapor += ["", "## Ekip reposu",
                   "Bu değişiklikler proje reposuna commit edilecek; ekip arkadaşların pull edince "
                   "onlara da gelir. Commit KULLANICININ onayıyla atılır; push asla."]
-    rapor += ["", "## Kullanıcının kendi terminalinde",
-              f"Davranış yüzeyi değiştiyse: python \"{AXET_HOME / 'scripts' / 'behavior_manifest.py'}\" generate"]
+    # Z48 (ürün kararı): `guncelle-proje` manifest'i KENDİSİ yenilemez — davranış yüzeyi onayı
+    # bilinçli olarak kullanıcının terminalinde kalır; aksi güvenlik tasarımını deler. Yalnız tam
+    # komut verilir.
+    manifest_komutu = (f"python \"{AXET_HOME / 'scripts' / 'behavior_manifest.py'}\" generate "
+                       f"--project-dir \"{p.kok}\"")
+    yazilan = [d["yol"] for d in plan["dosyalar"]
+               if durum["dosyalar"].get(d["yol"], {}).get("durum") == "dogrulandi"
+               and durum["dosyalar"].get(d["yol"], {}).get("karar") != "yerel"]
+    sebepler = (["AGENTS.md kesin yasak damgası yenilendi"] if damga_yenilendi else []) + (
+        [f"{len(yazilan)} şablon dosyası yazıldı"] if yazilan else [])
+    if sebepler:
+        rapor += ["", "## Kullanıcının kendi terminalinde — GEREKLİ",
+                  f"Davranış yüzeyi DEĞİŞTİ ({'; '.join(sebepler)}). `doctor` bunu onaysız "
+                  "değişiklik olarak gösterecek. Onayı YALNIZ sen verirsin (aXet oturumu "
+                  "`generate` koşmaz):", manifest_komutu]
+    else:
+        rapor += ["", "## Kullanıcının kendi terminalinde",
+                  f"Davranış yüzeyi değiştiyse: {manifest_komutu}"]
     if eksikler:
         rapor += ["", "## KAPANMADI — eksikler"] + [f"- {e}" for e in eksikler]
     if kabul:

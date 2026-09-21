@@ -122,6 +122,12 @@ def korumali_ortam(kum: Path) -> dict:
 
 MOTOR_CIKAR = ("<!-- MOTOR-CIKAR:BASLA -->", "<!-- MOTOR-CIKAR:BITIR -->")
 
+# Güncellenmiş klonun KENDİ `sap_stamp.denetle`si ile proje AGENTS.md damgası (doctor'ın check_stamp'ı
+# da bunu çağırır, scripts/doctor.py). 0 = guncel · 1 = başka her durum (durum + ayrıntı basılır).
+DAMGA_OLC = ("import sys; sys.path.insert(0, sys.argv[1]); import sap_stamp; "
+             "st, ay = sap_stamp.denetle(open(sys.argv[2], encoding='utf-8').read()); "
+             "print('damga:', st, ay); sys.exit(0 if st == 'guncel' else 1)")
+
 
 def motor_komutlari(pub: Path) -> list[str]:
     """ADAYIN `skills/guncelle/SKILL.md` MOTOR-CIKAR bloğu — aXet'in çalıştırdığı komutların ta kendisi.
@@ -161,7 +167,7 @@ def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
         isaret = "OK  " if r.returncode in beklenen else "FAIL"
         print(f"  [{isaret}] {ad:<22} rc={r.returncode}  {sure:6.1f} sn")
         for satir in cikti.splitlines():
-            if satir.startswith(("[İKAME]", "[ÖLÇ]", "[KAPSANDI]", "DUR", "FAIL", "[FAIL]")):
+            if satir.startswith(("[İKAME]", "[ÖLÇ]", "[KAPSANDI]", "DUR", "FAIL", "[FAIL]", "damga:")):
                 print(f"         {satir[:220]}")
         return r.returncode
 
@@ -225,7 +231,12 @@ def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
     if rc == 0:
         proje_adim("proje onkontrol", "onkontrol")
         proje_adim("proje onay", "onay", "--kabul", "PROVA")
-        proje_adim("proje plan", "plan", beklenen=(0, 1))
+        # Z55: plan 1 ("güncel") dönse bile damga AŞAĞIDA ayrıca ölçülür — v0.5.0'da şablon güncelken
+        # plan 1 dönüyor ve eski damga sessizce kalıyordu; prova yalnız plan rc'sine bakıyordu.
+        if proje_adim("proje plan", "plan", beklenen=(0, 1)) == 0:
+            proje_adim("proje uygula", "uygula", "--otomatik")
+            proje_adim("proje kapanis", "kapanis")
+        kos("proje damga = kanonik", ["-c", DAMGA_OLC, str(kon / "scripts"), str(proje / "AGENTS.md")])
     rapor = kon / ".axet-guncelleme" / "RAPOR.md"
     kalan = [a["ad"] for a in adimlar if not a["tamam"]]
     hukum = "TEMİZ" if rc == 0 and not kalan else "FAIL"
@@ -298,10 +309,13 @@ def main() -> int:
     print("KAPSAM — bakılan: aday yayının public geçmişe kurulabilmesi (yayin_hazirla: tarama + "
           "kalem-diff kapsamı), her tabandan TEMİZ bir tüketici klonunda motorun adım 2-14'ü, "
           "kapanış hükmü = 0, temiz klonda yargı vakası çıkmaması; ardından eski sürümle açılmış "
-          "bir SAP projesinde `guncelle_proje` onkontrol + onay + plan.")
+          "bir SAP projesinde `guncelle_proje` onkontrol + onay + plan (+ plan 0 ise uygula --otomatik "
+          "+ kapanış) ve SONRA proje AGENTS.md damgasının güncel klonun kanonik metniyle eşleşmesi "
+          "(`sap_stamp.denetle`; Z55).")
     print("KAPSAM — bakılmayan: YEREL DEĞİŞİKLİKLİ tüketici (yargı vakaları, kartlar, isaretle), "
           "aXet modelinin GUNCELLE.md'yi doğru izlemesi, kur.ps1 ile kurulmuş gerçek makine durumu "
-          "(global config, gerçek axet-code), `%guncelle-proje`nin uygula/kapanış adımları, "
+          "(global config, gerçek axet-code), `%guncelle-proje`de yargı vakaları (temiz projede beklenmez), "
+          "`behavior_manifest.py generate` (kullanıcının terminalinde koşar; prova koşmaz), "
           + ("CI ikamesi yolu (--tam-olcum verildi)." if a.tam_olcum else
              "testlerin tüketicide gerçekten koşulması (sentetik CI kaydı ⇒ ölçümler İKAME edilir; "
              "o yol için --tam-olcum)."))
