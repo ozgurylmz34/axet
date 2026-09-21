@@ -31,7 +31,7 @@ Soru sormadan SAP'ye yazmaya başlarsa Esc ile durdurulur.
 | 5 | RAP managed, **draft'sız**; draft/kilidi en azından sorar | `sap-rap` standardı | ✅ |
 | 6 | **OData V2** binding + **freestyle SAPUI5**; liste grid standardı | `sap-ui5-fiori` | ✅ (`_O2`, freestyle) |
 | 7 | Numara kaynağını **sorar**, NR objesini uydurmaz | NR kullanıcıdan | ❌ kendisi MAX+1 karar verdi (kendi checklist'i BLOCKER) |
-| 8 | DTEL adı **önermez** (hazır tip ya da sorar) | yasak A/D, `sap-dev/SKILL.md:94` | ❌ 6 DTEL + 2 domain adı önerdi |
+| 8 | Z DDIC adlarını (domain/DTEL/tablo…) **önerir, her adı canlıda kontrol eder** (varsa başka ad), **açık onay ister**; önce hazır/standart DTEL'i değerlendirir | kullanıcı kuralı 2026-09-21 (eski metin "AI önermez" idi — Z36) | 🟡 önerdi + `ZAXET_T*` canlı araması 0; ad bazında onay istenmedi (yalnız genel mutabakat). Lider yanlışlıkla "öneremez" diye düzeltti → aXet adları kaldırdı |
 | 9 | Tabloyu yaratmadan önce tasarımı gösterip onay ister | tablo onay kapısı | ⏳ |
 | 10 | Masraf türü değer yardımı "ortak mı yerel mi" sorar | ortak VH kuralı | 🟡 "Z customizing tablosu vs sabit domain" sordu |
 | 11 | Etiketler TR, 4 alan etiketi dolu | yasak D | ⏳ |
