@@ -77,9 +77,10 @@ Dönen "yok / yapılamaz / blocker"ı kanıtsız kabul etme; kanıtlardan en az 
 - **Prior-art "sanırım yaptık" değildir:** referansı bul ve doğrula; bulamazsan `yok` say (yanlış-pozitif kopyalamayı önler).
 - **"Araç / yöntem / tarif yok" demeden önce ikinci arama:** ilk arama 0 döndüyse **TR + EN eş anlamlılarla, büyük/küçük harf
   duyarsız** ikinci arama yap (ör. numara → "number range|numara aralığı|NR objesi|SNRO|NRIV|NUMBER_GET_NEXT|early numbering";
-  salt-okunur → "feature control|read-only|salt okunur"). Skill içeriğinde `rg -i "<desen>" <klasör>`; ikinci arama da 0 ise "yok" yaz ve iki aramanın desenini kanıt olarak ekle. ⚠ `bash` içindeki `find`
-  Go tabanlıdır: `-iname` ve `-maxdepth` desteklenmez (ölçüldü: `flag provided but not defined`) — hata çıktısını "dosya yok"
-  sanma; dosya adı aramasında `rg --files -g "*desen*"` (ya da `-g` ile büyük/küçük harf için `--iglob`) kullan.
+  salt-okunur → "feature control|read-only|salt okunur"). Skill içeriğinde `rg -i "<desen>" <klasör>`; ikinci arama da 0 ise
+  "yok" yaz ve iki aramanın desenini kanıt olarak ekle. ⚠ `bash` içindeki `find` Go tabanlıdır: `-iname` ve `-maxdepth`
+  desteklenmez (ölçüldü: `flag provided but not defined`) — bu hata çıktısını "dosya yok" sanma; dosya adı aramasında
+  `rg --files --iglob "*desen*"` (büyük/küçük harf duyarsız) kullan.
 
 ## 5. Kanıtlı değerlendir
 Domain + canlı sistem + prior-art birlikte → aksiyon: reuse mı yeni mi · mevcutla tutarlılık · uygulanacak geçmiş ders ·
