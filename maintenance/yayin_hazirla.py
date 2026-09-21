@@ -52,6 +52,9 @@ CI_DURUM_YOLU = "guncelle/ci-durum.json"
 # `%guncelle`nin `once` turunu ikame edebilmesi için gereken ASGARİ takım adları. Bir yayın
 # bunlardan birini taşımıyorsa `hepsi_yesil` YAZILMAZ ⇒ tüketici normal ölçer (fail-safe).
 CI_ASGARI_TAKIMLAR = ("Testler (kok · Python 3.12)", "Testler (foundation · Python 3.12)")
+# Z23 — bu sürenin altında biten `failure` iş hiç başlamamış sayılır (ölçüldü 2026-09-20:
+# kota duvarında işler 2-4 sn'de `steps: 0` ile döndü; en kısa gerçek iş ~25 sn ön koşul koşar).
+CI_BASLAMADI_ESIK_SN = 15
 RESMI_ORIGIN = "https://github.com/ozgurylmz34/axet-template.git"
 
 TURLER = ("duzeltme", "yetenek", "kural", "guvenlik")
@@ -385,17 +388,23 @@ def ci_durum_uret(kaynak_sha: str, etiket: str, mevcut: dict | None, kapali: boo
     temel["depo"] = depo
     kod, cikti, hata = git_sessiz_komut(
         ["gh", "api", f"repos/{depo}/commits/{kaynak_sha}/check-runs",
-         "--jq", ".check_runs[] | \"\\(.name)\\t\\(.conclusion)\""])
+         "--jq", ".check_runs[] | \"\\(.name)\\t\\(.conclusion)\\t"
+                 "\\(if .started_at and .completed_at then "
+                 "((.completed_at|fromdate) - (.started_at|fromdate)) else \"\" end)\""])
     if kod != 0:
         temel["not"] = f"gh check-runs okunamadi (rc={kod}): {(hata or '').strip()[:200]}"
         kayit[etiket] = temel
         return kayit
     takimlar = []
+    sureler = {}
     for satir in (cikti or "").splitlines():
         if "\t" not in satir:
             continue
-        ad, sonuc = satir.split("\t", 1)
-        takimlar.append({"ad": ad.strip(), "sonuc": sonuc.strip()})
+        parca = satir.split("\t")
+        ad, sonuc = parca[0].strip(), parca[1].strip()
+        takimlar.append({"ad": ad, "sonuc": sonuc})
+        if len(parca) > 2 and parca[2].strip().lstrip("-").isdigit():
+            sureler[ad] = int(parca[2].strip())
     temel["takimlar"] = takimlar
     eksik = [t for t in CI_ASGARI_TAKIMLAR if not any(x["ad"] == t for x in takimlar)]
     if not takimlar:
@@ -409,7 +418,16 @@ def ci_durum_uret(kaynak_sha: str, etiket: str, mevcut: dict | None, kapali: boo
                         "sonra bu araci yeniden calistir.")
     elif any(t["sonuc"] != "success" for t in takimlar):
         kirmizi = [t["ad"] for t in takimlar if t["sonuc"] != "success"]
-        temel["not"] = "yesil olmayan takim(lar): " + ", ".join(kirmizi)
+        # Z23 — kota/ödeme duvarında işler HİÇ BAŞLAMAZ: saniyeler içinde `failure`, 0 adım.
+        # En kısa gerçek iş bile checkout + setup-python ile bu eşiği aşar ⇒ eşiğin altındaki
+        # failure "kırmızı takım" DEĞİL, "ölçülmedi"dir. Süresi bilinmeyen iş gerçek kırmızı sayılır.
+        if all(t["sonuc"] == "failure" and sureler.get(t["ad"], CI_BASLAMADI_ESIK_SN + 1)
+               <= CI_BASLAMADI_ESIK_SN for t in takimlar if t["sonuc"] != "success"):
+            temel["not"] = ("CI isleri BASLAMADI (kota/odeme duvari olabilir; "
+                            f"{', '.join(kirmizi)} <= {CI_BASLAMADI_ESIK_SN} sn) — "
+                            "kod hakkinda hukum YOK.")
+        else:
+            temel["not"] = "yesil olmayan takim(lar): " + ", ".join(kirmizi)
     else:
         temel["hepsi_yesil"] = True
         temel["isletim_sistemi"] = _ci_os()

@@ -102,7 +102,10 @@ jobs:
         # 3.14'e ozgu bir kirilma CI'da degil, kullanicinin makinesinde ortaya cikar.
         # Ucuz telafi (bugun YAPILMADI, acik kalem): 3.14 kolunu yalniz main push'unda ya da
         # haftalik schedule'da kosturmak — PR maliyeti dusmeye devam eder, iddia olculmus kalir.
-        python: ['3.12']
+        # ✅ 3.14 KOLU GERI GELDI (2026-09-21, kullanici karari, Z19): depo PUBLIC yapildi;
+        # public depoda standart runner dakikasi ucretsiz => yukaridaki kota gerekcesi KALKTI.
+        # Tek kol daraltmasi yalniz o gerekceye dayaniyordu; kapsam kaybi geri alindi.
+        python: ['3.12', '3.14']
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: 'utf-8'

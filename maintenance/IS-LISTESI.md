@@ -6,9 +6,33 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ⭐ 2026-09-20 (2. tur) — KARAR TURU · **TAŞIMA TAMAM** — BURADAN BAŞLA
+## ⭐ 2026-09-21 — DEPO PUBLIC · Z18/Z19/Z23 KAPANDI — BURADAN BAŞLA
 
-> Aşağıdaki "GÜN SONU 2026-09-20" bloğu artık TARİHÇEdir. Güncel durum budur.
+**Kullanıcı kararı (2026-09-21):** *"bekleyemeyiz, public yapalım"* → `ozgurylmz34/axet` **PUBLIC**.
+Public depoda standart runner dakikası ücretsiz ⇒ **Z18 kota duvarı kalktı**; 2026-09-20'deki
+*"yerel tam ölçümle merge"* süreli istisnası da **bitti** (merge şartı yine "CI yeşil").
+
+Çevirmeden önce ölçülenler (hepsi `--all` geçmiş, 168 commit / 1247 obje):
+- Gerçek SAP bağlantı değerleri (`.conn_adt` URL/kullanıcı/parola/sistem adı): **0 eşleşme**.
+  Parola/token desenli satırların hepsi test fikstürü (`S3cretValu3`, `hunter22x`, `example.invalid`).
+- Kalan iz: commit e-postaları (şirket adresi 232 yazar/committer kaydı) + dokümanlarda iç
+  kullanıcı kimliği `tr11718` (192 satır). **Temizlenmedi:** geçmişi yeniden yazmak GitHub'daki
+  20 `refs/pull/*/head` ref'ini temizlemez (yalnız GitHub Support siler) ⇒ yarım kalırdı ve tüm
+  SHA'ları kırardı. Kullanıcı: *"temizlenebiliyorsa temizleyelim, değilse kalsın."* → **kaldı**.
+- Yazma yetkisi: katkıcı yalnız `ozgurylmz34` (admin) · bekleyen davet 0 · deploy key 0 ·
+  webhook 0 · Actions secret 0 · workflow `pull_request` (`_target` DEĞİL) + `contents: read`.
+  Ek sıkılaştırma: fork PR workflow onayı `all_external_contributors` (her dış PR elle onay).
+
+| # | Madde | Durum |
+|---|---|---|
+| Z18 | Actions kota duvarı | ✅ **KAPANDI** — depo public |
+| Z19 | 3.14 kolu | ✅ **KAPANDI** — matris `['3.12','3.14']` geri (kota gerekçesi kalktı). ⚠ Tüketiciye etkisi: 3.14 kırmızıysa `hepsi_yesil` false ⇒ tüketici yavaş yola döner; bilinçli tercih |
+| Z23 | `ci-durum.json` yanıltıcı not | ✅ **KAPANDI** — `failure` + süre ≤ 15 sn ⇒ *"CI işleri BAŞLAMADI … kod hakkında hüküm YOK"*. Kırmızı-önce: fixsiz test_9 + test_11 **FAILED**, KONTROL test_10 OK → fixli 22/22. Canlı API kontrolü: kota duvarındaki `ec0c3bd` check-run'ları **2 sn** ⇒ gerçek vaka eşiğin altında |
+| Z24 | 34 bayat yerel dal | 🟡 **SİLİNMEDİ** — yeniden ölçüldü (19 dal merge'li PR · 16 dal `integrasyon`'un atası · 1 dal eklediği 71 satırın 70'i main'de, kalan 1'i main'de yeniden adlandırılmış başlık) ⇒ kayıp iş **yok**. Silme komutu izin katmanında (geri alınamaz yerel yıkım) durdu → **kullanıcı terminali** |
+
+> Aşağıdaki blok artık TARİHÇEdir.
+
+## 2026-09-20 (2. tur) — KARAR TURU · TAŞIMA TAMAM (TARİHÇE; güncel durum yukarıda)
 
 **Bu turda KOD DEĞİŞMEDİ.** Tur, 2026-09-19'dan devreden sıranın **lider maddelerini karara
 bağlamak** ve **klasör taşıması** için hazırlık yapmaktı. Her karar kullanıcıdan tek tek alındı;
