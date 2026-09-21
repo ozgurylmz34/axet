@@ -767,6 +767,46 @@
      "test": [
       "python tests/run_tests.py -k sap_skill_bilgi"
      ]
+    },
+    {
+     "id": "0.5.0-08",
+     "baslik": "SAP DDIC yazma araçları: Z tablo, tablo tipi, metin havuzu, ccdef/ccmac",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "aXet Z tablo yaratamıyordu (kullanıcı Eclipse'e yönlendiriliyordu); tablo tipi kabuğu satır tipini sessizce boş bırakabiliyordu ve düzeltme aracı yoktu; metin havuzu yazılamıyordu; sınıfın yerel tanım/makro include'ları itilemiyordu. Yeni araçlar: `adt_table_create` (kabuk → kilit → kaynak → aktivasyon → sistemden geri okuma; alan/anahtar tasarımı önce kullanıcıya gösterilir), `adt_ttyp_create` (satır tipi DD40L'den ve XML'den iki kanalla doğrulanır, boşsa bir kez If-Match ile düzeltilip yeniden doğrulanır, yine boşsa FAIL — asla sahte OK), `adt_textpool_write` (metin sembolleri + seçim metinleri; mevcut girdiyi silme ancak açık izinle), `adt_push_source` artık `ccdef`/`ccmac` kabul eder. Hepsi SAP-yazma kapısından ve transport kuralından geçer; kesin yasaklar aynen geçerli. Yeni rehber: `sap-cds-ddic/references/table-types.md`. CANLI_DURUM_YER_TUTUCU",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
+      "skills-sap/sap-adt-foundation/SKILL.md",
+      "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+      "skills-sap/sap-adt-foundation/references/profiles.md",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/_app.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/_reviewer.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/guardrails.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/hints.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ddic_tablo.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ddic_ttyp.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/textpool.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/ddic.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/shells.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/textpool.py",
+      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
+      "skills-sap/sap-adt-foundation/tests/test_ddic_textpool.py",
+      "skills-sap/sap-adt-foundation/tests/test_new_write_tools.py",
+      "skills-sap/sap-cds-ddic/references/message-class.md",
+      "skills-sap/sap-cds-ddic/references/table-types.md",
+      "skills-sap/sap-cds-ddic/references/tables-structures.md",
+      "skills-sap/sap-classic-abap/SKILL.md",
+      "skills-sap/sap-classic-abap/references/programs-includes.md",
+      "skills-sap/sap-classic-abap/templates/screen-gen/table-types.md",
+      "skills-sap/sap-code-review/references/validator-map.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py"
+     ]
     }
    ]
   }
