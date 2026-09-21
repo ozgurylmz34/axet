@@ -53,7 +53,8 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
   **tip kaynaktan belirlenir (v0.5.1, Z53):** canlı SAP `/ddic/structures/<tablo>` ucundan da 200 + `define table …` döner (ve tersi
   olabilir) → uç 200 verse bile kaynağın ilk `define table|structure` anahtar sözcüğü istenen tiple uyuşmuyorsa yanıt `resolved_type`
   (gerçek tip) · `requested_endpoint` · `resolved_endpoint` · `canonical_endpoint` · `type_probe:"source_keyword"` · `warning:"TIP DUZELTMESI …"`
-  taşır; pull kaydı kardeş-uç çözümündeki gibi iki tiple yazılır. Anahtar sözcük bulunamazsa düzeltme yapılmaz (eski davranış) ·
+  taşır; pull kaydı kardeş-uç çözümündeki gibi iki tiple yazılır. `/* … */` ve `//` yorumları aranmadan önce atılır
+  (yorumdaki eski `define structure` türü yanıltmaz; tırnak içi korunur). Anahtar sözcük bulunamazsa düzeltme yapılmaz (eski davranış) ·
   yaratma/silme kararında DDIC varlığını tek başına buna dayandırma, `adt_search_objects` ile çapraz kontrol ·
   `func` grubu arama indeksinden çözer (yeni FM henüz indekste değilse `exists:false` dönebilir — DOĞRULANMADI) ·
   ağ hatasında `exists:false` yerine `ok:false` (`unreachable`/`belirsiz`) · MSAG → `adt_msgclass_read`'e delege ·
@@ -347,7 +348,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Varlık ön kontrolü + üzerine yazma kapısı (v0.5.1, Z51 ⓐ / Z52):** ön kontrol ÜÇ DEĞERLİDİR (`adt_get(doma)` ile): var → `already_exists` ·
   ölçülemedi (5xx/403/istisna/ağ — 404 dışı her şey) → `exists_unmeasured`, **POST atılmaz** · 404 → yaratılır; `steps.pre_check` =
   `checked_found` | `checked_absent` | `unavailable:<sebep>`. Ön kontrol "yok" deyip SAP POST'u 400/405 `AlreadyExists` ile reddederse
-  kütüphane artık başarı DÖNMEZ (`SAPObjectExistsError`) → `already_exists`, **aktivasyon yapılmaz**. POST'tan önce 5xx/zaman aşımı yüzünden
+  kütüphane artık başarı DÖNMEZ (`SAPObjectExistsError`) → `already_exists`, **aktivasyon yapılmaz**. POST'tan önce 5xx/zaman aşımı/bağlantı hatası yüzünden
   sessiz yeniden deneme olduysa (`[RETRY]` izi) → `already_exists_after_retry` + `own_shell_possible:true`: obje büyük olasılıkla önceki
   denemenin yarattığı kabuktur (başkasının olduğu kanıtlanmadı) → `adt_get` ile bak, kör tekrar yok. Önceden: ön kontrol hata/None'da "yok"
   diyordu ve POST 405 başarı sayılıp aktivasyon çağrılıyordu (aynı adlı ikinci çağrı var olan objeyi "yaratıldı" diye raporlayabiliyordu).
@@ -363,7 +364,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   kırpılıp karakter sayılır) denetlenir → aşım `ADR_0005_D` (çıkış 2, mesaj `short=11>10` biçiminde). Sınırlar DTEL CSV validator'ıyla aynı
   tablodan (2026-09-13; önceden artefaktsız çağrıda uzunluk denetlenmiyordu) · kullanılan domain'in varlığı ağdan önce **denetlenmez** (açık kalem) ·
   **varlık/üzerine yazma (v0.5.1):** `adt_domain_create` ile aynı üç değerli ön kontrol (`adt_get(dtel)`) ve aynı kodlar — `already_exists` ·
-  `exists_unmeasured` (POST yok) · `already_exists_after_retry` (5xx yeniden denemesinden sonra `AlreadyExists`) — aktivasyon hiçbirinde yapılmaz.
+  `exists_unmeasured` (POST yok) · `already_exists_after_retry` (5xx/zaman aşımı/bağlantı hatası yeniden denemesinden sonra `AlreadyExists`) — aktivasyon hiçbirinde yapılmaz.
 
 ### `adt_struct_create`
 - **Amaç:** DDIC yapı yarat + aktive et + doğrula.
@@ -400,7 +401,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   (15f9716'dan beri tüm sürümlerde). `steps.pre_check` = `checked_found` | `checked_absent` | `unavailable:<sebep>`.
   **Tablo/yapı ayrımı (v0.5.1, Z53, canlı bulgu):** canlı SAP var olan bir TABLOYU `/ddic/structures/` ucundan da 200 + `define table …` ile
   döndürür → önceden `existing_kind: structure` deniyordu. Artık tür kaynağın ilk `define table|structure` anahtar sözcüğünden belirlenir
-  (`existing_kind: table`, mesaj "TABLO"). **Yeniden deneme sonrası çakışma (v0.5.1, Z52):** POST 5xx/zaman aşımı → kütüphanenin sessiz
+  (`existing_kind: table`, mesaj "TABLO"). **Yeniden deneme sonrası çakışma (v0.5.1, Z52):** POST 5xx/zaman aşımı/bağlantı hatası → kütüphanenin sessiz
   yeniden denemesi → 400/405 `AlreadyExists` ise `already_exists_after_retry` + `own_shell_possible:true` (kabuğu büyük olasılıkla önceki deneme
   yarattı; `adt_get(structure)` ile bak). **Paket (v0.5.1, Z50 ⓕ):** boş ya da yalnız boşluk `package` → `validation_error`, SAP'ye gidilmez.
   **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `already_exists_after_retry` · `exists_unmeasured` · `description_too_long` · `create_failed` · `activation_failed` ·

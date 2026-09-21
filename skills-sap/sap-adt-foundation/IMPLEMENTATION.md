@@ -1348,7 +1348,7 @@ ccdef/ccmac çıkarıldı → B2 + B2b.
 |---|---|---|---|
 | `exists_unmeasured` | `adt_domain_create`, `adt_dtel_create` (yeni; struct/table/ttyp'de zaten vardı) | varlık ön kontrolü ölçülemedi (404 dışı hata/istisna) — POST atılmadı | 1 |
 | `already_exists` | domain · dtel · struct | ön kontrol "var" dedi ya da POST 400/405 `AlreadyExists` döndü — kaynak yazılmadı, aktivasyon yok | 1 |
-| `already_exists_after_retry` | domain · dtel · struct | POST 5xx/zaman aşımı → kütüphanenin sessiz yeniden denemesi → `AlreadyExists`; `own_shell_possible:true` (kabuğu büyük olasılıkla önceki deneme yarattı — kanıtlanmadı) → `adt_get` ile bak | 1 |
+| `already_exists_after_retry` | domain · dtel · struct | POST 5xx/zaman aşımı/bağlantı hatası → kütüphanenin sessiz yeniden denemesi → `AlreadyExists`; `own_shell_possible:true` (kabuğu büyük olasılıkla önceki deneme yarattı — kanıtlanmadı) → `adt_get` ile bak | 1 |
 | `validation_error` (paket) | struct · table · ttyp | boş ya da yalnız boşluk `package` araç kapısında reddedilir, ağ çağrısı sıfır | 1 |
 | `outcome_uncertain` alanı | table (`partial_shell`) · ttyp (onarım) · textpool (`lock_failed`/`put_failed`) | istek gönderildi, HTTP yanıtı yerine ağ istisnası geldi → yazıldığı / kilit durumu BELİRSİZ | 1 |
 | `unlock_ok` / `unlock_warning` | `adt_push_source` `func` ve `bdef` | UNLOCK 200/204 değil ya da istisna → uyarı (SM12; AI kilit silmez) | `ok`'u bozmaz |
@@ -1366,13 +1366,25 @@ CLI eşlemesi (`sap_adt_cli._sonuc_hatasi`): yeni kodlar `GATE_RESULT_ERRORS`/`U
 | `create_function_group` | başarı | `SAPObjectExistsError` | yok |
 | `create_function_module` | başarı | `SAPObjectExistsError` | yok |
 | `create_behavior_definition` (Z51 ⓑ) | `not in [200,201]` kontrolünden önce ayrım yoktu | `SAPObjectExistsError` (201 kontrolünden ÖNCE) | yok |
-`_retry_request` her istekte `_son_yeniden_denemeler`'i sıfırlar; CSRF dışı yeniden deneme sebeplerini ekler ⇒ istisna `after_retry` taşır.
-Composite ayrıca stdout'taki `[RETRY] … Server error 5xx|Timeout` izine bakar (sap_client sarmalayıcıları istisnayı yutar).
+`_retry_request` her istekte `_son_yeniden_denemeler`'i sıfırlar; CSRF dışı yeniden deneme sebeplerini (5xx/zaman aşımı/bağlantı
+hatası — `_should_retry` + iki istisna dalının kaydettiği küme) ekler ⇒ istisna `after_retry` taşır ve mesaj eki `ONCEKI_DENEME_IZI`
+("ÖNCEKİ DENEME …", sebeplerle) ile başlar. Composite (`_yeniden_deneme_izi`) sap_client sarmalayıcıları istisnayı yutup yalnız
+`[ERROR] <mesaj>` bastığı için kararı log'dan okur: ① BİRİNCİL kütüphane hükmü (`ONCEKI_DENEME_IZI` — kayıt listesinden türetilir)
+② YEDEK `[RETRY] … Server error 5xx|Timeout|Connection error` satırı (aynı üç sebep; CSRF hariç — istek işlenmedi).
+**Bug gate düzeltmesi (v0.5.1):** ilk sürüm yalnız `[RETRY] … 5xx|Timeout` regex'ine bakıyordu → bağlantı kopması sonrası
+yeniden deneme 405 alınca log "ÖNCEKİ DENEME" derken kod düz `already_exists` dönüyordu (çelişki). Neden kayıt listesine doğrudan
+(`client.adt_client._son_yeniden_denemeler`) bakılmadı: sarmalayıcı istisnayı yuttuktan sonra listenin son POST'a ait olduğu
+yalnız "arada başka istek yok" varsayımıyla doğru olur; hüküm istisna ANINDA mesaja gömüldüğü için bu varsayım gerekmez.
+Testler: D9 (domain, bağlantı → retry → 405 · kontrol: retry'sız, yalnız CSRF) · S9b (yapı, bağlantı kolu) · S9c (iki iz ayrı
+ayrı + kütüphane eki yalnız liste doluyken).
 **ÖLÇÜLMEDİ:** var olan objenin başkasına ait inaktif sürümünün eski yolda aktive edilip edilmediği (canlı yok) — kanıtlanan yalnız çevrimdışı:
 eski kodda POST 405 → `ok:true` + aktivasyon çağrısı 1 (test D7 eski koda karşı).
 
 ### 22.3 Diğer düzeltmeler
 - **Z53:** `atom._adt_get_oku` DDL tip düzeltmesi (`_ddl_kaynak_turu`, ilk `define table|structure`); `adt_struct_create` ön kontrolü bunu kullanır.
+  Bug gate düzeltmesi (v0.5.1): arama öncesi `/* … */` blok ve `//` satır yorumları atılır, tırnaklı dizgi korunur (`_ddl_yorumsuz`;
+  ölçülen kusur `/*\ndefine structure old\n*/\ndefine table` → structure). Test S6c. `--` yorum biçimi ele alınmadı (DDL'de
+  geçerliliği bu turda doğrulanmadı).
   Sahte istemci S6 canlı davranışa çekildi (yapı ucu da 200 + `define table`) — eski kodda `existing_kind: structure` ile FAIL.
 - **Z50 ⓒ:** `create_table_with_ddl` gönderilen son isteği (`lock`/`put`) izler, genel istisnaya `outcome_uncertain` koyar.
 - **Z50 ⓓ/ⓔ:** FM UNLOCK `except: pass` kaldırıldı; BDEF UNLOCK durum kodu okunur — `unlock_ok`/`unlock_warning` deseni (tablo aracındaki gibi).

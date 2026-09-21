@@ -59,7 +59,10 @@ def _domain_adt_sinifi():
             self.cagri.append({"method": "POST", "path": url[len(self.url):], "params": dict(params or {}),
                                "headers": dict(headers or {}), "data": govde})
             if self.post_yanitlari:
-                kod, metin = self.post_yanitlari.pop(0)
+                oge = self.post_yanitlari.pop(0)
+                if isinstance(oge, BaseException):   # POST gitti, yanıt yerine ağ istisnası (ör. bağlantı koptu)
+                    raise oge
+                kod, metin = oge
                 return Yanit(kod, metin)
             return Yanit(201, "", {"Location": "/sap/bc/adt/ddic/domains/x"})
 
@@ -342,6 +345,35 @@ class DomainVeMesajSinifi(unittest.TestCase):
                     "already_exists · after_retry · aktivasyon 0",
                     f"{r.get('error')} akt={ist.aktive_edildi} · {r2.get('error')} akt={ist2.aktive_edildi} "
                     f"post={len(post2)}", ok)
+
+    def test_D9_baglanti_hatasi_retry_sonrasi_zaten_var(self):
+        """Bug gate MEDIUM (v0.5.1): POST gitti, SAP işledi, yanıt gelmeden bağlantı koptu (ConnectionError) → kütüphane
+        yeniden dener → 405 AlreadyExists. Beklenen: `already_exists_after_retry` (5xx/zaman aşımı ile aynı sınıf) — log
+        'ÖNCEKİ DENEME' derken kodun düz `already_exists` demesi çelişkiydi.
+        Kontrol grupları: retry'sız 405 → düz `already_exists` · yalnız CSRF yeniden denemesi (istek işlenmedi) → düz
+        `already_exists`."""
+        import requests  # type: ignore
+        sonuc = {}
+        adt, ist = self._domain_kur(post=[requests.exceptions.ConnectionError("RemoteDisconnected: bağlantı koptu"),
+                                          (405, self.VAR_GOVDE)], gercek_retry=True)
+        r = self.comp.adt_domain_create("ZAXET_D_X", "CHAR", 10, "Test alanı", "ZAXET_PKG", TR)
+        sonuc["baglanti"] = (r.get("error"), r.get("own_shell_possible"), ist.aktive_edildi,
+                             len([c for c in adt.cagri if c["method"] == "POST"]))
+        adt, ist = self._domain_kur(post=[(405, self.VAR_GOVDE)], gercek_retry=True)
+        r = self.comp.adt_domain_create("ZAXET_D_X", "CHAR", 10, "Test alanı", "ZAXET_PKG", TR)
+        sonuc["retrysiz"] = (r.get("error"), r.get("own_shell_possible"), ist.aktive_edildi,
+                             len([c for c in adt.cagri if c["method"] == "POST"]))
+        adt, ist = self._domain_kur(post=[(403, "CSRF token validation failed"), (405, self.VAR_GOVDE)],
+                                    gercek_retry=True)
+        adt.fetch_csrf_token = lambda force_refresh=False: "tok2"
+        r = self.comp.adt_domain_create("ZAXET_D_X", "CHAR", 10, "Test alanı", "ZAXET_PKG", TR)
+        sonuc["csrf"] = (r.get("error"), r.get("own_shell_possible"), ist.aktive_edildi,
+                         len([c for c in adt.cagri if c["method"] == "POST"]))
+        ok = sonuc == {"baglanti": ("already_exists_after_retry", True, 0, 2),
+                       "retrysiz": ("already_exists", None, 0, 1),
+                       "csrf": ("already_exists", None, 0, 2)}
+        self.kaydet("D9 domain: bağlantı hatası → retry → 405 → after_retry · retry'sız / yalnız CSRF → already_exists",
+                    "after_retry · already_exists · already_exists", str(sonuc), ok)
 
     def test_D8_dtel_on_kontrol_uc_degerli(self):
         sonuc = {}

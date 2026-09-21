@@ -855,7 +855,7 @@
      "baslik": "`adt_struct_create` / `adt_get`: var olan TABLO artık \"yapı\" diye raporlanmaz",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Canlı SAP var olan bir tabloyu yapı ucundan da 200 + `define table …` ile döndürür; bu yüzden aynı adlı tabloya çarpan `adt_struct_create` `existing_kind: structure` diyordu. Artık tür kaynağın ilk `define table|structure` anahtar sözcüğünden belirlenir (`existing_kind: table`); `adt_get` de istenen tip kaynakla uyuşmazsa `resolved_type` + `type_probe: source_keyword` + uyarı döner. Sahte istemci canlı davranışa çekildi; eski kodda test kırmızı.",
+     "neden": "Canlı SAP var olan bir tabloyu yapı ucundan da 200 + `define table …` ile döndürür; bu yüzden aynı adlı tabloya çarpan `adt_struct_create` `existing_kind: structure` diyordu. Artık tür kaynağın ilk `define table|structure` anahtar sözcüğünden belirlenir (`existing_kind: table`); `adt_get` de istenen tip kaynakla uyuşmazsa `resolved_type` + `type_probe: source_keyword` + uyarı döner. Sahte istemci canlı davranışa çekildi; eski kodda test kırmızı. Tür aranmadan önce DDL yorumları (`/* … */`, `//`) atılır; yorumdaki eski bir `define structure` satırı türü yanıltmaz.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/composite.py",
@@ -870,10 +870,10 @@
     },
     {
      "id": "0.5.1-13",
-     "baslik": "Sunucu hatası sonrası sessiz yeniden deneme \"zaten var\"a çarparsa ayrı kod: `already_exists_after_retry`",
+     "baslik": "Sunucu hatası / bağlantı kopması sonrası sessiz yeniden deneme \"zaten var\"a çarparsa ayrı kod: `already_exists_after_retry`",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Yaratma isteği 5xx/zaman aşımı alınca kütüphane aynı isteği sessizce yeniden dener; ilk deneme objeyi SAP'de yaratmışsa ikinci deneme \"zaten var\" alır ve kullanıcıya başkasının objesine çarpmış gibi görünürdü. Artık domain, DTEL ve yapı araçları bu durumda `already_exists_after_retry` + `own_shell_possible: true` döner: kabuğu büyük olasılıkla önceki deneme yarattı (kanıtlanmadı) — `adt_get` ile bakın, kör tekrar yapmayın.",
+     "neden": "Yaratma isteği 5xx/zaman aşımı/bağlantı hatası alınca kütüphane aynı isteği sessizce yeniden dener; ilk deneme objeyi SAP'de yaratmışsa ikinci deneme \"zaten var\" alır ve kullanıcıya başkasının objesine çarpmış gibi görünürdü. Artık domain, DTEL ve yapı araçları bu durumda `already_exists_after_retry` + `own_shell_possible: true` döner: kabuğu büyük olasılıkla önceki deneme yarattı (kanıtlanmadı) — `adt_get` ile bakın, kör tekrar yapmayın.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/composite.py",

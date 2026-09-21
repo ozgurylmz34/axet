@@ -90,6 +90,11 @@ class SAPObjectNotFoundError(SAPADTError):
     pass
 
 
+# Z52 (v0.5.1): `_zaten_var_hatasi` bu işaretle başlayan eki YALNIZ `_son_yeniden_denemeler` doluysa (5xx / zaman aşımı /
+# bağlantı hatası yeniden denemesi) koyar; araç katmanı `already_exists_after_retry` kararını buradan okur.
+ONCEKI_DENEME_IZI = "ÖNCEKİ DENEME"
+
+
 class SAPObjectExistsError(SAPADTError):
     """Object already exists"""
     pass
@@ -1656,8 +1661,9 @@ class SAPADTClient:
     
 
         last_error = None
-        # Z52 (v0.5.1): bu çağrıdaki 5xx / zaman aşımı yeniden denemeleri — yaratma POST'unda ilk istek SAP'de
-        # işlenmiş olabilir; ardından gelen AlreadyExists aracın KENDİ kabuğu olabilir (`_zaten_var_hatasi`).
+        # Z52 (v0.5.1): bu çağrıdaki 5xx / zaman aşımı / bağlantı hatası yeniden denemeleri — yaratma POST'unda ilk
+        # istek SAP'de işlenmiş olabilir; ardından gelen AlreadyExists aracın KENDİ kabuğu olabilir (`_zaten_var_hatasi`).
+        # CSRF yeniden denemesi kaydedilmez: SAP isteği token yüzünden reddetti, işlemedi.
         self._son_yeniden_denemeler = []
 
         for attempt in range(self.max_retries):
@@ -5294,8 +5300,12 @@ class SAPADTClient:
         """⛔ Z51 (v0.5.1) — AlreadyExists BAŞARI DEĞİLDİR: eskiden domain/DTEL/CDS/FUGR/FM `success:True` döndürüyordu,
         BDEF mevcut objeye LOCK+PUT+aktivasyon yapıyordu (yapı yolu 2026-09-21'de düzeltilmişti). Çağıran yazmaz,
         aktive etmez; mevcut objeyi değiştirmek bilinçli ayrı yoldur (adt_push_source). `yeniden_deneme=True`
-        (Z52): aynı çağrıda önce 5xx/zaman aşımı yeniden denemesi oldu — obje büyük olasılıkla ilk denemenin kabuğu."""
-        ek = (" — ÖNCEKİ DENEME (5xx/zaman aşımı sonrası yeniden deneme) kabuğu yaratmış olabilir; adt_get ile bak"
+        (Z52): aynı çağrıda önce 5xx/zaman aşımı/bağlantı hatası yeniden denemesi oldu — obje büyük olasılıkla ilk
+        denemenin kabuğu. Ek `ONCEKI_DENEME_IZI` ile başlar: araç katmanı (sarmalayıcı istisnayı yutup yalnız metni
+        basar) sınıflamayı bu kütüphane hükmünden okur (`composite._yeniden_deneme_izi`)."""
+        sebepler = ", ".join(str(x) for x in (getattr(self, '_son_yeniden_denemeler', None) or []))
+        ek = (f" — {ONCEKI_DENEME_IZI} (5xx/zaman aşımı/bağlantı hatası sonrası yeniden deneme"
+              f"{': ' + sebepler if sebepler else ''}) kabuğu yaratmış olabilir; adt_get ile bak"
               if yeniden_deneme else "")
         hata = SAPObjectExistsError(
             f"{tur} {name} already exists (SAP {response.status_code} AlreadyExists) — üzerine YAZILMADI "

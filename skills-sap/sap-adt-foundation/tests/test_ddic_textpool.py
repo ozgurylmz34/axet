@@ -913,6 +913,92 @@ class DdicTextpool(unittest.TestCase):
                     "already_exists_after_retry · POST 2 · yazma 0",
                     f"ok={r.get('ok')} err={r.get('error')} post={len(post)} yazma={len(yazma)} msg={msg[:80]}", ok)
 
+    def test_S9b_yapi_baglanti_hatasi_retry_sonrasi_zaten_var(self):
+        """Bug gate MEDIUM (v0.5.1): ilk POST gitti ama yanıt yerine bağlantı koptu (ConnectionError) → kütüphane yeniden
+        dener → 405 AlreadyExists → `already_exists_after_retry` + `own_shell_possible`, yazma YOK (S9'un bağlantı kolu)."""
+        import requests  # type: ignore
+        sira = {"n": 0}
+
+        def ek(c):
+            if c["method"] == "POST" and c["path"] == "/sap/bc/adt/ddic/structures":
+                sira["n"] += 1
+                if sira["n"] == 1:
+                    raise requests.exceptions.ConnectionError("RemoteDisconnected: bağlantı koptu")
+                return Yanit(405, "<exc:exception><type id=\"ExceptionResourceAlreadyExists\"/>"
+                                  "<localizedMessage>AlreadyExists</localizedMessage></exc:exception>")
+            return None
+        from sap_client import SAPClient  # type: ignore
+        eski_cs = SAPClient.create_structure
+
+        def cs(ist, *a, **kw):
+            self._gercek_retry(ist.adt_client)
+            return eski_cs(ist, *a, **kw)
+        SAPClient.create_structure = cs
+        self.addCleanup(setattr, SAPClient, "create_structure", eski_cs)
+        adt, r = self._yapi(yon_ek=ek, gercek_lib=True)
+        yazma = [c for c in adt.cagri if c["method"] == "PUT" or c["path"] in ("lock_object",)
+                 or c["path"].startswith("activate")]
+        ok = (r.get("ok") is False and r.get("error") == "already_exists_after_retry"
+              and r.get("own_shell_possible") is True and sira["n"] == 2 and yazma == [])
+        self.kaydet("S9b yapı: POST bağlantı hatası → retry → 405 → already_exists_after_retry, yazma YOK",
+                    "already_exists_after_retry · POST 2 · yazma 0",
+                    f"ok={r.get('ok')} err={r.get('error')} own={r.get('own_shell_possible')} post={sira['n']} "
+                    f"yazma={len(yazma)}", ok)
+
+    def test_S9c_yeniden_deneme_izi_iki_kaynak_ayri_ayri(self):
+        """Bug gate MEDIUM (v0.5.1): `already_exists_after_retry` kararının iki izi AYRI AYRI ölçülür (uçtan uca testte
+        biri öbürünü örter): ① kütüphane hükmü (`ONCEKI_DENEME_IZI`, `[RETRY]` satırı yok) ② `[RETRY] … Connection error`
+        satırı (kütüphane eki yok). Kontrol: yalnız CSRF yeniden denemesi · iz yok → düz `already_exists`. Kütüphane eki
+        yalnız `_son_yeniden_denemeler` doluysa konur ve sebebi taşır."""
+        import sap_adt_lib  # type: ignore
+        from types import SimpleNamespace
+        from sapadt.tools import composite
+        IZ = sap_adt_lib.ONCEKI_DENEME_IZI
+        loglar = {
+            "lib_hukmu": "[ERROR] [405] Domain ZAXET_D_X already exists (SAP 405 AlreadyExists) — üzerine YAZILMADI "
+                         "(kilit/PUT/aktivasyon yok) — %s (…: Connection error (attempt 1)) kabuğu yaratmış olabilir" % IZ,
+            "retry_baglanti": "  [RETRY] Create domain - Connection error (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
+            "retry_5xx": "  [RETRY] Create domain - Server error 503 (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
+            "retry_timeout": "  [RETRY] Create domain - Timeout (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
+            "yalniz_csrf": "  [RETRY] Create domain - CSRF token expired (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
+            "iz_yok": "[ERROR] [405] Domain ZAXET_D_X already exists (SAP 405 AlreadyExists)",
+        }
+        sonuc = {k: composite._zaten_var_yaniti("Domain", "ZAXET_D_X", "doma", v)["error"] for k, v in loglar.items()}
+        c = SimpleNamespace(_son_yeniden_denemeler=["Connection error (attempt 1)"])
+        yanit = SimpleNamespace(status_code=405, text="AlreadyExists")
+        dolu = str(sap_adt_lib.SAPADTClient._zaten_var_hatasi(c, "Domain", "ZAXET_D_X", yanit, "/e", yeniden_deneme=True))
+        bos = str(sap_adt_lib.SAPADTClient._zaten_var_hatasi(SimpleNamespace(_son_yeniden_denemeler=[]), "Domain",
+                                                              "ZAXET_D_X", yanit, "/e", yeniden_deneme=False))
+        beklenen = {"lib_hukmu": "already_exists_after_retry", "retry_baglanti": "already_exists_after_retry",
+                    "retry_5xx": "already_exists_after_retry", "retry_timeout": "already_exists_after_retry",
+                    "yalniz_csrf": "already_exists", "iz_yok": "already_exists"}
+        ok = (sonuc == beklenen and IZ in dolu and "Connection error (attempt 1)" in dolu and IZ not in bos)
+        self.kaydet("S9c after_retry izi: kütüphane hükmü / [RETRY] bağlantı-5xx-timeout ayrı ayrı · CSRF / iz yok → düz",
+                    str(beklenen) + " · lib eki sebepli", f"{sonuc} · dolu_ek={IZ in dolu} bos_ek={IZ in bos}", ok)
+
+    def test_S6c_ddl_turu_yorumlar_atlanir(self):
+        """Bug gate LOW (v0.5.1): `define table|structure` aranmadan önce `/* … */` blokları ve `//` satır yorumları atılır;
+        tırnak içindeki `/*` / `//` yorum sayılmaz. Kontrol grubu: annotation'lı yapı · büyük harf `DEFINE TABLE` · yorumsuz."""
+        f = self.atom._ddl_kaynak_turu
+        vakalar = {
+            "blok_yorum": ("/*\ndefine structure old\n*/\ndefine table zaxet_t {\n  key mandt : mandt not null;\n}", "table"),
+            "blok_yorum_ters": ("/* define table eski\n   devam */\ndefine structure zaxet_s {\n  f : char10;\n}", "structure"),
+            "satir_yorum": ("// define structure eski\ndefine table zaxet_t {\n}", "table"),
+            "satir_ici_blok": ("/* define table */ define structure zaxet_s {\n}", "structure"),
+            "tirnak_ici": ("@EndUserText.label : 'etiket /* yorum değil'\ndefine table zaxet_t {\n}", "table"),
+            "tirnak_ici_kapanan": ("@EndUserText.label : 'etiket /* yorum değil'\ndefine table zaxet_t {\n"
+                                   "  f : char10; /* son */\n}", "table"),
+            "tirnak_ici_2": ("@EndUserText.label : 'http://ornek'\ndefine structure zaxet_s {\n}", "structure"),
+            "annotation": ("@EndUserText.label : 'Yapı'\n@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE\n"
+                           "define structure zaxet_s {\n  f : char10;\n}", "structure"),
+            "buyuk_harf": ("DEFINE TABLE ZAXET_T {\n}", "table"),
+            "tanim_yok": ("/* define table */\n// define structure\n", None),
+        }
+        sonuc = {k: f(v[0]) for k, v in vakalar.items()}
+        beklenen = {k: v[1] for k, v in vakalar.items()}
+        self.kaydet("S6c DDL türü: yorumlar atlanır, tırnak içi korunur, annotation / büyük harf doğru",
+                    str(beklenen), str(sonuc), sonuc == beklenen)
+
     @staticmethod
     def _lib_istemci(post_yanitlari, put_kod=200, iz=None):
         """`object.__new__(SAPADTClient)`: POST'lar sırayla `post_yanitlari`'ndan döner, kilit/PUT/aktivasyon `iz`'e düşer."""

@@ -563,6 +563,16 @@ _DDL_KARDES_SEG = {
 _DDL_TANIM = re.compile(r"^\s*define\s+(table|structure)\b", re.IGNORECASE | re.MULTILINE)
 
 
+# Bug gate LOW (v0.5.1): tür aranmadan önce DDL yorumları atılır. Tek geçişli alternasyon: tırnaklı dizgi (olduğu gibi
+# kalır — `'etiket /* x'` yorum başlatmaz) · `/* … */` blok yorum · `//` satır yorumu. Ölçülen kusur:
+# `/*\ndefine structure old\n*/\ndefine table` → 'structure' dönüyordu.
+_DDL_YORUM_YA_DA_DIZGI = re.compile(r"'[^'\n]*'|/\*.*?\*/|//[^\n]*", re.S)
+
+
+def _ddl_yorumsuz(kaynak: str) -> str:
+    return _DDL_YORUM_YA_DA_DIZGI.sub(lambda m: m.group(0) if m.group(0).startswith("'") else " ", kaynak)
+
+
 def _ddl_kaynak_turu(kaynak) -> Optional[str]:
     """DDIC DDL kaynağının türü: ilk `define table|structure` satırı → 'table' | 'structure'; bulunamazsa None.
 
@@ -570,7 +580,7 @@ def _ddl_kaynak_turu(kaynak) -> Optional[str]:
     eşleşmez. Z53: türü uç değil KAYNAK söyler (structures ucu tablo için de 200 döner — canlı bulgu, v0.5.1 Z53)."""
     if not isinstance(kaynak, str):
         return None
-    m = _DDL_TANIM.search(kaynak)
+    m = _DDL_TANIM.search(_ddl_yorumsuz(kaynak))
     return m.group(1).lower() if m else None
 
 
