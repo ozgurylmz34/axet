@@ -202,6 +202,7 @@ if __name__ == "__main__":
     unittest.main()
 
 
+@unittest.skipUnless(BETIK.is_file(), "maintenance/yayin_hazirla.py yok (public sürümde maintenance/ dışlanır)")
 class CiDurumUretTest(unittest.TestCase):
     """Z16 — yayına taşınan CI hükmü (`guncelle/ci-durum.json`) FAIL-SAFE üretilmeli.
 
