@@ -6605,13 +6605,11 @@ constants:
         )
 
         if response.status_code not in [200, 201]:
-            if response.status_code == 403 and 'already exists' in response.text.lower():
-                object_url = f'/sap/bc/adt/ddic/typegroups/{name.lower()}'
-                return {
-                    'success': True,
-                    'object_url': object_url,
-                    'message': f'Type group {name} already exists'
-                }
+            # v0.5.2: AlreadyExists BAŞARI DEĞİLDİR (Z51 kardeşi) — eskiden 403 + 'already exists' erken success:True
+            # dönüyordu. 403 imzası canlıda ölçülmedi (kütüphanedeki eski dal); 405|400 diğer tiplerle aynı.
+            if self._zaten_var_mi(response) or (
+                    response.status_code == 403 and 'already exists' in (response.text or '').lower()):
+                raise self._zaten_var_hatasi('Type group', name, response, '/sap/bc/adt/ddic/typegroups')
             raise SAPADTError(
                 f"Failed to create type group {name}",
                 status_code=response.status_code,
