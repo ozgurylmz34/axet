@@ -31,6 +31,7 @@ ozel-adim · butunluk · geri-al · kapanis · durum · kart
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime
 import difflib
 import fnmatch
@@ -193,6 +194,61 @@ class Klon:
     def __init__(self, kok: Path) -> None:
         self.kok = kok.resolve()
         self.durum_dizini = self.kok / DURUM_DIZIN_ADI
+        # Toplu okuma önbelleği (Z31) — YALNIZ `toplu_okuma` bloğunun içinde dolu, dışında None.
+        self._agaclar: dict[str, dict[str, str]] | None = None
+        self._disk: dict[str, str] | None = None
+        self._refler: dict[str, str | None] = {}
+
+    @contextlib.contextmanager
+    def toplu_okuma(self, yollar):
+        """Plan turunda blob/disk hash'lerini TEK git çağrısıyla okur (Z31, 2026-09-21).
+
+        ⛔ NEDEN: plan, 476 dosyalık kapsam için dosya başına 3 git süreci başlatıyordu (iki
+        `rev-parse <ref>:<yol>` + bir `hash-object`) — ölçüldü: 1455 süreç, 76.3 sn; Windows'ta
+        süreç başlatma başına ~52 ms. Ref başına tek `ls-tree -r -t` + disk için tek
+        `hash-object --stdin-paths` aynı cevabı verir.
+        ⛔ KAPSAM BİLİNÇLİ OLARAK DAR: disk hash'i önbelleklenirse bir YAZIMDAN sonra bayat değer
+        döner ve doğrulama sessizce körleşir ⇒ önbellek yalnız bu bloğun içinde yaşar, blok
+        içinde klona yazan kod çağrılmamalıdır (plan turu yazmaz). Önbellekte OLMAYAN her soru
+        eski tek-tek yola düşer (fail-safe: hız kaybı, doğruluk kaybı değil).
+        """
+        self._agaclar, self._disk, self._refler = {}, {}, {}
+        try:
+            dosyalar = [y for y in sorted(set(yollar)) if (self.kok / y).is_file()]
+            if dosyalar:
+                r = subprocess.run(["git", "-C", str(self.kok), "hash-object", "--stdin-paths"],
+                                   cwd=str(self.kok), input="\n".join(dosyalar) + "\n",
+                                   capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace")
+                satirlar = r.stdout.split()
+                # Tek dosya okunamazsa git TÜM çağrıyı düşürür ⇒ önbellek boş kalır ve her dosya
+                # tek-tek yoldan ölçülür (orada okunamayan dosya `Dur` ile açıkça durur).
+                if r.returncode == 0 and len(satirlar) == len(dosyalar):
+                    self._disk = dict(zip(dosyalar, satirlar))
+            yield
+        finally:
+            self._agaclar, self._disk, self._refler = None, None, {}
+
+    def _agac(self, ref: str) -> dict[str, str] | None:
+        """`ref` ağacının yol → nesne sha eşlemi (tree girdileri DAHİL: `rev-parse ref:dizin` de
+        tree sha döndürür). Anahtar ÇÖZÜLMÜŞ commit'tir: ad aynı kalıp hedef kayarsa karışmasın."""
+        if ref not in self._refler:   # blok içinde ref'ler kaymaz (plan fetch/commit yapmaz)
+            c = self.git("rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
+            self._refler[ref] = c.stdout.strip() if c.returncode == 0 else None
+        sha = self._refler[ref]
+        if not sha:
+            return None
+        if sha not in self._agaclar:
+            r = self.git("ls-tree", "-r", "-t", "-z", "--full-tree", sha)
+            if r.returncode != 0:
+                return None
+            esle: dict[str, str] = {}
+            for girdi in r.stdout.split("\0"):
+                if "\t" in girdi:
+                    bas, yol = girdi.split("\t", 1)
+                    esle[yol] = bas.split()[2]
+            self._agaclar[sha] = esle
+        return self._agaclar[sha]
 
     # --- git ---------------------------------------------------------------------------------
     def git(self, *args: str, kontrol: bool = False, ikili: bool = False,
@@ -217,6 +273,10 @@ class Klon:
         return {y for y in r.stdout.split("\0") if y}
 
     def blob_sha(self, ref: str, yol: str) -> str | None:
+        if self._agaclar is not None:
+            agac = self._agac(ref)
+            if agac is not None:
+                return agac.get(yol)
         r = self.git("rev-parse", "--verify", "--quiet", f"{ref}:{yol}")
         return r.stdout.strip() or None
 
@@ -252,6 +312,8 @@ class Klon:
         tam = self.kok / yol
         if not tam.is_file():
             return None
+        if self._disk is not None and yol in self._disk:
+            return self._disk[yol]
         r = self.git("hash-object", "--path", yol, "--", str(tam))
         sha = r.stdout.strip()
         if r.returncode != 0 or not sha:
@@ -760,15 +822,16 @@ def komut_plan(b: Baglam, args) -> int:
     sayaclar: dict[str, int] = {}
     vaka_kayitlari: dict[str, dict] = {}
     yeniden_hedefleri = set(yeniden_ad.values())
-    for yol in sorted(kapsam):
-        if yol in yeniden_hedefleri:
-            # yeniden adlandırma HEDEFİ kaynak kaydında (`yeni_yol`) taşınır; ayrıca V2 olarak
-            # listelenirse aynı dosya iki kez uygulanır ve `kapanis` iki kez doğrulamaya çalışır
-            continue
-        kayit = dosya_vakasi(b, yol, yeniden_ad)
-        sayaclar[kayit["vaka"]] = sayaclar.get(kayit["vaka"], 0) + 1
-        if kayit["vaka"] not in ISLEMSIZ_VAKALAR:
-            vaka_kayitlari[yol] = kayit
+    with k.toplu_okuma(set(kapsam) | yeniden_hedefleri):  # Z31: dosya başına 3 git süreci yerine toplu
+        for yol in sorted(kapsam):
+            if yol in yeniden_hedefleri:
+                # yeniden adlandırma HEDEFİ kaynak kaydında (`yeni_yol`) taşınır; ayrıca V2
+                # listelenirse aynı dosya iki kez uygulanır ve `kapanis` iki kez doğrulamaya çalışır
+                continue
+            kayit = dosya_vakasi(b, yol, yeniden_ad)
+            sayaclar[kayit["vaka"]] = sayaclar.get(kayit["vaka"], 0) + 1
+            if kayit["vaka"] not in ISLEMSIZ_VAKALAR:
+                vaka_kayitlari[yol] = kayit
     sayaclar["VKD"] = sayaclar.get("VKD", 0) + b.kullanici_dosya_sayisi()
 
     # 3) her yolu onu BEYAN EDEN EN SON kaleme bağla

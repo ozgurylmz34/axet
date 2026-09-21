@@ -552,12 +552,41 @@
      "baslik": "Her yayın öncesi CI'da gerçek güncelleme provası",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Birim testleri kuralları küçük yapay girdilerle dener; kullanıcının yürüdüğü akışı (gerçek eski sürüm → yeni sürüm, gerçek içerik, `%guncelle` ardından `%guncelle-proje`) hiçbiri koşmuyordu — bu sürümdeki iki hata da oradan kaçtı. CI artık her değişiklikte aday yayını gerçek public geçmişin üstüne kurup temiz klonlarda güncelleme motorunu baştan sona koşuyor. Kullanıcı tarafında davranış değişikliği yoktur.",
+     "neden": "Birim testleri kuralları küçük yapay girdilerle dener; kullanıcının yürüdüğü akışı (gerçek eski sürüm → yeni sürüm, gerçek içerik, `%guncelle` ardından `%guncelle-proje`) hiçbiri koşmuyordu — bu sürümdeki iki hata da oradan kaçtı. CI artık her değişiklikte aday yayını gerçek public geçmişin üstüne kurup temiz klonlarda güncelleme motorunu baştan sona koşuyor. Kullanıcı tarafında davranış değişikliği yoktur. Ayrıca CI'daki 'kullanıcı ağacı' testi artık yayın aracının ürettiği dosyaları da içeriyor (önceden içermediği için yalnız kullanıcı ağacında kırmızı olan bir test 3 yayın boyunca görünmedi).",
      "dosyalar": [
       ".github/workflows/testler.yml"
      ],
      "gerektirir": [],
      "test": []
+    },
+    {
+     "id": "0.4.2-05",
+     "baslik": "Güncelleme planı saniyeler içinde hazır (önce ~77 sn)",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "Plan adımı her dosya için ayrı git süreçleri başlatıyordu: yaklaşık 470 dosyada 1455 süreç, Windows'ta süreç başına ~52 ms ⇒ ~77 sn (ölçüldü). Artık aynı bilgiler sürüm başına tek git çağrısıyla okunuyor: ~2 sn. Plan çıktısı eskisiyle BİREBİR aynı (aynı klonda eski ve yeni motorla üretilen plan dosyaları karşılaştırıldı). Önbellek yalnız plan adımının içinde yaşar; dosya yazan adımlar her zaman diskten taze okur.",
+     "dosyalar": [
+      "scripts/guncelle.py",
+      "tests/test_guncelle.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k TopluOkumaTest"
+     ]
+    },
+    {
+     "id": "0.4.2-06",
+     "baslik": "Kullanıcı klonunda kırmızı yanan bir kart testi düzeltildi",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "`test_guncelle_kartlar` içindeki bir kontrol, yayında üretilen `guncelle/ci-durum.json` dosyasının diskte OLMADIĞINI varsayıyordu; dosya her yayında üretildiği için test yalnız kullanıcı klonunda kırmızıydı (yerel değişiklikli güncellemelerde test turu bunu gürültü olarak gösterebilirdi). Kontrol artık diskte gerçekten olmayan sentetik bir yolla yapılıyor.",
+     "dosyalar": [
+      "tests/test_guncelle_kartlar.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k test_guncelle_kartlar"
+     ]
     },
     {
      "id": "0.4.2-04",

@@ -2513,6 +2513,46 @@ class CakismaIsaretiTest(unittest.TestCase):
         self.assertTrue(self._f()("a\n======= \nb\n"), "elle çözümde kalan '======= ' yakalanmalı")
 
 
+class TopluOkumaTest(GeciciTest):
+    """Z31 (2026-09-21): plan turu 1455 git süreci başlatıyordu (76 sn, ölçüldü) → toplu okuma.
+
+    Sözleşme: ① blok içinde cevaplar tek-tek yolla AYNI (dizin yolu, olmayan yol, değişmiş dosya)
+    ② önbellek YALNIZ blok içinde yaşar — bloktan sonra yazılan dosyanın hash'i TAZE okunur
+    (bayat hash doğrulamayı sessizce körleştirirdi).
+    """
+
+    def _klon(self):
+        import guncelle  # noqa: PLC0415
+        kok = self.tmp / "k"
+        kok.mkdir()
+        self.git(kok, "init", "-q", "-b", "main")
+        self.yaz(kok / "a.txt", "bir\n")
+        self.yaz(kok / "d" / "b.txt", "iki\n")
+        self.git(kok, "add", "-A")
+        self.git(kok, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "c1")
+        self.yaz(kok / "a.txt", "degisti\n")
+        return guncelle.Klon(kok), kok
+
+    def test_1_blok_icinde_cevaplar_tek_tek_yolla_ayni(self):
+        k, _ = self._klon()
+        yollar = ["a.txt", "d/b.txt", "d", "yok.txt"]
+        tek = {y: (k.blob_sha("HEAD", y), k.disk_sha(y) if y != "d" else None) for y in yollar}
+        with k.toplu_okuma(yollar):
+            self.assertIsNotNone(k._disk, "kalibrasyon: önbellek blok içinde açık olmalı")
+            toplu = {y: (k.blob_sha("HEAD", y), k.disk_sha(y) if y != "d" else None)
+                     for y in yollar}
+        self.assertEqual(tek, toplu)
+        self.assertIsNotNone(tek["d"][0], "dizin yolu tree sha döndürmeli (rev-parse ile aynı)")
+
+    def test_2_bloktan_sonra_disk_hash_TAZE(self):
+        k, kok = self._klon()
+        with k.toplu_okuma(["a.txt"]):
+            once = k.disk_sha("a.txt")
+        self.yaz(kok / "a.txt", "yeniden yazildi\n")
+        self.assertIsNone(k._disk, "önbellek blok dışında KAPALI olmalı")
+        self.assertNotEqual(once, k.disk_sha("a.txt"), "yazımdan sonra bayat hash dönmemeli")
+
+
 class CiTabaniKirmiziTest(unittest.TestCase):
     """Z16 — CI tabanıyla `yeni_kirmizilar` SESSİZ SAHTE-YEŞİL vermemeli.
 

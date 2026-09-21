@@ -11,7 +11,8 @@ Ne yapar (sırayla):
   1. public depoyu geçici dizine klonlar, o klonda PUSH'u kapatır (push URL'si geçersiz yapılır);
   2. `yayin_hazirla` ile aday yayın commit'ini + etiketini YALNIZ o geçici klona kurar;
   3. her eski etiket için temiz bir tüketici klonu açar (`origin` = geçici public klon);
-  4. motoru aday sürümden çıkarır (`scripts/guncelle.py` + `guncelle/`) ve GUNCELLE.md adım 2-14'ü
+  4. motoru adayın `skills/guncelle/SKILL.md` MOTOR-CIKAR komutlarını AYNEN koşarak çıkarır ve
+     GUNCELLE.md adım 2-14'ü
      etkileşimsiz koşar: onkontrol · hazirla · plan · sec --hepsi · olc once · uygula --otomatik ·
      ozel-adim · olc sonra · butunluk · kapanis;
   5. her adımın çıkış kodunu ve süresini basar; kapanış 0 değilse PROVA FAIL.
@@ -33,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -118,21 +120,25 @@ def korumali_ortam(kum: Path) -> dict:
     return env
 
 
-def motoru_cikar(pub: Path, hedef: Path) -> Path:
-    """GUNCELLE.md: motor YENİ sürümden koşar ⇒ aday commit'ten `scripts/guncelle.py` + `guncelle/`."""
-    hedef.mkdir(parents=True)
-    arsiv = subprocess.run(["git", "archive", "HEAD", "scripts/guncelle.py", "guncelle"],
-                           cwd=pub, capture_output=True)
-    if arsiv.returncode != 0:
-        raise ProvaHatasi(f"motor çıkarılamadı: {arsiv.stderr.decode(errors='replace')[:300]}")
-    import io
-    import tarfile
-    with tarfile.open(fileobj=io.BytesIO(arsiv.stdout)) as t:
-        t.extractall(hedef, filter="data")
-    return hedef / "scripts" / "guncelle.py"
+MOTOR_CIKAR = ("<!-- MOTOR-CIKAR:BASLA -->", "<!-- MOTOR-CIKAR:BITIR -->")
 
 
-def prova_kos(pub: Path, motor: Path, eski: str, is_dizini: Path) -> dict:
+def motor_komutlari(pub: Path) -> list[str]:
+    """ADAYIN `skills/guncelle/SKILL.md` MOTOR-CIKAR bloğu — aXet'in çalıştırdığı komutların ta kendisi.
+
+    Prova motoru kendi yöntemiyle çıkarmaz: belgedeki komutlar bozulursa (yanlış yol, eksik
+    klasör) kullanıcının `%guncelle`si ilk adımda düşer ⇒ prova da aynı yerde düşmelidir.
+    """
+    r = subprocess.run(["git", "show", "HEAD:skills/guncelle/SKILL.md"], cwd=pub,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if r.returncode != 0 or MOTOR_CIKAR[0] not in r.stdout or MOTOR_CIKAR[1] not in r.stdout:
+        raise ProvaHatasi("adayda skills/guncelle/SKILL.md MOTOR-CIKAR bloğu okunamadı")
+    blok = r.stdout.split(MOTOR_CIKAR[0], 1)[1].split(MOTOR_CIKAR[1], 1)[0]
+    return [x.strip() for x in blok.splitlines()
+            if x.strip() and not x.strip().startswith("```")]
+
+
+def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
     """Tek taban etiketinden tam güncelleme akışı. Dönen kayıt: adımlar + hüküm.
 
     Her taban KENDİ kum ortamını alır: iki klon aynı global config'e kurulursa `doctor` ikisini
@@ -176,6 +182,19 @@ def prova_kos(pub: Path, motor: Path, eski: str, is_dizini: Path) -> dict:
     if kos("kurulum (eski sürüm)", [str(kon / "scripts" / "install.py")]) != 0:
         return {"eski": eski, "adimlar": adimlar, "hukum": "FAIL",
                 "neden": "eski sürüm kurulamadı (install.py)"}
+    # Motor, skill'in MOTOR-CIKAR komutlarıyla AYNEN çıkarılır (Z32).
+    tmp = is_dizini / f"motor-{eski}"
+    tmp.mkdir()
+    for i, satir in enumerate(motor_komutlari(pub), 1):
+        argv = shlex.split(satir.replace("<KLON>", kon.as_posix()).replace("<TMP>", tmp.as_posix()))
+        if argv[0] == "python":
+            argv = argv[1:]
+        else:
+            argv = ["-c", "import subprocess,sys; sys.exit(subprocess.call(sys.argv[1:]))", *argv]
+        if kos(f"motor-cikar {i}", argv) != 0:
+            return {"eski": eski, "adimlar": adimlar, "hukum": "FAIL",
+                    "neden": f"skill MOTOR-CIKAR komutu {i} başarısız: {satir}"}
+    motor = tmp / "scripts" / "guncelle.py"
     proje.mkdir()
     _git("init", "-q", "-b", "main", cwd=proje)
     if kos("yeni proje (eski sürüm)", [str(kon / "scripts" / "new_project.py"), str(proje),
@@ -256,9 +275,7 @@ def main() -> int:
             return 1
         print(f"Aday yayın commit'i kuruldu (yalnız {pub}, push KAPALI) · "
               f"{time.monotonic() - bas:.1f} sn")
-        motor = motoru_cikar(pub, is_dizini / "motor")
-
-        sonuclar = [prova_kos(pub, motor, t, is_dizini) for t in tabanlar]
+        sonuclar = [prova_kos(pub, t, is_dizini) for t in tabanlar]
     except ProvaHatasi as e:
         print(f"PROVA KURULAMADI: {e}", file=sys.stderr)
         return 2

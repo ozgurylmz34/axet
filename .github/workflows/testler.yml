@@ -170,14 +170,34 @@ jobs:
       # PUBLIC DUZEN — dislanacak yollar yayin_hazirla.DISLANANLAR'dan OKUNUR (sabit yazilmaz,
       # bayatlamasin). Silme COMMIT'lenir: test_kur fixture'i bu depoyu HEAD'den klonluyor.
       # `python -B`: import __pycache__ birakip maintenance/ klasorunu diriltmesin.
-      - name: Public duzen - dislananlari sil
-        if: matrix.takim == 'kok-public'
+      # URETILEN DOSYALAR (Z33, 2026-09-21): kullanici agacinda yayin aracinin URETTIGI dosyalar
+      # (CHANGELOG.md, guncelle/yayinlar.json, guncelle/ci-durum.json) da vardir; bu kol onlari
+      # uretmiyordu ⇒ yalniz yayinlanan agacta kirmizi olan bir test (ci-durum.json'un diskte
+      # OLMADIGINI varsayan) public CI'da 3 yayin boyunca kirmiziydi, burada gorunmedi. Artik ayni
+      # arac (`--yalniz-tara --ci-durum-yok`) calistirilip uretilenler agaca konur.
+      # Public depoda bu adim ATLANIR (maintenance/ yok, agac ZATEN public) — orada `kok` kolu
+      # yayinlanan agacin kendisini olcer.
+      - name: Public duzen - dislananlari sil + uretilenleri koy
+        if: matrix.takim == 'kok-public' && hashFiles('maintenance/yayin_hazirla.py') != ''
         run: |
-          $d = python -B -c "import sys; sys.path.insert(0, 'maintenance'); import yayin_hazirla as y; print(' '.join(y.DISLANANLAR))"
+          $py = "import sys; sys.path.insert(0, 'maintenance'); import yayin_hazirla as y; print(' '.join"
+          $d = python -B -c "$py(y.DISLANANLAR))"
+          $u = python -B -c "$py(y.URETILEN_DOSYALAR))"
+          $hedef = Join-Path $env:RUNNER_TEMP 'yayin-agaci'
+          python -B maintenance/yayin_hazirla.py --hedef $hedef --yalniz-tara --ci-durum-yok
+          if ($LASTEXITCODE -ne 0) { throw "yayin_hazirla --yalniz-tara basarisiz (rc=$LASTEXITCODE)" }
+          foreach ($f in $u.Split(' ')) {
+            $ust = Split-Path $f
+            if ($ust) { New-Item -ItemType Directory -Force -Path $ust | Out-Null }
+            Copy-Item -Force (Join-Path $hedef $f) $f
+          }
           Write-Host "dislanan: $d"
+          Write-Host "uretilen: $u"
           git rm -r -q --ignore-unmatch $d.Split(' ')
+          git add -A -- $u.Split(' ')
           git -c user.name=ci -c user.email=ci@example.invalid commit -q -m public-duzen
           if (Test-Path maintenance) { throw "maintenance/ hala var - public duzen kurulamadi" }
+          foreach ($f in $u.Split(' ')) { if (-not (Test-Path $f)) { throw "uretilen dosya yok: $f" } }
 
       - name: Kok takim
         if: matrix.takim == 'kok' || matrix.takim == 'kok-public'
