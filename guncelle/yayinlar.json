@@ -927,7 +927,8 @@
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/composite.py",
       "skills-sap/sap-adt-foundation/tests/test_ddic_textpool.py",
       "skills-sap/sap-adt-foundation/tests/test_msgclass_domain.py",
-      "skills-sap/sap-adt-foundation/references/tool-catalog.md"
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/IMPLEMENTATION.md"
      ],
      "gerektirir": [],
      "test": [

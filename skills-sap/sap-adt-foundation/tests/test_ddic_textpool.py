@@ -962,6 +962,9 @@ class DdicTextpool(unittest.TestCase):
             "retry_timeout": "  [RETRY] Create domain - Timeout (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
             "yalniz_csrf": "  [RETRY] Create domain - CSRF token expired (attempt 1), retrying in 0.0s...\n[ERROR] [405] x",
             "iz_yok": "[ERROR] [405] Domain ZAXET_D_X already exists (SAP 405 AlreadyExists)",
+            # gate LOW-1 (düzeltme turu): sarmalayıcı açıklamayı da log'a basar — izi TÜM log'da aramak yanlış pozitif
+            "aciklama_ici": "  Description: %s TARİHİ\n[ERROR] [405] Domain ZAXET_D_X already exists (SAP 405 "
+                            "AlreadyExists) — üzerine YAZILMADI (kilit/PUT/aktivasyon yok)" % IZ,
         }
         sonuc = {k: composite._zaten_var_yaniti("Domain", "ZAXET_D_X", "doma", v)["error"] for k, v in loglar.items()}
         c = SimpleNamespace(_son_yeniden_denemeler=["Connection error (attempt 1)"])
@@ -971,7 +974,7 @@ class DdicTextpool(unittest.TestCase):
                                                               "ZAXET_D_X", yanit, "/e", yeniden_deneme=False))
         beklenen = {"lib_hukmu": "already_exists_after_retry", "retry_baglanti": "already_exists_after_retry",
                     "retry_5xx": "already_exists_after_retry", "retry_timeout": "already_exists_after_retry",
-                    "yalniz_csrf": "already_exists", "iz_yok": "already_exists"}
+                    "yalniz_csrf": "already_exists", "iz_yok": "already_exists", "aciklama_ici": "already_exists"}
         ok = (sonuc == beklenen and IZ in dolu and "Connection error (attempt 1)" in dolu and IZ not in bos)
         self.kaydet("S9c after_retry izi: kütüphane hükmü / [RETRY] bağlantı-5xx-timeout ayrı ayrı · CSRF / iz yok → düz",
                     str(beklenen) + " · lib eki sebepli", f"{sonuc} · dolu_ek={IZ in dolu} bos_ek={IZ in bos}", ok)
@@ -996,6 +999,14 @@ class DdicTextpool(unittest.TestCase):
         }
         sonuc = {k: f(v[0]) for k, v in vakalar.items()}
         beklenen = {k: v[1] for k, v in vakalar.items()}
+        # gate LOW-2 (düzeltme turu): çok sayıda KAPANMAMIŞ `/*` ikinci dereceden süre alıyordu (30 KB ≈ 1,4 sn,
+        # 100 KB ≈ 43 sn ölçüldü). Kapanmamış blok metin sonuna kadar yorum sayılır → doğrusal.
+        import time
+        t0 = time.perf_counter()
+        kapanmamis = f("/* " * 10000 + "\ndefine table zaxet_t {\n}")
+        sure = time.perf_counter() - t0
+        sonuc["kapanmamis_cok"] = (kapanmamis, sure < 0.3)
+        beklenen["kapanmamis_cok"] = (None, True)
         self.kaydet("S6c DDL türü: yorumlar atlanır, tırnak içi korunur, annotation / büyük harf doğru",
                     str(beklenen), str(sonuc), sonuc == beklenen)
 

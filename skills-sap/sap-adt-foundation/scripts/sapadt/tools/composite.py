@@ -136,7 +136,10 @@ def _yeniden_deneme_izi(log_text: str) -> bool:
         from sap_adt_lib import ONCEKI_DENEME_IZI  # type: ignore
     except Exception:  # noqa: BLE001 — kütüphane içe alınamazsa yalnız yedek iz
         ONCEKI_DENEME_IZI = None
-    if ONCEKI_DENEME_IZI and ONCEKI_DENEME_IZI in metin:
+    # Düzeltme turu gate LOW-1: iz TÜM log'da değil, yalnız kütüphanenin AlreadyExists satırının EKİ olarak aranır —
+    # sarmalayıcı `Description: …` satırını da log'a basar, açıklamada aynı sözcükler geçebilir (yanlış pozitif).
+    if ONCEKI_DENEME_IZI and re.search(r"already exists \(SAP \d+ AlreadyExists\)[^\n]* — "
+                                       + re.escape(ONCEKI_DENEME_IZI) + r" \(", metin):
         return True
     return bool(_RETRY_IZI.search(metin))
 

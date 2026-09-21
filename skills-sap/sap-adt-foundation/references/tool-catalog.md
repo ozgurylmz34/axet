@@ -349,7 +349,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   ölçülemedi (5xx/403/istisna/ağ — 404 dışı her şey) → `exists_unmeasured`, **POST atılmaz** · 404 → yaratılır; `steps.pre_check` =
   `checked_found` | `checked_absent` | `unavailable:<sebep>`. Ön kontrol "yok" deyip SAP POST'u 400/405 `AlreadyExists` ile reddederse
   kütüphane artık başarı DÖNMEZ (`SAPObjectExistsError`) → `already_exists`, **aktivasyon yapılmaz**. POST'tan önce 5xx/zaman aşımı/bağlantı hatası yüzünden
-  sessiz yeniden deneme olduysa (`[RETRY]` izi) → `already_exists_after_retry` + `own_shell_possible:true`: obje büyük olasılıkla önceki
+  sessiz yeniden deneme olduysa (kütüphanenin `ÖNCEKİ DENEME` eki; yedek: `[RETRY]` 5xx/zaman aşımı/bağlantı hatası satırı) → `already_exists_after_retry` + `own_shell_possible:true`: obje büyük olasılıkla önceki
   denemenin yarattığı kabuktur (başkasının olduğu kanıtlanmadı) → `adt_get` ile bak, kör tekrar yok. Önceden: ön kontrol hata/None'da "yok"
   diyordu ve POST 405 başarı sayılıp aktivasyon çağrılıyordu (aynı adlı ikinci çağrı var olan objeyi "yaratıldı" diye raporlayabiliyordu).
   **Kodlar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `already_exists_after_retry` · `exists_unmeasured` · yaratma

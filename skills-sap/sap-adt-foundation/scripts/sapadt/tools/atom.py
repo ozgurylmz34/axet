@@ -566,7 +566,9 @@ _DDL_TANIM = re.compile(r"^\s*define\s+(table|structure)\b", re.IGNORECASE | re.
 # Bug gate LOW (v0.5.1): tür aranmadan önce DDL yorumları atılır. Tek geçişli alternasyon: tırnaklı dizgi (olduğu gibi
 # kalır — `'etiket /* x'` yorum başlatmaz) · `/* … */` blok yorum · `//` satır yorumu. Ölçülen kusur:
 # `/*\ndefine structure old\n*/\ndefine table` → 'structure' dönüyordu.
-_DDL_YORUM_YA_DA_DIZGI = re.compile(r"'[^'\n]*'|/\*.*?\*/|//[^\n]*", re.S)
+# Düzeltme turu gate LOW-2: kapanmamış `/*` metin sonuna kadar yorum sayılır (`\Z`) — aksi hâlde her `/*` konumu metnin
+# sonuna kadar taranıp geri çekiliyordu: 10.000 kapanmamış `/*` (30 KB) ≈ 1,4 sn, 100 KB ≈ 43 sn (ölçüldü).
+_DDL_YORUM_YA_DA_DIZGI = re.compile(r"'[^'\n]*'|/\*.*?(?:\*/|\Z)|//[^\n]*", re.S)
 
 
 def _ddl_yorumsuz(kaynak: str) -> str:
