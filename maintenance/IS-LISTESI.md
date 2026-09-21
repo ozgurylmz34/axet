@@ -82,7 +82,7 @@ placeholder'ı kalmadı. Düzeltme gelince ölçüm **sentetik ReadOnly öznitel
 | Sıra | İş | Kim |
 |---|---|---|
 | 0 | ~~Klasör taşıması + kontrol listesi~~ | ✅ **TAMAM** (2026-09-20; §4 10/10, çapa arşivlendi) |
-| 1 | `behavior_manifest.py generate` | kullanıcı terminali — **hâlâ açık** (MERGE ANINDA md. 1) |
+| 1 | ~~`behavior_manifest.py generate`~~ | ✅ **GEREKMEDİ** (ölçüldü 2026-09-21): PROVA `behavior_manifest.py` → *"canlı ağaç manifest'le EŞ"* · AXET `scripts/behavior_manifest.py check` → `[OK]` |
 | 2 | `%guncelle` + `install.py` + aXet'i yeniden başlat · SAP projelerinde `%guncelle-proje` | kullanıcı |
 | 3 | Yeni davranış testi (K-I niyet ölçümü / Z14) | kullanıcı + lider |
 | 4 | ~~Yukarıdaki 7 kararın uygulanması~~ | ✅ **6/7 TAMAM** (md. 5 ölçüldü→kural gerekmedi); ayrıntı aşağıda |
