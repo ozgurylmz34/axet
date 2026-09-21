@@ -7361,9 +7361,11 @@ constants:
                       adtcore:name="{package_name.upper()}"/>
 </ddlx:ddlxSource>'''
 
+        # v0.5.2 (Z42, canlı 2026-09-22): koleksiyon ADT discovery'de yalnız `ddic.ddlx.v1+xml` kabul eder;
+        # eski `ddlxSource+xml` → 415 Unsupported Media Type (DENENEN-BAŞARISIZ).
         headers = self._get_headers(
-            'application/vnd.sap.adt.ddlxSource+xml',
-            'application/vnd.sap.adt.ddlxSource+xml'
+            'application/vnd.sap.adt.ddic.ddlx.v1+xml',
+            'application/vnd.sap.adt.ddic.ddlx.v1+xml'
         )
 
         params = {}
@@ -7388,11 +7390,12 @@ constants:
         object_url = f'/sap/bc/adt/ddic/ddlx/sources/{name.lower()}'
 
         # Upload the source (pass transport so SAP registers write under correct CTS entry)
+        # v0.5.2: yükleme hatası artık YUTULMAZ — kabuk yaratıldı ama kaynak yazılmadıysa başarı DEĞİLDİR.
         try:
             self.set_object_source(f"{object_url}/source/main", source, lock_handle=None, transport=transport)
         except Exception as e:
-            if self.debug_enabled:
-                self._debug(f"[DEBUG] DDLX source upload note: {e}")
+            return {'success': False, 'shell_created': True, 'object_url': object_url,
+                    'message': f'Metadata extension {name} kabuğu yaratıldı ama kaynak YAZILAMADI: {e}'}
 
         return {
             'success': True,
@@ -7459,11 +7462,12 @@ constants:
         object_url = f'/sap/bc/adt/acm/dcl/sources/{name.lower()}'
 
         # Upload the source (pass transport so SAP registers write under correct CTS entry)
+        # v0.5.2: yükleme hatası artık YUTULMAZ (DDLX ile aynı).
         try:
             self.set_object_source(f"{object_url}/source/main", source, lock_handle=None, transport=transport)
         except Exception as e:
-            if self.debug_enabled:
-                self._debug(f"[DEBUG] DCL source upload note: {e}")
+            return {'success': False, 'shell_created': True, 'object_url': object_url,
+                    'message': f'Access control {name} kabuğu yaratıldı ama kaynak YAZILAMADI: {e}'}
 
         return {
             'success': True,
