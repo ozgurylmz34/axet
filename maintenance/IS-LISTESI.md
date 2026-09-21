@@ -46,6 +46,7 @@ onay (DEV, `$TMP`, `ZAXET_T_*` test objeleri) alınır.
 | Z47 | `ask_user` ilk çağrı `options` string verilince başarısız, ikinci denemede düzeldi | araç açıklamasına örnek; sıklığı DB'den ölç | 🟡 ölçüldü: 46 çağrıda 4 hata (options string/XML · tek seçenek ×2 · label boş); `protocol.md`'ye biçim notu; **motor/araç açıklaması düzeltmesi açık** |
 | Z48 | `session_brief` AXET_TEST'te commit'siz `AGENTS.md`'yi (`%guncelle-proje` sonrası) onaysız davranış yüzeyi FAIL saydı | kullanıcı: `behavior_manifest.py generate` + commit; ürün sorusu: guncelle-proje kapanışı manifest'i kendisi yenilesin mi | ❓ |
 | Z49 | CI skill testlerini (`sap-fs-ts-docs`, `sap-ui5-user-guide`) koşmuyor | KD PR'ında `testler.yml` kok işine adım | 🟡 KD PR'ında |
+| Z50 | DDIC bug gate artıkları (LOW, 2026-09-21 düzeltme turu PASS sonrası): ⓐ `tools/ddic.py:~446` ttyp onarım yolunda nihai `ok` ilk aktivasyonun `verified`'ını kullanıyor, `t2.verified` yok sayılıyor ⓑ `tool-catalog.md:407/419` hata listesinde `verify_failed`, `create_uncertain` yok ⓒ öneri: PUT/LOCK ağ istisnasında "yazıldığı / kilit durumu belirsiz" ifadesi ⓓ `sap_adt_lib.py ~6865` FM yardımcısı UNLOCK `except: pass` ⓔ `tools/atom.py:1533` UNLOCK yanıt kodu kontrolü DOĞRULANMADI ⓕ `_guard` boş paketi reddetmiyor (yalnız lib durduruyor, DOĞRULANMADI) | kırmızı-önce test + düzeltme; ⓓⓔ aynı desen (UNLOCK sonucu görünür) | ⬜ |
 
 ## ⭐ 2026-09-21 (öğleden sonra) — **YAYIN PROVASI (Z28)** + v0.4.2 adayı — BURADAN BAŞLA
 
