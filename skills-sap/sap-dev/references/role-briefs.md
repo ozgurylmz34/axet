@@ -46,6 +46,7 @@ OKUMA sınıfı (serbest): ping, adt_get, adt_msgclass_read, adt_search_objects,
   adt_feature_probe, adt_lock_check, adt_unit_run (YALNIZ allow_risky_tests=false).
 YAZMA sınıfı — ÇAĞIRMA: adt_post_shell, adt_push_source, adt_activate, adt_delete, adt_publish_service,
   adt_classrun, adt_domain_create, adt_dtel_create, adt_struct_create, adt_screen_generate,
+  adt_table_create, adt_ttyp_create, adt_textpool_write,
   adt_syntax_check (adına rağmen yazmadır: bekleyen temiz sürümü AKTİVE EDER),
   adt_unit_run + allow_risky_tests=true (kalıcı veri değiştirebilir).
 - Hiçbir komuta `--sap-write` / `--scope` ekleme. `install.py` çalıştırma.

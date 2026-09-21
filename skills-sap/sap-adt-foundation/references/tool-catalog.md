@@ -6,16 +6,17 @@
 > Yazma sınıfı: `--sap-write --scope S0|S1|S2` + (`--reason "<gerekçe>"` | `--intake .axet-code/intake/<id>.md`).
 
 **Sınıf özeti (`--list` ile ölçüldü, 2026-09-13):** okuma 24 (`ping` + `sap_doctor` + 22 `adt_*`, `adt_unit_run` dahil) · yazma 13 · toplam 37.
+**2026-09-21 eki (DDIC şeridi, Z38/Z39/Z40):** yazma +3 (`adt_table_create`, `adt_ttyp_create`, `adt_textpool_write`) → yazma 16 · toplam 40 (`--list`, çevrimdışı ölçüldü).
 Profil etiketlerinin tamamı ve yetenek matrisi: `references/profiles.md` (rehber; etiket tablosu kodla test edilir).
 `adt_set_description` yalnız `s4_private`'ta açıktır ve transport ister.
 `adt_unit_run` `allow_risky_tests=true` verilirse yazma sınıfına geçer (`--list`: `write_when`).
 `adt_transport_list` yalnız `ecc`, `s4_private`, `s4_public` profillerinde açıktır (`available_on`); `btp_abap`'ta yoktur.
-`adt_screen_generate` yalnız `ecc`, `s4_private` profillerinde açıktır. `adt_msgclass_write` yalnız `s4_private`'ta açıktır
+`adt_screen_generate` yalnız `ecc`, `s4_private` profillerinde açıktır. `adt_msgclass_write`, `adt_table_create`, `adt_ttyp_create`, `adt_textpool_write` yalnız `s4_private`'ta açıktır
 (kaynak reçetenin kanıtı yalnız bu profil; diğer profilde `tool_not_available_for_profile`, çıkış 2).
 `adt_post_shell` / `adt_push_source` içinde `fugr` ve `func` tipleri yalnız `ecc`, `s4_private`'ta (`--list`: `object_type_available_on`;
 diğer profilde `type_not_available_for_profile`, çıkış 2).
 Transport zorunlu araçlar (`requires_transport`): `adt_post_shell`, `adt_domain_create`, `adt_dtel_create`, `adt_struct_create`,
-`adt_msgclass_write`, `adt_set_description`, `adt_screen_generate` (`requires_transport_when`: mode WRITE/DELETE). `adt_push_source` `bdef`/`ccimp`/`ccau` tiplerinde de transport ister (araç katmanı).
+`adt_msgclass_write`, `adt_set_description`, `adt_table_create`, `adt_ttyp_create` (`$TMP` paketinde muaf), `adt_textpool_write`, `adt_screen_generate` (`requires_transport_when`: mode WRITE/DELETE). `adt_push_source` `bdef`/`ccimp`/`ccau`/`ccdef`/`ccmac` tiplerinde de transport ister (araç katmanı).
 Argümanları dosyadan vermek için `--args-json` yerine `--args-file <json dosyası>`.
 
 **Ortak dönüş okuma kuralları**
@@ -33,7 +34,7 @@ Tip değerleri — CLI tip tablosu (`lib/object_types.py`, kod okuması): `class
 **Tabloda yok ama araçlarda özel yolu olan tipler (2026-09-13):** `bdef` (`adt_get` okur · `adt_post_shell` kabuk · `adt_push_source`
 yazar · `adt_activate` aktive eder), `msag` (`adt_get`→`adt_msgclass_read` · `adt_post_shell` kabuk · `adt_msgclass_write` mesaj yazar), `enqu` (`adt_get` yalnız varlık — `include_source:false` · `adt_post_shell` kabuk ·
 `adt_activate` aktive eder; kaynak okuma/yazma yok), `srvb` (`adt_activate` + `adt_publish_service`; yaratma/kaynak yok). Sınıf alt-include'ları
-`ccimp`/`ccau`/`ccdef`/`ccmac` (`name` = ANA SINIF): `adt_get` dördünü okur, `adt_push_source` yalnız `ccimp`/`ccau` yazar.
+`ccimp`/`ccau`/`ccdef`/`ccmac` (`name` = ANA SINIF): `adt_get` dördünü okur, `adt_push_source` dördünü yazar (`ccdef`/`ccmac` yazma yolu canlı ÖLÇÜLMEDİ — yanıtta `write_path_measured:false`).
 Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde (class/interface/program/include) True'dur.
 
 ---
@@ -284,7 +285,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   canlı okuma başarısız `pull_live_read_failed` (1) · durum dosyası bozuk `pull_state_unreadable` (2); başarılı push kaydı günceller (`pull_state: guncellendi`).
 - **Tipe özel yazma (2026-09-13; çevrimdışı test edildi, canlı DOĞRULANMADI):**
   - `bdef`: LOCK → PUT (If-Match YOK) → UNLOCK → readback; **aktive ETMEZ** (`activated:false` + `activation_note`) → `adt_activate(<kök ddls>, also=[bdef, behavior class])`. Transport zorunlu. Yasak B taraması uygulanmaz (ABAP değil). Reviewer `rap_bdef_creation`.
-  - `ccimp` / `ccau`: `name` = **ana sınıf** (`{"name":"ZBP_X","object_type":"ccimp",…}`); include yoksa önce iskelet (POST) sonra PUT; bayt readback; ana sınıf aktive edilir — RAP behavior pool'da BDEF inaktifse aktivasyon düşer (`push_failed` + `activation_note`) → `also` ile birlikte aktive et. Transport zorunlu. Yasak B taranır. Reviewer `class_push`. `ccdef`/`ccmac` → `unsupported_type` (yazma yolu ölçülmedi).
+  - `ccimp` / `ccau`: `name` = **ana sınıf** (`{"name":"ZBP_X","object_type":"ccimp",…}`); include yoksa önce iskelet (POST) sonra PUT; bayt readback; ana sınıf aktive edilir — RAP behavior pool'da BDEF inaktifse aktivasyon düşer (`push_failed` + `activation_note`) → `also` ile birlikte aktive et. Transport zorunlu. Yasak B taranır. Reviewer `class_push`. `ccdef` / `ccmac` (2026-09-21, Z41): aynı yol (`push_class_include` → `definitions` / `macros` segmenti); segment adları GET ile ölçüldü, **yazma canlı ÖLÇÜLMEDİ** → yanıtta `write_path_measured:false` (ccimp/ccau'da `true`); bayt readback her yazımda koşar.
   - `func`: fonksiyon grubu canlı okumadan çözülür (`function_group` yanıtta) ve **Z/Y olmalı** (değilse `ADR_0005_A`, yazma yok); sıkı kilit PUT + ayrı aktivasyon; aktivasyon düşerse `push_failed` + `activation_errors` (kaynak yüklendi, kayıt güncellendi). İmza satır-içi ABAP (`*"` blok 400 verir, K-15). Yasak B taranır. Reviewer yok (SKIP görünür).
   - `ddls`: kaynak `define [root] view entity` / `as projection on` içeriyorsa reviewer `rap_cds_creation` (RAP read-only consumption BLOCKER + reuse WARNING dahil), yoksa `cds_update`.
   - `prog` / `program` / `include` (2026-09-14): reviewer `program_push` — abaplint, released_objects, decimal_write_to (üçü WARNING). abaplint
@@ -393,6 +394,42 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   `msgclass_live_incomplete` (canlıda paket/açıklama/sorumlu yok; tahmin edilmez) · `push_failed` (1).
 - **Uyarı:** canlı davranış **DOĞRULANMADI** (çevrimdışı sahte istemciyle test edildi). Uzun metin (`documented`) bu araçla yazılmaz.
 
+### `adt_table_create` (Z şeffaf tablo — YAZMA, 2026-09-21)
+- **Amaç:** Z/Y şeffaf tablo (TABL/DT) yarat + DDL'i yaz + aktive et + aktif kaynağı geri oku. Profil: yalnız `s4_private`.
+- **Ön kapı (araçta değil, skill akışında):** ad, alanlar, DTEL'ler ve anahtar kullanıcıya gösterilir, AÇIK onay alınır (`sap-cds-ddic` → `tables-structures.md` §3).
+- **Argümanlar:** `name` (≤ 16) · `description` · `fields=[{"name":"MANDT","type":"mandt","key":true}, {"name":"BELGE","type":"<DTEL>","key":true}, {"name":"MIKTAR","type":"<DTEL>","unit_field":"BIRIM","unit_kind":"quantity"}, …]` ·
+  `package` · `transport` (**`$TMP` dahil zorunlu**) · `delivery_class="A"` · `data_maintenance="RESTRICTED"`.
+- **Akış:** ağsız ön kontrol (T1 ad ≤ 16 · T2 ilk alan `MANDT`/`mandt`/anahtar · T3 alan biçimi · T4 tekil ad · T5/T6 teslimat sınıfı / veri bakımı · T7 birim referansı ·
+  T8 satır sonu · T9 `key` bool) → DDL render (`#NOT_EXTENSIBLE`, anahtarlarda `not null`, nitelikli `'tablo.alan'` birim/para referansı) → reviewer `table_creation` **yazılacak DDL'in kendisi** üzerinde →
+  varlık sondası (ölçülemezse `exists_unmeasured`, yaratma yok) → kabuk POST (**DDL'siz**) → aynı stateful oturumda LOCK → PUT `source/main` (**If-Match yok**; corrNr = kilit yanıtındaki CORRNR) → UNLOCK (finally) →
+  aktivasyon + `version=active` → aktif DDL readback (alan/anahtar dizisi).
+- **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}}`.
+- **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi ya da yabancı transport; silinmez, kullanıcı karar verir) ·
+  `activation_failed` · `readback_mismatch` (`default_shell_client_field` = varsayılan `client : abap.clnt` kabuğu duruyor, DDL sessizce kaybolmuş).
+- **Kapsam:** mevcut tabloyu DEĞİŞTİRMEZ. Canlı DOĞRULANMADI (çevrimdışı sahte istemci testleri; canlı ölçüm planı lider onayında). `adt_push_source(tabl)` ile DDL yazma kaynak çekirdekte "invalid lock handle" verdi — bu araç kilidi kendi içinde tutar.
+
+### `adt_ttyp_create` (tablo tipi — YAZMA, 2026-09-21)
+- **Amaç:** DDIC tablo tipi (TTYP) yarat + aktive et + **iki kanallı** doğrula; satır tipi boş kaldıysa bir kez düzelt. Profil: yalnız `s4_private`. Ayrıntı: `sap-cds-ddic/references/table-types.md`.
+- **Argümanlar:** `name` · `description` · `package` · `transport` (`$TMP`'de muaf) · satır tipi **tam olarak biri**: `row_type` (yapı/tablo/DTEL) ya da
+  `builtin={"data_type":"CHAR|NUMC","length":N}` · `{"data_type":"DEC","length":N,"decimals":D}` · `{"data_type":"STRING|INT4|DATS"}` ·
+  `access_type="standard|sorted|hashed"` · `key_definition="standard|rowType|keyComponents"` · `key_kind="nonUnique|unique"` (varsayılan: hashed → unique, diğerleri nonUnique) · `key_components=[..]`.
+- **Desteklenmeyen:** aralık tablosu, referans satır, iç içe tablo tipi, boş/genel anahtar, ikincil anahtar → `preflight_blocker`.
+- **Akış:** ön kontrol → varlık sondası → POST `/ddic/tabletypes` (`application/vnd.sap.adt.tabletype.v1+xml`, corrNr sorgu parametresi) → aktivasyon → readback: ADT XML (`rowType/typeName`|`dataType`, erişim, anahtar) + DD40L (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND) →
+  **iki kanal da boş** → aynı XML ile If-Match PUT → yeniden aktivasyon → yeniden iki kanal. Reviewer zinciri yok (`reviewer.verdict:"SKIP"`); doğrulama canlı readback'tir.
+- **Hatalar:** `preflight_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` · `row_type_empty_repair_failed` · **`row_type_empty_after_repair`** (FAIL — asla OK) ·
+  `readback_channels_disagree` (biri dolu biri boş) · `readback_unmeasured` (DD40L/XML okunamadı; ölçülemedi ≠ doğru) · `readback_mismatch` (erişim/anahtar/satır tipi farklı).
+- **Kapsam:** canlı DOĞRULANMADI (okuma kalibrasyonu: standart bir TTYP'de iki kanal eşlemesi ölçüldü; düzeltme PUT'u kaynak reçeteden, aXet'te ölçülmedi).
+
+### `adt_textpool_write` (klasik program metin havuzu — YAZMA, 2026-09-21)
+- **Amaç:** Z/Y programın metin sembollerini (`TEXT-xxx`) ve seçim metinlerini yazmak; `adt_push_source` bunları TAŞIMAZ (yalnız `source/main`). Profil: yalnız `s4_private`.
+- **Argümanlar:** `name` · `transport` (zorunlu) · `symbols=[{"key":"B01","text":"…","max_length"?:N}]` · `selections=[{"name":"P_BUKRS","text":"…"}]` · `allow_remove=false`.
+- **Akış:** ağsız ön kontrol (sembol 3 karakter · seçim adı ≤ 8 · metin boş değil · metin ≤ `max_length` → aksi SAP DS512) → her alt kaynağı canlı oku (ETag;
+  canlıda olup girdide olmayan giriş SİLİNECEKSE `allow_remove=true` olmadan `would_remove_entries`, yazma yok) → metin öğeleri kaynağını kilitle (program değil) →
+  PUT (CRLF, giriş başına `@MaxLength`, boş satır ayraç, sonda satır sonu yok; If-Match + lockHandle + corrNr) → UNLOCK → PROG/P + **açık PROG/PX** aktivasyonu →
+  `?version=active` readback (eksik / farklı / `=?` → `readback_mismatch`).
+- **Hatalar:** `preflight_blocker` · `not_found` · `read_failed` · `would_remove_entries` · `lock_failed` (gerçek tutamaç yoksa yazmaz) · `put_failed` · `readback_mismatch` · `unlock_warning`.
+- **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı DOĞRULANMADI (reçete kaynak çekirdekte canlı kanıtlı; aXet portu çevrimdışı test edildi).
+
 ### `adt_syntax_check` (adına rağmen YAZMA)
 - **Amaç:** sözdizimi kontrolü — gerçek semantik "temizse aktive et".
 - **Argümanlar:** `name` (Z/Y) · `object_type="class"`.
@@ -448,3 +485,5 @@ Ayrıca (2026-09-13): mesaj sınıfı **uzun metni** (`documented`) yazma yok ·
 tablo tipi satır tipi düzeltme (PUT) yok · FM RFC-enable yok (SE37) · program/SRVB/DTEL açıklaması değiştirme yok (`adt_set_description` bu tipleri
 kanıtla reddeder) · kaynak-sapma (source drift) aracı yok (pull-before-edit kaydı + `adt_get` yeterli sayıldı). Mesaj yazma artık `adt_msgclass_write`'tadır; kaynak reçetenin enqueue kilidi
 silen "güvenlik ağı" adımı bilinçli olarak alınmadı (Yasak C).
+2026-09-21 güncellemesi: tablo tipi satır tipi düzeltmesi artık `adt_ttyp_create` içindedir (yalnız kendi yarattığı tipte, bir kez); mevcut tablo tipini
+değiştiren araç hâlâ yok. Z tablo kabuğu `adt_table_create` ile gelir. Metin havuzu başlıkları (headings) yazma yok.
