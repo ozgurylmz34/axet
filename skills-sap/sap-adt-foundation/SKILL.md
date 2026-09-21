@@ -149,7 +149,7 @@ kullanıcıya aktar, ne gerektiğini söyle.
   `adt_push_source` ek tipleri: `bdef` (aktive etmez), `ccimp`/`ccau` (`name` = ana sınıf), `func`. Klasik ekran: `adt_screen_generate`.
   Kısa açıklama değişikliği: `adt_set_description` (class/bdef/srvd/ddls/ddlx/dcl, `s4_private`; obje inaktife düşer → dönüşteki `state`'e bak).
   2026-09-21 (yalnız `s4_private`, canlı DOĞRULANMADI): Z tablo `adt_table_create` · tablo tipi `adt_ttyp_create` · metin havuzu `adt_textpool_write` ·
-  `adt_push_source` `ccdef`/`ccmac` (yazma yolu ölçülmedi → yanıtta `write_path_measured:false`). Ayrıntı: `references/tool-catalog.md`.
+  `adt_push_source` `ccdef`/`ccmac` (yazma yolu canlı ölçüldü 2026-09-21 → yanıtta `write_path_measured:true`). Ayrıntı: `references/tool-catalog.md`.
   Program açıklaması ADT ile değişmez → kullanıcı SE38'de değiştirir.
   CSV / `.cds` klasöründen çok obje (domain, dtel, cds, enqu, msag): `scripts/sap_adt_populate.py` — aynı kapı + reviewer hattından geçer,
   önce `--dry-run`; tablo türü yok (`references/foundation-ops.md` §9).

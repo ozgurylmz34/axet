@@ -1466,11 +1466,12 @@ def adt_post_shell(
 _BDEF_TIPLERI = frozenset({"bdef", "behaviordefinition"})
 # Yazılabilir alt-include segmentleri. Yazma yolu CANLI ölçülmüş: testclasses (adt-classes.md §24.8) ·
 # implementations (adt-rap.md §32.6h + object_types Q283 PUT). Z41 (2026-09-21): definitions (CCDEF) ve
-# macros (CCMAC) AYNI yoldan (`push_class_include`: yoksa POST iskelet → PUT gövde → bayt readback) açıldı;
-# segment adları GET ile ölçüldü, YAZMA yolları bu evde henüz ÖLÇÜLMEDİ → sonuçta `write_path_measured:
-# false` beyan edilir; readback bayt kıyası her yazımda koşar (canlı ölçüm planı lider onayında, 2026-09-21).
+# macros (CCMAC) AYNI yoldan (`push_class_include`: yoksa POST iskelet → PUT gövde → bayt readback) açıldı.
+# YAZMA yolu CANLI ÖLÇÜLDÜ (2026-09-21, DEV, bir Z sınıfı): PUT /includes/definitions ve /includes/macros →
+# sınıf aktivasyonu → aktif readback eşit (bytes_live/verified); kontrol grubu aynı turda ccimp (implementations).
+# ⇒ Ölçülmemiş yazma segmenti KALMADI; küme boş tutulur (yeni segment eklenirse ÖNCE buraya, ölçülünce çıkar).
 _YAZILABILIR_INCLUDE = frozenset({"testclasses", "implementations", "definitions", "macros"})
-_YAZMA_OLCULMEDI_INCLUDE = frozenset({"definitions", "macros"})
+_YAZMA_OLCULMEDI_INCLUDE: frozenset = frozenset()
 _PUSH_DESTEKSIZ = {
     "srvb": "SRVB kaynak metni taşımaz; yayın için adt_publish_service.",
     "servicebinding": "SRVB kaynak metni taşımaz; yayın için adt_publish_service.",

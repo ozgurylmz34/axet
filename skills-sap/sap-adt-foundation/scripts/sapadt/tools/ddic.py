@@ -5,8 +5,8 @@
                      sondası → kabuk POST + stateful LOCK→PUT→UNLOCK (`create_table_with_ddl`) → aktivasyon →
                      aktif kaynak readback (alan/anahtar dizisi)
 - adt_ttyp_create  : ön kontrol → varlık sondası → POST → aktivasyon → İKİ KANALLI readback (ADT XML + DD40L) →
-                     satır tipi boşsa If-Match'li PUT düzeltmesi → yeniden aktivasyon → yeniden readback;
-                     hâlâ boş/çelişkili → FAIL (asla "OK" denmez)
+                     satır tipi boş YA DA tanım istenenden farklıysa If-Match'li PUT düzeltmesi (tek sefer) →
+                     yeniden aktivasyon → yeniden readback; hâlâ boş/farklı/çelişkili → FAIL (asla "OK" denmez)
 
 Politika `tools/composite.py` ile aynı: atomik-yaratma, atomik-geri-alma DEĞİL. Yarım kalan obje SİLİNMEZ; durum
 `steps`'te ve `message`'da açıkça yazılır, karar kullanıcınındır.
@@ -312,7 +312,7 @@ def _ttyp_readback(client, name: str, spec: dict) -> dict:
 
 
 def _ttyp_duzelt(client, name: str, xml_govde: str, transport: str, etag: str) -> dict:
-    """Satır tipi boş kaldıysa: aynı XML ile If-Match'li PUT (kaynak çekirdek tablo tipi bölümü 'Adım 4')."""
+    """Satır tipi boş ya da tanım farklı kaldıysa: AYNI XML (istenen tam tanım) ile If-Match'li PUT (kaynak çekirdek tablo tipi bölümü 'Adım 4')."""
     adt = _adt(client)
     if not etag:
         try:
@@ -368,12 +368,17 @@ def adt_ttyp_create(
         hashed+nonUnique reddedilir.
 
     Doğrulama (canlıda OKUNUR, mesaja güvenilmez): aktivasyon → ADT XML (`rowType/typeName`, erişim, anahtar) VE
-    DD40L (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND). İki kanal da BOŞ → bir kez If-Match'li PUT düzeltmesi →
-    yeniden aktivasyon → yeniden iki kanal. Kanallar çelişirse ya da düzeltme sonrası hâlâ boşsa `ok:false`.
+    DD40L (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND). İki kanal da BOŞ ya da tanım istenenden FARKLI → bir kez
+    If-Match'li PUT (istenen tam tanım) → yeniden aktivasyon → yeniden iki kanal; nihai `ok` ikinci aktivasyonun
+    doğrulamasından gelir. Kanallar çelişirse ya da düzeltme sonrası hâlâ boş/farklıysa `ok:false` (asla sahte OK).
 
     Returns:
         {ok, name, type:'ttyp', spec, steps:{pre_flight, pre_check, create, activate, verify, readback,
-         repair?, activate_2?, readback_2?}, error?, message?}
+         repair?{trigger: bos|uyumsuz}, activate_2?, verify_2?, readback_2?}, error?, message?}
+        error: preflight_blocker · already_exists · exists_unmeasured · create_uncertain · create_failed ·
+        activation_failed · row_type_empty_repair_failed · readback_mismatch_repair_failed ·
+        activation_failed_after_repair · row_type_empty_after_repair · readback_channels_disagree ·
+        readback_unmeasured · readback_mismatch · verify_failed
     """
     obj_type = "ttyp"
     try:
@@ -440,17 +445,36 @@ def adt_ttyp_create(
                            "(tipik: satır tipi yok/inaktif, anahtar bileşeni satır tipinde yok)."}
     rb = _ttyp_readback(client, name, spec)
     steps["readback"] = _rb_ozet(rb)
-    if rb["durum"] == "bos":
+    son_tail = tail
+    onarildi = False
+    # Onarım (TEK sefer): satır tipi BOŞ ya da tanım istenenden FARKLI. Canlı 2026-09-21 (DEV): POST gövdedeki satır
+    # tanımını düşürdü, SAP varsayılanı `CHAR · 000001` kaldı (ROWTYPE NULL). Yapı satırlıda bu `bos` olarak
+    # yakalanıp If-Match PUT ile düzeldi (erişim/anahtar dahil); ilkel satırda varsayılan CHAR "dolu" göründüğü için
+    # `uyumsuz` çıkıyordu ve onarım hiç denenmiyordu. İlkel satırda PUT onarımı canlıda henüz ÖLÇÜLMEDİ.
+    if rb["durum"] in ("bos", "uyumsuz"):
+        ilk_durum = rb["durum"]
         steps["repair"] = _ttyp_duzelt(client, name, govde, transport, rb.get("_etag", ""))
+        steps["repair"]["trigger"] = ilk_durum
         if not steps["repair"].get("ok"):
-            return {"ok": False, "error": "row_type_empty_repair_failed", **temel,
-                    "message": "Satır tipi iki kanalda da BOŞ; If-Match'li PUT düzeltmesi BAŞARISIZ — obje "
-                               "kullanılamaz (ABAP'ta belirsiz çalışma zamanı hatası verir). steps.repair'e bak."}
+            if ilk_durum == "bos":
+                return {"ok": False, "error": "row_type_empty_repair_failed", **temel,
+                        "message": "Satır tipi iki kanalda da BOŞ; If-Match'li PUT düzeltmesi BAŞARISIZ — obje "
+                                   "kullanılamaz (ABAP'ta belirsiz çalışma zamanı hatası verir). steps.repair'e bak."}
+            return {"ok": False, "error": "readback_mismatch_repair_failed", **temel,
+                    "message": "Tablo tipi aktif ama tanımı istenenden FARKLI (" + "; ".join(rb.get("farklar") or [])
+                               + "); If-Match'li PUT onarımı BAŞARISIZ — obje SİLİNMEDİ. steps.repair'e bak."}
         t2 = aktive_et("activate_2")
         if not t2.get("activated"):
             return {"ok": False, "error": "activation_failed_after_repair", **temel,
                     "message": "Düzeltme PUT'u yazıldı ama yeniden aktivasyon BAŞARISIZ — satır tipi aktif sürümde "
                                "doğrulanamaz; obje SİLİNMEDİ (inaktif sürüm kalabilir). steps.activate_2'ye bak."}
+        # Z50 ⓐ: onarım sonrası nihai doğrulama İKİNCİ aktivasyonun metadata'sından gelir (ilk tail bayattır).
+        steps["verify_2"] = {"ok": t2.get("verified", False)}
+        for k_src, k_dst in (("verify_reason", "reason"), ("sap_version", "sap_version")):
+            if t2.get(k_src):
+                steps["verify_2"][k_dst] = t2[k_src]
+        son_tail = t2
+        onarildi = True
         rb = _ttyp_readback(client, name, spec)
         steps["readback_2"] = _rb_ozet(rb)
         if rb["durum"] == "bos":
@@ -467,7 +491,11 @@ def adt_ttyp_create(
                            "'ölçülemedi' 'doğru' DEĞİLDİR."}
     if rb["durum"] == "uyumsuz":
         return {"ok": False, "error": "readback_mismatch", **temel,
-                "message": "Tablo tipi aktif ama tanımı istenenden FARKLI: " + "; ".join(rb.get("farklar") or [])}
-    return {"ok": bool(tail.get("verified")), **temel,
-            **({} if tail.get("verified") else {"error": "verify_failed",
-                                                 "message": "Readback dolu ama metadata 'active' doğrulanamadı."})}
+                "message": ("Tablo tipi aktif ama tanımı istenenden FARKLI"
+                            + (" (If-Match'li PUT onarımı + yeniden aktivasyon SONRASI da)" if onarildi else "")
+                            + ": " + "; ".join(rb.get("farklar") or []))}
+    return {"ok": bool(son_tail.get("verified")), **temel,
+            **({} if son_tail.get("verified") else {
+                "error": "verify_failed",
+                "message": "Readback dolu ama metadata 'active' doğrulanamadı"
+                           + (" (onarım sonrası ikinci aktivasyon: steps.verify_2)." if onarildi else ".")})}
