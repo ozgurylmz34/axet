@@ -480,16 +480,18 @@
      "baslik": "Güncelleme testleri public ağaçta da yeşil + CI kaydı kota duvarında doğru teşhis",
      "tur": "duzeltme",
      "kritik": true,
-     "neden": "İki test sınıfı (`test_vakum_tara`, `CiDurumUretTest`) yalnız bakımcı deposunda bulunan `maintenance/` klasörüne bağlıydı ve atlama koruması yoktu: kullanıcı klonunda 9 failure + 8 error veriyordu (gerçek v0.4.0 ağacında ölçüldü). Güncelleme bunları 'yeni kırmızı' sayıp güncellemeyi KAPANMADI ile bitirirdi. Artık o ağaçta atlanırlar. CI'ye kullanıcının ağacını (public düzen) test eden bir iş eklendi ve yayının CI hükmü o işe de bağlandı. Ayrıca CI işleri hiç başlamadığında (kota/ödeme duvarı) yayın kaydı 'kırmızı takım' değil 'CI işleri BAŞLAMADI — kod hakkında hüküm YOK' der.",
+     "neden": "İki test sınıfı (`test_vakum_tara`, `CiDurumUretTest`) yalnız bakımcı deposunda bulunan `maintenance/` klasörüne bağlıydı ve atlama koruması yoktu: kullanıcı klonunda 9 failure + 8 error veriyordu (gerçek v0.4.0 ağacında ölçüldü). Güncelleme bunları 'yeni kırmızı' sayıp güncellemeyi KAPANMADI ile bitirirdi. Artık o ağaçta atlanırlar. CI'ye kullanıcının ağacını (public düzen) test eden bir iş eklendi ve yayının CI hükmü o işe de bağlandı. Ayrıca CI işleri hiç başlamadığında (kota/ödeme duvarı) yayın kaydı 'kırmızı takım' değil 'CI işleri BAŞLAMADI — kod hakkında hüküm YOK' der. Aynı kökten: güncelleme haritasındaki bakımcı sınıfı kullanıcı klonunda 'ölü kural' sayılıp 2 testi (ve paralel koşucu testini) kırıyordu; artık 'beklenen boş' olarak gerekçesiyle işaretli.",
      "dosyalar": [
       ".github/workflows/testler.yml",
       "tests/test_yayin_hazirla.py",
-      "tests/test_vakum_tara.py"
+      "tests/test_vakum_tara.py",
+      "guncelle/harita.json"
      ],
      "gerektirir": [],
      "test": [
       "python tests/run_tests.py -k CiDurumUret",
-      "python tests/run_tests.py -k VakumTara"
+      "python tests/run_tests.py -k VakumTara",
+      "python tests/run_tests.py -k test_guncelle_harita"
      ]
     },
     {
