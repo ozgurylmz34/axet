@@ -103,11 +103,14 @@
     {
       "source": "DEV_CORE",
       "pattern": ".github/*",
-      "decision": "telafi",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        ".github/workflows/testler.yml",
+        ".github/CODEOWNERS"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI barindirma belli degil (kullanici karari 2026-09-13); simdilik yerel pre-commit."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS."
     },
     {
       "source": "DEV_CORE",
@@ -185,11 +188,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "claude/CODEOWNERS.template",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        ".github/CODEOWNERS"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI/barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Sablon yerine aXet reposunda dogrudan .github/CODEOWNERS."
     },
     {
       "source": "DEV_CORE",
@@ -1267,11 +1272,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "claude/workflows/*",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "telafi",
+      "targets": [
+        ".github/workflows/testler.yml"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Tuketici projeye workflow sablonu tasinmadi; aXet kendi reposunda testler.yml kullanir. Tuketici CI sablonu ihtiyaci dogarsa yeniden degerlendir."
     },
     {
       "source": "DEV_CORE",
@@ -3320,7 +3327,7 @@
       "targets": [],
       "party": 7,
       "status": "-",
-      "note": "Tetik: canli SAP envanteri ya da CI karari gelince yeniden degerlendir."
+      "note": "CI karari verildi (K2 2026-09-15) — tetigin o kolu kapandi. Kalan tetik: canli SAP CBO envanteri ihtiyaci. Z44 (2026-09-21)."
     },
     {
       "source": "DEV_CORE",
@@ -3520,11 +3527,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "scripts/merge_pr.py",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        "scripts/merge_pr.py"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "Barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. scripts/merge_pr.py + tests/test_merge_pr.py (check-runs uzerinden CI dogrular)."
     },
     {
       "source": "DEV_CORE",
