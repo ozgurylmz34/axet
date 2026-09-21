@@ -103,11 +103,14 @@
     {
       "source": "DEV_CORE",
       "pattern": ".github/*",
-      "decision": "telafi",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        ".github/workflows/testler.yml",
+        ".github/CODEOWNERS"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI barindirma belli degil (kullanici karari 2026-09-13); simdilik yerel pre-commit."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS."
     },
     {
       "source": "DEV_CORE",
@@ -185,11 +188,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "claude/CODEOWNERS.template",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        ".github/CODEOWNERS"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI/barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Sablon yerine aXet reposunda dogrudan .github/CODEOWNERS."
     },
     {
       "source": "DEV_CORE",
@@ -1267,11 +1272,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "claude/workflows/*",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "telafi",
+      "targets": [
+        ".github/workflows/testler.yml"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "CI barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Tuketici projeye workflow sablonu tasinmadi; aXet kendi reposunda testler.yml kullanir. Tuketici CI sablonu ihtiyaci dogarsa yeniden degerlendir."
     },
     {
       "source": "DEV_CORE",
@@ -2104,7 +2111,8 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md",
-        "skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py"
+        "skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py",
+        "skills-sap/sap-ui5-user-guide/references/tuzaklar.md"
       ],
       "party": 4,
       "status": "tamam",
@@ -3089,7 +3097,7 @@
       ],
       "party": 3,
       "status": "kismi",
-      "note": "2026-09-14 (D3): scripts/sap_adt_populate.py + scripts/sapadt/populate.py tasindi — turler domain, dtel, cds, enqu, msag. Her satirin her adimi sap_adt_cli.calistir uzerinden (kapi + reviewer + arac; ikinci yazma yolu yok); yazmadan once TUM planli cagrilar on geciste kapidan gecer (red -> 0 yazma, exit 2). --force-recreate tasindi: yalniz domain/dtel/cds + --only <TEK AD>; DELETE calistir'dan gecer, delete_verified okunur (dogrulanamazsa kosum durur, kalan satirlar islenmedi); oneri metni tek ada daraltilir. enqu varligi adt_get(enqu) salt-GET sondasi (yeni). Kilit silme/temizleme cagrisi yok; kilit cakismasi satir HATA + SM12 tarifi, kosum devam. Tablolar ALINMADI: tablo kabuğu reçetesi yok (D2 ile birlikte, ilk canlı başarıdan sonra değerlendirilir). Alinmayan kaynak ozellikleri: CDS ad on-ek whitelist / sprint gate / TD spec on kontrolu, msgno zfill (3 hane zorunlu), DTEL datatype/length/decimals kolonlari (domain'den okunur). Cevrimdisi testler tests/test_populate.py + tests/test_populate_hat.py; canli SAP DOGRULANMADI."
+      "note": "2026-09-14 (D3): scripts/sap_adt_populate.py + scripts/sapadt/populate.py tasindi — turler domain, dtel, cds, enqu, msag. Her satirin her adimi sap_adt_cli.calistir uzerinden (kapi + reviewer + arac; ikinci yazma yolu yok); yazmadan once TUM planli cagrilar on geciste kapidan gecer (red -> 0 yazma, exit 2). --force-recreate tasindi: yalniz domain/dtel/cds + --only <TEK AD>; DELETE calistir'dan gecer, delete_verified okunur (dogrulanamazsa kosum durur, kalan satirlar islenmedi); oneri metni tek ada daraltilir. enqu varligi adt_get(enqu) salt-GET sondasi (yeni). Kilit silme/temizleme cagrisi yok; kilit cakismasi satir HATA + SM12 tarifi, kosum devam. Tablolar ALINMADI (toplu CSV turu olarak): 2026-09-21'den beri tek tablo reçetesi (kabuk POST DDL'siz -> ayni oturumda LOCK -> PUT If-Match'siz -> UNLOCK -> aktivasyon -> readback) tools/ddic.py adt_table_create + sap_adt_lib.create_table_with_ddl olarak TASINDI (cevrimdisi test, canli DOGRULANMADI); populate turune baglanmasi ilk canli basaridan sonra degerlendirilir. Alinmayan kaynak ozellikleri: CDS ad on-ek whitelist / sprint gate / TD spec on kontrolu, msgno zfill (3 hane zorunlu), DTEL datatype/length/decimals kolonlari (domain'den okunur). Cevrimdisi testler tests/test_populate.py + tests/test_populate_hat.py; canli SAP DOGRULANMADI."
     },
     {
       "source": "DEV_CORE",
@@ -3319,7 +3327,7 @@
       "targets": [],
       "party": 7,
       "status": "-",
-      "note": "Tetik: canli SAP envanteri ya da CI karari gelince yeniden degerlendir."
+      "note": "CI karari verildi (K2 2026-09-15) — tetigin o kolu kapandi. Kalan tetik: canli SAP CBO envanteri ihtiyaci. Z44 (2026-09-21)."
     },
     {
       "source": "DEV_CORE",
@@ -3519,11 +3527,13 @@
     {
       "source": "DEV_CORE",
       "pattern": "scripts/merge_pr.py",
-      "decision": "bekliyor",
-      "targets": [],
+      "decision": "uyarla",
+      "targets": [
+        "scripts/merge_pr.py"
+      ],
       "party": 7,
-      "status": "bekliyor",
-      "note": "Barindirma kararina bagli."
+      "status": "tamam",
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. scripts/merge_pr.py + tests/test_merge_pr.py (check-runs uzerinden CI dogrular)."
     },
     {
       "source": "DEV_CORE",
