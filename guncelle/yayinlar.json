@@ -826,6 +826,60 @@
      ]
     }
    ]
+  },
+  {
+   "etiket": "v0.5.1",
+   "tarih": "2026-09-21",
+   "kalemler": [
+    {
+     "id": "0.5.1-01",
+     "baslik": "`%guncelle-proje` eski SAP damgasını artık yeniliyor (şablon dosyaları değişmemiş olsa da)",
+     "tur": "duzeltme",
+     "kritik": true,
+     "neden": "v0.5.0 kesin yasak metnini `AXET-SAP-0.4.0` yaptı, ama `%guncelle-proje` SAP projesinin `AGENTS.md` damgasını YENİLEMİYORDU. Proje şablon dosyaları değişmediği için plan \"işlem gerektiren dosya yok\" deyip çıkıyor, damga eski sürümde kalıyor ve `doctor` FAIL veriyordu. Bu sürümle damga şablondan bağımsız ölçülür: eskiyse plan `DAMGA` kalemini gösterir, onaydan sonra kapanış damgayı yeniden basar. v0.5.0'a güncellediyseniz SAP projelerinizde `%guncelle-proje`yi TEKRAR koşun. Kapanıştaki `behavior_manifest.py generate --project-dir \"<proje>\"` komutunu kendi terminalinizde çalıştırın (aXet bunu sizin yerinize koşmaz). Elle çare: `python \"<AXET_HOME>/scripts/new_project.py\" <proje> --sap` ve ardından aynı `behavior_manifest.py generate` komutu. Damga bozuksa (birden fazla BASLA/BITIR) araç eskisi gibi DURUR.",
+     "dosyalar": [
+      "scripts/guncelle_proje.py",
+      "tests/test_guncelle_proje.py",
+      "skills/guncelle-proje/SKILL.md",
+      "guncelle/kartlar/sinif-kesin-yasak-kanonigi.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k guncelle_proje"
+     ]
+    },
+    {
+     "id": "0.5.1-02",
+     "baslik": "`%guncelle` ölçümü `python -m unittest` biçimli test komutlarını artık gerçekten koşuyor",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Ölçüm motoru komutun ikinci parçasını betik yolu sanıyordu. `python -m unittest discover -s …` komutlarında bu parça `-m` olduğu için adım hiç koşmadan \"ÖLÇÜLEMEDİ — -m yok\" yazılıyordu. Bu kusur bütünlük turundaki sap-code-review takımını ve `olc` ölçümünde 5 sınıfın 6 test komutunu etkiliyordu: skill-test (×2), validator-zincir-map, validator-runner, validator, validator-diger-skill. Bu sınıflar şimdiye dek hiç ölçülmemişti. Artık `-s` ile verilen dizin denetlenir ve komut koşulur; dizin gerçekten yoksa yine ÖLÇÜLEMEDİ yazılır.",
+     "dosyalar": [
+      "scripts/guncelle.py",
+      "tests/test_guncelle.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k guncelle"
+     ]
+    },
+    {
+     "id": "0.5.1-03",
+     "baslik": "Yayın kataloğu ve CI kaydı",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri"
+     ]
+    }
+   ]
   }
  ]
 }
