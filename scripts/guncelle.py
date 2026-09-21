@@ -1321,6 +1321,60 @@ def _ci_tabani(b: Baglam, plan: dict) -> dict | None:
     }
 
 
+# Yayın aracının ÜRETTİĞİ meta veri (`maintenance/yayin_hazirla.py::URETILEN_DOSYALAR` ile aynı
+# küme): tüketici klonuna UYGULANMAZ, motor onları `origin/main`'den okur ⇒ disk↔yayın ağacı
+# karşılaştırmasında sayılmazlar. Ölçüldü (2026-09-21): dışlanmasalar ağaç HİÇBİR ZAMAN eşit çıkmaz.
+YAYIN_META_YOLLARI = ("CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json")
+
+
+def _agac_yayinla_ayni(k: Klon, etiket: str) -> tuple[bool, str]:
+    """Diskteki ağaç (izlenmeyen ama yok sayılmayan dosyalar DAHİL) `etiket` ağacının AYNISI mı?
+
+    Plan beyanı değil DOĞRUDAN ölçüm: geçici bir index'e çalışma ağacı `git add -A` ile alınır
+    ve o index `etiket` ile karşılaştırılır. Asıl index'e dokunulmaz. Her git hatası = "aynı değil"
+    (fail-safe: ölçemediysek ölçüme döneriz). Yalnız `YAYIN_META_YOLLARI` karşılaştırma dışıdır."""
+    haric = [f":(exclude){y}" for y in YAYIN_META_YOLLARI]
+    with tempfile.TemporaryDirectory() as d:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(d) / "index"))
+        for argv in (["add", "-A", "--", "."],
+                     ["diff", "--cached", "--name-status", etiket, "--", "."] + haric):
+            r = _run(["git", "-C", str(k.kok)] + argv, k.kok, env=env)
+            if r.returncode != 0:
+                return False, f"disk ağacı ölçülemedi (git {argv[0]} rc={r.returncode})"
+        fark = [s for s in (r.stdout or "").splitlines() if s.strip()]
+        if fark:
+            return False, (f"disk ağacı {etiket} ağacından FARKLI ({len(fark)} yol: "
+                           + ", ".join(s.replace("\t", " ") for s in fark[:5])
+                           + (" …" if len(fark) > 5 else "") + ")")
+    return True, f"disk ağacı {etiket} ağacıyla birebir aynı (geçici index ile ölçüldü)"
+
+
+def _ci_sonrasi(b: Baglam, plan: dict) -> dict | None:
+    """`sonra` turunun yerine CI hükmünü koy — İKİ şart birden sağlanırsa (Z26, 2026-09-21).
+
+    ⛔ NEDEN: yargı vakası yokken uygulama sonrası ağaç, CI'nin temiz ortamda ÖLÇTÜĞÜ yayın
+    ağacının aynısıdır ⇒ aynı testleri kullanıcının makinesinde yeniden koşmak yeni bilgi
+    üretmez, yalnız dakikalar harcar (ölçüldü: sonra turu ~25-30 dk).
+    Şart 1: `_ci_tabani` koşulları (yargı vakası yok + etiket için CI `hepsi_yesil`).
+    Şart 2: plan beyanına GÜVENİLMEZ — disk ağacı etiket ağacıyla DOĞRUDAN karşılaştırılır.
+    ⛔ FAIL-SAFE: biri tutmazsa `None` = normal ölç.
+    """
+    taban = _ci_tabani(b, plan)
+    if taban is None:
+        return None
+    ayni, neden = _agac_yayinla_ayni(b.k, taban["etiket"])
+    if not ayni:
+        print(f"[ÖLÇ] sonra-ölçüm CI ile ikame EDİLMEDİ — {neden}")
+        return None
+    return {
+        "asama": "sonra", "zaman": _simdi(), "kaynak": "ci", "testler": [],
+        "ci": taban["ci"], "etiket": taban["etiket"],
+        "gerekce": f"{neden}; bu ağacı CI ölçtü ve hepsi yeşil.",
+        "kapsam_disi": ("Testler YEREL ortamda koşulmadı. Yerel ortamın asgari kontrolü "
+                        "(install --dry-run · doctor · hızlı takımlar) bütünlük turunda koşar."),
+    }
+
+
 def _taban_argv(komut: str) -> tuple[str, ...] | None:
     """`-k <desen>` ekini atılmış argv — komut `-k` taşımıyorsa `None`.
 
@@ -1375,6 +1429,14 @@ def komut_olc(b: Baglam, args) -> int:
         if ikame is not None:
             _yaz_json(k.durum_dizini / "olcum-once.json", ikame)
             print(f"[İKAME] önce-ölçüm KOŞULMADI — taban {ikame['etiket']} CI hükmü. "
+                  f"{ikame['gerekce']}")
+            print(f"KAPSAM — {ikame['kapsam_disi']}")
+            return 0
+    else:
+        ikame = _ci_sonrasi(b, plan)
+        if ikame is not None:
+            _yaz_json(k.durum_dizini / "olcum-sonra.json", ikame)
+            print(f"[İKAME] sonra-ölçüm KOŞULMADI — {ikame['etiket']} CI hükmü. "
                   f"{ikame['gerekce']}")
             print(f"KAPSAM — {ikame['kapsam_disi']}")
             return 0

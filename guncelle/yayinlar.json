@@ -454,6 +454,59 @@
      ]
     }
    ]
+  },
+  {
+   "etiket": "v0.4.1",
+   "tarih": "2026-09-21",
+   "kalemler": [
+    {
+     "id": "0.4.1-01",
+     "baslik": "Yerel değişikliği olmayan güncellemede test turu koşmaz — güncelleme dakikalar sürer",
+     "tur": "yetenek",
+     "kritik": true,
+     "neden": "Güncelleme sonrası ölçüm (`olc --asama sonra`) yerel değişiklik yokken de bütün testleri kullanıcının makinesinde yeniden koşuyordu (~25-30 dk). Oysa o ağaç, CI'nin temiz ortamda ölçtüğü yayın ağacının aynısıdır ⇒ yeni bilgi üretmiyordu. Artık iki şart birlikte sağlanırsa tur CI hükmüyle ikame edilir: (1) önce-ölçüm ikamesinin şartları (yargı vakası yok + yayının CI kaydı yeşil) (2) disk ağacı yayın etiketinin ağacıyla birebir aynı — plan beyanına güvenilmez, geçici bir index ile diskten ölçülür. Biri tutmazsa normal ölçülür ve hangi yolların farklı olduğu basılır. Yerel ortamın asgari kontrolü (install --dry-run · doctor · hızlı takımlar) bütünlük turunda yine koşar.",
+     "dosyalar": [
+      "scripts/guncelle.py",
+      "tests/test_guncelle.py",
+      "GUNCELLE.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k CiSonrasiTest"
+     ]
+    },
+    {
+     "id": "0.4.1-02",
+     "baslik": "CI kota/ödeme duvarında yayın kaydı artık 'kırmızı takım' demiyor",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "CI işleri hiç başlamadığında (saniyeler içinde `failure`, sıfır adım) yayının CI kaydı 'yeşil olmayan takım' diyordu; oysa kod hakkında hüküm yoktu. Artık 'CI işleri BAŞLAMADI — kod hakkında hüküm YOK' der. Davranış değişmedi: kayıt yeşil değilse güncelleme yine normal ölçer. CI matrisi Python 3.12'de kaldı (yorum güncellendi).",
+     "dosyalar": [
+      ".github/workflows/testler.yml",
+      "tests/test_yayin_hazirla.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k CiDurumUret"
+     ]
+    },
+    {
+     "id": "0.4.1-03",
+     "baslik": "Yayın kataloğu ve CI kaydı",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri"
+     ]
+    }
+   ]
   }
  ]
 }
