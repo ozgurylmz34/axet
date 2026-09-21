@@ -344,7 +344,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Amaç:** data element yarat + aktive et + doğrula.
 - **Argümanlar:** `name` · `domain_name` (Z domain ya da `CHAR1` gibi standart tip) · `description` · `package` · `transport` ·
   `short_label` · `medium_label` · `long_label` · `heading_label` (4'ü de dolu, `master_language`'de) · `artifact_path`.
-- **Uyarılar:** DTEL adı kullanıcıdan gelir; metinler spesifikasyondan (tahmin yasak) ·
+- **Uyarılar:** DTEL adı kullanıcı onaylıdır (standarda uygun öneri + canlı kontrol + açık onay — `%sap-dev` §6); metinler spesifikasyondan (tahmin yasak) ·
   ağdan önce tier, Z/Y, transport, açıklama dolu, 4 etiket dolu ve **etiket uzunlukları ≤ 10/20/40/55** (kısa/orta/uzun/başlık; kenar boşluğu
   kırpılıp karakter sayılır) denetlenir → aşım `ADR_0005_D` (çıkış 2, mesaj `short=11>10` biçiminde). Sınırlar DTEL CSV validator'ıyla aynı
   tablodan (2026-09-13; önceden artefaktsız çağrıda uzunluk denetlenmiyordu) · kullanılan domain'in varlığı ağdan önce **denetlenmez** (açık kalem).
