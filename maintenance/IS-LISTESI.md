@@ -6,7 +6,26 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ▶ YARIN BURADAN (gün sonu 2026-09-21 gece) — v0.5.0 TEK YAYIN: KD + RAP bilgisi + DDIC araçları
+## ▶ BURADAN DEVAM (2026-09-22) — v0.5.0 YAYINDA · sıradaki: v0.5.1 (Z55 kritik)
+
+**v0.5.0 YAYINLANDI (2026-09-22 ~00:00):** PR #25 squash `8b01570` (PR CI 5/5 · main CI 5/5) → `yayin_hazirla --ref origin/main`:
+bulgu 0 · kalem-diff 96 yol / 0 sorun · ci-durum `hepsi_yesil: true` → public `4a80001` + etiket `v0.5.0` (noreply, hızlı-ileri,
+force yok; push lider — kullanıcı onayıyla). Public CI `4a80001` YEŞİL (kok · kok-public · foundation · kurulum; prova `skipped` bilinçli).
+Merge: auto mode sınıflandırıcısı `merge_pr.py`'yi reddetti → kullanıcı kendi terminalinde koştu (`--yol rest`: doğrulanan head SHA
+merge gövdesine sabitlenir; `gh` yolu sabitlemiyor — not). **Tüketici ölçümü:** `%guncelle` v0.4.2→v0.5.0 `2faaee5`, 9 kalem / 96 dosya
+PASS, önce/sonra ölçümü CI ile ikame, klon ağacı public v0.5.0 ile birebir (`git diff origin/main 2faaee5` boş), doctor 0/0.
+
+**Yeni kalemler (bu yayının tüketici ölçümünden):**
+
+| # | Madde | Yöntem | Durum |
+|---|---|---|---|
+| Z55 | **KRİTİK — `%guncelle-proje` SAP damgasını YENİLEMİYOR.** Kullanıcı v0.5.0 sonrası AXET_TEST'te koştu: *"Proje şablonu zaten güncel (2396f2a861); yapılacak dosya yok. İşlem bitti."* — `AGENTS.md` `SAP-STAMP-ID: AXET-SAP-0.3.0` kaldı (kanonik 0.4.0), AXET_TEST `doctor` FAIL. Kök (okundu, ölçülmedi): şablon dosyaları v0.1.0'dan beri değişmediği için erken çıkış; `_damgala` (`guncelle_proje.py:~244`) yalnız birleştirilen `AGENTS.md` yolunda koşuyor. ⇒ v0.5.0 0.5.0-06 notu ve `cekirdek-kural-sap-kanonik` kartı *"damgayı `%guncelle-proje` yeniler"* diyor — **YANLIŞ VAAT**, tüm SAP tüketicilerini etkiler. **Neden kaçtı:** yayın provası (Z28) `guncelle_proje`'yi yalnız onkontrol/onay/plan ile koşuyor, uygula/kapanış ve damga kontrolü kapsam dışı. Geçici çare (AXET_TEST'te uygulandı, doctor 0 FAIL): `new_project.py <proje> --sap` + `behavior_manifest.py generate` | ① şablon güncelken de damga `sap_stamp.denetle` ile ölçülür, eskiyse yeniden damgalanır (+ manifest uyarısı) ② kırmızı-önce test (eski damgalı, şablonu güncel proje) ③ prova: `guncelle_proje` uygula + `doctor` damga satırı ④ kart/not metni düzeltilir ⑤ **v0.5.1** (kritik) | ⬜ |
+| Z54 | `%guncelle` bütünlük turunda `sap-code-review` takımı **ÖLÇÜLEMEDİ** (`butunluk.json` adım 3: "-m yok ('temiz' DEĞİL)"); takım unittest (`python -m unittest discover -s tests`, runner yok) — bütünlük adımının komutu doğrulanmadı | adım komutunu oku; takıma runner ya da adımı unittest'e çevir; kırmızı-önce | ⬜ v0.5.1 ile |
+
+**Sırada:** Z55 + Z54 → v0.5.1 (kullanıcı onayı bekliyor) · sonra Z50 DDIC sağlamlaştırma turu (Z50 ⓐ-ⓕ + Z51 ⓐ ⓑ + Z52 + Z53) · RAP testine dönüş (Z37).
+Worktree: `kk-ddic` artık silinebilir (içeriği main'de) · `wt-kontrol` (eski scratchpad) kaldı.
+
+## ✅ ARŞİV — YARIN BURADAN (gün sonu 2026-09-21 gece) — v0.5.0 TEK YAYIN: KD + RAP bilgisi + DDIC araçları
 
 **Dal / worktree:** entegrasyon `feat/2026-09-21-kullanici-kilavuzu` → `C:/AI_WORKS/.wt/axet/kk-birlesik` (HEAD `6af2c39`, push'lu).
 Lane dalları birleşti: `wip/kk-rapbilgi` (54d4be1) · `wip/kk-ddic` (5bc7755). `main`'e HENÜZ PR açılmadı.
