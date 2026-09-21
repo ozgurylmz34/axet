@@ -6,6 +6,29 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## ▶ YARIN BURADAN (gün sonu 2026-09-21 gece) — v0.5.0 TEK YAYIN: KD + RAP bilgisi + DDIC araçları
+
+**Dal / worktree:** entegrasyon `feat/2026-09-21-kullanici-kilavuzu` → `C:/AI_WORKS/.wt/axet/kk-birlesik` (HEAD `6af2c39`, push'lu).
+Lane dalları birleşti: `wip/kk-rapbilgi` (54d4be1) · `wip/kk-ddic` (5bc7755). `main`'e HENÜZ PR açılmadı.
+SAP'de yarım iş YOK (canlı test objeleri silindi, TADIR/DD40L/E071 temiz). `config/sap-write.local` SİLİNDİ (yeniden açmayı kullanıcı yapar).
+
+**Yapılanlar (bugün):**
+- KD skill'i (`%sap-ui5-user-guide`) + capture assert'ler + tarayıcı indirme yasağı + CI belge takımları — v0.5.0-01..05.
+- RAP bilgisi + intake şablonu (Z34 ✅, Z35 🟡 canlı yok, Z36 ✅) — v0.5.0-07. Kesin yasak A metni: append ↔ Z DDIC ad ayrımı (`AXET-SAP-0.4.0`) + çekirdeğe `find` notu (`AXET-CORE-0.5.0`) — v0.5.0-06 (kritik; SAP projelerinde `%guncelle-proje` MANUEL adım).
+- DDIC araçları (Z38-Z41): `adt_table_create`, `adt_ttyp_create`, `adt_textpool_write`, ccdef/ccmac — v0.5.0-08 (neden metninde `CANLI_DURUM_YER_TUTUCU` VAR → yayından önce doldur).
+- Canlı ölçüm 1 (C:\AXET_TEST, DS4K900029, $TMP): tablo ✅ · ttyp yapı satırlı ✅ (sessiz NULL canlıda üretildi, onarım düzeltti) · sorted+key ✅ · textpool ✅ · ccdef/ccmac ✅ · ilkel ttyp ❌ · `adt_struct_create` sahte ok:false. Ham çıktı: scratchpad `kk-ddic-canli/r2_*.json` (oturum scratchpad'i — yarın olmayabilir; sonuçlar Z38-Z41 satırlarında).
+- Düzeltme turları: bug gate WARNING→düzeltildi→PASS (1fbd437) · canlı bulgular düzeltildi (09d5c15) · gate WARNING + **Z51 kritik kusur** (`adt_struct_create` mevcut yapının üzerine yazabiliyordu, v0.4.1 dahil) → düzeltildi (5bc7755). Foundation 1008/1008 + 465/0.
+- Z44 sync-rules 5 kayıt + D2 listesi güncellendi. Z50/Z51 açık kalemler yazıldı.
+
+**Yarın sırayla:**
+1. **Taze bug gate** — delta `git diff 09d5c15 5bc7755` (kk-ddic). Bugünkü gate yarıda kesildi (salt-okuma, yan etki yok). Odak: üzerine yazma yolu gerçekten kapalı mı, `_varlik_olcumu` değişikliğinin tablo/ttyp'ye etkisi, test sahtesi (`session.get` 200) anlamı bozdu mu.
+2. **Canlı ölçüm 2** (kullanıcı önce izin dosyasını açar: `python -c "open(r'C:\AI_WORKS\.wt\axet\kk-birlesik\config\sap-write.local','w',encoding='utf-8').write('Canli olcum 2 ...\n')"`; onay: $TMP test objeleri, DS4K900029, yaratıp silmek — 2026-09-21'de verildi, kapsam aynı): ① `adt_struct_create ZAXET_S_KKD` → ok:true, verify `ddic/structures` ② aynı adla FARKLI alanlarla tekrar → `already_exists`, POST yok, DD03L değişmemiş ③ mevcut Z tablo adıyla yapı → `already_exists (table)` ④ ilkel CHAR10 + DEC15,2 ttyp → `repair.trigger: uyumsuz`, DD40L LENG/DECIMALS doğru ⑤ textpool `activation_final` ⑥ temizlik + izin dosyasını sil. Gateway ajanı (adt-gateway), CLI `kk-birlesik/skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py --project-dir C:/AXET_TEST`.
+3. Sonuçlara göre: v0.5.0-08 `CANLI_DURUM_YER_TUTUCU`'yu doldur + **Z51 için ayrı kritik kalem** (kullanıcıya: "v0.4.1'de `adt_struct_create` var olan yapının üzerine yazabiliyordu"); kalem-kapsam kontrolü + `yayin_hazirla.py --yalniz-dogrula`.
+4. Kök + tüm skill takımları son hâlde (sap-code-review: `python -m unittest discover -s tests`, runner yok) → push → PR (`--body`) → CI yeşil → `merge_pr.py` (`--match-head-commit`, `--admin` yok) → v0.5.0 yayını (kullanıcı onayı) → kullanıcı `%guncelle` + `%guncelle-proje`.
+5. Sonra RAP testine dön (aXet'te): kullanıcı 4 düzeltmeyi aXet'e verir, 3 düzeltme için `%remember`, `behavior_manifest.py generate` + AGENTS.md commit; Z37 (aynı istemle yeniden koşum) güncellemeden sonra.
+
+**Açık kararlar / notlar:** §1b `$TMP` transportsuz tablo muafiyeti ölçülmedi (bilinçli) · Z35 feature control canlı ölçümü · Z42 DDLX/DCL yazma reçetesi (okuma bulguları: DDLX sourceUri `./<ad>/source/main`, DCL `source/main`) · Z46/Z47 aXet motor düzeltmeleri · DEV_CORE'da aynı "AlreadyExists → PUT" deseni (PROVA MCP etkisi ölçülmedi, ayrı karar) · worktree temizliği (`kk-arac`, `kk-mock`, `kk-skill`, `wt-kontrol`) · memory index sıkıştırma.
+
 ## ⭐ 2026-09-21 (akşam) — RAP TESTİ + SAP YETENEK EŞİTLEME — TOPLU İŞ (kullanıcı: "hemen yapma, test sonucunda toplu yaparız")
 
 **Tetik:** aXet'e iş-dili istemiyle RAP "masraf talebi" yaptırılıyor (senaryo + puanlama:
