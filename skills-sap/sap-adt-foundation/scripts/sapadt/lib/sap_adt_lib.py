@@ -6083,12 +6083,20 @@ define table {name.lower()} {{
           · `adt_push_source(object_type='tabl')` ile ayrı kilit denemesi "invalid lock handle" verdi ⇒
             kilit bu metot içinde tutulur.
 
-        Returns: dict {success, object_url, shell_status, corrnr_lock, effective_transport, put_status, warnings}
-        Raises: SAPADTError — kabuk reddi (`stage='shell'`), kilit/PUT reddi (`stage='lock'|'put'`; kabuk
-            bu durumda SAP'de VAR — çağıran bunu raporlar, otomatik silme YOK).
+        Returns: dict {success, object_url, shell_status, corrnr_lock, effective_transport, put_status, warnings,
+            unlock_ok} — `unlock_ok`: None = kilit alınmadı · True = UNLOCK 200/204 · False = UNLOCK yanıtı başka
+            kod ya da istisna (uyarı `warnings`'e düşer; yazma sonucu `success`'i BOZMAZ).
+        Raises: SAPADTError — ad/paket doğrulaması (`stage='validate'`, ağa gidilmedi), kabuk reddi
+            (`stage='shell'`), kilit/PUT reddi (`stage='lock'|'put'`; kabuk bu durumda SAP'de VAR — çağıran bunu
+            raporlar, otomatik silme YOK). lock/put aşamasındaki istisnalar `partial` özniteliğinde o ana kadarki
+            sonuç sözlüğünü (warnings, unlock_ok dahil) taşır.
         """
-        self._validate_object_name(name, 'Table')
-        self._validate_package_name(package_name)
+        try:
+            self._validate_object_name(name, 'Table')
+            self._validate_package_name(package_name)
+        except SAPADTError as exc:
+            exc.stage = 'validate'
+            raise
         ml = (master_language or self.language or '').upper()
         tablo_url = f'/sap/bc/adt/ddic/tables/{name.lower()}'
         esc = lambda v: str(v).replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')  # noqa: E731
@@ -6105,7 +6113,8 @@ define table {name.lower()} {{
 </blue:blueSource>'''
         uyarilar = []
         sonuc = {'success': False, 'object_url': tablo_url, 'shell_status': None, 'corrnr_lock': None,
-                 'effective_transport': transport or None, 'put_status': None, 'warnings': uyarilar}
+                 'effective_transport': transport or None, 'put_status': None, 'warnings': uyarilar,
+                 'unlock_ok': None}
 
         basliklar = self._get_headers('application/vnd.sap.adt.tables.v2+xml',
                                       'application/vnd.sap.adt.tables.v2+xml; charset=utf-8')
@@ -6119,13 +6128,17 @@ define table {name.lower()} {{
             hata.stage = 'shell'
             raise hata
 
+        # Stateful başlık + CSRF try İÇİNDE: CSRF istisnasında da finally başlığı geri alır (başlık sızıntısı
+        # sonraki stateless çağrıları stateful yapardı). Kabuk bu noktada SAP'de VAR → istisna aşaması 'lock'.
         prev = self.session.headers.get('X-sap-adt-sessiontype')
-        self.session.headers['X-sap-adt-sessiontype'] = 'stateful'
-        self.fetch_csrf_token(force_refresh=True)
-        csrf = self.csrf_token
         tam = f"{self.url}{tablo_url}"
         handle = None
+        csrf = None
+        asama = 'lock'
         try:
+            self.session.headers['X-sap-adt-sessiontype'] = 'stateful'
+            self.fetch_csrf_token(force_refresh=True)
+            csrf = self.csrf_token
             kilit_param = {'_action': 'LOCK', 'accessMode': 'MODIFY'}
             if transport:
                 kilit_param['corrNr'] = transport
@@ -6162,6 +6175,7 @@ define table {name.lower()} {{
             put_param = {'lockHandle': handle}
             if etkin:
                 put_param['corrNr'] = etkin
+            asama = 'put'
             put = self.session.put(f"{tam}/source/main", params=put_param, timeout=self.timeout_default,
                                    headers={'X-CSRF-Token': csrf, 'Content-Type': 'text/plain; charset=utf-8',
                                             'Accept': '*/*'},
@@ -6173,15 +6187,33 @@ define table {name.lower()} {{
                                    endpoint=f'{tablo_url}/source/main')
                 hata.stage = 'put'
                 raise hata
+        except Exception as exc:
+            # Aşamasız istisna (ağ/CSRF) → bulunduğu aşama; kabuk VAR olduğundan çağıran partial_shell raporlar.
+            if getattr(exc, 'stage', None) is None:
+                try:
+                    exc.stage = asama
+                except Exception:
+                    pass
+            try:
+                exc.partial = sonuc   # finally aynı sözlüğe unlock_ok/uyarı yazar (referans paylaşılır)
+            except Exception:
+                pass
+            raise
         finally:
             if handle:
                 try:
-                    self.session.post(tam, params={'_action': 'UNLOCK', 'lockHandle': handle},
-                                      headers={'X-CSRF-Token': csrf, 'X-sap-adt-sessiontype': 'stateful'},
-                                      timeout=self.timeout_short)
-                except Exception:
-                    uyarilar.append("UNLOCK başarısız — bayat kilit kalmış olabilir (kullanıcı SM12'de bakar; "
-                                    "AI kilit SİLMEZ).")
+                    u = self.session.post(tam, params={'_action': 'UNLOCK', 'lockHandle': handle},
+                                          headers={'X-CSRF-Token': csrf, 'X-sap-adt-sessiontype': 'stateful'},
+                                          timeout=self.timeout_short)
+                    u_kod = getattr(u, 'status_code', None)
+                    sonuc['unlock_ok'] = u_kod in (200, 204)
+                    if not sonuc['unlock_ok']:
+                        uyarilar.append(f"UNLOCK HTTP {u_kod} — kilit açılmamış olabilir (bayat kilit; kullanıcı "
+                                        f"SM12'de bakar; AI kilit SİLMEZ). Gövde: {(getattr(u, 'text', '') or '')[:200]}")
+                except Exception as u_exc:
+                    sonuc['unlock_ok'] = False
+                    uyarilar.append(f"UNLOCK başarısız ({type(u_exc).__name__}) — bayat kilit kalmış olabilir "
+                                    "(kullanıcı SM12'de bakar; AI kilit SİLMEZ).")
             if prev is None:
                 self.session.headers.pop('X-sap-adt-sessiontype', None)
             else:

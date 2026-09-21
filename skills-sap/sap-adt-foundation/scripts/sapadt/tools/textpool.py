@@ -235,13 +235,15 @@ def adt_textpool_write(
             steps["readback"][alt] = {"ok": False, "http_status": kod}
             tamam = False
             continue
-        steps["readback"][alt] = tp.readback_karsilastir(alt, r.text or "", g)
+        steps["readback"][alt] = tp.readback_karsilastir(alt, r.text or "", g,
+                                                         silinecek=steps["read"][alt].get("would_remove"))
         tamam = tamam and steps["readback"][alt]["ok"]
     out = {"ok": tamam, **temel}
     if kilit_uyari:
         out["unlock_warning"] = kilit_uyari
     if not tamam:
         out["error"] = "readback_mismatch"
-        out["message"] = ("Metinler yazıldı ama AKTİF sürümde doğrulanamadı (eksik / farklı / `=?`) — metin havuzu "
+        out["message"] = ("Metinler yazıldı ama AKTİF sürümde doğrulanamadı (eksik / farklı / `=?` / silinmesi onaylanan "
+                          "giriş hâlâ duruyor: steps.readback.*.remove_not_applied) — metin havuzu "
                           "terfi etmemiş olabilir; ekranda metin görünmez. steps.activate_px ve steps.readback'e bak.")
     return out

@@ -217,12 +217,15 @@ def dd40l_uyumsuzluklari(spec: dict, satir: dict) -> list[str]:
     else:
         es("ROWTYPE", "")
         es("DATATYPE", ILKEL_TIPLER[spec["data_type"]][2])
-        if ILKEL_TIPLER[spec["data_type"]][0]:
+        uz_ister, on_ister, _dd = ILKEL_TIPLER[spec["data_type"]]
+        for alan, anahtar, ister in (("LENG", "length", uz_ister), ("DECIMALS", "decimals", on_ister)):
+            if not ister:
+                continue
             try:
-                if int(satir.get("LENG") or 0) != int(spec.get("length") or 0):
-                    fark.append(f"DD40L.LENG={satir.get('LENG')} ≠ beklenen {spec.get('length')}")
+                if int(satir.get(alan) or 0) != int(spec.get(anahtar) or 0):
+                    fark.append(f"DD40L.{alan}={satir.get(alan)} ≠ beklenen {spec.get(anahtar)}")
             except ValueError:
-                fark.append(f"DD40L.LENG okunamadı: {satir.get('LENG')!r}")
+                fark.append(f"DD40L.{alan} okunamadı: {satir.get(alan)!r}")
     es("ACCESSMODE", ERISIM[spec["access_type"]])
     es("KEYDEF", ANAHTAR_TANIM[spec["key_definition"]])
     es("KEYKIND", ANAHTAR_TUR[spec["key_kind"]])
@@ -238,6 +241,14 @@ def xml_uyumsuzluklari(spec: dict, oku: dict) -> list[str]:
         fark.append(f"XML typeName={oku.get('type_name')!r} ≠ beklenen {spec['type_name']!r}")
     if spec.get("type_kind") == "predefinedAbapType" and (oku.get("data_type") or "").upper() != spec["data_type"]:
         fark.append(f"XML dataType={oku.get('data_type')!r} ≠ beklenen {spec['data_type']!r}")
+    if spec.get("type_kind") == "predefinedAbapType" and spec.get("data_type") in ILKEL_TIPLER:
+        # Uzunluk/ondalık yalnız tip onu İSTİYORSA ve XML alanı SAYI olarak okunabildiyse kıyaslanır. Etiket yok /
+        # boş / sayı değil = bu kanalda ÖLÇÜLEMEDİ → fark UYDURULMAZ (birincil ölçü DD40L; o kanal ayrıca kıyaslar).
+        uz_ister, on_ister, _dd = ILKEL_TIPLER[spec["data_type"]]
+        for anahtar, etiket, ister in (("length", "length", uz_ister), ("decimals", "decimals", on_ister)):
+            deger = str(oku.get(anahtar) or "").strip()
+            if ister and deger.isdigit() and int(deger) != int(spec.get(anahtar) or 0):
+                fark.append(f"XML {etiket}={deger} ≠ beklenen {spec.get(anahtar)}")
     if spec.get("key_components") and [k.upper() for k in oku.get("key_components") or []] != spec["key_components"]:
         fark.append(f"XML anahtar bileşenleri {oku.get('key_components')} ≠ beklenen {spec['key_components']}")
     return fark

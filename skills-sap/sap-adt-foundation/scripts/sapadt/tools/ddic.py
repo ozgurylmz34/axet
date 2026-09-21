@@ -76,6 +76,10 @@ def _ml_kontrol(tail: dict, steps: dict) -> None:
 # adt_table_create (Z38)
 # =============================================================================
 
+# adt_textpool_write'taki `unlock_warning` ile aynı sözleşme: yazma sonucu (`ok`) bozulmaz, uyarı üst seviyede görünür.
+_KILIT_UYARI = ("Tablo kilidi AÇILAMADI (UNLOCK yanıtı 200/204 değil ya da istisna; ayrıntı steps.create.warnings) — "
+                "sonraki yazımlar kilit hatası alabilir. Kilit silinmez (Kesin Yasak C); kullanıcıya bildir (SM12).")
+
 def _aktif_tablo_kaynagi(client, name: str) -> tuple:
     """Aktif tablo DDL'i → (metin|None, sebep). 200 dışı / istisna = ÖLÇÜLEMEDİ (None)."""
     adt = _adt(client)
@@ -120,9 +124,14 @@ def adt_table_create(
 
     Returns:
         {ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create,
-         activate, verify, readback}, message?}
+         activate, verify, readback}, error?, message?, unlock_warning?}
+        `unlock_warning`: UNLOCK yanıtı 200/204 değilse (steps.create.unlock_ok=false) — `ok`'u bozmaz.
+        `error='validation_error'`: ad/paket kütüphane doğrulamasında düştü, SAP'ye gidilmedi.
     """
     obj_type = "table"
+    # Ad büyük harfe normalize edilir (ttyp/textpool ile aynı): küçük harfli ad kapıyı geçip kütüphanenin
+    # `_validate_object_name` (yalnız A-Z) adımında düşüyordu ve "Kabuk POST'u reddedildi" diye YANLIŞ raporlanıyordu.
+    name = name.strip().upper() if isinstance(name, str) else name
     try:
         _guard(name, package, transport, description, "table", False)
     except GuardrailViolation as gv:
@@ -172,18 +181,28 @@ def adt_table_create(
             yaz = adt.create_table_with_ddl(name, description, package, ddl, transport=transport or None,
                                             master_language=_master_language())
         steps["create"] = {"ok": True, **{k: yaz.get(k) for k in ("shell_status", "put_status", "corrnr_lock",
-                                                                  "effective_transport", "warnings")},
+                                                                  "effective_transport", "warnings", "unlock_ok")},
                            "log": buf.getvalue().strip()}
     except Exception as exc:  # noqa: BLE001
         asama = getattr(exc, "stage", None)
         steps["create"] = {**_err_from_exc(exc), "stage": asama}
+        kismi = getattr(exc, "partial", None) or {}
+        for k in ("corrnr_lock", "effective_transport", "put_status", "warnings", "unlock_ok"):
+            if k in kismi:
+                steps["create"][k] = kismi[k]
+        if asama == "validate":
+            return {"ok": False, "error": "validation_error", **temel,
+                    "message": f"Ad/paket doğrulaması reddetti — SAP'ye gidilmedi (kabuk POST'u atılmadı): {exc}"}
         if asama in ("lock", "put"):
-            return {"ok": False, "error": "partial_shell", **temel,
+            out = {"ok": False, "error": "partial_shell", **temel,
                     "message": ("Tablo KABUĞU SAP'de yaratıldı ama DDL YAZILAMADI (%s aşaması). Kabuk varsayılan "
                                 "`client : abap.clnt` içeriğiyle İNAKTİF duruyor; SİLİNMEDİ. Seçenekler: sebebi "
                                 "düzeltip kabuğu kullanıcı onayıyla adt_delete ile sil ve aracı yeniden çalıştır. "
                                 "adt_push_source(tabl) ile DDL yazma kaynak çekirdekte 'invalid lock handle' "
                                 "verdi (aXet'te ÖLÇÜLMEDİ) — önerilmez." % asama)}
+            if kismi.get("unlock_ok") is False:
+                out["unlock_warning"] = _KILIT_UYARI
+            return out
         var2, sonda2 = _varlik(name, obj_type)
         steps["exists_after"] = sonda2
         return {"ok": False, "error": "create_failed", **temel, "exists_after": var2,
@@ -212,6 +231,8 @@ def adt_table_create(
                         "verify_failed" if not tail.get("verified") else "readback_mismatch")
         out["message"] = ("Tablo yazıldı ama doğrulanamadı — obje SİLİNMEDİ; steps.activate / steps.readback'e bak. "
                           "Aktivasyon hatası çoğunlukla DTEL/birim referansıdır; düzeltme için kabuğu onayla silip yeniden yarat.")
+    if yaz.get("unlock_ok") is False:
+        out["unlock_warning"] = _KILIT_UYARI
     return out
 
 
@@ -425,7 +446,11 @@ def adt_ttyp_create(
             return {"ok": False, "error": "row_type_empty_repair_failed", **temel,
                     "message": "Satır tipi iki kanalda da BOŞ; If-Match'li PUT düzeltmesi BAŞARISIZ — obje "
                                "kullanılamaz (ABAP'ta belirsiz çalışma zamanı hatası verir). steps.repair'e bak."}
-        aktive_et("activate_2")
+        t2 = aktive_et("activate_2")
+        if not t2.get("activated"):
+            return {"ok": False, "error": "activation_failed_after_repair", **temel,
+                    "message": "Düzeltme PUT'u yazıldı ama yeniden aktivasyon BAŞARISIZ — satır tipi aktif sürümde "
+                               "doğrulanamaz; obje SİLİNMEDİ (inaktif sürüm kalabilir). steps.activate_2'ye bak."}
         rb = _ttyp_readback(client, name, spec)
         steps["readback_2"] = _rb_ozet(rb)
         if rb["durum"] == "bos":

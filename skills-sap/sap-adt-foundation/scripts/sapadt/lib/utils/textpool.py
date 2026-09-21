@@ -121,13 +121,18 @@ def silinecekler(alt: str, canli_govde: str, girdiler) -> list[str]:
     return sorted(set(ayristir(alt, canli_govde)) - set(beklenen(alt, girdiler)))
 
 
-def readback_karsilastir(alt: str, aktif_govde: str, girdiler) -> dict:
-    """Aktif sürüm ↔ beklenen. `=?` (seçim yer tutucusu) ya da eksik/farklı metin = FAIL."""
+def readback_karsilastir(alt: str, aktif_govde: str, girdiler, silinecek=None) -> dict:
+    """Aktif sürüm ↔ beklenen. `=?` (seçim yer tutucusu) ya da eksik/farklı metin = FAIL.
+
+    `silinecek`: yazmadan önce `silinecekler` ile bulunan ve `allow_remove=true` ile silinmesi onaylanan anahtarlar.
+    Bunlardan aktif sürümde HÂLÂ duran varsa silme uygulanmamıştır → FAIL (`remove_not_applied`)."""
     canli = ayristir(alt, aktif_govde)
     bek = beklenen(alt, girdiler)
     eksik = sorted(k for k in bek if k not in canli)
     farkli = sorted(k for k in bek if k in canli and canli[k] != bek[k])
     yer_tutucu = sorted(k for k in bek if canli.get(k, "").strip() == "?")
-    ok = not (eksik or farkli or yer_tutucu) and bool(bek)
+    kalan = sorted(k for k in {str(s).upper() for s in (silinecek or [])} if k in canli)
+    ok = not (eksik or farkli or yer_tutucu or kalan) and bool(bek)
     return {"ok": ok, "missing": eksik, "different": [k for k in farkli if k not in yer_tutucu],
-            "placeholder": yer_tutucu, "active_count": len(canli), "expected_count": len(bek)}
+            "placeholder": yer_tutucu, "remove_not_applied": kalan, "active_count": len(canli),
+            "expected_count": len(bek)}
