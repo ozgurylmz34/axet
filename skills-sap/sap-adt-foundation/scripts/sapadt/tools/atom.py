@@ -1414,8 +1414,8 @@ def adt_post_shell(
     Args:
         object_type: Genel yol (`SAPClient.create_object`): 'class', 'interface', 'program', 'include'.
             Tipe özel reçeteler (`tools/shells.py`): 'ddls' (boş CDS kabuğu — kaynak ayrı push),
-            'srvd', 'bdef' (ad = kök entity adı), 'fugr', 'func', 'msag' (yalnız kabuk; mesaj
-            yazma desteklenmez), 'enqu' (ad E+Z/Y), 'ttyp'. 'ddlx'/'dcl'/'srvb'/'doma'/'dtel'/
+            'srvd', 'bdef' (ad = kök entity adı), 'ddlx', 'dcls' (v0.5.2), 'fugr', 'func', 'msag'
+            (yalnız kabuk; mesaj yazma desteklenmez), 'enqu' (ad E+Z/Y), 'ttyp'. 'srvb'/'doma'/'dtel'/
             'structure'/'tabl' → `unsupported_type` (gerekçe mesajda). Paket → ADR_0005_C.
         name: Customer-namespace name (Z*/Y*; lock object E+Z/Y).
         package: Target SAP package (mevcut; paket yaratılmaz).
