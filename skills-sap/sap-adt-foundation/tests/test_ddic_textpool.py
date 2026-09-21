@@ -975,9 +975,15 @@ class DdicTextpool(unittest.TestCase):
         beklenen = {"lib_hukmu": "already_exists_after_retry", "retry_baglanti": "already_exists_after_retry",
                     "retry_5xx": "already_exists_after_retry", "retry_timeout": "already_exists_after_retry",
                     "yalniz_csrf": "already_exists", "iz_yok": "already_exists", "aciklama_ici": "already_exists"}
-        ok = (sonuc == beklenen and IZ in dolu and "Connection error (attempt 1)" in dolu and IZ not in bos)
+        # v0.5.2 (v0.5.1 gate LOW): kütüphanenin GERÇEK mesajı composite regex'inden geçer — ek biçimi değişirse
+        # yedek `[RETRY]` izi birincil izi örttüğü için uçtan uca testler yeşil kalırdı; bağ burada doğrudan sınanır.
+        gercek_dolu = composite._yeniden_deneme_izi("[ERROR] " + dolu)
+        gercek_bos = composite._yeniden_deneme_izi("[ERROR] " + bos)
+        ok = (sonuc == beklenen and IZ in dolu and "Connection error (attempt 1)" in dolu and IZ not in bos
+              and gercek_dolu is True and gercek_bos is False)
         self.kaydet("S9c after_retry izi: kütüphane hükmü / [RETRY] bağlantı-5xx-timeout ayrı ayrı · CSRF / iz yok → düz",
-                    str(beklenen) + " · lib eki sebepli", f"{sonuc} · dolu_ek={IZ in dolu} bos_ek={IZ in bos}", ok)
+                    str(beklenen) + " · lib eki sebepli · gerçek mesaj regex'ten True/False",
+                    f"{sonuc} · dolu_ek={IZ in dolu} bos_ek={IZ in bos} · regex={gercek_dolu}/{gercek_bos}", ok)
 
     def test_S6c_ddl_turu_yorumlar_atlanir(self):
         """Bug gate LOW (v0.5.1): `define table|structure` aranmadan önce `/* … */` blokları ve `//` satır yorumları atılır;
