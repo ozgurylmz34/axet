@@ -106,10 +106,17 @@ Kalibrasyon (kontrol grubu): standart mesaj tablosu tipi → `ROWTYPE=BAPIRET2 �
 | boş | dolu | `readback_channels_disagree` (FAIL; kanallardan biri kör — kullanıcıya bildir) |
 | dolu | boş | `readback_channels_disagree` |
 | dolu | okunamadı | `readback_unmeasured` |
-| dolu | dolu | tanım kıyası: erişim / anahtar tanımı / anahtar türü / satır tipi / ilkel uzunluk → fark varsa `readback_mismatch` |
+| dolu | dolu | tanım kıyası: erişim / anahtar tanımı / anahtar türü / satır tipi / ilkel uzunluk + **ondalık** (DEC: DD40L `DECIMALS`) → fark varsa `readback_mismatch` |
+
+İlkel tipte uzunluk/ondalık yalnız tip onu **istiyorsa** kıyaslanır (CHAR/NUMC uzunluk · DEC uzunluk + ondalık). DD40L `LENG`/`DECIMALS`
+her zaman kıyaslanır (okunamazsa fark yazılır). XML `builtInType/length`·`decimals` yalnız **sayı olarak okunabildiyse** kıyaslanır;
+etiket yok / boş / sayı değil = o kanalda ölçülemedi → fark **uydurulmaz** (birincil ölçü DD40L). ⚠ XML `length` ile DD40L `LENG`'in
+aynı birimde olduğu canlıda ÖLÇÜLMEDİ (yalnız yazım gövdesi aynı değeri gönderir) — ilk canlı ilkel tipte XML `length` farkı çıkarsa
+önce bu varsayımı sorgula.
 
 Düzeltme **bir kez** denenir. Sonrasında hâlâ boşsa `row_type_empty_after_repair` → **FAIL; asla "OK" denmez.** Obje silinmez;
-kullanıcıya bildir (SE11'de bakar). Düzeltme PUT'u düşerse `row_type_empty_repair_failed`.
+kullanıcıya bildir (SE11'de bakar). Düzeltme PUT'u düşerse (ya da ETag alınamazsa — If-Match'siz PUT denenmez)
+`row_type_empty_repair_failed`. Düzeltme PUT'u geçip yeniden aktivasyon düşerse `activation_failed_after_repair`.
 ⚠ Düzeltme PUT'unda `If-Match` **gönderilir** — Z tablo kaynağı PUT'unda gönderilmez; bu fark bilinçlidir (farklı uç, farklı içerik tipi;
 kaynak ekip bu uçta ETag yolunun çalıştığını ölçtü). Genelleme yapma.
 

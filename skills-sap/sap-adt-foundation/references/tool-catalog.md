@@ -403,8 +403,8 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   T8 satır sonu · T9 `key` bool) → DDL render (`#NOT_EXTENSIBLE`, anahtarlarda `not null`, nitelikli `'tablo.alan'` birim/para referansı) → reviewer `table_creation` **yazılacak DDL'in kendisi** üzerinde →
   varlık sondası (ölçülemezse `exists_unmeasured`, yaratma yok) → kabuk POST (**DDL'siz**) → aynı stateful oturumda LOCK → PUT `source/main` (**If-Match yok**; corrNr = kilit yanıtındaki CORRNR) → UNLOCK (finally) →
   aktivasyon + `version=active` → aktif DDL readback (alan/anahtar dizisi).
-- **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}}`.
-- **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi ya da yabancı transport; silinmez, kullanıcı karar verir) ·
+- **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}, unlock_warning?}` — `steps.create.unlock_ok:false` (UNLOCK yanıtı 200/204 değil) → `unlock_warning`; `ok`'u bozmaz, kullanıcıya ilet (SM12; AI kilit silmez).
+- **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `validation_error` (ad/paket kütüphane doğrulaması; SAP'ye gidilmedi) · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi, kilit öncesi CSRF/ağ istisnası ya da yabancı transport; silinmez, kullanıcı karar verir) ·
   `activation_failed` · `readback_mismatch` (`default_shell_client_field` = varsayılan `client : abap.clnt` kabuğu duruyor, DDL sessizce kaybolmuş).
 - **Kapsam:** mevcut tabloyu DEĞİŞTİRMEZ. Canlı DOĞRULANMADI (çevrimdışı sahte istemci testleri; canlı ölçüm planı lider onayında). `adt_push_source(tabl)` ile DDL yazma kaynak çekirdekte "invalid lock handle" verdi — bu araç kilidi kendi içinde tutar.
 
@@ -416,8 +416,8 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Desteklenmeyen:** aralık tablosu, referans satır, iç içe tablo tipi, boş/genel anahtar, ikincil anahtar → `preflight_blocker`.
 - **Akış:** ön kontrol → varlık sondası → POST `/ddic/tabletypes` (`application/vnd.sap.adt.tabletype.v1+xml`, corrNr sorgu parametresi) → aktivasyon → readback: ADT XML (`rowType/typeName`|`dataType`, erişim, anahtar) + DD40L (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND) →
   **iki kanal da boş** → aynı XML ile If-Match PUT → yeniden aktivasyon → yeniden iki kanal. Reviewer zinciri yok (`reviewer.verdict:"SKIP"`); doğrulama canlı readback'tir.
-- **Hatalar:** `preflight_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` · `row_type_empty_repair_failed` · **`row_type_empty_after_repair`** (FAIL — asla OK) ·
-  `readback_channels_disagree` (biri dolu biri boş) · `readback_unmeasured` (DD40L/XML okunamadı; ölçülemedi ≠ doğru) · `readback_mismatch` (erişim/anahtar/satır tipi farklı).
+- **Hatalar:** `preflight_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` · `row_type_empty_repair_failed` (düzeltme PUT'u düştü ya da ETag yok) · `activation_failed_after_repair` · **`row_type_empty_after_repair`** (FAIL — asla OK) ·
+  `readback_channels_disagree` (biri dolu biri boş) · `readback_unmeasured` (DD40L/XML okunamadı; ölçülemedi ≠ doğru) · `readback_mismatch` (erişim/anahtar/satır tipi/ilkel uzunluk-ondalık farklı).
 - **Kapsam:** canlı DOĞRULANMADI (okuma kalibrasyonu: standart bir TTYP'de iki kanal eşlemesi ölçüldü; düzeltme PUT'u kaynak reçeteden, aXet'te ölçülmedi).
 
 ### `adt_textpool_write` (klasik program metin havuzu — YAZMA, 2026-09-21)
@@ -426,7 +426,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Akış:** ağsız ön kontrol (sembol 3 karakter · seçim adı ≤ 8 · metin boş değil · metin ≤ `max_length` → aksi SAP DS512) → her alt kaynağı canlı oku (ETag;
   canlıda olup girdide olmayan giriş SİLİNECEKSE `allow_remove=true` olmadan `would_remove_entries`, yazma yok) → metin öğeleri kaynağını kilitle (program değil) →
   PUT (CRLF, giriş başına `@MaxLength`, boş satır ayraç, sonda satır sonu yok; If-Match + lockHandle + corrNr) → UNLOCK → PROG/P + **açık PROG/PX** aktivasyonu →
-  `?version=active` readback (eksik / farklı / `=?` → `readback_mismatch`).
+  `?version=active` readback (eksik / farklı / `=?` / `allow_remove` ile silinmesi onaylanan giriş hâlâ duruyor (`remove_not_applied`) → `readback_mismatch`).
 - **Hatalar:** `preflight_blocker` · `not_found` · `read_failed` · `would_remove_entries` · `lock_failed` (gerçek tutamaç yoksa yazmaz) · `put_failed` · `readback_mismatch` · `unlock_warning`.
 - **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı DOĞRULANMADI (reçete kaynak çekirdekte canlı kanıtlı; aXet portu çevrimdışı test edildi).
 

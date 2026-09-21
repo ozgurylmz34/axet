@@ -63,7 +63,7 @@ class DdicADT(SahteADT):
         self.cagri.append({"method": "LIB", "path": "unlock_object", "params": {"url": object_url,
                                                                                   "handle": lock_handle},
                            "data": None, "headers": {}})
-        return True
+        return getattr(self, "unlock_sonuc", True)
 
 
 class DdicIstemci(SahteIstemci):
@@ -72,11 +72,14 @@ class DdicIstemci(SahteIstemci):
         self.metadata = AKTIF_MD
         self.sql = sql
         self.last_sql_error = None
+        self.aktive = True   # bool ya da sırayla dönen liste (ilk aktivasyon, düzeltme sonrası ikinci)
 
     def activate_object(self, name, object_type=None):
         self.adt_client.cagri.append({"method": "LIB", "path": f"activate:{object_type}", "params": {"name": name},
                                       "data": None, "headers": {}})
-        return True
+        if isinstance(self.aktive, list):
+            return self.aktive.pop(0) if self.aktive else True
+        return self.aktive
 
     def run_sql_query(self, query, max_rows=100):
         self.adt_client.cagri.append({"method": "LIB", "path": "sql", "params": {"q": query}, "data": None,
@@ -136,7 +139,7 @@ class DdicTextpool(unittest.TestCase):
         self.assertTrue(ok, f"{ad}: {gercek}")
 
     # ── Z38 adt_table_create ───────────────────────────────────────────────────────────────
-    def _tablo_yon(self, kilit=None, canli=None, put_kod=200):
+    def _tablo_yon(self, kilit=None, canli=None, put_kod=200, unlock_kod=200):
         durum = {"ddl": None}
 
         def yon(c):
@@ -150,7 +153,7 @@ class DdicTextpool(unittest.TestCase):
                 durum["ddl"] = c["data"]
                 return Yanit(put_kod, "")
             if m == "POST" and pr.get("_action") == "UNLOCK":
-                return Yanit(200, "")
+                return Yanit(unlock_kod, "kilit" if unlock_kod != 200 else "")
             if m == "GET" and yol.endswith("/source/main"):
                 return Yanit(200, canli if canli is not None else durum["ddl"] or "")
             return Yanit(500, "beklenmedik")
@@ -237,24 +240,26 @@ class DdicTextpool(unittest.TestCase):
     # ── Z40 adt_ttyp_create ────────────────────────────────────────────────────────────────
     @staticmethod
     def _ttyp_xml(type_name="ZAXET_S_SATIR", data_type="", access="standard", kdef="standard", kind="nonUnique",
-                  kk="dictionaryType"):
+                  kk="dictionaryType", length="000010", decimals="000000"):
         tn = f"<ttyp:typeName>{type_name}</ttyp:typeName>" if type_name else "<ttyp:typeName/>"
         dt = f"<ttyp:dataType>{data_type}</ttyp:dataType>" if data_type else "<ttyp:dataType/>"
         return ('<ttyp:tableType xmlns:ttyp="http://www.sap.com/dictionary/tabletype"><ttyp:rowType>'
-                f"<ttyp:typeKind>{kk}</ttyp:typeKind>{tn}<ttyp:builtInType>{dt}<ttyp:length>000010</ttyp:length>"
-                "<ttyp:decimals>000000</ttyp:decimals></ttyp:builtInType></ttyp:rowType>"
+                f"<ttyp:typeKind>{kk}</ttyp:typeKind>{tn}<ttyp:builtInType>{dt}<ttyp:length>{length}</ttyp:length>"
+                f"<ttyp:decimals>{decimals}</ttyp:decimals></ttyp:builtInType></ttyp:rowType>"
                 f"<ttyp:accessType>{access}</ttyp:accessType><ttyp:primaryKey><ttyp:definition>{kdef}"
                 f"</ttyp:definition><ttyp:kind>{kind}</ttyp:kind><ttyp:components/></ttyp:primaryKey></ttyp:tableType>")
 
     @staticmethod
     def _dd40l(rowtype="ZAXET_S_SATIR", rowkind="S", datatype="STRU", leng="000000", access="T", keydef="D",
-               keykind="N"):
+               keykind="N", decimals="000000"):
         return {"columns": ["TYPENAME", "ROWTYPE", "ROWKIND", "DATATYPE", "LENG", "DECIMALS", "ACCESSMODE", "KEYDEF",
                             "KEYKIND"],
-                "data": [["ZAXET_TT_DEN", rowtype, rowkind, datatype, leng, "000000", access, keydef, keykind]]}
+                "data": [["ZAXET_TT_DEN", rowtype, rowkind, datatype, leng, decimals, access, keydef, keykind]]}
 
-    def _ttyp(self, xml_seq, sql_seq, put_kod=200, **kw):
-        """xml_seq / sql_seq: sırayla dönen readback yanıtları (düzeltme sonrası ikinci eleman)."""
+    def _ttyp(self, xml_seq, sql_seq, put_kod=200, etag="etag-1", aktive=True, **kw):
+        """xml_seq / sql_seq: sırayla dönen readback yanıtları (düzeltme sonrası ikinci eleman).
+
+        xml_seq öğesi int ise o HTTP koduyla boş yanıt döner (XML kanalı ölçülemedi)."""
         sayac = {"x": 0, "s": 0}
 
         def yon(c):
@@ -263,7 +268,9 @@ class DdicTextpool(unittest.TestCase):
             if c["method"] == "GET" and c["path"] == "/sap/bc/adt/ddic/tabletypes/zaxet_tt_den":
                 x = xml_seq[min(sayac["x"], len(xml_seq) - 1)]
                 sayac["x"] += 1
-                return Yanit(200, x, {"ETag": "etag-1"})
+                if isinstance(x, int):
+                    return Yanit(x, "hata")
+                return Yanit(200, x, {"ETag": etag} if etag else {})
             if c["method"] == "PUT":
                 return Yanit(put_kod, "")
             return Yanit(500, "beklenmedik")
@@ -273,6 +280,7 @@ class DdicTextpool(unittest.TestCase):
             sayac["s"] += 1
             return s
         adt, ist = self.kur(yon, sql)
+        ist.aktive = aktive
         arg = {"row_type": "ZAXET_S_SATIR"}
         arg.update(kw)
         r = self.ddic.adt_ttyp_create("ZAXET_TT_DEN", "Deneme tablo tipi", "ZAXET_PKG", TR, **arg)
@@ -357,7 +365,7 @@ class DdicTextpool(unittest.TestCase):
                     ok and r_tmp.get("code") != "ADR_0005_C")
 
     # ── Z39 adt_textpool_write ─────────────────────────────────────────────────────────────
-    def _tp(self, canli=None, aktif=None, put_kod=200, **kw):
+    def _tp(self, canli=None, aktif=None, put_kod=200, unlock=True, **kw):
         canli = canli or {}
         durum = {"yaz": {}}
 
@@ -376,6 +384,7 @@ class DdicTextpool(unittest.TestCase):
                                   'generationExecuted="true"/>')
             return Yanit(500, "beklenmedik")
         adt, ist = self.kur(yon)
+        adt.unlock_sonuc = unlock
         return adt, self.tp.adt_textpool_write("ZAXET_P_DEN", TR, **kw)
 
     SEM = [{"key": "B01", "text": "Seçim kriterleri"}]
@@ -444,6 +453,156 @@ class DdicTextpool(unittest.TestCase):
                and not any(c["path"] == "/sap/bc/adt/activation" for c in adt2.cagri))
         self.kaydet("P5 textpool: sahte tutamaç → yazmaz · PUT 406 → unlock var, aktivasyon yok",
                     "lock_failed · put_failed", f"{r.get('error')} · {r2.get('error')}", ok1 and ok2)
+
+
+    # ── Bug-gate WARNING düzeltmeleri (2026-09-21): kapsanmayan dallar + M1-M3 · L1-L3 ─────────────
+    def test_T7_tablo_put_4xx_yarim_kabuk_unlock(self):
+        adt, _ = self.kur(self._tablo_yon(put_kod=400))
+        r = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        unlock = [c for c in adt.cagri if c["params"].get("_action") == "UNLOCK"]
+        ok = (r.get("ok") is False and r.get("error") == "partial_shell" and r["steps"]["create"].get("stage") == "put"
+              and len(unlock) == 1 and unlock[0]["params"].get("lockHandle") == "HT1"
+              and not any(c["path"].startswith("activate") for c in adt.cagri) and "unlock_warning" not in r)
+        self.kaydet("T7 tablo: PUT 400 → partial_shell(put), UNLOCK 1, aktivasyon yok", "partial_shell · unlock 1",
+                    f"{r.get('error')} stage={r['steps']['create'].get('stage')} unlock={len(unlock)}", ok)
+
+    def test_T8_tablo_unlock_hatasi_gorunur(self):
+        adt, _ = self.kur(self._tablo_yon(unlock_kod=403))
+        r = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        c = r["steps"]["create"]
+        ok1 = (r.get("ok") is True and c.get("unlock_ok") is False and bool(r.get("unlock_warning"))
+               and any("UNLOCK" in w for w in c.get("warnings") or []))
+        adt2, _ = self.kur(self._tablo_yon(put_kod=400, unlock_kod=403))
+        r2 = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        ok2 = (r2.get("error") == "partial_shell" and bool(r2.get("unlock_warning"))
+               and r2["steps"]["create"].get("unlock_ok") is False)
+        adt3, _ = self.kur(self._tablo_yon())
+        r3 = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        ok3 = r3["steps"]["create"].get("unlock_ok") is True and "unlock_warning" not in r3
+        self.kaydet("T8 tablo: UNLOCK 403 → ok korunur ama unlock_ok:false + unlock_warning (başarı + PUT hatası)",
+                    "uyarı görünür ×2 · 200'de uyarı yok",
+                    f"ok={r.get('ok')} c={c.get('unlock_ok')} w={str(r.get('unlock_warning'))[:40]} · "
+                    f"{r2.get('error')} {str(r2.get('unlock_warning'))[:30]} · {r3['steps']['create'].get('unlock_ok')}",
+                    ok1 and ok2 and ok3)
+
+    def test_T9_tablo_aktivasyon_hatasi(self):
+        adt, ist = self.kur(self._tablo_yon())
+        ist.aktive = False
+        r = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        ok = (r.get("ok") is False and r.get("error") == "activation_failed" and "readback" not in r["steps"]
+              and not any(c["method"] == "GET" for c in adt.cagri))
+        self.kaydet("T9 tablo: aktivasyon False → activation_failed, readback yok", "activation_failed",
+                    f"{r.get('error')} steps={sorted(r['steps'])}", ok)
+
+    def test_T10_tablo_kucuk_harf_ad_ve_dogrulama_asamasi(self):
+        adt, _ = self.kur(self._tablo_yon())
+        r = self.ddic.adt_table_create("zaxet_t_den", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        kabuk = [c for c in adt.cagri if c["method"] == "POST" and c["path"] == "/sap/bc/adt/ddic/tables"]
+        ok1 = (r.get("ok") is True and r.get("name") == "ZAXET_T_DEN" and len(kabuk) == 1
+               and 'adtcore:name="ZAXET_T_DEN"' in kabuk[0]["data"])
+        adt2, _ = self.kur(self._tablo_yon())
+        r2 = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "", TR)
+        msg = r2.get("message") or ""
+        ok2 = (r2.get("ok") is False and r2.get("error") == "validation_error"
+               and r2["steps"].get("create", {}).get("stage") == "validate" and adt2.cagri == []
+               and "reddedildi" not in msg and "gidilmedi" in msg)
+        self.kaydet("T10 tablo: küçük harfli ad normalize → OK · boş paket → validation_error (POST 0, doğru mesaj)",
+                    "ok · validation_error", f"ok={r.get('ok')} err={r.get('error')} · {r2.get('error')} "
+                    f"stage={r2['steps'].get('create', {}).get('stage')} msg={msg[:60]} "
+                    f"çağrı={len(adt2.cagri)}", ok1 and ok2)
+
+    def test_T11_tablo_csrf_istisnasi_baslik_temizlenir(self):
+        adt, _ = self.kur(self._tablo_yon())
+
+        def patla(force_refresh=False):
+            raise RuntimeError("csrf ağı düştü")
+        adt.fetch_csrf_token = patla
+        r = self.ddic.adt_table_create("ZAXET_T_DEN", "Deneme tablosu", ALANLAR, "ZAXET_PKG", TR)
+        ok = (r.get("error") == "partial_shell" and r["steps"]["create"].get("stage") == "lock"
+              and "X-sap-adt-sessiontype" not in adt.session.headers
+              and not any(c["params"].get("_action") == "LOCK" for c in adt.cagri))
+        self.kaydet("T11 tablo: kabuk sonrası CSRF istisnası → partial_shell(lock), stateful başlık temizlendi",
+                    "partial_shell · başlık yok", f"{r.get('error')} stage={r['steps']['create'].get('stage')} "
+                    f"başlık={adt.session.headers}", ok)
+
+    def test_Y9_ttyp_duzeltme_put_412(self):
+        bos_x, bos_s = self._ttyp_xml(type_name=""), self._dd40l(rowtype="", rowkind="", datatype="")
+        adt, r = self._ttyp([bos_x], [bos_s], put_kod=412)
+        akt = [c for c in adt.cagri if c["path"].startswith("activate")]
+        ok = (r.get("ok") is False and r.get("error") == "row_type_empty_repair_failed"
+              and r["steps"]["repair"].get("http_status") == 412 and len(akt) == 1)
+        self.kaydet("Y9 ttyp: düzeltme PUT 412 → row_type_empty_repair_failed, ikinci aktivasyon yok",
+                    "repair_failed", f"ok={r.get('ok')} err={r.get('error')} akt={len(akt)}", ok)
+
+    def test_Y10_ttyp_etag_yok(self):
+        bos_x, bos_s = self._ttyp_xml(type_name=""), self._dd40l(rowtype="", rowkind="", datatype="")
+        adt, r = self._ttyp([bos_x], [bos_s], etag="")
+        ok = (r.get("error") == "row_type_empty_repair_failed" and r["steps"]["repair"].get("reason") == "etag_yok"
+              and not any(c["method"] == "PUT" for c in adt.cagri))
+        self.kaydet("Y10 ttyp: ETag yok → If-Match'siz PUT DENENMEZ", "etag_yok · PUT 0",
+                    f"{r.get('error')} {r['steps'].get('repair')}", ok)
+
+    def test_Y11_ttyp_aktivasyon_hatasi(self):
+        adt, r = self._ttyp([self._ttyp_xml()], [self._dd40l()], aktive=False)
+        ok = (r.get("ok") is False and r.get("error") == "activation_failed" and "readback" not in r["steps"]
+              and not any(c["path"] == "sql" for c in adt.cagri))
+        self.kaydet("Y11 ttyp: aktivasyon False → activation_failed, readback yok", "activation_failed",
+                    f"{r.get('error')} steps={sorted(r['steps'])}", ok)
+
+    def test_Y12_ttyp_dd40l_dolu_xml_olculemedi(self):
+        adt, r = self._ttyp([500], [self._dd40l()])
+        rb = r["steps"].get("readback", {})
+        ok = (r.get("ok") is False and r.get("error") == "readback_unmeasured"
+              and rb.get("xml_probe") == "xml_http_500" and rb.get("durum") == "olculemedi")
+        self.kaydet("Y12 ttyp: DD40L dolu + XML 500 → readback_unmeasured (ölçülemedi ≠ doğru)", "readback_unmeasured",
+                    f"{r.get('error')} {rb.get('xml_probe')}", ok)
+
+    def test_Y13_ttyp_dec_ondalik_uyumsuz(self):
+        dec = {"row_type": None, "builtin": {"data_type": "DEC", "length": 15, "decimals": 2}}
+        x_iyi = self._ttyp_xml(type_name="", data_type="DEC", kk="predefinedAbapType", length="000015",
+                               decimals="000002")
+        s_iyi = self._dd40l(rowtype="", rowkind="", datatype="DEC", leng="000015", decimals="000002")
+        _a, r0 = self._ttyp([x_iyi], [s_iyi], **dec)
+        _a, r1 = self._ttyp([x_iyi], [self._dd40l(rowtype="", rowkind="", datatype="DEC", leng="000015",
+                                                  decimals="000000")], **dec)
+        _a, r2 = self._ttyp([self._ttyp_xml(type_name="", data_type="DEC", kk="predefinedAbapType", length="000015",
+                                            decimals="000000")], [s_iyi], **dec)
+        _a, r3 = self._ttyp([self._ttyp_xml(type_name="", data_type="DEC", kk="predefinedAbapType", length="000013",
+                                            decimals="000002")], [s_iyi], **dec)
+        ok = (r0.get("ok") is True
+              and r1.get("error") == "readback_mismatch" and "DD40L.DECIMALS" in r1.get("message", "")
+              and r2.get("error") == "readback_mismatch" and "XML decimals" in r2.get("message", "")
+              and r3.get("error") == "readback_mismatch" and "XML length" in r3.get("message", ""))
+        self.kaydet("Y13 ttyp: DEC 15,2 — DD40L DECIMALS=0 / XML decimals=0 / XML length=13 → readback_mismatch",
+                    "ok · mismatch ×3", f"{r0.get('error')} · {str(r1.get('message'))[:70]} · "
+                    f"{str(r2.get('message'))[:70]} · {str(r3.get('message'))[:70]}", ok)
+
+    def test_Y14_ttyp_duzeltme_sonrasi_aktivasyon_hatasi(self):
+        bos_x, bos_s = self._ttyp_xml(type_name=""), self._dd40l(rowtype="", rowkind="", datatype="")
+        adt, r = self._ttyp([bos_x, self._ttyp_xml()], [bos_s, self._dd40l()], aktive=[True, False])
+        ok = (r.get("ok") is False and r.get("error") == "activation_failed_after_repair"
+              and r["steps"]["activate_2"]["ok"] is False and "readback_2" not in r["steps"])
+        self.kaydet("Y14 ttyp: düzeltme PUT'u OK ama yeniden aktivasyon düştü → activation_failed_after_repair",
+                    "activation_failed_after_repair", f"ok={r.get('ok')} err={r.get('error')}", ok)
+
+    def test_P6_textpool_unlock_hatasi(self):
+        adt, r = self._tp(unlock=False, symbols=self.SEM)
+        ok = (r.get("ok") is True and r["steps"]["unlock"]["ok"] is False and bool(r.get("unlock_warning")))
+        adt2, r2 = self._tp(unlock=False, put_kod=406, symbols=self.SEM)
+        ok = ok and r2.get("error") == "put_failed" and bool(r2.get("unlock_warning"))
+        self.kaydet("P6 textpool: UNLOCK başarısız → unlock_warning (başarı + PUT hatası yolunda)", "uyarı ×2",
+                    f"ok={r.get('ok')} {str(r.get('unlock_warning'))[:40]} · {r2.get('error')}", ok)
+
+    def test_P7_textpool_silme_uygulanmadi(self):
+        canli = {"symbols": "@MaxLength:5\r\nB99=Eski!\r\n\r\n@MaxLength:16\r\nB01=Seçim kriterleri"}
+        adt, r = self._tp(canli=canli, aktif=canli, allow_remove=True, symbols=self.SEM)
+        rb = r["steps"]["readback"]["symbols"]
+        ok1 = (r.get("ok") is False and r.get("error") == "readback_mismatch"
+               and rb.get("remove_not_applied") == ["B99"] and rb["ok"] is False)
+        adt2, r2 = self._tp(canli=canli, allow_remove=True, symbols=self.SEM)
+        ok2 = r2.get("ok") is True and r2["steps"]["readback"]["symbols"].get("remove_not_applied") == []
+        self.kaydet("P7 textpool: allow_remove ile silinecek B99 aktifte duruyor → readback_mismatch",
+                    "remove_not_applied · temizde ok", f"{r.get('error')} {rb} · {r2.get('ok')}", ok1 and ok2)
 
 
 if __name__ == "__main__":
