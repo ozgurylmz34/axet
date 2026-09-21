@@ -11,8 +11,9 @@ Akış (kaynak çekirdek `playbook/adt-programs.md` §23.7 "6 zorunlu cephe" + `
   → etkin transport kilit yanıtından → her alt kaynağa PUT (If-Match + lockHandle + corrNr; `_get_headers` +
   `_request_with_csrf_retry` = CSRF + stateful) → gerçek kilit tutamacı ŞART → UNLOCK (finally, aktivasyondan
   ÖNCE: aksi hâlde PROG/PX aktivasyonu aracın kendi kilidine çarpar) → PROG/P aktivasyonu → AÇIK PROG/PX
-  aktivasyonu (program zaten aktifse PROG/P no-op olur ve metin havuzunu terfi ettirmez) → `?version=active`
-  readback: her beklenen giriş aktif sürümde aynı metinle var mı (`=?` yer tutucu = FAIL).
+  aktivasyonu (program zaten aktifse PROG/P yalnız generation koşar ve metin havuzunu terfi ettirmez) → PX sonrası
+  bağımsız worklist sondası → `?version=active` readback: her beklenen giriş aktif sürümde aynı metinle var mı
+  (`=?` yer tutucu = FAIL).
 """
 from __future__ import annotations
 
@@ -79,8 +80,14 @@ def adt_textpool_write(
         Başlıklar (headings) desteklenmez: yazım biçimi kaynakta belgelenmedi.
 
     Returns:
-        {ok, name, type:'prog', written:[alt], steps:{pre_flight, read, lock, put, unlock, activate_prog,
-         activate_px, readback}, effective_transport, error?, message?}
+        {ok, name, type:'prog', written:[PUT'u başarılı alt kaynaklar; yazılmadıysa []], steps:{pre_flight, read,
+         lock, put, unlock, activate_prog{ok, outcome: activated|generation_only|failed}, activate_px,
+         activation_final{ok, sonda, kalan_inaktif}, readback}, effective_transport, activation_notice?, error?, message?}
+        `ok` = aktif sürüm readback'i doğru VE PX sonrası worklist'te program/metin havuzu kalmadı (ölçülemezse
+        yalnız readback + `activation_notice`). `activate_prog.outcome=generation_only` beklenen durumdur (program
+        zaten aktif); hükmü `activation_final` verir.
+        error: preflight_blocker · read_failed · not_found · would_remove_entries · lock_failed · put_failed ·
+        readback_mismatch · activation_incomplete
     """
     try:
         require_writable_tier(get_active_tier(), what="text pool write")
@@ -99,7 +106,9 @@ def adt_textpool_write(
                            + "; ".join(f["message"] for f in on["findings"])}
     alt_girdi = [(a, g) for a, g in (("symbols", symbols), ("selections", selections)) if g]
     yuk = {a: (tp.sembol_yuku(g) if a == "symbols" else tp.secim_yuku(g)) for a, g in alt_girdi}
-    temel["written"] = [a for a, _ in alt_girdi]
+    # `written` YALNIZ PUT'u başarılı alt kaynakları sayar (canlı 2026-09-21: `would_remove_entries` ile hiçbir şey
+    # yazılmadan dönüldüğünde yanıt `written:["symbols"]` gösteriyordu).
+    temel["written"] = []
 
     try:
         client = _get_client()
@@ -173,7 +182,9 @@ def adt_textpool_write(
                                              data=yuk[alt].encode("utf-8"), timeout=60)
             kod = int(getattr(r, "status_code", 0) or 0)
             steps["put"][alt] = {"ok": kod in (200, 201, 204), "http_status": kod}
-            if kod not in (200, 201, 204):
+            if kod in (200, 201, 204):
+                temel["written"].append(alt)
+            else:
                 steps["put"][alt]["body_head"] = str(getattr(r, "text", ""))[:600]
                 put_hatasi = alt
                 break
@@ -198,13 +209,34 @@ def adt_textpool_write(
         return out
 
     # 4) Aktivasyon: PROG/P, ardından AÇIK PROG/PX.
+    # PROG/P adımının ANLAMI (kaynak çekirdek push_textpool.py 4a/4b): programın kaynağını bu araç DEĞİŞTİRMEZ;
+    # adım program yükünü yeniden üretir ve program inaktifse onu aktive eder. Program ZATEN aktifse SAP yalnız
+    # generation koşar (`activationExecuted=false` + `generationExecuted=true`) ve metin havuzunu TERFİ ETTİRMEZ —
+    # o işi AÇIK PROG/PX aktivasyonu yapar. Bu yüzden `yalniz_generation` bu adımda BEKLENEN sonuçtur (canlı
+    # 2026-09-21, DEV: her çağrıda worklist PROG/P + PROG/PX'i inaktif gösterdi, PX aktivasyonu terfi ettirdi) —
+    # FAIL değildir; hükmü PX'ten SONRAKİ bağımsız worklist sondası (`activation_final`) verir. Gövdede gerçek
+    # E/A mesajı varsa (ör. sözdizimi hatası) adım `ok:false` kalır ve son sonda PROG/P'yi inaktif görürse nihai
+    # `ok:false` (`activation_incomplete`).
+    prog_url = f"/sap/bc/adt/programs/programs/{prog_l}"
     try:
         with _capture():
-            akt = adt.activate_object(prog_u, f"/sap/bc/adt/programs/programs/{prog_l}")
-        steps["activate_prog"] = {"ok": bool((akt or {}).get("success")),
-                                  "errors": [e.get("message") for e in (akt or {}).get("errors", [])][:10]}
+            akt = adt.activate_object(prog_u, prog_url)
+        akt = akt or {}
+        if akt.get("success"):
+            steps["activate_prog"] = {"ok": True, "outcome": "activated"}
+        elif akt.get("hukum_sebep") == "yalniz_generation":
+            dog = akt.get("aktivasyon_dogrulama") or {}
+            steps["activate_prog"] = {
+                "ok": None, "outcome": "generation_only", "decided_by": "activation_final",
+                "pending_before_px": ["%s (%s)" % (k.get("name"), k.get("type"))
+                                      for k in dog.get("kalan_inaktif") or []],
+                "note": "Program zaten aktif: SAP yalnız generation koştu (beklenen). Metin havuzu PROG/PX adımında "
+                        "terfi eder; hüküm steps.activation_final'da."}
+        else:
+            steps["activate_prog"] = {"ok": False, "outcome": "failed", "reason": akt.get("hukum_sebep"),
+                                      "errors": [e.get("message") for e in akt.get("errors", [])][:10]}
     except Exception as exc:  # noqa: BLE001
-        steps["activate_prog"] = {"ok": False, **_err_from_exc(exc)}
+        steps["activate_prog"] = {"ok": False, "outcome": "failed", **_err_from_exc(exc)}
     try:
         from sap_adt_lib import aktivasyon_govde_hukmu  # type: ignore
         ph = adt._get_headers(accept_type="application/vnd.sap.adt.objectactivation.result.v1+xml",
@@ -217,6 +249,20 @@ def adt_textpool_write(
                                 "reason": hk["sebep"], "note": "Nihai hüküm aktif sürüm readback'indedir."}
     except Exception as exc:  # noqa: BLE001
         steps["activate_px"] = {"ok": False, **_err_from_exc(exc)}
+
+    # 4c) PX SONRASI bağımsız worklist sondası — program + metin havuzu hâlâ aktive-bekleyen listesinde mi?
+    #     (Tek kaynak: `aktivasyon_worklist_sondasi`; ölçülemezse None = "temiz" DEĞİL, görünür not.)
+    try:
+        from sap_adt_lib import aktivasyon_worklist_sondasi  # type: ignore
+        son_ok, son_sonda, kalan = aktivasyon_worklist_sondasi(adt, [
+            {"uri": prog_url, "name": prog_u, "type": "PROG/P"},
+            {"uri": te_url, "name": prog_u, "type": "PROG/PX"}])
+    except Exception as exc:  # noqa: BLE001
+        son_ok, son_sonda, kalan = None, f"unavailable:{type(exc).__name__}", []
+    steps["activation_final"] = {"ok": son_ok, "sonda": son_sonda,
+                                 "kalan_inaktif": ["%s (%s)" % (k.get("name"), k.get("type")) for k in kalan]}
+    if steps["activate_prog"].get("outcome") == "generation_only":
+        steps["activate_prog"]["ok"] = son_ok
 
     # 5) Readback — ?version=active (working sürüm PUT'lanan metni gösterip yanıltır).
     steps["readback"] = {}
@@ -238,9 +284,20 @@ def adt_textpool_write(
         steps["readback"][alt] = tp.readback_karsilastir(alt, r.text or "", g,
                                                          silinecek=steps["read"][alt].get("would_remove"))
         tamam = tamam and steps["readback"][alt]["ok"]
-    out = {"ok": tamam, **temel}
+    eksik_aktivasyon = son_ok is False
+    out = {"ok": tamam and not eksik_aktivasyon, **temel}
     if kilit_uyari:
         out["unlock_warning"] = kilit_uyari
+    if son_ok is None:
+        out["activation_notice"] = (f"PX sonrası worklist sondası ÖLÇÜLEMEDİ ({son_sonda}) — program/metin havuzunun "
+                                    "aktive-bekleyen listesinde kalmadığı DOĞRULANMADI; hüküm yalnız aktif sürüm "
+                                    "readback'ine dayanıyor. `adt_inactive_objects` ile elle bak.")
+    if tamam and eksik_aktivasyon:
+        out["error"] = "activation_incomplete"
+        out["message"] = ("Metinler aktif sürümde doğru AMA PX sonrası worklist şunları hâlâ inaktif gösteriyor: "
+                          + ", ".join(steps["activation_final"]["kalan_inaktif"])
+                          + " — program kaynağının inaktif sürümü ya da aktivasyon hatası olabilir; "
+                            "steps.activate_prog ve steps.activation_final'a bak.")
     if not tamam:
         out["error"] = "readback_mismatch"
         out["message"] = ("Metinler yazıldı ama AKTİF sürümde doğrulanamadı (eksik / farklı / `=?` / silinmesi onaylanan "

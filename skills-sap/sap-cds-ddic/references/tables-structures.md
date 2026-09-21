@@ -125,6 +125,7 @@ Araç sırayla: ön kontrol (ad ≤ 16, ilk alan `MANDT`, anahtar bayrağı bool
 reviewer `table_creation` o DDL üzerinde (Z/Y DTEL var ve aktif mi, CURR/QUAN referansı) → kabuk POST (**DDL'siz**) → aynı oturumda kilit →
 `source/main` PUT (**If-Match yok**, corrNr = kilit yanıtındaki CORRNR) → kilidi bırak → aktivasyon → aktif DDL readback.
 - `transport` **`$TMP` paketinde de zorunlu** (transportsuz kilit canlı ölçülmedi; ölçüm planda — sonuca göre muafiyet açılabilir).
+- Kilit yanıtı `$TMP`'de `CORRNR` döndürmez (canlı 2026-09-21, DEV: tablo, yapı, program, metin havuzu, sınıf — hiçbirinde); etkin transport verilen değerdir.
 - `partial_shell` = kabuk SAP'de VAR, DDL yazılamadı (kilit/PUT reddi ya da obje yabancı transportta). Araç silmez; kullanıcıya göster, onayıyla `adt_delete` + yeniden dene.
 - `readback_mismatch` + `default_shell_client_field` = canlıda varsayılan `client : abap.clnt` kabuğu duruyor → DDL sessizce kaybolmuş; "aktif" deme.
 - Kapsam: mevcut tabloyu değiştirmez (§3.4 ayrı yol).

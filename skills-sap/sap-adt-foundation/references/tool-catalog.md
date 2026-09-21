@@ -34,7 +34,7 @@ Tip değerleri — CLI tip tablosu (`lib/object_types.py`, kod okuması): `class
 **Tabloda yok ama araçlarda özel yolu olan tipler (2026-09-13):** `bdef` (`adt_get` okur · `adt_post_shell` kabuk · `adt_push_source`
 yazar · `adt_activate` aktive eder), `msag` (`adt_get`→`adt_msgclass_read` · `adt_post_shell` kabuk · `adt_msgclass_write` mesaj yazar), `enqu` (`adt_get` yalnız varlık — `include_source:false` · `adt_post_shell` kabuk ·
 `adt_activate` aktive eder; kaynak okuma/yazma yok), `srvb` (`adt_activate` + `adt_publish_service`; yaratma/kaynak yok). Sınıf alt-include'ları
-`ccimp`/`ccau`/`ccdef`/`ccmac` (`name` = ANA SINIF): `adt_get` dördünü okur, `adt_push_source` dördünü yazar (`ccdef`/`ccmac` yazma yolu canlı ÖLÇÜLMEDİ — yanıtta `write_path_measured:false`).
+`ccimp`/`ccau`/`ccdef`/`ccmac` (`name` = ANA SINIF): `adt_get` dördünü okur, `adt_push_source` dördünü yazar (dördünün yazma yolu canlı ölçüldü — `ccdef`/`ccmac` 2026-09-21, DEV; yanıtta `write_path_measured:true`).
 Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde (class/interface/program/include) True'dur.
 
 ---
@@ -285,7 +285,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   canlı okuma başarısız `pull_live_read_failed` (1) · durum dosyası bozuk `pull_state_unreadable` (2); başarılı push kaydı günceller (`pull_state: guncellendi`).
 - **Tipe özel yazma (2026-09-13; çevrimdışı test edildi, canlı DOĞRULANMADI):**
   - `bdef`: LOCK → PUT (If-Match YOK) → UNLOCK → readback; **aktive ETMEZ** (`activated:false` + `activation_note`) → `adt_activate(<kök ddls>, also=[bdef, behavior class])`. Transport zorunlu. Yasak B taraması uygulanmaz (ABAP değil). Reviewer `rap_bdef_creation`.
-  - `ccimp` / `ccau`: `name` = **ana sınıf** (`{"name":"ZBP_X","object_type":"ccimp",…}`); include yoksa önce iskelet (POST) sonra PUT; bayt readback; ana sınıf aktive edilir — RAP behavior pool'da BDEF inaktifse aktivasyon düşer (`push_failed` + `activation_note`) → `also` ile birlikte aktive et. Transport zorunlu. Yasak B taranır. Reviewer `class_push`. `ccdef` / `ccmac` (2026-09-21, Z41): aynı yol (`push_class_include` → `definitions` / `macros` segmenti); segment adları GET ile ölçüldü, **yazma canlı ÖLÇÜLMEDİ** → yanıtta `write_path_measured:false` (ccimp/ccau'da `true`); bayt readback her yazımda koşar.
+  - `ccimp` / `ccau`: `name` = **ana sınıf** (`{"name":"ZBP_X","object_type":"ccimp",…}`); include yoksa önce iskelet (POST) sonra PUT; bayt readback; ana sınıf aktive edilir — RAP behavior pool'da BDEF inaktifse aktivasyon düşer (`push_failed` + `activation_note`) → `also` ile birlikte aktive et. Transport zorunlu. Yasak B taranır. Reviewer `class_push`. `ccdef` / `ccmac` (2026-09-21, Z41): aynı yol (`push_class_include` → `definitions` / `macros` segmenti); segment adları GET ile ölçüldü; **yazma yolu canlı ÖLÇÜLDÜ (2026-09-21, DEV)**: PUT `/includes/definitions` ve `/includes/macros` → sınıf aktivasyonu → aktif readback eşit (kontrol grubu aynı turda ccimp) → yanıtta `write_path_measured:true` (dördünde de); bayt readback her yazımda koşar.
   - `func`: fonksiyon grubu canlı okumadan çözülür (`function_group` yanıtta) ve **Z/Y olmalı** (değilse `ADR_0005_A`, yazma yok); sıkı kilit PUT + ayrı aktivasyon; aktivasyon düşerse `push_failed` + `activation_errors` (kaynak yüklendi, kayıt güncellendi). İmza satır-içi ABAP (`*"` blok 400 verir, K-15). Yasak B taranır. Reviewer yok (SKIP görünür).
   - `ddls`: kaynak `define [root] view entity` / `as projection on` içeriyorsa reviewer `rap_cds_creation` (RAP read-only consumption BLOCKER + reuse WARNING dahil), yoksa `cds_update`.
   - `prog` / `program` / `include` (2026-09-14): reviewer `program_push` — abaplint, released_objects, decimal_write_to (üçü WARNING). abaplint
@@ -371,6 +371,13 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   `validation_error` (reviewer'dan önce). Standart DTEL'ler (ör. MATNR) denetlenmez. Önceden (2026-09-13 ölçümü) artefaktsız çağrıda bu denetim yoktu;
   artefaktlı çağrıda `fields[]` hiç denetlenmiyordu ve olmayan artefakt yolu SKIP ile yazıyordu (bug gate 2026-09-14). Yaratma sonrası içerik
   doğrulaması (`content_verify`) artefakttan bağımsız koşar. `already_exists` ve create hatası dönüşleri de `reviewer` alanını taşır.
+  **Doğrulama adresi (düzeltme 2026-09-21, canlı bulgu):** varlık sondası, metadata doğrulaması (`steps.verify.endpoint: ddic/structures`)
+  ve `content_verify` yapıyı `/ddic/structures/` ucundan okur. Önceden `tabl` → `/ddic/tables/` ucuna soruluyordu: canlıda yapı AKTİF
+  yaratıldığı hâlde (DD02L INTTAB/A, DD03L 2 satır) araç `ok:false` + `verify.reason: metadata_not_found` dönüyordu ve ön kontrol mevcut
+  yapıyı "yok" görüyordu (kusur ilk sürümden beri `main`'de). Aktivasyon adresi değişmedi (`tabl` — canlıda çalıştı). Yanıttaki `type` hâlâ `tabl`.
+  **Hatalar (başarısız yanıtta `error`, 2026-09-21):** `validation_error` · `reviewer_blocker` · `already_exists` · `activation_failed` ·
+  `verify_failed` (metadata okunamadı ya da sürüm `active` değil) · `content_verify_failed` (yer tutucu kabuk / alan yok / kaynak okunamadı) ·
+  `post_check_blocker`. Obje hiçbir durumda silinmez.
   **Satır sonu yasağı (2026-09-15):** `description` ile her alanın `description`/`name`/`type` değeri tek satır olmalı — CR, LF, U+2028, U+2029 ya da U+0085 varsa ağa ve reviewer'a gitmeden `validation_error` (mesaj yeri ve karakter kodunu söyler, ör. `fields[0].description … U+000A`); aynı kural render'da `ValueError` → gate'te `reviewer_blocker` (`ddl_render_hatasi`).
 
 ### `adt_msgclass_write` (mesaj sınıfına mesaj yazma — YAZMA)
@@ -394,6 +401,9 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   `msgclass_live_incomplete` (canlıda paket/açıklama/sorumlu yok; tahmin edilmez) · `push_failed` (1).
 - **Uyarı:** canlı davranış **DOĞRULANMADI** (çevrimdışı sahte istemciyle test edildi). Uzun metin (`documented`) bu araçla yazılmaz.
 
+> **Kilit yanıtında CORRNR (canlı 2026-09-21, DEV, `$TMP`):** tablo, yapı, program, metin havuzu ve sınıf kilitlerinin HİÇBİRİ `CORRNR` döndürmedi
+> (`[INFO] SAP did not return CORRNR in lock response`) — `$TMP`'de bu beklenen; etkin transport verilen değere düşer, transport ataması doğrulanamaz.
+
 ### `adt_table_create` (Z şeffaf tablo — YAZMA, 2026-09-21)
 - **Amaç:** Z/Y şeffaf tablo (TABL/DT) yarat + DDL'i yaz + aktive et + aktif kaynağı geri oku. Profil: yalnız `s4_private`.
 - **Ön kapı (araçta değil, skill akışında):** ad, alanlar, DTEL'ler ve anahtar kullanıcıya gösterilir, AÇIK onay alınır (`sap-cds-ddic` → `tables-structures.md` §3).
@@ -405,20 +415,25 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   aktivasyon + `version=active` → aktif DDL readback (alan/anahtar dizisi).
 - **Dönüş:** `{ok, name, type:'table', ddl, fields_count, reviewer, steps:{pre_flight, reviewer, pre_check, create, activate, verify, readback}, unlock_warning?}` — `steps.create.unlock_ok:false` (UNLOCK yanıtı 200/204 değil) → `unlock_warning`; `ok`'u bozmaz, kullanıcıya ilet (SM12; AI kilit silmez).
 - **Hatalar:** `preflight_blocker` · `reviewer_blocker` · `already_exists` · `exists_unmeasured` · `validation_error` (ad/paket kütüphane doğrulaması; SAP'ye gidilmedi) · `create_failed` · **`partial_shell`** (kabuk VAR, DDL yazılamadı — kilit/PUT reddi, kilit öncesi CSRF/ağ istisnası ya da yabancı transport; silinmez, kullanıcı karar verir) ·
-  `activation_failed` · `readback_mismatch` (`default_shell_client_field` = varsayılan `client : abap.clnt` kabuğu duruyor, DDL sessizce kaybolmuş).
+  `activation_failed` · `verify_failed` (aktive oldu ama metadata `active` doğrulanamadı) · `readback_mismatch` (`default_shell_client_field` = varsayılan `client : abap.clnt` kabuğu duruyor, DDL sessizce kaybolmuş).
 - **Kapsam:** mevcut tabloyu DEĞİŞTİRMEZ. Canlı DOĞRULANMADI (çevrimdışı sahte istemci testleri; canlı ölçüm planı lider onayında). `adt_push_source(tabl)` ile DDL yazma kaynak çekirdekte "invalid lock handle" verdi — bu araç kilidi kendi içinde tutar.
 
 ### `adt_ttyp_create` (tablo tipi — YAZMA, 2026-09-21)
-- **Amaç:** DDIC tablo tipi (TTYP) yarat + aktive et + **iki kanallı** doğrula; satır tipi boş kaldıysa bir kez düzelt. Profil: yalnız `s4_private`. Ayrıntı: `sap-cds-ddic/references/table-types.md`.
+- **Amaç:** DDIC tablo tipi (TTYP) yarat + aktive et + **iki kanallı** doğrula; satır tipi boş ya da tanım istenenden farklı kaldıysa bir kez düzelt. Profil: yalnız `s4_private`. Ayrıntı: `sap-cds-ddic/references/table-types.md`.
 - **Argümanlar:** `name` · `description` · `package` · `transport` (`$TMP`'de muaf) · satır tipi **tam olarak biri**: `row_type` (yapı/tablo/DTEL) ya da
   `builtin={"data_type":"CHAR|NUMC","length":N}` · `{"data_type":"DEC","length":N,"decimals":D}` · `{"data_type":"STRING|INT4|DATS"}` ·
   `access_type="standard|sorted|hashed"` · `key_definition="standard|rowType|keyComponents"` · `key_kind="nonUnique|unique"` (varsayılan: hashed → unique, diğerleri nonUnique) · `key_components=[..]`.
 - **Desteklenmeyen:** aralık tablosu, referans satır, iç içe tablo tipi, boş/genel anahtar, ikincil anahtar → `preflight_blocker`.
 - **Akış:** ön kontrol → varlık sondası → POST `/ddic/tabletypes` (`application/vnd.sap.adt.tabletype.v1+xml`, corrNr sorgu parametresi) → aktivasyon → readback: ADT XML (`rowType/typeName`|`dataType`, erişim, anahtar) + DD40L (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND) →
-  **iki kanal da boş** → aynı XML ile If-Match PUT → yeniden aktivasyon → yeniden iki kanal. Reviewer zinciri yok (`reviewer.verdict:"SKIP"`); doğrulama canlı readback'tir.
-- **Hatalar:** `preflight_blocker` · `already_exists` · `exists_unmeasured` · `create_failed` · `activation_failed` · `row_type_empty_repair_failed` (düzeltme PUT'u düştü ya da ETag yok) · `activation_failed_after_repair` · **`row_type_empty_after_repair`** (FAIL — asla OK) ·
-  `readback_channels_disagree` (biri dolu biri boş) · `readback_unmeasured` (DD40L/XML okunamadı; ölçülemedi ≠ doğru) · `readback_mismatch` (erişim/anahtar/satır tipi/ilkel uzunluk-ondalık farklı).
-- **Kapsam:** canlı DOĞRULANMADI (okuma kalibrasyonu: standart bir TTYP'de iki kanal eşlemesi ölçüldü; düzeltme PUT'u kaynak reçeteden, aXet'te ölçülmedi).
+  **iki kanal da boş YA DA tanım istenenden farklı** → aynı XML (istenen tam tanım) ile If-Match PUT → yeniden aktivasyon → yeniden iki kanal (tek sefer; `steps.repair.trigger` = `bos`|`uyumsuz`);
+  onarım sonrası nihai `ok` ikinci aktivasyonun doğrulamasından gelir (`steps.verify_2`). Reviewer zinciri yok (`reviewer.verdict:"SKIP"`); doğrulama canlı readback'tir.
+- **Hatalar:** `preflight_blocker` · `already_exists` · `exists_unmeasured` · `create_uncertain` (POST istisna verdi — `exists_after` sondasına bak, kör tekrar yok) · `create_failed` · `activation_failed` ·
+  `row_type_empty_repair_failed` (boş satır için düzeltme PUT'u düştü ya da ETag yok) · `readback_mismatch_repair_failed` (farklı tanım için düzeltme PUT'u düştü ya da ETag yok) · `activation_failed_after_repair` ·
+  **`row_type_empty_after_repair`** (FAIL — asla OK) · `readback_channels_disagree` (biri dolu biri boş) · `readback_unmeasured` (DD40L/XML okunamadı; ölçülemedi ≠ doğru) ·
+  `readback_mismatch` (erişim/anahtar/satır tipi/ilkel uzunluk-ondalık farklı — onarım denendiyse mesaj bunu söyler) · `verify_failed` (readback doğru ama metadata `active` doğrulanamadı).
+- **Kapsam (canlı 2026-09-21, DEV):** yapı satırlı üç kombinasyon (standart · sıralı + anahtar bileşenli + tekil) canlıda `ok:true` — üçünde de POST satır tanımını
+  düşürdü (`bos`), If-Match PUT onarımı erişim/anahtar dahil tanımı kabul ettirdi. İlkel satır (CHAR 10, DEC 15,2) canlıda POST sonrası SAP varsayılanı
+  `CHAR · 000001` kaldı; onarım o sürümde `uyumsuz` için denenmiyordu → düzeltildi, **ilkel satırda PUT onarımı canlıda henüz ÖLÇÜLMEDİ**.
 
 ### `adt_textpool_write` (klasik program metin havuzu — YAZMA, 2026-09-21)
 - **Amaç:** Z/Y programın metin sembollerini (`TEXT-xxx`) ve seçim metinlerini yazmak; `adt_push_source` bunları TAŞIMAZ (yalnız `source/main`). Profil: yalnız `s4_private`.
@@ -426,9 +441,15 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Akış:** ağsız ön kontrol (sembol 3 karakter · seçim adı ≤ 8 · metin boş değil · metin ≤ `max_length` → aksi SAP DS512) → her alt kaynağı canlı oku (ETag;
   canlıda olup girdide olmayan giriş SİLİNECEKSE `allow_remove=true` olmadan `would_remove_entries`, yazma yok) → metin öğeleri kaynağını kilitle (program değil) →
   PUT (CRLF, giriş başına `@MaxLength`, boş satır ayraç, sonda satır sonu yok; If-Match + lockHandle + corrNr) → UNLOCK → PROG/P + **açık PROG/PX** aktivasyonu →
-  `?version=active` readback (eksik / farklı / `=?` / `allow_remove` ile silinmesi onaylanan giriş hâlâ duruyor (`remove_not_applied`) → `readback_mismatch`).
-- **Hatalar:** `preflight_blocker` · `not_found` · `read_failed` · `would_remove_entries` · `lock_failed` (gerçek tutamaç yoksa yazmaz) · `put_failed` · `readback_mismatch` · `unlock_warning`.
-- **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı DOĞRULANMADI (reçete kaynak çekirdekte canlı kanıtlı; aXet portu çevrimdışı test edildi).
+  PX sonrası bağımsız worklist sondası (`steps.activation_final`) → `?version=active` readback (eksik / farklı / `=?` / `allow_remove` ile silinmesi onaylanan giriş hâlâ duruyor (`remove_not_applied`) → `readback_mismatch`).
+- **`steps.activate_prog`:** program zaten aktifse SAP yalnız generation koşar ve metin havuzunu terfi ettirmez (canlı 2026-09-21: her çağrıda) —
+  bu BEKLENEN durumdur: `outcome:"generation_only"`, `ok` = `activation_final.ok`. Gövdede gerçek hata varsa `outcome:"failed"` + `errors`.
+  `ok` = aktif readback doğru **ve** PX sonrası worklist'te program/metin havuzu kalmadı; sonda ölçülemezse yalnız readback + `activation_notice`.
+  `written` yalnız PUT'u başarılı alt kaynakları listeler (yazılmadıysa `[]`).
+- **Hatalar:** `preflight_blocker` · `not_found` · `read_failed` · `would_remove_entries` · `lock_failed` (gerçek tutamaç yoksa yazmaz) · `put_failed` · `readback_mismatch` ·
+  `activation_incomplete` (metinler aktif ama PX sonrası worklist program/metin havuzunu hâlâ inaktif gösteriyor) · `unlock_warning`.
+- **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı 2026-09-21 (DEV): yazma + PX terfisi + aktif readback `ok:true`, `would_remove_entries` yazmadan döndü;
+  `activation_final` ve `generation_only` sınıflaması bu turda eklendi — canlıda henüz ÖLÇÜLMEDİ.
 
 ### `adt_syntax_check` (adına rağmen YAZMA)
 - **Amaç:** sözdizimi kontrolü — gerçek semantik "temizse aktive et".

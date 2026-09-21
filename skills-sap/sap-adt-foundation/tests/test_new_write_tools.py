@@ -373,8 +373,9 @@ class YeniYazmaYollari(unittest.TestCase):
                     f"{r1.get('code')} · {r2.get('code')} · {r3.get('error')} · çağrı={len(adt.cagri)}", ok)
 
     def test_B2b_ccdef_ccmac_push_yolu(self):
-        """Z41: ccdef/ccmac ccimp ile AYNI yoldan (`push_class_include`) yazılır; yazma yolu canlı ölçülmediği için
-        sonuç `write_path_measured: false` beyan eder, ccimp `true`."""
+        """Z41: ccdef/ccmac ccimp ile AYNI yoldan (`push_class_include`) yazılır. Yazma yolu canlıda ÖLÇÜLDÜ
+        (DEV, 2026-09-21: PUT /includes/definitions ve /includes/macros + aktivasyon + readback eşit; kontrol grubu
+        ccimp) → dördü de `write_path_measured: true`."""
         canli = {}
 
         def yon(c):
@@ -396,10 +397,10 @@ class YeniYazmaYollari(unittest.TestCase):
             r = self.atom.adt_push_source("ZCL_AXET_BP", tip, f"* {tip} yeni\n", transport=TR)
             lib = [c for c in adt.cagri if c["path"] == "push_class_include" and c["params"]["kind"] == seg]
             sonuc[tip] = (r.get("ok"), r.get("include"), r.get("write_path_measured"), len(lib))
-        ok = (sonuc["ccdef"] == (True, "definitions", False, 1) and sonuc["ccmac"] == (True, "macros", False, 1)
+        ok = (sonuc["ccdef"] == (True, "definitions", True, 1) and sonuc["ccmac"] == (True, "macros", True, 1)
               and sonuc["ccimp"] == (True, "implementations", True, 1))
-        self.kaydet("B ccdef/ccmac → push_class_include(definitions|macros) · write_path_measured=false",
-                    "ccdef/ccmac ok+false · ccimp ok+true", sonuc, ok)
+        self.kaydet("B ccdef/ccmac → push_class_include(definitions|macros) · write_path_measured=true (canlı)",
+                    "ccdef/ccmac/ccimp ok+true", sonuc, ok)
 
     def test_B3_ccimp_push(self):
         canli = {"t": "CLASS lhc_x DEFINITION.\nENDCLASS.\n"}

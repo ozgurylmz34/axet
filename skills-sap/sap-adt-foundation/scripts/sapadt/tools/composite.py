@@ -117,8 +117,12 @@ def _exists(client, name: str, object_type: str) -> bool:
         return False
 
 
-def _activate_and_verify(client, name: str, object_type: str) -> dict:
+def _activate_and_verify(client, name: str, object_type: str, verify_type: str | None = None) -> dict:
     """Step 4+5 — common tail. Returns dict with activated/verified flags.
+
+    `verify_type`: metadata okumasının tipi (verilmezse `object_type`). Yapı için ŞART: `adt_struct_create`
+    aktivasyonu canlıda ölçülen `tabl` adresiyle yapar ama metadata `/ddic/tables/` ucunda BULUNMAZ — yapılar
+    `/ddic/structures/` altındadır (canlı 2026-09-21: yapı aktifti, doğrulama `metadata_not_found` dedi).
 
     verified=True requires:
       - get_object_metadata returns non-None
@@ -145,7 +149,7 @@ def _activate_and_verify(client, name: str, object_type: str) -> dict:
     # Verify metadata + version=active
     try:
         with _capture():
-            md = client.get_object_metadata(name, object_type=object_type)
+            md = client.get_object_metadata(name, object_type=verify_type or object_type)
         if md is None:
             out["verified"] = False
             out["verify_reason"] = "metadata_not_found"
@@ -182,7 +186,7 @@ def _verify_ddic_content(client, name: str, obj_type: str) -> dict:
     Ders: create-POST inline source flaky → 'activated' bir placeholder shell olabilir
     (component_to_be_changed:abap.string). Bu yüzden AKTİVASYON SONRASI sistemden İÇERİK
     okunur, success mesajına güvenilmez:
-      - tabl (structure): /source/main (active) → placeholder yok + field sayısı > 0
+      - structure (eski adıyla `tabl`): /ddic/structures/<ad>/source/main (active) → placeholder yok + alan > 0
       - ttyp (table type): obje XML (active) → rowType/typeName dolu + dataType boş değil
 
     Returns {ok: bool, reason?, field_count?/row_type?/data_type?}.
@@ -190,7 +194,7 @@ def _verify_ddic_content(client, name: str, obj_type: str) -> dict:
     import re
     adt = getattr(client, "adt_client", client)
     try:
-        if obj_type == "tabl":
+        if obj_type in ("structure", "tabl"):
             url = f"/sap/bc/adt/ddic/structures/{name.lower()}/source/main"
             r = adt.session.get(adt.url + url, headers=adt._get_headers("text/plain"),
                                 params={"version": "active"}, timeout=30)
@@ -574,7 +578,13 @@ def adt_struct_create(
     Returns:
         {ok, name, type:'tabl', steps, fields_count, reviewer?, ...}
     """
-    obj_type = "tabl"  # structures live in tabl namespace (intttab category)
+    obj_type = "tabl"  # yanıt/reviewer sözleşmesindeki tip (TABL ana tipi; yapı = INTTAB kategorisi)
+    # ⛔ ADRES tipi AYRI (canlı 2026-09-21, DEV): yapılar ADT'de `/ddic/structures/` altında yaşar. `tabl` ile
+    # varlık sondası ve metadata doğrulaması `/ddic/tables/` ucuna soruyordu → yapı AKTİF yaratıldığı hâlde
+    # `verify: metadata_not_found` + `ok:false` (DD02L INTTAB/A, DD03L 2 satır ile teyit), ön kontrol de mevcut
+    # yapıyı "yok" görüyordu. Kusur 2026-09-16 ilk commit'ten beri `main`'de. Aktivasyon adresi `tabl` KALDI:
+    # o yol canlıda çalıştı (yapı aktive oldu); `structure` ucuyla aktivasyon ÖLÇÜLMEDİ.
+    adres_tipi = "structure"
     try:
         require_writable_tier(get_active_tier(), what="structure create")
         require_customer_namespace(name, what="structure")
@@ -622,7 +632,7 @@ def adt_struct_create(
     client = _get_client()
     steps: dict[str, Any] = {}
 
-    if _exists(client, name, obj_type):
+    if _exists(client, name, adres_tipi):
         return {
             "ok": False,
             "error": "already_exists",
@@ -651,11 +661,11 @@ def adt_struct_create(
         return {"ok": False, "name": name, "type": obj_type, "steps": steps, "reviewer": warn["reviewer"],
                 "message": "create_structure returned False"}
 
-    tail = _activate_and_verify(client, name, obj_type)
+    tail = _activate_and_verify(client, name, obj_type, verify_type=adres_tipi)
     steps["activate"] = {"ok": tail.get("activated", False), "log": tail.get("activate_log", "")}
     if "activate_error" in tail:
         steps["activate"]["error"] = tail["activate_error"]
-    steps["verify"] = {"ok": tail.get("verified", False)}
+    steps["verify"] = {"ok": tail.get("verified", False), "endpoint": "ddic/structures"}
     if tail.get("master_language_warning"):
         steps["verify"]["master_language_warning"] = tail["master_language_warning"]
     if "verify_reason" in tail:
@@ -667,7 +677,7 @@ def adt_struct_create(
     # shell'i maskeliyor olabilir. Aktivasyon+versiyon OK ise sistemden İÇERİK okunur.
     content_ok = True
     if tail.get("verified"):
-        content = _verify_ddic_content(client, name, obj_type)
+        content = _verify_ddic_content(client, name, adres_tipi)
         steps["content_verify"] = content
         content_ok = content.get("ok", False)
 
@@ -699,6 +709,15 @@ def adt_struct_create(
         "fields_count": len(fields),
         "steps": steps,
     }
+    if not ok_overall:
+        # Hata kodu: CLI eskiden `tool_failed` + boş mesaj gösteriyordu (canlı 2026-09-21) — hangi adımın düştüğü görünsün.
+        out["error"] = ("activation_failed" if not tail.get("activated") else
+                        "verify_failed" if not tail.get("verified") else
+                        "content_verify_failed" if not content_ok else "post_check_blocker")
+        out["message"] = ("Yapı yaratıldı ama doğrulama tamamlanmadı — obje SİLİNMEDİ; steps.%s'e bak."
+                          % {"activation_failed": "activate", "verify_failed": "verify",
+                             "content_verify_failed": "content_verify",
+                             "post_check_blocker": "post_check"}[out["error"]])
     if notice_ozet is not None and ok_overall:
         # Notice "yaratma BAŞARILI" der ⇒ yalnız işlem gerçekten başarılıyken üst düzeye konur;
         # başarısız yanıtta ölçülemeyen kapı `steps.post_check.unmeasured`'da zaten durur.

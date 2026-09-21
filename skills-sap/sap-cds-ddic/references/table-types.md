@@ -102,11 +102,11 @@ Kalibrasyon (kontrol grubu): standart mesaj tablosu tipi → `ROWTYPE=BAPIRET2 �
 | DD40L | XML | Sonuç |
 |---|---|---|
 | okunamadı / aktif satır yok | — | `readback_unmeasured` (`ok:false` — ölçülemedi "doğru" değildir) |
-| boş | boş ya da okunamadı | **düzeltme:** GET ile ETag → **aynı XML** ile `PUT` + `If-Match: <etag>` → yeniden aktivasyon → yeniden iki kanal |
+| boş | boş ya da okunamadı | **düzeltme:** GET ile ETag → **aynı XML** ile `PUT` + `If-Match: <etag>` → yeniden aktivasyon → yeniden iki kanal (`repair.trigger:"bos"`) |
 | boş | dolu | `readback_channels_disagree` (FAIL; kanallardan biri kör — kullanıcıya bildir) |
 | dolu | boş | `readback_channels_disagree` |
 | dolu | okunamadı | `readback_unmeasured` |
-| dolu | dolu | tanım kıyası: erişim / anahtar tanımı / anahtar türü / satır tipi / ilkel uzunluk + **ondalık** (DEC: DD40L `DECIMALS`) → fark varsa `readback_mismatch` |
+| dolu | dolu | tanım kıyası: erişim / anahtar tanımı / anahtar türü / satır tipi / ilkel uzunluk + **ondalık** (DEC: DD40L `DECIMALS`) → fark yoksa OK; fark varsa **aynı düzeltme** (`repair.trigger:"uyumsuz"`) → yeniden iki kanal → hâlâ farklıysa `readback_mismatch` |
 
 İlkel tipte uzunluk/ondalık yalnız tip onu **istiyorsa** kıyaslanır (CHAR/NUMC uzunluk · DEC uzunluk + ondalık). DD40L `LENG`/`DECIMALS`
 her zaman kıyaslanır (okunamazsa fark yazılır). XML `builtInType/length`·`decimals` yalnız **sayı olarak okunabildiyse** kıyaslanır;
@@ -114,9 +114,21 @@ etiket yok / boş / sayı değil = o kanalda ölçülemedi → fark **uydurulmaz
 aynı birimde olduğu canlıda ÖLÇÜLMEDİ (yalnız yazım gövdesi aynı değeri gönderir) — ilk canlı ilkel tipte XML `length` farkı çıkarsa
 önce bu varsayımı sorgula.
 
-Düzeltme **bir kez** denenir. Sonrasında hâlâ boşsa `row_type_empty_after_repair` → **FAIL; asla "OK" denmez.** Obje silinmez;
+Düzeltme **bir kez** denenir. Sonrasında hâlâ boşsa `row_type_empty_after_repair`, hâlâ farklıysa `readback_mismatch` → **FAIL; asla "OK" denmez.** Obje silinmez;
 kullanıcıya bildir (SE11'de bakar). Düzeltme PUT'u düşerse (ya da ETag alınamazsa — If-Match'siz PUT denenmez)
-`row_type_empty_repair_failed`. Düzeltme PUT'u geçip yeniden aktivasyon düşerse `activation_failed_after_repair`.
+`row_type_empty_repair_failed` (boş satırda) / `readback_mismatch_repair_failed` (farklı tanımda). Düzeltme PUT'u geçip yeniden aktivasyon
+düşerse `activation_failed_after_repair`. Onarım sonrası nihai `ok` **ikinci** aktivasyonun metadata doğrulamasından gelir (`steps.verify_2`;
+`active` değilse `verify_failed`).
+
+**Canlı ölçüm (2026-09-21, DEV, `$TMP`) — neden `uyumsuz`da da onarılır:** dört yaratımın DÖRDÜNDE de POST gövdesindeki satır tanımı
+DÜŞTÜ; SAP varsayılanı kaldı: `DATATYPE=CHAR · LENG=000001 · DECIMALS=000000 · ACCESSMODE=T · KEYDEF=D · KEYKIND=N` (ROWTYPE NULL; XML'de
+`predefinedAbapType` + `CHAR` + `000001`). Yapı satırlıda bu `bos` olarak yakalandı ve If-Match PUT onarımı tanımı kabul ettirdi — sıralı +
+`keyComponents` + tekil kombinasyonunda erişim ve anahtar da PUT ile geldi (`ACCESSMODE=S · KEYDEF=K · KEYKIND=U`). İlkel satırda (CHAR 10 ·
+DEC 15,2) varsayılan CHAR "dolu" göründüğü için `uyumsuz` çıktı ve o sürümde onarım denenmedi (`readback_mismatch`).
+- ⚠ **İlkel satırda PUT onarımı canlıda henüz ÖLÇÜLMEDİ** — bu düzeltme sonrası ilk canlı koşu ölçer.
+- ⚠ **POST gövdesindeki satır tanımı (`<ttyp:rowType>` … `<ttyp:components>`) canlıda KANITLANMADI** — ölçülen dört yaratımın hepsinde düştü;
+  kanıtlı yol yalnız **PUT** (If-Match) yoludur. POST'un tek işlevi bugün kabuğu yaratmaktır.
+- XML `length` ile DD40L `LENG` bu turda aynı değeri gösterdi (varsayılan CHAR'da ikisi de `000001`; tek örnek).
 ⚠ Düzeltme PUT'unda `If-Match` **gönderilir** — Z tablo kaynağı PUT'unda gönderilmez; bu fark bilinçlidir (farklı uç, farklı içerik tipi;
 kaynak ekip bu uçta ETag yolunun çalıştığını ölçtü). Genelleme yapma.
 
