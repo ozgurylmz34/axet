@@ -50,7 +50,7 @@ Bilinen kör noktalar: özyinelemeli CDS bağımlılığı (A → B → C → A)
 |---|---|---|---|
 | DE-REUSE-1 | Önce released standart DTEL arandı; varsa yeni yaratılmıyor | BLOCKER | `naming.md` §5 |
 | DE-REUSE-2 | Aynı işi gören mevcut Z DTEL/domain arandı (`adt_search_objects`); kopya yok | BLOCKER | `naming.md` §5 |
-| DE-NAME | Domain `…_D_…`, DTEL `…_E_…`; **ad kullanıcıdan** | BLOCKER | `naming.md` §4.7 |
+| DE-NAME | Domain `…_D_…`, DTEL `…_E_…`; ad önerisi canlıda kontrol edildi (varsa başka ad) ve **kullanıcı açıkça onayladı** (`%sap-dev` §6) | BLOCKER | `naming.md` §4.7 |
 | DE-LANG | Oturum dili = `master_language`; yaratma sonrası metadata'dan `masterLanguage` okunacak | BLOCKER | kesin yasak D |
 | DE-LABEL | 4 etiket (kısa ≤10 · orta ≤20 · uzun ≤40 · başlık ≤55) tam ve dolu | BLOCKER | `domain-dtel.md` §1.2 |
 | DE-TEXT | Açıklama/etiket spesifikasyondan ya da eski sistemden; tahmin yok | BLOCKER | SAP çekirdeği |

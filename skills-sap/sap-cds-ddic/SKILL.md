@@ -65,15 +65,17 @@ okuyarak doğrularsın. `adt_post_shell` `structure`/`tabl`/`doma`/`dtel` → `u
 ### 2. Tasarımı göster, açık onay al
 | İş | Kullanıcıya gösterilecek |
 |---|---|
-| Yeni Z tablo | Tüm alanlar · her alanın DTEL'i · anahtar · uzunluk · delivery class · data maintenance · CURR/QUAN referans alanları |
-| Yeni domain / DTEL | Ad (kullanıcıdan) · tip/uzunluk/ondalık · sabit değerler · 4 etiket (spesifikasyondan, `master_language`'de) |
+| Yeni Z tablo | Ad önerisi (≤ 16, canlı kontrollü) · tüm alanlar · her alanın DTEL'i · anahtar · uzunluk · yönetim alanları (oluşturan/zaman, son değiştiren/zaman, RAP ETag alanı) · delivery class · data maintenance · CURR/QUAN referans alanları |
+| Yeni domain / DTEL | Ad önerisi (canlı kontrollü, kullanıcı onaylar) · tip/uzunluk/ondalık · sabit değerler · 4 etiket (spesifikasyondan, `master_language`'de) |
 | Yeni / değişen CDS | View türü · kaynak tablo/view listesi (released mi, `#CHECK` mi) · `sqlViewName` (classic) · tüketiciler |
 | Alan silme / rename / tip değişikliği | Yazma yolu analizi (alana yazan kod var mı) · etkilenen CDS/servis/UI · veri kaybı riski |
 | Lock object | Birincil tablo · kilit modu · kilit parametresi alanları |
 | Mesaj sınıfı | **Nihai tam** mesaj listesi (yazma tüm listeyi değiştirir) |
 | Value help CDS | Ortak paket mi, paket-yerel mi → **kullanıcıya sor**; generic master VH kopyalanmaz |
 
-DTEL / append alanı adını önerme; açıklama ve etiketleri tahmin etme (kesin yasak A/D).
+Yeni Z DDIC adı (domain, DTEL, tablo, yapı, tablo tipi …): önce yeniden kullanım; değilse standarda uygun **öner** →
+canlıda kontrol et (`adt_search_objects` / `adt_get`; varsa başka ad) → tablo hâlinde sun → **açık onay** (`%sap-dev` §6).
+Standart objeye append alanı adını önerme; açıklama ve etiketleri tahmin etme (kesin yasak A/D).
 
 ### 3. Yaz — bağımlılık sırasıyla
 Sıra: **domain → DTEL → structure / table type → Z tablo → lock object → CDS (alt view'dan üste)**; mesaj sınıfı bağımsız.
