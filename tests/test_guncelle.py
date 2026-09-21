@@ -2386,8 +2386,10 @@ class CiSonrasiTest(GuncelleTemel):
     ⛔ Şart 2 plan beyanı DEĞİL, disk ölçümüdür: kontrol grupları diske tek dosya ekleyerek /
     uygulamayı atlayarak "plan temiz ama ağaç farklı" vakasını kurar ⇒ ölçüm beklenir.
 
-    KAPSAM — bakılmayan: gerçek CI kaydının doğruluğu (güven sınırı) · CRLF/autocrlf farkı
-    (fark ölçüme düşürür, fail-safe yönü) · yerel ortam sapması (bütünlük turunun işi).
+    KAPSAM — bakılmayan: gerçek CI kaydının doğruluğu (güven sınırı) · satır sonu farkı
+    (⚠ `git add` normalize eder ⇒ CRLF/LF farkı GÖRÜNMEZ, "aynı" sayılır — ölçüldü, bug gate
+    2026-09-21; davranışı değiştiren bir satır sonu vakası bilinmiyor) · gitignore'lu dosyalar
+    (karşılaştırma dışı) · yerel ortam sapması (bütünlük turunun işi).
     """
 
     ETIKET = CiTabaniTest.ETIKET
@@ -2422,6 +2424,15 @@ class CiSonrasiTest(GuncelleTemel):
         self.assertEqual(veri.get("testler"), [], "ikamede hiçbir test KOŞMAMALI")
         self.assertIn("İKAME", self.cikti(r))
         self.assertIn("KAPSAM", self.cikti(r))
+
+    def test_6_RAPOR_ikameyi_KALICI_olarak_soyler(self):
+        """Kapanış raporu 'Yeni kırmızı: yok' ile yetinmemeli; yerelde test KOŞULMADIĞINI yazmalı."""
+        self._ci_yayinla(self._yesil())
+        self._akis()
+        self.f.calistir("kapanis")
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn("sonra-ölçüm: yerelde test KOŞULMADI", rapor)
+        self.assertIn("once-ölçüm: yerelde test KOŞULMADI", rapor)
 
     def test_2_KONTROL_ci_durumu_YOKKEN_olcer(self):
         r, veri = self._akis()

@@ -51,7 +51,9 @@ CHANGELOG_YOLU = "CHANGELOG.md"
 CI_DURUM_YOLU = "guncelle/ci-durum.json"
 # `%guncelle`nin `once` turunu ikame edebilmesi için gereken ASGARİ takım adları. Bir yayın
 # bunlardan birini taşımıyorsa `hepsi_yesil` YAZILMAZ ⇒ tüketici normal ölçer (fail-safe).
-CI_ASGARI_TAKIMLAR = ("Testler (kok · Python 3.12)", "Testler (foundation · Python 3.12)")
+CI_ASGARI_TAKIMLAR = ("Testler (kok · Python 3.12)", "Testler (foundation · Python 3.12)",
+                      # Z27: tüketicinin testleri PUBLIC ağaçta koşar; CI hükmü o ağacı da kapsamalı.
+                      "Testler (kok-public · Python 3.12)")
 # Z23 — bu sürenin altında biten `failure` iş hiç başlamamış sayılır (ölçüldü 2026-09-20:
 # kota duvarında işler 2-4 sn'de `steps: 0` ile döndü; en kısa gerçek iş ~25 sn ön koşul koşar).
 CI_BASLAMADI_ESIK_SN = 15

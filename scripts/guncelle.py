@@ -1317,7 +1317,9 @@ def _ci_tabani(b: Baglam, plan: dict) -> dict | None:
                         f"({kayit.get('isletim_sistemi', 'BİLİNMİYOR')} · Python "
                         f"{kayit.get('python', 'BİLİNMİYOR')}). Yerele özgü sapma (yerel ayar, "
                         "uzun yol, antivirüs, eksik araç) bu tabanda GÖRÜNMEZ; onu `sonra` turu "
-                        "yakalar. Yargı vakası çıksaydı ikame YAPILMAZDI."),
+                        "yakalar — `sonra` turu da CI ile ikame edilirse (Z26) yalnız bütünlük "
+                        "turundaki asgari yerel kontrol (install --dry-run · doctor · hızlı "
+                        "takımlar) kalır. Yargı vakası çıksaydı ikame YAPILMAZDI."),
     }
 
 
@@ -1346,7 +1348,8 @@ def _agac_yayinla_ayni(k: Klon, etiket: str) -> tuple[bool, str]:
             return False, (f"disk ağacı {etiket} ağacından FARKLI ({len(fark)} yol: "
                            + ", ".join(s.replace("\t", " ") for s in fark[:5])
                            + (" …" if len(fark) > 5 else "") + ")")
-    return True, f"disk ağacı {etiket} ağacıyla birebir aynı (geçici index ile ölçüldü)"
+    return True, (f"disk ağacı {etiket} ağacıyla aynı (geçici index ile ölçüldü; "
+                  "gitignore'lu dosyalar ve satır sonu farkı karşılaştırma DIŞI)")
 
 
 def _ci_sonrasi(b: Baglam, plan: dict) -> dict | None:
@@ -2056,6 +2059,13 @@ def komut_kapanis(b: Baglam, args) -> int:
               ", ".join(f"{a}={c}" for a, c in plan["sayaclar"].items()),
               "", "## Yeni kırmızı testler",
               ("\n".join(f"- {t}" for t in kirmizi) if kirmizi else "yok")]
+    # Z26 — ikame edilen tur KALICI raporda da görünmeli: "yok", "yerelde 0 test koştu" ile
+    # karışmasın (ölçülemeyen/koşulmayan şey sessizce 'temiz' okunmaz).
+    for asama in ("once", "sonra"):
+        o = _oku(k.durum_dizini / f"olcum-{asama}.json", None) or {}
+        if o.get("kaynak") == "ci":
+            rapor += [f"- {asama}-ölçüm: yerelde test KOŞULMADI — {o.get('etiket')} CI hükmüyle "
+                      f"ikame edildi. {o.get('gerekce', '')}"]
     rapor += ["", "## Bütünlük turu"]
     if butunluk:
         rapor += [f"- {a['ad']}: " + ("ÖLÇÜLEMEDİ" if a.get("cikis") is None
