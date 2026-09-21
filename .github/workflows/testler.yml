@@ -102,6 +102,11 @@ jobs:
         # 3.14'e ozgu bir kirilma CI'da degil, kullanicinin makinesinde ortaya cikar.
         # Ucuz telafi (bugun YAPILMADI, acik kalem): 3.14 kolunu yalniz main push'unda ya da
         # haftalik schedule'da kosturmak — PR maliyeti dusmeye devam eder, iddia olculmus kalir.
+        # ⛔ 3.14 KOLU GERI GELMEDI (2026-09-21, kullanici karari, Z19) — depo public oldugu
+        # icin kota gerekcesi kalkti, ama yeni gerekce KULLANICI HIZI: 3.14 kolu kirilirsa
+        # ci-durum `hepsi_yesil` diyemez ve o yayinda HERKES yavas tam olcume duser.
+        # Hedef (Z25): CI surumu = kullanici surumu — tek sabit surum, kurucu/guncelleme
+        # kullaniciyi o surume ceker, ikinci kol anlamsizlasir.
         python: ['3.12']
     env:
       PYTHONUTF8: '1'

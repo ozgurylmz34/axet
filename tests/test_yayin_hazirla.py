@@ -276,6 +276,33 @@ class CiDurumUretTest(unittest.TestCase):
         self.assertFalse(y["hepsi_yesil"])
         self.assertIn("ci-durum-yok", y["not"])
 
+    def test_9_isler_HIC_BASLAMADIYSA_kirmizi_takim_DEMEZ(self):
+        """Z23 — kota/ödeme duvarında işler saniyeler içinde `failure` döner, hiç adım koşmaz.
+
+        Bunu "yeşil olmayan takım" diye yazmak yanlış teşhistir: kod kırılmadı, ölçülmedi.
+        """
+        m = self.modul()
+        y = self._uret(m, "Testler (kok · Python 3.12)\tfailure\t3\n"
+                          "Testler (foundation · Python 3.12)\tfailure\t2\n")
+        self.assertFalse(y["hepsi_yesil"])
+        self.assertIn("BASLAMADI", y["not"])
+        self.assertNotIn("yesil olmayan", y["not"])
+
+    def test_10_KONTROL_uzun_suren_failure_GERCEK_kirmizidir(self):
+        m = self.modul()
+        y = self._uret(m, "Testler (kok · Python 3.12)\tfailure\t640\n"
+                          "Testler (foundation · Python 3.12)\tsuccess\t400\n")
+        self.assertFalse(y["hepsi_yesil"])
+        self.assertIn("yesil olmayan", y["not"])
+        self.assertIn("Testler (kok · Python 3.12)", y["not"])
+
+    def test_11_KONTROL_sure_alani_yesil_hukmu_BOZMAZ(self):
+        m = self.modul()
+        y = self._uret(m, "Testler (kok · Python 3.12)\tsuccess\t600\n"
+                          "Testler (foundation · Python 3.12)\tsuccess\t400\n")
+        self.assertTrue(y["hepsi_yesil"], y)
+        self.assertEqual({t["sonuc"] for t in y["takimlar"]}, {"success"})
+
     def test_8_uretilen_dosyalar_ci_durumu_KAPSAR(self):
         """Kapsam muafiyeti tek kaynaktan gelmeli; unutulursa kalem-diff FAIL verirdi."""
         m = self.modul()
