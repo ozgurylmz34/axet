@@ -6,6 +6,47 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## ⭐ 2026-09-21 (akşam) — RAP TESTİ + SAP YETENEK EŞİTLEME — TOPLU İŞ (kullanıcı: "hemen yapma, test sonucunda toplu yaparız")
+
+**Tetik:** aXet'e iş-dili istemiyle RAP "masraf talebi" yaptırılıyor (senaryo + puanlama:
+`maintenance/degerlendirme/rap-masraf-talebi.md`). Intake aşamasında 3 kusur çıktı; kullanıcı sordu *"aXet neden tablo
+yaratamıyor"* → *"sen ne yapabiliyorsan aXet de yapabilmeli"* → *"başka ertelenen bir şey var mı"*. Salt-okur denetim
+(alt-ajan; sync-rules 358 kural × DEV_CORE) 6 takipsiz kalem buldu. **Hiçbiri henüz yapılmadı; RAP testi bitince bu
+bloktaki işler TEK paket olarak yapılır.** Canlı SAP ölçümü gerektirenler için yazmadan önce kullanıcıdan 5 unsurlu açık
+onay (DEV, `$TMP`, `ZAXET_T_*` test objeleri) alınır.
+
+### A — RAP testinin gösterdiği kusurlar (tekrarlamaması için)
+
+| # | Madde | Yöntem (nasıl yapılacak) | Durum |
+|---|---|---|---|
+| Z34 | **NR tarifi bulunamıyor** — aXet `number range\|NRIV\|nrng` aradı → 0; tarif `sap-rap/references/behavior-impl.md` §3'te "NR objesi" diye yazılı ⇒ MAX+1 uydurdu (kendi `checklists.md:23` BLOCKER'ı) | §3 başlığına + `sap-rap/SKILL.md` description'ına eş anlamlılar: *number range, numara aralığı, SNRO, NRIV, NROB, NUMBER_GET_NEXT, early numbering*. Description ≤1024 karakter (aşarsa skill SESSİZCE yüklenmez). Doğrulama: aynı aramanın artık §3'e düştüğünü ölçen test (`test_skill_structure` deseni) | ⬜ |
+| Z35 | **Backend feature control bilgisi yok** — onaylı talebin salt-okunurluğunu "yalnız UI'da" deyip kapsam dışına attı. Ne aXet RAP skill'inde ne DEV_CORE playbook/standards'ta var (arama 0). Düzeltme istenince aXet salt-okunurluğu `authorization ( instance )` / `auth-unauthorized` ile kurdu — çalışır ama anlamı yanlış (durum kuralı yetki değildir; kullanıcı "yetkiniz yok" görür) — bilgi eksiğinin ikinci kanıtı | Yeni `sap-rap/references/feature-control.md`: BDEF `features : instance` (update/delete/action), `get_instance_features` handler (`%update` / `%delete` / `%action-X` = `if_abap_behv=>fc-o-disabled`), alan düzeyi `field ( features : instance )`; freestyle V2 UI'ın bunu nasıl gördüğü **ölçülerek** yazılır. `checklists.md`'ye BLOCKER satırı: *duruma bağlı düzenlenebilirlik backend'de zorlanır, yalnız UI yetmez*. **Canlı ölçüm şart** (reçete hiçbir yerde yok): test BO'sunda onaylı kayda PATCH → hata beklenir; kontrol grubu taslak kayda PATCH → 204 | ⬜ canlı onay gerekir |
+| Z36 | **Intake şablonu kural ihlaline davet ediyor** — 6 DTEL + 2 domain adı önerdi (`sap-dev/SKILL.md:94` "AI önermez"); checklist'ler intake'te okunmuyor; sürüm farkı (proje dosyası `2023`) kontrol edilmedi | `sap-intake-triage/templates/*` + `references/protocol.md`: ⓐ "Etkilenen objeler"de DTEL/domain adı yerine `<kullanıcı verir>` + alan/tip/uzunluk listesi ⓑ mutabakattan ÖNCE zorunlu **"Kural taraması"** bölümü: iş tipine göre ilgili checklist'lerin BLOCKER satırları okunur, her tasarım kararı için *uyuyor / sapıyor (gerekçe)* ⓒ kural: "araç/yöntem yok" demeden önce TR+EN eş anlamlılarla büyük/küçük harf duyarsız 2. arama; standarttan sapan sadeleştirme risk olarak YAZILMAZ, kullanıcıya SORULUR ⓓ `sap-project.json` `release` ↔ canlı sistem sürümü (`adt_system_info`) intake adımı | ⬜ |
+| Z37 | **Düzeltmenin tuttuğu ölçülmeli** | Z34-Z36 sonrası aynı istem yeni oturumda yeniden koşulur, puan tablosu önce/sonra kıyaslanır; kanıt aXet DB izi. **Gate** (ör. intake'te onaysız DTEL adı arayan validator) ancak 2. koşumda da düşerse ve ADR 0019'un 5 şartıyla önerilir | ⬜ |
+
+### B — SAP yetenek eşitleme (DEV_CORE'da olup aXet'te olmayan)
+
+| # | Eksik | Yöntem | Durum |
+|---|---|---|---|
+| Z38 | **Z tablo kabuğu yaratma** (öncelik 1; RAP testinde kullanıcı Eclipse'e yönlendirildi). Takipsizdi: `sync-rules.json` `scripts/populate_*.py` notu *"tablo kabuğu reçetesi yok"* diyor — **YANLIŞ**: DEV_CORE `playbook/adt-tables-structures.md` §15 "ÇÖZÜLDÜ" + `scripts/populate_tables.py`; karar kapanan D3'e gömülü kalmış, D2'ye hiç taşınmamış | `adt_table_create` composite (`adt_struct_create` deseni): POST kabuk (DDL POST body'de **sessizce düşer** — kullanma) → aynı oturumda LOCK → PUT source → activate → readback (`adt_get`) → UNLOCK `finally`. ⚠ `adt_push_source object_type='tabl'` "invalid lock handle" verdi — kilidi composite içinde tut. Ön-kapı: alan+DTEL+anahtar tasarımı gösterilip onay (`sap-dev` kuralı), ad ≤16, `mandt : mandt`, Z/Y. Port ÖNCESİ DEV_CORE §15'in DENENEN-BAŞARISIZ tablosu okunur. Güncellenecek: `shells.py` `DESTEKLENMEYEN['table']`, `sap-cds-ddic/references/tables-structures.md` §3.2, sync-rules notu, rule-coverage. **Canlı:** `ZAXET_T_*` test tablosu yarat → oku → sil; kontrol grubu mevcut `adt_struct_create` | ⬜ canlı onay gerekir |
+| Z39 | **Text pool yazma** (öncelik 3) | DEV_CORE `scripts/push_textpool.py` → aXet aracı; genericize; canlı: test programında text symbol + selection text yaz → oku | ⬜ canlı onay gerekir |
+| Z40 | **TTYP satır tipi** — `adt_post_shell(ttyp, row_type)` canlı doğrulanmadı; ROWTYPE boş kalırsa düzeltme aracı yok (DEV_CORE'da da yalnız reçete: If-Match'li PUT) | Önce ölç: ttyp kabuğunu satır tipiyle yarat → readback ROWTYPE dolu mu. Boşsa If-Match PUT'u composite'e göm | ⬜ canlı onay gerekir |
+| Z41 | **CCDEF / CCMAC push** (sync-rules push_*.py KALAN) | ccimp/ccau yolunun aynısı (definitions / macros include); canlı: test sınıfında local type tanımı push → aktive | ⬜ canlı onay gerekir |
+| Z42 | **DDLX / DCL kabuğu** — iki tarafta da canlı reçete yok (DEV_CORE tarafı bağımsız aranmadı) | Önce DEV_CORE `path=core/` araması; yoksa canlı probe (`adt_feature_probe` + kabuk POST); sonuç DENENEN-BAŞARISIZ kaydıyla | ⬜ araştırma |
+| Z43 | **UI5 deploy** kodu var, gerçek deploy canlı doğrulanmadı | RAP testinin UI teslimatında ölç (`deploy_ui.py` prepare → deploy → verify) | ⬜ RAP testine bağlı |
+| — | SRVB yaratma (REST 400 ölçülmüş) · FM RFC-enable (ADT ucu yok) · NROB yaratma (araç yok; NR kullanıcının alanı) | **Kalıcı elle** — D2 listesine AÇIKÇA yazılır (takipsiz kalmasın); kullanıcıya yönlendirme metni skill'lerde | ⬜ D2 güncellemesi |
+
+### C — Takip hijyeni + aXet motor/araç sürtünmeleri
+
+| # | Madde | Yöntem | Durum |
+|---|---|---|---|
+| Z44 | **sync-rules ↔ IS-LISTESI senkronsuz** — 5 kural hâlâ "CI barındırma kararına bağlı" (`.github/*`, `claude/CODEOWNERS.template`, `claude/workflows/*`, `scripts/merge_pr.py`, `scripts/build_cbo_inventory.py`); karar K2'de 2026-09-15 verildi, uygulandı | 5 kaydı güncelle; D2'ye TABL ekle (Z38). Kök: kapanan maddeye gömülü alt-karar üst listeye taşınmıyor ⇒ madde kapatılırken *"içinde erteleme var mı → D2'ye taşı"* satırı kapanış disiplinine. `canli-test-plani.md` / `rule-coverage.md` 2026-09-14'te donmuş görünüyor — tazelik turu | ⬜ |
+| Z45 | aXet `ls` aracı yoldaki `$TMP`'yi ortam değişkeni sanıp genişletiyor (`…/TEST/C:\Users\…\Temp/programs`) | fork `ls` yol işleme; kırmızı-önce test | ⬜ |
+| Z46 | aXet bash `find` `-iname` desteklemiyor (arama hatası → yanlış "yok" riski) | motor içi bash emülasyonu mu, ölç; skill'lerde `grep -ri` / `rg -i` öner | ⬜ |
+| Z47 | `ask_user` ilk çağrı `options` string verilince başarısız, ikinci denemede düzeldi | araç açıklamasına örnek; sıklığı DB'den ölç | ⬜ |
+| Z48 | `session_brief` AXET_TEST'te commit'siz `AGENTS.md`'yi (`%guncelle-proje` sonrası) onaysız davranış yüzeyi FAIL saydı | kullanıcı: `behavior_manifest.py generate` + commit; ürün sorusu: guncelle-proje kapanışı manifest'i kendisi yenilesin mi | ❓ |
+| Z49 | CI skill testlerini (`sap-fs-ts-docs`, `sap-ui5-user-guide`) koşmuyor | KD PR'ında `testler.yml` kok işine adım | 🟡 KD PR'ında |
+
 ## ⭐ 2026-09-21 (öğleden sonra) — **YAYIN PROVASI (Z28)** + v0.4.2 adayı — BURADAN BAŞLA
 
 Kullanıcı v0.1.0 → v0.4.1'i kendi makinesinde güncelledi (18 dk 29 sn) ve **iki kusur buldu**; ikisini de
