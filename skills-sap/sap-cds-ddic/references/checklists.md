@@ -112,6 +112,11 @@ Bilinen kör noktalar: yabancı anahtar değişikliği etkisi · indeks/tamponla
 | Ad `…_TT_…`; satır tipi (yapı) sistemde aktif | BLOCKER |
 | Yaratma sonrası `DD40L.ROWTYPE` dolu ve doğru yapı | BLOCKER |
 | RFC/`TABLES` parametresinde yapı değil table type kullanılıyor | BLOCKER |
+| Ek (2026-09-21, `table-types.md`): önce hazır standart tip arandı (ör. `BAPIRET2_T`); yeni tip gerçekten gerekli | WARNING |
+| Ek: ad canlıda `exists:false` ölçüldü; ad, kısa metin, satır tipi, erişim türü ve anahtar kullanıcıya gösterilip açık onay alındı | BLOCKER |
+| Ek: iki kanal readback — `DD40L` (ROWTYPE/DATATYPE, ACCESSMODE, KEYDEF, KEYKIND) **ve** ADT XML aynı şeyi söylüyor; biri boş biri dolu = FAIL | BLOCKER |
+| Ek: `adt_ttyp_create` `ok:false` (ör. `row_type_empty_after_repair`, `readback_unmeasured`) "tamam" diye raporlanmadı | BLOCKER |
+| Ek: tipi `TABLES` üzerinden içeride tam tipli parametreye devreden FM'e veren çağıran `WITH EMPTY KEY` değil `WITH DEFAULT KEY` kullanıyor (DDIC standart anahtar = `DEFAULT KEY`) | BLOCKER |
 
 ## 6. Lock object
 *(Kaynakta ayrı liste yok; `lock-objects.md`'den türetildi.)*

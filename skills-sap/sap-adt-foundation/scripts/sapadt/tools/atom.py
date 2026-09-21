@@ -1167,7 +1167,8 @@ _KABUK_SONRAKI_ADIM = {
     "enqu": ("Kilit objesi İNAKTİF ve ENQUEUE_/DEQUEUE_ FM'leri üretilmemiş durumda. Sıradaki: "
              "adt_activate(object_type='enqu')."),
     "ttyp": ("Sıradaki: adt_activate(ttyp) → adt_sql_query ile DD40L.ROWTYPE dolu mu doğrula (ROWTYPE NULL "
-             "kalabilir)."),
+             "kalabilir). Yeni tablo tipi için tercih: adt_ttyp_create (yaratma + aktivasyon + iki kanallı "
+             "readback + boş satır tipi düzeltmesi tek çağrıda)."),
 }
 
 
@@ -1463,9 +1464,13 @@ def adt_post_shell(
 
 # ── aXet 2026-09-13: kaynak yazma — tipe özel yollar (IMPLEMENTATION.md §14.3) ─────────────────
 _BDEF_TIPLERI = frozenset({"bdef", "behaviordefinition"})
-# Yazma yolu canlı ölçülmüş alt-include segmentleri: testclasses (adt-classes.md §24.8) ·
-# implementations (adt-rap.md §32.6h + object_types Q283 PUT). definitions/macros yalnız GET ölçüldü.
-_YAZILABILIR_INCLUDE = frozenset({"testclasses", "implementations"})
+# Yazılabilir alt-include segmentleri. Yazma yolu CANLI ölçülmüş: testclasses (adt-classes.md §24.8) ·
+# implementations (adt-rap.md §32.6h + object_types Q283 PUT). Z41 (2026-09-21): definitions (CCDEF) ve
+# macros (CCMAC) AYNI yoldan (`push_class_include`: yoksa POST iskelet → PUT gövde → bayt readback) açıldı;
+# segment adları GET ile ölçüldü, YAZMA yolları bu evde henüz ÖLÇÜLMEDİ → sonuçta `write_path_measured:
+# false` beyan edilir; readback bayt kıyası her yazımda koşar (canlı ölçüm planı lider onayında, 2026-09-21).
+_YAZILABILIR_INCLUDE = frozenset({"testclasses", "implementations", "definitions", "macros"})
+_YAZMA_OLCULMEDI_INCLUDE = frozenset({"definitions", "macros"})
 _PUSH_DESTEKSIZ = {
     "srvb": "SRVB kaynak metni taşımaz; yayın için adt_publish_service.",
     "servicebinding": "SRVB kaynak metni taşımaz; yayın için adt_publish_service.",
@@ -1627,7 +1632,7 @@ def adt_push_source(
     Args:
         name: Object name (Z*/Y*).
         object_type: 'class', 'ddls', 'prog', 'tabl', ... · aXet: 'bdef' (LOCK→PUT→UNLOCK, aktive
-            ETMEZ; transport zorunlu) · 'ccimp'/'ccau' (sınıf alt-include'u — `name` = ANA SINIF;
+            ETMEZ; transport zorunlu) · 'ccimp'/'ccau'/'ccdef'/'ccmac' (sınıf alt-include'u — `name` = ANA SINIF;
             transport zorunlu; ana sınıf aktive edilir) · 'func' (FM kaynağı; fonksiyon grubu canlıdan
             çözülür ve Z/Y olmalı; aktive edilir). 'srvb'/'msag'/'enqu' → unsupported_type.
         source: Source body text (full content; partial diffs not supported).
@@ -1663,7 +1668,7 @@ def adt_push_source(
     if sinif_include and include_kind not in _YAZILABILIR_INCLUDE:
         return {"ok": False, "error": "unsupported_type", "name": name, "type": object_type,
                 "message": (f"'{include_kind}' alt-include'una YAZMA yolu canlı ölçülmedi (yalnız GET ölçüldü); "
-                            f"desteklenen: {', '.join(sorted(_YAZILABILIR_INCLUDE))} (ccimp/ccau).")}
+                            f"desteklenen: {', '.join(sorted(_YAZILABILIR_INCLUDE))} (ccau/ccimp/ccdef/ccmac).")}
     if tip in _PUSH_DESTEKSIZ:
         return {"ok": False, "error": "unsupported_type", "name": name, "type": object_type,
                 "message": f"adt_push_source '{object_type}' desteklenmiyor: {_PUSH_DESTEKSIZ[tip]}"}
@@ -1806,6 +1811,7 @@ def adt_push_source(
                 resp["function_group"] = fm_grubu
             if sinif_include:
                 resp["include"] = include_kind
+                resp["write_path_measured"] = include_kind not in _YAZMA_OLCULMEDI_INCLUDE
             if not resp["ok"] and result.get("error"):
                 resp["error"] = "push_failed"
                 resp["message"] = str(result.get("error"))[:800]
