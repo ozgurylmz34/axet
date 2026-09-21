@@ -711,6 +711,62 @@
      "test": [
       "python tests/run_tests.py -k yayin_surumleri"
      ]
+    },
+    {
+     "id": "0.5.0-06",
+     "baslik": "SAP kesin yasak A netleşti: Z DDIC adı önerilebilir (canlı kontrol + onay); çekirdeğe `find` kısıtı (CORE 0.5.0, SAP 0.4.0)",
+     "tur": "kural",
+     "kritik": true,
+     "neden": "Eski metin \"Append alanı / DTEL adını sen önermezsin\" Z DDIC objelerini de kapsıyor gibi okunuyordu; aXet bir RAP işinde doğru önerdiği Z DTEL adlarını bu yüzden geri çekti. Yeni metin: standart objeye eklenecek append yapı / alan / DTEL adını yine önermezsin; Z DDIC adlarında (domain, DTEL, tablo, yapı, tablo tipi) önce hazır DTEL'e bakılır, değilse standarda uygun ad önerilir, her ad canlı sistemde kontrol edilir ve kullanıcının açık onayı olmadan yaratılmaz. Çekirdek kabuk notuna: `bash` içindeki `find` `-iname` ve `-maxdepth` desteklemez (hata \"dosya yok\" sanılmamalı) → `rg --files --iglob`. SAP projelerinde `AGENTS.md` damgası ancak `%guncelle-proje` ile yenilenir.",
+     "dosyalar": [
+      "core/sap/00-sap.md",
+      "core/00-temel.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k sap_stamp",
+      "python tests/run_tests.py -k sap_skill_bilgi",
+      "python scripts/doctor.py"
+     ]
+    },
+    {
+     "id": "0.5.0-07",
+     "baslik": "RAP bilgisi ve intake şablonu: numara aralığı tarifi bulunur, feature control, Z DDIC ad akışı, kural taraması",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "Bir RAP değerlendirme koşusunda aXet numara aralığı tarifini bulamadı (aradığı kelimeler bölüm başlığında yoktu) ve MAX+1 uydurdu; onaylı kaydın salt-okunurluğunu \"yalnız UI'da\" diye kapsam dışına attı; sistem sürümünü kontrol etmedi. Düzeltmeler: `sap-rap` §3 başlığı ve skill açıklaması eş anlamlıları taşır (number range, NRIV, SNRO, NUMBER_GET_NEXT…); yeni `feature-control.md` (instance features ↔ authorization ayrımı, kalem create, handler, kontrol listesi); Z DDIC ad kuralı skill'lerde tutarlı hâle getirildi; intake şablonuna sistem sürümü, ad önerisi + canlı kontrol + ad başına onay, tablo yönetim alanları, kural taraması ve öz-tutarlılık bölümleri; protokole \"yok demeden önce TR+EN ikinci arama\" kuralı. Yeni onay kutuları intake mutabakatı sayılmaz (testle ölçüldü).",
+     "dosyalar": [
+      "skills-sap/sap-abapgit-delivery/SKILL.md",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-cds-ddic/SKILL.md",
+      "skills-sap/sap-cds-ddic/references/cds.md",
+      "skills-sap/sap-cds-ddic/references/checklists.md",
+      "skills-sap/sap-cds-ddic/references/domain-dtel.md",
+      "skills-sap/sap-code-review/references/checklist-abap.md",
+      "skills-sap/sap-dev/SKILL.md",
+      "skills-sap/sap-dev/references/naming.md",
+      "skills-sap/sap-dev/references/role-briefs.md",
+      "skills-sap/sap-fs-ts-docs/references/doc-checklist.md",
+      "skills-sap/sap-intake-triage/SKILL.md",
+      "skills-sap/sap-intake-triage/references/protocol.md",
+      "skills-sap/sap-intake-triage/references/s2-artifact-schema.md",
+      "skills-sap/sap-intake-triage/templates/command-intake.md",
+      "skills-sap/sap-intake-triage/templates/intake-artifact.md",
+      "skills-sap/sap-odata-backend/references/backend-coding.md",
+      "skills-sap/sap-odata-backend/references/dpc-crud.md",
+      "skills-sap/sap-rap/SKILL.md",
+      "skills-sap/sap-rap/references/behavior-impl.md",
+      "skills-sap/sap-rap/references/checklists.md",
+      "skills-sap/sap-rap/references/feature-control.md",
+      "skills-sap/sap-rap/references/layering-and-bdef.md",
+      "skills-sap/sap-ui5-fiori/SKILL.md",
+      "templates/package/.rules.md.tmpl",
+      "tests/test_sap_skill_bilgi.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k sap_skill_bilgi"
+     ]
     }
    ]
   }
