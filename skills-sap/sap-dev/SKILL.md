@@ -66,6 +66,7 @@ Her şeyi değil, ilgili olanı oku.
 | Web/doküman araştırması (SAP Help, not, public kod) | `%research` |
 | SAP'ye CLI ile yazılmayacak teslim (abapGit ZIP; içe aktarımı geliştirici yapar) | `%sap-abapgit-delivery` |
 | FS/TS/KD yazımı, doküman incelemesi, kullanıcı kılavuzu PDF'i, TS build öncesi canlı teyit | `%sap-fs-ts-docs` |
+| Freestyle UI5 (OData V2) uygulamasının ekran görüntülü kullanıcı kılavuzu (mock veriyle çekim, HTML + PDF) | `%sap-ui5-user-guide` |
 
 **Araç sınırı (otorite `--list` + `%sap-adt-foundation` → `tool-catalog.md`):** 2026-09-13'te eklenen yollar — kabuk
 `ddls`/`srvd`/`bdef`/`fugr`/`func`/`msag`/`enqu`/`ttyp`, push `bdef`/`ccimp`/`ccau`/`func`, klasik ekran
