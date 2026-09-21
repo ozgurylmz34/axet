@@ -160,5 +160,20 @@ class DdicAdOnerisiKuraliTest(unittest.TestCase):
         self.assertEqual([], kalan)
 
 
+    def test_kanonik_yasak_a_append_ile_z_ddic_adini_ayirir(self):
+        """Kanonik yasak A: 'önermezsin' yalnız standart objeye append; Z DDIC adı öner + canlı kontrol + onay."""
+        md = _oku(AXET_HOME / "core" / "sap" / "00-sap.md")
+        a = next(s for s in md.splitlines() if s.startswith("| **A — "))
+        self.assertNotIn("Append alanı / DTEL adını sen önermezsin", a)
+        self.assertIn("append", a.lower())
+        self.assertRegex(a, r"Z DDIC[^|]*canlı[^|]*onay")
+
+    def test_cekirdek_kabuk_notu_find_kisitini_tasir(self):
+        """Her oturum yüklenen çekirdek: Go `find` -iname/-maxdepth desteklemez → rg --files --iglob (Z46)."""
+        md = _oku(AXET_HOME / "core" / "00-temel.md")
+        kabuk = next(s for s in md.splitlines() if "**Kabuk ortamı:**" in s)
+        for parca in ("-iname", "-maxdepth", "rg --files --iglob"):
+            self.assertIn(parca, kabuk)
+
 if __name__ == "__main__":
     unittest.main()
