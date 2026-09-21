@@ -605,6 +605,114 @@
      ]
     }
    ]
+  },
+  {
+   "etiket": "v0.5.0",
+   "tarih": "2026-09-21",
+   "kalemler": [
+    {
+     "id": "0.5.0-01",
+     "baslik": "Yeni skill: `%sap-ui5-user-guide` — mock veriyle ekran görüntülü kullanıcı kılavuzu (HTML + PDF)",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "Freestyle SAPUI5 + OData V2 (RAP) uygulamasını yerelde mock veriyle çalıştırıp Playwright ile ekranları çeker ve kullanıcı kılavuzunu `%sap-fs-ts-docs` boru hattıyla HTML ve PDF'e çevirir. Ortam kontrolü (`kd_ortam.py check`) eksik bağımlılığı kurmaz, yalnız komutunu yazar; `kd_ortam.py config` tarayıcıyı sistemdeki Chrome'a sabitler. `mock_veri.py` servis metadata'sından (V2 ve V4) tutarlı, kurgusal Türkçe veri üretir; aynı tohum aynı veriyi verir, elle düzeltilmiş dosyayı ezmez. Yerel sunucular yalnız 127.0.0.1'e bağlanır (şirket bilgisayarında güvenlik duvarı penceresi açılmasın diye).",
+     "dosyalar": [
+      "skills-sap/sap-ui5-user-guide/SKILL.md",
+      "skills-sap/sap-ui5-user-guide/references/akis.md",
+      "skills-sap/sap-ui5-user-guide/references/gorsel-kontrol.md",
+      "skills-sap/sap-ui5-user-guide/references/kesif-playwright-cli.md",
+      "skills-sap/sap-ui5-user-guide/references/mock-ortam.md",
+      "skills-sap/sap-ui5-user-guide/references/tuzaklar.md",
+      "skills-sap/sap-ui5-user-guide/scripts/kd_ortam.py",
+      "skills-sap/sap-ui5-user-guide/scripts/mock_veri.py",
+      "skills-sap/sap-ui5-user-guide/tests/_common.py",
+      "skills-sap/sap-ui5-user-guide/tests/run_tests.py",
+      "skills-sap/sap-ui5-user-guide/tests/samples/v2_rap_draft_metadata.xml",
+      "skills-sap/sap-ui5-user-guide/tests/samples/v2_rap_siparis_metadata.xml",
+      "skills-sap/sap-ui5-user-guide/tests/samples/v2_siparis_metadata.xml",
+      "skills-sap/sap-ui5-user-guide/tests/samples/v4_rap_draft_metadata.xml",
+      "skills-sap/sap-ui5-user-guide/tests/test_kd_ortam.py",
+      "skills-sap/sap-ui5-user-guide/tests/test_mock_veri.py",
+      "skills-sap/sap-ui5-user-guide/tests/test_skill_structure.py",
+      "README.md",
+      "skills-sap/README.md",
+      "skills-sap/sap-dev/SKILL.md",
+      "NOTICE",
+      "guncelle/harita.json",
+      "tests/test_run_tests_cli.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-user-guide/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.0-02",
+     "baslik": "Ekran çekimi: doğrulama adımları ve Chrome varsayılanı",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "`capture_kd_screens.js` çekimden önce ekranın hazır olduğunu doğrulayabiliyor: `assert_no_busy` (meşgul göstergesi yok), `assert_text` (metin görünüyor), `assert_in_viewport` (öğe görünür alanda). Tutmayan adım FAIL sayılır ve script 1 ile çıkar — yarım yüklenmiş ekranın kılavuza girmesi engellenir. Ekran çekimi ve PDF üretimi varsayılan olarak sistemdeki Chrome'u kullanır (ortam değişkeniyle değiştirilebilir).",
+     "dosyalar": [
+      "skills-sap/sap-fs-ts-docs/scripts/capture_kd_screens.js",
+      "skills-sap/sap-fs-ts-docs/scripts/html_to_pdf.js",
+      "skills-sap/sap-fs-ts-docs/scripts/doc_tools.py",
+      "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md",
+      "skills-sap/sap-fs-ts-docs/SKILL.md",
+      "skills-sap/sap-fs-ts-docs/tests/test_capture_assert.py",
+      "skills-sap/sap-fs-ts-docs/tests/test_doc_tools_tarayici.py",
+      "skills-sap/sap-fs-ts-docs/tests/samples/capture/config_assert_bad.json",
+      "skills-sap/sap-fs-ts-docs/tests/samples/capture/config_assert_ok.json",
+      "skills-sap/sap-fs-ts-docs/tests/samples/capture/ui5_sahte.html"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-fs-ts-docs/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.0-03",
+     "baslik": "aXet artık kendi kararıyla Playwright tarayıcısı indiremiyor",
+     "tur": "duzeltme",
+     "kritik": true,
+     "neden": "Tarayıcı açıkça belirtilmediğinde aXet `npx playwright-cli install-browser` çalıştırıp izin sormadan ~1 GB tarayıcı indirdi (ölçüldü). İzin kurallarına bu indirme komutlarını reddeden desenler eklendi; sistemdeki Chrome kullanılır. Canlı ölçüldü: gerçek indirme komutu reddedildi, tarayıcı klasörü oluşmadı; tarayıcı indirmeyen Playwright komutları çalışmaya devam ediyor.",
+     "dosyalar": [
+      "config/permissions.json",
+      "tests/test_install.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k test_install"
+     ]
+    },
+    {
+     "id": "0.5.0-04",
+     "baslik": "CI belge skill'lerinin testlerini de koşuyor",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "`sap-fs-ts-docs` ve `sap-ui5-user-guide` testleri CI'da hiç koşmuyordu, yalnız kullanıcının güncelleme turunda koşuyordu. Kullanıcı tarafında davranış değişikliği yoktur.",
+     "dosyalar": [
+      ".github/workflows/testler.yml"
+     ],
+     "gerektirir": [],
+     "test": []
+    },
+    {
+     "id": "0.5.0-05",
+     "baslik": "Yayın kataloğu ve CI kaydı",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri"
+     ]
+    }
+   ]
   }
  ]
 }

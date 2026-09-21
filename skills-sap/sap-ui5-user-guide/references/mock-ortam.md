@@ -57,6 +57,10 @@ Kontroller (sırayla):
   tutarlı, aynı `--tohum` aynı veriyi verir, var olan dosya `--zorla` olmadan ezilmez (elle düzeltilmiş dosya korunur).
   Üretilen veri **gözden geçirilir**: iş anlamı taşıyan alanlar (durum kodu, birim, para birimi) uygulamanın beklediği
   değerlerle eşleşmeli; eşleşmeyen değer ekranda boş metin ya da hata olarak görünür.
+- Üretilen biçim: V2 tarihleri `/Date(<ms>)/`; `Edm.Decimal` JSON'a **sayı** olarak yazılır (V2 sunucusu string
+  döndürür — ekranda biçim farkı görülürse değeri string'e çevir). Araç, `MaxLength`'e sığmadığı için kestiği
+  değer yardımı / yabancı anahtar değerlerini raporda **KESİLEN** satırında `Set.Alan` olarak listeler — o alanları
+  elle gözden geçir.
 - Davranış değiştirmek gerekiyorsa aynı adla `.js` dosyası (MockserverAPI). V2'de entity set'e bağlı function import
   o set'in dosyasında `executeAction` olarak yazılır (DefiningMockdata). KD için çoğunlukla gerekmez — dolu durumu
   model verisi enjeksiyonuyla kurmak daha az iştir (`tuzaklar.md` T17).
@@ -75,8 +79,9 @@ Ekip standardında varsayılan **draft'sızdır** (freestyle V2 + JSON edit-buff
 `%sap-rap` → `references/draft-and-locks.md`). Bu bölüm yalnız tüketilen servis draft'lıysa uygulanır:
 - Metadata'da `IsActiveEntity`, `HasActiveEntity`, `HasDraftEntity` alanları görünür; her veri kaydı bunları taşır
   (core-concepts: etkin kayıtlar `IsActiveEntity: true`; taslağı gösterilecekse aynı anahtarla `false` olan ikinci kayıt).
-- Draft aksiyonlarının V2 freestyle uygulamada mock'ta nasıl davrandığı **DOĞRULANMADI**; ilk kullanımda `logRequests`
-  ile gözle, kareyi gerekirse model verisi enjeksiyonuyla kur.
+- Ölçüldü (fe-mockserver 2.4.17, 2026-09-21): V2'de draft `Edit` function import'u mock'ta **simüle edilmiyor**;
+  draft'sız V2 yolunda `MERGE` (güncelleme) çalışıyor. Draft'lı bir ekranın "düzenleme" karesi bu yüzden model verisi
+  enjeksiyonuyla kurulur (`tuzaklar.md` T17); diğer draft aksiyonları **DOĞRULANMADI** — `logRequests` ile gözle.
 
 ## 6. Başlatma ve duman testi
 ```

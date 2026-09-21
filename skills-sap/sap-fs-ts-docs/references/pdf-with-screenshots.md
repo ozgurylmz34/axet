@@ -51,7 +51,9 @@ Durum: `python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/doc_tools.py check`.
 }
 ```
 Adımlar: `goto` · `wait_ui5` · `wait` (`ms` ya da `selector`) · `click` · `eval` · `set_model` (görünüm adı deseni + model adı +
-`data` ya da `data_file`) · `shot` (`selector` ya da tam sayfa; `optional:true` başarısızlığı durdurmaz). Script sonunda her çekimi
+`data` ya da `data_file`) · `assert_no_busy` (açık meşgul göstergesi yok) · `assert_text` (`text`, isteğe bağlı `selector`) ·
+`assert_in_viewport` (`selector` görünür alanda) · `shot` (`selector` ya da tam sayfa; `optional:true` başarısızlığı durdurmaz).
+Tutmayan `assert_*` adımı FAIL sayılır. Script sonunda her çekimi
 `OK/FAIL` listeler ve **FAIL varsa çıkış 1** verir. Seçiciler `[id$='--<id>']` biçiminde yeniden çizime dayanıklıdır; kimliksiz
 paneller önce `eval` ile `data-kd` özniteliğiyle etiketlenir.
 **Çok uygulamalı paralel mock tuzağı:** aynı anda iki mock sunucu + paylaşılan tarayıcı → sekme başka porta kayar. Her çekimde
