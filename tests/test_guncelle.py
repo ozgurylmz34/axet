@@ -2788,6 +2788,8 @@ class Z54ModulKomutuOlculurTest(GuncelleTemel):
         self.assertEqual(by(["py", "-m", "unittest", "discover", "-s", "a/b", "-t", "a/b"]), "a/b")
         self.assertIsNone(by(["py", "-m", "unittest"]), "-s yoksa ön denetim yok (rc hükmeder)")
         self.assertIsNone(by(["py", "-m", "unittest", "discover", "-s"]))
+        self.assertIsNone(by(["py", "-m", "pytest", "-s", "tests"]),
+                          "`-s` yalnız `unittest discover`da dizindir (pytest'te çıktı yakalama bayrağı)")
         self.assertEqual(by(["py", "scripts/doctor.py", "--x"]), "scripts/doctor.py")
         self.assertIsNone(by(["py"]))
 

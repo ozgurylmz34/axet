@@ -437,6 +437,25 @@ def onay_yolu(p: Proje) -> Path:
     return p.durum_dizini / "onay.json"
 
 
+def damga_hedefi(p: Proje) -> str:
+    """Onayın bağlandığı DAMGA hedefi: kanonik kesin yasak bloğunun özeti (SAP/damgalı proje) ya da
+    `"damgasiz"`.
+
+    ⛔ Bug gate 2026-09-22 (MEDIUM, Z55'ten doğdu): onay yalnız proje + ŞABLON commit'ine bağlıydı.
+    Z55 vakası tanım gereği "şablon commit'i aynı, kanonik ilerledi"dir ⇒ eskiden verilmiş bir onay
+    YENİ damga kalemini de geçerli kılıyor, AGENTS.md onaysız yeniden damgalanıyordu (probe ölçüldü).
+    Kimlik (`SAP-STAMP-ID`) değil tam blok özeti: kimliği artırılmadan değişen metin de onayı düşürür.
+    Seçilen yol bu (plan yazılınca onayı düşürmek DEĞİL): o yol onay→plan sırasıyla çalışan her akışı
+    kırar ve kanonik dışındaki hiçbir şeyi daha iyi korumaz; bağlama yalnız değişen girdiyi hedefler."""
+    if not p.damga_gerekli:
+        return "damgasiz"
+    try:
+        blok = sap_stamp.kanonik_blok()
+    except (OSError, RuntimeError) as exc:
+        raise Dur(f"kanonik kesin yasak metni okunamadı, onay bağlanamaz: {exc}") from exc
+    return hashlib.sha256(sap_stamp._norm(blok).encode("utf-8")).hexdigest()
+
+
 def komut_onay(b: Baglam, args) -> int:
     p = b.p
     if (args.kabul or "").strip() != p.ad:
@@ -445,7 +464,8 @@ def komut_onay(b: Baglam, args) -> int:
               file=sys.stderr)
         return 2
     g._yaz_json(onay_yolu(p), {"surum": 1, "proje": p.kok.as_posix(), "ad": p.ad,
-                               "hedef_commit": b.yeni_commit, "zaman": _simdi()})
+                               "hedef_commit": b.yeni_commit, "damga_hedefi": damga_hedefi(p),
+                               "zaman": _simdi()})
     print(f"ONAY: {p.ad} ({p.kok}) → şablon {b.yeni_commit[:10]}. "
           f"Bu onay YALNIZ bu projeyi ve bu şablon sürümünü kapsar.")
     return 0
@@ -463,6 +483,11 @@ def onay_dogrula(b: Baglam) -> None:
     if kayit.get("hedef_commit") != b.yeni_commit:
         raise Dur(f"onay {str(kayit.get('hedef_commit'))[:10]} şablon sürümü için verilmişti; "
                   f"klondaki şablon {b.yeni_commit[:10]} oldu. Yeniden planla ve yeniden onayla.")
+    # Fail-closed: alanı olmayan (eski biçim) onay da geçersizdir — geriye uyumluluk için geçerli SAYILMAZ.
+    if kayit.get("damga_hedefi") != damga_hedefi(p):
+        raise Dur("onay verildiğinden beri kesin yasak kanoniği değişti (ya da onay damga hedefini "
+                  "taşımayan eski biçimde). Yeni damga kalemi onaysız yazılmaz: yeniden planla ve "
+                  f"yeniden onayla (`onay --kabul \"{p.ad}\"`).")
 
 
 # =====================================================================================================
@@ -860,7 +885,10 @@ def komut_kapanis(b: Baglam, args) -> int:
     yazilan = [d["yol"] for d in plan["dosyalar"]
                if durum["dosyalar"].get(d["yol"], {}).get("durum") == "dogrulandi"
                and durum["dosyalar"].get(d["yol"], {}).get("karar") != "yerel"]
-    sebepler = (["AGENTS.md kesin yasak damgası yenilendi"] if damga_yenilendi else []) + (
+    # Karar planın damga kalemine de dayanır (yalnız bu koşumdaki yazıma değil): ikinci `kapanis`ta
+    # yazım olmaz ama manifest hâlâ onaylanmamıştır ⇒ GEREKLİ kaybolmamalı (bug gate LOW, idempotent).
+    damga_kalemi = damga_yenilendi or bool(plan.get("damga"))
+    sebepler = (["AGENTS.md kesin yasak damgası yenilendi"] if damga_kalemi else []) + (
         [f"{len(yazilan)} şablon dosyası yazıldı"] if yazilan else [])
     if sebepler:
         rapor += ["", "## Kullanıcının kendi terminalinde — GEREKLİ",

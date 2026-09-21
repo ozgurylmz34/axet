@@ -1245,6 +1245,54 @@ class Z55EskiDamgaGuncelSablonTest(ProjeTemel):
         self.assertIn("şablon dosyası yazıldı", rapor)
         self.assertNotIn("damgası yenilendi", rapor)
 
+    # --- bug gate 2026-09-22 düzeltme turu -------------------------------------------------------
+    def test_6_BAYAT_ONAY_yeni_damga_kalemini_ACMAZ(self):
+        """MEDIUM probe'u birebir: onay + plan(1) → kanonik yükselir → YENİ ONAY OLMADAN plan(0,
+        DAMGA) → uygula → kapanış. Eski kodda damga ONAYSIZ yazılıyordu (AXET-SAP-9.9.9)."""
+        self.assertEqual(self.planla().returncode, 1)          # onay verildi, iş yok
+        once = self.f.oku("AGENTS.md")
+        self._kanonigi_yukselt()
+        r = self.f.calistir("plan")
+        self.assertEqual(r.returncode, 0, self.cikti(r))       # plan salt-okur, onaysız çalışır
+        r_u = self.f.calistir("uygula", "--otomatik")
+        r_k = self.f.calistir("kapanis")
+        self.assertNotIn(self.YENI_ID, self.f.oku("AGENTS.md"), "bayat onayla damga YAZILDI")
+        self.assertEqual(self.f.oku("AGENTS.md"), once)
+        self.assertEqual(r_u.returncode, 2, self.cikti(r_u))
+        self.assertEqual(r_k.returncode, 2, self.cikti(r_k))
+        self.assertIn("kanoniği değişti", self.cikti(r_k))
+
+    def test_6b_KONTROL_kanonik_degismeden_onay_GECERLI_kalir(self):
+        self.f.ilerlet()
+        self.assertEqual(self.planla().returncode, 0)
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+
+    def test_6c_eski_bicim_onay_alansiz_GECERSIZ(self):
+        """Fail-closed: `damga_hedefi` alanı olmayan onay.json geriye uyumluluk için geçerli SAYILMAZ."""
+        self.f.ilerlet()
+        self.assertEqual(self.planla().returncode, 0)
+        yol = self.f.durum_dizini() / "onay.json"
+        kayit = json.loads(yol.read_text(encoding="utf-8"))
+        kayit.pop("damga_hedefi")
+        yol.write_text(json.dumps(kayit), encoding="utf-8")
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+
+    def test_7_ikinci_kapanis_GEREKLI_satirini_KORUR(self):
+        """LOW: tam akış → plan(1, plan.json bayat kalır) → kapanış tekrar. Manifest hâlâ onaysız ⇒
+        GEREKLİ bölümü ikinci raporda da durmalı (kapanış idempotent)."""
+        self._kanonigi_yukselt()
+        self.assertEqual(self.planla().returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self.assertEqual(self.f.calistir("kapanis").returncode, 0)
+        self.assertEqual(self.f.calistir("plan").returncode, 1)
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn("Kullanıcının kendi terminalinde — GEREKLİ", rapor)
+        self.assertIn("AGENTS.md kesin yasak damgası yenilendi", rapor)
+
 
 if __name__ == "__main__":
     unittest.main()
