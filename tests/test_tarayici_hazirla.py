@@ -229,6 +229,38 @@ class TarayiciHazirlaTest(GeciciTest):
         self.assertIn("--no-sandbox eklendi", metin)
         self.assertEqual("HAZIR", durum)
 
+    # --- global config yazılamazsa: "yazıldı/eklendi" DENMEZ, EKSİK, duman koşmaz (Z59 `_yaz` dönüşü) ----------
+    @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
+    def test_global_config_yolu_dizinse_yazildi_denmez(self):
+        self.chrome_kur()
+        self.cfg.mkdir(parents=True)  # config yolunda DİZİN: open(..., "w") OSError
+        durum, metin, surec = self.kos()
+        self.assertEqual("EKSİK", durum, metin)
+        self.assertNotIn("yazıldı", metin)
+        self.assertIn("global config yazılamadı", metin)
+        self.assertNotIn("open", surec.adlar())  # config olmadan aXet'te duman testi anlamsız
+        self.assertTrue(self.cfg.is_dir())
+
+    @unittest.skipUnless(WIN, "salt-okunur bit Windows'ta open('w')'yi reddeder (POSIX root'ta reddetmeyebilir)")
+    def test_salt_okunur_global_config_eklendi_denmez(self):
+        self.chrome_kur()
+        bayt = self.yaz_cfg({"browser": {"launchOptions": {"channel": "chrome", "args": ["--x"]}}})
+        os.chmod(self.cfg, 0o444)  # GeciciTest.tearDown salt-okunuru kendisi temizler
+        durum, metin, surec = self.kos()
+        self.assertEqual("EKSİK", durum, metin)
+        self.assertNotIn("eklendi", metin)
+        self.assertIn("global config yazılamadı", metin)
+        self.assertEqual(bayt, self.cfg.read_bytes())
+        self.assertNotIn("open", surec.adlar())
+
+    def test_main_yazma_hatasinda_da_cikis_0(self):
+        with mock.patch.object(th, "hazirla", return_value=("EKSİK", ["global config yazılamadı (x)"])):
+            tampon = io.StringIO()
+            with redirect_stdout(tampon):
+                rc = th.main([])
+        self.assertEqual(0, rc)  # güncellemeyi/kurulumu DURDURMAZ
+        self.assertTrue(tampon.getvalue().startswith("TARAYICI: EKSİK — global config yazılamadı"))
+
     # --- başarısızlıklar: EKSİK ama çıkış yine 0 ---------------------------------------------------------------
     @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
     def test_npm_basarisizsa_eksik_ve_config_yazilmaz(self):

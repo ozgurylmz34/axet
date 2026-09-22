@@ -174,15 +174,21 @@ def npm_kur(kok: Path, npm: str, surum: str, env: dict, calistir=subprocess.run)
 
 
 def config_hazirla(kd, kanal: str, env=None) -> tuple[str, str]:
-    """(etiket, metin). etiket: 'yazildi' | 'eklendi' | 'uygun' | 'dokunulmadi'."""
+    """(etiket, metin). etiket: 'yazildi' | 'eklendi' | 'uygun' | 'dokunulmadi' | 'hata'.
+    'hata' = yazım başarısız (salt-okunur, yol dizin, izin): kd._yaz/sandbox_ekle hata metni döner (Z59); o zaman
+    "yazıldı/eklendi" DENMEZ. İstisna fırlatılmaz — çağıran (install/%guncelle) durmaz."""
     durum, yol, ham, bulunan = global_durum(kd, env)
     if durum == "uygun":
         return "uygun", "global config zaten uygun (%s, kanal %s)" % (yol, bulunan)
     if durum == "eksik-sandbox":
-        kd.sandbox_ekle(yol, ham)
+        hata = kd.sandbox_ekle(yol, ham)
+        if hata:
+            return "hata", "global config yazılamadı: %s" % hata
         return "eklendi", "global config'e --no-sandbox eklendi (%s; diğer anahtarlara dokunulmadı)" % yol
     if durum == "yok":
-        kd._yaz(yol, kd.hedef_config(kanal, True))
+        hata = kd._yaz(yol, kd.hedef_config(kanal, True))
+        if hata:
+            return "hata", "global config yazılamadı: %s" % hata
         return "yazildi", "global config yazıldı (%s, kanal %s · --no-sandbox)" % (yol, kanal)
     return "dokunulmadi", ("global config %s (%s) — EZİLMEDİ; aXet'te `open` için launchOptions'ta chrome/msedge kanalı "
                            "ve args'ta --no-sandbox gerekir" % ("JSON değil" if durum == "bozuk" else "farklı içerikli",
@@ -253,8 +259,10 @@ def hazirla(kok: Path, env: dict | None = None, calistir=subprocess.run, which=s
         parca.append(metin)
         if not ok:
             return "EKSİK", parca
-    _, metin = config_hazirla(kd, kanal, env)
+    etiket, metin = config_hazirla(kd, kanal, env)
     parca.append(metin)
+    if etiket == "hata":  # --no-sandbox'sız aXet bash'inde `open` düşer (ölçüldü) → duman testi anlamsız
+        return "EKSİK", parca
     parca += ["UYARI: " + u for u in kd.ortam_uyarilari(env)]
     ok, metin = duman_testi(kok, node, env, calistir)
     parca.append(metin)
