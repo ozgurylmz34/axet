@@ -6,7 +6,32 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ▶ BURADAN DEVAM (2026-09-22 gece) — v0.5.1 ADAYI (Z55 · Z54 · Z48 · Z50-Z53) → sonra v0.5.2
+## ▶ YARIN BURADAN (gün sonu 2026-09-22 sabaha karşı) — v0.5.2 ADAYI (dal `wip/v052b`, 6 commit, push'lu)
+
+**v0.5.1 YAYINLANDI:** PR #26 squash `d3ec6f7` (PR CI 5/5 · main CI 5/5 · taze bug gate WARNING, BLOCKER yok) → public
+`ca52110` + etiket `v0.5.1` (noreply) · public CI yeşil (prova `skipped` bilinçli). Uzak dallar silindi (SHA yedeği `.git/z24-dal-sha-yedek-2026-09-22.txt`).
+
+**v0.5.2 dalında hazır (`wip/v052b` = origin/main + 6):** doctor damga önerisi · domain/DTEL boşluk paket kapısı + type_group
+AlreadyExists · guncelle_proje LOW'ları · **ddlx/dcls kabuğu + `adt_delete bdef` + lib DDLX media tipi** · Z35 feature-control §7a ·
+S9c gate LOW (mutasyonla doğrulandı). Hedefli testler yeşil (new_write_tools 31 · cli_gate 15 · std_dml_scan · S9c).
+
+**Canlı ölçümler (DEV, `$TMP`, hepsi silindi — TADIR 0, kontrol MARA=1, inaktif 0; `config/sap-write.local` silindi):**
+- Z35 ✅ EML kolu: `Durum='A'` UPDATE/DELETE → `failed` 1 satır, `%fail-cause`=`DISABLED`; kontrol N1 commit'lendi. OData/`IN LOCAL MODE`/alan düzeyi ölçülmedi.
+- Z42 ✅ DDLX eski media tipi 415 → discovery `ddic.ddlx.v1+xml` ile 201; DCL çalıştı; yeni araç zinciri uçtan uca + 4 silme `delete_verified`.
+- Z13 ✅ `$TMP`'de corrNr'sız kilit+PUT+unlock çalıştı; E070'te yeni transport yok, E071'de kayıt yok (`adt_transport_list` bu sistemde kör: 0 döndü).
+- Z43 ✅ UI5 deploy `$TMP` (BSP ZAXET_FC_UI, canlı preload == dist) → undeploy (TADIR'de yok, canlı okunamıyor). Sınır: undeploy öncesi TADIR kontrolü alınmadı.
+
+**Sırada (kalan, sırayla):** ① Z20 teşhisi: v0.1.0 `-k kur` detached HEAD'de 16 FAIL (ölçüm GEÇERSİZ — push HEAD hatası); dal üzerinde yeniden
+koşum başlatıldı, sonuç `scratchpad/z20-v010-dal.log` (oturum scratchpad'i; kaybolduysa yeniden koş) · ② Z8 fixture önbelleği: ölçüldü —
+üretilen proje yalnız ADA bağlı (3 dosya), mutlak yol/XDG yan etkisi yok ⇒ anahtar (ad, sap, git_init) ile `copytree` güvenli; kod YAZILMADI ·
+③ Z22 kayıt: v0.5.1 kök **596 sn / 275 = 2,2× (BULGU, eşik 2×)** · foundation 418/375 = 1,1× · v0.5.0 kök 689 = 2,5× · ④ Z19 haftalık 3.14,
+Z25 sabit Python, Z21 `-j 12` ölçümü, Z6/Z7 mutasyon · ⑤ kayıtlar (Z2/3/4 iptal, Z12, Z44, Z45-47 motor notu, Z28-30) · ⑥ yayinlar.json
+v0.5.2 kalemleri → taze bug gate → tam takımlar → PR → yayın. Sabah kullanıcıda: Z37/Z14 (istem + puan tablosu henüz HAZIRLANMADI).
+
+⛔ **KRİTİK (kullanıcıya):** public `ozgurylmz34/axet` PR commit'lerinde kurumsal e-posta görünür (PR #25: 14, PR #26: 10 commit) — geri
+alınamaz (PR geçmişi). main temiz. Önlem: aXet repo-yerel `user.email` noreply yapıldı (global dokunulmadı).
+
+## ✅ ARŞİV — v0.5.1 adayı (2026-09-22 gece) — v0.5.1 ADAYI (Z55 · Z54 · Z48 · Z50-Z53) → sonra v0.5.2
 
 **v0.5.1 adayı:** dal `wip/v051-birlesim` (worktree `kk-birlesik`). Lane'ler `wip/v051-guncelle` + `wip/v051-ddic`, her biri
 bug gate → düzeltme turu → düzeltme turu gate'i (güncelleme PASS · DDIC WARNING 2 LOW → lider kapattı). Birleşim `96e9a29`: foundation
