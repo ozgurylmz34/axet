@@ -187,12 +187,12 @@ def ortam_uyarilari(env=None):
     return ["%s ortam değişkeni tanımlı — config dosyasındaki tarayıcı seçimini ezer" % k for k in EZEN_ORTAM if env.get(k)]
 
 
-def sandbox_notu(kanal=None):
-    """Önerilen komut dosyanın KANALINI korur: Edge'e sabit dosyada `--kanal msedge` verilmezse `config` dosyayı
-    'farkli' sayıp ezmeyi reddeder (rc 2 — v0.5.3 bug gate)."""
-    kanal_arg = " --kanal %s" % kanal if kanal and kanal != KANAL else ""
+def sandbox_notu(kanal=None, zorla=False):
+    """Önerilen komut, koşulunca GERÇEKTEN uygulanmalı (v0.5.3 bug gate): Edge'e sabit dosyada `--kanal msedge`
+    verilmezse, hiçbir kanala sabit olmayan (kullanıcı) dosyada `--zorla` verilmezse `config` ezmeyi reddeder (rc 2)."""
+    ek = (" --kanal %s" % kanal if kanal and kanal != KANAL else "") + (" --zorla" if zorla else "")
     return ("aXet.code bash'inde `open` %s olmadan düştü (ölçüldü, playwright-cli 0.1.21) → orada "
-            "`python kd_ortam.py config --proje <dizin>%s --no-sandbox`; diğer kabuklarda gerekmez" % (NO_SANDBOX, kanal_arg))
+            "`python kd_ortam.py config --proje <dizin>%s --no-sandbox`; diğer kabuklarda gerekmez" % (NO_SANDBOX, ek))
 
 BIND_NOTU = ("NOT: yerel sunucuyu 127.0.0.1'e bağla (ör. `python -m http.server <port> --bind 127.0.0.1`) — "
              "0.0.0.0'ı dinleyen bir süreç şirket makinesinde güvenlik duvarı izni ister (yaşandı 2026-09-21).")
@@ -277,7 +277,7 @@ def cmd_check(proje, env=None):
                   "`python kd_ortam.py config --proje <dizin> [--kanal msedge] --zorla` (eskisi .bak'a alınır)",
         "bozuk": "okunamadı (JSON değil)"}
     _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json kanalı", cfg_metni[cfg]))
-    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", sandbox_metni(proje, kanal)))
+    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", sandbox_metni(proje, kanal, zorla=(cfg == "farkli"))))
     pj, _ = package_json_oku(proje)
     host_ozet, uzak = start_mock_host_tespiti(((pj or {}).get("scripts") or {}).get("start-mock"))
     _cikti("  %-5s %-26s %s" % ("UYARI" if uzak else "BİLGİ", "start-mock host/bind", host_ozet))
@@ -353,7 +353,7 @@ def config_kanali(proje):
     return durum, None
 
 
-def sandbox_metni(proje, kanal=None):
+def sandbox_metni(proje, kanal=None, zorla=False):
     """check için: dosyadaki launchOptions.args'ta '--no-sandbox' olup olmadığını (sabit metin değil) yazar."""
     yol = os.path.join(proje, CONFIG_GORELI)
     if not os.path.isfile(yol):
@@ -368,7 +368,7 @@ def sandbox_metni(proje, kanal=None):
         if _sandbox_kapali(b.get("launchOptions") if isinstance(b, dict) else None):
             return "launchOptions.args'ta %s VAR (süreç izolasyonu kapalı: yalnız yerel/güvenilir sayfa)" % NO_SANDBOX
         durum = "launchOptions.args'ta %s YOK" % NO_SANDBOX
-    return "%s — %s" % (durum, sandbox_notu(kanal))
+    return "%s — %s" % (durum, sandbox_notu(kanal, zorla))
 
 
 def _yaz(yol, veri=None):
@@ -411,8 +411,9 @@ def cmd_config(proje, zorla=False, env=None, kanal=KANAL, no_sandbox=False):
               file=sys.stderr)
         return 2
     yedek = yol + ".bak"
-    with open(yedek, "w", encoding="utf-8", newline="") as fh:
-        fh.write(ham)
+    # Bayt bayt kopya: UTF-8 olmayan dosyada `ham` None'dır (config_durumu) — metin olarak yazmak çöküp 0 baytlık .bak
+    # bırakıyordu (v0.5.3 bug gate).
+    shutil.copyfile(yol, yedek)
     _yaz(yol, hedef_config(kanal, no_sandbox))
     _cikti("YAZILDI (--zorla): %s — %s · eski içerik: %s" % (yol, _ozet(kanal, no_sandbox), yedek))
     return 0

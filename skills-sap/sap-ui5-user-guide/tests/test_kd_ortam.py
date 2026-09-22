@@ -199,6 +199,41 @@ class KdOrtamCheckTest(unittest.TestCase):
         self.assertEqual(veri["browser"]["launchOptions"]["channel"], "msedge")
         self.assertIn("--no-sandbox", veri["browser"]["launchOptions"]["args"])
 
+    def test_check_farkli_dosyada_sandbox_onerisi_calisir(self):
+        # Sınıf taraması (v0.5.3 bug gate): check'in önerdiği sandbox komutu hiçbir kanala sabit olmayan dosyada da
+        # koşulunca uygulanmalı (eskiden `--zorla`sız → rc 2 'EZİLMEDİ').
+        import shlex
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            yol = os.path.join(app, ".playwright", "cli.config.json")
+            yaz_json(yol, {"browser": {"browserName": "firefox"}})
+            r = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+            m = re.search(r"cli.config.json sandbox.*?`python kd_ortam.py (config [^`]*)`", r.stdout)
+            self.assertIsNotNone(m, r.stdout)
+            argv = [a if a != "<dizin>" else app for a in shlex.split(m.group(1))]
+            rc, out, err = call_main(kd_ortam.main, argv)
+            with open(yol, encoding="utf-8") as fh:
+                veri = json.load(fh)
+        self.assertEqual(rc, 0, out + err)
+        self.assertIn("--no-sandbox", veri["browser"]["launchOptions"]["args"])
+
+    def test_config_zorla_utf8_olmayan_dosyada_bayt_yedek(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            yol = os.path.join(app, ".playwright", "cli.config.json")
+            os.makedirs(os.path.dirname(yol), exist_ok=True)
+            eski = '{"browser": {}}'.encode("utf-16")
+            with open(yol, "wb") as fh:
+                fh.write(eski)
+            rc, out, err = call_main(kd_ortam.main, ["config", "--proje", app, "--zorla"])
+            with open(yol + ".bak", "rb") as fh:
+                yedek = fh.read()
+            with open(yol, encoding="utf-8") as fh:
+                veri = json.load(fh)
+        self.assertEqual(rc, 0, out + err)
+        self.assertEqual(yedek, eski)
+        self.assertEqual(veri["browser"]["launchOptions"]["channel"], "chrome")
+
     def test_check_utf8_olmayan_config_cokmez(self):
         with gecici_dizin() as t:
             app = tam_uygulama(os.path.join(t, "app"))
