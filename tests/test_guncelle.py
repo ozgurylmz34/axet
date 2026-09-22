@@ -1316,7 +1316,15 @@ class OneriIsaretleTest(GuncelleTemel):
 # =====================================================================================================
 # 7. ÖLÇÜM / BÜTÜNLÜK / GERİ AL / KAPANIŞ / DURUM
 # =====================================================================================================
-class AkisTest(GuncelleTemel):
+class AkisTemel(GuncelleTemel):
+    """Akış fikstürü + yardımcılar — TEST İÇERMEZ (Z22-A, v0.5.5).
+
+    Alt sınıflar (`AkisTest`, `KapanisYabanciStageTest`, `ButunlukMuhruTest`) bundan türer.
+    Eskiden ikisi `AkisTest`'ten türüyordu ⇒ unittest AkisTest'in 25 testini her birinde
+    BİREBİR yeniden koşuyordu (setUp/yardımcı override yok ⇒ ek ölçüm yok, yalnız süre).
+    ⛔ Buraya `test_*` metodu KOYMA: her alt sınıfta tekrar koşar.
+    """
+
     def setUp(self) -> None:
         super().setUp()
         self.senaryolari_uygula()
@@ -1342,6 +1350,8 @@ class AkisTest(GuncelleTemel):
             r = self.f.calistir("isaretle", yol, "--karar", karar)
             self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
 
+
+class AkisTest(AkisTemel):
     def test_olc_once_ve_sonra_kaydeder(self):
         r = self.f.calistir("olc", "--asama", "once")
         self.assertEqual(r.returncode, 0, self.cikti(r))
@@ -2611,7 +2621,7 @@ class IsaretlemePlanaSabitTest(V4YayinKarisimi, GuncelleTemel):
         self.assertIn("# Çekirdek v3", (self.f.tuketici / "core/00-temel.md").read_text(encoding="utf-8"))
 
 
-class KapanisYabanciStageTest(AkisTest):
+class KapanisYabanciStageTest(AkisTemel):
     """Madde 6 (karar B — "DUR + uyar", 2026-09-20) — kapanış commit'i pathspec ALMAZ.
 
     `git commit --no-verify -q -m <mesaj>` index'te NE VARSA commit'ler. Kullanıcının
@@ -2671,7 +2681,7 @@ class KapanisYabanciStageTest(AkisTest):
         self.assertIn("benim-isim.txt", stage, "kullanıcının stage'i korunmalı")
 
 
-class ButunlukMuhruTest(V4YayinKarisimi, AkisTest):
+class ButunlukMuhruTest(V4YayinKarisimi, AkisTemel):
     """Madde 4 / K2 (karar: "mühürle, fail-closed", 2026-09-20).
 
     `durum_dizini` döngüler arası TEMİZLENMİYOR ve bu bilerçedir (`uygulanan.json`
