@@ -16,7 +16,8 @@ const DEFAULT_SPEC = 'ui.smoke.spec.ts';
 //   SMOKE_BROWSER_CHANNEL = chrome | msedge → indirilmiş Chromium yerine KURULU Chrome/Edge (tarayıcı indirmesi gerekmez;
 //   aXet.code izin kuralları install-browser'ı yasaklar).
 // '--no-sandbox' için ayar YOK, çünkü gerekmiyor: playwright-core (1.63.0) `chromiumSandbox: true` verilmedikçe
-// Chromium'a '--no-sandbox'u KENDİSİ ekler (coreBundle.js; DEBUG=pw:browser başlatma satırında görüldü).
+// Chromium'a '--no-sandbox'u KENDİSİ ekler (coreBundle.js; DEBUG=pw:browser başlatma satırında görüldü — normal
+// kabukta, aXet DIŞINDA, --channel chrome ve msedge ile; 2026-09-22).
 // aXet bash'indeki playwright-cli çökmesi (config'siz `open` → "Session closed") bu yüzden bu koşucuda beklenmez —
 // ama bu koşucunun aXet'te çalıştığı ÖLÇÜLMEDİ.
 const CHANNEL = process.env.SMOKE_BROWSER_CHANNEL || undefined;

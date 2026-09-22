@@ -6,6 +6,7 @@ Sahte uygulama dizinleri repo DIŞINDA geçici klasörde kurulur; tarayıcı aç
 import importlib.util
 import json
 import os
+import re
 import unittest
 from unittest import mock
 
@@ -149,11 +150,33 @@ class KdOrtamCheckTest(unittest.TestCase):
             r = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
             self.assertIn("127.0.0.1", r.stdout)
             self.assertIn("güvenlik duvarı", r.stdout)
-            self.assertRegex(r.stdout, r"BİLGİ\s+cli.config.json \(Chrome\)\s+YOK")
+            self.assertRegex(r.stdout, r"BİLGİ\s+cli.config.json kanalı\s+YOK")
             self.assertIn("varsayılanı zaten chromium + kanal chrome", r.stdout)
             call_main(kd_ortam.main, ["config", "--proje", app])
             r2 = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
-        self.assertRegex(r2.stdout, r"BİLGİ\s+cli.config.json \(Chrome\)\s+Chrome kanalına sabit")
+        self.assertRegex(r2.stdout, r"BİLGİ\s+cli.config.json kanalı\s+Chrome kanalına sabit")
+
+    def test_check_msedge_gecerli_secim_ve_sandbox_dosyadan(self):
+        # `config --kanal msedge [--no-sandbox]` ile yazılan dosya check'te "sabit DEĞİL" sayılmamalı; sandbox satırı
+        # sabit metin değil, dosyadaki launchOptions.args'ı yansıtmalı.
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            r0 = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+            call_main(kd_ortam.main, ["config", "--proje", app, "--kanal", "msedge"])
+            r1 = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+            call_main(kd_ortam.main, ["config", "--proje", app, "--kanal", "msedge", "--no-sandbox"])
+            r2 = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+            yaz_json(os.path.join(app, ".playwright", "cli.config.json"),
+                     {"browser": {"launchOptions": {"channel": "chrome", "executablePath": "C:/x/chrome.exe"}}})
+            r3 = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+        self.assertRegex(r0.stdout, r"BİLGİ\s+cli.config.json sandbox\s+config YOK → --no-sandbox yok — aXet")
+        self.assertRegex(r1.stdout, r"BİLGİ\s+cli.config.json kanalı\s+Edge kanalına sabit")
+        self.assertNotIn("sabit DEĞİL", r1.stdout)
+        self.assertRegex(r1.stdout, r"BİLGİ\s+cli.config.json sandbox\s+launchOptions.args'ta --no-sandbox YOK — aXet")
+        self.assertRegex(r2.stdout, r"BİLGİ\s+cli.config.json kanalı\s+Edge kanalına sabit")
+        self.assertRegex(r2.stdout, r"BİLGİ\s+cli.config.json sandbox\s+launchOptions.args'ta --no-sandbox VAR")
+        self.assertRegex(r3.stdout, r"BİLGİ\s+cli.config.json kanalı\s+Chrome'a da Edge'e de sabit DEĞİL")
+        self.assertIn("--zorla", r3.stdout)
 
     def test_check_start_mock_uzak_erisim_uyarisi(self):
         with gecici_dizin() as t:
@@ -330,8 +353,19 @@ class KdOrtamSemaKaynakTest(unittest.TestCase):
                         'resolve(".playwright", "cli.config.json")'):
             self.assertIn(anahtar, kaynak)
         self.assertIn('"win32": `\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe`', kaynak)
-        # --no-sandbox seçeneğinin gerekçesi: playwright-cli chrome/msedge kanalında sandbox'ı AÇIK başlatır.
-        self.assertIn('browser.launchOptions.chromiumSandbox = channel !== void 0 && channel !== "chromium"', kaynak)
+        # --no-sandbox seçeneğinin gerekçesi: playwright-cli Windows'ta HER kanalda sandbox'ı AÇIK başlatır.
+        # validateBrowserConfig'te kanala bağlı ifade yalnız linux dalında; Windows (else) dalı koşulsuz `= true`.
+        # Önek eşleşmesiyle sahte geçmesin diye dal yapısı bütün olarak ve `true;` ile sınırlı aranır.
+        bas = kaynak.find("async function validateBrowserConfig(")
+        self.assertNotEqual(-1, bas, "validateBrowserConfig kaynakta yok")
+        govde = kaynak[bas:bas + 2000]
+        self.assertRegex(govde, re.compile(
+            r'if \(process\.platform === "linux"\) \{\s*'
+            r'const \{ channel \} = browser\.launchOptions;\s*'
+            r'browser\.launchOptions\.chromiumSandbox = channel !== void 0 && channel !== "chromium"[^;]*;\s*'
+            r'\} else \{\s*browser\.launchOptions\.chromiumSandbox = true;\s*\}'))
+        # Başlatıcı: chromiumSandbox true değilse --no-sandbox eklenir (test runner farkının kaynağı).
+        self.assertRegex(kaynak, r'if \(options\.chromiumSandbox !== true\)\s*chromeArguments\.push\("--no-sandbox"\);')
 
 
 if __name__ == "__main__":

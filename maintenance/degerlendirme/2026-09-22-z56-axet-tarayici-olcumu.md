@@ -181,6 +181,64 @@ npx playwright-cli -s=c goto <url> ; ... ; npx playwright-cli -s=c detach   # de
   sunucusu gerekir.
 - `.playwright-cli/` dizinine snapshot/konsol logları yazılıyor (sayfa metnini içerir). `.gitignore`'a eklenmeli.
 
+## v0.5.3 reçete ölçümleri (normal kabuk)
+
+v0.5.3 metinlerinde (`kd_ortam.py`, `tuzaklar.md` T23, `runtime-verification.md` §4.1/§4.6, `playwright.config.ts`)
+"ölçüldü" diye geçen ama yukarıdaki bölümlerde karşılığı olmayan üç iddia bug gate'ten sonra **yeniden koşuldu**.
+**Hepsi aXet.code'un İÇİNDE DEĞİL, normal kabukta** (Claude Code'un Git Bash'i, Windows 11, aXet job'ı dışında)
+ölçüldü; aXet bash'indeki davranış için geçerli değildir. Ortam: node v22.19.0 · `@playwright/cli` 0.1.21 +
+`playwright-core` 1.64.0-alpha-1789764292000 (lab) · `@playwright/test` 1.63.0 (smoke) · Chrome 153.0.8010.53 ·
+Edge 153.0.4234.48 · `%LOCALAPPDATA%\ms-playwright\` içinde chromium dizini yok · `~/.playwright/` yok ·
+`PLAYWRIGHT_*` ortam değişkeni yok. Sayfa: `python -m http.server 8767 --bind 127.0.0.1` (tek UI5 sayfası).
+Ham çıktılar: `scratchpad/z56-bg/` (`cli/*.out`, `smoke-*.out`, ölçüm betiği `cli/olc.sh`).
+
+**Yöntem (playwright-cli):** her durum için ayrı klasörde `.playwright/cli.config.json` yazıldı →
+`playwright-cli -s=<oturum> open [--browser x] http://127.0.0.1:8767/index.html` → `open`'ın bildirdiği pid
+**cliDaemon** sürecidir; onun `--type=` içermeyen çocuğu ana tarayıcı sürecidir. O sürecin `Win32_Process.CommandLine`'ı
+okundu → `close`. Bilinmeyen bir işaret argümanı (`--z56-isaret-*`) config'e konup süreçte arandı: argümanın gerçekten
+taşındığını gösteren kontrol.
+
+| # | config `launchOptions` | `open` bayrağı | süreç (`ExecutablePath`) | `--no-sandbox` | işaret |
+|---|---|---|---|---|---|
+| a | `channel: chrome` | — | `…\Google\Chrome\Application\chrome.exe` | **False** | — |
+| e | `channel: msedge` | — | `…\Microsoft\Edge\Application\msedge.exe` | **False** | — |
+| b | `channel: chrome`, `args: ["--no-sandbox"]` (pozitif kontrol) | — | `chrome.exe` | **True** | — |
+| c | `channel: msedge`, `args: ["--z56-isaret-c"]` | `--browser chrome` | `chrome.exe` | False | **True** |
+| d | `channel: chrome`, `args: ["--z56-isaret-d"]` | `--browser msedge` | `msedge.exe` | False | **True** |
+| f | `channel: chrome`, `args: ["--no-sandbox"]` | `--browser msedge` | `msedge.exe` | **True** | — |
+
+Her satırda `open rc=0`, `close` → `Browser '<oturum>' closed`; sonunda `playwright-cli list` → `(no browsers)`.
+
+1. **`open --browser chrome|msedge` config'teki `args`'ı korur — ÖLÇÜLDÜ (normal kabukta).** c/d: `--browser`
+   kanalı ezdi (süreç yolu bayraktaki tarayıcı), config'teki işaret argümanı süreçte duruyor; f: `--no-sandbox` da
+   `--browser msedge` altında süreçte duruyor. aXet içinde `--browser` + config birleşimi ayrıca ölçülmedi.
+2. **Config'te `args` yokken playwright-cli'nin Chrome/Edge süreç komut satırında `--no-sandbox` yok — ÖLÇÜLDÜ
+   (normal kabukta).** a/e: False; kontrol grubu b: aynı yöntem `--no-sandbox`'ı gördüğünde True yazıyor (algılama
+   çalışıyor). Kaynak karşılığı (playwright-core 1.64.0-alpha-1789764292000, `lib/coreBundle.js`):
+   `validateBrowserConfig` (satır 73724-73730) Windows'ta **her kanal için koşulsuz** `chromiumSandbox = true` atar;
+   kanala bağlı ifade (`channel !== void 0 && channel !== "chromium" && channel !== "chrome-for-testing"`) yalnız
+   `process.platform === "linux"` dalındadır. Chromium başlatıcısı `chromiumSandbox !== true` ise `--no-sandbox`
+   ekler (satır 44089-44090).
+3. **ui-smoke `--channel chrome|msedge` rc 0 + başlatma satırında `--no-sandbox`; kanalsız kontrol rc 1
+   `Executable doesn't exist` — ÖLÇÜLDÜ (normal kabukta).** Komut:
+   `DEBUG=pw:browser python run_ui_smoke.py --base-url http://127.0.0.1:8767 --no-auth [--channel chrome|msedge]`
+   (koşucu ve `playwright.config.ts` repodakinin birebir kopyası, `diff` boş):
+   - `--channel chrome`: `pw:browser <launching> C:\Program Files\Google\Chrome\Application\chrome.exe … --no-sandbox …` ·
+     `1 passed (6.7s)` · `rc=0`
+   - `--channel msedge`: `pw:browser <launching> C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe … --no-sandbox …` ·
+     `1 passed (7.0s)` · `rc=0`
+   - kanalsız: `Error: browserType.launch: Executable doesn't exist at C:\Users\<kullanıcı>\AppData\Local\ms-playwright\chromium_headless_shell-1243\chrome-headless-shell-win64\chrome-headless-shell.exe` ·
+     `1 failed` · `rc=1` (tarayıcı indirilmedi).
+   Kaynak karşılığı: test runner `chromiumSandbox` vermez → başlatıcı `--no-sandbox` ekler. Fark bu yüzden
+   playwright-cli (Windows'ta `chromiumSandbox = true`) ile test runner arasındadır.
+
+**Bilgi notu (kaynaktan, ÖLÇÜLMEDİ):** playwright-cli 0.1.21'in `open --help` çıktısında sandbox seçeneği yok (bu kısım
+ölçüldü: yalnız `--browser --config --device --headed --idle-timeout --mobile --persistent --profile`). Kaynakta
+sandbox'ı kapatmanın iki yolu daha görünüyor: config'te `browser.launchOptions.chromiumSandbox: false` (şemada
+`"browser.launchOptions.chromiumSandbox": "boolean"`; `validateBrowserConfig` yalnız tanımsızsa atar) ve
+`PLAYWRIGHT_MCP_SANDBOX` ortam değişkeni (`configFromEnv` → `configFromCLIOptions` → `launchOptions.chromiumSandbox`).
+İkisi de ne aXet'te ne normal kabukta **ölçüldü**; reçete `args: ["--no-sandbox"]` ile kalır (aXet'te ölçülen tek yol o).
+
 ## Açık kalemler (kapsam dışı; düzeltilmedi)
 
 1. **aXet: `fetch` aracının hatası "provider error" gibi ele alınıp BÜTÜN TUR yeniden oynatılıyor.** ⓒ 1. koşumda
