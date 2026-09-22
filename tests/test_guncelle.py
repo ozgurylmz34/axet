@@ -649,7 +649,8 @@ class SecCaprazYayinGerektirirTest(GuncelleTemel):
     # --- Z57 devamı (bug gate MEDIUM): `atlandi` mühürlü önkoşul ------------------------------------
     # `uygulanan.json`'da `durum: atlandi` = kalem seçildi ama HİÇBİR dosyası doğrulanmadı
     # (`_kapanis_git`) — ya `isaretle --karar ertelendi` ile ertelendi ya da yapılacak iş yoktu.
-    # Kayıt bu ikisini AYIRMAZ ({etiket, durum, zaman}). Bağ karşılanmış sayılır (DUR etmek bağımlıyı
+    # Z58 öncesi kayıt ({etiket, durum, zaman}, `neden` YOK) bu ikisini AYIRMAZ — aşağıdaki
+    # `_atlandi_2_01` o eski kaydı kurar. Bağ karşılanmış sayılır (DUR etmek bağımlıyı
     # kalıcı kilitlerdi: atlandi kalem bir daha plana girmez) ama SESSİZ geçmemeli: UYARI + rc 0.
     def _atlandi_2_01(self) -> None:
         """2-01 önceki turda seçildi ama dosyası uygulanmadı (ertelendi): disk ESKİ içerikte."""
@@ -678,6 +679,66 @@ class SecCaprazYayinGerektirirTest(GuncelleTemel):
         self._uygulanmis_2_01()
         self.assertEqual(self.hazirla_ve_planla().returncode, 0)
         self.assertEqual(self.f.plan().get("karsilanan_atlandi"), [])
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("UYARI:", self.cikti(r))
+
+    # --- Z58 (v0.5.4): `atlandi` mührü artık NEDENİNİ taşır ------------------------------------------
+    # `_kapanis_git` atlandi kaleme `neden` yazar: `ertelendi` (en az bir dosyada `isaretle --karar
+    # ertelendi`) · `kabul` (`kapanis --kabul` ile dosyaları bekliyor kaldı) · `is-yok` (planda kalemin
+    # dosyası yoktu). Plan `is-yok` DIŞINDAKİ her atlandi kalemi `karsilanan_atlandi`'ya koyar
+    # (fail-closed: neden yok/tanınmıyor ⇒ uyar); `is-yok` karşılanmış sayılır, UYARI YOK.
+    def _atlandi_2_01_neden(self, neden: str) -> None:
+        d = self.f.durum_dizini()
+        d.mkdir(exist_ok=True)
+        (d / "uygulanan.json").write_text(json.dumps(
+            {"surum": 1, "dosyalar": {},
+             "kalemler": {"2-01": {"etiket": "v2", "durum": "atlandi", "neden": neden,
+                                   "zaman": "2026-01-02T00:00:00"}}},
+            ensure_ascii=False), encoding="utf-8")
+
+    def _tek_uyari(self) -> str:
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        uyari = [s for s in self.cikti(r).splitlines() if s.startswith("UYARI:")]
+        self.assertEqual(len(uyari), 1, self.cikti(r))
+        for parca in ("3-05", "2-01", "atlandi", "diskte"):
+            self.assertIn(parca, uyari[0])
+        return uyari[0]
+
+    def test_Z58_ertelendi_onkosul_UYARI_ertelenmis_der(self):
+        self._atlandi_2_01_neden("ertelendi")
+        uyari = self._tek_uyari()
+        self.assertEqual(self.f.plan().get("karsilanan_atlandi"), ["2-01"])
+        self.assertIn("ertelenmiş", uyari)
+        self.assertNotIn("ayırt edilemiyor", uyari)
+        self.assertNotIn("ikisini ayırmaz", uyari, "eski yanlış cümle kalmamalı")
+
+    def test_Z58_kabul_onkosul_UYARI_kabul_der(self):
+        self._atlandi_2_01_neden("kabul")
+        uyari = self._tek_uyari()
+        self.assertIn("--kabul", uyari)
+        self.assertIn("bekliyor", uyari)
+
+    def test_Z58_eski_kayit_neden_yok_UYARI_eski_kayit_metni(self):
+        self._atlandi_2_01()
+        uyari = self._tek_uyari()
+        self.assertIn("eski kayıt", uyari)
+        self.assertIn("ayırt edilemiyor", uyari)
+
+    def test_Z58_taninmayan_neden_fail_closed_UYARI(self):
+        self._atlandi_2_01_neden("gelecekte-yeni-deger")
+        uyari = self._tek_uyari()
+        self.assertIn("gelecekte-yeni-deger", uyari)
+
+    def test_Z58_is_yok_onkosul_karsilanmis_UYARI_basmaz(self):
+        self._atlandi_2_01_neden("is-yok")
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        plan = self.f.plan()
+        self.assertNotIn("2-01", self._plan_kalem_idleri())
+        self.assertIn("2-01", plan["karsilanan"], "is-yok kalem KARŞILANMIŞ sayılmalı")
+        self.assertEqual(plan.get("karsilanan_atlandi"), [])
         r = self.f.calistir("sec", "--kalem", "3-05")
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertNotIn("UYARI:", self.cikti(r))
@@ -1170,6 +1231,50 @@ class AkisTest(GuncelleTemel):
         # kapanış commit'i atıldı
         son = self.git(self.f.tuketici, "log", "-1", "--format=%s").stdout
         self.assertTrue(son.startswith("guncelle:"), son)
+
+    def test_Z58_kapanis_atlandi_kaleme_neden_yazar_ertelendi_ve_is_yok(self):
+        """Z58: 3-05'in üç dosyası da ertelendi ⇒ `neden: ertelendi`. 2-01/2-02'nin dosyaları
+        (doctor.py, 00-temel.md) v3'ün 3-01/3-02'sinde yeniden beyan edildiği için plan onları
+        SONRAKİ kaleme bağlar (komut_plan adım 3) ⇒ plandaki `dosyalar` boş ⇒ `neden: is-yok`.
+        Uygulanmış kalem `neden` taşımaz."""
+        plan_k = {k["id"]: k for k in self.f.plan()["kalemler"]}
+        self.assertEqual(plan_k["2-01"]["dosyalar"], [], "kurgu: 2-01'in dosyası sonraki kaleme geçmeli")
+        self.assertEqual(plan_k["2-02"]["dosyalar"], [], "kurgu: 2-02'nin dosyası sonraki kaleme geçmeli")
+        self.assertEqual(sorted(d["yol"] for d in plan_k["3-05"]["dosyalar"]),
+                         ["docs/logo.png", "kur.cmd", "skills/cakisan/SKILL.md"])
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        ertelenen = ("docs/logo.png", "kur.cmd", "skills/cakisan/SKILL.md")
+        for yol in ("core/00-temel.md", "scripts/doctor.py", "docs/tasinan2.md"):
+            self.assertEqual(self.f.calistir("isaretle", yol, "--karar", "yeni").returncode, 0)
+        self.assertEqual(self.f.calistir("isaretle", "docs/silinecek.md", "--karar", "yerel").returncode, 0)
+        for yol in ertelenen:
+            r = self.f.calistir("isaretle", yol, "--karar", "ertelendi", "--gerekce", "sonra")
+            self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        u = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-05"]["durum"], kal["3-05"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "is-yok"))
+        self.assertEqual((kal["2-02"]["durum"], kal["2-02"].get("neden")), ("atlandi", "is-yok"))
+        self.assertEqual(kal["3-01"]["durum"], "uygulandi")
+        self.assertNotIn("neden", kal["3-01"], "uygulanmış kalem neden taşımaz")
+
+    def test_Z58_kapanis_kabul_ile_bekleyen_kalem_neden_kabul(self):
+        """`kapanis --kabul` (kod 3) da mühür basar; dosyası `bekliyor` kalan kalem `is-yok`
+        DEĞİLDİR (yoksa önkoşul uyarısı sessizce kaybolurdu) ⇒ `neden: kabul`."""
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("kapanis", "--kabul", "bilerek yarım")
+        self.assertEqual(r.returncode, 3, self.cikti(r))
+        kal = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))["kalemler"]
+        self.assertEqual(self.f.durum()["dosyalar"]["core/00-temel.md"]["durum"], "bekliyor",
+                         "kurgu: 3-02'nin tek dosyası bekliyor kalmalı")
+        self.assertEqual((kal["3-02"]["durum"], kal["3-02"].get("neden")), ("atlandi", "kabul"))
+        self.assertEqual(kal["2-01"].get("neden"), "is-yok")
 
     def test_kapanis_kullanicinin_izlenmeyen_dosyalarini_COMMITLEMEZ(self):
         """§1/§2a kapsam ihlali: `kapanis`'in `git add -A`'sı kullanıcının izlenmeyen
