@@ -29,6 +29,8 @@ koşum başlatıldı, sonuç `scratchpad/z20-v010-dal.log` (oturum scratchpad'i;
 Z25 sabit Python, Z21 `-j 12` ölçümü, Z6/Z7 mutasyon · ⑤ kayıtlar (Z2/3/4 iptal, Z12, Z44, Z45-47 motor notu, Z28-30) · ⑥ yayinlar.json
 v0.5.2 kalemleri → taze bug gate → tam takımlar → PR → yayın. Sabah kullanıcıda: Z37/Z14 (istem + puan tablosu henüz HAZIRLANMADI).
 
+**Z57 ⬜ (YENİ 2026-09-22, PR #27 yayın provası yakaladı):** `scripts/guncelle.py:984-989` `gerektirir` kontrolü yalnız bu turun seçimine bakıyor, ÖNCEKİ yayında UYGULANMIŞ kalemi karşılanmış saymıyor ⇒ çapraz-yayın `gerektirir` (0.5.2-01 → 0.5.1-01) v0.5.1 tüketicisinde `sec --hepsi` DUR (rc=2). v0.5.2'de geçici çare: 01/02/03'ün çapraz bağları kaldırıldı (geçmişte başka çapraz bağ yok — ölçüldü). Kalıcı: ① motor uygulanmış kalemi karşılanmış saysın (kırmızı-önce test) ② `yayin_hazirla --yalniz-dogrula` motor düzelene dek çapraz-yayın bağında uyarsın.
+
 **Z56 ⬜ (YENİ 2026-09-22, kullanıcı sorusu):** aXet'in UI5/RAP uygulamasını yerelde başlatıp tarayıcıda test etmesi. Araştırma: `maintenance/degerlendirme/2026-09-22-tarayici-test-arastirmasi.md`. Lider teyidi (`npm view` + `gh api`, 2026-09-22): `@playwright/cli` 0.1.21 = `microsoft/playwright-cli` ★13.5k Apache-2.0 · `vercel-labs/agent-browser` ★43k Apache-2.0 · `playwright-praman` ★11 (UI5'e özgü, genç) · crush #2826 (tarayıcı aracı) AÇIK. Sıradaki: aXet oturumunda ölç ⓐ `view` PNG gösteriyor mu ⓑ playwright-cli/agent-browser bash+job_output ile `ui5 serve` + smoke ⓒ açık Chrome'a CDP bağlanma. Ölçmeden skill'e yazılmaz.
 
 ⛔ **KRİTİK (kullanıcıya):** public `ozgurylmz34/axet` PR commit'lerinde kurumsal e-posta görünür (PR #25: 14, PR #26: 10 commit) — geri

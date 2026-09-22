@@ -988,9 +988,7 @@
       "scripts/doctor.py",
       "tests/test_doctor.py"
      ],
-     "gerektirir": [
-      "0.5.1-01"
-     ],
+     "gerektirir": [],
      "test": [
       "python tests/run_tests.py -k doctor"
      ]
@@ -1006,9 +1004,7 @@
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/composite.py",
       "skills-sap/sap-adt-foundation/tests/test_ddic_textpool.py"
      ],
-     "gerektirir": [
-      "0.5.1-11"
-     ],
+     "gerektirir": [],
      "test": [
       "python skills-sap/sap-adt-foundation/tests/run_tests.py"
      ]
@@ -1023,9 +1019,7 @@
       "scripts/guncelle_proje.py",
       "tests/test_guncelle_proje.py"
      ],
-     "gerektirir": [
-      "0.5.1-01"
-     ],
+     "gerektirir": [],
      "test": [
       "python tests/run_tests.py -k guncelle_proje"
      ]
