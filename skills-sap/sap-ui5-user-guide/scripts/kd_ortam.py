@@ -10,9 +10,16 @@ Alt komutlar:
         makinesinde güvenlik duvarı izni ister.
         Çıkış: 0 hepsi tamam · 2 en az bir eksik ya da kullanım hatası.
 
-    python kd_ortam.py config --proje <uygulama_dizini> [--zorla]
-        <uygulama>/.playwright/cli.config.json dosyasını Chrome kanalına sabitler. İdempotenttir.
-        Farklı içerikli bir kullanıcı dosyası varsa `--zorla` verilmeden EZİLMEZ (--zorla eskisini .bak'a alır).
+    python kd_ortam.py config --proje <uygulama_dizini> [--kanal chrome|msedge] [--no-sandbox] [--zorla]
+        <uygulama>/.playwright/cli.config.json dosyasını Chrome kanalına (ya da `--kanal msedge` ile Edge'e)
+        sabitler. İdempotenttir. Farklı içerikli bir kullanıcı dosyası varsa `--zorla` verilmeden EZİLMEZ
+        (--zorla eskisini .bak'a alır). Tek istisna: dosya zaten istenen kanala sabitse ve yalnız `--no-sandbox`
+        eksikse, diğer anahtarlara dokunmadan `launchOptions.args`'a eklenir.
+        `--no-sandbox`: aXet.code bash'inde config'siz ya da bu argümansız `playwright-cli open`
+        "Session closed"/"Target crashed" ile düştü; `{"channel":"chrome"|"msedge","args":["--no-sandbox"]}` ile
+        açıldı (ölçüldü 2026-09-22, playwright-cli 0.1.21; sebep DOĞRULANMADI). playwright-cli chrome/msedge
+        kanalında sandbox'ı AÇIK başlatır (`chromiumSandbox = true`, coreBundle.js; süreç komut satırında
+        `--no-sandbox` yok, ölçüldü). Süreç izolasyonunu kapatır: yalnız yerel/güvenilir sayfa.
         Çıkış: 0 yazıldı / zaten uygun · 2 ezilmedi ya da kullanım hatası.
 
 Şema kaynağı (tahmin değil, @playwright/cli 0.1.21 · playwright-core 1.64.0-alpha içinden okundu):
@@ -42,7 +49,18 @@ for _s in (sys.stdout, sys.stderr):
 
 PLAYWRIGHT_CLI_SURUM = "0.1.21"  # ölçülen sürüm; kurulum komutu bunu sabitler
 KANAL = "chrome"
-HEDEF_CONFIG = {"browser": {"browserName": "chromium", "launchOptions": {"channel": KANAL}}}
+KANALLAR = ("chrome", "msedge")
+NO_SANDBOX = "--no-sandbox"
+
+
+def hedef_config(kanal=KANAL, no_sandbox=False):
+    lo = {"channel": kanal}
+    if no_sandbox:
+        lo["args"] = [NO_SANDBOX]
+    return {"browser": {"browserName": "chromium", "launchOptions": lo}}
+
+
+HEDEF_CONFIG = hedef_config()
 CONFIG_GORELI = os.path.join(".playwright", "cli.config.json")
 MOCKSERVER_PAKET = "@sap-ux/ui5-middleware-fe-mockserver"
 NODE_ASGARI = 18  # @playwright/cli package.json engines: node >=18
@@ -59,8 +77,10 @@ KAPSAM_CHECK = ("KAPSAM (SCOPE): kd_ortam check — bakılanlar: node sürümü,
                 "dosyaları, npm ağ/proxy erişimi, ~/.playwright global config'inin etkisi (yalnız uyarılır)."
                 % MOCKSERVER_PAKET)
 KAPSAM_CONFIG = ("KAPSAM (SCOPE): kd_ortam config — yalnız <proje>/.playwright/cli.config.json dosyasının browser "
-                 "anahtarlarına bakar. Bakılmayanlar: `playwright-cli open --browser <x>` bayrağı ve "
-                 "PLAYWRIGHT_MCP_* ortam değişkenleri dosyayı EZER (yalnız uyarılır); ~/.playwright global "
+                 "anahtarlarına bakar. Bakılmayanlar: `playwright-cli open --browser <x>` bayrağı kanalı EZER "
+                 "(launchOptions.args korunur — ölçüldü 2026-09-22) ve "
+                 "PLAYWRIGHT_MCP_* ortam değişkenleri dosyayı EZER (yalnız uyarılır); `--no-sandbox`'ın aXet.code'da "
+                 "yeterli olduğu yalnız playwright-cli `open` için ölçüldü; ~/.playwright global "
                  "config'inin kalan anahtarları; tarayıcının gerçekten açıldığı. İndirme riskini bu dosya "
                  "KAPATMAZ — izin kuralları (config/permissions.json) kapatır.")
 
@@ -163,6 +183,9 @@ def ortam_uyarilari(env=None):
     return ["%s ortam değişkeni tanımlı — config dosyasındaki tarayıcı seçimini ezer" % k for k in EZEN_ORTAM if env.get(k)]
 
 
+SANDBOX_NOTU = ("aXet.code bash'inde `open` %s olmadan düştü (ölçüldü, playwright-cli 0.1.21) → orada "
+                "`python kd_ortam.py config --proje <dizin> --no-sandbox`; diğer kabuklarda gerekmez" % NO_SANDBOX)
+
 BIND_NOTU = ("NOT: yerel sunucuyu 127.0.0.1'e bağla (ör. `python -m http.server <port> --bind 127.0.0.1`) — "
              "0.0.0.0'ı dinleyen bir süreç şirket makinesinde güvenlik duvarı izni ister (yaşandı 2026-09-21).")
 
@@ -245,6 +268,7 @@ def cmd_check(proje, env=None):
         "farkli": "Chrome'a sabit DEĞİL → `python kd_ortam.py config --proje <dizin>`",
         "bozuk": "okunamadı (JSON değil)"}
     _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json (Chrome)", cfg_metni[cfg]))
+    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", SANDBOX_NOTU))
     pj, _ = package_json_oku(proje)
     host_ozet, uzak = start_mock_host_tespiti(((pj or {}).get("scripts") or {}).get("start-mock"))
     _cikti("  %-5s %-26s %s" % ("UYARI" if uzak else "BİLGİ", "start-mock host/bind", host_ozet))
@@ -264,9 +288,10 @@ def cmd_check(proje, env=None):
 
 # --------------------------------------------------------------------------- config
 
-def _uygun_mu(veri):
-    """Dosya zaten Chrome'a sabit mi: browserName chromium (ya da yok) + launchOptions.channel == chrome ve
-    kanalı geçersiz kılan executablePath yok. Kullanıcının diğer anahtarları serbesttir."""
+def _uygun_mu(veri, kanal=KANAL, no_sandbox=False):
+    """Dosya zaten istenen kanala sabit mi: browserName chromium (ya da yok) + launchOptions.channel == kanal ve
+    kanalı geçersiz kılan executablePath yok; `no_sandbox` istendiyse launchOptions.args '--no-sandbox' içerir.
+    Kullanıcının diğer anahtarları (fazladan args dahil) serbesttir."""
     if not isinstance(veri, dict):
         return False
     b = veri.get("browser")
@@ -275,12 +300,19 @@ def _uygun_mu(veri):
     lo = b.get("launchOptions")
     if not isinstance(lo, dict):
         return False
-    return (b.get("browserName", "chromium") == "chromium" and lo.get("channel") == KANAL
-            and not lo.get("executablePath") and not b.get("cdpEndpoint") and not b.get("remoteEndpoint"))
+    temel = (b.get("browserName", "chromium") == "chromium" and lo.get("channel") == kanal
+             and not lo.get("executablePath") and not b.get("cdpEndpoint") and not b.get("remoteEndpoint"))
+    return temel and (not no_sandbox or _sandbox_kapali(lo))
 
 
-def config_durumu(proje):
-    """('yok'|'uygun'|'farkli'|'bozuk', yol, ham_metin)."""
+def _sandbox_kapali(lo):
+    args = lo.get("args") if isinstance(lo, dict) else None
+    return isinstance(args, list) and NO_SANDBOX in args
+
+
+def config_durumu(proje, kanal=KANAL, no_sandbox=False):
+    """('yok'|'uygun'|'eksik-sandbox'|'farkli'|'bozuk', yol, ham_metin).
+    'eksik-sandbox' = kanal uygun, yalnız istenen '--no-sandbox' yok (güvenle eklenebilir)."""
     yol = os.path.join(proje, CONFIG_GORELI)
     if not os.path.isfile(yol):
         return "yok", yol, None
@@ -290,40 +322,59 @@ def config_durumu(proje):
         veri = json.loads(ham)
     except ValueError:
         return "bozuk", yol, ham
-    return ("uygun" if _uygun_mu(veri) else "farkli"), yol, ham
+    if _uygun_mu(veri, kanal, no_sandbox):
+        return "uygun", yol, ham
+    if no_sandbox and _uygun_mu(veri, kanal):
+        args = veri["browser"]["launchOptions"].get("args")
+        if args is None or isinstance(args, list):
+            return "eksik-sandbox", yol, ham
+    return "farkli", yol, ham
 
 
-def _yaz(yol):
+def _yaz(yol, veri=None):
     os.makedirs(os.path.dirname(yol), exist_ok=True)
     with open(yol, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(json.dumps(HEDEF_CONFIG, indent=2, ensure_ascii=False) + "\n")
+        fh.write(json.dumps(HEDEF_CONFIG if veri is None else veri, indent=2, ensure_ascii=False) + "\n")
 
 
-def cmd_config(proje, zorla=False, env=None):
+def _ozet(kanal, no_sandbox):
+    return "kanal %s%s" % (kanal, " · %s" % NO_SANDBOX if no_sandbox else "")
+
+
+def cmd_config(proje, zorla=False, env=None, kanal=KANAL, no_sandbox=False):
     _cikti(KAPSAM_CONFIG)
     if not os.path.isdir(proje):
         print("HATA: uygulama dizini yok: %s" % proje, file=sys.stderr)
         return 2
-    durum, yol, ham = config_durumu(proje)
+    durum, yol, ham = config_durumu(proje, kanal, no_sandbox)
     for u in filter(None, [global_config_uyarisi(env)] + ortam_uyarilari(env)):
         _cikti("UYARI: " + u)
+    if no_sandbox:
+        _cikti("NOT: %s süreç izolasyonunu kapatır — yalnız yerel/güvenilir sayfalarda kullan." % NO_SANDBOX)
     if durum == "uygun":
-        _cikti("ZATEN UYGUN (dokunulmadı): %s — kanal %s" % (yol, KANAL))
+        _cikti("ZATEN UYGUN (dokunulmadı): %s — %s" % (yol, _ozet(kanal, no_sandbox)))
         return 0
     if durum == "yok":
-        _yaz(yol)
-        _cikti("YAZILDI: %s — kanal %s" % (yol, KANAL))
+        _yaz(yol, hedef_config(kanal, no_sandbox))
+        _cikti("YAZILDI: %s — %s" % (yol, _ozet(kanal, no_sandbox)))
+        return 0
+    if durum == "eksik-sandbox":
+        veri = json.loads(ham)
+        lo = veri["browser"]["launchOptions"]
+        lo["args"] = list(lo.get("args") or []) + [NO_SANDBOX]
+        _yaz(yol, veri)
+        _cikti("EKLENDİ: %s — launchOptions.args'a %s (diğer anahtarlara dokunulmadı)" % (yol, NO_SANDBOX))
         return 0
     if not zorla:
         print("HATA: %s farklı içerikli (%s) bir kullanıcı dosyası; EZİLMEDİ. İncele, gerekiyorsa --zorla ile yeniden "
-              "koş (eskisi .bak'a alınır)." % (yol, "JSON değil" if durum == "bozuk" else "Chrome'a sabit değil"),
+              "koş (eskisi .bak'a alınır)." % (yol, "JSON değil" if durum == "bozuk" else "%s'a sabit değil" % kanal),
               file=sys.stderr)
         return 2
     yedek = yol + ".bak"
     with open(yedek, "w", encoding="utf-8", newline="") as fh:
         fh.write(ham)
-    _yaz(yol)
-    _cikti("YAZILDI (--zorla): %s — kanal %s · eski içerik: %s" % (yol, KANAL, yedek))
+    _yaz(yol, hedef_config(kanal, no_sandbox))
+    _cikti("YAZILDI (--zorla): %s — %s · eski içerik: %s" % (yol, _ozet(kanal, no_sandbox), yedek))
     return 0
 
 
@@ -335,8 +386,11 @@ def main(argv):
     alt = p.add_subparsers(dest="komut")
     c = alt.add_parser("check", help="bağımlılık tablosu (kurmaz)")
     c.add_argument("--proje", required=True, help="UI5 uygulama dizini (package.json içeren)")
-    k = alt.add_parser("config", help=".playwright/cli.config.json'u Chrome kanalına sabitler")
+    k = alt.add_parser("config", help=".playwright/cli.config.json'u Chrome (ya da Edge) kanalına sabitler")
     k.add_argument("--proje", required=True, help="UI5 uygulama dizini")
+    k.add_argument("--kanal", choices=KANALLAR, default=KANAL, help="kurulu tarayıcı kanalı (varsayılan chrome)")
+    k.add_argument("--no-sandbox", action="store_true",
+                   help="launchOptions.args'a --no-sandbox (aXet.code bash'i için; yalnız yerel/güvenilir sayfa)")
     k.add_argument("--zorla", action="store_true", help="farklı içerikli dosyayı ez (eskisi .bak'a)")
     try:
         a = p.parse_args(argv)
@@ -348,7 +402,7 @@ def main(argv):
     proje = os.path.abspath(a.proje)
     if a.komut == "check":
         return cmd_check(proje)
-    return cmd_config(proje, a.zorla)
+    return cmd_config(proje, a.zorla, kanal=a.kanal, no_sandbox=a.no_sandbox)
 
 
 if __name__ == "__main__":
