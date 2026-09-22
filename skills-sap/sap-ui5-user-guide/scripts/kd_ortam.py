@@ -72,13 +72,14 @@ EZEN_ORTAM = ("PLAYWRIGHT_MCP_BROWSER", "PLAYWRIGHT_MCP_EXECUTABLE_PATH", "PLAYW
               "PLAYWRIGHT_MCP_CDP_ENDPOINT")
 
 KAPSAM_CHECK = ("KAPSAM (SCOPE): kd_ortam check — bakılanlar: node sürümü, Chrome yürütülebilir dosyası, uygulamada "
-                "yerel @playwright/cli ve playwright-core, python markdown, package.json'da %s devDependency'si ve "
+                "yerel ya da merkezi (<klon>/.araclar/playwright-cli) @playwright/cli ve playwright-core, python markdown, package.json'da %s devDependency'si ve "
                 "start-mock script'i, start-mock komut metnindeki host/bind bayrakları (yalnız metin), "
                 "<proje>/.playwright/cli.config.json'un chrome ya da msedge kanalına sabit olup olmadığı ve "
-                "launchOptions.args'ta --no-sandbox bulunup bulunmadığı. "
+                "launchOptions.args'ta --no-sandbox bulunup bulunmadığı, ~/.playwright/cli.config.json'un aynı iki "
+                "özelliği. "
                 "Bakılmayanlar: Chrome'un gerçekten açılabildiği (config sonrası "
                 "`playwright-cli open` ile ölçülür), mock sunucunun ayağa kalktığı, ui5-mock.yaml içeriği, mock veri "
-                "dosyaları, npm ağ/proxy erişimi, ~/.playwright global config'inin etkisi (yalnız uyarılır)."
+                "dosyaları, npm ağ/proxy erişimi, global config'in diğer anahtarlarının etkisi (yalnız uyarılır)."
                 % MOCKSERVER_PAKET)
 KAPSAM_CONFIG = ("KAPSAM (SCOPE): kd_ortam config — yalnız <proje>/.playwright/cli.config.json dosyasının browser "
                  "anahtarlarına bakar. Bakılmayanlar: `playwright-cli open --browser <x>` bayrağı kanalı EZER "
@@ -133,9 +134,28 @@ def _node_major(surum):
     return int(m.group(1)) if m else None
 
 
-def playwright_cli_yolu(proje):
-    paket = os.path.join(proje, "node_modules", "@playwright", "cli", "package.json")
-    if not os.path.isfile(paket):
+# Merkezi kurulum (v0.5.4, Z60): install.py ve %guncelle `scripts/tarayici_hazirla.py` ile template klonuna kurar;
+# proje başına kurulum gerekmez. Bu dosya <klon>/skills-sap/sap-ui5-user-guide/scripts/ altındadır → klon = parents[3].
+MERKEZI_GORELI = os.path.join(".araclar", "playwright-cli")
+MERKEZI_ORTAM = "AXET_MERKEZI_ARAC"  # merkezi dizini ezer (test ve ölçüm lab'ı için)
+
+
+_KLON = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+HAZIRLA_BETIGI = os.path.join(_KLON, "scripts", "tarayici_hazirla.py")
+
+
+def merkezi_dizin(env=None):
+    env = os.environ if env is None else env
+    return env.get(MERKEZI_ORTAM) or os.path.join(_KLON, MERKEZI_GORELI)
+
+
+def playwright_cli_yolu(proje, env=None):
+    """Önce projede (yerel kurulum), yoksa merkezi dizinde @playwright/cli: (paket dizini, sürüm) ya da (None, None)."""
+    for kok in (proje, merkezi_dizin(env)):
+        paket = os.path.join(kok, "node_modules", "@playwright", "cli", "package.json")
+        if os.path.isfile(paket):
+            break
+    else:
         return None, None
     try:
         with open(paket, encoding="utf-8") as fh:
@@ -145,9 +165,12 @@ def playwright_cli_yolu(proje):
     return os.path.dirname(paket), surum
 
 
-def playwright_core_yolu(proje):
+def playwright_core_yolu(proje, env=None):
+    merkez = merkezi_dizin(env)
     for aday in (os.path.join(proje, "node_modules", "playwright-core"),
-                 os.path.join(proje, "node_modules", "@playwright", "cli", "node_modules", "playwright-core")):
+                 os.path.join(proje, "node_modules", "@playwright", "cli", "node_modules", "playwright-core"),
+                 os.path.join(merkez, "node_modules", "playwright-core"),
+                 os.path.join(merkez, "node_modules", "@playwright", "cli", "node_modules", "playwright-core")):
         if os.path.isfile(os.path.join(aday, "package.json")):
             return aday
     return None
@@ -164,12 +187,20 @@ def package_json_oku(proje):
         return None, "package.json okunamadı: %s" % exc
 
 
+def global_ev(env=None):
+    """playwright-cli'nin GLOBAL config için baktığı ev dizini: `PWTEST_CLI_GLOBAL_CONFIG` ya da `os.homedir()`
+    (Windows'ta USERPROFILE). Kaynak: coreBundle.js resolveCLIConfigForCLI →
+    `path.join(env.PWTEST_CLI_GLOBAL_CONFIG ?? os.homedir(), ".playwright", "cli.config.json")`. Global dosya bu
+    dizinin altında proje dosyasıyla AYNI göreli yoldadır (CONFIG_GORELI) ⇒ config_durumu(global_ev(), …) çalışır.
+    Paylaşılır: scripts/tarayici_hazirla.py (v0.5.4)."""
+    env = os.environ if env is None else env
+    return env.get("PWTEST_CLI_GLOBAL_CONFIG") or os.path.expanduser("~")
+
+
 def global_config_uyarisi(env=None):
     """~/.playwright/cli.config.json varsa ve browser anahtarı taşıyorsa uyarı metni (proje dosyasının ALTINA birleşir:
     ör. executablePath orada kalırsa kanalın yerine geçer)."""
-    env = os.environ if env is None else env
-    ev = env.get("PWTEST_CLI_GLOBAL_CONFIG") or os.path.expanduser("~")
-    yol = os.path.join(ev, ".playwright", "cli.config.json")
+    yol = os.path.join(global_ev(env), CONFIG_GORELI)
     if not os.path.isfile(yol):
         return None
     try:
@@ -177,6 +208,9 @@ def global_config_uyarisi(env=None):
             veri = json.load(fh)
     except Exception:
         return "global config okunamadı (%s) — içeriği elle incele" % yol
+    ev = global_ev(env)
+    if any(config_durumu(ev, k, True)[0] == "uygun" for k in KANALLAR):
+        return None  # tarayici_hazirla.py'nin yazdığı biçim (kanal chrome/msedge + --no-sandbox): beklenen durum
     if isinstance(veri, dict) and "browser" in veri:
         return "global config browser anahtarı taşıyor (%s) — proje dosyasının altına birleşir, incele" % yol
     return None
@@ -229,12 +263,13 @@ def denetle(proje, env=None):
     satirlar.append(("Chrome", bool(chrome), chrome or "YOK",
                      None if chrome else "Google Chrome kurulmalı (sistem kurulumu; Playwright ile İNDİRİLMEZ)"))
 
-    cli_dizin, cli_surum = playwright_cli_yolu(proje)
-    komut_cli = 'npm install --prefix "%s" --save-dev @playwright/cli@%s' % (proje, PLAYWRIGHT_CLI_SURUM)
-    satirlar.append(("playwright-cli (yerel)", bool(cli_dizin),
+    cli_dizin, cli_surum = playwright_cli_yolu(proje, env)
+    komut_cli = ('python "%s"  (merkezi kurulum @playwright/cli@%s; install.py ve %%guncelle zaten koşar, proje başına '
+                 'kurulum gerekmez)' % (HAZIRLA_BETIGI, PLAYWRIGHT_CLI_SURUM))
+    satirlar.append(("playwright-cli", bool(cli_dizin),
                      ("%s (%s)" % (cli_surum, cli_dizin)) if cli_dizin else "YOK", None if cli_dizin else komut_cli))
 
-    core = playwright_core_yolu(proje)
+    core = playwright_core_yolu(proje, env)
     satirlar.append(("playwright-core", bool(core),
                      ("%s  → capture_kd_screens.js için PLAYWRIGHT_CORE_PATH=%s" % (core, core)) if core else "YOK",
                      None if core else komut_cli + "  (playwright-core bağımlılık olarak gelir)"))
@@ -272,12 +307,14 @@ def cmd_check(proje, env=None):
     cfg_metni = {
         "uygun": "%s kanalına sabit" % {"chrome": "Chrome", "msedge": "Edge"}.get(kanal, kanal),
         "yok": "YOK → config yokken @playwright/cli varsayılanı zaten chromium + kanal chrome "
-               "(validateBrowserConfig); sabitlemek için `python kd_ortam.py config --proje <dizin>` koş",
+               "(validateBrowserConfig); global ~/.playwright/cli.config.json %s (install.py/%%guncelle yazar: "
+               "tarayici_hazirla.py). Proje dosyası yalnız proje-düzeyi istisna için: "
+               "`python kd_ortam.py config --proje <dizin>`" % global_ozet(env),
         "farkli": "Chrome'a da Edge'e de sabit DEĞİL (kullanıcı dosyası) → ezmek için "
                   "`python kd_ortam.py config --proje <dizin> [--kanal msedge] --zorla` (eskisi .bak'a alınır)",
         "bozuk": "okunamadı (JSON değil)"}
     _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json kanalı", cfg_metni[cfg]))
-    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", sandbox_metni(proje, kanal, zorla=(cfg == "farkli"))))
+    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", sandbox_metni(proje, kanal, zorla=(cfg == "farkli"), env=env)))
     pj, _ = package_json_oku(proje)
     host_ozet, uzak = start_mock_host_tespiti(((pj or {}).get("scripts") or {}).get("start-mock"))
     _cikti("  %-5s %-26s %s" % ("UYARI" if uzak else "BİLGİ", "start-mock host/bind", host_ozet))
@@ -353,10 +390,25 @@ def config_kanali(proje):
     return durum, None
 
 
-def sandbox_metni(proje, kanal=None, zorla=False):
+def global_ozet(env=None):
+    """Global dosyanın durumu (check metni için): chrome/msedge'e sabit ve --no-sandbox'lı mı."""
+    ev = global_ev(env)
+    durum = "yok"
+    for kanal in KANALLAR:
+        durum = config_durumu(ev, kanal, True)[0]
+        if durum == "uygun":
+            return "VAR (kanal %s · %s)" % (kanal, NO_SANDBOX)
+    return {"yok": "YOK", "eksik-sandbox": "var ama %s eksik" % NO_SANDBOX, "bozuk": "okunamadı (JSON değil)"}.get(
+        durum, "farklı içerikli (kullanıcı dosyası)")
+
+
+def sandbox_metni(proje, kanal=None, zorla=False, env=None):
     """check için: dosyadaki launchOptions.args'ta '--no-sandbox' olup olmadığını (sabit metin değil) yazar."""
     yol = os.path.join(proje, CONFIG_GORELI)
     if not os.path.isfile(yol):
+        g = global_ozet(env)
+        if g.startswith("VAR"):
+            return ("config YOK → global dosya geçerli: %s — aXet.code'da yeterli (ölçüldü 2026-09-22, Z60)" % g)
         durum = "config YOK → %s yok" % NO_SANDBOX
     else:
         try:
@@ -375,6 +427,15 @@ def _yaz(yol, veri=None):
     os.makedirs(os.path.dirname(yol), exist_ok=True)
     with open(yol, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(json.dumps(HEDEF_CONFIG if veri is None else veri, indent=2, ensure_ascii=False) + "\n")
+
+
+def sandbox_ekle(yol, ham):
+    """config_durumu 'eksik-sandbox' dediği dosyaya YALNIZ launchOptions.args'a '--no-sandbox' ekler; diğer anahtarlar
+    (kullanıcının fazladan args'ı dahil) korunur. Paylaşılır: scripts/tarayici_hazirla.py global config için (v0.5.4)."""
+    veri = json.loads(ham)
+    lo = veri["browser"]["launchOptions"]
+    lo["args"] = list(lo.get("args") or []) + [NO_SANDBOX]
+    _yaz(yol, veri)
 
 
 def _ozet(kanal, no_sandbox):
@@ -399,10 +460,7 @@ def cmd_config(proje, zorla=False, env=None, kanal=KANAL, no_sandbox=False):
         _cikti("YAZILDI: %s — %s" % (yol, _ozet(kanal, no_sandbox)))
         return 0
     if durum == "eksik-sandbox":
-        veri = json.loads(ham)
-        lo = veri["browser"]["launchOptions"]
-        lo["args"] = list(lo.get("args") or []) + [NO_SANDBOX]
-        _yaz(yol, veri)
+        sandbox_ekle(yol, ham)
         _cikti("EKLENDİ: %s — launchOptions.args'a %s (diğer anahtarlara dokunulmadı)" % (yol, NO_SANDBOX))
         return 0
     if not zorla:

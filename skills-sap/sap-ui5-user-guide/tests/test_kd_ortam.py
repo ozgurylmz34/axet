@@ -50,7 +50,8 @@ def chromesuz_env(kok):
 
 def temiz_env(kok):
     """Global config ve kanal-ezen ortam değişkenleri testi etkilemesin."""
-    env = {"PWTEST_CLI_GLOBAL_CONFIG": os.path.join(kok, "ev-yok")}
+    env = {"PWTEST_CLI_GLOBAL_CONFIG": os.path.join(kok, "ev-yok"),
+           kd_ortam.MERKEZI_ORTAM: os.path.join(kok, "merkez-yok")}  # makinedeki merkezi kurulum sonucu etkilemesin
     for k in kd_ortam.EZEN_ORTAM:
         env[k] = ""
     return env
@@ -97,11 +98,12 @@ class KdOrtamCheckTest(unittest.TestCase):
         self.assertEqual(once, sonra, "check dizine bir şey yazdı/kurdu")
         self.assertIn("KURULUM KOMUTLARI", r.stdout)
         self.assertIn("--save-dev @sap-ux/ui5-middleware-fe-mockserver", r.stdout)
-        self.assertIn("--save-dev @playwright/cli@0.1.21", r.stdout)
+        self.assertIn("tarayici_hazirla.py", r.stdout)  # proje başına npm kurulumu ÖNERİLMEZ (v0.5.4, merkezi)
+        self.assertNotIn("--save-dev @playwright/cli", r.stdout)
         self.assertIn("scripts.start-mock", r.stdout)
         self.assertRegex(r.stdout, r"EKSİK\s+mockserver devDependency")
         self.assertRegex(r.stdout, r"EKSİK\s+start-mock script'i")
-        self.assertRegex(r.stdout, r"EKSİK\s+playwright-cli \(yerel\)")
+        self.assertRegex(r.stdout, r"EKSİK\s+playwright-cli\s+YOK")
 
     @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama sırasına göre")
     def test_check_chrome_yok_eksik_ve_indirme_onermez(self):
@@ -273,6 +275,60 @@ class KdOrtamCheckTest(unittest.TestCase):
             r = run_py("kd_ortam.py", "check", "--proje", app, env=env)
         self.assertIn("global config browser anahtarı taşıyor", r.stdout)
         self.assertIn("PLAYWRIGHT_MCP_BROWSER ortam değişkeni tanımlı", r.stdout)
+
+
+class KdOrtamMerkeziTest(unittest.TestCase):
+    """v0.5.4 (Z60): merkezi kurulum (<klon>/.araclar/playwright-cli) + global ~/.playwright config."""
+
+    def _merkez(self, t):
+        m = os.path.join(t, "merkez")
+        yaz_json(os.path.join(m, "node_modules", "@playwright", "cli", "package.json"), {"version": "0.1.21"})
+        yaz_json(os.path.join(m, "node_modules", "playwright-core", "package.json"), {"version": "1.64.0"})
+        return m
+
+    def test_merkezi_kurulum_projede_yokken_bulunur(self):
+        with gecici_dizin() as t:
+            app = os.path.join(t, "app")
+            os.makedirs(app)
+            m = self._merkez(t)
+            env = dict(temiz_env(t), **{kd_ortam.MERKEZI_ORTAM: m})
+            dizin, surum = kd_ortam.playwright_cli_yolu(app, env)
+            core = kd_ortam.playwright_core_yolu(app, env)
+        self.assertEqual("0.1.21", surum)
+        self.assertTrue(dizin.startswith(m), dizin)
+        self.assertEqual(os.path.join(m, "node_modules", "playwright-core"), core)
+
+    def test_proje_kurulumu_merkeziden_once_gelir(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            env = dict(temiz_env(t), **{kd_ortam.MERKEZI_ORTAM: self._merkez(t)})
+            dizin, _ = kd_ortam.playwright_cli_yolu(app, env)
+        self.assertTrue(dizin.startswith(app), dizin)
+
+    def test_global_uygunsa_sandbox_satiri_globali_soyler_uyari_yok(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            ev = os.path.join(t, "ev")
+            yaz_json(os.path.join(ev, ".playwright", "cli.config.json"), kd_ortam.hedef_config("chrome", True))
+            env = dict(temiz_env(t), PWTEST_CLI_GLOBAL_CONFIG=ev)
+            r = run_py("kd_ortam.py", "check", "--proje", app, env=env)
+        self.assertRegex(r.stdout, r"BİLGİ\s+cli.config.json sandbox\s+config YOK → global dosya geçerli: VAR")
+        self.assertIn("global ~/.playwright/cli.config.json VAR (kanal chrome", r.stdout)
+        self.assertNotIn("global config browser anahtarı taşıyor", r.stdout)
+
+    def test_global_ev_ve_sandbox_ekle_paylasilan(self):
+        """tarayici_hazirla.py bu iki fonksiyonu kullanır: global yol playwright-core'un kuralıyla aynı olmalı."""
+        with gecici_dizin() as t:
+            self.assertEqual(t, kd_ortam.global_ev({"PWTEST_CLI_GLOBAL_CONFIG": t}))
+            yol = os.path.join(t, ".playwright", "cli.config.json")
+            yaz_json(yol, {"browser": {"launchOptions": {"channel": "msedge", "args": ["--x"]}}, "diger": 1})
+            durum, _, ham = kd_ortam.config_durumu(t, "msedge", True)
+            self.assertEqual("eksik-sandbox", durum)
+            kd_ortam.sandbox_ekle(yol, ham)
+            with open(yol, encoding="utf-8") as fh:
+                veri = json.load(fh)
+        self.assertEqual(["--x", "--no-sandbox"], veri["browser"]["launchOptions"]["args"])
+        self.assertEqual(1, veri["diger"])
 
 
 class KdOrtamConfigTest(unittest.TestCase):
