@@ -870,7 +870,13 @@ def komut_plan(b: Baglam, args) -> int:
     eksik_kartlar: set[str] = set()
     for kid, (etiket, kalem) in kalem_kaydi.items():
         dosyalar, ozel_adimlar = [], []
+        # Z58 bug gate (v0.5.4): kalemin BEYAN ETTİĞİ ve EYLEM gerektiren ama sonraki bir kaleme
+        # devredilen yollar → yeni sahipleri. `_atlandi_nedeni` dosyasız kalemi yalnız bu yolların
+        # içeriği bu turda gerçekten indiyse `is-yok` sayar; aksi hâlde devir sessiz bir kayıptı.
+        devredilen: dict[str, str] = {}
         for yol in sorted(beyan[kid]):
+            if yol in vaka_kayitlari and yol_kalemi.get(yol) not in (None, kid):
+                devredilen[yol] = yol_kalemi[yol]
             if yol_kalemi.get(yol) != kid or yol not in vaka_kayitlari:
                 continue
             kayit = dict(vaka_kayitlari[yol])
@@ -906,7 +912,7 @@ def komut_plan(b: Baglam, args) -> int:
             "kritik": bool(kalem.get("kritik") or kalem.get("tur") == "guvenlik"),
             "gerektirir": kalem.get("gerektirir", []), "min_axet": kalem.get("min_axet"),
             "yayin": etiket, "paket": paketler[kid], "dosyalar": dosyalar,
-            "testler": testler, "ozel_adimlar": sorted(set(ozel_adimlar)),
+            "devredilen": devredilen, "testler": testler, "ozel_adimlar": sorted(set(ozel_adimlar)),
         })
 
     # Kapsamda EYLEM gerektiren ama hiçbir kalemin `dosyalar` listesinde geçmeyen yollar:
@@ -1989,24 +1995,41 @@ def _tek_satir(metin: str | None) -> str:
     return " ".join((metin or "").split())
 
 
-def _atlandi_nedeni(kalem: dict, durum: dict) -> str:
+def _atlandi_nedeni(kalem: dict, durum: dict, uygulanan_kalemler: set) -> str | None:
     """Z58 (v0.5.4): hiçbir dosyası `dogrulandi` olmayan kalemin `uygulanan.json` mührüne NEDEN.
 
     Kapanış anında güvenilir biçimde bilinir: `durum` bu turun `durum.json`'udur (`komut_kapanis`
     okur, hiçbir yer silmez — `_plan_muhru`), dosya→kalem eşlemesi planın `kalem["dosyalar"]`ıdır
-    (`komut_plan` adım 3: her yol TEK kaleme, onu beyan eden en son kaleme bağlanır).
-      · `ertelendi` — kalemin en az bir dosyasında `isaretle --karar ertelendi`;
-      · `is-yok`    — planda kalemin HİÇ dosyası yok (işlemsiz vaka ya da dosyaları sonraki kaleme
-                      geçmiş) ⇒ yapılacak iş yoktu;
-      · `kabul`     — dosyası var, ertelenmemiş, doğrulanmamış: yalnız `kapanis --kabul` (kod 3) ile
-                      buraya gelinir (dosyalar `bekliyor`/`uygulandi` kaldı).
-    ⛔ `is-yok` yalnız dosyasız kalemdir: "ertelendi değilse iş yoktu" DENMEZ — `--kabul` ile açık
-    FAIL'le kapanan kalem `is-yok` sayılsaydı `komut_sec`in önkoşul UYARI'sı sessizce kaybolurdu.
+    (`komut_plan` adım 3: her yol TEK kaleme, onu beyan eden en son kaleme bağlanır). Kalemin
+    beyan ettiği ama sonraki bir kaleme DEVREDİLEN yollar planın `kalem["devredilen"]`ındadır
+    ({yol: sahip kalem}); `uygulanan_kalemler` bu turda `uygulandi` mühürlenen seçili kalemlerdir
+    (`_kapanis_git` onları mühür yazmadan ÖNCE hesaplar).
+    Devredilen bir yol ancak sahibi bu turda `uygulandi` mühürlendiyse VE yolun kendisi
+    `dogrulandi` ise İNMİŞ sayılır (sahibin başka dosyası inip bu yol ertelenmiş olabilir).
+      · `ertelendi` — kalemin dosyalarından ya da İNMEYEN devredilen yollarından en az birinde
+                      `isaretle --karar ertelendi`;
+      · `is-yok`    — kalemin planda dosyası yok VE devredilen her yolu bu turda indi (ya da hiç
+                      devredilen yolu yok: işlemsiz vaka) ⇒ yapılacak iş kalmadı;
+      · `kabul`     — inmeyen iş var, ertelenmemiş: `kapanis --kabul` (kod 3) ile buraya gelinir
+                      (dosyalar `bekliyor`/`uygulandi` kaldı ya da sahip kalem seçilmedi);
+      · `None`      — plan `devredilen` alanını taşımıyor (v0.5.4 öncesi motorun planı) ve kalem
+                      dosyasız: iş-yok mu devir mi ÖLÇÜLEMEZ ⇒ "bilinmiyor" (fail-closed, uyarı üretir).
+    ⛔ `is-yok` yalnız yapılacak işi KALMAYAN kalemdir: "ertelendi değilse iş yoktu" DENMEZ —
+    `--kabul` ile açık FAIL'le kapanan kalem ya da dosyası sonraki kalemde ertelenen kalem `is-yok`
+    sayılsaydı `komut_sec`in önkoşul UYARI'sı sessizce kaybolurdu (bug gate 2026-09-22, ölçüldü).
     """
-    if not kalem["dosyalar"]:
+    devredilen = kalem.get("devredilen")
+    if not isinstance(devredilen, dict):
+        if not kalem["dosyalar"]:
+            return None
+        devredilen = {}
+    inmeyen = [yol for yol, sahip in devredilen.items()
+               if not (sahip in uygulanan_kalemler
+                       and durum["dosyalar"].get(yol, {}).get("durum") == "dogrulandi")]
+    if not kalem["dosyalar"] and not inmeyen:
         return "is-yok"
-    if any(durum["dosyalar"].get(d["yol"], {}).get("karar") == "ertelendi"
-           for d in kalem["dosyalar"]):
+    if any(durum["dosyalar"].get(y, {}).get("karar") == "ertelendi"
+           for y in [d["yol"] for d in kalem["dosyalar"]] + inmeyen):
         return "ertelendi"
     return "kabul"
 
@@ -2157,19 +2180,26 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     u = b.uygulanan
     u.setdefault("dosyalar", {})
     u.setdefault("kalemler", {})
+    # ⛔ İKİ GEÇİŞ (Z58 bug gate): atlandi kalemin `is-yok` nedeni, devrettiği yolların SAHİBİNİN bu
+    # turdaki mührüne bağlıdır (`_atlandi_nedeni`). Sahip plan sırasında SONRA gelir (en son beyan
+    # eden kalem) ⇒ önce tüm seçili kalemlerin uygulandi/atlandi hâli hesaplanır, sonra nedenler.
+    uygulanan_kalemler: set[str] = set()
     for kalem in plan["kalemler"]:
         if kalem["id"] not in secili:
             continue
-        uygulandi = False
         for d in kalem["dosyalar"]:
             kayit = durum["dosyalar"].get(d["yol"], {})
             if kayit.get("durum") == "dogrulandi":
                 u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
-                uygulandi = True
+                uygulanan_kalemler.add(kalem["id"])
+    for kalem in plan["kalemler"]:
+        if kalem["id"] not in secili:
+            continue
+        uygulandi = kalem["id"] in uygulanan_kalemler
         muhur = {"etiket": plan["yeni_etiket"],
                  "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
         if not uygulandi:
-            muhur["neden"] = _atlandi_nedeni(kalem, durum)
+            muhur["neden"] = _atlandi_nedeni(kalem, durum, uygulanan_kalemler)
         u["kalemler"][kalem["id"]] = muhur
     _yaz_json(k.durum_dizini / "uygulanan.json", u)
     return kod
