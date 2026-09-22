@@ -1194,6 +1194,10 @@ def komut_sec(b: Baglam, args) -> int:
     # v0.5.5 bug gate (P3): seçili kalemin devredilen yolunun SAHİBİ seçimde yoksa (`--cikar`) o yol
     # bu turda işlenmez ⇒ kapanış kalemi `ertelendi` mühürler (sonraki turda yeniden önerilir; `kabul`
     # DEĞİL — `kabul` yalnız `kapanis --kabul` ile). Kullanıcı bunu seçim anında görsün.
+    # ⛔ `ertelendi` vaadi YALNIZ dosyasız kalemde verilir: `_atlandi_nedeni` yalnız `uygulandi`
+    # OLMAYAN kalem için çağrılır; kalemin KENDİ dosyaları (`kalemler[kid]["dosyalar"]`) inerse mühür
+    # `uygulandi` olur (v0.5.5 mini gate, ölçüldü: 3-06 `docs/tasindi2.md` + `kur.cmd`,
+    # `sec --kalem 3-06 --cikar 3-04` ⇒ NOT "ertelendi" diyordu, mühür `uygulandi`).
     for kid in sorted(genisletilmis):
         dv = kalemler[kid].get("devredilen")
         if not isinstance(dv, dict):
@@ -1201,8 +1205,14 @@ def komut_sec(b: Baglam, args) -> int:
         disarida = sorted(y for y, sahip in dv.items() if sahip not in genisletilmis)
         if disarida:
             parca = ", ".join(f"{y} → {dv[y] or 'beyansız (hiçbir kalem)'}" for y in disarida)
-            print(f"NOT: {kid} kaleminin işi bu turda seçilmeyen kalemde ({parca}) ⇒ {kid} kapanışta "
-                  f"`ertelendi` mühürlenir ve sonraki turda yeniden önerilir (`kabul` DEĞİL).")
+            if kalemler[kid]["dosyalar"]:
+                print(f"NOT: {kid} kaleminin bu yolları bu turda işlenmez — işleri seçilmeyen kalemde "
+                      f"({parca}); bu yollar sahip kalemle sonraki bir turda gelir. {kid} kendi "
+                      f"dosyalarıyla işlenir; kapanış mührü o dosyaların sonucuna göre belirlenir.")
+            else:
+                print(f"NOT: {kid} kaleminin işi bu turda seçilmeyen kalemde ({parca}) ⇒ {kid} "
+                      f"kapanışta `ertelendi` mühürlenir ve sonraki turda yeniden önerilir "
+                      f"(`kabul` DEĞİL).")
 
     secim = {"kalemler": sorted(genisletilmis),
              "paketler": sorted({kalemler[k2]["paket"] for k2 in genisletilmis}),

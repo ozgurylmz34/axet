@@ -1132,15 +1132,17 @@ class Z62YenidenAdlandirmaHedefiTest(Z62Temel):
                 ("docs/logo.png", "yeni"), ("skills/cakisan/SKILL.md", "yeniden-adlandir"),
                 ("docs/silinecek.md", "yerel"))
 
-    def _yayin_3_06(self, dosyalar: list[str], bag_3_05: list[str] | None = None) -> None:
+    def _yayin_3_06(self, dosyalar: list[str], bag_3_05: list[str] | None = None,
+                    dosyalar_3_04: list[str] | None = None) -> None:
         yayinlar = json.loads(json.dumps(YAYINLAR))
         yayinlar["yayinlar"][1]["kalemler"].append(
             {"id": "3-06", "baslik": "tasindi2 duzeltmesi", "tur": "duzeltme", "kritik": False,
              "neden": "-", "dosyalar": dosyalar, "gerektirir": [], "test": []})
-        if bag_3_05 is not None:
-            for kalem in yayinlar["yayinlar"][1]["kalemler"]:
-                if kalem["id"] == "3-05":
-                    kalem["gerektirir"] = bag_3_05
+        for kalem in yayinlar["yayinlar"][1]["kalemler"]:
+            if kalem["id"] == "3-05" and bag_3_05 is not None:
+                kalem["gerektirir"] = bag_3_05
+            if kalem["id"] == "3-04" and dosyalar_3_04 is not None:
+                kalem["dosyalar"] = dosyalar_3_04
         self.f._yaz(self.f.public, {"guncelle/yayinlar.json":
                                     json.dumps(yayinlar, ensure_ascii=False, indent=1) + "\n"})
         self.git(self.f.public, "add", "-A")
@@ -1215,6 +1217,73 @@ class Z62YenidenAdlandirmaHedefiTest(Z62Temel):
         kal = self._p1_tur("yeni")
         self.assertTrue((self.f.tuketici / "docs/tasindi2.md").exists(), "kurgu: taşıma indi")
         self.assertEqual((kal["3-06"]["durum"], kal["3-06"].get("neden")), ("atlandi", "is-yok"))
+
+    # --- union-find: sahip YALNIZ kaynağı beyan eder (mini gate EKSİK — M3 mutantı yaşıyordu) ---------
+    # Fikstürde 3-04 hem kaynağı hem hedefi beyan ettiği için paket birleşmesi hedef→kaynak
+    # genişletmesi olmadan da (ortak `docs/tasindi2.md` beyanıyla) oluşuyordu.
+    TASIMASIZ_3_04 = ["skills/silinen-skill/SKILL.md", "docs/silinecek.md", "docs/silinecek2.md",
+                      "docs/tasinacak.md", "docs/tasindi.md"]
+
+    def test_Z62_hedefi_beyan_eden_kalem_yalniz_kaynagi_beyan_eden_sahiple_ayni_pakette(self):
+        self._yayin_3_06(["docs/tasindi2.md"], dosyalar_3_04=self.TASIMASIZ_3_04 + ["docs/tasinan2.md"])
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        kalem = self._kalem("3-06")
+        self.assertIsNotNone(kalem)
+        self.assertEqual(kalem.get("devredilen"), {"docs/tasinan2.md": "3-04"})
+        self.assertEqual(kalem["paket"], self._kalem("3-04")["paket"],
+                         "hedef→kaynak genişletmesi: ortak beyan yokken de sahiple aynı paket")
+
+    # --- sahibi None olan devredilen yol (mini gate EKSİK — M6 mutantı yaşıyordu) -----------------------
+    def test_Z62_kaynagi_beyansiz_tasimanin_hedefini_beyan_eden_kalem_ertelendi_is_yok_DEGIL(self):
+        """Taşımanın KAYNAĞINI hiçbir kalem beyan etmiyor (beyansız EYLEM ⇒ taşıma uygulanmaz);
+        3-06 yalnız HEDEFİ beyan ediyor ⇒ `devredilen {kaynak: None}`; içerik inmez ⇒ kapanış
+        `atlandi/ertelendi` (sonraki turda yeniden önerilir), `is-yok` DEĞİL (fail-closed)."""
+        self._yayin_3_06(["docs/tasindi2.md"], dosyalar_3_04=self.TASIMASIZ_3_04)
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        kalem = self._kalem("3-06")
+        self.assertIsNotNone(kalem)
+        self.assertEqual(kalem["dosyalar"], [])
+        self.assertEqual(kalem.get("devredilen"), {"docs/tasinan2.md": None})
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        for yol, karar in self.KARARLAR:
+            r = self.f.calistir("isaretle", yol, "--karar", karar)
+            self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        kal = json.loads((self.f.durum_dizini() / "uygulanan.json")
+                         .read_text(encoding="utf-8"))["kalemler"]
+        self.assertFalse((self.f.tuketici / "docs/tasindi2.md").exists(), "kurgu: taşıma inmedi")
+        self.assertEqual((kal["3-06"]["durum"], kal["3-06"].get("neden")), ("atlandi", "ertelendi"))
+
+    # --- `sec` NOT metni: sahip dışarıdayken kalemin kendi dosyası varsa `ertelendi` vaadi YOK ----------
+    def _sec_not(self, dosyalar: list[str]) -> str:
+        self._yayin_3_06(dosyalar)
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self._kalem("3-06").get("devredilen"), {"docs/tasinan2.md": "3-04"})
+        r = self.f.calistir("sec", "--kalem", "3-06", "--cikar", "3-04")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        satir = [s for s in r.stdout.splitlines() if s.startswith("NOT: 3-06")]
+        self.assertEqual(len(satir), 1, r.stdout)
+        return satir[0]
+
+    def test_Z62_P3_dosyali_kalemde_sec_NOT_ertelendi_vaadi_vermez(self):
+        """3-06 kendi dosyası `kur.cmd` (3-05'ten devralır) + taşıma hedefi. Kapanış mührü kendi
+        dosyası inerse `uygulandi` olur (`_atlandi_nedeni` yalnız uygulandi OLMAYAN kalemde çağrılır)
+        ⇒ `sec` "`ertelendi` mühürlenir" diyemez."""
+        not_ = self._sec_not(["docs/tasindi2.md", "kur.cmd"])
+        self.assertTrue(self._kalem("3-06")["dosyalar"], "kurgu: 3-06'nın kendi dosyası olmalı")
+        self.assertNotIn("ertelendi", not_)
+        self.assertIn("3-04", not_)
+
+    def test_Z62_P3_KONTROL_dosyasiz_kalemde_sec_NOT_ertelendi_der(self):
+        not_ = self._sec_not(["docs/tasindi2.md"])
+        self.assertEqual(self._kalem("3-06")["dosyalar"], [])
+        self.assertIn("`ertelendi`", not_)
 
 
 class Z62SahipCikarilincaTest(Z62Temel):
