@@ -1989,9 +1989,6 @@ def _tek_satir(metin: str | None) -> str:
     return " ".join((metin or "").split())
 
 
-ATLANDI_NEDENLERI = ("ertelendi", "kabul", "is-yok")
-
-
 def _atlandi_nedeni(kalem: dict, durum: dict) -> str:
     """Z58 (v0.5.4): hiçbir dosyası `dogrulandi` olmayan kalemin `uygulanan.json` mührüne NEDEN.
 
