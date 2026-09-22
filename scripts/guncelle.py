@@ -1207,7 +1207,8 @@ def komut_sec(b: Baglam, args) -> int:
             parca = ", ".join(f"{y} → {dv[y] or 'beyansız (hiçbir kalem)'}" for y in disarida)
             if kalemler[kid]["dosyalar"]:
                 print(f"NOT: {kid} kaleminin bu yolları bu turda işlenmez — işleri seçilmeyen kalemde "
-                      f"({parca}); bu yollar sahip kalemle sonraki bir turda gelir. {kid} kendi "
+                      f"({parca}); bu yollar ancak sahip kalem seçildiğinde gelir (beyansız yolu "
+                      f"getirecek kalem yoktur). {kid} kendi "
                       f"dosyalarıyla işlenir; kapanış mührü o dosyaların sonucuna göre belirlenir.")
             else:
                 print(f"NOT: {kid} kaleminin işi bu turda seçilmeyen kalemde ({parca}) ⇒ {kid} "
