@@ -332,6 +332,48 @@ def sema_dogrula(veri) -> list[str]:
     return s
 
 
+def capraz_yayin_uyarilari(veri) -> list[str]:
+    """Z57: ÖNCEKİ bir yayının kalemine işaret eden `gerektirir` bağları — WARNING, çıkışı ETKİLEMEZ.
+
+    Bağ şemaca geçerlidir (`sema_dogrula`: daha önce tanımlı kalem). Uyarı yalnız bakımcıya bağın
+    tüketicide NASIL çözüleceğini hatırlatır. Tüketici motoru klondan değil bu yayının
+    `origin/main` kopyasından koşar (K4: `skills/guncelle/SKILL.md` MOTOR-CIKAR bloğu,
+    `maintenance/yayin_provasi.py` de adayın motorunu böyle çıkarır) ⇒ bağı değerlendiren motor
+    BU yayının motorudur. v0.5.3 (Z57) motoru önceki turda uygulanmış (`uygulanan.json`) ya da
+    içerilmiş (etiket HEAD'in atası) kalemi karşılanmış sayar; v0.5.2 ve öncesi saymıyordu
+    (v0.5.2 CI yayın provası: `sec --hepsi` DUR). Kalan davranış: bağlı kalem tüketicide hâlâ
+    bekliyorsa (hiç uygulanmamış) `sec --hepsi` onu da seçer, `sec --kalem <yeni>` ise DUR eder.
+    Şema bozuksa sessizce boş döner — şema hükmü `sema_dogrula`nındır.
+    """
+    if not isinstance(veri, dict) or not isinstance(veri.get("yayinlar"), list):
+        return []
+    kalem_yayini: dict[str, str] = {}
+    for y in veri["yayinlar"]:
+        if isinstance(y, dict):
+            for k in y.get("kalemler", []) or []:
+                if isinstance(k, dict) and isinstance(k.get("id"), str):
+                    kalem_yayini.setdefault(k["id"], str(y.get("etiket")))
+    out: list[str] = []
+    for y in veri["yayinlar"]:
+        if not isinstance(y, dict):
+            continue
+        etiket = str(y.get("etiket"))
+        for k in y.get("kalemler", []) or []:
+            if not isinstance(k, dict) or not isinstance(k.get("gerektirir"), list):
+                continue
+            for bag in k["gerektirir"]:
+                hedef = kalem_yayini.get(bag) if isinstance(bag, str) else None
+                if hedef is not None and hedef != etiket:
+                    out.append(
+                        f"WARNING çapraz-yayın `gerektirir`: {k.get('id')} ({etiket}) → {bag} ({hedef}). "
+                        f"Tüketici motoru bu yayının origin/main kopyasından koşar (K4); Z57 (v0.5.3+) "
+                        f"motoru {bag} önceki turda uygulanmış/içerilmişse bağı karşılanmış sayar. "
+                        f"{bag} tüketicide hâlâ bekliyorsa `sec --hepsi` onu da seçer, "
+                        f"`sec --kalem {k.get('id')}` DUR eder. Bu yayının motoru Z57 öncesiyse "
+                        f"(v0.5.2 ve eskisi) `sec --hepsi` de DUR eder.")
+    return out
+
+
 def kapsam_dogrula(yayin: dict, degisen: set[str]) -> list[str]:
     """TASARIM §11: diff'teki HER dosya en az 1 kaleme ait · kalemdeki her dosya gerçekten değişmiş.
 
@@ -596,12 +638,15 @@ def main() -> int:
         sorunlar = sema_dogrula(veri)
         print(f"Doğrulanan: {KOK / YAYINLAR_YOLU}")
         print("KAPSAM — bakılan: şema (alan adları/tipleri), kalem id tekilliği, tur=guvenlik ise kritik "
-              "kuralı, `gerektirir` çözünürlüğü ve sırası, yayın sürüm sırası, dışlanan yol beyanı. (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
+              "kuralı, `gerektirir` çözünürlüğü ve sırası (+ çapraz-yayın bağı WARNING, Z57), yayın sürüm sırası, dışlanan yol beyanı. (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
         print("KAPSAM — bakılmayan: kalem-diff kapsamı (yalnız gerçek yayında ölçülür), `baslik`/`neden` "
               "metinlerinin doğruluğu, `test` kimliklerinin gerçekten koştuğu.")
         for s in sorunlar:
             print("  " + s)
-        print(f"SORUN: {len(sorunlar)}")
+        uyarilar = capraz_yayin_uyarilari(veri)
+        for u in uyarilar:
+            print("  " + u)
+        print(f"SORUN: {len(sorunlar)}" + (f" · UYARI: {len(uyarilar)} (çıkışı etkilemez)" if uyarilar else ""))
         return 1 if sorunlar else 0
 
     if a.hedef is None:
@@ -664,6 +709,8 @@ def main() -> int:
                 print("  " + s)
             print("Git geçmişi kurulmadı." if yayin_kipi else "(tarama kipi — git zaten kurulmuyor)")
             return 1
+        for u in capraz_yayin_uyarilari(veri):
+            print("  " + u)
         miras_uygula(veri)
         (hedef / YAYINLAR_YOLU).write_text(
             json.dumps(veri, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")

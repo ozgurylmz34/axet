@@ -779,6 +779,12 @@ def komut_plan(b: Baglam, args) -> int:
 
     # 1) hangi yayınlar bekliyor
     bekleyen_yayinlar, beyan, kalem_kaydi, cozulemeyen = [], {}, {}, []
+    # Z57: plana ALINMAYAN ama KARŞILANMIŞ kalemler (yayını içerilmiş ya da `uygulanan.json`'da
+    # mühürlü). `komut_sec` `gerektirir` bağını bu kümeye de bakarak çözer; eskiden yalnız seçim
+    # kümesine bakıyordu ⇒ önceki yayında uygulanmış kaleme bağlı yeni kalem "seçili değil" DUR'u
+    # veriyordu (v0.5.2 CI yayın provası, ölçüldü). Plan hangi kalemi NEDEN dışarıda bıraktıysa
+    # seçim de AYNI kümeyi görür — iki ayrı ölçüm iki ayrı sonuç veremez.
+    karsilanan: set[str] = set()
     for yayin in b.yayinlar.get("yayinlar", []):
         etiket = yayin["etiket"]
         durum_y = yayin_durumu(lambda *a: k.git(*a).returncode, etiket)
@@ -787,11 +793,14 @@ def komut_plan(b: Baglam, args) -> int:
             cozulemeyen.append(etiket)
             continue
         if durum_y == "icerildi":
-            continue  # tüketici bu yayını gerçekten içeriyor (taze klon)
+            # tüketici bu yayını gerçekten içeriyor (taze klon)
+            karsilanan |= {kalem["id"] for kalem in yayin.get("kalemler", [])}
+            continue
         bekleyen_yayinlar.append(etiket)
         for kalem in yayin.get("kalemler", []):
             kid = kalem["id"]
             if kid in b.uygulanan.get("kalemler", {}):
+                karsilanan.add(kid)
                 continue
             beyan[kid] = set(kalem.get("dosyalar", []))
             kalem_kaydi[kid] = (etiket, kalem)
@@ -907,6 +916,7 @@ def komut_plan(b: Baglam, args) -> int:
     plan = {
         "surum": 1, "taban_commit": b.taban_global, "yeni_etiket": b.yeni_ref,
         "yayinlar": bekleyen_yayinlar, "kalemler": kalemler,
+        "karsilanan": sorted(karsilanan),
         "paketler": {p: sorted(kid for kid, pp in paketler.items() if pp == p)
                      for p in sorted(set(paketler.values()))},
         "sayaclar": dict(sorted(sayaclar.items())),
@@ -981,11 +991,19 @@ def komut_sec(b: Baglam, args) -> int:
     # `--cikar` paket genişletmesini de bağlar (kullanıcı açıkça çıkardı)
     genisletilmis -= set(args.cikar or [])
 
+    # Z57: bağ, seçimde YA DA önceki bir turda karşılanmışsa (plan `karsilanan`) tamamdır.
+    # Alan yoksa/bozuksa (eski motorun planı) karşılanmışlık ÖLÇÜLEMEZ ⇒ boş küme ⇒ fail-closed.
+    ham = plan.get("karsilanan")
+    karsilanan = set(ham) if isinstance(ham, list) and all(isinstance(x, str) for x in ham) else set()
     for kid in sorted(genisletilmis):
         for bag in kalemler[kid]["gerektirir"]:
-            if bag not in genisletilmis:
+            if bag not in genisletilmis and bag not in karsilanan:
+                ipucu = ("" if isinstance(ham, list) else
+                         " plan.json `karsilanan` alanını taşımıyor (eski motorun planı) — "
+                         "önceki turda uygulanmış olsa bile ÖLÇÜLEMEZ; `plan`ı yeniden koş.")
                 print(f"DUR: {kid} kalemi {bag} kalemini gerektiriyor ama {bag} seçili değil "
-                      f"(§6 `gerektirir`).", file=sys.stderr)
+                      f"ve önceki bir turda karşılanmış da değil (§6 `gerektirir`).{ipucu}",
+                      file=sys.stderr)
                 return 2
 
     secim = {"kalemler": sorted(genisletilmis),
