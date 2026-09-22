@@ -1127,7 +1127,7 @@
      "baslik": "UI5: aXet içinde tarayıcı testi reçetesi; smoke testi ve KD ortamı kurulu Chrome/Edge'i kullanabiliyor",
      "tur": "yetenek",
      "kritik": false,
-     "neden": "aXet içinde `@playwright/cli` ile yerel uygulamayı açıp tıklamak, konsol/ağ hatalarını okumak ve ekran görüntüsünü modele göstermek canlı ölçüldü (kurulu Chrome ve Edge ile, tarayıcı indirmeden). Ölçülmüş adımlar `sap-ui5-fiori` runtime-verification §4.6'da. aXet'te config'siz `open` açılmıyordu; `--no-sandbox` içeren config ile açıldığı ölçüldü. `run_ui_smoke.py` `--channel chrome|msedge` ve `--dry-run` aldı; `kd_ortam.py config` `--kanal` ve `--no-sandbox` aldı. Bu iki betiğin aXet'in içinde koşması henüz ölçülmedi — metinlerde öyle yazılı.",
+     "neden": "aXet içinde `@playwright/cli` ile yerel uygulamayı açıp tıklamak, konsol/ağ hatalarını okumak ve ekran görüntüsünü modele göstermek canlı ölçüldü (kurulu Chrome ve Edge ile, tarayıcı indirmeden). Ölçülmüş adımlar `sap-ui5-fiori` runtime-verification §4.6'da. aXet'te config'siz `open` açılmıyordu; `--no-sandbox` içeren config ile açıldığı ölçüldü. `run_ui_smoke.py` `--channel chrome|msedge` ve `--dry-run` aldı; `kd_ortam.py config` `--kanal` ve `--no-sandbox` aldı. Bu iki betiğin aXet'in içinde koşması henüz ölçülmedi — metinlerde öyle yazılı. `kd_ortam.py check` Edge'e sabit dosyayı geçerli sayar, sandbox satırını dosyadan okur ve önerdiği komut dosyanın kanalını korur; UTF-8 olmayan config artık çökme yerine \"okunamadı\" verir.",
      "dosyalar": [
       "skills-sap/sap-ui5-fiori/SKILL.md",
       "skills-sap/sap-ui5-fiori/references/runtime-verification.md",

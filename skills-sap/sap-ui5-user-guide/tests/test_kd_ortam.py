@@ -178,6 +178,38 @@ class KdOrtamCheckTest(unittest.TestCase):
         self.assertRegex(r3.stdout, r"BİLGİ\s+cli.config.json kanalı\s+Chrome'a da Edge'e de sabit DEĞİL")
         self.assertIn("--zorla", r3.stdout)
 
+    def test_check_msedge_sandbox_onerisi_kanali_korur_ve_calisir(self):
+        # v0.5.3 bug gate: Edge'e sabit dosyada check'in önerdiği sandbox komutu `--kanal msedge` taşımalı; önerilen
+        # komut AYNEN koşulunca rc 0 olmalı ve dosyaya --no-sandbox eklenmeli (eskiden rc 2 'farklı içerikli').
+        import re
+        import shlex
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            call_main(kd_ortam.main, ["config", "--proje", app, "--kanal", "msedge"])
+            r = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+            m = re.search(r"cli.config.json sandbox.*?`python kd_ortam.py (config [^`]*)`", r.stdout)
+            self.assertIsNotNone(m, r.stdout)
+            self.assertIn("--kanal msedge", m.group(1))
+            argv = [a if a != "<dizin>" else app for a in shlex.split(m.group(1))]
+            rc, out, _ = call_main(kd_ortam.main, argv)
+            with open(os.path.join(app, ".playwright", "cli.config.json"), encoding="utf-8") as fh:
+                veri = json.load(fh)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("EKLENDİ", out)
+        self.assertEqual(veri["browser"]["launchOptions"]["channel"], "msedge")
+        self.assertIn("--no-sandbox", veri["browser"]["launchOptions"]["args"])
+
+    def test_check_utf8_olmayan_config_cokmez(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            yol = os.path.join(app, ".playwright", "cli.config.json")
+            os.makedirs(os.path.dirname(yol), exist_ok=True)
+            with open(yol, "wb") as fh:
+                fh.write(b"\xff\xfe{\x00}\x00")
+            r = run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+        self.assertNotIn("Traceback", r.stderr)
+        self.assertRegex(r.stdout, r"cli.config.json kanalı\s+okunamadı")
+
     def test_check_start_mock_uzak_erisim_uyarisi(self):
         with gecici_dizin() as t:
             app = tam_uygulama(os.path.join(t, "app"),
