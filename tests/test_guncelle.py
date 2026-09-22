@@ -646,6 +646,54 @@ class SecCaprazYayinGerektirirTest(GuncelleTemel):
         self.assertEqual(r.returncode, 2, self.cikti(r))
         self.assertIn("2-01", self.cikti(r))
 
+    # --- Z57 devamı (bug gate MEDIUM): `atlandi` mühürlü önkoşul ------------------------------------
+    # `uygulanan.json`'da `durum: atlandi` = kalem seçildi ama HİÇBİR dosyası doğrulanmadı
+    # (`_kapanis_git`) — ya `isaretle --karar ertelendi` ile ertelendi ya da yapılacak iş yoktu.
+    # Kayıt bu ikisini AYIRMAZ ({etiket, durum, zaman}). Bağ karşılanmış sayılır (DUR etmek bağımlıyı
+    # kalıcı kilitlerdi: atlandi kalem bir daha plana girmez) ama SESSİZ geçmemeli: UYARI + rc 0.
+    def _atlandi_2_01(self) -> None:
+        """2-01 önceki turda seçildi ama dosyası uygulanmadı (ertelendi): disk ESKİ içerikte."""
+        d = self.f.durum_dizini()
+        d.mkdir(exist_ok=True)
+        (d / "uygulanan.json").write_text(json.dumps(
+            {"surum": 1, "dosyalar": {},
+             "kalemler": {"2-01": {"etiket": "v2", "durum": "atlandi",
+                                   "zaman": "2026-01-02T00:00:00"}}},
+            ensure_ascii=False), encoding="utf-8")
+
+    def test_atlandi_onkosul_secimi_bozmaz_ama_UYARI_basar(self):
+        self._atlandi_2_01()
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertNotIn("2-01", self._plan_kalem_idleri(),
+                         "kurgu: mühürlü (atlandi) kalem plana girmemeli")
+        self.assertEqual(self.f.plan().get("karsilanan_atlandi"), ["2-01"])
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        uyari = [s for s in self.cikti(r).splitlines() if s.startswith("UYARI:")]
+        self.assertEqual(len(uyari), 1, self.cikti(r))
+        for parca in ("3-05", "2-01", "atlandi", "diskte"):
+            self.assertIn(parca, uyari[0])
+
+    def test_KONTROL_uygulanmis_onkosul_UYARI_basmaz(self):
+        self._uygulanmis_2_01()
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        self.assertEqual(self.f.plan().get("karsilanan_atlandi"), [])
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("UYARI:", self.cikti(r))
+
+    def test_KONTROL_plan_karsilanan_atlandi_tasimiyorsa_bos_kabul(self):
+        """Alan yoksa (Z57 ilk sürümünün planı) boş küme: seçim bozulmaz, uyarı basılamaz."""
+        self._atlandi_2_01()
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        yol = self.f.durum_dizini() / "plan.json"
+        plan = self.f.plan()
+        plan.pop("karsilanan_atlandi", None)
+        yol.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertNotIn("UYARI:", self.cikti(r))
+
 
 # =====================================================================================================
 # 5. UYGULA (otomatik vakalar)

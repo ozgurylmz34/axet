@@ -242,12 +242,12 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
    "dosyalar": [{"yol": "scripts/doctor.py", "sinif": "kurulum-script", "vaka": "V4t",
      "kart": ["V4t","sinif-kurulum-bakim-scripti"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
    "testler": ["kok:test_doctor"], "ozel_adimlar": []}],
- "karsilanan": ["0.4.1-01"],
+ "karsilanan": ["0.4.1-01"], "karsilanan_atlandi": [],
  "paketler": {"P2": ["0.5.0-03","0.5.0-05"]},
  "sayaclar": {"V3": 12, "VKD": 40}, "yeniden_baslat": "yeni-oturum"}
 ```
 - **paket:** aynı dosyaya dokunan kalemler union-find ile tek pakete bağlanır; seçim paket birimindedir (Q2 sonucu).
-- **gerektirir:** seçilen kalemin bağımlılığı seçilmemişse **ve önceki bir turda karşılanmamışsa** `sec` çıkış 2. *Karşılanmış* = `karsilanan` listesinde: yayını HEAD'in atası olan (içerilmiş) ya da `uygulanan.json`'da mühürlü kalem (plan bu kalemleri plana almaz; Z57, v0.5.3). Alan yoksa (eski motorun planı) karşılanmışlık ölçülemez ⇒ çıkış 2 (fail-closed).
+- **gerektirir:** seçilen kalemin bağımlılığı seçilmemişse **ve önceki bir turda karşılanmamışsa** `sec` çıkış 2. *Karşılanmış* = `karsilanan` listesinde: yayını HEAD'in atası olan (içerilmiş) ya da `uygulanan.json`'da mühürlü kalem (plan bu kalemleri plana almaz; Z57, v0.5.3). Alan yoksa (eski motorun planı) karşılanmışlık ölçülemez ⇒ çıkış 2 (fail-closed). **`atlandi` da karşılanmış sayılır:** `uygulanan.json`'da `durum: atlandi` (hiçbir dosyası doğrulanmadı — `isaretle --karar ertelendi` ya da yapılacak iş yoktu; kayıt `{etiket, durum, zaman}` bu ikisini ayırmaz) olan kalem `karsilanan`'a girer, çünkü DUR bağımlıyı kalıcı kilitlerdi (atlandi kalem bir daha plana girmez). Bu kalemler ayrıca `karsilanan_atlandi`'ya yazılır; bağ yalnız bu yolla karşılanıyorsa `sec` her bağ için bir `UYARI:` satırı basar (hangi kalem, hangi önkoşul, önkoşul `atlandi`, dosyaları diskte olmayabilir) — çıkış kodu değişmez. `karsilanan_atlandi` yoksa (Z57 ilk sürümünün planı) boş kabul edilir.
 
 **Durum geçişleri (dosya başına):** `bekliyor → uygulandi → dogrulandi` · `bekliyor → atlandi(gerekce)` (yalnız kullanıcı seçimiyle ya da `ertelendi`) · `uygulandi → geri_alindi`. `dogrulandi` = diskteki hash beklenen içerikle (Y, birleşik öneri ya da yerel karar) eşit + çakışma işareti yok.
 
