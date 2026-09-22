@@ -1096,24 +1096,28 @@ def komut_sec(b: Baglam, args) -> int:
     # `--cikar` paket genişletmesini de bağlar (kullanıcı açıkça çıkardı)
     genisletilmis -= set(args.cikar or [])
 
-    # Z62 (kullanıcı kararı): önkoşul YENİDEN ÖNERİLEN (önceki turda ertelenmiş) bir plan kalemiyse
-    # `sec` DUR vermez, onu (paketiyle) kendiliğinden seçer ve söyler — kullanıcı ayrı komut
-    # çalıştırmamalı. Eskiden bu kalem `karsilanan`daydı ve bağı hiç DUR üretmiyordu; plana geri
-    # dönünce "seçili değil" DUR'u doğacaktı. Kapsam DAR: normal bekleyen önkoşul (Z57 kontrol
-    # grubu) ve `--cikar` ile açıkça dışlanan önkoşul aşağıdaki kontrolde yine DUR verir.
+    # Z62 + Z63 (kullanıcı kararları): önkoşul PLANDA bekleyen bir kalemse — yeniden önerilen
+    # (önceki turda ertelenmiş, Z62) ya da normal bekleyen (Z63) — `sec` DUR vermez, onu (paketiyle)
+    # kendiliğinden seçer ve stdout'a bir satırla söyler; zincir sabit noktaya kadar izlenir.
+    # İlke: kullanıcı ayrı komut çalıştırmamalı. Aşağıdaki kontrolde YİNE DUR veren iki dal:
+    # `--cikar` ile AÇIKÇA dışlanan önkoşul (kalem adıyla ya da paket adıyla — kullanıcının açık
+    # iradesi) ve planda da `karsilanan`'da da OLMAYAN önkoşul (seçilecek kalem yok ⇒ fail-closed).
     cikarilan = set(args.cikar or [])
+    for ad in args.cikar or []:
+        if ad in paket_uyeleri:
+            cikarilan |= set(paket_uyeleri[ad])
     degisti = True
     while degisti:
         degisti = False
         for kid in sorted(genisletilmis):
             for bag in kalemler[kid]["gerektirir"]:
-                if (bag in genisletilmis or bag in cikarilan or bag not in kalemler
-                        or not kalemler[bag].get("yeniden_onerilen")):
+                if bag in genisletilmis or bag in cikarilan or bag not in kalemler:
                     continue
                 ek = set(paket_uyeleri[kalemler[bag]["paket"]]) - cikarilan - genisletilmis
                 genisletilmis |= ek | {bag}
-                print(f"{kid} kalemi {bag} kalemini gerektiriyor; {bag} önceki turda ertelenmişti "
-                      f"ve yeniden önerildi — kendiliğinden seçildi"
+                neden = (f"; {bag} önceki turda ertelenmişti ve yeniden önerildi"
+                         if kalemler[bag].get("yeniden_onerilen") else "")
+                print(f"{kid} kalemi {bag} kalemini gerektiriyor{neden} — kendiliğinden seçildi"
                       + (f" (paketiyle: {', '.join(sorted(ek - {bag}))})" if ek - {bag} else "")
                       + ".")
                 degisti = True

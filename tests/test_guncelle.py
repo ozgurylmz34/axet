@@ -576,8 +576,9 @@ class SecCaprazYayinGerektirirTest(GuncelleTemel):
     arıyordu ⇒ karşılanmış bağ "seçili değil" sayılıyordu.
 
     Kurgu: v3'ün 3-05 kalemi v2'nin 2-01 kalemini gerektirir (çapraz-yayın bağı).
-    KONTROL GRUBU: 2-01 hiç karşılanmamışken (ne uygulandı ne içerildi) ve seçilmemişken `sec`
-    YİNE DUR etmeli — düzeltme bağ kontrolünü gevşetip körleştirmemeli. Plan `karsilanan`
+    Z63 (v0.5.5): 2-01 planda normal bekleyen kalemse artık kendiliğinden seçilir (eskiden DUR).
+    KONTROL GRUBU — düzeltme bağ kontrolünü körleştirmemeli: `--cikar` ile (kalem ya da paket adıyla)
+    dışlanan önkoşul ve planda da `karsilanan`'da da olmayan önkoşul YİNE DUR; plan `karsilanan`
     alanını taşımıyorsa (eski motorun planı) fail-closed: DUR.
     """
 
@@ -627,11 +628,53 @@ class SecCaprazYayinGerektirirTest(GuncelleTemel):
         r = self.f.calistir("sec", "--hepsi")
         self.assertEqual(r.returncode, 0, self.cikti(r))
 
-    def test_KONTROL_karsilanmamis_ve_secilmemis_bag_yine_DUR(self):
+    def test_Z63_normal_bekleyen_capraz_bag_kendiliginden_secilir(self):
+        """Z63 (v0.5.5) BİLİNÇLİ DEĞİŞİKLİK — eski adı `test_KONTROL_karsilanmamis_ve_secilmemis_bag_yine_DUR`.
+        2-01 planda NORMAL bekleyen kalem ⇒ kullanıcı kararı: `sec` DUR vermez, onu kendiliğinden
+        seçer ve söyler. Bağ kontrolünün körleşmediğini aşağıdaki iki KONTROL kilitler
+        (`--cikar` ile dışlanan · planda da `karsilanan`'da da olmayan bağ ⇒ DUR)."""
         self.assertEqual(self.hazirla_ve_planla().returncode, 0)
         self.assertIn("2-01", self._plan_kalem_idleri(), "kurgu: 2-01 bekleyen kalem olmalı")
         r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        s = json.loads((self.f.durum_dizini() / "secim.json").read_text(encoding="utf-8"))
+        self.assertIn("2-01", s["kalemler"])
+        satir = [x for x in r.stdout.splitlines() if "3-05" in x and "2-01" in x
+                 and not x.startswith("Seçildi:")]
+        self.assertEqual(len(satir), 1, r.stdout)
+        self.assertIn("kendiliğinden", satir[0])
+
+    def test_Z63_KONTROL_cikar_ile_dislanan_capraz_bag_yine_DUR(self):
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        r = self.f.calistir("sec", "--kalem", "3-05", "--cikar", "2-01")
         self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("2-01", self.cikti(r))
+
+    def test_Z63_KONTROL_paket_adiyla_cikarilan_capraz_bag_yine_DUR(self):
+        """`--cikar <paket>` da açık iradedir: paketin üyesi olan önkoşul kendiliğinden seçilmez."""
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        paket = next(k["paket"] for k in self.f.plan()["kalemler"] if k["id"] == "2-01")
+        r = self.f.calistir("sec", "--kalem", "3-05", "--cikar", paket)
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("2-01", self.cikti(r))
+
+    def test_Z63_KONTROL_planda_ve_karsilananda_olmayan_bag_yine_DUR(self):
+        """Z63 fail-closed: bağ ne planda ne `karsilanan`'da ⇒ seçilecek kalem YOK ⇒ DUR (Z63
+        kendiliğinden seçimi yalnız PLAN kalemini seçebilir). Kurgu: plan.json'da 2-01 kalemi
+        düşürülür (ör. elle/eski araçla değişmiş plan) — `karsilanan` alanı VAR ama 2-01'i içermez."""
+        self.assertEqual(self.hazirla_ve_planla().returncode, 0)
+        yol = self.f.durum_dizini() / "plan.json"
+        plan = self.f.plan()
+        self.assertIsInstance(plan.get("karsilanan"), list, "kurgu: alan var olmalı")
+        self.assertNotIn("2-01", plan["karsilanan"])
+        plan["kalemler"] = [k for k in plan["kalemler"] if k["id"] != "2-01"]
+        for uyeler in plan["paketler"].values():
+            if "2-01" in uyeler:
+                uyeler.remove("2-01")
+        yol.write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+        r = self.f.calistir("sec", "--kalem", "3-05")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("DUR:", self.cikti(r))
         self.assertIn("2-01", self.cikti(r))
 
     def test_KONTROL_plan_karsilanan_tasimiyorsa_fail_closed_DUR(self):
@@ -918,8 +961,9 @@ class Z62SecOnkosulKendiligindenTest(Z62Temel):
     """Z62 karar 3: yeniden önerilen (ertelenmiş) kaleme bağlı kalem seçilince `sec` DUR vermez;
     önkoşulu kendiliğinden seçer ve bunu stdout'a bir satırla söyler (kullanıcı ayrı komut
     çalıştırmaz). Kurgu: 3-02 → 3-05 bağı; 3-05 ertelendi.
-    KONTROL: `--cikar 3-05` açık tercihtir ⇒ DUR · yeniden önerilmemiş (normal bekleyen) önkoşul
-    kendiliğinden seçilmez ⇒ DUR (Z57 kontrol grubu davranışı korunur)."""
+    KONTROL: `--cikar 3-05` açık tercihtir ⇒ DUR. Z63 (v0.5.5): normal bekleyen önkoşul da artık
+    kendiliğinden seçilir (eski KONTROL `..._normal_bekleyen_onkosul_kendiliginden_secilmez` bu
+    yüzden tersine döndü); zincirde `--cikar` ile dışlanan önkoşul ise DUR."""
 
     def _bag_kur(self, bag_3_05: list[str]) -> None:
         yayinlar = json.loads(json.dumps(YAYINLAR))
@@ -956,10 +1000,28 @@ class Z62SecOnkosulKendiligindenTest(Z62Temel):
         self.assertEqual(r.returncode, 2, self.cikti(r))
         self.assertIn("3-05", self.cikti(r))
 
-    def test_Z62_KONTROL_normal_bekleyen_onkosul_kendiliginden_secilmez(self):
-        """3-05 kendiliğinden seçilir, ama onun bağı 3-01 yeniden önerilmiş değil ⇒ DUR."""
+    def test_Z63_zincirde_normal_bekleyen_onkosul_de_kendiliginden_secilir(self):
+        """Z63 (v0.5.5) BİLİNÇLİ DEĞİŞİKLİK — eski adı
+        `test_Z62_KONTROL_normal_bekleyen_onkosul_kendiliginden_secilmez` (eskiden DUR bekliyordu).
+        3-02 → 3-05 (yeniden önerilen) → 3-01 (normal bekleyen): zincir sabit noktaya kadar
+        izlenir; her halka için bir satır, yeniden önerilen halka kendi metniyle."""
         self._bag_kur(["3-01"])
         r = self.f.calistir("sec", "--kalem", "3-02")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        secim = self._secim()
+        self.assertIn("3-05", secim)
+        self.assertIn("3-01", secim)
+        s305 = [s for s in r.stdout.splitlines() if s.startswith("3-02 kalemi 3-05")]
+        s301 = [s for s in r.stdout.splitlines() if s.startswith("3-05 kalemi 3-01")]
+        self.assertEqual((len(s305), len(s301)), (1, 1), r.stdout)
+        self.assertIn("yeniden önerildi", s305[0])
+        self.assertNotIn("ertelenmişti", s301[0], "normal bekleyen önkoşul ertelenmiş denmez")
+        self.assertIn("kendiliğinden", s301[0])
+
+    def test_Z63_KONTROL_zincirde_cikar_ile_dislanan_normal_onkosul_DUR(self):
+        """3-05 kendiliğinden seçilir, ama onun bağı 3-01 `--cikar` ile açıkça dışlandı ⇒ DUR."""
+        self._bag_kur(["3-01"])
+        r = self.f.calistir("sec", "--kalem", "3-02", "--cikar", "3-01")
         self.assertEqual(r.returncode, 2, self.cikti(r))
         self.assertIn("3-01", self.cikti(r))
 
