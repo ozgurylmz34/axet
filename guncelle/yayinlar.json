@@ -1035,13 +1035,16 @@
      "baslik": "Yeni: metadata extension (DDLX) ve access control (DCL) kabuğu; `adt_delete` BDEF siliyor",
      "tur": "yetenek",
      "kritik": false,
-     "neden": "`adt_post_shell` artık `ddlx` ve `dcls` kabuğu yaratır (canlı ölçüldü: S/4HANA private DEV, `$TMP`, yarat → oku → yükle → aktive et → sil uçtan uca). Kütüphanedeki DDLX yaratma eski media tipi yüzünden canlıda 415 alıyordu; ADT discovery'deki tip kullanılıyor ve kaynak yükleme hatası artık yutulmuyor. `adt_delete` BDEF'i tanımıyordu (\"Unsupported object type: bdef\"); artık kilit → sil → kilit bırak + silindi doğrulaması yapar. Tüm yazmalar yine tek yazma kapısından geçer.",
+     "neden": "`adt_post_shell` artık `ddlx` ve `dcls` kabuğu yaratır (canlı ölçüldü: S/4HANA private DEV, `$TMP`, yarat → oku → yükle → aktive et → sil uçtan uca). Kütüphanedeki DDLX yaratma eski media tipi yüzünden canlıda 415 alıyordu; ADT discovery'deki tip kullanılıyor ve kaynak yükleme hatası artık yutulmuyor. `adt_delete` BDEF'i tanımıyordu (\"Unsupported object type: bdef\"); artık kilit → sil → kilit bırak + silindi doğrulaması yapar. Tüm yazmalar yine tek yazma kapısından geçer. `dcls`, `dcl` ve `accesscontrol` adları aktivasyonda da eşdeğerdir.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/shells.py",
       "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
-      "skills-sap/sap-adt-foundation/tests/test_new_write_tools.py"
+      "skills-sap/sap-adt-foundation/tests/test_new_write_tools.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/description.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/_reviewer.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py"
      ],
      "gerektirir": [],
      "test": [
@@ -1070,6 +1073,20 @@
      "test": [
       "python skills-sap/sap-adt-foundation/tests/run_tests.py",
       "python tests/run_tests.py -k sap_skill_bilgi"
+     ]
+    },
+    {
+     "id": "0.5.2-07",
+     "baslik": "Test takımı biraz hızlandı (proje kalıbı bir kez üretiliyor)",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Testler her seferinde `git init` + `new_project.py` ile sıfırdan proje üretiyordu. Artık kalıp test süreci başına bir kez üretilip kopyalanıyor (üretilen proje yalnız ada bağlı olduğu ölçüldü). Test anlamı değişmedi; ölçülen kazanç sınırlı (örnek 3 modülde ≈%12). `%guncelle` ölçüm adımı bu testleri koşarken biraz daha kısa sürer.",
+     "dosyalar": [
+      "tests/_helpers.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k new_project"
      ]
     },
     {
