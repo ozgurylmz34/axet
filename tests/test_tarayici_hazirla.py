@@ -591,7 +591,7 @@ class SinirliCalistirTemizlikTest(GeciciTest):
 
     def test_sinirli_calistir_bayat_kendi_onekli_dizinleri_supurur(self):
         # Ölçüldü (v0.5.4 mini gate): playwright-cli oturum daemon'u çıktı dosyasını tutarken rmtree sessizce
-        # başarısız olur ve %TEMP%xet-cikti-* kalıcı kalırdı. Sonraki koşum YAŞLI ve KENDİ önekli olanları süpürür.
+        # başarısız olur ve %TEMP%\axet-cikti-* kalıcı kalırdı. Sonraki koşum YAŞLI ve KENDİ önekli olanları süpürür.
         td = self.tmp / "tmpkok"
         td.mkdir()
         gun = 24 * 3600
@@ -622,7 +622,9 @@ class SinirliCalistirTemizlikTest(GeciciTest):
             def wait(self, timeout=None):
                 raise KeyboardInterrupt
 
-        with mock.patch.object(th.subprocess, "Popen", KesilenPopen),                 mock.patch.object(th, "_agaci_oldur") as oldur,                 mock.patch.object(th.tempfile, "tempdir", str(self.tmp)):
+        with mock.patch.object(th.subprocess, "Popen", KesilenPopen), \
+                mock.patch.object(th, "_agaci_oldur") as oldur, \
+                mock.patch.object(th.tempfile, "tempdir", str(self.tmp)):
             with self.assertRaises(KeyboardInterrupt):
                 th.sinirli_calistir(["yok"], timeout=60)
         oldur.assert_called_once()
