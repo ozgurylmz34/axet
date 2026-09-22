@@ -103,7 +103,7 @@ def _type_key(t: str) -> str:
 _SOURCE_BASED_TYPES = {
     "ddls", "cds", "cdsview", "ddl", "bdef", "behaviordefinition",
     "srvd", "servicedefinition", "class", "clas", "program", "prog",
-    "interface", "intf", "dcl", "accesscontrol", "ddlx", "metadataextension",
+    "interface", "intf", "dcl", "dcls", "accesscontrol", "ddlx", "metadataextension",
 }
 
 
@@ -2153,7 +2153,7 @@ _ACTIVATION_URI_SEG = {
     "bdef": "bo/behaviordefinitions", "behaviordefinition": "bo/behaviordefinitions",
     "class": "oo/classes", "clas": "oo/classes",
     "srvd": "ddic/srvd/sources", "servicedefinition": "ddic/srvd/sources",
-    "dcl": "acm/dcl/sources", "accesscontrol": "acm/dcl/sources",
+    "dcl": "acm/dcl/sources", "dcls": "acm/dcl/sources", "accesscontrol": "acm/dcl/sources",
     "ddlx": "ddic/ddlx/sources", "metadataextension": "ddic/ddlx/sources",
     "domain": "ddic/domains", "doma": "ddic/domains",
     "dataelement": "ddic/dataelements", "dtel": "ddic/dataelements",

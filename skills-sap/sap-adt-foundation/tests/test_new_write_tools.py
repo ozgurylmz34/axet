@@ -788,6 +788,25 @@ class YeniYazmaYollari(unittest.TestCase):
         self.kaydet("F2b bdef sil: DELETE hatası → ok:false + kilit yine açılır", "ok False · unlock var",
                     f"ok={r2.get('ok')} {lib2}", r2.get("ok") is False and ("unlock", uc) in lib2)
 
+    def test_F4_dcls_aktivasyon_ve_kaynak_tipi_esanlamlisi(self):
+        """v0.5.2 gate LOW: `dcls` (shells'in kanonik adı) aktivasyon/okuma tablolarında da tanınır."""
+        durum = {t: (t in self.atom._SOURCE_BASED_TYPES, self.atom._activation_uri("ZAXET_A_X", t))
+                 for t in ("dcls", "dcl", "accesscontrol")}
+        ok = all(k and u == "/sap/bc/adt/acm/dcl/sources/zaxet_a_x" for k, u in durum.values())
+        self.kaydet("F4 dcls/dcl/accesscontrol → kaynak tipi + /acm/dcl/sources aktivasyon URI'si",
+                    "üçü de True + aynı URI", durum, ok)
+
+    def test_F5_standart_bdef_silme_dal_oncesi_reddedilir(self):
+        """v0.5.2 gate LOW: standart adlı BDEF silme, BDEF dalına (kilit/DELETE) ULAŞMADAN reddedilir."""
+        adt, _ = self.kur(lambda c: Yanit(404, ""))
+        adt.lock_object = lambda *a, **kw: adt.cagri.append({"method": "LIB", "path": "lock"}) or "K"
+        adt.delete_object = lambda *a, **kw: adt.cagri.append({"method": "LIB", "path": "delete"})
+        r = self.atom.adt_delete("I_PRODUCTTP", "bdef", TR)
+        lib = [c for c in adt.cagri if c.get("method") == "LIB"]
+        self.kaydet("F5 standart BDEF (I_PRODUCTTP) silme → ok:false, kilit/DELETE çağrısı yok",
+                    "ok False · LIB 0", f"ok={r.get('ok')} err={r.get('error')} lib={lib}",
+                    r.get("ok") is False and not lib)
+
     def test_F3_lib_ddlx_dcl_media_tipi_ve_yukleme_hatasi(self):
         """v0.5.2 Z42: kütüphane DDLX'i discovery'nin kabul ettiği tiple POST eder; kaynak yükleme hatası YUTULMAZ.
         Kontrol grubu: yükleme başarılıysa success:True."""
