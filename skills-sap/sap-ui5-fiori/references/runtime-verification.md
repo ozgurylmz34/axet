@@ -61,11 +61,13 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui-smoke/run_ui_smoke.py --po
 ```
 - Koşucu Playwright'ı **kurmaz**; yoksa kurulum komutunu yazıp çıkış 2.
 - `--channel chrome|msedge`: indirilmiş Chromium yerine kurulu Chrome/Edge. aXet.code'da tarayıcı indirmesi izin kuralıyla
-  yasak olduğu için orada bu biçim kullanılır. Ölçüm (2026-09-22, Git Bash, `@playwright/test` 1.63.0, indirilmiş
-  Chromium YOK, yerel HTTP'de sahte sayfa): `--channel chrome` ve `--channel msedge` çıkış 0; kanalsız kontrol çıkış 1
-  `Executable doesn't exist`. Bu koşucunun **aXet bash'inde** koştuğu **ÖLÇÜLMEDİ**.
+  yasak olduğu için orada bu biçim kullanılır. Ölçüm (2026-09-22, normal kabuk = Claude Code Git Bash, aXet DIŞINDA,
+  `@playwright/test` 1.63.0, indirilmiş Chromium YOK, yerel HTTP'de UI5 sayfası): `--channel chrome` ve
+  `--channel msedge` çıkış 0; kanalsız kontrol çıkış 1 `Executable doesn't exist`. Bu koşucunun **aXet bash'inde**
+  koştuğu **ÖLÇÜLMEDİ**.
 - `--no-sandbox` seçeneği bilinçli olarak YOK: Playwright test runner `chromiumSandbox: true` verilmedikçe Chromium'a
-  `--no-sandbox`'ı kendisi ekler (playwright-core kaynağı; `DEBUG=pw:browser` başlatma satırında görüldü). §4.6'daki
+  `--no-sandbox`'ı kendisi ekler (playwright-core kaynağı; `DEBUG=pw:browser` başlatma satırında görüldü — normal
+  kabukta, chrome ve msedge). §4.6'daki
   playwright-cli çökmesi bu farktan doğuyor olabilir — DOĞRULANMADI.
 - `--dry-run`: ön koşullara bakmadan komutu ve tarayıcı ayarını basar (çıkış 0); hiçbir şey koşmaz.
 - **Hesap kilidi önlemi:** testten önce **tek** kimlik denemesi (`/sap/opu/odata/sap/`); 401 → çıkış 3, **tekrar denemez**
@@ -129,9 +131,10 @@ CDP `attach`/`goto`/`detach` · UI5 `sap.m.Button` için hem `click` hem `firePr
    Edge için `"channel":"msedge"`. `%sap-ui5-user-guide`'daki `kd_ortam.py config --proje <dizin> --no-sandbox`
    aynı dosyayı yazar. **Neden:** aXet bash'inde config'siz `open` → `Error: Session closed` ya da
    `Error: Target crashed`. `--browser chrome` / `--browser msedge` tek başına düzeltmedi. Aynı komut normal kabukta
-   açılıyor. `--no-sandbox` içeren config ile Chrome'da ve Edge'de açıldı. playwright-cli chrome/msedge kanalında
-   sandbox'ı açık başlatır (`chromiumSandbox = true`, kaynak; süreç komut satırında `--no-sandbox` yok, normal kabukta
-   ölçüldü). aXet bash'i kısıtlı bir Windows job içinde koşuyor; çökmenin sebebinin bu olduğu **DOĞRULANMADI**
+   açılıyor. `--no-sandbox` içeren config ile Chrome'da ve Edge'de açıldı. playwright-cli Windows'ta her kanalda
+   sandbox'ı açık başlatır (kaynak: playwright-core `validateBrowserConfig` Windows'ta koşulsuz `chromiumSandbox = true`;
+   kanala bağlı ifade yalnız Linux dalında). Süreç komut satırında `--no-sandbox` yok — normal kabukta (aXet DIŞINDA)
+   ölçüldü. `open --browser chrome|msedge` config'teki `args`'ı korur (normal kabukta ölçüldü). aXet bash'i kısıtlı bir Windows job içinde koşuyor; çökmenin sebebinin bu olduğu **DOĞRULANMADI**
    (`--no-sandbox` ile düzelmesiyle yalnız tutarlı). `--no-sandbox` süreç izolasyonunu kapatır: **yalnız yerel/güvenilir
    sayfa**.
 3. **Sunucuyu başlat:** aXet `bash` aracını **arka plan** özelliğiyle çağır (`run_in_background: true`; `&` kullanma).

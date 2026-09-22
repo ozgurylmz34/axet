@@ -17,9 +17,11 @@ Alt komutlar:
         eksikse, diğer anahtarlara dokunmadan `launchOptions.args`'a eklenir.
         `--no-sandbox`: aXet.code bash'inde config'siz ya da bu argümansız `playwright-cli open`
         "Session closed"/"Target crashed" ile düştü; `{"channel":"chrome"|"msedge","args":["--no-sandbox"]}` ile
-        açıldı (ölçüldü 2026-09-22, playwright-cli 0.1.21; sebep DOĞRULANMADI). playwright-cli chrome/msedge
-        kanalında sandbox'ı AÇIK başlatır (`chromiumSandbox = true`, coreBundle.js; süreç komut satırında
-        `--no-sandbox` yok, ölçüldü). Süreç izolasyonunu kapatır: yalnız yerel/güvenilir sayfa.
+        açıldı (ölçüldü 2026-09-22, playwright-cli 0.1.21; sebep DOĞRULANMADI). playwright-cli Windows'ta HER
+        kanalda sandbox'ı AÇIK başlatır: playwright-core 1.64.0-alpha `validateBrowserConfig` kanala bağlı ifadeyi
+        yalnız `process.platform === "linux"` dalında kullanır, Windows'ta koşulsuz `chromiumSandbox = true`
+        (coreBundle.js). Normal kabukta (aXet DIŞINDA) chrome/msedge süreç komut satırında `--no-sandbox` yok
+        (ölçüldü). Süreç izolasyonunu kapatır: yalnız yerel/güvenilir sayfa.
         Çıkış: 0 yazıldı / zaten uygun · 2 ezilmedi ya da kullanım hatası.
 
 Şema kaynağı (tahmin değil, @playwright/cli 0.1.21 · playwright-core 1.64.0-alpha içinden okundu):
@@ -71,14 +73,16 @@ EZEN_ORTAM = ("PLAYWRIGHT_MCP_BROWSER", "PLAYWRIGHT_MCP_EXECUTABLE_PATH", "PLAYW
 
 KAPSAM_CHECK = ("KAPSAM (SCOPE): kd_ortam check — bakılanlar: node sürümü, Chrome yürütülebilir dosyası, uygulamada "
                 "yerel @playwright/cli ve playwright-core, python markdown, package.json'da %s devDependency'si ve "
-                "start-mock script'i, start-mock komut metnindeki host/bind bayrakları (yalnız metin). "
+                "start-mock script'i, start-mock komut metnindeki host/bind bayrakları (yalnız metin), "
+                "<proje>/.playwright/cli.config.json'un chrome ya da msedge kanalına sabit olup olmadığı ve "
+                "launchOptions.args'ta --no-sandbox bulunup bulunmadığı. "
                 "Bakılmayanlar: Chrome'un gerçekten açılabildiği (config sonrası "
                 "`playwright-cli open` ile ölçülür), mock sunucunun ayağa kalktığı, ui5-mock.yaml içeriği, mock veri "
                 "dosyaları, npm ağ/proxy erişimi, ~/.playwright global config'inin etkisi (yalnız uyarılır)."
                 % MOCKSERVER_PAKET)
 KAPSAM_CONFIG = ("KAPSAM (SCOPE): kd_ortam config — yalnız <proje>/.playwright/cli.config.json dosyasının browser "
                  "anahtarlarına bakar. Bakılmayanlar: `playwright-cli open --browser <x>` bayrağı kanalı EZER "
-                 "(launchOptions.args korunur — ölçüldü 2026-09-22) ve "
+                 "(launchOptions.args korunur — normal kabukta ölçüldü 2026-09-22, aXet içinde ölçülmedi) ve "
                  "PLAYWRIGHT_MCP_* ortam değişkenleri dosyayı EZER (yalnız uyarılır); `--no-sandbox`'ın aXet.code'da "
                  "yeterli olduğu yalnız playwright-cli `open` için ölçüldü; ~/.playwright global "
                  "config'inin kalan anahtarları; tarayıcının gerçekten açıldığı. İndirme riskini bu dosya "
@@ -260,15 +264,16 @@ def cmd_check(proje, env=None):
     _cikti("== KD ortamı: %s ==" % proje)
     for ad, tamam, deger, _ in satirlar:
         _cikti("  %-5s %-26s %s" % ("OK" if tamam else "EKSİK", ad, deger))
-    cfg = config_durumu(proje)[0]
+    cfg, kanal = config_kanali(proje)
     cfg_metni = {
-        "uygun": "Chrome kanalına sabit",
+        "uygun": "%s kanalına sabit" % {"chrome": "Chrome", "msedge": "Edge"}.get(kanal, kanal),
         "yok": "YOK → config yokken @playwright/cli varsayılanı zaten chromium + kanal chrome "
                "(validateBrowserConfig); sabitlemek için `python kd_ortam.py config --proje <dizin>` koş",
-        "farkli": "Chrome'a sabit DEĞİL → `python kd_ortam.py config --proje <dizin>`",
+        "farkli": "Chrome'a da Edge'e de sabit DEĞİL (kullanıcı dosyası) → ezmek için "
+                  "`python kd_ortam.py config --proje <dizin> [--kanal msedge] --zorla` (eskisi .bak'a alınır)",
         "bozuk": "okunamadı (JSON değil)"}
-    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json (Chrome)", cfg_metni[cfg]))
-    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", SANDBOX_NOTU))
+    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json kanalı", cfg_metni[cfg]))
+    _cikti("  %-5s %-26s %s" % ("BİLGİ", "cli.config.json sandbox", sandbox_metni(proje)))
     pj, _ = package_json_oku(proje)
     host_ozet, uzak = start_mock_host_tespiti(((pj or {}).get("scripts") or {}).get("start-mock"))
     _cikti("  %-5s %-26s %s" % ("UYARI" if uzak else "BİLGİ", "start-mock host/bind", host_ozet))
@@ -329,6 +334,35 @@ def config_durumu(proje, kanal=KANAL, no_sandbox=False):
         if args is None or isinstance(args, list):
             return "eksik-sandbox", yol, ham
     return "farkli", yol, ham
+
+
+def config_kanali(proje):
+    """check için: ('uygun', kanal) dosya KANALLAR'dan birine sabitse (config --kanal ile yazılabilen her kanal
+    geçerli seçimdir); aksi halde (config_durumu durumu, None)."""
+    durum = "yok"
+    for kanal in KANALLAR:
+        durum = config_durumu(proje, kanal)[0]
+        if durum == "uygun":
+            return "uygun", kanal
+    return durum, None
+
+
+def sandbox_metni(proje):
+    """check için: dosyadaki launchOptions.args'ta '--no-sandbox' olup olmadığını (sabit metin değil) yazar."""
+    yol = os.path.join(proje, CONFIG_GORELI)
+    if not os.path.isfile(yol):
+        durum = "config YOK → %s yok" % NO_SANDBOX
+    else:
+        try:
+            with open(yol, encoding="utf-8-sig") as fh:
+                veri = json.load(fh)
+        except ValueError:
+            return "okunamadı (JSON değil)"
+        b = veri.get("browser") if isinstance(veri, dict) else None
+        if _sandbox_kapali(b.get("launchOptions") if isinstance(b, dict) else None):
+            return "launchOptions.args'ta %s VAR (süreç izolasyonu kapalı: yalnız yerel/güvenilir sayfa)" % NO_SANDBOX
+        durum = "launchOptions.args'ta %s YOK" % NO_SANDBOX
+    return "%s — %s" % (durum, SANDBOX_NOTU)
 
 
 def _yaz(yol, veri=None):
