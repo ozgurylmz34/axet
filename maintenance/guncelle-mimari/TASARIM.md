@@ -242,11 +242,12 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
    "dosyalar": [{"yol": "scripts/doctor.py", "sinif": "kurulum-script", "vaka": "V4t",
      "kart": ["V4t","sinif-kurulum-bakim-scripti"], "esler": ["tests/test_doctor.py"], "etkin": "aninda"}],
    "testler": ["kok:test_doctor"], "ozel_adimlar": []}],
+ "karsilanan": ["0.4.1-01"],
  "paketler": {"P2": ["0.5.0-03","0.5.0-05"]},
  "sayaclar": {"V3": 12, "VKD": 40}, "yeniden_baslat": "yeni-oturum"}
 ```
 - **paket:** aynı dosyaya dokunan kalemler union-find ile tek pakete bağlanır; seçim paket birimindedir (Q2 sonucu).
-- **gerektirir:** seçilen kalemin bağımlılığı seçilmemişse `sec` çıkış 2.
+- **gerektirir:** seçilen kalemin bağımlılığı seçilmemişse **ve önceki bir turda karşılanmamışsa** `sec` çıkış 2. *Karşılanmış* = `karsilanan` listesinde: yayını HEAD'in atası olan (içerilmiş) ya da `uygulanan.json`'da mühürlü kalem (plan bu kalemleri plana almaz; Z57, v0.5.3). Alan yoksa (eski motorun planı) karşılanmışlık ölçülemez ⇒ çıkış 2 (fail-closed).
 
 **Durum geçişleri (dosya başına):** `bekliyor → uygulandi → dogrulandi` · `bekliyor → atlandi(gerekce)` (yalnız kullanıcı seçimiyle ya da `ertelendi`) · `uygulandi → geri_alindi`. `dogrulandi` = diskteki hash beklenen içerikle (Y, birleşik öneri ya da yerel karar) eşit + çakışma işareti yok.
 
