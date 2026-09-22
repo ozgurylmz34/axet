@@ -1110,7 +1110,7 @@
      "baslik": "`%guncelle`: önceki yayında uygulanmış kaleme bağlı yeni kalem artık seçilebiliyor",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "`sec`, `gerektirir` bağını yalnız o turun seçim kümesinde arıyordu. Önceki turda uygulanmış ya da yayını zaten içerilmiş bir kalem plana hiç girmediği için \"seçili değil\" sayılıyor ve seçim DUR ediyordu (v0.5.2 yayın provasında ölçüldü: 0.5.2-01 → 0.5.1-01). Plan artık karşılanmış kalemleri `karsilanan` alanında taşıyor ve `sec` bağı orada da arıyor. Alan yoksa (eski motorla üretilmiş plan) yine DUR eder ve `plan`ın yeniden koşulmasını söyler.",
+     "neden": "`sec`, `gerektirir` bağını yalnız o turun seçim kümesinde arıyordu. Önceki turda uygulanmış ya da yayını zaten içerilmiş bir kalem plana hiç girmediği için \"seçili değil\" sayılıyor ve seçim DUR ediyordu (v0.5.2 yayın provasında ölçüldü: 0.5.2-01 → 0.5.1-01). Plan artık karşılanmış kalemleri `karsilanan` alanında taşıyor ve `sec` bağı orada da arıyor. Alan yoksa (eski motorla üretilmiş plan) yine DUR eder ve `plan`ın yeniden koşulmasını söyler. Önceki turda `atlandi` olarak mühürlenmiş (ertelenmiş ya da yapılacak işi olmayan) önkoşul da karşılanmış sayılır, yani seçim kilitlenmez; ama `sec` her böyle bağ için bir `UYARI:` satırı basar, çünkü önkoşulun dosyaları diskte olmayabilir.",
      "dosyalar": [
       "scripts/guncelle.py",
       "tests/test_guncelle.py",
