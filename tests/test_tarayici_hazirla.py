@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -48,6 +49,10 @@ class SahteSurec:
                 paket = th.arac_dizini(self.kok) / "node_modules" / "@playwright" / "cli" / "package.json"
                 paket.parent.mkdir(parents=True, exist_ok=True)
                 paket.write_text(json.dumps({"version": self.npm_surum}), encoding="utf-8")
+                th.cli_js(self.kok).write_text("// sahte\n", encoding="utf-8")
+                cekirdek = th.arac_dizini(self.kok) / "node_modules" / "playwright-core" / "package.json"
+                cekirdek.parent.mkdir(parents=True, exist_ok=True)
+                cekirdek.write_text(json.dumps({"version": "1.60.0"}), encoding="utf-8")
                 return subprocess.CompletedProcess(komut, 0, "added 3 packages", "")
             return subprocess.CompletedProcess(komut, self.npm_rc, "", "npm error network ETIMEDOUT")
         alt = komut[3]
@@ -205,7 +210,31 @@ class TarayiciHazirlaTest(GeciciTest):
                 durum, metin, _ = self.kos()
                 self.assertEqual(bayt, self.cfg.read_bytes(), "kullanıcının global config'i EZİLDİ")
                 self.assertIn("EZİLMEDİ", metin)
-                self.assertEqual("HAZIR", durum)  # sahte duman geçti: kararı duman testi verir
+                # Sahte duman geçti ama bu kabukta geçmesi aXet'te --no-sandbox'sız açılışı KANITLAMAZ: ilk satır
+                # düz "HAZIR" demez, ayırt edici ek taşır (v0.5.4 bug gate öneri 5). Önek korunur (tüketiciler
+                # `TARAYICI: HAZIR` ile başlar).
+                self.assertTrue(durum.startswith("HAZIR ("), durum)
+                self.assertIn("global config uyumsuz", durum)
+
+    @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
+    def test_uyumsuz_global_configte_ilk_satir_ayirt_edici_komut_satiri_yok(self):
+        self.chrome_kur()
+        self.yaz_cfg({"browser": {"browserName": "firefox"}})
+        kd = th.kd_yukle(self.kok)
+        surec = SahteSurec(self.kok)
+        out = io.StringIO()
+        with mock.patch.object(kd, "node_durumu", return_value=("C:/node/node.exe", "v22.19.0")), \
+                mock.patch.object(th, "kd_yukle", return_value=kd), \
+                mock.patch.object(th.shutil, "which", return_value="C:/node/npm.cmd"), \
+                mock.patch.object(th, "sinirli_calistir", surec), \
+                mock.patch.dict(os.environ, self.env), redirect_stdout(out):
+            rc = th.main(["--kok", str(self.kok)])
+        self.assertEqual(0, rc)
+        self.assertEqual(["npm", "open", "snapshot", "close"], surec.adlar())
+        satirlar = out.getvalue().splitlines()
+        self.assertTrue(satirlar[0].startswith("TARAYICI: HAZIR (aXet için global config uyumsuz"), satirlar[0])
+        # KOMUT satırı "global config geçerli" der — bu durumda yanlış olurdu
+        self.assertFalse(any(s.startswith("KOMUT:") for s in satirlar), satirlar)
 
     @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
     def test_uygun_global_config_dokunulmaz_edge_olsa_bile(self):
@@ -295,6 +324,41 @@ class TarayiciHazirlaTest(GeciciTest):
         self.assertEqual("EKSİK", durum)
         self.assertIn("işaret YOK", metin)
 
+    # --- kısmi kurulum kendini onarır (v0.5.4 bug gate madde 2) -------------------------------------------------
+    @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
+    def test_kismi_kurulum_yeniden_kurulur(self):
+        """package.json sürümü doğru ama giriş dosyası ya da playwright-core eksikse "zaten kurulu" DENMEZ."""
+        self.chrome_kur()
+        for ad, yol in (("cli_js", lambda: th.cli_js(self.kok)),
+                        ("playwright-core", lambda: th.arac_dizini(self.kok) / "node_modules" / "playwright-core"
+                         / "package.json")):
+            with self.subTest(eksik=ad):
+                durum, metin, _ = self.kos()
+                self.assertEqual("HAZIR", durum, metin)
+                yol().unlink()
+                self.assertFalse(th.durum_oku(self.kok, dict(self.env))[0], "kısmi kurulum doctor'da hazır göründü")
+                durum2, metin2, surec2 = self.kos()
+                self.assertEqual("HAZIR", durum2, metin2)
+                self.assertEqual("npm", surec2.adlar()[0], "kısmi kurulum 'zaten kurulu' sayıldı")
+                self.assertNotIn("zaten kurulu", metin2)
+                self.assertTrue(yol().is_file())
+
+    @unittest.skipUnless(WIN, "Chrome yol simülasyonu Windows arama yerlerine göre")
+    def test_npm_rc0_ama_kurulum_eksikse_eksik(self):
+        self.chrome_kur()
+        kok = self.kok
+
+        class GirisDosyasizSurec(SahteSurec):
+            def __call__(self, komut, **kw):
+                r = super().__call__(komut, **kw)
+                if "install" in komut:
+                    th.cli_js(kok).unlink()
+                return r
+        durum, metin, surec = self.kos(GirisDosyasizSurec(self.kok))
+        self.assertEqual("EKSİK", durum, metin)
+        self.assertIn("playwright-cli.js", metin)
+        self.assertEqual(["npm"], surec.adlar())
+
     def test_main_beklenmeyen_hatada_bile_cikis_0_ve_kapsam(self):
         out = io.StringIO()
         with mock.patch.object(th, "hazirla", side_effect=RuntimeError("patladı")), redirect_stdout(out):
@@ -338,6 +402,122 @@ class TarayiciHazirlaTest(GeciciTest):
         kurallar = json.loads((AXET_HOME / "config" / "permissions.json").read_text(encoding="utf-8"))["rules"]["bash"]
         komut = 'python "C:/Users/x/axet/scripts/tarayici_hazirla.py"'
         self.assertEqual([], [d for d in kurallar if fnmatch.fnmatchcase(komut, d)])
+
+
+def _yasiyor(pid: int) -> bool:
+    if WIN:
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        h = k32.OpenProcess(0x00100000, False, pid)  # SYNCHRONIZE
+        if not h:
+            return False
+        try:
+            return k32.WaitForSingleObject(h, 0) == 0x102  # WAIT_TIMEOUT → hâlâ çalışıyor
+        finally:
+            k32.CloseHandle(h)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _oldur(pid: int) -> None:
+    try:
+        if WIN:
+            subprocess.run(["taskkill", "/F", "/PID", str(pid)], capture_output=True, stdin=subprocess.DEVNULL,
+                           timeout=30)
+        else:
+            os.kill(pid, 9)
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
+class ZamanAsimiAgacTest(GeciciTest):
+    """v0.5.4 bug gate madde 1 (ölçüldü): `subprocess.run(capture_output=True, timeout=…)` zaman aşımında yalnız
+    doğrudan çocuğu öldürür; boruyu tutan TORUN (npm.cmd → cmd.exe → node) yaşadıkça communicate() sınırsız
+    bekler (timeout=2 → 15.1 sn). Bu testler GERÇEK alt süreç koşar (npm/node DEĞİL: sahte betik + python torun)
+    ve dönüşün sınır içinde geldiğini ölçer. Kırmızıda torunun uyku süresi kadar takılır."""
+
+    UYKU = 15
+    SINIR = 10.0
+
+    def torun_kodu(self) -> str:
+        """Torun: PID'ini dosyaya yazar (sayaçlı ad: duman testinde open ve close ayrı torun başlatır), sonra uyur."""
+        return ("import os, time, itertools; "
+                "d = r'%s'; "
+                "n = next(i for i in itertools.count() if not os.path.exists(os.path.join(d, 'torun%%d.pid' %% i))); "
+                "open(os.path.join(d, 'torun%%d.pid' %% n), 'w').write(str(os.getpid())); "
+                "time.sleep(%d)") % (self.pid_dizini, self.UYKU)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.pid_dizini = self.tmp / "pid"
+        self.pid_dizini.mkdir()
+
+    def torunlar_olmus_olmali(self) -> None:
+        """Zaman aşımı yalnız dönüşü değil TORUNU da bitirmeli (dosyaya yönlendirme tek başına dönüşü sınırlar ama
+        torunu yetim bırakırdı — mutasyonla ölçüldü)."""
+        time.sleep(1.0)  # yetim torun PID'ini henüz yazmadıysa yazsın
+        pidler = [int(p.read_text()) for p in self.pid_dizini.glob("torun*.pid") if p.read_text().strip()]
+        son = time.monotonic() + 5
+        yasayan = pidler
+        while time.monotonic() < son:
+            yasayan = [p for p in pidler if _yasiyor(p)]
+            if not yasayan:
+                break
+            time.sleep(0.2)
+        for p in yasayan:  # testin kendi kalıntısını temizle (kırmızıda)
+            _oldur(p)
+        self.assertEqual([], yasayan, "zaman aşımından sonra torun süreç(ler) YAŞIYOR (ağaç öldürülmedi)")
+
+    def test_npm_zaman_asiminda_surec_agaci_olur_sinirli_surede_doner(self):
+        kok = self.tmp / "kok"
+        torun = '"%s" -c "%s"' % (sys.executable, self.torun_kodu())
+        if WIN:  # gerçek sınıf: npm.CMD → cmd.exe → (torun) node
+            npm = self.tmp / "sahte-npm.cmd"
+            npm.write_text("@echo off\r\n%s\r\n" % torun.replace("%", "%%"), encoding="utf-8")  # cmd: % kaçışı
+        else:
+            npm = self.tmp / "sahte-npm"
+            npm.write_text("#!/bin/sh\n%s\n" % torun, encoding="utf-8")
+            npm.chmod(0o755)
+        bas = time.monotonic()
+        with mock.patch.object(th, "NPM_ZAMAN", 2):
+            ok, metin = th.npm_kur(kok, str(npm), SURUM, dict(self.env))
+        gecen = time.monotonic() - bas
+        self.assertFalse(ok)
+        self.assertIn("bitmedi", metin)
+        self.assertLess(gecen, self.SINIR, "zaman aşımı süreç ağacını öldürmedi (%.1f sn)" % gecen)
+        self.torunlar_olmus_olmali()
+
+    def test_duman_zaman_asiminda_surec_agaci_olur_sinirli_surede_doner(self):
+        kok = self.tmp / "kok"
+        giris = th.cli_js(kok)
+        giris.parent.mkdir(parents=True)
+        # "node" yerine python: çocuk, stdout'u miras alan bir torun başlatıp bekler (playwright-cli oturum süreci
+        # sınıfı). open ve (finally'deki) close ikisi de zaman aşımına düşer.
+        giris.write_text("import subprocess, sys, time\n"
+                         "subprocess.Popen([sys.executable, '-c', %r])\n"
+                         "time.sleep(%d)\n" % (self.torun_kodu(), self.UYKU), encoding="utf-8")
+        bas = time.monotonic()
+        with mock.patch.object(th, "DUMAN_ZAMAN", 2):
+            ok, metin = th.duman_testi(kok, sys.executable, dict(self.env))
+        gecen = time.monotonic() - bas
+        self.assertFalse(ok)
+        self.assertIn("bitmedi", metin)
+        # open + close iki zaman aşımı (≈2×2 sn + öldürme; ölçüldü 6.5 sn). Eski kod: iki kez UYKU (ölçüldü 30.7 sn).
+        self.assertLess(gecen, self.UYKU - 2, "zaman aşımı süreç ağacını öldürmedi (%.1f sn)" % gecen)
+        self.torunlar_olmus_olmali()
+
+    def test_sinirli_calistir_normal_cikti_ve_rc(self):
+        r = th.sinirli_calistir([sys.executable, "-c", "import sys; sys.stdout.reconfigure(encoding='utf-8'); "
+                                 "print('merhaba ğ'); print('hata', file=sys.stderr); sys.exit(3)"],
+                                env=dict(self.env), cwd=str(self.tmp), timeout=60)
+        self.assertEqual(3, r.returncode)
+        self.assertIn("merhaba ğ", r.stdout)
+        self.assertIn("hata", r.stderr)
 
 
 class GitTemizligiTest(GeciciTest):

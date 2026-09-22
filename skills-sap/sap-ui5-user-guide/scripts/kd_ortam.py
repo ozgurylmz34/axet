@@ -36,6 +36,7 @@ Alt komutlar:
 Kontrol: kanal `msedge` yapılınca brands "Microsoft Edge" döndü (dosya gerçekten okunuyor).
 """
 import argparse
+import errno
 import importlib.util
 import json
 import os
@@ -43,6 +44,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 for _s in (sys.stdout, sys.stderr):
     try:
@@ -433,18 +435,41 @@ def sandbox_metni(proje, kanal=None, zorla=False, env=None):
 
 def _yaz(yol, veri=None):
     """Başarıda None; OSError'da kullanıcıya basılacak metin (v0.5.4 Z59: traceback yerine HATA satırı).
-    Dosya açılamadıysa (salt-okunur, yol dizin, izin) dosyaya dokunulmamıştır; açıldıktan sonraki hata ayrı söylenir."""
+    ATOMİK (v0.5.4 bug gate madde 3): aynı dizinde geçici dosyaya yazılır, fsync, sonra os.replace. Hangi adımda
+    düşerse düşsün asıl dosyaya dokunulmamıştır (yarım dosya kalmaz) ve geçici dosya silinir. Salt-okunur hedef
+    önceden reddedilir: os.replace POSIX'te salt-okunur dosyanın üstüne de yazabilirdi (dizin izni yeter); eski
+    `open(yol, "w")` davranışı korunur. Hedef bir sembolik bağsa bağın işaret ettiği dosya değiştirilir, bağ kalır."""
     metin = json.dumps(HEDEF_CONFIG if veri is None else veri, indent=2, ensure_ascii=False) + "\n"
+    hedef = os.path.realpath(yol)
+    dizin = os.path.dirname(hedef)
+    gecici = None
     try:
-        os.makedirs(os.path.dirname(yol), exist_ok=True)
-        fh = open(yol, "w", encoding="utf-8", newline="\n")
+        if os.path.isdir(hedef):
+            raise IsADirectoryError(errno.EISDIR, "hedef bir dizin", hedef)
+        if os.path.exists(hedef) and not os.access(hedef, os.W_OK):
+            raise PermissionError(errno.EACCES, "salt-okunur dosya", hedef)
+        os.makedirs(dizin, exist_ok=True)
+        fd, gecici = tempfile.mkstemp(prefix="." + os.path.basename(hedef) + ".", suffix=".tmp", dir=dizin)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(metin)
+            fh.flush()
+            os.fsync(fh.fileno())
+        if os.path.exists(hedef):
+            shutil.copymode(hedef, gecici)  # mkstemp 0600 açar; kullanıcının dosya izni korunur
+        else:
+            um = os.umask(0)
+            os.umask(um)
+            os.chmod(gecici, 0o666 & ~um)
+        os.replace(gecici, hedef)
+        gecici = None
     except OSError as exc:
         return "%s yazılamadı (%s: %s); dosyaya dokunulmadı." % (yol, type(exc).__name__, exc)
-    try:
-        with fh:
-            fh.write(metin)
-    except OSError as exc:
-        return "%s yazılırken hata (%s: %s); dosya yarım kalmış olabilir." % (yol, type(exc).__name__, exc)
+    finally:
+        if gecici is not None:
+            try:
+                os.remove(gecici)
+            except OSError:
+                pass
     return None
 
 

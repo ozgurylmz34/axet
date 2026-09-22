@@ -566,6 +566,34 @@ class KdOrtamConfigTest(unittest.TestCase):
                     os.chmod(yol, stat.S_IREAD | stat.S_IWRITE)
                 self._hata_satiri_ve_dosya_korunur(rc, err, yol, eski)
 
+    def test_config_yazim_yarida_kalirsa_asil_dosya_korunur(self):
+        # v0.5.4 bug gate madde 3: eksik-sandbox yolu (tarayici_hazirla'da GLOBAL dosya) yedeksiz yazıyordu; açıldıktan
+        # sonraki bir hata (disk dolu, fsync, rename) dosyayı yarım bırakıyordu. Artık geçici dosya + os.replace:
+        # yazım/commit adımı düşerse asıl dosya bayt bayt aynı kalır ve geçici dosya artık bırakmaz.
+        for adim in ("fsync", "replace"):
+            with self.subTest(adim=adim), gecici_dizin() as t:
+                app = os.path.join(t, "app")
+                yol = self._cfg(app)
+                yaz_json(yol, HEDEF)
+                with open(yol, "rb") as fh:
+                    eski = fh.read()
+                with mock.patch.object(kd_ortam.os, adim, side_effect=OSError("disk dolu (sahte)")):
+                    rc, _, err = call_main(kd_ortam.main, ["config", "--proje", app, "--no-sandbox"])
+                self._hata_satiri_ve_dosya_korunur(rc, err, yol, eski)
+                self.assertIn("disk dolu", err)
+                self.assertEqual(["cli.config.json"], os.listdir(os.path.dirname(yol)), "geçici dosya kaldı")
+
+    def test_yaz_basarida_none_ve_icerik_tam(self):
+        with gecici_dizin() as t:
+            yol = os.path.join(t, "a", "cli.config.json")
+            self.assertIsNone(kd_ortam._yaz(yol, {"x": "ğ"}))
+            with open(yol, encoding="utf-8") as fh:
+                self.assertEqual({"x": "ğ"}, json.load(fh))
+            self.assertIsNone(kd_ortam._yaz(yol, {"x": 2}))  # mevcut dosyanın üstüne (os.replace)
+            with open(yol, "rb") as fh:
+                self.assertEqual(b'{\n  "x": 2\n}\n', fh.read())  # LF, BOM yok
+            self.assertEqual(["cli.config.json"], os.listdir(os.path.dirname(yol)))
+
     def test_config_hedef_yol_dizinse_hata_satiri(self):
         with gecici_dizin() as t:
             app = os.path.join(t, "app")
