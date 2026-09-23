@@ -192,6 +192,7 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   dal ve değişiklikler, template güncelliği, doctor uyarıları, aktif paketin son kaydı, iş listesi, devir notları
 - `%yeni-proje` — yeni projeyi sorarak kur
 - `%gun-sonu` — kaldığın yeri yaz (SESSION_NOTES, iş listesi, devir notu), çalışma dalını commit + push et
+  (projenin uzak deposu yoksa push yapılmaz)
 - İş listesi: `.axet-code/memory/project_is-listesi.md` (açık maddenin tek yeri)
 - `%recall` — işe başlarken ekip/proje hafızası ve skill'lerde ilgili kayıtları ara
 - `%skill-audit` — dışarıdan skill/script almadan ya da tanımadığın projede çalışmadan önce inceleme
@@ -200,12 +201,16 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
 - `%explore` — salt-okur araştırmayı alt ajana devret
 - `%code-review` — bağımsız inceleyiciyle kod incelemesi
 - `%handoff` — oturum devir notu / "devam"
-- `%commit-pr` — commit, push, PR disiplini
+- `%commit-pr` — commit, push, PR disiplini; uzak deposu olmayan projede dalı `main`'e yerel birleştirme
+  (onayınla; cevapsız onay = hayır)
 - `%write-skill` — yeni skill yazma
 - `%onboard` — yeni ekip üyesine kurulum ve ilk oturum rehberi
 - `%guncelle` — merkezi klonu yeni template yayınına seçmeli olarak taşı (kendi değişikliklerin korunur)
+- `%guncelle-proje` — açık projenin template kaynaklı dosyalarını (AGENTS.md, denylist, .githooks,
+  sap-project.json …) klondaki şablona getir; doctor ya da oturum özeti "proje şablonu eski" dediğinde
 - `%research` — web/doküman araştırması (kaynaklı, aXet'in web araçlarıyla)
 - `%office-excel` · `%office-docs` · `%office-slides` — Excel, Word/PDF, sunum üretimi ve okuma
+- `%sistem` — projenin `conn/` altında tanımlı SAP sistemlerini listele, aktif olanı değiştir ("QA'ya geç")
 - SAP işi: giriş `%sap-dev` (yeni talepte önce `%sap-intake-triage`); SAP skill listesi [`skills-sap/README.md`](skills-sap/README.md)
 - `ctrl+p` → **User** sekmesi — projeye özel komutlar (`.axet-code/commands/`)
 - Kimlik bilgilerini (kullanıcı adı, şifre, token) sohbete **yazma**: prompt'lar kurumsal denetime gider.
@@ -351,6 +356,11 @@ Açık kaynak projelere dayanan kod ve veriler: [THIRD_PARTY_NOTICES.md](THIRD_P
 SAP, ABAP ve S/4HANA SAP SE'nin ticari markalarıdır; bu proje SAP SE ile bağlantılı değildir.
 
 ## Değişiklik notu
+Public yayınların (v0.1.0 ve sonrası) sürüm notları **`CHANGELOG.md`** dosyasındadır: her yayında
+`guncelle/yayinlar.json` kataloğundan üretilir; kalem başına neden, dosyalar ve test komutu yazar. `%guncelle`
+aynı katalogdan hangi kalemlerin bekleyip beklemediğini gösterir. Aşağıdaki kayıtlar public yayın öncesi iç
+sürümlerdir; yeni kayıt buraya eklenmez.
+
 - **0.3.0 (hüküm dürüstlüğü, 2026-09-14)** — SAP temel araçları ölçemediği sonucu başarı saymaz: aktivasyon hükmü
   üç değerli (gövde hüküm taşımıyorsa bağımsız worklist sondası; sonda ölçemezse `success:false`), `adt_syntax_check`
   kontrol koşmadıysa `valid:null`, push ön kontrolü ölçülemediyse `syntax_precheck:"olculemedi"`. Sorgu araçları SAP
@@ -366,7 +376,7 @@ SAP, ABAP ve S/4HANA SAP SE'nin ticari markalarıdır; bu proje SAP SE ile bağl
   Ekran üreteci kiti ve ALV şablonları nötr `ZBC000` önekine taşındı. Kurulum aracı ve `%yeni-proje` canlı aXet
   oturumunda ve gerçek winget kurulumuyla DOĞRULANMADI.
 - **0.2.0 (partiler 4-7, 2026-09-13/14)** — Yeni SAP skill'leri: `sap-ui5-fiori`, `sap-code-review`, `sap-fs-ts-docs`,
-  `sap-gui-scripting`, `sap-abapgit-delivery` (0.5.6'da `sistem` eklendi). Genel skill'ler: `onboard`, `research`, `office-excel`, `office-docs`,
+  `sap-gui-scripting`, `sap-abapgit-delivery`. Genel skill'ler: `onboard`, `research`, `office-excel`, `office-docs`,
   `office-slides`. Proje pre-commit denetimi (`.githooks/`, `project_precommit.py`, paket adı denetimi, davranış
   manifesti), `tests/`. SAP CLI: mesaj sınıfı yazma, domain ön kontrolü, yeni kabuk/push tipleri. İzin kurallarına
   UI5 deploy ve manifest onayı eklendi — **install.py tekrar çalıştırılmalı**. Yeni araçların canlı SAP ve aXet
