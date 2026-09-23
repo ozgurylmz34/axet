@@ -37,6 +37,8 @@ Kurulum biçimi: `python -m pip install --user <paket>`.
 
 ## 1. Kurulum
 
+En kolayı: `aXet-Kur.cmd` dosyasını (template deposunun kökünde; ya da ekibinden) indir ve **çift tıkla**. Windows
+"internetten geldi" uyarısı verirse **Daha fazla bilgi → Yine de çalıştır**. Terminal yolu aynı işi yapar —
 PowerShell'i aç ve şu satırı yapıştır:
 
 ```powershell

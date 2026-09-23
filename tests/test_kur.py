@@ -1599,5 +1599,44 @@ class KurTest(GeciciTest):
             self.assertNotIn("private dönemde", metin, f"{yol}: bayat private notu duruyor")
 
 
+class IlkKurulumCmdTest(unittest.TestCase):
+    """Z81: repoda olmayan makineye e-posta/ortak klasörle dağıtılan çift tıklamalık ilk kurulum dosyası.
+    Ağ gerektirmeyen biçim ve sözleşme denetimi; gerçek indirme + `-DenemeModu` koşumu elle ölçüldü (Z81)."""
+
+    CMD = AXET_HOME / "aXet-Kur.cmd"
+
+    def test_ascii_ve_crlf(self):
+        veri = self.CMD.read_bytes()
+        veri.decode("ascii")  # cmd.exe OEM kod sayfasıyla okur; ASCII her sayfada aynı
+        satirlar = veri.split(b"\n")[:-1]
+        self.assertTrue(satirlar and all(s.endswith(b"\r") for s in satirlar),
+                        "her satır CRLF olmalı (cmd LF'li dosyada goto/etiketleri yanlış okuyabilir)")
+
+    def test_readme_tek_satiriyla_ayni_adresi_indirir(self):
+        adres = re.findall(r"https://raw\.githubusercontent\.com/\S+?/kur\.ps1", self.CMD.read_text("ascii"))
+        readme = re.findall(r"https://raw\.githubusercontent\.com/\S+?/kur\.ps1",
+                            (AXET_HOME / "README.md").read_text("utf-8"))
+        self.assertEqual(len(set(adres)), 1, adres)
+        self.assertTrue(readme)
+        self.assertEqual(set(adres), set(readme), "cmd ile README'deki tek satır aynı kur.ps1'i indirmeli")
+
+    def test_secenekleri_gecirir_pencereyi_acik_tutar_kodu_dondurur(self):
+        metin = self.CMD.read_text("ascii")
+        calistir = [s for s in metin.splitlines() if "-File" in s and "powershell" in s.lower()]
+        self.assertEqual(len(calistir), 1, calistir)
+        self.assertIn("%*", calistir[0], "ek seçenekler (ör. -DenemeModu) kur.ps1'e geçmeli")
+        self.assertIn("-ExecutionPolicy Bypass", calistir[0])
+        self.assertRegex(metin, r"(?m)^pause\s*$", "çift tıklamada pencere mesaj okunmadan kapanmamalı")
+        self.assertRegex(metin, r"(?m)^exit /b %RC%\s*$", "kur.ps1'in çıkış kodu korunmalı")
+        for kod in ("0", "3"):
+            self.assertIn(f'if "%RC%"=="{kod}"', metin, f"çıkış kodu {kod} için ayrı kullanıcı mesajı")
+        self.assertNotIn("sap-write", metin.lower())
+        self.assertNotIn("invoke-expression", metin.lower())
+
+    def test_readme_dosyayi_gosterir(self):
+        readme = (AXET_HOME / "README.md").read_text("utf-8")
+        self.assertIn("aXet-Kur.cmd", readme)
+
+
 if __name__ == "__main__":
     unittest.main()

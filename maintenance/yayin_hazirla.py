@@ -41,7 +41,7 @@ KOK = Path(__file__).resolve().parent.parent
 DISLANANLAR = ["maintenance/", "docs/agentic-connectors.md", "docs/axet-davranis-olcumleri.md", "_lab/"]
 
 ZORUNLU_DOSYALAR = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt",
-                    "README.md", "AGENTS.md", "kur.cmd", "kur.ps1", "yeni-proje.cmd"]
+                    "README.md", "AGENTS.md", "kur.cmd", "kur.ps1", "yeni-proje.cmd", "aXet-Kur.cmd"]
 
 # Yayın anında ÜRETİLEN / normalize edilen dosyalar: kalem-dosya eşlemesinden MUAFtırlar, çünkü
 # bakımcının elle dokunduğu bir değişiklik değil, bu aracın çıktısıdırlar. Muafiyet KAPSAM'da basılır.

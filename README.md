@@ -36,7 +36,11 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 İlk kez kuruyorsan adım adım rehber: [`docs/onboarding.md`](docs/onboarding.md) (kurulumdan sonra aXet içinde `%onboard`).
 
 ## Kurulum
-**PowerShell**'i aç ve şu satırı yapıştır. Komut kurulum betiğini geçici klasöre indirip çalıştırır:
+**En kolay yol:** [`aXet-Kur.cmd`](aXet-Kur.cmd) dosyasını indir (açılan sayfada **Download raw file** düğmesi) ya da
+ekibinden al ve **çift tıkla**. Aşağıdaki tek satırın aynısını yapar; sonunda sonucu sade bir mesajla yazar ve
+pencereyi açık tutar. Windows "bu dosya internetten geldi" uyarısı verirse **Daha fazla bilgi → Yine de çalıştır**.
+
+Terminal tercih edenler için: **PowerShell**'i aç ve şu satırı yapıştır. Komut kurulum betiğini geçici klasöre indirip çalıştırır:
 ```powershell
 $f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
 ```
