@@ -17,11 +17,15 @@ Bu belgedeki yollar template'in varsayılan yere, `%USERPROFILE%\axet` klasörü
 | Gerekli | Kontrol | Nasıl sağlanır |
 |---|---|---|
 | aXet.code (girişi yapılmış) | `axet-code -v` | şirket kanalından; kurulum aracı aXet'i kurmaz |
-| Git | `git --version` | yoksa kurulum aracı `winget` ile kurmayı sorar |
-| Python ≥ 3.12 | `python --version` | yoksa kurulum aracı `winget` ile kurmayı sorar |
+| Git | `git --version` | şirketinin yazılım merkezinden (Software Center / Company Portal) ya da BT'den |
+| Python ≥ 3.12 | `python --version` | şirketinin yazılım merkezinden (Software Center / Company Portal) ya da BT'den |
 | Windows PowerShell | Windows ile gelir | — |
 
-Önerilen: `rg` (ripgrep). Yoksa aXet'in arama aracı yavaşlar; kurulum aracı kurmayı sorar.
+Kurulum aracı Git ve Python'u **kurmaz**: eksikse durur ve yazılım merkezini gösterir. Şirket makinesinde başka
+yoldan (winget, internetten indirme) kurma; şirketin izin verdiği sürüm yazılım merkezindekidir. Yalnız şirket
+dışı, kişisel bir makinede `kur.cmd -Winget` eksikleri winget ile kurmayı sorar.
+
+Önerilen: `rg` (ripgrep). Yoksa aXet'in arama aracı yavaşlar; kurulum aracı hatırlatır ama durmaz.
 Bir şey kurulduktan sonra **yeni terminal ve yeni aXet oturumu** aç: PATH ancak o zaman görünür.
 
 İsteğe bağlı paketler (yalnız ilgili iş gelince kur; kurmak senin kararın):
@@ -45,7 +49,8 @@ $f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'htt
 
 Kurulum aracının yaptıkları:
 1. aXet'i arar; bulamazsa durur.
-2. Git ve Python'u arar; eksikse `winget` ile kurmayı sorar. Kurulum olmazsa ne indirmen gerektiğini yazar.
+2. Git ve Python'u arar; eksikse durur ve yazılım merkezinden (ya da BT'den) kurmanı söyler, resmi indirme
+   adresini de yazar (çıkış kodu 2). Kurduktan sonra yeni bir PowerShell aç ve aynı satırı tekrar yapıştır.
 3. Template'i `%USERPROFILE%\axet` klasörüne klonlar (makinede **bir kez**; tüm projeler aynı klonu kullanır).
 4. `install.py --sap` çalıştırır: global aXet config'ine yalnız kendi yollarını ve izin kurallarını ekler, önce yedek alır.
 5. `doctor.py` ile kontrol eder.
