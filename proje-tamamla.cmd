@@ -128,7 +128,8 @@ goto son
 
 :python_yok
 echo HATA: python bulunamadi ya da calismiyor - PATH'te Python 3.12+ gerekli.
-echo Kurulum: winget install Python.Python.3.12  - sonra bu dosyaya tekrar cift tikla.
+echo Kurulum: sirketinin yazilim merkezinden (Software Center / Company Portal) kur ya da BT'den iste;
+echo resmi indirme: https://www.python.org/downloads/windows/  - sonra bu dosyaya tekrar cift tikla.
 set "RC=9009"
 goto son
 

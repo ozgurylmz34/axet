@@ -20,9 +20,13 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 
 ## Gereksinimler
 - **aXet.code** — şirket kanalından kurulmuş ve girişi yapılmış (`axet-code -v` çalışıyor). Kurulum aracı aXet'i kurmaz.
-- Git ve Python ≥ 3.12 — yoksa kurulum aracı `winget` ile kurmayı önerir; olmazsa ne indireceğini söyler.
+- Git ve Python ≥ 3.12 — kurulum aracı bunları **kurmaz**. Eksikse durur ve ne yapacağını söyler: şirketinin
+  yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste, sonra yeni bir PowerShell'de
+  komutu tekrar çalıştır. (Yalnız şirket dışı, kişisel bir makinede: `kur.cmd -Winget` eksikleri winget ile
+  kurmayı sorar.)
 - Windows PowerShell (Windows ile gelir).
-- Önerilen: `rg` (ripgrep) — yoksa aXet'in arama aracı yavaşlar. Kurulum aracı sorar.
+- Önerilen: `rg` (ripgrep) — yoksa aXet'in arama aracı yavaşlar. Kurulum aracı hatırlatır ama durmaz; yazılım
+  merkezinden kurabilirsin.
 - İsteğe bağlı, yalnız ilgili skill'i kullanırken (skill kendi kurulum satırını söyler):
 
 | Paket | Kullanan |
@@ -50,7 +54,8 @@ aynı `-Hedef`'i bu komuta da ver, yoksa ikinci bir klon kurulur.
 
 Kurulum aracı sırayla şunları yapar:
 1. aXet'in kurulu olduğunu kontrol eder. Kurulu değilse durur.
-2. Git ve Python'u kontrol eder. Eksikse `winget` ile kurmayı sorar.
+2. Git ve Python'u kontrol eder. Eksikse durur ve şirketinin yazılım merkezinden (ya da BT'den) kurmanı söyler;
+   kendisi bir şey kurmaz.
 3. Template'i `%USERPROFILE%\axet` klasörüne klonlar. Klasör zaten varsa günceller.
 4. `install.py --sap` ile global aXet config'ini bu klona bağlar.
 5. `doctor.py` ile kontrol eder.
@@ -168,7 +173,8 @@ aXet marketplace'inden skill kurulabilir. Template skill'leriyle çakışmaması
 | Belirti | Bak |
 |---|---|
 | Kurulum aracı aXet'i bulamadı (çıkış 2) | aXet'i şirket kanalından kur, girişi yap, yeni PowerShell aç |
-| Kurulum aracı yeni terminal istedi (çıkış 3) | winget kurulumu PATH'i bu pencereye yansıtmadı: yeni PowerShell'de `kur.cmd`'yi tekrar çalıştır |
+| Kurulum aracı Git ya da Python eksik dedi (çıkış 2) | Şirketinin yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste. Kurduktan sonra **yeni** bir PowerShell aç ve komutu tekrar çalıştır. Python en az 3.12 olmalı |
+| Kurulum aracı yeni terminal istedi (çıkış 3) | Yalnız `-Winget` ile olur: winget kurulumu PATH'i bu pencereye yansıtmadı. Yeni PowerShell'de `kur.cmd`'yi tekrar çalıştır |
 | Başka bir klonun kayıtlı olduğu uyarısı (çoğunlukla çıkış 4) | Config eski bir klonu da gösteriyor (ör. önceki sürümle `C:\axet`'e kurulmuş). Doctor'daki skill ad çakışması FAIL'leri bundan gelir: skill'leri yeniden adlandırma. Uyarıdaki `--uninstall` komutunu o klon için kendin çalıştır (o klonun `config/sap-write.local` dosyası da silinir), sonra `kur.cmd`'yi tekrar çalıştır. Eski yerde kalmak istersen `kur.cmd -Hedef C:\axet`. Uyarıdaki klon klasörü artık yoksa (silinmiş ya da taşınmış) araç "kayıt bayat" der ve `--uninstall` önermez: sondaki BAYAT KAYIT listesindeki girişleri config dosyasından elle sil (araç config'e kendisi yazmaz), sonra yeni aXet oturumu aç |
 | Kurulum aracı "klon karşılaştırması ÖLÇÜLEMEDİ" dedi | Hedef yol (junction/symlink) Python ile çözülemedi. Config'teki kayıtlı klonun bu klonun kendisi olup olmadığını elle kontrol et; araç bu durumda hiçbir kaydı kaldırmayı önermez |
 | Kurulum aracı "git çalıştırılamadı" dedi | Listelenen git.exe kendi terminalinde `git --version` ile çalışıyor mu bak. "unable to access …/git/config" görüyorsan XDG_CONFIG_HOME değerindeki geçersiz karakteri düzelt |

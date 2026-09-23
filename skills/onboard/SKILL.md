@@ -47,8 +47,9 @@ Ayrıntılı komutlar ve beklenen çıktılar: `docs/onboarding.md` ilgili böl�
   `skills-sap/sap-adt-foundation/scripts/setup_credentials.py --slot <AD>`). Bu dosyaları ve pencereyi sen
   çalıştırma/açma. Dosya biçimini uydurma: alan adları `skills-sap/sap-adt-foundation/assets/.conn_adt.example`'dadır.
 - **Kurulum komutları:** `kur.cmd` önce `-DenemeModu` ile çalıştırılır. `new_project.py` ve `new_package.py` önce
-  `--dry-run` ile çalıştırılır. Gerçek çalıştırma yalnız kullanıcının açık onayıyla yapılır; `kur.cmd` winget ile kurulum
-  soruları sorduğu için kullanıcının kendi terminalinde çalıştırılmalıdır.
+  `--dry-run` ile çalıştırılır. Gerçek çalıştırma yalnız kullanıcının açık onayıyla yapılır; `kur.cmd` kullanıcının
+  kendi terminalinde çalıştırılır. Git/Python eksikse kurmaz; kullanıcıyı şirket yazılım merkezine (ya da BT'ye)
+  yönlendir. `-Winget` yalnız kullanıcı açıkça isterse ve şirket dışı kişisel makinedeyse önerilir.
 - `install.py --sap-write` **asla** model tarafından çalıştırılmaz ve önerilmez. Kullanıcı sorarsa: yalnız
   sandbox, ekip kararıyla, kendi terminalinde. `behavior_manifest.py generate` de yalnız kullanıcının terminalinde çalışır.
 - **Paket bağımlılığı:** pip kurulumunu kullanıcı onaylamadan yapma; komutu öner.
