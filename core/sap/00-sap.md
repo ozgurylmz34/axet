@@ -1,5 +1,5 @@
 # SAP / ABAP Paketi — Kesin Kurallar
-SAP-CORE-ID: AXET-SAP-0.4.0
+SAP-CORE-ID: AXET-SAP-0.5.0
 
 > `scripts/install.py --sap` ile yüklenir. Sistem, `master_language`, paket ve transport bilgisi proje `AGENTS.md`'sindedir.
 
