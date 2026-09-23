@@ -2268,6 +2268,69 @@ class Z58AtlandiNedeniBirimTest(unittest.TestCase):
                                                 secili={"2-01", "3-01"}), "kabul")
 
 
+class Z65ZamanKarsilastirmaBirimTest(unittest.TestCase):
+    """Z65: `_kayit_tuketildi_mi` zaman damgalarını METİN olarak karşılaştırıyordu ve `_simdi()` saat
+    dilimsiz yazıyordu ⇒ iki damga farklı dilimde yazıldıysa (dilim değişimi, makine taşınması) sıra
+    yanlış okunur: mühürden SONRAKİ karar tüketilmiş sayılıp silinir ya da mühürden ÖNCEKİ bayat karar
+    korunur ve `uygula` dosyayı bir tur sessizce atlar. Karşılaştırma ANI kıyaslamalıdır.
+
+    KAPSAM — bakılmayan: gerçek saat geri gitmesi (NTP/DST) — aynı dilimde saatin kendisi geri
+    giderse ANI karşılaştırma da yanlış sıra görür; bu testler yalnız DİLİM farkını ölçer."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, str(AXET_HOME / "scripts"))
+        import guncelle  # noqa: PLC0415
+        cls.g = guncelle
+
+    MUHUR = "2026-09-23T10:00:00+03:00"   # = 07:00 UTC
+
+    def test_Z65_farkli_dilim_muhurden_SONRAKI_karar_tuketilmedi(self):
+        # 08:00 UTC = mühürden 1 saat SONRA; metinde "08" < "10" olduğu için eski kod "önce" okurdu.
+        self.assertFalse(self.g._kayit_tuketildi_mi("2026-09-23T08:00:00+00:00", self.MUHUR))
+
+    def test_Z65_farkli_dilim_muhurden_ONCEKI_karar_tuketildi(self):
+        # 10:00+03 = 07:00 UTC, mühür 07:30 UTC ⇒ kayıt ÖNCE; metinde "10" > "07" ⇒ eski kod "sonra" okurdu.
+        self.assertTrue(self.g._kayit_tuketildi_mi(self.MUHUR, "2026-09-23T07:30:00+00:00"))
+
+    def test_Z65_ayni_an_farkli_dilim_esitlik_tuketildi(self):
+        self.assertTrue(self.g._kayit_tuketildi_mi("2026-09-23T07:00:00+00:00", self.MUHUR))
+
+    def test_Z65_KONTROL_ayni_saniye_ayni_metin_tuketildi(self):
+        self.assertTrue(self.g._kayit_tuketildi_mi(self.MUHUR, self.MUHUR))
+        self.assertTrue(self.g._kayit_tuketildi_mi("2026-02-02T10:00:00", "2026-02-02T10:00:00"))
+
+    def test_Z65_KONTROL_iki_naive_eski_kayit_sozlesmesi_korunur(self):
+        self.assertTrue(self.g._kayit_tuketildi_mi("2026-02-02T10:00:00", "2026-02-02T10:05:00"))
+        self.assertFalse(self.g._kayit_tuketildi_mi("2026-02-02T10:06:00", "2026-02-02T10:05:00"))
+
+    def test_Z65_naive_eski_kayit_yerel_saat_kabul_edilir_TypeError_yok(self):
+        import datetime  # noqa: PLC0415
+        muhur = datetime.datetime(2026, 9, 23, 10, 0, tzinfo=datetime.timezone.utc)
+
+        def naive_yerel(an):  # eski `_simdi()` biçimi: bu makinenin yerel saati, dilimsiz
+            return an.astimezone().replace(tzinfo=None).isoformat(timespec="seconds")
+        m = muhur.isoformat(timespec="seconds")
+        once = naive_yerel(muhur - datetime.timedelta(hours=1))
+        sonra = naive_yerel(muhur + datetime.timedelta(hours=1))
+        self.assertTrue(self.g._kayit_tuketildi_mi(once, m))
+        self.assertFalse(self.g._kayit_tuketildi_mi(sonra, m))
+        # ters yön: kayıt aware, mühür naive (eski mühür, yeni karar)
+        self.assertFalse(self.g._kayit_tuketildi_mi(m, once))
+        self.assertTrue(self.g._kayit_tuketildi_mi(m, sonra))
+
+    def test_Z65_okunamaz_zaman_tuketildi(self):
+        for kotu in (None, 123, "", "bozuk", "0001-01-01T00:00:00", "9999-12-31T23:59:59"):
+            with self.subTest(kotu=kotu):
+                self.assertTrue(self.g._kayit_tuketildi_mi(kotu, self.MUHUR))
+                self.assertTrue(self.g._kayit_tuketildi_mi(self.MUHUR, kotu))
+
+    def test_Z65_simdi_saat_dilimli_yazar(self):
+        import datetime  # noqa: PLC0415
+        an = datetime.datetime.fromisoformat(self.g._simdi())
+        self.assertIsNotNone(an.tzinfo, self.g._simdi())
+
+
 class KapanisKabulVeHookTest(GuncelleTemel):
     """P2 ⓑ: `kapanis --kabul` altında git tarafının davranışı + hook reddi (rc=1).
 
