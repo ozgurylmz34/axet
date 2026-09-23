@@ -139,6 +139,33 @@ class YeniProjeTest(GeciciTest):
         self.assertEqual(durum, "korundu", aciklama)
         self.assertEqual((d / yeni_proje.KISAYOL).read_bytes(), b"@echo kullanicinin kendi dosyasi\r\n")
 
+    def test_z79_kisayol_durumu_dort_hal(self):
+        """Z79: `%guncelle-proje` kısayolu bu sınıflamayla planlar (yok · guncel · farkli · resmi-degil)."""
+        d = self.tmp / "durum"
+        d.mkdir()
+        self.assertEqual(yeni_proje.kisayol_durumu(d), "yok")
+        yeni_proje.kisayol_yaz(d)
+        self.assertEqual(yeni_proje.kisayol_durumu(d), "guncel")
+        self.assertEqual(yeni_proje.kisayol_durumu(d, self.tmp / "baska-klon"), "farkli")
+        (d / yeni_proje.KISAYOL).write_bytes(b"@echo off\r\nrem elle\r\n")
+        self.assertEqual(yeni_proje.kisayol_durumu(d), "resmi-degil")
+
+    def test_z79_guncelle_kipi_yalniz_RESMI_kisayolu_yeniden_yazar(self):
+        d = self.tmp / "guncelle"
+        d.mkdir()
+        eski = self.tmp / "eski-klon"
+        (d / yeni_proje.KISAYOL).write_bytes(yeni_proje.kisayol_bayt(eski))
+        durum, aciklama = yeni_proje.kisayol_yaz(d)                     # varsayılan kip: Z70 ezmez
+        self.assertEqual(durum, "korundu", aciklama)
+        self.assertEqual((d / yeni_proje.KISAYOL).read_bytes(), yeni_proje.kisayol_bayt(eski))
+        durum, aciklama = yeni_proje.kisayol_yaz(d, guncelle=True)
+        self.assertEqual(durum, "guncellendi", aciklama)
+        self.assertEqual((d / yeni_proje.KISAYOL).read_bytes(), yeni_proje.kisayol_bayt())
+        (d / yeni_proje.KISAYOL).write_bytes(b"@echo kendi\r\n")
+        durum, aciklama = yeni_proje.kisayol_yaz(d, guncelle=True)       # işaretsiz: güncelle kipinde de EZİLMEZ
+        self.assertEqual(durum, "korundu", aciklama)
+        self.assertEqual((d / yeni_proje.KISAYOL).read_bytes(), b"@echo kendi\r\n")
+
     def test_z70_dry_run_kisayol_yazmaz_plana_satir_basar(self):
         d = self.proje("plankisa", sap=True)
         r = self.yeni(str(d), *bayraklar(), "--dry-run")
