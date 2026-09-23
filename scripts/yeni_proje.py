@@ -711,6 +711,9 @@ def ozet(v: dict) -> None:
 # yazılır. Bu araç (ve aXet oturumu) kısayolu ÇALIŞTIRMAZ: iki adım kullanıcının kendi onayıdır.
 KISAYOL = "KURULUMU-TAMAMLA.cmd"
 TAMAMLA_CMD = "proje-tamamla.cmd"
+# Z79: resmi kısayolun İŞARETİ (ikinci satırın başı). `%guncelle-proje` yalnız bu işareti taşıyan dosyayı yeniden
+# yazar; işaretsiz dosya (elle yazılmış / Z70 öncesi geçici sürüm) kullanıcınındır, ezilmez.
+KISAYOL_ISARETI = "rem aXet kurulum kisayolu (yeni_proje.py yazdi)"
 
 
 def kisayol_metni(axet_home: Path | None = None) -> str:
@@ -718,7 +721,7 @@ def kisayol_metni(axet_home: Path | None = None) -> str:
     bu yüzden dosyayı git'e kapatır. Klon yoksa pencere sessizce kapanmasın diye hata + pause."""
     k = str((axet_home or AXET_HOME) / TAMAMLA_CMD).replace("%", "%%")
     satirlar = ["@echo off",
-                "rem aXet kurulum kisayolu (yeni_proje.py yazdi): cift tikla. Asil mantik aXet klonundaki "
+                f"{KISAYOL_ISARETI}: cift tikla. Asil mantik aXet klonundaki "
                 f"{TAMAMLA_CMD} dosyasinda.",
                 # `exit /b` kodsuz → `cmd /c` altında 0 döner (ölçüldü); `call exit /b %%errorlevel%%` çağrı SONRASI kodu taşır
                 f'if exist "{k}" call "{k}" "%~dp0." & call exit /b %%errorlevel%%',
@@ -727,14 +730,44 @@ def kisayol_metni(axet_home: Path | None = None) -> str:
     return "\r\n".join(satirlar) + "\r\n"
 
 
-def kisayol_yaz(hedef: Path) -> tuple[str, str]:
-    """('yazildi' | 'korundu' | 'yazilamadi', açıklama). Var olan dosya EZİLMEZ (merge-safe)."""
+def kisayol_bayt(axet_home: Path | None = None) -> bytes:
+    """Diske yazılan bayt. cmd.exe toplu iş dosyasını konsolun OEM kod sayfasıyla okur; UTF-8 yazılırsa ASCII dışı
+    klon yolu bozulur. Kodlanamayan yol UnicodeEncodeError yükseltir (çağıran yakalar)."""
+    return kisayol_metni(axet_home).encode("oem" if os.name == "nt" else "utf-8")
+
+
+def kisayol_resmi_mi(veri: bytes) -> bool:
+    """İkinci satır resmi işaretle mi başlıyor (Z79). İşaret ASCII'dir; kod sayfasından bağımsız okunur."""
+    satirlar = veri.decode("latin-1").splitlines()
+    return len(satirlar) > 1 and satirlar[1].startswith(KISAYOL_ISARETI)
+
+
+def kisayol_durumu(hedef: Path, axet_home: Path | None = None) -> str:
+    """'yok' | 'guncel' (bayt bayt beklenen) | 'farkli' (resmi ama içerik eski, ör. klon yolu değişti) |
+    'resmi-degil' (işaretsiz — kullanıcınındır). `%guncelle-proje` planı bu sınıflamayla kurulur (Z79)."""
     f = hedef / KISAYOL
-    if f.exists():
-        return "korundu", f"{f} zaten var — ezilmedi"
+    if not f.exists():
+        return "yok"
+    veri = f.read_bytes()
+    if not kisayol_resmi_mi(veri):
+        return "resmi-degil"
+    return "guncel" if veri == kisayol_bayt(axet_home) else "farkli"
+
+
+def kisayol_yaz(hedef: Path, axet_home: Path | None = None, guncelle: bool = False) -> tuple[str, str]:
+    """('yazildi' | 'guncellendi' | 'korundu' | 'yazilamadi', açıklama). Var olan dosya EZİLMEZ (merge-safe, Z70).
+    `guncelle=True` (yalnız `%guncelle-proje`, Z79): var olan dosya RESMİ işaretliyse yeniden yazılır; işaretsizse
+    yine ezilmez. Yeni proje akışı varsayılan kipi kullanır — davranışı değişmedi."""
+    f = hedef / KISAYOL
     try:
-        # cmd.exe toplu iş dosyasını konsolun OEM kod sayfasıyla okur; UTF-8 yazılırsa ASCII dışı klon yolu bozulur.
-        veri = kisayol_metni().encode("oem" if os.name == "nt" else "utf-8")
+        veri = kisayol_bayt(axet_home)
+        if f.exists():
+            if not (guncelle and kisayol_resmi_mi(f.read_bytes())):
+                return "korundu", f"{f} zaten var — ezilmedi"
+            gecici = f.with_name(f.name + ".yeni")
+            gecici.write_bytes(veri)
+            os.replace(gecici, f)       # yarım yazılmış kısayol kalmasın
+            return "guncellendi", str(f)
         with open(f, "xb") as fh:  # x: arada biri yazdıysa da ezme
             fh.write(veri)
     except (OSError, UnicodeEncodeError, LookupError) as exc:
