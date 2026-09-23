@@ -137,7 +137,7 @@ kullanıcı verir; TS'te eksik kalan her mesaj build ortasında bloke eden bir o
 
 ### 5.3 FM imzası ↔ doküman senkronu (§9 ve kullanım kılavuzları)
 Bir Z fonksiyon modülünün parametreleri dokümanda (TS §9 arayüz bölümü, paylaşılan bir FM'in kullanım kılavuzu)
-listeleniyorsa liste **makine-okunur blok** içine alınır:
+listeleniyorsa ve FM'in kaynağı yazılmışsa (build sonrası) liste **makine-okunur blok** içine alınır:
 ```
 <!-- FM-IMZA: Z_DEMO_FM -->
 | Parametre | Tip | Anlam |
@@ -180,7 +180,7 @@ Teslim edilen tek dokümandır; parçalar çalışma dosyasıdır. Birleşik dok
 [ ] Performans noktaları, iyileştirme yaklaşımı, transport stratejisi yazılı
 [ ] §4.5 kolon tamlığı + (d) açıklama kolonu kararı + (e) alan kataloğu kararı
 [ ] §10.1 mesaj envanteri TAM (≤ 73, &1..&4 + anlam, üretim noktası, aksiyon; metinler kullanıcıdan)
-[ ] Parametreleri listelenen her Z FM için FM-IMZA bloğu var ve `check_fm_signature_doc_sync.py` sapma göstermiyor (§5.3)
+[ ] FM kaynağı varsa (build sonrası): parametreleri listelenen her Z FM için FM-IMZA bloğu var ve `check_fm_signature_doc_sync.py` sapma göstermiyor; build öncesi TS'te liste elle karşılaştırılır, blok build sonrası eklenir (§5.3)
 [ ] Birim ve entegrasyon testleri; izlenebilirlik matrisi FS'e bağlı, boş satır yok (İlke 3)
 [ ] §2-A FS denetimi dolu; sorunlu maddeler bilgilendirildi (İlke 4)
 [ ] §11-A yalnız teknik teyit; fonksiyonel kararlar kapalı: eşleştirme + çoklu eşleşme · tüm anahtar · dönüşüm · birim · alan taşıma · kenar durumlar · kilit · hata birleştirme (İlke 5)
