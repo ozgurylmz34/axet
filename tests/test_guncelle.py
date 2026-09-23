@@ -1208,7 +1208,10 @@ class Z62YenidenAdlandirmaHedefiTest(Z62Temel):
 
     def test_Z62_P1_tasima_ertelenirse_hedefi_beyan_eden_kalem_is_yok_DEGIL(self):
         kal = self._p1_tur("ertelendi")
-        self.assertEqual(kal["3-04"]["durum"], "uygulandi", "kurgu: 3-04'ün diğer dosyaları indi")
+        # Z61 (c): docs/tasinan2.md 3-04'ün KENDİ dosyası ve ertelendi ⇒ diğer dosyaları inse de 3-04
+        # `atlandi` + `ertelendi` (eskiden `uygulandi`).
+        self.assertEqual((kal["3-04"]["durum"], kal["3-04"].get("neden")), ("atlandi", "ertelendi"),
+                         "kurgu: 3-04'ün diğer dosyaları indi, tasinan2.md ertelendi")
         self.assertFalse((self.f.tuketici / "docs/tasindi2.md").exists(), "kurgu: taşıma inmedi")
         self.assertEqual((kal["3-06"]["durum"], kal["3-06"].get("neden")), ("atlandi", "ertelendi"),
                          "3-06'nın içeriği inmedi — is-yok sayılırsa bağımlının UYARI'sı kaybolur")
@@ -2148,7 +2151,11 @@ class AkisTest(AkisTemel):
     def test_Z58_kapanis_sahip_kalemde_dosya_ertelendiyse_devreden_kalem_is_yok_DEGIL(self):
         u = self._kapanis_doctor_ertelendi()
         kal = u["kalemler"]
-        self.assertEqual(kal["3-01"]["durum"], "uygulandi", "kurgu: 3-01'in sap_stamp.py'si indi")
+        # Z61 (c): doctor.py 3-01'in KENDİ dosyası ve ertelendi ⇒ sap_stamp.py inse de 3-01 `atlandi`
+        # + `ertelendi` (eskiden `uygulandi`; ertelenen dosya bir daha önerilmiyordu).
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"),
+                         "kurgu: 3-01'in sap_stamp.py'si indi, doctor.py'si ertelendi")
+        self.assertEqual(u["dosyalar"].get("scripts/sap_stamp.py"), "v3", "inen dosyanın tabanı yazılır")
         self.assertNotIn("scripts/doctor.py", u["dosyalar"], "kurgu: doctor.py diske İNMEDİ")
         self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "ertelendi"),
                          "2-01'in içeriği inmedi — is-yok sayılırsa bağımlının UYARI'sı kaybolur")
@@ -4081,6 +4088,266 @@ class Z54ModulKomutuOlculurTest(GuncelleTemel):
         (self.f.tuketici / "scripts" / "install.py").unlink()
         r = self.f.calistir("--harita", str(yol), "ozel-adim", "config-izin-kok")
         self.assertIn("betik yok", self.cikti(r))
+
+
+# =====================================================================================================
+# Z61 — kapanışın disk doğrulaması + turlar arası bayat `dogrulandi` kaydı
+# =====================================================================================================
+class Z61KapanisDiskTutmazTest(AkisTemel):
+    """Z61 (a): `durum.json` `dogrulandi` diyor, disk başka (kullanıcı `isaretle`den SONRA dosyayı
+    elle değiştirdi/sildi). Kapanış bunu EKSİK olarak basıyordu ama yalnız YEREL `dv`yi düşürüyordu;
+    aynı sözlüğü okuyan `_kapanis_git` kaydı hâlâ `dogrulandi` görüp `--kabul`de kalemi `uygulandi`
+    mühürlüyor, `uygulanan.json`'a dosyayı "indi" diye yazıyordu; devreden kalemi de `_atlandi_nedeni`
+    `is-yok` sayıyordu ⇒ içerik diskte yokken kalem kalıcı kapanır (bir daha önerilmez).
+
+    Kurgu: 3-02'nin TEK dosyası `core/00-temel.md` (V4t, `--karar yeni`); 2-02 aynı yolu 3-02'ye
+    devreder. KONTROL: disk bozulmazsa 3-02 `uygulandi`, 2-02 `is-yok` (kusursuz hâl yeşil)."""
+
+    YOL = "core/00-temel.md"
+
+    def _kapanisa_hazirla(self) -> None:
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        self._tum_yargilari_kapat()
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        self.assertEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi",
+                         "kurgu: dosya isaretle ile doğrulanmış olmalı")
+
+    def _uygulanan(self) -> dict:
+        return json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
+
+    def _disk_tutmaz_kabul(self, boz) -> None:
+        self._kapanisa_hazirla()
+        boz()
+        r = self.f.calistir("kapanis", "--kabul", "bilerek")
+        self.assertEqual(r.returncode, 3, self.cikti(r))
+        self.assertIn(self.YOL, r.stderr, "EKSİK satırı dosyayı adıyla söylemeli")
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertIn(f"[FAIL] 3-02 {self.YOL}", rapor, "rapor dosyayı açık madde göstermeli")
+        u = self._uygulanan()
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-02"]["durum"], kal["3-02"].get("neden")), ("atlandi", "kabul"),
+                         "disk tutmayan tek dosyalı kalem --kabul ile UYGULANDI mühürlenmemeli; "
+                         "kullanıcının açık kararı `atlandi` + `neden: kabul`")
+        self.assertNotIn(self.YOL, u["dosyalar"], "diske inmeyen içerik 'indi' diye kaydedilmemeli")
+        self.assertNotEqual(kal["2-02"].get("neden"), "is-yok",
+                            "devredilen yol inmedi — devreden kalem is-yok SAYILMAZ")
+        self.assertNotEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi",
+                            "durum.json kaydı da disk ölçümüyle güncellenmeli")
+
+    def test_Z61_a_elle_degistirilen_dosya_kabul_ile_uygulandi_muhurlenmez(self):
+        self._disk_tutmaz_kabul(lambda: self.f.yerel_degistir(self.YOL, "elle bozuldu\n"))
+
+    def test_Z61_a_elle_silinen_dosya_kabul_ile_uygulandi_muhurlenmez(self):
+        self._disk_tutmaz_kabul(lambda: self.f.yerel_sil(self.YOL))
+
+    def test_Z61_a_disk_tutmazsa_kabulsuz_kapanis_1_ve_durum_json_guncellenir(self):
+        self._kapanisa_hazirla()
+        self.f.yerel_degistir(self.YOL, "elle bozuldu\n")
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 1, self.cikti(r))
+        self.assertNotEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi")
+        u_yol = self.f.durum_dizini() / "uygulanan.json"
+        u = self._uygulanan() if u_yol.exists() else {"kalemler": {}, "dosyalar": {}}
+        self.assertNotIn("3-02", u.get("kalemler", {}), "--kabul yoksa mühür BASILMAZ")
+        self.assertNotIn(self.YOL, u.get("dosyalar", {}))
+
+    def test_Z61_a_KONTROL_disk_tutarsa_uygulandi_ve_devreden_is_yok(self):
+        self._kapanisa_hazirla()
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        u = self._uygulanan()
+        self.assertEqual(u["kalemler"]["3-02"]["durum"], "uygulandi")
+        self.assertEqual(u["dosyalar"][self.YOL], "v3")
+        self.assertEqual(u["kalemler"]["2-02"].get("neden"), "is-yok")
+        self.assertEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi")
+
+
+class Z61BayatDogrulandiTest(AkisTemel):
+    """Z61 (b): önceki turun `dogrulandi` kaydı turlar arasında silinmez (`_plan_muhru`); Z62
+    temizliği yalnız `atlandi/ertelendi`yi siler. `komut_uygula` yargı vakasında önceki
+    `dogrulandi`yi "verilmiş karar" sayıp dosyayı `bekliyor` AÇMADAN atlıyordu ⇒ sonraki yayının
+    AYNI dosyadaki yargı vakası kullanıcıya hiç sorulmuyordu; `yerel`/`birlesik` kararında disk =
+    eski `beklenen_sha` olduğundan kapanış da onu PASS sayıp yeni kalemi `uygulandi` mühürlüyordu.
+
+    Kurgu: tur 1'de `core/00-temel.md` (3-02, V4t) `--karar yerel` → kapanış 0. Sonra public v4
+    aynı dosyayı yeniden değiştirir (kalem 4-01) ⇒ tur 2'de taban v3, yerel ≠ v3, yeni v4 ⇒ yargı.
+    """
+
+    YOL = "core/00-temel.md"
+
+    def _tur1(self) -> None:
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        for yol, karar in (("core/00-temel.md", "yerel"), ("scripts/doctor.py", "yeni"),
+                           ("kur.cmd", "yeni"), ("docs/logo.png", "yeni"),
+                           ("docs/tasinan2.md", "yeni"),
+                           ("skills/cakisan/SKILL.md", "yeniden-adlandir"),
+                           ("docs/silinecek.md", "yerel")):
+            r = self.f.calistir("isaretle", yol, "--karar", karar)
+            self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+
+    def _v4_yayinla(self) -> None:
+        f = self.f
+        f._yaz(f.public, {self.YOL: "CORE-ID: AXET-CORE-TEST\n# Çekirdek v3\nsatir1\nsatir2 v4\n"
+                                    "satir3\nsatir4\nsatir5\nsatir6\nson\n"})
+        yayinlar = json.loads(json.dumps(YAYINLAR))
+        yayinlar["yayinlar"].append({
+            "etiket": "v4", "tarih": "2026-03-01", "min_axet": "1.0.0",
+            "kalemler": [{"id": "4-01", "baslik": "çekirdek v4", "tur": "kural", "kritik": False,
+                          "neden": "—", "dosyalar": [self.YOL], "gerektirir": [], "test": []}]})
+        f._yaz(f.public, {"guncelle/yayinlar.json":
+                          json.dumps(yayinlar, ensure_ascii=False, indent=1) + "\n"})
+        self.git(f.public, "add", "-A")
+        self.git(f.public, "commit", "-q", "-m", "v4")
+        self.git(f.public, "tag", "v4")
+        self.git(f.tuketici, "fetch", "-q", "--tags", "origin")
+
+    def _tur2_plan(self) -> None:
+        self._tur1()
+        self.assertEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi",
+                         "kurgu: tur 1'in yerel kararı dogrulandi kalmalı")
+        self._v4_yayinla()
+        r = self.hazirla_ve_planla()
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        vakalar = self.f.vakalar()
+        self.assertIn(vakalar.get(self.YOL), ("V4t", "V4c"),
+                      f"kurgu: tur 2'de dosya YARGI vakası olmalı — {vakalar}")
+
+    def test_Z61_b_bayat_dogrulandi_yeni_turun_yargi_vakasini_atlatmaz(self):
+        self._tur2_plan()
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+        r = self.f.calistir("uygula", "--otomatik")
+        kayit = self.f.durum()["dosyalar"].get(self.YOL, {})
+        self.assertEqual(kayit.get("durum"), "bekliyor",
+                         f"tur 1'in dogrulandi kaydı tur 2'nin yargı vakasını atlatmamalı — "
+                         f"{kayit} {self.cikti(r)}")
+        self.assertEqual(kayit.get("kalem"), "4-01")
+
+    def test_Z61_b_KONTROL_bu_turun_dogrulandi_karari_yeniden_plan_ile_silinmez(self):
+        """Mühürden SONRA verilmiş karar bu turundur; `plan`ı aynı turda yeniden koşmak onu
+        silmemeli (Z62 KONTROL'ün `dogrulandi` karşılığı). Saat çözünürlüğü saniye olduğundan
+        kaydın zamanı mühürden açıkça sonraya çekilir (Z62Temel'in sabit-zaman yöntemi)."""
+        self._tur2_plan()
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+        r = self.f.calistir("isaretle", self.YOL, "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        yol = self.f.durum_dizini() / "durum.json"
+        d = self.f.durum()
+        d["dosyalar"][self.YOL]["zaman"] = "2999-01-01T00:00:00"
+        yol.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        r = self.f.calistir("plan")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        kayit = self.f.durum()["dosyalar"][self.YOL]
+        self.assertEqual((kayit.get("durum"), kayit.get("kalem")), ("dogrulandi", "4-01"), kayit)
+
+
+class Z61KismiKalemTest(AkisTemel):
+    """Z61 (c) (kullanıcı kararı 2026-09-23, seçenek 1): kalemin KENDİ dosyası `ertelendi` ise — başka
+    dosyası `dogrulandi` olsa bile — kalem `atlandi` + `neden: ertelendi` mühürlenir ⇒ Z62 sonraki
+    `plan`'da yeniden önerir. Eskiden tek `dogrulandi` dosya kalemi `uygulandi` mühürlüyordu; ertelenen
+    dosya bir daha hiç önerilmiyordu (ölçüldü: tur 2 `plan` "Klon güncel", v3 içeriği diskte yok).
+    Z66 ①'den AYRIMI: orada inmeyen yol BAŞKA kaleme devredilmiştir (sahibi Z62 ile geri gelir); burada
+    inmeyen dosya kalemin KENDİSİNİN.
+
+    Kurgu: 3-05 = logo.png (V4B) · kur.cmd (V4t) · cakisan (V7). 3-05 → 3-01'i gerektirir. 2-01'in
+    doctor.py'si 3-01'e devredilmiştir (3-01 = doctor.py + sap_stamp.py)."""
+
+    def _kapat(self, kararlar: dict, *, kabul: str | None = None, sonra=None) -> tuple:
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        tam = {"core/00-temel.md": "yeni", "scripts/doctor.py": "yeni", "kur.cmd": "yeni",
+               "docs/logo.png": "yeni", "docs/tasinan2.md": "yeni",
+               "skills/cakisan/SKILL.md": "yeniden-adlandir", "docs/silinecek.md": "yerel"}
+        tam.update(kararlar)
+        for yol, karar in tam.items():
+            ek = ["--gerekce", "sonra"] if karar == "ertelendi" else []
+            r = self.f.calistir("isaretle", yol, "--karar", karar, *ek)
+            self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        if sonra:
+            sonra()
+        r = self.f.calistir("kapanis", *(["--kabul", kabul] if kabul else []))
+        self.assertEqual(r.returncode, 3 if kabul else 0, self.cikti(r))
+        u = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
+        return u, r
+
+    def _tur2(self) -> dict:
+        r = self.hazirla_ve_planla()
+        self.assertEqual(r.returncode, 0, f"tur 2 plan: {self.cikti(r)}")
+        return {k["id"]: k for k in self.f.plan()["kalemler"]}
+
+    def test_Z61_c_kendi_dosyasi_ertelenen_kalem_uygulandi_muhurlenmez_ve_yeniden_onerilir(self):
+        u, _ = self._kapat({"kur.cmd": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-05"]["durum"], kal["3-05"].get("neden")), ("atlandi", "ertelendi"))
+        # inen dosyaların tabanı dosya başına yazılır, ertelenenin YAZILMAZ
+        self.assertEqual(u["dosyalar"].get("docs/logo.png"), "v3")
+        self.assertEqual(u["dosyalar"].get("skills/cakisan/SKILL.md"), "v3")
+        self.assertNotIn("kur.cmd", u["dosyalar"])
+        plan = self._tur2()
+        self.assertIn("3-05", plan, "ertelenen dosyalı kalem tur 2'de yeniden önerilmeli")
+        self.assertTrue(plan["3-05"].get("yeniden_onerilen"))
+        # inen dosyalar tur 2'de YENİDEN yargı/eylem vakası üretmez (taban v3 ⇒ işlemsiz)
+        self.assertEqual({d["yol"]: d["vaka"] for d in plan["3-05"]["dosyalar"]}.keys(), {"kur.cmd"},
+                         plan["3-05"]["dosyalar"])
+        self.assertIn(plan["3-05"]["dosyalar"][0]["vaka"], ("V4t", "V4c"))
+
+    def test_Z61_c_KONTROL_kalemin_tum_dosyalari_inerse_uygulandi(self):
+        u, _ = self._kapat({})
+        self.assertEqual(u["kalemler"]["3-05"]["durum"], "uygulandi")
+        self.assertNotIn("neden", u["kalemler"]["3-05"])
+
+    def test_Z61_c_kabul_altinda_disk_tutmayan_dosya_cok_dosyali_kalemi_uygulandi_yapmaz(self):
+        """Lider notu: `--kabul` + kalemin bir dosyası disk doğrulamasını tutmadı + diğerleri indi ⇒
+        kalem `atlandi` + `neden: kabul` (kullanıcının açık FAIL kabulü; ertelenmiş dosya yok)."""
+        u, r = self._kapat({}, kabul="bilerek",
+                           sonra=lambda: self.f.yerel_degistir("kur.cmd", "elle bozuldu\r\n"))
+        self.assertIn("kur.cmd", r.stderr)
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-05"]["durum"], kal["3-05"].get("neden")), ("atlandi", "kabul"))
+        self.assertNotIn("kur.cmd", u["dosyalar"])
+        self.assertEqual(u["dosyalar"].get("docs/logo.png"), "v3")
+
+    def test_Z61_c_sahip_kismi_ertelendiyse_indigi_devredilen_yol_devreden_kalemi_kapatir(self):
+        """3-01'in sap_stamp.py'si ertelendi, doctor.py indi ⇒ 3-01 `atlandi/ertelendi`. 2-01'in tek
+        işi (doctor.py, 3-01'e devredilmiş) İNDİ ⇒ 2-01 `is-yok` kalmalı (sahibin tamamı değil, YOLUN
+        inmesi ölçüttür); `kabul` basılsaydı 2-01 kalıcı kapanırdı ama gerekçesi yanlış olurdu."""
+        u, _ = self._kapat({"scripts/sap_stamp.py": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "is-yok"))
+        self.assertEqual(u["dosyalar"].get("scripts/doctor.py"), "v3")
+
+    def test_Z61_c_bagimli_kalem_yan_etkisi_tur2_onkosul_yeniden_onerilir(self):
+        """Yan etki ölçümü: 3-01 (3-05'in önkoşulu) kısmi — doctor.py (V4c, yargı) ertelendi,
+        sap_stamp.py indi ⇒ 3-01 `atlandi/ertelendi`; doctor.py'yi 3-01'e devreden 2-01 de
+        `ertelendi` (yol inmedi). Aynı turda seçili bağımlı 3-05 `uygulandi` kalır. Tur 2'de 3-01
+        yalnız ertelenen dosyasıyla yeniden önerilir (sap_stamp tabanı v3 ⇒ işlemsiz), `sec` DUR
+        vermez."""
+        u, _ = self._kapat({"scripts/doctor.py": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual(kal["3-05"]["durum"], "uygulandi")
+        self.assertEqual(u["dosyalar"].get("scripts/sap_stamp.py"), "v3")
+        plan = self._tur2()
+        self.assertIn("3-01", plan)
+        self.assertNotIn("3-05", plan)
+        self.assertEqual([d["yol"] for d in plan["3-01"]["dosyalar"]], ["scripts/doctor.py"],
+                         plan["3-01"]["dosyalar"])
+        r = self.f.calistir("sec", "--hepsi")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        print(f"[Z61c yan etki] tur2 kalemler={sorted(plan)} sec stdout={r.stdout.strip()!r}")
 
 
 if __name__ == "__main__":
