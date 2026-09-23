@@ -1435,7 +1435,11 @@ class GitKimlikTest(GeciciTest):
         self.assertTrue(satir[0].startswith("[INFO] git kimliği tanımsız"), satir[0])
 
     def test_kimliksiz_remote_lu_repo_warn(self):
+        # FAIL'siz taban: global config yoksa ya da .conn_adt gitignore'da değilse doctor rc'si zaten 1 olur ve
+        # aşağıdaki rc karşılaştırması kör kalır (ölçüldü).
+        self.global_config()
         self.repo(remote=True)
+        self.yaz(self.cwd / ".gitignore", ".conn_adt\n")
         r = self.calistir("doctor.py", cwd=self.cwd)
         satir = self.kimlik_satirlari(r)
         self.assertEqual(len(satir), 1, r.stdout)
@@ -1444,6 +1448,34 @@ class GitKimlikTest(GeciciTest):
                       "yargılanmaz", "remote yalnız bulunulan repoda ölçülür"):
             self.assertIn(parca, satir[0])
         self.assertNotIn("example.invalid", r.stdout.split("git kimliği", 1)[1].splitlines()[0])
+        self.assertNotIn("bu makinedeki", satir[0], "proje dizininde genel (template) metni basılmamalı")
+        # WARN dalı çıkış kodunu değiştirmemeli: aynı remote'lu repoda kimlikli koşunun rc'siyle karşılaştır.
+        self.kimlik("Ad Soyad", self.ADRES)
+        kimlikli = self.calistir("doctor.py", cwd=self.cwd)
+        self.assertTrue(self.kimlik_satirlari(kimlikli)[0].startswith("[PASS]"), kimlikli.stdout)
+        self.assertEqual(kimlikli.returncode, 0, "kontrol grubu: FAIL'siz koşu olmalı (yoksa rc karşılaştırması kör)\n"
+                         + kimlikli.stdout)
+        self.assertEqual(r.returncode, kimlikli.returncode, "WARN çıkış kodunu değiştirmemeli")
+
+    def test_template_klonunda_genel_metin(self):
+        """Kurulumda doctor template klonunda koşar (kur.ps1: Push-Location $Hedef); klonun origin'i vardır.
+        Metin "proje" değil bu makinedeki projeler için konuşmalı; seviye WARN kalır. Gerçek AXET_HOME'un yerel
+        config'inde kimlik olabileceği için klon eşdeğeri izole bir remote'lu repo + yamalı AXET_HOME kullanılır."""
+        self.repo(remote=True)
+        (self.cwd / "alt").mkdir()
+        doctor.results.clear()
+        with mock.patch.dict(os.environ, self.env, clear=True), \
+                mock.patch.object(doctor.inst, "AXET_HOME", self.cwd):
+            doctor.check_git_kimlik(self.cwd)
+            doctor.check_git_kimlik(self.cwd / "alt")  # klonun alt dizini de template sayılır
+        sonuc = list(doctor.results)
+        doctor.results.clear()
+        self.assertEqual(len(sonuc), 2, sonuc)
+        for durum, mesaj in sonuc:
+            self.assertEqual(durum, "WARN", mesaj)
+            self.assertIn("git kimliği tanımsız", mesaj)
+            self.assertIn("bu makinedeki bir proje uzak sunucuya push edilirse", mesaj)
+            self.assertNotIn("; proje uzak sunucuya push edilirse", mesaj)
 
     def test_remote_olculemezse_warn(self):
         """`git remote` rc 0/128 dışı → güvenli taraf WARN (sessiz INFO değil)."""
@@ -1483,7 +1515,7 @@ class GitKimlikTest(GeciciTest):
         self.assertEqual(len(satir), 1, r.stdout)
         self.assertTrue(satir[0].startswith("[PASS] git kimliği tanımlı"), satir[0])
         self.assertNotIn(self.ADRES, r.stdout, "adres (kişisel veri) basılmamalı")
-        self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
+        self.assertEqual(r.returncode, kontrol.returncode, "kimlik satırı (INFO↔PASS) çıkış kodunu değiştirmemeli")
 
     def test_git_yoksa_bilgi_satiri(self):
         doctor.results.clear()
