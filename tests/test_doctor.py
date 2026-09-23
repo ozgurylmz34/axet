@@ -1377,3 +1377,121 @@ class CekirdekMetniTest(GeciciTest):
                       "scripts/guncelle.py", "gevşetemez", "DUR"):
             self.assertIn(parca, bolum, f"§11 istisnasında eksik: {parca}")
         self.assertIn("Başka hiçbir dış içerik", bolum)
+
+
+class GitKimlikTest(GeciciTest):
+    """Z84: git kimliği (user.name/user.email) tanımsızsa: bulunulan repoda remote varsa WARN, yoksa INFO. Ölçülen vaka:
+    Windows'ta `user.email` yokken git adresi şirket hesabından türetti, commit HATA VERMEDEN o adresle atıldı; push
+    edilirse adres geçmişe girer. İzolasyon: global config geçici dosya, sistem config'i yok, HOME/USERPROFILE geçici,
+    cwd başlangıçta git reposu DEĞİL (repo gereken testler onu kendisi `git init` eder)."""
+
+    ADRES = "ad.soyad@sirket.com"
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.env["LOCALAPPDATA"] = str(self.tmp / "_lad")
+        home = self.tmp / "_home"
+        home.mkdir()
+        self.gitconfig = self.tmp / "_kimlik_gitconfig"
+        self.gitconfig.write_text("", encoding="utf-8")
+        self.env.update({"GIT_CONFIG_GLOBAL": str(self.gitconfig), "GIT_CONFIG_NOSYSTEM": "1",
+                         "HOME": str(home), "USERPROFILE": str(home)})
+        self.cwd = self.tmp / "repo_disi"
+        self.cwd.mkdir()
+        # Ön koşul: cwd bir git reposunun içinde DEĞİL (içindeyse üst reponun yerel config'i sonucu sızdırır).
+        r = self.git(self.cwd, "rev-parse", "--is-inside-work-tree", kontrol=False)
+        self.assertNotEqual(r.returncode, 0, f"geçici dizin bir git reposunun içinde: {self.cwd}")
+
+    def kimlik(self, ad: str | None, eposta: str | None) -> None:
+        satirlar = ["[user]"]
+        if ad is not None:
+            satirlar.append(f"\tname = {ad}")
+        if eposta is not None:
+            satirlar.append(f"\temail = {eposta}")
+        self.gitconfig.write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+
+    def kimlik_satirlari(self, r) -> list[str]:
+        return [s for s in r.stdout.splitlines() if s.startswith("[") and "git kimliği" in s]
+
+    def repo(self, remote: bool) -> None:
+        """cwd'yi git reposu yapar; `remote` → push riski gerçek (WARN seviyesi)."""
+        self.git(self.cwd, "init", "-q")
+        if remote:
+            self.git(self.cwd, "remote", "add", "origin", "https://example.invalid/x.git")
+
+    def test_kimliksiz_remote_suz_repo_info(self):
+        self.repo(remote=False)
+        r = self.calistir("doctor.py", cwd=self.cwd)
+        satir = self.kimlik_satirlari(r)
+        self.assertEqual(len(satir), 1, r.stdout)
+        self.assertTrue(satir[0].startswith("[INFO] git kimliği tanımsız"), satir[0])
+        for parca in ("user.email", "user.name", "Windows", "push edilmeyecekse zararsız",
+                      "git config --global user.email", "yargılanmaz", "remote yalnız bulunulan repoda ölçülür"):
+            self.assertIn(parca, satir[0])
+
+    def test_kimliksiz_repo_disi_info(self):
+        satir = self.kimlik_satirlari(self.calistir("doctor.py", cwd=self.cwd))
+        self.assertEqual(len(satir), 1, satir)
+        self.assertTrue(satir[0].startswith("[INFO] git kimliği tanımsız"), satir[0])
+
+    def test_kimliksiz_remote_lu_repo_warn(self):
+        self.repo(remote=True)
+        r = self.calistir("doctor.py", cwd=self.cwd)
+        satir = self.kimlik_satirlari(r)
+        self.assertEqual(len(satir), 1, r.stdout)
+        self.assertTrue(satir[0].startswith("[WARN] git kimliği tanımsız"), satir[0])
+        for parca in ("user.email", "user.name", "Windows", "push edilirse", "git config --global user.email",
+                      "yargılanmaz", "remote yalnız bulunulan repoda ölçülür"):
+            self.assertIn(parca, satir[0])
+        self.assertNotIn("example.invalid", r.stdout.split("git kimliği", 1)[1].splitlines()[0])
+
+    def test_remote_olculemezse_warn(self):
+        """`git remote` rc 0/128 dışı → güvenli taraf WARN (sessiz INFO değil)."""
+        def sahte(argv, **kw):
+            if argv[1:3] == ["config", "--get"]:
+                return subprocess.CompletedProcess(argv, 1, "", "")
+            return subprocess.CompletedProcess(argv, 2, "", "bozuk\n")
+        doctor.results.clear()
+        with mock.patch.object(doctor.subprocess, "run", side_effect=sahte):
+            doctor.check_git_kimlik(self.cwd)
+        self.assertEqual(len(doctor.results), 1, doctor.results)
+        durum, mesaj = doctor.results[0]
+        doctor.results.clear()
+        self.assertEqual(durum, "WARN")
+        self.assertIn("git kimliği tanımsız", mesaj)
+        self.assertIn("remote'u ÖLÇÜLEMEDİ (rc=2: bozuk)", mesaj)
+
+    def test_yalniz_eposta_eksik_warn(self):
+        self.repo(remote=True)
+        self.kimlik("Ad Soyad", None)
+        satir = self.kimlik_satirlari(self.calistir("doctor.py", cwd=self.cwd))
+        self.assertEqual(len(satir), 1, satir)
+        self.assertTrue(satir[0].startswith("[WARN] git kimliği tanımsız (user.email)"), satir[0])
+
+    def test_yalniz_ad_eksik_warn(self):
+        self.repo(remote=True)
+        self.kimlik(None, self.ADRES)
+        satir = self.kimlik_satirlari(self.calistir("doctor.py", cwd=self.cwd))
+        self.assertEqual(len(satir), 1, satir)
+        self.assertTrue(satir[0].startswith("[WARN] git kimliği tanımsız (user.name)"), satir[0])
+
+    def test_kimlikli_pass_adres_basilmaz(self):
+        kontrol = self.calistir("doctor.py", cwd=self.cwd)
+        self.kimlik("Ad Soyad", self.ADRES)
+        r = self.calistir("doctor.py", cwd=self.cwd)
+        satir = self.kimlik_satirlari(r)
+        self.assertEqual(len(satir), 1, r.stdout)
+        self.assertTrue(satir[0].startswith("[PASS] git kimliği tanımlı"), satir[0])
+        self.assertNotIn(self.ADRES, r.stdout, "adres (kişisel veri) basılmamalı")
+        self.assertEqual(r.returncode, kontrol.returncode, "WARN çıkış kodunu değiştirmemeli")
+
+    def test_git_yoksa_bilgi_satiri(self):
+        doctor.results.clear()
+        with mock.patch.object(doctor.shutil, "which", return_value=None):
+            doctor.check_git_kimlik()
+        self.assertEqual(len(doctor.results), 1, doctor.results)
+        durum, mesaj = doctor.results[0]
+        self.assertEqual(durum, "INFO")
+        self.assertIn("git bulunamadı", mesaj)
+        self.assertIn("git kimliği", mesaj)
+        doctor.results.clear()
