@@ -273,7 +273,8 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   `-f`/`-df`/`-xdf`/`-fdx`/`-d -f`/`--force` ailesinin tamamını **tek** desenle tutar; altı ayrı desen yazmak
   uzunluk-ezme yüzeyini gereksiz büyütürdü.
   ⚠ **HÂLÂ AÇIK** (bilinçli, `tests/test_install.py::test_git_c_disi_kacis_bicimleri_hala_acik` ile kilitli):
-  `git -c ayar=değer <altkomut>` biçimi (kombinatoryal, desenle kapatılamaz) ·
+  `git -c ayar=değer <altkomut>` biçimi (kombinatoryal, desenle kapatılamaz; **istisna:** dal silme ailesi Z75'te
+  `*git *branch* …*` biçimiyle global seçenekten bağımsız kapatıldı — aşağıya bkz.) ·
   `git --git-dir=<yol>` yalnız yol `.git` ile bitiyorsa **kazara** eşleşir (koruma değil, tesadüf) ·
   ve bu 6 desenin tamamı **simülasyonla** ölçüldü, canlı `axet-code run` ile **DOĞRULANMADI**
   (kardeşi `*git -C * push -f*` canlı ölçülmüştü, biçim birebir aynı).
@@ -287,6 +288,20 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   tam olarak "tüm ağacı geri alan nokta biçimi"dir. Kapatılmadı, **belgelendi**; bilinen yanlış
   pozitifi `git checkout -- .gitignore` ve `git checkout -- ./yol`. Seçim ölçütü "daha geri alınamaz olan"dı: commit'siz iş
   için reflog YOKTUR ⇒ `checkout -- .` bu setin en geri alınamazıdır, `branch -D`/`stash drop` reflog/fsck ile kurtarılabilir.
+- **Zorla dal silme eşdeğerleri (Z75, 2026-09-23, kullanıcı onayı).** Yalnız `*git branch -D*` vardı. Gerçek gitte
+  (scratch repo, birleşmemiş dal) ölçüldü: `-d -f`, `-df`, `-fd`, `-fD`, `-Df`, `-d --force`, `--force -d`, `--delete -f`,
+  `--delete --force`, `-f -d`, `-f --delete`, `--force --delete`, **sondaki** bayrak (`-d <dal> -f`) ve tekil önek
+  kısaltması (`--delete --forc`) birleşmemiş dalı **sildi**; düz `-d` reddetti. 12 deny eklendi — bayrak sırasından
+  bağımsız, `*git *branch*` önekli (`-C`/`-c`/`--git-dir=` de tutulur): `*git *branch* -d* -f*`, `*git *branch* -d* --forc*`,
+  `*git *branch* --d* -f*`, `*git *branch* --d* --forc*`, `*git *branch* -f* -d*`, `*git *branch* -f* --d*`,
+  `*git *branch* --forc* -d*`, `*git *branch* --forc* --d*`, `*git *branch* -df*`, `*git *branch* -fd*`, `*git *branch* -fD*`,
+  `*git *branch* -D*`. Meşru `git branch -d <dal>` (adında `-f` geçen dallar dahil) ve okuma biçimleri (`--list`, `-a`, `-v`,
+  `--show-current`, `--format=…`) ile adında/mesajında "branch" geçen başka git komutları **düşmez**
+  (`tests/test_install.py::ZorlaDalSilmeTest`). **Bilinçli açık:** `git branch -f/--force <dal> <ref>` (zorla taşıma —
+  dalın kendi reflog'u korunur, `<dal>@{1}` ile geri alınır; ölçüldü) ve `-M`. `-D` ise dalın reflog'unu da siler
+  (ölçüldü); kurtarma yalnız HEAD reflog'u ya da `git fsck` dangling commit ile, gc'ye kadar. Bilinen yanlış pozitif:
+  `git branch …` ile **zincirlenmiş** ve sonrasında ` -d…`/` -f…` bayrakları geçen başka komut. Bilinen açık: harf
+  varyantı, `-d`/`-f` ilk harf olmayan kümeler (`-vdf`), çift boşluk.
 - **Yanlış pozitif: desen metni komutun herhangi bir yerinde geçerse eşleşir.** Ölçülen: `echo "rm -rf notu"`,
   `python x.py "rd /s metni"`, `git commit -m "git push --force notu"`, `echo "git reset --hard açıklaması"`.
   Simülasyonla beklenen (ölçülmedi): `rg -n "git reset --hard" .` ve `grep -rn "git reset --hard" docs` (deny),
