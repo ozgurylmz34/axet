@@ -1010,11 +1010,15 @@ def komut_plan(b: Baglam, args) -> int:
     d = durum_oku(k)
     d["plan"] = _plan_muhru(plan)
     temizlenen = _tuketilmis_ertelemeleri_temizle(d, plan, b.uygulanan)
+    tuketilen = _tuketilmis_dogrulamalari_temizle(d, plan, b.uygulanan)
     durum_yaz(k, d)
     _plan_tablosu(plan)
     for yol in temizlenen:
         print(f"  NOT: {yol} önceki turda ertelenmişti; o karar kapanışta mühürlendi, bu turda "
               f"dosya yeniden karar bekliyor.")
+    for yol in tuketilen:
+        print(f"  NOT: {yol} önceki turda doğrulanmıştı; o kayıt kapanışta mühürlendi, bu "
+              f"yayının değişikliği için dosya bu turda yeniden işlenecek.")
     return 0
 
 
@@ -1053,6 +1057,33 @@ def _tuketilmis_ertelemeleri_temizle(d: dict, plan: dict, uygulanan: dict) -> li
             kayit = d["dosyalar"].get(dosya["yol"])
             if not (isinstance(kayit, dict) and kayit.get("durum") == "atlandi"
                     and kayit.get("karar") == "ertelendi"):
+                continue
+            muhur = muhurler.get(kayit.get("kalem"))
+            if isinstance(muhur, dict) and _kayit_tuketildi_mi(kayit.get("zaman"),
+                                                              muhur.get("zaman")):
+                del d["dosyalar"][dosya["yol"]]
+                temizlenen.append(dosya["yol"])
+    return temizlenen
+
+
+def _tuketilmis_dogrulamalari_temizle(d: dict, plan: dict, uygulanan: dict) -> list[str]:
+    """Z61 (b): bu planın dosyalarındaki, önceki bir kapanışta TÜKETİLMİŞ `dogrulandi` kayıtlarını
+    `durum.json`'dan siler. Döner: temizlenen yollar. Ölçüt Z62 temizliğinin aynısı (dosya bazlı;
+    kaydın kalemi mühürlü VE kayıt mühürden önce/aynı saniyede ⇒ tüketilmiş; `_kayit_tuketildi_mi`).
+
+    Neden gerekli (ölçüldü, `test_Z61_b_bayat_dogrulandi_yeni_turun_yargi_vakasini_atlatmaz`):
+    `komut_uygula` yargı vakasında önceki `dogrulandi` kaydını "verilmiş karar" sayıp dosyayı
+    `bekliyor` açmadan atlar. Önceki turun `yerel`/`birlesik` kararında disk hâlâ o kaydın
+    `beklenen_sha`sıdır ⇒ kapanış dosyayı PASS sayar ve sonraki yayının kalemini kullanıcıya hiç
+    sorulmadan `uygulandi` mühürler (içeriği diske inmeden; `--kabul` bile gerekmez).
+    `_tuketilmis_ertelemeleri_temizle` yalnız `atlandi/ertelendi`yi siler — bilinçli olarak ayrı
+    fonksiyon: o kaydın silinmesi kullanıcıya "yeniden karar bekliyor" notu verir, bunun notu farklıdır."""
+    temizlenen = []
+    muhurler = uygulanan.get("kalemler", {})
+    for kalem in plan["kalemler"]:
+        for dosya in kalem["dosyalar"]:
+            kayit = d["dosyalar"].get(dosya["yol"])
+            if not (isinstance(kayit, dict) and kayit.get("durum") == "dogrulandi"):
                 continue
             muhur = muhurler.get(kayit.get("kalem"))
             if isinstance(muhur, dict) and _kayit_tuketildi_mi(kayit.get("zaman"),
@@ -2378,6 +2409,7 @@ def komut_kapanis(b: Baglam, args) -> int:
     durum = durum_oku(k)
     secili = secim_oku(k, plan)
     satirlar, eksikler = [], []
+    durum_dustu = False
 
     for kalem in plan["kalemler"]:
         if kalem["id"] not in secili:
@@ -2388,6 +2420,11 @@ def komut_kapanis(b: Baglam, args) -> int:
             dv = kayit.get("durum", "bekliyor")
             karar = kayit.get("karar", "—")
             # §6: ajanın "yaptım" demesi durum değiştirmez — DİSKTEN yeniden doğrula
+            # ⛔ Z61 (a): ölçüm tutmazsa KAYDIN KENDİSİ düşürülür, yalnız yerel `dv` değil. Aynı
+            # `durum` sözlüğünü `_kapanis_git` (mühür + `uygulanan.json` dosya tabanı) ve
+            # `_atlandi_nedeni` (devredilen yol "indi" mi) okur; kayıt `dogrulandi` kalınca
+            # `--kabul`de kalem `uygulandi`, devreden kalem `is-yok` mühürleniyor, içerik diskte
+            # yokken kalem bir daha önerilmiyordu (ölçüldü, `Z61KapanisDiskTutmazTest`).
             if dv == "dogrulandi":
                 hedef = kayit.get("hedef_yol", yol)
                 if k.disk_sha(hedef) != kayit.get("beklenen_sha"):
@@ -2403,7 +2440,11 @@ def komut_kapanis(b: Baglam, args) -> int:
                                      if y_sha_ref else None)
                         if cakisma_isaretleri(metin, ref_metin):
                             dv = "uygulandi"
+                            kayit["not_"] = "kapanışta çakışma işareti bulundu"
                             eksikler.append(f"{yol}: çakışma işareti duruyor")
+                if dv != "dogrulandi":
+                    kayit["durum"] = dv
+                    durum_dustu = True
             if dv in ("bekliyor", "uygulandi"):
                 eksikler.append(f"{yol}: durum '{dv}' (dogrulandi ya da gerekçeli atlandi gerekir)")
                 satirlar.append(f"[FAIL] {kalem['id']} {yol} {d['vaka']} {karar}")
@@ -2412,6 +2453,10 @@ def komut_kapanis(b: Baglam, args) -> int:
                                 f" ({kayit.get('gerekce', '—')})")
             else:
                 satirlar.append(f"[PASS] {kalem['id']} {yol} {d['vaka']} {karar}")
+    if durum_dustu:
+        # Kalıcı: `durum` tablosu ve sonraki `uygula` da ölçülen hâli görsün (yargı vakası
+        # `uygulandi` kaydında yeniden `bekliyor` açılır; otomatik vaka yeniden yazılır).
+        durum_yaz(k, durum)
 
     # özel adımlar
     beklenen_ozel = sorted({a for kalem in plan["kalemler"] if kalem["id"] in secili
