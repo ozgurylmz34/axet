@@ -66,16 +66,22 @@ BAKILMAYANLAR = [
     "belgelenmiş sayılır",
     "SAP sistemindeki güncel imza — yalnız yerel kaynak dosyası okunur; yerel kaynak bayatsa önce sistemden çek",
     "makro/dinamik biçimde üretilmiş imza · kaynak kökü dışındaki FM kaynağı",
+    "tipsiz IMPORTING/EXPORTING/CHANGING parametresi ve tanınmayan tip sözdizimi — atlanmaz, ÖLÇÜLEMEDİ (çıkış 2) verir",
     "atlanan klasörler (%s) ve dizin bağlantıları (junction/symlink) — izlenmez" % ", ".join(sorted(_SKIP)),
 ]
 
 _BLOK = re.compile(r"<!--\s*FM-IMZA:\s*([A-Za-z0-9_/]+)\s*-->")
 _BLOK_SON = "<!-- /FM-IMZA -->"
-_BOLUM = re.compile(r"^(IMPORTING|EXPORTING|CHANGING|TABLES|EXCEPTIONS|RAISING)\b\s*(.*)$", re.IGNORECASE)
+_BOLUMLER = {"IMPORTING", "EXPORTING", "CHANGING", "TABLES", "EXCEPTIONS", "RAISING"}
 _PARAM_BOLUM = {"IMPORTING", "EXPORTING", "CHANGING", "TABLES"}
-_VALUE = re.compile(r"^(?:VALUE|REFERENCE)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)\s+(?:TYPE|LIKE)\b", re.IGNORECASE)
-_DUZ = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s+(?:TYPE|LIKE|STRUCTURE)\b", re.IGNORECASE)
-_CIPLAK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)(?:\s+OPTIONAL)?$", re.IGNORECASE)   # tipsiz TABLES parametresi
+_AYRILMIS = _BOLUMLER | {"TYPE", "LIKE", "STRUCTURE", "DEFAULT", "OPTIONAL", "REF", "TO"}
+# İmza token'ları: dize ('…', `…`) · VALUE(x)/REFERENCE(x) · boşluksuz sözcük · deyim sonu nokta.
+_TOKEN = re.compile(r"'(?:[^']|'')*'|`[^`]*`|(?:VALUE|REFERENCE)\s*\(\s*[A-Za-z_][A-Za-z0-9_]*\s*\)|[^\s.'`]+|\.",
+                    re.IGNORECASE)
+_BAS = re.compile(r"^(?:VALUE|REFERENCE)\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)$", re.IGNORECASE)
+_AD = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_TIP_ADI = re.compile(r"^[A-Za-z_/][A-Za-z0-9_/\-=>~]*$")
+_GENEL_TABLO = {"STANDARD", "SORTED", "HASHED", "INDEX", "ANY"}   # `TYPE ANY TABLE` gibi iki sözcüklü genel tip
 _KIMLIK = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _ONEKLI = re.compile(r"\b(?:IV|IT|IS|IO|IR|EV|ET|ES|CV|CT|CS|EX)_[A-Z0-9][A-Z0-9_]*\b")
 
@@ -85,54 +91,107 @@ class Olculemedi(Exception):
 
 
 # ── imza ayrıştırma ─────────────────────────────────────────────────────────────
-def _imza_satirlari(metin: str, fm: str):
-    """(imza satırları, yorum-biçimi mi) — FUNCTION satırından imza sonuna kadar."""
+def _yorumsuz(satir: str) -> str:
+    """Satır sonu `"` yorumunu at — dize ('…' / `…`) içindeki `"` yorum başlatmaz."""
+    dize = None
+    for i, c in enumerate(satir):
+        if dize:
+            if c == dize:
+                dize = None
+        elif c in "'`":
+            dize = c
+        elif c == '"':
+            return satir[:i]
+    return satir
+
+
+def _imza_tokenlari(metin: str, fm: str) -> list:
+    """FUNCTION satırından imza deyiminin sonuna kadar token listesi. Sonu bulunamazsa Olculemedi.
+
+    İki biçim: satır içi imza (`FUNCTION z … IMPORTING … .` — sonu ilk dize-dışı nokta) ve `FUNCTION z.` ardından gelen
+    `*"` yorum bloğu (eski biçim; başlık satırları — sonu `:` ile biten `*"*"…:` — ve çizgiler atlanır, blok sonu = imza sonu)."""
     satirlar = metin.splitlines()
     bas = next((i for i, s in enumerate(satirlar)
                 if re.match(r"^\s*FUNCTION\s+%s(?![A-Za-z0-9_/])" % re.escape(fm), s, re.IGNORECASE)), None)
     if bas is None:
         raise Olculemedi("kaynakta `FUNCTION %s` satırı yok" % fm)
-    ilk = satirlar[bas].split('"', 1)[0].strip()
-    kalan = re.sub(r"^FUNCTION\s+\S+?(?=\.|\s|$)", "", ilk, flags=re.IGNORECASE).strip()
+    ilk = _yorumsuz(satirlar[bas]).strip()
+    kalan = re.sub(r"^FUNCTION\s+[A-Za-z0-9_/]+", "", ilk, flags=re.IGNORECASE).strip()
     if kalan == ".":
-        # `FUNCTION z.` → imza (varsa) hemen ardından gelen `*"` yorum bloğundadır (eski SE37 biçimi).
-        yorum = []
+        tokenlar = []
         for s in satirlar[bas + 1:]:
             if not s.lstrip().startswith('*"'):
                 break
-            yorum.append(s.lstrip()[2:])
-        return [s for s in yorum if not re.match(r"^[\s*\"-]*(?:Local Interface:)?[\s*\"-]*$", s)], True
-    return [kalan] + satirlar[bas + 1:], False
+            govde = s.lstrip()[2:]
+            ic = govde.lstrip(' *"-\t')
+            if not ic.strip() or ic.rstrip().endswith(":"):
+                continue                          # çizgi ya da başlık (Local Interface: · Lokale Schnittstelle: …)
+            tokenlar += _TOKEN.findall(govde)
+        if "." in tokenlar:
+            raise Olculemedi("yorum biçimli imzada beklenmeyen nokta — ayrıştırma belirsiz")
+        return tokenlar
+    tokenlar = []
+    for s in [kalan] + [_yorumsuz(x) for x in satirlar[bas + 1:] if not x.lstrip().startswith("*")]:
+        for tok in _TOKEN.findall(s):
+            if tok.upper() == "ENDFUNCTION":
+                raise Olculemedi("`FUNCTION %s` imzasının sonu (`.`) bulunamadı — ayrıştırma yarım kalırdı" % fm)
+            if tok == ".":
+                return tokenlar
+            tokenlar.append(tok)
+    raise Olculemedi("`FUNCTION %s` imzasının sonu (`.`) bulunamadı — ayrıştırma yarım kalırdı" % fm)
 
 
 def imza_parametreleri(metin: str, fm: str) -> set:
-    """FM imzasındaki parametre adları (BÜYÜK harf). Ayrıştıramazsa Olculemedi (sessiz yarım sonuç yok)."""
-    satirlar, yorum_bicimi = _imza_satirlari(metin, fm)
-    parametreler, bolum, bitti = set(), None, yorum_bicimi
-    for ham in satirlar:
-        s = ham.split('"', 1)[0].strip() if not yorum_bicimi else ham.strip()
-        if not s or (not yorum_bicimi and ham.lstrip().startswith("*")):
+    """FM imzasındaki parametre adları (BÜYÜK harf). Bir satırda birden çok parametre/bölüm olabilir; token token
+    ayrıştırılır. Tanınmayan her yapı Olculemedi'dir (sessiz yarım sonuç yok)."""
+    tok = _imza_tokenlari(metin, fm)
+    parametreler, bolum, i, n = set(), None, 0, len(tok)
+
+    def bozuk(neden):
+        raise Olculemedi("imza ayrıştırılamadı (%s): …%s…" % (neden, " ".join(tok[max(0, i - 3):i + 4])))
+
+    def tip_adi(j):
+        return j < n and tok[j].upper() not in _AYRILMIS and bool(_TIP_ADI.match(tok[j]))
+
+    while i < n:
+        u = tok[i].upper()
+        if u in _BOLUMLER:
+            bolum, i = u, i + 1
             continue
-        if re.match(r"ENDFUNCTION\b", s, re.IGNORECASE):
-            break                                 # imza '.' ile kapanmadan gövde bitti → aşağıda ÖLÇÜLEMEDİ
-        son = s.endswith(".")
-        s = s[:-1].strip() if son else s
-        m = _BOLUM.match(s)
+        if bolum is None:
+            bozuk("bölüm anahtar sözcüğünden önce token")
+        if bolum not in _PARAM_BOLUM:             # EXCEPTIONS / RAISING: istisna adları, parametre değil
+            i += 1
+            continue
+        m = _BAS.match(tok[i])
         if m:
-            bolum, s = m.group(1).upper(), m.group(2).strip()
-        if s:
-            if bolum is None:
-                raise Olculemedi("imzada bölüm anahtar sözcüğünden önce tanınmayan satır: %r" % ham.strip())
-            if bolum in _PARAM_BOLUM:
-                p = _VALUE.match(s) or _DUZ.match(s) or (_CIPLAK.match(s) if bolum == "TABLES" else None)
-                if not p:
-                    raise Olculemedi("%s bölümünde tanınmayan imza satırı: %r" % (bolum, ham.strip()))
-                parametreler.add(p.group(1).upper())
-        if son:
-            bitti = True
-            break
-    if not bitti:
-        raise Olculemedi("`FUNCTION %s` imzasının sonu (`.`) bulunamadı — ayrıştırma yarım kalırdı" % fm)
+            ad = m.group(1)
+        elif _AD.match(tok[i]) and u not in _AYRILMIS:
+            ad = tok[i]
+        else:
+            bozuk("parametre adı beklenirken")
+        i += 1
+        if i < n and tok[i].upper() in ("TYPE", "LIKE", "STRUCTURE"):
+            i += 1
+            if i < n and tok[i].upper() == "REF":
+                if not (i + 1 < n and tok[i + 1].upper() == "TO" and tip_adi(i + 2)):
+                    bozuk("TYPE REF TO <tip> beklenirken")
+                i += 3
+            elif i + 1 < n and tok[i].upper() in _GENEL_TABLO and tok[i + 1].upper() == "TABLE":
+                i += 2
+            elif tip_adi(i):
+                i += 1
+            else:
+                bozuk("tip adı beklenirken")
+        elif bolum != "TABLES" or m:
+            bozuk("tipsiz parametre (yalnız TABLES'ta tanınır)")
+        if i < n and tok[i].upper() == "DEFAULT":
+            if i + 1 >= n or tok[i + 1].upper() in _AYRILMIS:
+                bozuk("DEFAULT değeri beklenirken")
+            i += 2
+        if i < n and tok[i].upper() == "OPTIONAL":
+            i += 1
+        parametreler.add(ad.upper())
     return parametreler
 
 
@@ -232,6 +291,10 @@ def selftest() -> int:
     imza = imza_parametreleri(_SELFTEST_ABAP, "Z_SELFTEST_FM")
     if imza != {"IV_BIR", "IV_IKI", "EV_RC", "IT_UC"}:
         sorun.append("imza ayrıştırma hatalı: %s" % sorted(imza))
+    tek = imza_parametreleri("FUNCTION z_selftest_fm IMPORTING iv_a TYPE c iv_b TYPE c EXPORTING ev_c TYPE c.\n",
+                             "Z_SELFTEST_FM")
+    if tek != {"IV_A", "IV_B", "EV_C"}:
+        sorun.append("tek satırda birden çok parametre/bölüm yarım ayrıştırıldı: %s" % sorted(tek))
     bloklar = belge_bloklari(belge)
     eksik, hayalet = karsilastir(imza, bloklar[0][1])
     if eksik != ["EV_RC", "IT_UC", "IV_IKI"]:

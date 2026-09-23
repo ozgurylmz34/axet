@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from _common import run_py
 
@@ -114,6 +115,52 @@ class FmSignatureDocSyncTest(unittest.TestCase):
             _write(root, "kaynak/z_demo_fm.abap", FM_SRC)
             r = self._run(root, doc, "--kaynak-kok", src_dir)
         self.assertRegex(r.stdout, r"HAYALET .*IV_ESKI")
+
+    # --- bir satırda birden çok parametre / bölüm (sessiz yarım sonuç olmamalı) -------------------
+    DOC_YALNIZ_A = "<!-- FM-IMZA: Z_DEMO_FM -->\n| `IV_A` | tek |\n<!-- /FM-IMZA -->\n"
+
+    def _tek_satir(self, imza):
+        with tempfile.TemporaryDirectory() as root:
+            _project(root, doc=self.DOC_YALNIZ_A, src="FUNCTION z_demo_fm\n  %s\n  ev = 1.\nENDFUNCTION.\n" % imza)
+            return self._run(root)
+
+    def test_tek_satir_iki_duz_parametre_eksik_yakalanir(self):
+        r = self._tek_satir("IMPORTING iv_a TYPE c iv_b TYPE c.")
+        self.assertRegex(r.stdout, r"EKSİK .*IV_B", r.stdout)
+        self.assertNotIn("SONUÇ: TEMİZ", r.stdout)
+
+    def test_tek_satir_iki_value_parametre_eksik_yakalanir(self):
+        r = self._tek_satir("IMPORTING VALUE(iv_a) TYPE c VALUE(iv_b) TYPE c.")
+        self.assertRegex(r.stdout, r"EKSİK .*IV_B", r.stdout)
+        self.assertNotIn("SONUÇ: TEMİZ", r.stdout)
+
+    def test_tek_satir_iki_bolum_eksik_yakalanir(self):
+        r = self._tek_satir("IMPORTING iv_a TYPE c EXPORTING ev_b TYPE c.")
+        self.assertRegex(r.stdout, r"EKSİK .*EV_B", r.stdout)
+        self.assertNotIn("SONUÇ: TEMİZ", r.stdout)
+
+    def test_tek_satir_karmasik_tipler_ayristirilir(self):
+        r = self._tek_satir("IMPORTING iv_a TYPE REF TO zcl_demo iv_b TYPE rsmpe_titt-text DEFAULT 'A b.c' "
+                            "iv_c TYPE ANY TABLE OPTIONAL EXPORTING ev_d LIKE sy-datum TABLES it_e it_f STRUCTURE zst OPTIONAL "
+                            "EXCEPTIONS not_found.")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        self.assertRegex(r.stdout, r"EKSİK .*EV_D, IT_E, IT_F, IV_B, IV_C")
+
+    def test_yorum_bicimi_baslik_varyantlari(self):
+        for baslik in ("Local Interface:", "Lokale Schnittstelle:", "Global Interface:", "Update Function Module:"):
+            src = ('FUNCTION z_demo_fm.\n*"----\n*"*"%s\n*"  IMPORTING\n*"     VALUE(IV_BIR) TYPE  CHAR10\n'
+                   '*"     VALUE(IV_IKI) TYPE  CHAR10 DEFAULT \'X\'\n*"  EXPORTING\n*"     VALUE(EV_RC) TYPE  I\n'
+                   '*"  TABLES\n*"      IT_UC STRUCTURE  ZST_DEMO OPTIONAL\n*"----\n  ev_rc = 0.\nENDFUNCTION.\n' % baslik)
+            with self.subTest(baslik=baslik), tempfile.TemporaryDirectory() as root:
+                _project(root, src=src)
+                r = self._run(root)
+                self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+                self.assertIn("SONUÇ: TEMİZ", r.stdout)
+
+    def test_env_proje_dizini_testlere_sizmaz(self):
+        import _common
+        with mock.patch.dict(os.environ, {"AXET_SAP_PROJECT_DIR": os.path.join(tempfile.gettempdir(), "baska-proje")}):
+            self.assertNotIn("AXET_SAP_PROJECT_DIR", _common._env())
 
     def test_yerel_arayuz_yorum_bicimi(self):
         src = ('FUNCTION z_demo_fm.\n*"----\n*"*"Local Interface:\n*"  IMPORTING\n*"     VALUE(IV_BIR) TYPE  CHAR10\n'
