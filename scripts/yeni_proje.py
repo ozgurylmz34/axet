@@ -60,7 +60,7 @@ VARSAYILAN_SOURCE_ROOT = "SOURCE_CODES"  # templates/project-sap/sap-project.jso
 TEKNOLOJI = {"ecc": "SAP ECC ABAP", "s4_private": "SAP S/4HANA ABAP",
              "s4_public": "SAP S/4HANA Cloud Public Edition ABAP", "btp_abap": "SAP BTP ABAP Environment"}
 KOMUT_YOK = "henüz tanımlı değil"
-KURAL_YOK = "Henüz projeye özel kural yok; kural netleştikçe buraya kısa madde olarak eklenir."
+KURAL_YOK = "Henüz projeye özel kural yok."
 # session_brief.py `aktif_paket`: değerin ilk sözcüğü SAP paket adı biçimine (Z/Y… ya da /ADALANI/AD, büyük harf) uymazsa
 # "aktif paket ÖLÇÜLEMEDİ"; boş, "<" ya da "—" ile başlayan değer → "AGENTS.md'de yazılı değil" dalı (testli).
 AKTIF_PAKET_YOK = "— henüz seçilmedi"

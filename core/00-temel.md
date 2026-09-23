@@ -84,6 +84,7 @@ Her dalda kanıt şart; "sanırım bozuk" ile kalem açılmaz.
 - aXet'te otomatik hafıza yoktur. Hafıza **repodaki dosyalardır**; indeksleri her oturum bağlama yüklenir:
   - ekip geneli çalışma dersleri → bu çekirdeğin bulunduğu template reposunun `memory/` klasörü
   - projeye özel bilgi ve kararlar → proje kökünde `.axet-code/memory/`
+  - bu projede her işte uyulacak bağlayıcı kural → EK olarak proje `AGENTS.md` "Proje kuralları"na kısa madde (davranış yüzeyi: onayı kullanıcı verir; akış `%remember` §1)
 - Çok adımlı bir işe başlarken, tanıdık bir hata görünce ve yeni kayıt yazmadan önce `%recall` ile ara (aXet ilgili dersi kendiliğinden getirmez).
 - Kalıcı bir ders, karar ya da kullanıcı düzeltmesi öğrendiğinde `%remember` akışıyla kaydet. Önce var olan kaydı ara; varsa güncelle, yanlış çıkanı sil.
 - Hafıza hipotezdir: hatırlanan dosya/fonksiyon/komutu kullanmadan önce hâlâ var mı doğrula.
