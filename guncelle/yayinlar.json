@@ -1470,7 +1470,8 @@
       "docs/onboarding.md",
       "guncelle/harita.json",
       "tests/test_kur.py",
-      "tests/test_yayin_hazirla.py"
+      "tests/test_yayin_hazirla.py",
+      "tests/test_yayin_surumleri.py"
      ],
      "gerektirir": [],
      "test": [
