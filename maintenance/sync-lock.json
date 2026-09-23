@@ -2639,10 +2639,10 @@
      "status": "tamam"
     },
     "scripts/validators/check_fm_signature_doc_sync.py": {
-     "decision": "bekliyor",
-     "rule": "scripts/validators/*",
+     "decision": "uyarla",
+     "rule": "scripts/validators/check_fm_signature_doc_sync.py",
      "sha256": "bc566574c500514076a6602bebf26197033b3a20f3199bdf24e5666ad541933a",
-     "status": "-"
+     "status": "tamam"
     },
     "scripts/validators/check_fs_no_analysis_log.py": {
      "decision": "uyarla",
