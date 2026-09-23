@@ -74,7 +74,7 @@ _BLOK = re.compile(r"<!--\s*FM-IMZA:\s*([A-Za-z0-9_/]+)\s*-->")
 _BLOK_SON = "<!-- /FM-IMZA -->"
 _BOLUMLER = {"IMPORTING", "EXPORTING", "CHANGING", "TABLES", "EXCEPTIONS", "RAISING"}
 _PARAM_BOLUM = {"IMPORTING", "EXPORTING", "CHANGING", "TABLES"}
-_AYRILMIS = _BOLUMLER | {"TYPE", "LIKE", "STRUCTURE", "DEFAULT", "OPTIONAL", "REF", "TO"}
+_AYRILMIS = _BOLUMLER | {"TYPE", "LIKE", "STRUCTURE", "DEFAULT", "OPTIONAL", "REF", "TO", "OF"}
 # İmza token'ları: dize ('…', `…`) · VALUE(x)/REFERENCE(x) · boşluksuz sözcük · deyim sonu nokta.
 _TOKEN = re.compile(r"'(?:[^']|'')*'|`[^`]*`|(?:VALUE|REFERENCE)\s*\(\s*[A-Za-z_][A-Za-z0-9_]*\s*\)|[^\s.'`]+|\.",
                     re.IGNORECASE)
@@ -118,8 +118,23 @@ def _imza_tokenlari(metin: str, fm: str) -> list:
     ilk = _yorumsuz(satirlar[bas]).strip()
     kalan = re.sub(r"^FUNCTION\s+[A-Za-z0-9_/]+", "", ilk, flags=re.IGNORECASE).strip()
     if kalan == ".":
+        # Blok FUNCTION satırından sonra boş ya da düz `*` yorum satırlarıyla ayrılmış olabilir → onlar atlanıp blok
+        # yine bulunur. Kod başladıktan SONRA bir `*"` satırı görülürse bu imza mı, alıntı mı belirsizdir → ÖLÇÜLEMEDİ
+        # (sessizce "parametresiz FM" saymak EKSİK'i gizler, önekli blok token'larını sahte HAYALET yapardı).
+        j = bas + 1
+        while j < len(satirlar) and (not satirlar[j].strip() or (satirlar[j].lstrip().startswith("*")
+                                                                    and not satirlar[j].lstrip().startswith('*"'))):
+            j += 1
+        if not (j < len(satirlar) and satirlar[j].lstrip().startswith('*"')):
+            for s in satirlar[j:]:
+                if re.match(r"^\s*ENDFUNCTION\b", s, re.IGNORECASE):
+                    break
+                if s.lstrip().startswith('*"'):
+                    raise Olculemedi("`FUNCTION %s.` sonrasında imza bloğu yok ama gövdede `*\"` satırı var — imza mı "
+                                     "yorum mu belirsiz" % fm)
+            return []                             # imzasız (parametresiz) FM
         tokenlar = []
-        for s in satirlar[bas + 1:]:
+        for s in satirlar[j:]:
             if not s.lstrip().startswith('*"'):
                 break
             govde = s.lstrip()[2:]
@@ -185,6 +200,8 @@ def imza_parametreleri(metin: str, fm: str) -> set:
                 bozuk("tip adı beklenirken")
         elif bolum != "TABLES" or m:
             bozuk("tipsiz parametre (yalnız TABLES'ta tanınır)")
+        if i < n and tok[i].upper() == "OF":
+            bozuk("`… TABLE OF <tip>` imza sözdizimi tanınmıyor")   # `OF`/tip adı sahte parametre sayılmasın
         if i < n and tok[i].upper() == "DEFAULT":
             if i + 1 >= n or tok[i + 1].upper() in _AYRILMIS:
                 bozuk("DEFAULT değeri beklenirken")

@@ -157,6 +157,36 @@ class FmSignatureDocSyncTest(unittest.TestCase):
                 self.assertEqual(0, r.returncode, r.stdout + r.stderr)
                 self.assertIn("SONUÇ: TEMİZ", r.stdout)
 
+    YORUM_BLOK = ('*"----\n*"*"Local Interface:\n*"  IMPORTING\n*"     VALUE(IV_BIR) TYPE  CHAR10\n'
+                  '*"     VALUE(IV_IKI) TYPE  CHAR10 DEFAULT \'X\'\n*"  EXPORTING\n*"     VALUE(EV_RC) TYPE  I\n'
+                  '*"  TABLES\n*"      IT_UC STRUCTURE  ZST_DEMO OPTIONAL\n*"----\n')
+
+    def _yorum_arali(self, ara):
+        src = "FUNCTION z_demo_fm.\n" + ara + self.YORUM_BLOK + "  ev_rc = 0.\nENDFUNCTION.\n"
+        with tempfile.TemporaryDirectory() as root:
+            _project(root, doc=DOC_DRIFT, src=src)
+            return self._run(root)
+
+    def test_yorum_bicimi_arada_bos_satir_blok_okunur(self):
+        r = self._yorum_arali("\n")
+        self.assertRegex(r.stdout, r"EKSİK .*IV_IKI", r.stdout)
+
+    def test_yorum_bicimi_arada_yildiz_yorum_blok_okunur(self):
+        r = self._yorum_arali("* Açıklama: demo modül\n")
+        self.assertRegex(r.stdout, r"EKSİK .*IV_IKI", r.stdout)
+
+    def test_yorum_blogu_koddan_sonra_olculemedi(self):
+        src = "FUNCTION z_demo_fm.\n  ev_rc = 0.\n" + self.YORUM_BLOK + "ENDFUNCTION.\n"
+        with tempfile.TemporaryDirectory() as root:
+            _project(root, doc=DOC_DRIFT, src=src)
+            self._olculemedi(root)
+
+    def test_tables_standard_table_of_olculemedi(self):
+        with tempfile.TemporaryDirectory() as root:
+            _project(root, src="FUNCTION z_demo_fm\n  TABLES it_a TYPE STANDARD TABLE OF zs it_b.\nENDFUNCTION.\n")
+            r = self._olculemedi(root)
+        self.assertNotRegex(r.stdout, r"EKSİK .*\bOF\b")
+
     def test_env_proje_dizini_testlere_sizmaz(self):
         import _common
         with mock.patch.dict(os.environ, {"AXET_SAP_PROJECT_DIR": os.path.join(tempfile.gettempdir(), "baska-proje")}):
