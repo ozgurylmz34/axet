@@ -13,7 +13,7 @@ CORE-ID: AXET-CORE-0.5.0
   `[AXET-CORE-0.5.0 · SAP: <SAP-CORE-ID|YOK> · proje: <PROJECT-ID|YOK> · proje hafızası: <PROJECT-MEMORY-ID|YOK>]`
   aXet'te yüklemeyi doğrulayan hook yoktur; bu satır tek kanaryadır.
 - Ardından özetten en fazla 5 satır aktar: dal/değişiklik uyarısı, template güncelliği, FAIL/WARN, aktif paketin son kaydı, aktif işler ve devir notu. Açık iş varsa hangisiyle devam edileceğini sor.
-- Kullanıcı "gün sonu" derse `%gun-sonu`: kaldığın yeri dosyalara yaz, çalışma dalını commit + push et (bu söz, o dal için push talebidir).
+- Kullanıcı "gün sonu" derse `%gun-sonu`: kaldığın yeri dosyalara yaz, çalışma dalını commit + push et (bu söz, o dal için push talebidir; remote yoksa push yok, birleştirme de yok).
 
 ## 1. Kanıtlı çalış — TAHMİN YASAK
 - Dosya yolu, fonksiyon, alan adı, komut sözdizimi, API davranışı: önce oku / ara / çalıştır, sonra kullan. Hatırladığın şey hipotezdir; dosya ve çıktı otoritedir.
@@ -61,7 +61,8 @@ Yeni kural/ders/hafıza kaydı yazmadan ya da "bu yapılamaz" demeden önce:
 Her dalda kanıt şart; "sanırım bozuk" ile kalem açılmaz.
 
 ## 6. Git
-- `main`'e doğrudan commit yok: `git fetch origin` + `git switch -c <dal> origin/main` (başlangıç noktası daima açık yazılır).
+- `main`'e doğrudan commit yok: `git fetch origin` + `git switch -c <dal> origin/main` (başlangıç noktası daima açık yazılır). Remote yoksa (`git remote` boş): `git switch -c <dal> main`; push ve PR yoktur.
+- Dalı `main`'e birleştirmeden önce `%commit-pr`'yi oku (yerel repoda adım 9): açık onay · `git merge --no-ff` · çakışmada DUR, kendin çözme · yalnız `git branch -d`.
 - Commit ve push yalnız kullanıcı isteyince. `--force`, `--no-verify`, `reset --hard`, `clean -f` kullanılmaz.
 - Commit öncesi `git status` + `git diff --staged` oku: kimlik bilgisi, geçici dosya, alakasız değişiklik girmesin.
 - Commit, push ve PR ayrı adımlardır; her birinin sonucunu kontrol et.
