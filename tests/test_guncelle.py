@@ -1763,6 +1763,8 @@ class VTBTasimaTest(AkisTemel):
                          self.YENI)
         self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists(),
                          "taşımanın kaynağı silinmeliydi")
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md.yerel").exists(),
+                         "kaynak etikette aynen duruyor — gereksiz `.yerel` üretilmemeli")
         kayit = self.f.durum()["dosyalar"]["docs/tasinacak.md"]
         self.assertEqual((kayit["durum"], kayit["karar"], kayit.get("hedef_yol")),
                          ("dogrulandi", "yeni", "docs/tasindi.md"))
@@ -1780,6 +1782,18 @@ class VTBTasimaTest(AkisTemel):
         u = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
         self.assertEqual(u["dosyalar"].get("docs/tasindi.md"), "v3",
                          "hedef yolun tabanı bu yayına mühürlenmeli")
+
+    def test_VTB_tasima_karar_yeni_hazirla_sonrasi_kaynak_icerigi_yerel_olarak_saklanir(self):
+        """v0.5.6: kaynak `_sil_korunarak` ile silinir — hazirla-sonrası düzenleme kaybolmaz.
+        Kontrol grubu `test_VTB_tasima_karar_yeni_hedefi_yazar_...`: düzenleme yok ⇒ `.yerel` yok."""
+        sonra = self.YEREL + "hazirla sonrasi satir\n"
+        self.f.yerel_degistir("docs/tasinacak.md", sonra)
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists())
+        self.assertEqual((self.f.tuketici / "docs/tasinacak.md.yerel").read_text(encoding="utf-8"),
+                         sonra, "hazirla-sonrası kaynak içeriği kayboldu")
+        self.assertIn("docs/tasinacak.md.yerel", r.stdout)
 
     def test_kontrol_grubu_VTB_tasima_karar_yerel_kaynagi_korur(self):
         r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yerel")
@@ -1811,6 +1825,144 @@ class VTBTasimaTest(AkisTemel):
         self.assertEqual([(d["vaka"], d.get("yeni_yol"))
                           for d in self._kayitlar("docs/tasinacak.md")],
                          [("V7", "docs/tasindi.md")])
+
+
+class TasimaKaynagiYedekTest(GuncelleTemel):
+    """Silinen yolun `hazirla`-SONRASI içeriği sessizce kaybolmamalı (v0.5.6).
+
+    Ölçülen kusur (2026-09-23): taşımanın KAYNAĞI (`yol`) ve otomatik silmeler `_yedeksiz_mi`
+    sorulmadan `k.sil` ile siliniyordu; yedek kontrolü yalnız ezilen HEDEF için vardı. Kaynak
+    izlendiği için `guncelle-oncesi-*` etiketinde durur — ama yalnız `hazirla` ANINDAKİ hâli;
+    sonraki düzenleme ne diskte, ne etikette, ne `.yerel` kopyada kalıyordu. V6/V1R'nin "L == T"
+    koşulu PLAN anında ölçülür; plan → uygula arasındaki düzenlemeyi görmez.
+    Kontrol grubu (`test_kontrol_*`): hazirla-sonrası değişiklik YOKSA silme bugünkü gibidir,
+    `.yerel` üretilmez.
+    """
+
+    ISARET = "HAZIRLA-SONRASI-DUZENLEME-7f3a"
+
+    def _kur(self, once_plan: dict[str, str] | None = None) -> None:
+        """hazirla → (plan ÖNCESİ düzenlemeler) → plan → sec --hepsi."""
+        self.senaryolari_uygula()
+        r = self.f.calistir("hazirla")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        for yol, icerik in (once_plan or {}).items():
+            self.f.yerel_degistir(yol, icerik)
+        r = self.f.calistir("plan")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+    def _goreli(self, p) -> tuple[str, ...]:
+        return p.relative_to(self.f.tuketici).parts
+
+    def _isaretin_yerleri(self) -> list[str]:
+        """İşaretin bulunduğu TÜM dosyalar (çalışma ağacı + `.axet-guncelleme`; `.git` hariç)."""
+        return sorted("/".join(self._goreli(p)) for p in self.f.tuketici.rglob("*")
+                      if p.is_file() and self._goreli(p)[0] != ".git"
+                      and self.ISARET.encode() in p.read_bytes())
+
+    def _yerel_kopyalar(self) -> list[str]:
+        return sorted("/".join(self._goreli(p)) for p in self.f.tuketici.rglob("*.yerel*")
+                      if self._goreli(p)[0] != ".git")
+
+    # --- isaretle --karar yeni (V4R) -----------------------------------------------------------
+    def test_V4R_karar_yeni_kaynagin_hazirla_sonrasi_icerigi_korunur(self):
+        self._kur({"docs/tasinan2.md": f"ikinci tasinan\nX\nY\nZ yerelden\n{self.ISARET}\n"})
+        self.assertEqual(self.f.vakalar().get("docs/tasinan2.md"), "V4R")
+        r = self.f.calistir("isaretle", "docs/tasinan2.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinan2.md").exists(),
+                         "taşıma tamamlanmalı: kaynak yolda dosya kalmamalı")
+        self.assertEqual(self._isaretin_yerleri(), ["docs/tasinan2.md.yerel"],
+                         "hazirla-sonrası kaynak içeriği geri alınamaz biçimde kayboldu")
+        self.assertIn("docs/tasinan2.md.yerel", r.stdout)
+        kayit = self.f.durum()["dosyalar"]["docs/tasinan2.md"]
+        self.assertEqual((kayit["durum"], kayit["karar"]), ("dogrulandi", "yeni"))
+
+    def test_kontrol_V4R_karar_yeni_degisiklik_yoksa_yerel_kopya_uretmez(self):
+        self._kur()
+        r = self.f.calistir("isaretle", "docs/tasinan2.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinan2.md").exists())
+        self.assertEqual((self.f.tuketici / "docs/tasindi2.md").read_text(encoding="utf-8"),
+                         "ikinci tasinan\nX bizden\nY\nZ\n")
+        self.assertEqual(self._yerel_kopyalar(), [],
+                         "içerik geri dönüş etiketinde duruyor — gereksiz `.yerel` üretilmemeli")
+        kayit = self.f.durum()["dosyalar"]["docs/tasinan2.md"]
+        self.assertEqual((kayit["durum"], kayit["karar"]), ("dogrulandi", "yeni"))
+
+    # --- isaretle --karar birlesik (V4R) -------------------------------------------------------
+    def test_V4R_karar_birlesik_oneri_sonrasi_kaynak_icerigi_korunur(self):
+        self._kur()
+        r = self.f.calistir("oneri", "docs/tasinan2.md")
+        self.assertIn(r.returncode, (0, 1), self.cikti(r))
+        self.f.yerel_degistir("docs/tasinan2.md",
+                              f"ikinci tasinan\nX\nY\nZ yerelden\n{self.ISARET}\n")
+        r = self.f.calistir("isaretle", "docs/tasinan2.md", "--karar", "birlesik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinan2.md").exists())
+        self.assertEqual(self._isaretin_yerleri(), ["docs/tasinan2.md.yerel"])
+
+    # --- uygula --otomatik V1R / V6 ------------------------------------------------------------
+    def test_uygula_V1R_plan_sonrasi_kaynak_icerigi_korunur(self):
+        self._kur()
+        self.assertEqual(self.f.vakalar().get("docs/tasinacak.md"), "V1R")
+        self.f.yerel_degistir("docs/tasinacak.md", f"tasinan icerik\nA\nB\n{self.ISARET}\n")
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists())
+        self.assertEqual(self._isaretin_yerleri(), ["docs/tasinacak.md.yerel"])
+        self.assertIn("docs/tasinacak.md.yerel", r.stdout)
+
+    def test_uygula_V6_plan_sonrasi_icerik_korunur(self):
+        self._kur()
+        self.assertEqual(self.f.vakalar().get("docs/silinecek2.md"), "V6")
+        self.f.yerel_degistir("docs/silinecek2.md", f"{self.ISARET}\n")
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/silinecek2.md").exists())
+        self.assertEqual(self._isaretin_yerleri(), ["docs/silinecek2.md.yerel"])
+
+    def test_kontrol_uygula_otomatik_degisiklik_yoksa_yerel_kopya_uretmez(self):
+        self._kur()
+        r = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists())
+        self.assertFalse((self.f.tuketici / "docs/silinecek2.md").exists())
+        self.assertEqual(self._yerel_kopyalar(), [])
+
+    # --- isaretle --karar yeniden-adlandir (V7, yol ≠ hedef) -----------------------------------
+    def test_V7_yeniden_adlandir_kaynagin_hazirla_sonrasi_icerigi_korunur(self):
+        self.f.yerel_degistir("docs/tasindi.md", "KULLANICININ notu\n")
+        self._kur()
+        self.assertEqual(self.f.vakalar().get("docs/tasinacak.md"), "V7")
+        self.f.yerel_degistir("docs/tasinacak.md", f"tasinan icerik\nA\nB\n{self.ISARET}\n")
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yeniden-adlandir")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists())
+        self.assertEqual(self._isaretin_yerleri(), ["docs/tasinacak.md.yerel"])
+        self.assertIn("KULLANICININ",
+                      (self.f.tuketici / "docs/tasindi.md.yerel").read_text(encoding="utf-8"))
+
+    # --- geri-al: tabanda olmayan yol ----------------------------------------------------------
+    def test_geri_al_hepsi_izlenmeyen_kullanici_dosyasini_silmez(self):
+        """V7 `skills/cakisan/SKILL.md` kullanıcının İZLENMEYEN dosyası: etikette blob'u yok."""
+        self._kur()
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("geri-al", "--hepsi")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        yerler = [p for p in ("skills/cakisan/SKILL.md", "skills/cakisan/SKILL.md.yerel")
+                  if (self.f.tuketici / p).is_file()
+                  and "KULLANICININ" in (self.f.tuketici / p).read_text(encoding="utf-8")]
+        self.assertTrue(yerler, "geri-al kullanıcının yedeksiz dosyasını sildi")
+
+    def test_kontrol_geri_al_motorun_yazdigi_yeni_dosyayi_yerel_birakmadan_siler(self):
+        self._kur()
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("geri-al", "scripts/sap_stamp.py")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse((self.f.tuketici / "scripts/sap_stamp.py").exists())
+        self.assertEqual(self._yerel_kopyalar(), [])
 
 
 class AkisTest(AkisTemel):

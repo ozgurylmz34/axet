@@ -274,6 +274,8 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 | `kapanis [--kabul "<gerekce>"]` | plan↔durum: `bekliyor`/`uygulandi` kalan var mı · sonra-test'te **yeni kırmızı** var mı · bütünlük geçti mi · özel adımlar koştu mu → `RAPOR.md` üretir, `uygulanan.json`'u günceller, `guncelle: <yayın> kalemler …` commit'i | **0** tamam · **1** eksik/FAIL (rapor "KAPANMADI") · **3** kullanıcı onaylı açık FAIL ile kapandı (gerekçe raporda) |
 | `durum` | tablo: kalem × dosya × durum | 0 |
 
+**Yedeksiz içerik ilkesi (v0.5.6):** motor bir yolu ezmeden ya da SİLMEDEN önce diskteki içeriğin `guncelle-oncesi-*` etiketinde aynı blob'u var mı diye bakar (`_yedeksiz_mi`); yoksa (izlenmeyen dosya ya da `hazirla`/plan SONRASI düzenleme) içeriği `<yol>.yerel` olarak saklar ve saklanan yolu basar — ezilen hedef, taşımanın kaynağı (`yeni`/`birlesik`/`yeniden-adlandir`, V1R), V6 silmesi ve `geri-al`'ın tabanda olmayan yolu dahil (`scripts/guncelle.py::_sil_korunarak`; `geri-al`'da yeni sürümün blob'una eşit içerik de yedekli sayılır); silme/taşıma yine tamamlanır.
+
 **`olc --asama once` — CI ikamesi (Z16, 2026-09-20).** `once` turu, planda **yargı vakası**
 yokken ve `origin/main:guncelle/ci-durum.json` bu etiket için `hepsi_yesil: true` derken **test
 koşmaz**: tabanı CI hükmünden alır (`scripts/guncelle.py::_ci_tabani`) ve `olcum-once.json`'a

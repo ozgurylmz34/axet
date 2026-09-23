@@ -1303,14 +1303,17 @@ def komut_uygula(b: Baglam, args) -> int:
             durum_kaydet(k, yol, kalem=kid, vaka=kod, durum="bekliyor")
             continue
         hedef = d.get("yeni_yol") or yol
+        korunan = None
         try:
+            # V6/V1R'nin "L == T"si PLAN anında ölçüldü; plan → uygula arasındaki düzenleme
+            # yedeksizdir ⇒ silme `_sil_korunarak` ile (içerik `.yerel`de kalır).
             if kod == "V6":
-                k.sil(yol)
+                korunan = _sil_korunarak(k, yol)
                 beklenen = None
             elif kod == "V1R":
                 k.checkout_yol(b.yeni_ref, hedef)
                 if hedef != yol:
-                    k.sil(yol)
+                    korunan = _sil_korunarak(k, yol)
                 beklenen = k.blob_sha(b.yeni_ref, hedef)
             else:
                 k.checkout_yol(b.yeni_ref, hedef)
@@ -1320,6 +1323,8 @@ def komut_uygula(b: Baglam, args) -> int:
             durum_kaydet(k, yol, kalem=kid, vaka=kod, durum="bekliyor", not_=str(e))
             hata = 1
             continue
+        if korunan:
+            print(f"Yedeksiz yerel içerik saklandı: {korunan}")
 
         gercek = _yazim_sonrasi_sha(k, hedef)
         if gercek != beklenen:
@@ -1464,10 +1469,12 @@ def komut_isaretle(b: Baglam, args) -> int:
             return 2
         korunan = _yerel_kopya(k, hedef) if _yedeksiz_mi(k, hedef) else None
         k.checkout_yol(plan_ref, hedef)
+        kaynak_korunan = None
         if hedef != yol and (k.kok / yol).is_file():
-            k.sil(yol)
-        if korunan:
-            print(f"Yedeksiz yerel içerik saklandı: {korunan}")
+            kaynak_korunan = _sil_korunarak(k, yol)
+        for ad in (korunan, kaynak_korunan):
+            if ad:
+                print(f"Yedeksiz yerel içerik saklandı: {ad}")
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeni", y_sha)
 
     if args.karar == "yeniden-adlandir":
@@ -1478,11 +1485,15 @@ def komut_isaretle(b: Baglam, args) -> int:
         # ⚠ Ezilecek dosya DAİMA `hedef`tir. Yeniden adlandırmalı bir V7'de (`yol` ≠ `hedef`)
         # kullanıcının dosyası YENİ yolda durur; eski kod `yol`u saklayıp `hedef`i eziyordu.
         korunan = _yerel_kopya(k, hedef)
+        kaynak_korunan = None
         if hedef != yol and (k.kok / yol).is_file():
-            k.sil(yol)  # taşımanın kaynağı: içeriği geri dönüş etiketinde duruyor
+            # taşımanın kaynağı: etikette yalnız `hazirla` ANINDAKİ hâli durur
+            kaynak_korunan = _sil_korunarak(k, yol)
         k.checkout_yol(plan_ref, hedef)
         if korunan:
             print(f"Senin dosyan korundu: {korunan}")
+        if kaynak_korunan:
+            print(f"Yedeksiz yerel içerik saklandı: {kaynak_korunan}")
         return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "yeniden-adlandir", y_sha)
 
     # birlesik
@@ -1504,10 +1515,12 @@ def komut_isaretle(b: Baglam, args) -> int:
     beklenen = k.stdin_sha(hedef, veri)
     korunan = _yerel_kopya(k, hedef) if _yedeksiz_mi(k, hedef) else None
     k.yaz(hedef, veri)
+    kaynak_korunan = None
     if hedef != yol and (k.kok / yol).is_file():
-        k.sil(yol)
-    if korunan:
-        print(f"Yedeksiz yerel içerik saklandı: {korunan}")
+        kaynak_korunan = _sil_korunarak(k, yol)
+    for ad in (korunan, kaynak_korunan):
+        if ad:
+            print(f"Yedeksiz yerel içerik saklandı: {ad}")
     return _dogrula_ve_kaydet(k, kid, yol, hedef, d["vaka"], "birlesik", beklenen)
 
 
@@ -1526,6 +1539,26 @@ def _yedeksiz_mi(k: Klon, yol: str) -> bool:
     except Dur:
         return True                       # geri dönüş noktası hiç yok → her yazma yedeksiz
     return k.blob_sha(etiket, yol) != disk
+
+
+def _sil_korunarak(k: Klon, yol: str, kurtarilabilir_ref: str | None = None) -> str | None:
+    """`k.sil` — ama önce yedeksiz içeriği `.yerel` olarak saklar. Döner: saklanan ad ya da None.
+
+    ⛔ Motorun dosya SİLMELERİ buradan geçer (v0.5.6). Eskiden yedek sorusu yalnız ezilen
+    HEDEF için soruluyordu; taşımanın KAYNAĞI, otomatik silmeler (V6/V1R) ve `geri-al`
+    doğrudan `k.sil` ile gidiyordu. İzlenen kaynak etikette durur — ama yalnız `hazirla`
+    ANINDAKİ hâli; sonraki düzenleme (V6/V1R'nin "L == T"si de PLAN anında ölçülür) ve
+    izlenmeyen dosya sessizce kayboluyordu (ölçüldü 2026-09-23, `TasimaKaynagiYedekTest`).
+    Silme davranışı DEĞİŞMEZ: yol boşalır, yalnız içerik korunur.
+    `kurtarilabilir_ref`: içerik bu ref'teki blob'la aynıysa da yedekli sayılır (`geri-al`
+    motorun kendi yazdığı dosyayı silerken `.yerel` çöpü üretmesin).
+    """
+    korunan = None
+    if _yedeksiz_mi(k, yol) and not (
+            kurtarilabilir_ref and k.blob_sha(kurtarilabilir_ref, yol) == k.disk_sha(yol)):
+        korunan = _yerel_kopya(k, yol)
+    k.sil(yol)
+    return korunan
 
 
 def _yerel_kopya(k: Klon, yol: str) -> str | None:
@@ -2138,6 +2171,7 @@ def komut_geri_al(b: Baglam, args) -> int:
     k = b.k
     etiket = geri_donus_etiketi(k)
     plan = plan_oku(k)
+    yeni_ref = plan.get("yeni_etiket") or b.yeni_ref
     if args.hepsi:
         yollar = []
         for kalem in plan["kalemler"]:
@@ -2161,8 +2195,12 @@ def komut_geri_al(b: Baglam, args) -> int:
                 continue
             print(f"GERİ ALINDI: {yol}")
         elif (k.kok / yol).is_file():
-            k.sil(yol)
+            # Etikette blob yok ⇒ ya motorun yazdığı dosya (yeni ref'te var, kurtarılabilir) ya da
+            # kullanıcının İZLENMEYEN dosyası (V7: hiçbir yerde yedeği yok — ölçüldü 2026-09-23).
+            korunan = _sil_korunarak(k, yol, kurtarilabilir_ref=yeni_ref)
             print(f"GERİ ALINDI (silindi): {yol} — tabanda yoktu")
+            if korunan:
+                print(f"Yedeksiz yerel içerik saklandı: {korunan}")
         durum_kaydet(k, yol, durum="geri_alindi")
     return hata
 

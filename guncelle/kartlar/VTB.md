@@ -25,7 +25,8 @@ dosya sessizce yanlış olur; bu yüzden motor `oneri` komutunu bu vakada çalı
 
 **Dosya aynı zamanda taşınıyorsa** (planda `VTB <eski yol> → <yeni yol>`): fark, senin eski
 yoldaki dosyan ile yeni sürümün YENİ yoldaki içeriği arasındadır. İşaretlemeyi eski yol adıyla
-yap: `--karar yeni` içeriği yeni yola yazar ve eski yolu siler; `--karar yerel` dosyayı eski
+yap: `--karar yeni` içeriği yeni yola yazar ve eski yolu siler (`hazirla`'dan sonraki düzenlemen
+`<eski yol>.yerel` olarak saklanır); `--karar yerel` dosyayı eski
 yolda bırakır, yani taşımayı bilinçli olarak reddetmiş olursun — kullanıcıya bunu söyle. Yeni
 yolda zaten senin başka bir dosyan varsa vaka VTB değil **V7**'dir.
 
