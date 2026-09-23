@@ -450,7 +450,8 @@ def _yaz_json(yol: Path, veri) -> None:
 
 
 def _simdi() -> str:
-    return datetime.datetime.now().isoformat(timespec="seconds")
+    """Saat dilimli yerel an (Z65): `_kayit_tuketildi_mi` damgaları AN olarak karşılaştırır."""
+    return datetime.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 # =====================================================================================================
@@ -1025,10 +1026,22 @@ def _kayit_tuketildi_mi(kayit_zaman, muhur_zaman) -> bool:
     (ya da aynı saniyedeki) karar o kapanışta TÜKETİLMİŞTİR. Mühürden sonraki karar, kalem yeniden
     önerildikten sonra BU turda verilmiştir ⇒ korunur (aynı turda `plan` yeniden koşulabilir).
     Zaman okunamazsa tüketilmiş sayılır: kaydı silmek dosyayı `bekliyor`a döndürür ve kapanış onu
-    açık madde olarak GÖSTERİR; tutmak ise dosyayı `uygula`da SESSİZCE atlatırdı."""
+    açık madde olarak GÖSTERİR; tutmak ise dosyayı `uygula`da SESSİZCE atlatırdı.
+
+    Z65: karşılaştırma METİN değil ANDIR — farklı dilimde yazılmış iki damga metin olarak yanlış
+    sıralanır. Dilimsiz (Z65 öncesi `_simdi()`) damga bu makinenin yerel saati kabul edilir."""
     if not (isinstance(kayit_zaman, str) and isinstance(muhur_zaman, str)):
         return True
-    return kayit_zaman <= muhur_zaman
+    try:
+        kayit = datetime.datetime.fromisoformat(kayit_zaman)
+        muhur = datetime.datetime.fromisoformat(muhur_zaman)
+        if kayit.tzinfo is None:
+            kayit = kayit.astimezone()
+        if muhur.tzinfo is None:
+            muhur = muhur.astimezone()
+        return kayit <= muhur
+    except (ValueError, OverflowError, OSError):
+        return True
 
 
 def _tuketilmis_ertelemeleri_temizle(d: dict, plan: dict, uygulanan: dict) -> list[str]:
