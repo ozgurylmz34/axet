@@ -11,12 +11,12 @@
 
 **Nerede kaldık (ölçüldü):** Z83 + Z84 + Z85 birleşik dal `wip/v057-birlesim`'de tamam (worktree
 `C:/AI_WORKS/.wt/axet/birlesim`); katalog v0.5.7 (4 kalem: 0.5.7-01 Z83 düzeltme · -02 Z84 yetenek · -03 Z85 yetenek ·
--04 meta) eklendi; PR açıldı (numara/CI hükmü aşağıdaki "PR" satırında). **Public yayın YAPILMADI** — açık kullanıcı onayı
+-04 meta) eklendi; PR **#39** açıldı (head `52dcf32`; CI hükmü gün sonunda BEKLENMEDİ — yarın ilk iş). **Public yayın YAPILMADI** — açık kullanıcı onayı
 yok (kural: public push geri alınamaz).
 
 **Yarın sırayla:**
-1. PR CI hükmüne bak (`gh pr checks <N> --repo ozgurylmz34/axet`) → yeşilse ve henüz merge edilmediyse
-   `merge_pr.py --repo ozgurylmz34/axet --pr <N> --squash --admin`. Kırmızıysa önce teşhis (0 adım = hesap duvarı).
+1. PR CI hükmüne bak (`gh pr checks 39 --repo ozgurylmz34/axet`) → yeşilse ve henüz merge edilmediyse
+   `merge_pr.py --repo ozgurylmz34/axet --pr 39 --squash --admin`. Kırmızıysa önce teşhis (0 adım = hesap duvarı).
 2. Kullanıcıya v0.5.7 public yayın onayını sor (5 unsurla) → onaylarsa `yayin_hazirla` (noreply kimlik ortamıyla, önce
    public klon kopyasında prova — v0.5.6 akışı) → public push + etiket → `git ls-remote` ile doğrula.
 3. Kullanıcıda: `%guncelle` → TRAKYA + AXET_TEST `%guncelle-proje` → **canlı ölçüm:** `conn/README.md` yeni hâli geldi mi
