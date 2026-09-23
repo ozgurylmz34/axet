@@ -726,7 +726,12 @@ def dosya_vakasi(b: Baglam, yol: str, yeniden_ad: dict[str, str]) -> dict:
         else:
             kod = "V4R"
     else:
-        hedef_yol = None
+        # Buraya taşımalı bir yol YALNIZ taban çözülemediğinde gelir (⇒ VTB). Z66 ③: hedef yol
+        # KORUNUR. Eskiden `hedef_yol = None` yapılıyordu: hedef plan döngüsünde "yeniden
+        # adlandırma hedefi" olarak atlandığı için hiçbir kayıtta kalmıyor, `isaretle --karar yeni`
+        # "yeni sürümde yok" DUR'u veriyordu ⇒ kullanıcının yeni içeriği alma yolu yoktu (yalnız
+        # yerel/ertelendi; Z62 her tur yeniden önerir — kalıcı çıkmaz). Vaka VTB KALIR (otomatik
+        # birleştirme yasak, §4); `yeni` hedefe yazar + kaynağı siler, `yerel` kaynağı bırakır.
         kod = vaka_kodu(t_sha, l_sha, y_sha, taban_var=taban is not None)
 
     kayit: dict = {"yol": yol, "vaka": kod}
@@ -1359,11 +1364,15 @@ def komut_oneri(b: Baglam, args) -> int:
     yol = args.yol.replace("\\", "/")
     kid, d = _plan_kaydi(plan, yol)
     taban = b.taban_ref(yol)
-    if taban is None:
-        print(f"DUR: {yol} için taban bilinmiyor (VTB) — otomatik birleştirme YASAK (§4). "
-              f"Fark göster, kullanıcı 'yeniyi al / yereli koru / elle' seçsin.", file=sys.stderr)
-        return 2
     hedef = d.get("yeni_yol") or yol
+    if taban is None:
+        tasima = (f" Yayın dosyayı taşıyor: yeni içerik `{hedef}` yolunda (`--karar yeni` onu "
+                  f"yazar ve `{yol}`u siler; `--karar yerel` taşımayı reddeder)."
+                  if hedef != yol else "")
+        print(f"DUR: {yol} için taban bilinmiyor (VTB) — otomatik birleştirme YASAK (§4). "
+              f"Fark göster, kullanıcı 'yeniyi al / yereli koru / elle' seçsin.{tasima}",
+              file=sys.stderr)
+        return 2
     t_sha, y_sha = k.blob_sha(taban, yol), k.blob_sha(b.yeni_ref, hedef)
     t = k.blob(t_sha) if t_sha else b""
     y = k.blob(y_sha) if y_sha else b""

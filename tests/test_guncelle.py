@@ -1703,6 +1703,116 @@ class AkisTemel(GuncelleTemel):
             self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
 
 
+class VTBTasimaTest(AkisTemel):
+    """Z66 ③: tabanı çözülemeyen (VTB) dosya yayında TAŞINIYORSA hedef yol kaybolmamalı.
+
+    Ölçülen kusur (2026-09-23): `dosya_vakasi` taban None iken `else` dalında `hedef_yol = None`
+    yapıyordu ⇒ VTB kaydında `yeni_yol` yok; hedef yol plan döngüsünde "yeniden adlandırma hedefi"
+    olarak atlandığı için HİÇBİR kayıtta yok. `--karar yeni` "yeni sürümde yok" DUR'u veriyor,
+    kullanıcının yeni içeriği alma yolu kalmıyordu (yalnız `yerel`/`ertelendi` ⇒ Z62 her tur
+    yeniden önerir, kalıcı çıkmaz). Vaka VTB KALIR: otomatik birleştirme YASAK (§4).
+    Kurgu: `docs/tasinacak.md → docs/tasindi.md` (3-04), `uygulanan.json` kaynağın tabanını klonda
+    OLMAYAN bir etikete bağlar (`test_taban_bulunamazsa_VTB` ile aynı teknik); kullanıcı kaynağa
+    kendi satırını eklemiş (tabansız gerçek vaka: kimin değişikliği olduğu bilinemez).
+    """
+
+    YEREL = "tasinan icerik\nA\nB\nyerel not\n"
+    YENI = "tasinan icerik\nA\nB\n"
+
+    def setUp(self) -> None:
+        GuncelleTemel.setUp(self)
+        self.senaryolari_uygula()
+        self.f.yerel_degistir("docs/tasinacak.md", self.YEREL)
+        self.assertEqual(self.f.calistir("hazirla").returncode, 0)
+        (self.f.durum_dizini() / "uygulanan.json").write_text(json.dumps(
+            {"surum": 1, "dosyalar": {"docs/tasinacak.md": "yok-boyle-etiket"}, "kalemler": {}},
+            ensure_ascii=False), encoding="utf-8")
+        self.plan_r = self.f.calistir("plan")
+        self.assertEqual(self.plan_r.returncode, 0, self.cikti(self.plan_r))
+        self.assertEqual(self.f.calistir("sec", "--hepsi").returncode, 0)
+
+    def _kayitlar(self, yol: str) -> list[dict]:
+        return [d for k in self.f.plan()["kalemler"] for d in k["dosyalar"] if d["yol"] == yol]
+
+    def test_VTB_tasima_plani_yeni_yolu_tasir(self):
+        kayit = self._kayitlar("docs/tasinacak.md")
+        self.assertEqual([(d["vaka"], d.get("yeni_yol")) for d in kayit],
+                         [("VTB", "docs/tasindi.md")],
+                         "VTB taşımasında hedef yol plandan düştü")
+        self.assertEqual(self._kayitlar("docs/tasindi.md"), [],
+                         "hedef yol ayrıca listelenmemeli (kaynağın `yeni_yol`u taşır)")
+        self.assertRegex(self.plan_r.stdout, r"VTB\s+docs/tasinacak\.md → docs/tasindi\.md")
+        # fikstürde başka beyansız yollar da var (docs/beyansiz.md …) ⇒ ölçüt taşımanın yollarıdır
+        beyansiz = [s for s in self.plan_r.stdout.splitlines() if "beyansız EYLEM" in s]
+        self.assertFalse([s for s in beyansiz if "tasin" in s], beyansiz)
+
+    def test_VTB_tasimada_oneri_DUR_hedef_yolu_soyler(self):
+        """`oneri` VTB'de yine DUR (taban uydurma yok) ama ajana yeni içeriğin YERİNİ söyler."""
+        r = self.f.calistir("oneri", "docs/tasinacak.md")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertIn("taban bilinmiyor (VTB)", r.stderr)
+        self.assertIn("docs/tasindi.md", r.stderr)
+        self.assertFalse((self.f.durum_dizini() / "oneri" / "docs/tasinacak.md").exists())
+
+    def test_VTB_tasima_karar_yeni_hedefi_yazar_kaynagi_siler_kapanis_dogrular(self):
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yeni")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual((self.f.tuketici / "docs/tasindi.md").read_text(encoding="utf-8"),
+                         self.YENI)
+        self.assertFalse((self.f.tuketici / "docs/tasinacak.md").exists(),
+                         "taşımanın kaynağı silinmeliydi")
+        kayit = self.f.durum()["dosyalar"]["docs/tasinacak.md"]
+        self.assertEqual((kayit["durum"], kayit["karar"], kayit.get("hedef_yol")),
+                         ("dogrulandi", "yeni", "docs/tasindi.md"))
+
+        self._tum_yargilari_kapat()
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        r = self.f.calistir("kapanis")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("[PASS] 3-04 docs/tasinacak.md VTB yeni", r.stdout)
+        agac = self.git(self.f.tuketici, "ls-tree", "-r", "--name-only", "HEAD").stdout.split()
+        self.assertIn("docs/tasindi.md", agac, "taşımanın hedefi kapanış commit'inde yok")
+        self.assertNotIn("docs/tasinacak.md", agac, "taşımanın kaynağı commit'te duruyor")
+        u = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
+        self.assertEqual(u["dosyalar"].get("docs/tasindi.md"), "v3",
+                         "hedef yolun tabanı bu yayına mühürlenmeli")
+
+    def test_kontrol_grubu_VTB_tasima_karar_yerel_kaynagi_korur(self):
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yerel")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual((self.f.tuketici / "docs/tasinacak.md").read_text(encoding="utf-8"),
+                         self.YEREL)
+        self.assertFalse((self.f.tuketici / "docs/tasindi.md").exists(),
+                         "`yerel` taşımayı reddeder — hedef yazılmamalı")
+        kayit = self.f.durum()["dosyalar"]["docs/tasinacak.md"]
+        self.assertEqual((kayit["durum"], kayit["karar"]), ("dogrulandi", "yerel"))
+
+    def test_VTB_tasimada_tanimsiz_karar_hala_DUR(self):
+        """Düzeltme izinli karar kümesini GENİŞLETMEZ (VTB: yerel|yeni|ertelendi)."""
+        r = self.f.calistir("isaretle", "docs/tasinacak.md", "--karar", "yeniden-adlandir")
+        self.assertEqual(r.returncode, 2, self.cikti(r))
+        self.assertTrue((self.f.tuketici / "docs/tasinacak.md").exists())
+
+    def test_regresyon_tabanli_tasima_V4R_ayni_planda_degismez(self):
+        """Kontrol grubu: tabanı çözülen taşıma (V4R) aynı planda eski davranışında."""
+        kayit = self._kayitlar("docs/tasinan2.md")
+        self.assertEqual([(d["vaka"], d.get("yeni_yol")) for d in kayit],
+                         [("V4R", "docs/tasindi2.md")])
+
+    def test_hedefte_kullanici_dosyasi_varsa_V7_oncelikli(self):
+        """§4 +R: yeni yolda L varsa V7 — tabansız taşımada da VTB'den ÖNCE gelir."""
+        self.f.yerel_degistir("docs/tasindi.md", "KULLANICININ notu\n")
+        r = self.f.calistir("plan")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual([(d["vaka"], d.get("yeni_yol"))
+                          for d in self._kayitlar("docs/tasinacak.md")],
+                         [("V7", "docs/tasindi.md")])
+
+
 class AkisTest(AkisTemel):
     def test_olc_once_ve_sonra_kaydeder(self):
         r = self.f.calistir("olc", "--asama", "once")

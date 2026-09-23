@@ -148,7 +148,7 @@ Gösterim: T = taban içeriği, L = yerel, Y = yeni. "yok" = o sürümde dosya y
 - **+R yeniden adlandırma:** `git diff -M --name-status <taban> <yeni>` R satırı. L = T eski yolda → yeni yola taşı (V1R). L ≠ T → yerel değişiklik yeni yola birleştirilir (V4R, onaylı). Yeni yolda zaten L varsa → V7.
   <br>⚠ **R100 (içerik AYNI, yalnız yol değişti) — ÖLÇÜLDÜ 2026-09-17 (P2 fixture'ı yakaladı, motorda kusurdu):** bu vakada taban/yerel/yeni blob'ları **birbirinin aynısıdır**, dolayısıyla yukarıdaki §4 tablosu düz uygulanırsa **V0 "değişiklik yok"** çıkar ve dosya **plandan sessizce düşer** — oysa taşınması gerekir. ⇒ **+R, içerik karşılaştırmasından ÖNCE ve ondan BAĞIMSIZ değerlendirilir: yol değişimi başlı başına bir eylemdir.** İkinci tuzak (aynı ölçümde çıktı): yeniden adlandırmanın **hedef yolu** ayrıca "taban yok + Y var" görünümü verdiği için **V2 olarak ikinci kez** listelenebilir → aynı dosya iki kez uygulanır, `kapanis` iki kez doğrular. Hedef yol, R kaleminin parçasıysa V2 dalına DÜŞMEMELİ.
 - **+B ikili dosya** (`.gitattributes` binary satırları: png/jpg/pdf/zip/exe/xlsx/docx — `.gitattributes:14-23`; ya da git "Binary files differ"): V4 birleştirilemez → **V4B**: kullanıcı yerel ya da yeniyi seçer. V1/V2/V5/V6 değişmez.
-- **VTB taban bilinmiyor:** proje dosyasında geri düşüş eşleşmesi yok (§2b) ya da klonda taban commit'i yok (sığ klon/force push izi). Otomatik işlem yok: L ≠ Y ise fark gösterilir, kullanıcı "yeniyi al / yereli koru / elle birleştir" seçer; L = Y ise V2e.
+- **VTB taban bilinmiyor:** proje dosyasında geri düşüş eşleşmesi yok (§2b) ya da klonda taban commit'i yok (sığ klon/force push izi). Otomatik işlem yok: L ≠ Y ise fark gösterilir, kullanıcı "yeniyi al / yereli koru / elle birleştir" seçer; L = Y ise V2e. **+R ile birlikte (taban çözülemeyen dosya yayında taşınıyor — Z66 ③, ölçüldü 2026-09-23):** vaka **VTB kalır** ama kayıt hedef yolu (`yeni_yol`) TAŞIR; hedef yol ayrıca listelenmez (+R ikinci tuzağı). "Yeniyi al" (`--karar yeni`) içeriği hedef yola yazar ve eski yolu siler; "yereli koru" (`--karar yerel`) dosyayı eski yolda bırakır (taşımayı reddeder). Hedef yolda zaten L varsa yine **V7** önce gelir. Eskiden hedef yol atılıyordu ⇒ `--karar yeni` "yeni sürümde yok" DUR'u veriyor, kullanıcıya yalnız yerel/ertele kalıyordu (Z62 her tur yeniden önerir ⇒ kalıcı çıkmaz).
 - **K kritik:** kalem `kritik: true` ise tüm dosyaları seçili gelir (Q3); kod değişmez.
 
 **Döngü riski kararı (V5):** v1'de **hariç listesi YOK**, yalnız görünür log (`GERİ GETİRİLDİ: skills/x/SKILL.md — yerelde silinmişti, bu yayında güncellendi; istemiyorsan tekrar sil`).
@@ -193,7 +193,7 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 
 **V1R / V4R — yeniden adlandırma:** V1R otomatik taşıma. V4R = V4t/V4c kartı, hedef yol yeni ad; eski yol silinir, raporda "taşındı" yazar.
 
-**VTB — taban bilinmiyor:** fark göster, "yeniyi al / yereli koru / elle" sor; otomatik birleştirme **yasak** (taban uydurma).
+**VTB — taban bilinmiyor:** fark göster, "yeniyi al / yereli koru / elle" sor; otomatik birleştirme **yasak** (taban uydurma). Dosya yayında taşınıyorsa (`yeni_yol`) fark yerel eski yol ↔ yeni sürümün hedef yolu arasındadır; "yeniyi al" hedefe yazar + eski yolu siler.
 
 **Sınıf özel kartları** (`guncelle/kartlar/sinif-<id>.md`; plan, dosyanın sınıfı bunlardan biriyse vaka kartına ek olarak gösterir).
 
