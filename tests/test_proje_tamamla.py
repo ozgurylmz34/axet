@@ -4,7 +4,10 @@
 `scripts/conn_sablon.py`: SAP bağlantı ŞABLONLARI conn/DEV.env + conn/QA.env (yaz · doğrula · özet). Kural kopyalanmaz:
 anahtarlar ve alan kuralları setup_credentials.py'den; ek olarak parola dahil `<...>` yer tutucu denetimi.
 `proje-tamamla.cmd` (projede KURULUMU-TAMAMLA.cmd): şablon → Notepad → doğrula → DEV'i etkinleştir → davranış yüzeyi
-onayı → doctor → aXet'i aç. Etkileşim `choice`'a boru ile verilir (ölçüldü: choice boru girdisini okur); testlerde
+onayı → doctor → aXet'i aç. Etkileşim `choice`'a boru ile verilir (ölçüldü: choice boru girdisini okur) — ANCAK
+davranış yüzeyi onayı boruyla VERİLEMEZ (v0.5.6 gate: `echo E | …` ile ajan kendi değişikliğini onaylayabiliyordu);
+testlerde onay, kullanıcının penceredeki `E`sinin eşdeğeri olarak `behavior_manifest.py generate` ile verilir;
+testlerde
 Notepad `AXET_KURULUM_EDITOR_ACMA=1` ile açılmaz. `E` cevabı son soruda VERİLMEZ (axet-code açılmasın). Sahte değerler
 kullanılır, SAP'ye bağlanılmaz. cmd testleri yalnız Windows (cmd.exe).
 KAPSAM — bakılmayanlar: Notepad'in gerçekten açıldığı (yalnız cmd'deki `start "" notepad` satırı statik denetlenir) ·
@@ -190,6 +193,10 @@ class ProjeTamamlaTest(ZProje):
         return subprocess.run(["cmd", "/c", *args], input=girdi.encode("ascii"), capture_output=True,
                               cwd=str(cwd or self.tmp), env=self.env, timeout=300)
 
+    def onayla(self, d) -> None:
+        r = self.calistir("behavior_manifest.py", "generate", "--project-dir", str(d))
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+
     @staticmethod
     def metin(r: subprocess.CompletedProcess) -> str:
         return r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace")
@@ -266,7 +273,7 @@ class ProjeTamamlaTest(ZProje):
         self.assertEqual(r.returncode, 4, m)
         self.assertIn("aktif baglanti (.conn_adt) zaten var", m)
         self.assertIn("Onaylanacak dosyalar", m)
-        self.assertIn("Onay verilmedi", m)
+        self.assertIn("Onay yalniz bu dosyaya CIFT TIKLAYINCA", m)   # boru girdisi: soru hiç sorulmaz
         self.assertFalse((d / MANIFEST).exists())
         self.assertEqual((d / ".conn_adt").read_bytes(), b"", "bağlantı dosyasına dokunuldu")
 
@@ -280,6 +287,15 @@ class ProjeTamamlaTest(ZProje):
         self.assertIn("Aktif sistem DEV olarak ayarlaniyor", m)
         self.assertIn("SAP sistemi: aktif TAMAMLA_DEV (DEV)", m)
         self.assertIn("TAMAMLA_QA (QA)  [doldurulmam", m)
+        # boruyla verilen `E` onay DEĞİLDİR: manifest yazılmaz, soru sorulmaz (v0.5.6 gate)
+        self.assertEqual(r.returncode, 4, m)
+        self.assertIn("Onay yalniz bu dosyaya CIFT TIKLAYINCA", m)
+        self.assertNotIn("onayliyor musun", m)
+        self.assertFalse((d / MANIFEST).exists(), "boru girdisiyle davranış yüzeyi onaylandı")
+        self.onayla(d)           # kullanıcının pencerede `E` demesinin eşdeğeri
+        r = self.kos(str(CMD), str(d), girdi="H\n")
+        m = self.metin(r)
+        self.assertIn("Ayarlar zaten onayli", m)
         self.assertTrue((d / MANIFEST).is_file(), m)
         self.assertIn("[4/4] Kurulum tamam", m)
         self.assertIn(r.returncode, (0, 6), m)  # 6: axet-code PATH'te yok (son soru sorulmaz)
@@ -307,7 +323,7 @@ class ProjeTamamlaTest(ZProje):
         r = self.kos(str(d / yeni_proje.KISAYOL), cwd=self.tmp)
         m = self.metin(r)
         self.assertEqual(r.returncode, 3, m)
-        self.assertIn(f"aXet kurulum tamamlama - {d}\r\n", m)
+        self.assertIn(f"aXet kurulum tamamlama - \"{d}\"\r\n", m)
         self.assertTrue((d / "conn" / "DEV.env").is_file())
 
     def test_z70_doctor_fail_ise_durur_aXet_sorulmaz(self):
@@ -315,6 +331,7 @@ class ProjeTamamlaTest(ZProje):
         self.global_config(sap=True)
         d = self.proje("iskelet", sap=True)
         (d / ".conn_adt").write_bytes(b"")
+        self.onayla(d)
         r = self.kos(str(CMD), str(d), girdi="EE\n")
         m = self.metin(r)
         self.assertEqual(r.returncode, 5, m)
@@ -328,6 +345,24 @@ class ProjeTamamlaTest(ZProje):
         r = self.kos(str(d / yeni_proje.KISAYOL))
         self.assertEqual(r.returncode, 1, self.metin(r))
         self.assertIn("aXet klonu bulunamadi", self.metin(r))
+
+    def test_gate_yolda_ampersand_ciktiyi_bozmaz_komut_calistirmaz(self):
+        # v0.5.6 gate: tırnaksız `echo %PROJE%` yolun `&` sonrasını KOMUT olarak çalıştırıyordu (ölçüldü: başlık
+        # yolun `&` öncesinde kesildi + "The system cannot find the path specified.")
+        d = self.tmp / "R&D" / "yok"
+        r = subprocess.run(f'cmd /c ""{CMD}" "{d}""', input=b"\n", capture_output=True, cwd=str(self.tmp),
+                           env=self.env, timeout=120)
+        m = self.metin(r)
+        self.assertEqual(r.returncode, 1, m)
+        self.assertIn(f'aXet kurulum tamamlama - "{d}"', m)
+        self.assertIn(f'proje klasoru bulunamadi: "{d}"', m)
+        self.assertNotIn("cannot find the path", m)
+
+    def test_gate_kisayol_hata_satiri_yolu_tirnaklar(self):
+        klon = self.tmp / "R&D" / "klon"
+        hata = [s for s in yeni_proje.kisayol_metni(klon).splitlines() if s.startswith("echo HATA")]
+        self.assertEqual(len(hata), 1, hata)
+        self.assertIn(f'"{klon / yeni_proje.TAMAMLA_CMD}"', hata[0])
 
 
 if __name__ == "__main__":

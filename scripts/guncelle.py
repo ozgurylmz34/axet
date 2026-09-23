@@ -2511,7 +2511,7 @@ def komut_kapanis(b: Baglam, args) -> int:
                 if k.disk_sha(hedef) != kayit.get("beklenen_sha"):
                     dv = "uygulandi"
                     kayit["not_"] = "kapanışta diskten doğrulanamadı"
-                    eksikler.append(f"{yol}: durum.json 'dogrulandi' diyor ama disk farklı")
+                    eksikler.append(f"{yol}: durum.json 'dogrulandi' diyor ama disk farklı — kayıt geri 'uygulandi'ya alındı; düzelttikten sonra `isaretle`/`uygula` ile yeniden işaretle")
                 else:
                     tam = k.kok / hedef
                     if tam.is_file():
@@ -2522,7 +2522,7 @@ def komut_kapanis(b: Baglam, args) -> int:
                         if cakisma_isaretleri(metin, ref_metin):
                             dv = "uygulandi"
                             kayit["not_"] = "kapanışta çakışma işareti bulundu"
-                            eksikler.append(f"{yol}: çakışma işareti duruyor")
+                            eksikler.append(f"{yol}: çakışma işareti duruyor — kayıt geri 'uygulandi'ya alındı; düzelttikten sonra `isaretle`/`uygula` ile yeniden işaretle")
                 if dv != "dogrulandi":
                     kayit["durum"] = dv
                     durum_dustu = True

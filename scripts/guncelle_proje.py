@@ -635,6 +635,12 @@ def _kisayol_uygula(b: Baglam, plan: dict) -> int:
         return 1
     durum_kaydet(p, rel, vaka="KISAYOL", durum="dogrulandi", beklenen_ozet=beklenen, karar="otomatik")
     print(f"KISAYOL: {rel} " + ("yazıldı" if k["durum"] == "yok" else "güncellendi (eski hâli yedekte)"))
+    ignore = subprocess.run(["git", "-C", str(p.kok), "check-ignore", "-q", rel], capture_output=True,
+                            stdin=subprocess.DEVNULL)
+    if ignore.returncode == 1:    # 1 = kapalı değil · 0 = kapalı · 128 = git reposu değil (uyarı gereksiz)
+        # yeni_proje ile aynı uyarı: kısayol klonun MUTLAK yolunu taşır (kullanıcı adı, makine yolu)
+        print(f"  ! UYARI: {rel} git'e kapalı değil — makineye özgü mutlak yol taşır; .gitignore'a "
+              f"`{rel}` satırını ekle, commit etme")
     return 0
 
 

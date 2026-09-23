@@ -19,7 +19,7 @@ if "%PROJE:~-1%"=="\" set "PROJE=%PROJE:~0,-1%"
 set "CONN=%PROJE%\conn"
 
 echo ============================================================
-echo  aXet kurulum tamamlama - %PROJE%
+echo  aXet kurulum tamamlama - "%PROJE%"
 echo ============================================================
 echo.
 
@@ -74,6 +74,10 @@ set "AXET_SCRIPTS=%AXET_HOME%scripts"
 set "AXET_PROJE=%PROJE%"
 python -c "import os,sys;sys.path.insert(0,os.environ['AXET_SCRIPTS']);import behavior_manifest as b;from pathlib import Path;[print('     '+k) for k in b.topla(Path(os.environ['AXET_PROJE']))]"
 :onay_sor
+rem Onay YALNIZ gercek konsoldan: `echo E | ...` ile boruyla verilen cevap kabul edilmez (choice boruyu okur - olculdu).
+set "AXET_SCRIPTS=%AXET_HOME%scripts"
+python -c "import os,sys;sys.path.insert(0,os.environ['AXET_SCRIPTS']);import yeni_proje as y;sys.exit(0 if y.etkilesimli_mi() else 1)"
+if errorlevel 1 goto onay_konsol_yok
 choice /c EH /n /m "  Bu proje ayarlarini onayliyor musun? [E/H]: "
 if errorlevel 2 goto onay_yok
 python "%AXET_HOME%scripts\behavior_manifest.py" generate --project-dir "%PROJE%"
@@ -134,24 +138,29 @@ set "RC=9009"
 goto son
 
 :klon_yok
-echo HATA: aXet klonu eksik gorunuyor: %AXET_HOME%scripts altinda doctor.py / conn_sablon.py yok.
+echo HATA: aXet klonu eksik gorunuyor: "%AXET_HOME%scripts" altinda doctor.py / conn_sablon.py yok.
 echo aXet'i %%guncelle ile guncelle ya da kur.cmd ile yeniden kur.
 set "RC=1"
 goto son
 
 :klasor_yok
-echo HATA: proje klasoru bulunamadi: %PROJE%
+echo HATA: proje klasoru bulunamadi: "%PROJE%"
 set "RC=1"
 goto son
 
 :proje_yok
-echo Bu klasorde henuz aXet projesi yok (sap-project.json bulunamadi): %PROJE%
+echo Bu klasorde henuz aXet projesi yok (sap-project.json bulunamadi): "%PROJE%"
 echo Once aXet'i burada acip %%yeni-proje ile kurulumu yap, sonra bu dosyaya tekrar cift tikla.
 set "RC=2"
 goto son
 
 :onay_yok
 echo   Onay verilmedi. Hazir olunca bu dosyaya tekrar cift tikla (onceki adimlar korunur).
+set "RC=4"
+goto son
+
+:onay_konsol_yok
+echo   Onay yalniz bu dosyaya CIFT TIKLAYINCA acilan pencerede verilir (girdi yonlendirilmis - onay sorulmadi).
 set "RC=4"
 goto son
 
