@@ -115,11 +115,19 @@ betiği (`scripts/yeni_proje.py`) çalıştırır:
 - `sap-project.json` ve `AGENTS.md` alanlarını cevaplarınla doldurur; var olan değerleri ezmez;
 - `doctor.py` ile kontrol eder.
 
-Sonra **kendi terminalinde**, proje kökünde, sırayla (araç bu adımları çalıştırmaz, sonunda yazar):
-1. SAP bağlantısı: `python $HOME\axet\skills-sap\sap-adt-foundation\scripts\setup_credentials.py`
-   (parola ekrana yansımaz; çoklu sistem `--slot <AD>` + `switch_tier.py`; aXet bu dosyayı okumaz).
-2. Davranış yüzeyini onayla: `python $HOME\axet\scripts\behavior_manifest.py generate`.
-3. Projede aXet'i aç: `axet-code -c <klasör>` → ilk satırda `proje: <ad>` görünmeli.
+Sonra **proje klasöründeki `KURULUMU-TAMAMLA.cmd`'ye çift tıkla** (araç bu kısayolu yazar ama çalıştırmaz).
+Kısayol klondaki `proje-tamamla.cmd`'yi çağırır; tekrar çalıştırmak güvenlidir, var olanı ezmez:
+1. SAP bağlantı şablonları `conn\DEV.env` ve `conn\QA.env` yazılır ve Notepad'de açılır. `<...>` yerleri doldur,
+   kaydet, kısayola tekrar çift tıkla. Dosyalar denetlenir (hatalı alan adıyla gösterilir, değer basılmaz; boş şablon
+   atlanır); geçerli DEV aktif sistem (`.conn_adt`) olur. QA sistemi yoksa `QA.env`'e dokunma. Parola dosyada düz
+   metindir; `conn/` git'e girmez ve aXet ajanına kapalıdır (denylist).
+2. Davranış yüzeyi onayı sorulur (onaylanacak dosyalar listelenir).
+3. `doctor.py` koşar; FAIL varsa durur.
+4. aXet'i projede açmayı sorar → ilk satırda `proje: <ad>` görünmeli.
+
+Sistem değiştirmek için aXet'te `%sistem` (ya da "QA'ya geç"). Kısayol olmadan elle:
+`& $HOME\axet\proje-tamamla.cmd <klasör>`. Parolayı dosyaya yazmak istemeyen için terminal yolu:
+`python $HOME\axet\skills-sap\sap-adt-foundation\scripts\setup_credentials.py` (`--slot <AD>` ile `conn\<AD>.env`).
 
 Bağlantı teşhisi: `sap_adt_cli.py sap_doctor`.
 SAP projesinde `AGENTS.md` içindeki kesin yasak bloğunu elle değiştirme: template güncellenince
@@ -343,7 +351,7 @@ SAP, ABAP ve S/4HANA SAP SE'nin ticari markalarıdır; bu proje SAP SE ile bağl
   Ekran üreteci kiti ve ALV şablonları nötr `ZBC000` önekine taşındı. Kurulum aracı ve `%yeni-proje` canlı aXet
   oturumunda ve gerçek winget kurulumuyla DOĞRULANMADI.
 - **0.2.0 (partiler 4-7, 2026-09-13/14)** — Yeni SAP skill'leri: `sap-ui5-fiori`, `sap-code-review`, `sap-fs-ts-docs`,
-  `sap-gui-scripting`, `sap-abapgit-delivery`. Genel skill'ler: `onboard`, `research`, `office-excel`, `office-docs`,
+  `sap-gui-scripting`, `sap-abapgit-delivery` (0.5.6'da `sistem` eklendi). Genel skill'ler: `onboard`, `research`, `office-excel`, `office-docs`,
   `office-slides`. Proje pre-commit denetimi (`.githooks/`, `project_precommit.py`, paket adı denetimi, davranış
   manifesti), `tests/`. SAP CLI: mesaj sınıfı yazma, domain ön kontrolü, yeni kabuk/push tipleri. İzin kurallarına
   UI5 deploy ve manifest onayı eklendi — **install.py tekrar çalıştırılmalı**. Yeni araçların canlı SAP ve aXet

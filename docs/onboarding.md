@@ -90,18 +90,23 @@ Terminali tercih edersen aynı işi `& $HOME\axet\yeni-proje.cmd` yapar.
 senin yazdığın değerler ezilmez; araç farkı raporlar.
 
 ### 3.2 SAP kimlik bilgileri
-Bağlantı bilgisi proje kökündeki `.conn_adt` dosyasında durur. Bu dosya git'e girmez, aXet onu okumaz,
-içeriği sohbete yazılmaz.
+Her SAP sistemi `conn\<AD>.env` dosyasıdır; aktif bağlantı proje kökündeki `.conn_adt`'dir. `conn/` ve `.conn_adt`
+git'e girmez, aXet ajanına kapalıdır (denylist), içeriği sohbete yazılmaz.
 
-1. **Bilgileri yaz:** proje kökünde, **kendi PowerShell terminalinde** (aXet oturumunda değil):
-   `python $HOME\axet\skills-sap\sap-adt-foundation\scripts\setup_credentials.py`
-   - Bilgileri terminalde sorar; parola ekrana yansımaz, sohbete hiçbir şey düşmez.
-   - Birden çok sistem için `--slot <AD>` kullan (`conn/<AD>.env` yazar); aralarında `switch_tier.py <AD>` ile geçilir.
-   - Etkileşimsiz çağrıyı (aXet kabuğu, Git Bash) reddeder.
-   - Alan adları için örnek dosya: `skills-sap/sap-adt-foundation/assets/.conn_adt.example`.
-   - Canlı akış DOĞRULANMADI.
-2. **Davranış yüzeyini onayla:** aynı terminalde `python $HOME\axet\scripts\behavior_manifest.py generate`.
-   Proje kuralları (`AGENTS.md`, `.axet-code.json`, denylist, `.githooks/`) her değiştiğinde bu onayı yenile.
+1. **Proje klasöründeki `KURULUMU-TAMAMLA.cmd`'ye çift tıkla** (`%yeni-proje` yazar; yoksa
+   `& $HOME\axet\proje-tamamla.cmd <klasör>`). Pencere SAP bilgisi sormaz:
+   - `conn\DEV.env` ve `conn\QA.env` şablonlarını yazar (var olanı ezmez) ve Notepad'de açar. Dil
+     (`sap-project.json` master_language), tier ve sistem adı (`<proje>_DEV`) hazır gelir.
+   - `<...>` yerleri doldur, kaydet, kısayola tekrar çift tıkla. Hatalı alanlar adıyla gösterilir (değer basılmaz),
+     boş şablon atlanır; QA sistemi yoksa `QA.env`'e dokunma. Geçerli DEV aktif sistem olur.
+   - Parola dosyada düz metin durur. Dosyaya yazmak istemezsen terminal yolu:
+     `python $HOME\axet\skills-sap\sap-adt-foundation\scripts\setup_credentials.py --slot <AD>` (parola ekrana
+     yansımaz; etkileşimsiz çağrıyı reddeder).
+   - Sistem değiştirmek: aXet'te `%sistem` ya da "QA'ya geç". QA/PRD salt-okunurdur.
+2. **Davranış yüzeyini onayla:** aynı pencere onaylanacak dosyaları listeler ve sorar (`behavior_manifest.py
+   generate`). Proje kuralları (`AGENTS.md`, `.axet-code.json`, denylist, `.githooks/`) her değiştiğinde kısayola
+   tekrar çift tıkla; değişenler `!` ile gösterilir.
+   Çift tıklanan pencerede Notepad'in açılışı ve `axet-code -c` açılışı DOĞRULANMADI.
 3. **Doğrula** (proje kökünde):
    ```powershell
    git check-ignore .conn_adt                                        # dosya adını basmalı
@@ -164,7 +169,7 @@ Belirti → çözüm tablosu: [README "Sorun giderme"](../README.md#sorun-giderm
 - [ ] Kurulum aracı bitti; `doctor.py` 0 FAIL
 - [ ] Yeni oturumun ilk satırında `AXET-CORE` görünüyor
 - [ ] İlk proje `%yeni-proje` ile kuruldu; projede `proje: <ad>` görünüyor
-- [ ] (SAP) `setup_credentials.py` ve `behavior_manifest.py generate` kendi terminalimde çalıştı
+- [ ] (SAP) `KURULUMU-TAMAMLA.cmd`: `conn\DEV.env` dolduruldu, ayarlar onaylandı, doctor 0 FAIL
 - [ ] (SAP) `.conn_adt` git'e kapalı; `ping` ve `adt_get` başarılı
 - [ ] `session_brief.py --no-fetch` hatasız
 - [ ] (SAP) Paket SAP'de SE21 ile açıldı, yerelde `new_package.py` ile kuruldu
