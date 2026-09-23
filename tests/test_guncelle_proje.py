@@ -1409,12 +1409,22 @@ class Z79KisayolTest(ProjeTemel):
 
     def test_2_eksik_kisayol_uygula_yazar_icerik_kisayol_metni_kapanis_PASS(self):
         (self.f.proje / yeni_proje.KISAYOL).unlink()
-        self._akis()
+        u = self._akis()
         self.assertEqual(self.f.kisayol_oku(), self.f.kisayol_bayt())
+        # sahte şablonun .gitignore'unda kısayol satırı yok ⇒ git'e açık: uyarı (v0.5.6 gate, yeni_proje ile aynı)
+        self.assertIn("git'e kapalı değil", self.cikti(u))
         k = self.f.calistir("kapanis")
         self.assertEqual(k.returncode, 0, self.cikti(k))
         rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
         self.assertIn(f"[PASS] {yeni_proje.KISAYOL}", rapor)
+
+    def test_2b_kisayol_git_e_kapaliysa_uyari_YOK(self):
+        (self.f.proje / yeni_proje.KISAYOL).unlink()
+        (self.f.proje / ".git" / "info").mkdir(parents=True, exist_ok=True)
+        (self.f.proje / ".git" / "info" / "exclude").write_text(yeni_proje.KISAYOL + "\n", encoding="utf-8")
+        u = self._akis()
+        self.assertEqual(self.f.kisayol_oku(), self.f.kisayol_bayt())
+        self.assertNotIn("git'e kapalı değil", self.cikti(u))
 
     def test_3_onaysiz_uygula_kisayolu_YAZMAZ(self):
         (self.f.proje / yeni_proje.KISAYOL).unlink()

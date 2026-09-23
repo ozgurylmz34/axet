@@ -4149,6 +4149,8 @@ class Z61KapanisDiskTutmazTest(AkisTemel):
         r = self.f.calistir("kapanis")
         self.assertEqual(r.returncode, 1, self.cikti(r))
         self.assertNotEqual(self.f.durum()["dosyalar"][self.YOL]["durum"], "dogrulandi")
+        # kalıcı düşüş kullanıcıya söylenir: diski geri düzeltmek artık yetmez (v0.5.6 gate)
+        self.assertIn("yeniden işaretle", self.cikti(r))
         u_yol = self.f.durum_dizini() / "uygulanan.json"
         u = self._uygulanan() if u_yol.exists() else {"kalemler": {}, "dosyalar": {}}
         self.assertNotIn("3-02", u.get("kalemler", {}), "--kabul yoksa mühür BASILMAZ")
