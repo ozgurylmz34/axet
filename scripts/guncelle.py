@@ -2187,16 +2187,18 @@ def _tek_satir(metin: str | None) -> str:
 
 def _atlandi_nedeni(kalem: dict, durum: dict, uygulanan_kalemler: set,
                     secili: set | None = None) -> str | None:
-    """Z58 (v0.5.4): hiçbir dosyası `dogrulandi` olmayan kalemin `uygulanan.json` mührüne NEDEN.
+    """Z58 (v0.5.4): `uygulandi` mühürlenmeyen kalemin (Z61 c: kendi dosyalarının hepsi `dogrulandi`
+    değil) `uygulanan.json` mührüne NEDEN.
 
     Kapanış anında güvenilir biçimde bilinir: `durum` bu turun `durum.json`'udur (`komut_kapanis`
     okur, hiçbir yer silmez — `_plan_muhru`), dosya→kalem eşlemesi planın `kalem["dosyalar"]`ıdır
     (`komut_plan` adım 3: her yol TEK kaleme, onu beyan eden en son kaleme bağlanır). Kalemin
     beyan ettiği ama sonraki bir kaleme DEVREDİLEN yollar planın `kalem["devredilen"]`ındadır
-    ({yol: sahip kalem}); `uygulanan_kalemler` bu turda `uygulandi` mühürlenen seçili kalemlerdir
-    (`_kapanis_git` onları mühür yazmadan ÖNCE hesaplar).
-    Devredilen bir yol ancak sahibi bu turda `uygulandi` mühürlendiyse VE yolun kendisi
-    `dogrulandi` ise İNMİŞ sayılır (sahibin başka dosyası inip bu yol ertelenmiş olabilir).
+    ({yol: sahip kalem}); `uygulanan_kalemler` bu turda en az bir dosyası İNEN seçili kalemlerdir
+    (Z61 c: `_kapanis_git`in `inen_kalemler`i — onları mühür yazmadan ÖNCE hesaplar; kendi
+    dosyalarının hepsi inmeyen sahip `atlandi` mühürlenir ama burada yine sayılır).
+    Devredilen bir yol ancak sahibinde bu turda bir dosya indiyse VE yolun kendisi `dogrulandi`
+    ise İNMİŞ sayılır (sahibin başka dosyası inip bu yol ertelenmiş olabilir).
       · `ertelendi` — kalemin dosyalarından ya da İNMEYEN devredilen yollarından en az birinde
                       `isaretle --karar ertelendi`; YA DA (v0.5.5 bug gate P3) inmeyen bir devredilen
                       yolun sahibi bu turda SEÇİLMEDİ (`secili` verilmişse): o yolun işi sahipte hâlâ
@@ -2382,15 +2384,34 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
     # ⛔ İKİ GEÇİŞ (Z58 bug gate): atlandi kalemin `is-yok` nedeni, devrettiği yolların SAHİBİNİN bu
     # turdaki mührüne bağlıdır (`_atlandi_nedeni`). Sahip plan sırasında SONRA gelir (en son beyan
     # eden kalem) ⇒ önce tüm seçili kalemlerin uygulandi/atlandi hâli hesaplanır, sonra nedenler.
+    # ⛔ Z61 (c) (kullanıcı kararı 2026-09-23, seçenek 1): kalem ancak KENDİ dosyalarının HEPSİ
+    # `dogrulandi` ise `uygulandi` mühürlenir. Eskiden tek bir `dogrulandi` dosya yetiyordu: kalemin
+    # kendi dosyası `ertelendi` (ya da `--kabul` altında `bekliyor`/`uygulandi`) kalsa bile kalem
+    # `uygulandi` mühürleniyor ⇒ Z62 yeniden önerisi hiç devreye girmiyor, o dosyanın içeriği bir
+    # daha önerilmiyordu (ölçüldü, `Z61KismiKalemTest`). Artık böyle kalem `atlandi` olur, nedeni
+    # `_atlandi_nedeni` verir (kendi dosyası ertelendi ⇒ `ertelendi` → Z62 yeniden önerir; yalnız
+    # `--kabul` altında kalan açık FAIL ⇒ `kabul`).
+    # İKİ KÜME bilinçli: `inen_kalemler` (en az bir dosyası indi) `_atlandi_nedeni`nin devredilen-yol
+    # ölçütüdür — orada soru "bu YOL indi mi"dir (yolun kendi `dogrulandi`si ayrıca aranır), sahibin
+    # tamamı değil; sahibin başka dosyası ertelendi diye inmiş bir yolu "inmedi" saymak devreden
+    # kalemi `is-yok` yerine `kabul` ile kapatırdı. Dosya tabanı (`u["dosyalar"]`) da dosya başına
+    # yazılır: inen dosyanın tabanı eski kalsaydı kalem yeniden önerildiğinde o dosya yeniden
+    # YARGI vakası çıkarırdı (taban v3 ⇒ işlemsiz; ölçüldü).
     uygulanan_kalemler: set[str] = set()
+    inen_kalemler: set[str] = set()
     for kalem in plan["kalemler"]:
         if kalem["id"] not in secili:
             continue
+        hepsi = bool(kalem["dosyalar"])
         for d in kalem["dosyalar"]:
             kayit = durum["dosyalar"].get(d["yol"], {})
             if kayit.get("durum") == "dogrulandi":
                 u["dosyalar"][kayit.get("hedef_yol", d["yol"])] = plan["yeni_etiket"]
-                uygulanan_kalemler.add(kalem["id"])
+                inen_kalemler.add(kalem["id"])
+            else:
+                hepsi = False
+        if hepsi:
+            uygulanan_kalemler.add(kalem["id"])
     for kalem in plan["kalemler"]:
         if kalem["id"] not in secili:
             continue
@@ -2398,7 +2419,7 @@ def _kapanis_git(b: Baglam, plan: dict, durum: dict, secili: set,
         muhur = {"etiket": plan["yeni_etiket"],
                  "durum": "uygulandi" if uygulandi else "atlandi", "zaman": _simdi()}
         if not uygulandi:
-            muhur["neden"] = _atlandi_nedeni(kalem, durum, uygulanan_kalemler, secili)
+            muhur["neden"] = _atlandi_nedeni(kalem, durum, inen_kalemler, secili)
         u["kalemler"][kalem["id"]] = muhur
     _yaz_json(k.durum_dizini / "uygulanan.json", u)
     return kod

@@ -1208,7 +1208,10 @@ class Z62YenidenAdlandirmaHedefiTest(Z62Temel):
 
     def test_Z62_P1_tasima_ertelenirse_hedefi_beyan_eden_kalem_is_yok_DEGIL(self):
         kal = self._p1_tur("ertelendi")
-        self.assertEqual(kal["3-04"]["durum"], "uygulandi", "kurgu: 3-04'ün diğer dosyaları indi")
+        # Z61 (c): docs/tasinan2.md 3-04'ün KENDİ dosyası ve ertelendi ⇒ diğer dosyaları inse de 3-04
+        # `atlandi` + `ertelendi` (eskiden `uygulandi`).
+        self.assertEqual((kal["3-04"]["durum"], kal["3-04"].get("neden")), ("atlandi", "ertelendi"),
+                         "kurgu: 3-04'ün diğer dosyaları indi, tasinan2.md ertelendi")
         self.assertFalse((self.f.tuketici / "docs/tasindi2.md").exists(), "kurgu: taşıma inmedi")
         self.assertEqual((kal["3-06"]["durum"], kal["3-06"].get("neden")), ("atlandi", "ertelendi"),
                          "3-06'nın içeriği inmedi — is-yok sayılırsa bağımlının UYARI'sı kaybolur")
@@ -1886,7 +1889,11 @@ class AkisTest(AkisTemel):
     def test_Z58_kapanis_sahip_kalemde_dosya_ertelendiyse_devreden_kalem_is_yok_DEGIL(self):
         u = self._kapanis_doctor_ertelendi()
         kal = u["kalemler"]
-        self.assertEqual(kal["3-01"]["durum"], "uygulandi", "kurgu: 3-01'in sap_stamp.py'si indi")
+        # Z61 (c): doctor.py 3-01'in KENDİ dosyası ve ertelendi ⇒ sap_stamp.py inse de 3-01 `atlandi`
+        # + `ertelendi` (eskiden `uygulandi`; ertelenen dosya bir daha önerilmiyordu).
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"),
+                         "kurgu: 3-01'in sap_stamp.py'si indi, doctor.py'si ertelendi")
+        self.assertEqual(u["dosyalar"].get("scripts/sap_stamp.py"), "v3", "inen dosyanın tabanı yazılır")
         self.assertNotIn("scripts/doctor.py", u["dosyalar"], "kurgu: doctor.py diske İNMEDİ")
         self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "ertelendi"),
                          "2-01'in içeriği inmedi — is-yok sayılırsa bağımlının UYARI'sı kaybolur")
@@ -3915,6 +3922,107 @@ class Z61BayatDogrulandiTest(AkisTemel):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         kayit = self.f.durum()["dosyalar"][self.YOL]
         self.assertEqual((kayit.get("durum"), kayit.get("kalem")), ("dogrulandi", "4-01"), kayit)
+
+
+class Z61KismiKalemTest(AkisTemel):
+    """Z61 (c) (kullanıcı kararı 2026-09-23, seçenek 1): kalemin KENDİ dosyası `ertelendi` ise — başka
+    dosyası `dogrulandi` olsa bile — kalem `atlandi` + `neden: ertelendi` mühürlenir ⇒ Z62 sonraki
+    `plan`'da yeniden önerir. Eskiden tek `dogrulandi` dosya kalemi `uygulandi` mühürlüyordu; ertelenen
+    dosya bir daha hiç önerilmiyordu (ölçüldü: tur 2 `plan` "Klon güncel", v3 içeriği diskte yok).
+    Z66 ①'den AYRIMI: orada inmeyen yol BAŞKA kaleme devredilmiştir (sahibi Z62 ile geri gelir); burada
+    inmeyen dosya kalemin KENDİSİNİN.
+
+    Kurgu: 3-05 = logo.png (V4B) · kur.cmd (V4t) · cakisan (V7). 3-05 → 3-01'i gerektirir. 2-01'in
+    doctor.py'si 3-01'e devredilmiştir (3-01 = doctor.py + sap_stamp.py)."""
+
+    def _kapat(self, kararlar: dict, *, kabul: str | None = None, sonra=None) -> tuple:
+        self.assertEqual(self.f.calistir("olc", "--asama", "once").returncode, 0)
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        tam = {"core/00-temel.md": "yeni", "scripts/doctor.py": "yeni", "kur.cmd": "yeni",
+               "docs/logo.png": "yeni", "docs/tasinan2.md": "yeni",
+               "skills/cakisan/SKILL.md": "yeniden-adlandir", "docs/silinecek.md": "yerel"}
+        tam.update(kararlar)
+        for yol, karar in tam.items():
+            ek = ["--gerekce", "sonra"] if karar == "ertelendi" else []
+            r = self.f.calistir("isaretle", yol, "--karar", karar, *ek)
+            self.assertEqual(r.returncode, 0, f"{yol}: {self.cikti(r)}")
+        self.ozel_adimlari_kostur()
+        self.assertEqual(self.f.calistir("olc", "--asama", "sonra").returncode, 0)
+        self.assertEqual(self.f.calistir("butunluk").returncode, 0)
+        if sonra:
+            sonra()
+        r = self.f.calistir("kapanis", *(["--kabul", kabul] if kabul else []))
+        self.assertEqual(r.returncode, 3 if kabul else 0, self.cikti(r))
+        u = json.loads((self.f.durum_dizini() / "uygulanan.json").read_text(encoding="utf-8"))
+        return u, r
+
+    def _tur2(self) -> dict:
+        r = self.hazirla_ve_planla()
+        self.assertEqual(r.returncode, 0, f"tur 2 plan: {self.cikti(r)}")
+        return {k["id"]: k for k in self.f.plan()["kalemler"]}
+
+    def test_Z61_c_kendi_dosyasi_ertelenen_kalem_uygulandi_muhurlenmez_ve_yeniden_onerilir(self):
+        u, _ = self._kapat({"kur.cmd": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-05"]["durum"], kal["3-05"].get("neden")), ("atlandi", "ertelendi"))
+        # inen dosyaların tabanı dosya başına yazılır, ertelenenin YAZILMAZ
+        self.assertEqual(u["dosyalar"].get("docs/logo.png"), "v3")
+        self.assertEqual(u["dosyalar"].get("skills/cakisan/SKILL.md"), "v3")
+        self.assertNotIn("kur.cmd", u["dosyalar"])
+        plan = self._tur2()
+        self.assertIn("3-05", plan, "ertelenen dosyalı kalem tur 2'de yeniden önerilmeli")
+        self.assertTrue(plan["3-05"].get("yeniden_onerilen"))
+        # inen dosyalar tur 2'de YENİDEN yargı/eylem vakası üretmez (taban v3 ⇒ işlemsiz)
+        self.assertEqual({d["yol"]: d["vaka"] for d in plan["3-05"]["dosyalar"]}.keys(), {"kur.cmd"},
+                         plan["3-05"]["dosyalar"])
+        self.assertIn(plan["3-05"]["dosyalar"][0]["vaka"], ("V4t", "V4c"))
+
+    def test_Z61_c_KONTROL_kalemin_tum_dosyalari_inerse_uygulandi(self):
+        u, _ = self._kapat({})
+        self.assertEqual(u["kalemler"]["3-05"]["durum"], "uygulandi")
+        self.assertNotIn("neden", u["kalemler"]["3-05"])
+
+    def test_Z61_c_kabul_altinda_disk_tutmayan_dosya_cok_dosyali_kalemi_uygulandi_yapmaz(self):
+        """Lider notu: `--kabul` + kalemin bir dosyası disk doğrulamasını tutmadı + diğerleri indi ⇒
+        kalem `atlandi` + `neden: kabul` (kullanıcının açık FAIL kabulü; ertelenmiş dosya yok)."""
+        u, r = self._kapat({}, kabul="bilerek",
+                           sonra=lambda: self.f.yerel_degistir("kur.cmd", "elle bozuldu\r\n"))
+        self.assertIn("kur.cmd", r.stderr)
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-05"]["durum"], kal["3-05"].get("neden")), ("atlandi", "kabul"))
+        self.assertNotIn("kur.cmd", u["dosyalar"])
+        self.assertEqual(u["dosyalar"].get("docs/logo.png"), "v3")
+
+    def test_Z61_c_sahip_kismi_ertelendiyse_indigi_devredilen_yol_devreden_kalemi_kapatir(self):
+        """3-01'in sap_stamp.py'si ertelendi, doctor.py indi ⇒ 3-01 `atlandi/ertelendi`. 2-01'in tek
+        işi (doctor.py, 3-01'e devredilmiş) İNDİ ⇒ 2-01 `is-yok` kalmalı (sahibin tamamı değil, YOLUN
+        inmesi ölçüttür); `kabul` basılsaydı 2-01 kalıcı kapanırdı ama gerekçesi yanlış olurdu."""
+        u, _ = self._kapat({"scripts/sap_stamp.py": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "is-yok"))
+        self.assertEqual(u["dosyalar"].get("scripts/doctor.py"), "v3")
+
+    def test_Z61_c_bagimli_kalem_yan_etkisi_tur2_onkosul_yeniden_onerilir(self):
+        """Yan etki ölçümü: 3-01 (3-05'in önkoşulu) kısmi — doctor.py (V4c, yargı) ertelendi,
+        sap_stamp.py indi ⇒ 3-01 `atlandi/ertelendi`; doctor.py'yi 3-01'e devreden 2-01 de
+        `ertelendi` (yol inmedi). Aynı turda seçili bağımlı 3-05 `uygulandi` kalır. Tur 2'de 3-01
+        yalnız ertelenen dosyasıyla yeniden önerilir (sap_stamp tabanı v3 ⇒ işlemsiz), `sec` DUR
+        vermez."""
+        u, _ = self._kapat({"scripts/doctor.py": "ertelendi"})
+        kal = u["kalemler"]
+        self.assertEqual((kal["3-01"]["durum"], kal["3-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual((kal["2-01"]["durum"], kal["2-01"].get("neden")), ("atlandi", "ertelendi"))
+        self.assertEqual(kal["3-05"]["durum"], "uygulandi")
+        self.assertEqual(u["dosyalar"].get("scripts/sap_stamp.py"), "v3")
+        plan = self._tur2()
+        self.assertIn("3-01", plan)
+        self.assertNotIn("3-05", plan)
+        self.assertEqual([d["yol"] for d in plan["3-01"]["dosyalar"]], ["scripts/doctor.py"],
+                         plan["3-01"]["dosyalar"])
+        r = self.f.calistir("sec", "--hepsi")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        print(f"[Z61c yan etki] tur2 kalemler={sorted(plan)} sec stdout={r.stdout.strip()!r}")
 
 
 if __name__ == "__main__":
