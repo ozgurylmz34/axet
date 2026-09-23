@@ -88,7 +88,7 @@
     {
       "sinif": "kurulum-araci-kok",
       "ust_sinif": "kurulum-araci",
-      "glob": ["kur.cmd", "kur.ps1", "yeni-proje.cmd", "proje-tamamla.cmd"],
+      "glob": ["kur.cmd", "kur.ps1", "yeni-proje.cmd", "proje-tamamla.cmd", "aXet-Kur.cmd"],
       "yukleme": "aXet'e yüklenmez; kullanıcı terminalden elle çalıştırır (README.md:37-39)",
       "etkin": null,
       "esler": ["tests/test_kur.py", "tests/test_yeni_proje.py", "tests/test_proje_tamamla.py"],
