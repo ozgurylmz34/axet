@@ -25,8 +25,8 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
   komutu tekrar çalıştır. (Yalnız şirket dışı, kişisel bir makinede: `kur.cmd -Winget` eksikleri winget ile
   kurmayı sorar.)
 - Git kimliği — bir kez, bu makinede: `git config --global user.name "Ad Soyad"` ve
-  `git config --global user.email "ad.soyad@sirket.com"` (değer `%USERPROFILE%\.gitconfig`'e yazılır, tüm
-  repolarda geçerlidir; kontrol: `git config --global user.email`). Girmezsen kurulum ve aXet etkilenmez; ama
+  `git config --global user.email "ad.soyad@sirket.com"` (değer `git config --global` dosyasına — genelde
+  `%USERPROFILE%\.gitconfig` — yazılır, tüm repolarda geçerlidir; kontrol: `git config --global user.email`). Girmezsen kurulum ve aXet etkilenmez; ama
   commit'lerin Windows'un türettiği adresle atılır ve proje uzak sunucuya push edilirse o adres geçmişe girer
   (geri alınamaz). Kimlik tanımsızsa `doctor.py` projede remote varsa uyarır (WARN), yoksa bilgi verir (INFO).
   **GitHub hesabı gerekmez** (template herkese açık klonlanır).

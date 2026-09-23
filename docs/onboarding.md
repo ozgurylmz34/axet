@@ -33,8 +33,8 @@ git config --global user.email "ad.soyad@sirket.com"
 git config --global user.email    # kontrol: adresini basmalı
 ```
 
-Değer `%USERPROFILE%\.gitconfig`'e yazılır ve bu makinedeki tüm repolarda geçerlidir. Girmezsen kurulum ve aXet
-etkilenmez; ama commit'lerin hata vermeden Windows'un türettiği adresle atılır ve proje uzak sunucuya push edilirse
+Değer `git config --global` dosyasına (genelde `%USERPROFILE%\.gitconfig`) yazılır ve bu makinedeki tüm
+repolarda geçerlidir. Girmezsen kurulum ve aXet etkilenmez; ama commit'lerin hata vermeden Windows'un türettiği adresle atılır ve proje uzak sunucuya push edilirse
 o adres geçmişe girer (sonradan silinemez). Kimlik tanımsızsa `doctor.py` projede remote varsa uyarır (WARN),
 yoksa bilgi verir (INFO). **GitHub hesabı gerekmez:** template herkese açık klonlanır.
 

@@ -1249,7 +1249,11 @@ def check_git_kimlik(cwd: Path | None = None) -> None:
             add("WARN", bas + f"bulunulan reponun remote'u ÖLÇÜLEMEDİ ({neden}) → push riski varsayıldı; proje uzak "
                         "sunucuya push edilirse o adres geçmişe girer → " + GIT_KIMLIK_DUZELTME + kapsam)
         elif remote:
-            add("WARN", bas + "proje uzak sunucuya push edilirse o adres geçmişe girer → " + GIT_KIMLIK_DUZELTME + kapsam)
+            # Kurulumda doctor template klonunda koşar (kur.ps1 Push-Location $Hedef): remote klonun origin'idir,
+            # push edilecek "proje" o değildir → metin bu makinedeki projeler için genel konuşur; seviye aynı (WARN).
+            c = (cwd or Path.cwd()).resolve()
+            hedef = ("bu makinedeki bir proje" if c == inst.AXET_HOME or inst.AXET_HOME in c.parents else "proje")
+            add("WARN", bas + hedef + " uzak sunucuya push edilirse o adres geçmişe girer → " + GIT_KIMLIK_DUZELTME + kapsam)
         else:
             add("INFO", bas + "proje uzak sunucuya push edilmeyecekse zararsız · düzeltme: " + GIT_KIMLIK_DUZELTME + kapsam)
     else:
