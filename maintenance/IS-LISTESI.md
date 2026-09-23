@@ -7,6 +7,26 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
+## ▶ v0.5.7 PLANI (2026-09-23 akşam, kullanıcı kararları) — birleşik dal `wip/v057-birlesim`
+
+**Kararlar (kullanıcı, 2026-09-23):**
+1. **Tek birleşik dal:** Z83 + Z84 + Z85 aynı dalda (`wip/v057-birlesim`, origin/main'den) yapılır; ara adımlarda yalnız
+   hedefli testler (`-k`), sonda **tek** tam takım (BelowNormal) · **tek** bağımsız inceleme (bug gate, tüm diff) · **tek**
+   PR/CI · **tek** yayın (v0.5.7; her madde katalogda kendi kalemi). Birleşim dalı BAŞTAN kurulur (ders: lane yeşili ≠
+   birleşim yeşili). Gerekçe: tekrarlanan test/CI/inceleme/yayın adımlarını teke indirmek (kestirim ~5,5-7 sa → ~4-5 sa;
+   Z83 genişlemesiyle +2-3 sa).
+2. **Z85ⓑ:** `check_fm_signature_doc_sync.py` aXet'e **TAŞINIR** (karar verildi).
+3. **Z83 kapsamı GENİŞ:** yalnız `conn/README.md` değil — `templates/project/AGENTS.md` (satır 25 `session_brief.py`,
+   satır 36 `behavior_manifest.py generate`) ve `templates/project/.githooks/pre-commit` (`RUNNER=`) da `<AXET_HOME>` →
+   klonun MUTLAK yolu taşıyor ve bunlar proje git'ine ZATEN commit'leniyor (TRAKYA'da ölçüldü: `git grep "C:/Users"` →
+   `AGENTS.md:42` · `.githooks/pre-commit:7`). Üçü birden makineden bağımsız yapılacak. ⚠ Bağlılıklar (tasarımda
+   çözülecek): `install.session_brief_allow()` AGENTS.md'deki komut metniyle **birebir** eşleşen allow kuralı yazıyor
+   (joker yok — güvenlik, Z12) · `doctor.py` pre-commit `RUNNER=` satırını regex ile okuyup diskte arıyor · `guncelle_proje`
+   tabanı `_doldur` ile üretiyor (mevcut projelere değişikliğin ulaşması) · AGENTS.md ve `.githooks/` davranış yüzeyi ⇒
+   tasarım kullanıcıya sunulur, onaysız uygulanmaz; tüm projelerde `%guncelle-proje` + onay gerekir.
+
+**Durum:** ⬜ başlanmadı (PR #38 merge bekliyor → sonra dal + worktree'ler).
+
 ## ▶ YARIN BURADAN (gün sonu 2026-09-23) — v0.5.6 YAYINDA
 
 **Yayın (ölçüldü):** PR #34 squash → private `main` `d9373ee` (PR CI 5/5 `4155d46` · main CI yeşil) · public
