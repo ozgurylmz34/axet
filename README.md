@@ -19,28 +19,11 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 | Yükleme kanaryası | ilk yanıtın ilk satırı `[AXET-CORE-… · SAP · proje · hafıza]` | çekirdek §0 |
 
 ## Gereksinimler
-- **aXet.code** — şirket kanalından kurulmuş ve girişi yapılmış (`axet-code -v` çalışıyor). Kurulum aracı aXet'i kurmaz.
-- Git ve Python ≥ 3.12 — kurulum aracı bunları **kurmaz**. Eksikse durur ve ne yapacağını söyler: şirketinin
-  yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste, sonra yeni bir PowerShell'de
-  komutu tekrar çalıştır. (Yalnız şirket dışı, kişisel bir makinede: `kur.cmd -Winget` eksikleri winget ile
-  kurmayı sorar.)
-  Python kurulu ama `python` komutu çalışmıyorsa (PATH'te değil ya da Windows mağaza kısayolu çıkıyor) bir şey
-  yapman gerekmez: kurulum aracı bulduğu Python'un klasörünü kullanıcı PATH'ine kendisi ekler.
-- SAP bağlantısının Python paketleri (`requests`, `urllib3`, `python-dotenv`) — **kendiliğinden kurulur**:
-  kurulum aracı (`kur.cmd`) eksik olanı bulduğu Python'un pip'iyle (`--user`) kurar; ayrı komut gerekmez.
-  `%guncelle` bunu yalnız `scripts/install.py`'nin değiştiği bir güncellemede yapar. Paket sonradan eksik kalırsa
-  `doctor.py` (ve oturum açılışı) SAP açıkken WARN verir; o zaman `kur.cmd`'yi tekrar çalıştırman yeter. İnternet
-  ya da şirket proxy'si engellerse kurulum **durmaz**, UYARI verir (aşağıda "Sorun giderme").
-- Git kimliği — bir kez, bu makinede: `git config --global user.name "Ad Soyad"` ve
-  `git config --global user.email "ad.soyad@sirket.com"` (değer `git config --global` dosyasına — genelde
-  `%USERPROFILE%\.gitconfig` — yazılır, tüm repolarda geçerlidir; kontrol: `git config --global user.email`). Girmezsen kurulum ve aXet etkilenmez; ama
-  commit'lerin Windows'un türettiği adresle atılır ve proje uzak sunucuya push edilirse o adres geçmişe girer
-  (geri alınamaz). Kimlik tanımsızsa `doctor.py` projede remote varsa uyarır (WARN), yoksa bilgi verir (INFO).
-  **GitHub hesabı gerekmez** (template herkese açık klonlanır).
-- Windows PowerShell (Windows ile gelir).
-- Önerilen: `rg` (ripgrep) — yoksa aXet'in arama aracı yavaşlar. Kurulum aracı hatırlatır ama durmaz; yazılım
-  merkezinden kurabilirsin.
-- İsteğe bağlı, yalnız ilgili skill'i kullanırken (skill kendi kurulum satırını söyler):
+Şirket portalından (Software Center / Company Portal) üç program: **aXet**, **Git**, **Python 3.12 ya da üstü**.
+Portalda bulamazsan BT'den iste. Başka bir şey kurman gerekmez: SAP bağlantısının Python paketlerini ve tarayıcı
+testini kurulum kendisi hazırlar. GitHub hesabı gerekmez.
+
+İsteğe bağlı, yalnız ilgili skill'i kullanırken (skill kendi kurulum satırını söyler):
 
 | Paket | Kullanan |
 |---|---|
@@ -50,78 +33,19 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 | `@sap-ux/ui5-middleware-fe-mockserver` (proje `ui/` workspace'inde) | `%sap-ui5-user-guide` (ekran görüntülü kullanıcı kılavuzu) |
 | Node.js + `playwright-core` (proje içinde), `@abaplint/cli` (npx önbelleği) | `%sap-ui5-fiori` ui-smoke, `%sap-code-review` abaplint |
 
-İlk kez kuruyorsan adım adım rehber: [`docs/onboarding.md`](docs/onboarding.md) (kurulumdan sonra aXet içinde `%onboard`).
-
 ## Kurulum
-**En kolay yol:** [`aXet-Kur.cmd`](aXet-Kur.cmd) dosyasını indir (açılan sayfada **Download raw file** düğmesi) ya da
-ekibinden al ve **çift tıkla**. Aşağıdaki tek satırın aynısını yapar; sonunda sonucu sade bir mesajla yazar ve
-pencereyi açık tutar. Windows "bu dosya internetten geldi" uyarısı verirse **Daha fazla bilgi → Yine de çalıştır**.
+1. **Önce kur:** aXet, Git ve Python 3.12+ — şirket portalından.
+2. **[`aXet-Kur.cmd`](https://github.com/ozgurylmz34/axet-template/blob/main/aXet-Kur.cmd)'yi indir** (açılan sayfada **Download raw file**) ya da ekibinden al ve **çift
+   tıkla**. Soruları cevapla (git adın ve e-postan). Eksik program varsa pencere listesini verir: onları portaldan
+   kur ve dosyaya **tekrar çift tıkla**. Sonunda "Kurulum TAMAM — aXet'i aç." yazar.
+3. **aXet'i aç** (açıksa kapatıp yeniden aç). İlk yanıtın ilk satırı `[AXET-CORE-…` ile başlar. Sonraki
+   güncellemeler için aXet içinde **`%guncelle`** yaz.
+4. **Proje:** aXet içinde **`%yeni-proje`** (yeni proje) ya da **`%guncelle-proje`** (var olan proje) → proje
+   klasöründeki **`KURULUMU-TAMAMLA`**'ya çift tıkla → pencerenin gösterdiği **`conn\DEV.env`** dosyasını doldur →
+   **tekrar çift tıkla**.
 
-Terminal tercih edenler için: **PowerShell**'i aç ve şu satırı yapıştır. Komut kurulum betiğini geçici klasöre indirip çalıştırır:
-```powershell
-$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f
-```
-Klonun kendisi bozulduysa (yerel `kur.ps1` dahil) aynı satırın **sıfırlayan** varyantı: klonu template ile birebir
-aynı hâle getirir, önce her şeyi `yedek/<tarih-saat>` dalına alır:
-```powershell
-$f = Join-Path $env:TEMP 'axet-kur.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/ozgurylmz34/axet-template/main/kur.ps1' -OutFile $f; powershell -NoProfile -ExecutionPolicy Bypass -File $f -Sifirla
-```
-Tek satır komutlar klonu varsayılan yere (`%USERPROFILE%\axet`) kurar: `-Hedef` ile başka bir yere kurduysan
-aynı `-Hedef`'i bu komuta da ver, yoksa ikinci bir klon kurulur.
-
-Kurulum aracı sırayla şunları yapar:
-1. aXet'in kurulu olduğunu kontrol eder. Kurulu değilse durur.
-2. Git ve Python'u kontrol eder. Eksikse durur ve şirketinin yazılım merkezinden (ya da BT'den) kurmanı söyler;
-   kendisi bir şey kurmaz.
-3. Template'i `%USERPROFILE%\axet` klasörüne klonlar. Klasör zaten varsa günceller.
-4. `install.py --sap` ile global aXet config'ini bu klona bağlar.
-5. `doctor.py` ile kontrol eder.
-6. `python` komutu yeni terminalde çalışmıyorsa bulduğu Python'un klasörünü (ve `Scripts`) **kullanıcı** PATH'inin
-   başına ekler (yönetici gerekmez, mevcut girdilerin metnini değiştirmez). `kur.cmd -Kaldir` yalnız bu eklediğini geri alır. Klonu silmeden ÖNCE çalıştır: kayıt klonun içinde durur, klon silinirse PATH girdisi kalır.
-   Python klasörü PATH'inde zaten var ama önünde çalışmayan bir `python` (ör. Windows mağaza kısayolu) duruyorsa
-   klasörü başa taşır; `-Kaldir` taşınan girdiyi silmez (o senin girdindi). Birden çok klon kullanıyorsan
-   PATH'e yalnız ilk kuran klon ekler ve yalnız onun `-Kaldir`'ı geri alır; öbür klonda `kur.cmd`'yi tekrar
-   çalıştırman yeter.
-
-Bitince **yeni** bir aXet oturumu aç. İlk yanıtın ilk satırı `[AXET-CORE-…` ile başlamalıdır. Görünmüyorsa
-kurulum çalışmıyordur; `python $HOME\axet\scripts\doctor.py` çıktısına bak.
-
-Aynı araç klondan da çalışır:
-```powershell
-& $HOME\axet\kur.cmd                 # güncelle (git pull --ff-only + install.py + doctor)
-& $HOME\axet\kur.cmd -DenemeModu     # hiçbir şey yazmadan ne yapacağını göster
-& $HOME\axet\kur.cmd -Sifirla        # klonu template ile birebir aynı hâle getir (önce yedek dalı açılır)
-& $HOME\axet\kur.cmd -Kaldir         # config'ten template kayıtlarını çıkar (klasör silinmez)
-& $HOME\axet\kur.cmd -Hedef D:\araclar\axet   # başka klasöre kur
-```
-Araç yerel değişikliği olan bir klonu **kendiliğinden** güncellemez, `reset` ya da `stash` yapmaz; durur ve iki
-yolu söyler: değişikliklerini korumak istiyorsan onları kendin commit ya da stash et ve `kur.cmd`'yi tekrar
-çalıştır; korumak istemiyorsan `kur.cmd -Sifirla`.
-
-`-Sifirla` hiçbir şeyi silmeden önce yerel değişiklikleri, izlenmeyen dosyaları ve yerel commit'leri `yedek/<tarih-saat>`
-dalına alır ve yedeği doğrular; onayı senden ister (`SIFIRLA` yazarsın; `-DenemeModu` yalnız durumu gösterir).
-gitignore'lu dosyalarına dokunmaz (`.axet-guncelleme/` hariç: o yalnız **içindeki her şey yedek dalından geri
-alınabilir hâlde** yedeğe girdiyse silinir; giremediyse olduğu gibi bırakılır ve sana sebebiyle birlikte adıyla
-bildirilir) ve klon klasörünün dışına çıkmaz.
-Tek istisna: klonun içine dışarıyı gösteren bir bağ (junction/symlink) koyduysan git o bağın içine girer ve
-oradaki dosyaları da yedeğe alır — böyle bir bağın varsa önce kaldır. Klonun içindeki **ayrı bir git deposunu**
-araç silmez; bu `.axet-guncelleme/` içindekiler için de geçerlidir: git böyle bir klasörü yedeğe yalnız bir bağ
-(gitlink — 40 baytlık commit kimliği) olarak alır, dosyaları ve geçmişi yedek dalına GİRMEZ; silinseydi yedekten
-geri getirilemezdi. Araç kalanı sana adıyla bildirir. Klon işlem sonunda `main` dalında olur
-(güncellemenin çalışması için gerekli); klonun dalı başkaysa o dalın işi yedek dalında durur.
-
-Tek bir dosyayı geri almak için son mesajdaki komutu kullan:
-`git -C "$HOME\axet" restore --source yedek/<...> -- <yol>`.
-Çıkış kodları: `0` tamam · `1` durdu · `2` ön koşul eksik · `3` yeni terminal açıp tekrar çalıştır · `4` doctor FAIL.
-
-Elle kurmak istersen:
-```powershell
-git clone https://github.com/ozgurylmz34/axet-template.git $HOME\axet
-python $HOME\axet\scripts\install.py --sap      # --dry-run önce gösterir, --uninstall geri alır
-python $HOME\axet\scripts\doctor.py             # statik kontroller
-python $HOME\axet\scripts\doctor.py --live      # aXet'in çekirdeği fiilen yüklediğini ölçer (1 model çağrısı)
-```
-`install.py` yalnız kendi eklediği yolları ve kuralları yönetir, diğer ayarlarına dokunmaz; yazmadan önce yedek alır.
+Bu kadar. Takılırsan (pencere durdu, Windows uyarısı, paket indirilemedi, `python` bulunamadı, yeniden kurma ya da
+kaldırma, terminal yolu): [`docs/onboarding.md` → Sorun giderme](docs/onboarding.md#5-sorun-giderme).
 
 **SAP'ye yazma varsayılan kapalıdır.** Açmak için komutu **kendi terminalinde** çalıştır (aXet oturumu bu
 komutu çalıştıramaz):
@@ -135,40 +59,24 @@ sistem tipi `DEV`, çağrıda `--sap-write` ve kapsam beyanı (S0/S1 gerekçe, S
 > `-Hedef` ile başka yere kurduysan yolu değiştir.
 
 ## Yeni proje
-En kolay yol **aXet içinde `%yeni-proje`**: sorular sohbette tek tek sorulur, önce deneme çıktısı gösterilir,
-onayınla kurulur. Terminalde aynı işi `& $HOME\axet\yeni-proje.cmd` yapar (sorular terminalde). İkisi de aynı
-betiği (`scripts/yeni_proje.py`) çalıştırır:
-- klasörü açar, git reposu değilse `git init -b main` yapar (pre-commit denetimi ancak böyle kablolanır);
-- proje iskeletini kurar (`AGENTS.md`, `.axet-code.json`, proje hafızası, denylist, `sap-project.json`, kesin yasak damgası);
-- `sap-project.json` ve `AGENTS.md` alanlarını cevaplarınla doldurur; var olan değerleri ezmez;
-- `doctor.py` ile kontrol eder.
+aXet içinde **`%yeni-proje`** yaz: sorular sohbette tek tek sorulur, önce ne yapılacağı gösterilir, onayınla kurulur
+(klasör, git reposu, proje iskeleti, `AGENTS.md` ve `sap-project.json` alanları, kontrol). Var olan değerler ezilmez.
 
-Sonra **proje klasöründeki `KURULUMU-TAMAMLA.cmd`'ye çift tıkla** (araç bu kısayolu yazar ama çalıştırmaz).
-Kısayol klondaki `proje-tamamla.cmd`'yi çağırır; tekrar çalıştırmak güvenlidir, var olanı ezmez:
-1. SAP bağlantı şablonları `conn\DEV.env` ve `conn\QA.env` yazılır ve Notepad'de açılır. `<...>` yerleri doldur,
-   kaydet, kısayola tekrar çift tıkla. Dosyalar denetlenir (hatalı alan adıyla gösterilir, değer basılmaz; boş şablon
-   atlanır); geçerli DEV aktif sistem (`.conn_adt`) olur. QA sistemi yoksa `QA.env`'e dokunma. Parola dosyada düz
-   metindir; `conn/` git'e girmez ve aXet ajanına kapalıdır (denylist).
-2. Davranış yüzeyi onayı sorulur (onaylanacak dosyalar listelenir).
-3. `doctor.py` koşar; FAIL varsa durur.
-4. aXet'i projede açmayı sorar → ilk satırda `proje: <ad>` görünmeli.
+Sonra **proje klasöründeki `KURULUMU-TAMAMLA`'ya çift tıkla** (aXet bu dosyayı yazar ama çalıştırmaz):
+1. Pencere SAP bağlantı dosyalarını hazırlar ve hangisini dolduracağını tam yoluyla söyler: `conn\DEV.env`
+   (zorunlu) ve `conn\QA.env` (QA sistemin yoksa dokunma). Dosyayı aç, `<...>` yazan yerleri (adres, kullanıcı,
+   parola, client) doldur, kaydet. Pencere soru sormaz, dosyayı da kendisi açmaz.
+2. **Tekrar çift tıkla:** dosya denetlenir (hatalı alan adıyla gösterilir, değer basılmaz), DEV aktif sistem olur,
+   proje ayarlarının onayı sorulur, kontrol (`doctor`) koşar ve aXet'i projede açmayı önerir — ilk satırda
+   `proje: <ad>` görünmeli.
 
-Sistem değiştirmek için aXet'te `%sistem` (ya da "QA'ya geç"). Kısayol olmadan elle:
-`& $HOME\axet\proje-tamamla.cmd <klasör>`. Parolayı dosyaya yazmak istemeyen için terminal yolu:
-`python $HOME\axet\skills-sap\sap-adt-foundation\scripts\setup_credentials.py` (`--slot <AD>` ile `conn\<AD>.env`).
+Parola dosyada düz metindir; `conn/` git'e girmez ve aXet ajanına kapalıdır. Sistem değiştirmek için aXet'te
+`%sistem` (ya da "QA'ya geç"). Var olan projeyi şablona getirmek için `%guncelle-proje`; bitince yine
+`KURULUMU-TAMAMLA`'ya çift tıkla (ayar onayını o sorar).
 
-Bağlantı teşhisi: `sap_adt_cli.py sap_doctor`.
 SAP projesinde `AGENTS.md` içindeki kesin yasak bloğunu elle değiştirme: template güncellenince
 `new_project.py --sap` bloğu yeniler, `doctor.py` eski ya da değiştirilmiş damgayı FAIL olarak gösterir.
-
-Elle kurulum (ayrıntılı denetim isteyenler için):
-```powershell
-cd C:\projeler\benim-projem
-git init -b main
-python $HOME\axet\scripts\new_project.py --sap   # sonra AGENTS.md ve sap-project.json'daki <…> alanlarını doldur
-```
-Davranış yüzeyi (`AGENTS.md`, `.axet-code.json`, denylist, `.githooks/`, `validators-local/`) her değiştiğinde
-onayı yine kendi terminalinde `behavior_manifest.py generate` ile ver.
+Terminal yolu, elle kurulum ve bağlantı teşhisi: [`docs/onboarding.md`](docs/onboarding.md) §3.
 
 ## Yeni paket (SAP projesi)
 ```powershell
@@ -193,30 +101,12 @@ aXet marketplace'inden skill kurulabilir. Template skill'leriyle çakışmaması
   dokunan dış skill'i ve global kurulumu WARN olarak gösterir. Çelişkide template skill'i ve kesin yasaklar geçerlidir.
 
 ## Sorun giderme
-| Belirti | Bak |
-|---|---|
-| Kurulum aracı aXet'i bulamadı (çıkış 2) | aXet'i şirket kanalından kur, girişi yap, yeni PowerShell aç |
-| Kurulum aracı Git ya da Python eksik dedi (çıkış 2) | Şirketinin yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste. Kurduktan sonra **yeni** bir PowerShell aç ve komutu tekrar çalıştır. Python en az 3.12 olmalı |
-| Kurulum aracı `PAKETLER: EKSİK` dedi ya da SAP aracı `No module named 'requests'` (ya da `'dotenv'`) diyor | pip paketi indiremedi, çoğunlukla şirket proxy'si yüzünden. BT'den bu makine için pip proxy ayarını (ya da şirket paket aynasını) iste, sonra `kur.cmd`'yi tekrar çalıştır: eksik paketi kendisi kurar. "pip bulunamadı" diyorsa Python pip olmadan kurulmuştur: BT'den pip ile kurmasını iste. Çıktıdaki `Elle kurulum:` satırı aynı işi elle yapar. Kurulum bu yüzden durmaz, çıkış kodu değişmez |
-| `python` "bulunamadı" diyor ama Python kurulu | `kur.cmd`'yi tekrar çalıştır: kullanıcı PATH'ine kendisi ekler. Sonra **yeni** terminal / yeni aXet oturumu aç. Araç "UYARI: yeni terminalde 'python' hâlâ başka bir yere gidiyor" derse makine PATH'inde önde eski bir Python vardır: BT'den o girdiyi kaldırmasını iste. `yeni-proje.cmd` ve `proje-tamamla.cmd` bu arada `py -3` ile de çalışır |
-| Kurulum aracı yeni terminal istedi (çıkış 3) | Yalnız `-Winget` ile olur: winget kurulumu PATH'i bu pencereye yansıtmadı. Yeni PowerShell'de `kur.cmd`'yi tekrar çalıştır |
-| Başka bir klonun kayıtlı olduğu uyarısı (çoğunlukla çıkış 4) | Config eski bir klonu da gösteriyor (ör. önceki sürümle `C:\axet`'e kurulmuş). Doctor'daki skill ad çakışması FAIL'leri bundan gelir: skill'leri yeniden adlandırma. Uyarıdaki `--uninstall` komutunu o klon için kendin çalıştır (o klonun `config/sap-write.local` dosyası da silinir), sonra `kur.cmd`'yi tekrar çalıştır. Eski yerde kalmak istersen `kur.cmd -Hedef C:\axet`. Uyarıdaki klon klasörü artık yoksa (silinmiş ya da taşınmış) araç "kayıt bayat" der ve `--uninstall` önermez: sondaki BAYAT KAYIT listesindeki girişleri config dosyasından elle sil (araç config'e kendisi yazmaz), sonra yeni aXet oturumu aç |
-| Kurulum aracı "klon karşılaştırması ÖLÇÜLEMEDİ" dedi | Hedef yol (junction/symlink) Python ile çözülemedi. Config'teki kayıtlı klonun bu klonun kendisi olup olmadığını elle kontrol et; araç bu durumda hiçbir kaydı kaldırmayı önermez |
-| Kurulum aracı "git çalıştırılamadı" dedi | Listelenen git.exe kendi terminalinde `git --version` ile çalışıyor mu bak. "unable to access …/git/config" görüyorsan XDG_CONFIG_HOME değerindeki geçersiz karakteri düzelt |
-| Kurulum aracı doctor FAIL ile bitti (çıkış 4) | Kurulum yazıldı ama doğrulama geçmedi: çıktıdaki `[FAIL]` satırları; başka klon uyarısı varsa bir üst satır |
-| İlk satırda `proje: YOK` | Oturum proje kökünde mi açıldı; `AGENTS.md`'de `PROJECT-ID` satırı var mı |
-| İlk satırda `AXET-CORE` yok | Kurulum tamamlandı mı; `doctor.py` global config satırları |
-| SAP CLI yalnız `ping` açıyor | `sap-project.json` yok ya da `sap_profile` / `master_language` geçersiz |
-| Yazma reddi `tier_not_writable` | `.conn_adt` içindeki sistem tipi DEV değil ya da okunamıyor |
-| Skill listede yok | `doctor.py` (frontmatter biçimi, açıklama ≤ 1024 karakter); aXet logu `.axet-code/logs/axet-code.log` |
-| Skill ad çakışması FAIL | Çakışan skill başka bir template klonundaysa: yukarıdaki "başka bir klon" satırı. Dış skill ise yeniden adlandır ya da kaldır (marketplace kurulumu: `skill_uninstall <ad>`) |
-| Denylist değişikliği etkisiz | Yeni oturum aç |
+Belirti → çözüm tablosu: [`docs/onboarding.md` → Sorun giderme](docs/onboarding.md#5-sorun-giderme).
 
 ## Güncelleme
-```powershell
-& $HOME\axet\kur.cmd
-```
-Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXet oturumunda yüklenir.
+aXet içinde **`%guncelle`** yaz. Klonu yeni yayına seçmeli olarak taşır (senin değişikliklerin korunur), SAP Python
+paketlerini denetleyip eksikse kurar ve tarayıcı testini hazırlar. Yeni kurallar ve skill'ler bir sonraki aXet
+oturumunda yüklenir. Projelerin için ayrıca `%guncelle-proje`.
 
 ## Günlük kullanım
 - Oturum açılışı: model ilk yanıttan önce `scripts/session_brief.py`'yi çalıştırır (proje `AGENTS.md` "Oturum" bölümü) —
