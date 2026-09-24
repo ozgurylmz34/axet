@@ -45,6 +45,52 @@ class TestYaml(unittest.TestCase):
             H.temizle(app)
 
 
+class TestYamlNullYorum(unittest.TestCase):
+    """Z106 bug gate: tırnaksız null/~ ve yalnız-yorum değer BOŞ okunmalı (PyYAML: None); tırnaklı hâli dizedir."""
+
+    def _transport(self, ham: str) -> str:
+        sk, _ = B.yaml_duzlestir(f"app:\n  transport: {ham}\n  package: ZXX001\n")
+        return sk.get("app.transport", "")
+
+    def test_yorum_todo_bos(self):
+        deger = self._transport("# TODO transport gir")
+        H.kaydet("yaml: `transport: # TODO` → boş", "''", repr(deger), deger == "")
+        self.assertEqual(deger, "")
+
+    def test_null_bos(self):
+        sonuc = {v: self._transport(v) for v in ("null", "Null", "NULL")}
+        ok = all(x == "" for x in sonuc.values())
+        H.kaydet("yaml: null/Null/NULL → boş", "hepsi ''", str(sonuc), ok)
+        self.assertTrue(ok, sonuc)
+
+    def test_tilde_bos(self):
+        deger = self._transport("~")
+        H.kaydet("yaml: `~` → boş", "''", repr(deger), deger == "")
+        self.assertEqual(deger, "")
+
+    def test_kontrol_grubu_tirnakli_ve_satir_sonu_yorumu(self):
+        sonuc = (self._transport("'null'"), self._transport('"~"'), self._transport("ZXXK900001   # yorum"),
+                 self._transport("nullable"))
+        ok = sonuc == ("null", "~", "ZXXK900001", "nullable")
+        H.kaydet("yaml: tırnaklı null/~ dize kalır, satır sonu yorumu düşer", "null/~/ZXXK900001/nullable",
+                 str(sonuc), ok)
+        self.assertTrue(ok, sonuc)
+
+    def test_yorumlu_ust_anahtar_alt_eslemeyi_bozmaz(self):
+        """`app:   # açıklama` → alt anahtarlar yine app.* altında okunur (skaler '# açıklama' sanılmaz)."""
+        app = H.gecici_app()
+        try:
+            y = app / "ui5-deploy.yaml"
+            y.write_text(y.read_text(encoding="utf-8").replace("        app:\n", "        app:   # kullanıcı verir\n"),
+                         encoding="utf-8")
+            a = B.deploy_ayari(app)
+            ok = a["name"] == "ZXX001_ORDER" and a["package"] == "ZXX001" and a["transport"] == "ZXXK900001"
+            H.kaydet("yaml: yorumlu üst anahtar altındaki alanlar okunur", "ad/paket/transport dolu", str(ok), ok)
+            self.assertTrue(ok, a)
+        finally:
+            H.temizle(app)
+
+
 class TestPreloadKiyas(unittest.TestCase):
     def test_siniflar(self):
         crlf = H.PRELOAD.replace(rb">\n<", rb">\r\n<")
@@ -87,6 +133,34 @@ class TestPrepare(unittest.TestCase):
             self.assertTrue(ok, out)
         finally:
             H.temizle(app)
+
+    def _prepare(self, paket, transport):
+        app = H.gecici_app()
+        try:
+            _paket_tr(app, paket, transport)
+            return H.kos(S, "prepare", app, "--no-build")
+        finally:
+            H.temizle(app)
+
+    def test_kucuk_tmp_uyari_deploy_reddeder(self):
+        """prepare kanonik kurala hizalı: `$tmp` + transport yok → UYARI 'deploy bunu REDDEDER'."""
+        rc, out = self._prepare("$tmp", None)
+        ok = rc == 0 and "[UYARI] app.transport boş" in out and "REDDEDER" in out and "TAM `$TMP` değil" in out
+        H.kaydet("prepare: $tmp + transport yok → 'deploy REDDEDER' uyarısı", "rc=0 UYARI", f"rc={rc}", ok)
+        self.assertTrue(ok, out)
+
+    def test_buyuk_tmp_uyari_yok(self):
+        """KONTROL GRUBU: `$TMP` + transport yok → transport uyarısı YOK."""
+        rc, out = self._prepare("$TMP", None)
+        ok = rc == 0 and "app.transport boş" not in out and "[HAZIR]" in out
+        H.kaydet("prepare: $TMP + transport yok → uyarı yok", "rc=0 HAZIR", f"rc={rc}", ok)
+        self.assertTrue(ok, out)
+
+    def test_paket_yalniz_bosluk_ihlal(self):
+        rc, out = self._prepare('" "', "ZXXK900001")
+        ok = rc == 1 and "alanı boş: package" in out
+        H.kaydet("prepare: package ' ' → İHLAL", "rc=1", f"rc={rc}", ok)
+        self.assertTrue(ok, out)
 
     def test_yaml_yok(self):
         app = H.gecici_app()
@@ -383,6 +457,40 @@ class TestDeployYazmaKapisi(unittest.TestCase):
         """`$tmp` istisna DEĞİL (kanonik kural `$TMP` TAM eşleşme; test_cli_gate.py:224 ile aynı yön, fail-closed)."""
         self._red("paket $tmp (küçük harf) + transport yok → red", self.acik, "ADR_0005_C", paket_tr=("$tmp", None))
 
+    def test_transport_yorum_todo_red(self):
+        self._red("Z paket + `transport: # TODO transport gir` → red", self.acik, "ADR_0005_C",
+                  paket_tr=("ZXX001", "# TODO transport gir"))
+
+    def test_transport_null_red(self):
+        self._red("Z paket + `transport: null` → red", self.acik, "ADR_0005_C", paket_tr=("ZXX001", "null"))
+
+    def test_transport_tilde_red(self):
+        self._red("Z paket + `transport: ~` → red", self.acik, "ADR_0005_C", paket_tr=("ZXX001", "~"))
+
+    def test_transport_yalniz_bosluk_red(self):
+        self._red("Z paket + `transport: \" \"` → red", self.acik, "ADR_0005_C", paket_tr=("ZXX001", '" "'))
+
+    def test_paket_yalniz_bosluk_red(self):
+        """Bug gate (fail-OPEN, rc=0 ölçüldü): `package: " "` + geçerli transport → kapıda red, build yok."""
+        self._red("`package: \" \"` + transport var → red", self.acik, "ADR_0005_C", paket_tr=('" "', "ZXXK900001"))
+
+    def test_paket_bos_red(self):
+        """Tamamen boş paket de KAPIDA red (eskiden build SONRASI prepare_failed idi)."""
+        self._red("`package:` boş + transport var → red", self.acik, "ADR_0005_C", paket_tr=("", "ZXXK900001"))
+
+    def test_paket_null_red(self):
+        self._red("`package: null` + transport var → red", self.acik, "ADR_0005_C", paket_tr=("null", "ZXXK900001"))
+
+    def test_paket_yer_tutucu_red(self):
+        self._red("`package: <SAP_PAKET>` + transport var → red", self.acik, "ADR_0005_C",
+                  paket_tr=("<SAP_PAKET>", "ZXXK900001"))
+
+    def test_transport_red_kodu_bir_kez(self):
+        rc, out, istekler, proj = self._deploy(self.acik, paket_tr=("ZXX001", None))
+        ok = rc == 3 and "SAP yazma kapısı (ADR_0005_C): " in out and "[ADR_0005_C]" not in out
+        H.kaydet("deploy kapı: red satırında kod bir kez", "(ADR_0005_C) var, [ADR_0005_C] yok", f"rc={rc}", ok)
+        self.assertTrue(ok, out)
+
     def test_transport_red_mesaji_nereye_yazilacagini_soyler(self):
         rc, out, istekler, proj = self._deploy(self.acik, paket_tr=("ZXX001", None))
         ok = rc == 3 and "app.transport" in out and "ui5-deploy.yaml" in out and "KULLANICI verir" in out
@@ -492,6 +600,21 @@ class TestDeployKapiSurecIci(unittest.TestCase):
         H.kaydet("deploy kapı (süreç içi): $TMP + transport yok → akış çalışır", "rc=0 build+deploy",
                  f"rc={rc} run={len(self.cagrilar)} log={log.get('result')}", ok)
         self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
+
+    def test_paket_yalniz_bosluk_run_ve_istek_sifir(self):
+        rc, istekler, proj = self._kos(optin=True, paket_tr=('" "', "ZXXK900001"))
+        log = _son_log(proj) or {}
+        ok = rc == 3 and self.cagrilar == [] and istekler == [] and log.get("result") == "ADR_0005_C"
+        H.kaydet("deploy kapı (süreç içi): package ' ' → run=0 istek=0", "rc=3 0/0 ADR_0005_C",
+                 f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
+
+    def test_yerel_paket_sabiti_kanonikle_ayni(self):
+        """prepare uyarısındaki `$TMP` sabiti foundation'ın kanonik `guardrails.YEREL_PAKET`'i ile aynı."""
+        from sapadt import guardrails
+        ok = D.YEREL_PAKET == guardrails.YEREL_PAKET
+        H.kaydet("deploy_ui.YEREL_PAKET == guardrails.YEREL_PAKET", guardrails.YEREL_PAKET, D.YEREL_PAKET, ok)
+        self.assertTrue(ok)
 
     def test_transport_z_paket_transport_yok_run_ve_istek_sifir(self):
         rc, istekler, proj = self._kos(optin=True, paket_tr=("ZXX001", None))

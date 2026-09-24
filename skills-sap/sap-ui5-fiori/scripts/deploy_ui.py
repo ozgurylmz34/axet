@@ -14,7 +14,8 @@ yalnız AÇIK KULLANICI ONAYIYLA deploy eder.
    kapsam beyanı (`--scope S0|S1 --reason` / `S2 --intake`) + bağlantı dili; ardından `gate.check_target_system`:
    `ui5-deploy.yaml` target.url/client ≠ `.conn_adt` ADT_SAP_URL/ADT_SAP_CLIENT → red (tier başka sistemi
    doğrulamış olurdu); ardından `$TMP` dışı pakette `app.transport` ZORUNLU (foundation'ın kanonik
-   `guardrails.require_transport`'u, kod `ADR_0005_C`; `$TMP` TAM eşleşme, yer tutucu transport yok sayılır).
+   `guardrails.require_transport`'u, kod `ADR_0005_C`; `$TMP` TAM eşleşme, yer tutucu transport yok sayılır;
+   `app.package` boş/yalnız boşluk/yer tutucu da kapıda `ADR_0005_C`).
    Kapı yüklenemezse de red (fail-closed). Her deneme proje `.axet-code/sap-write-log.jsonl`'a
    yazılır. `--user-ok` kalır; kapı ona EKTİR. İzin katmanındaki `*deploy_ui*` `ask` kuralı artık ikincil katmandır
    (oturum izni verilince sormadan geçer — Z106 ölçümü). `prepare` (ağsız) ve `verify` (salt GET) kapıdan GEÇMEZ.
@@ -60,6 +61,9 @@ BUILD_KOMUTU = "npm run build"
 # SAP yazma kapısı: AYNI AXET_HOME'daki sap-adt-foundation (gate AXET_HOME'u kendi konumundan türetir).
 FOUNDATION_SCRIPTS = Path(__file__).resolve().parents[2] / "sap-adt-foundation" / "scripts"
 KAPI_ARACI = "deploy_ui"  # kapı + write-log'daki araç adı (READ_TOOLS dışı ⇒ yazma sınıfı)
+# Yalnız `prepare` UYARISI için (ağsız, foundation'a bağımlı değil). Kapıdaki kural foundation'ın kendisidir;
+# eşitlik test_deploy_ui'de `guardrails.YEREL_PAKET` ile zorlanır.
+YEREL_PAKET = "$TMP"
 # BSP repository'nin tanımadığı uzantı → deploy 400 "Type of file X is unknown" (ölçülmüş: .svg, .woff).
 RED_UZANTI = {".svg", ".woff"}
 # Aynı sınıftan olabilir, bu uzantılar için ölçüm yok → UYARI.
@@ -211,18 +215,22 @@ def hazirla(app: Path, build: bool, env: dict) -> tuple[list, list, dict]:
             h.append(f"BSP adı '{ad}' {len(ad)} karakter (en çok 15)")
     for alan in ("url", "client", "package"):
         v = ayar.get(alan, "")
-        if not v:
+        if not v.strip():  # yalnız boşluk (`package: " "`) da boştur
             h.append(f"ui5-deploy.yaml alanı boş: {alan}")
         elif "<" in v or ">" in v:
             h.append(f"ui5-deploy.yaml alanı yer tutucu içeriyor: {alan}")
     if ayar["url"] and not re.match(r"^https?://", ayar["url"], re.I):
         h.append("target.url http:// ya da https:// ile başlamıyor")
     tr = ayar.get("transport", "")
+    paket = ayar.get("package", "")
     if "<" in tr or ">" in tr:
         h.append("app.transport yer tutucu içeriyor — transport numarasını KULLANICI verir")
-    elif not tr and ayar.get("package", "").upper() != "$TMP":
-        u.append("app.transport boş — transport'lu pakette deploy transport isteyebilir (DOĞRULANMADI); "
-                 "transport'u KULLANICI verir, model yaratmaz")
+    elif not tr.strip() and paket != YEREL_PAKET:
+        # `deploy` kapısıyla AYNI kanonik kural (`guardrails.require_transport`): istisna yalnız TAM `$TMP`.
+        ek = (f" (paket '{paket}' TAM `{YEREL_PAKET}` değil — istisna yalnız büyük harfli `{YEREL_PAKET}`)"
+              if paket.strip().upper() == YEREL_PAKET else "")
+        u.append(f"app.transport boş ve paket `{YEREL_PAKET}` değil{ek} — `deploy` bunu REDDEDER (ADR_0005_C). "
+                 "Transport numarasını KULLANICI verir (ui5-deploy.yaml `app.transport`), model yaratmaz")
     webapp = app / "webapp"
     if not webapp.is_dir():
         h.append("webapp/ yok")
@@ -374,20 +382,28 @@ def transport_denetimi(ayar: dict, require_transport, ihlal_sinifi) -> tuple[str
     """Kesin Yasak C — `$TMP` dışı pakette transport ZORUNLU. Kuralın kendisi foundation'ın KANONİK
     `guardrails.require_transport`'udur (sap_adt_cli yazmalarıyla aynı: `$TMP` TAM eşleşme; `$tmp`, `$TMP2`,
     `" $TMP"` istisna DEĞİL — fail-closed). Burada yalnız iki uyarlama var:
+      · paket alanı boş / yalnız boşluk / yer tutucu (`<SAP_PAKET>`) → KAPIDA red (`ADR_0005_C`), build'den önce.
+        Eskiden bu durumda denetim atlanıp `hazirla`'ya bırakılıyordu: `package: " "` orada da boş sayılmadığı
+        için build + deploy KOŞUYORDU (bug gate ölçümü, rc=0). "Kapı reddinde build yok" değişmezi için
+        tamamen boş paket de artık kapıda reddedilir (yalnız `hazirla`'nın `prepare_failed`'ı build'den SONRA gelir);
       · yer tutucu transport (`<TRANSPORT_NO>` gibi `<`/`>` içeren) YOK sayılır — require_transport yalnız
-        boşluğa bakar, şablondan kalan yer tutucuyu geçirirdi;
-      · paket alanı BOŞSA bu denetim koşmaz: `hazirla` bunu İHLAL sayar ve deploy KOŞMAZ (mevcut davranış).
-    Döner: None (geçti / uygulanmaz) ya da (red kodu, mesaj). Transport YARATILMAZ, yalnız varlığı istenir."""
+        boşluğa bakar, şablondan kalan yer tutucuyu geçirirdi.
+    Döner: None (geçti) ya da (red kodu, mesaj). Transport/paket YARATILMAZ, yalnız varlığı istenir."""
     paket = ayar.get("package") or ""
-    if not paket.strip():
-        return None
+    if not paket.strip() or "<" in paket or ">" in paket:
+        durum = f"yer tutucu kalmış ({paket})" if paket.strip() else "boş"
+        return ("ADR_0005_C", f"ui5-deploy.yaml `app.package` {durum} — hangi pakete yazılacağı belli değil. Paketi "
+                              "KULLANICI verir (mevcut bir paket ya da yerel `$TMP`); ui5-deploy.yaml'daki deploy-to-abap "
+                              "görevinin `app.package` alanına yazılır. Model paket yaratmaz (Kesin Yasak C).")
     tr = ayar.get("transport") or ""
     yer_tutucu = "<" in tr or ">" in tr
     try:
         require_transport(None if yer_tutucu else tr, what="deploy_ui (BSP deploy)", package=paket)
     except ihlal_sinifi as gv:
         durum = f"yer tutucu kalmış ({tr})" if yer_tutucu else "boş"
-        return (gv.code, f"{gv}. Paket '{paket}' yerel ($TMP) değil ⇒ transport numarası zorunlu, ama "
+        kanonik, onek = str(gv), f"[{gv.code}] "  # kod başlıkta zaten basılıyor — tekrar etme
+        kanonik = kanonik[len(onek):] if kanonik.startswith(onek) else kanonik
+        return (gv.code, f"{kanonik}. Paket '{paket}' yerel ($TMP) değil ⇒ transport numarası zorunlu, ama "
                          f"ui5-deploy.yaml `app.transport` {durum}. Transport numarasını KULLANICI verir; "
                          "ui5-deploy.yaml'daki deploy-to-abap görevinin `app.transport` alanına yazılır "
                          "(deploy_ui'nin transport argümanı yok). Model transport yaratmaz (Kesin Yasak C).")

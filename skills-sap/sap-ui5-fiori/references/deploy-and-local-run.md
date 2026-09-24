@@ -78,7 +78,9 @@ builder:
           - /test/
 ```
 - Paket ve transport **kullanıcıdan** gelir; model transport yaratmaz, paket yaratmaz (kesin yasak C). Paket `$TMP`
-  değilse `deploy` transport'suz reddeder (`ADR_0005_C`, §3.2a); `prepare` bunu yalnız UYARI olarak gösterir.
+  değilse `deploy` transport'suz reddeder (`ADR_0005_C`, §3.2a); `prepare` aynı kuralla (yalnız TAM `$TMP` muaf,
+  `$tmp` dahil değil) "deploy bunu REDDEDER" **UYARI**sı basar — ihlal saymaz, çıkış kodunu değiştirmez.
+- `null`, `~` ve yalnız yorum (`transport: # TODO`) YAML'da **boş** değerdir; script de öyle okur (tırnaklı `'null'` dizedir).
 - Hedef URL alias değil kanonik host (aksi hâlde başka sistemin repository'sine gider).
 - Validation'daki **"application name must be prefixed with [ZZ1_]"** kaynak sistemde **yumuşak uyarıydı**: `Z…` adlı
   uygulamalar deploy oldu. Başka sistemde davranış DOĞRULANMADI.
@@ -95,7 +97,7 @@ python $S deploy  <app> --user-ok "<kullanıcının sohbetteki onay cümlesi>" \
 
 | Alt komut | Ne yapar | Ne yapmaz |
 |---|---|---|
-| `prepare` | `ui5-deploy.yaml` `deploy-to-abap` görevi, BSP adı (`Z`, ≤ 15), yer tutucu kalmış mı, URL/client/paket; boş transport **WARN**; `webapp/` ve `dist/`'te gizli/stray dosya, `.svg`/`.woff` **ERROR**, `.woff2/.ttf/.otf/.eot` **WARN** (exclude desenleri düşülür); `npm run build` (`--no-build` ile atlanır ve `dist` bayat mı bakılır); dist `Component-preload.js` sha256; koşulmamış deploy komutunu basar | Ağa çıkmaz, deploy etmez, transport'un açık/sahibi olduğunu doğrulamaz |
+| `prepare` | `ui5-deploy.yaml` `deploy-to-abap` görevi, BSP adı (`Z`, ≤ 15), yer tutucu kalmış mı, URL/client/paket (yalnız boşluk da boş); `$TMP` dışı pakette boş transport **WARN** ("deploy reddeder"); `webapp/` ve `dist/`'te gizli/stray dosya, `.svg`/`.woff` **ERROR**, `.woff2/.ttf/.otf/.eot` **WARN** (exclude desenleri düşülür); `npm run build` (`--no-build` ile atlanır ve `dist` bayat mı bakılır); dist `Component-preload.js` sha256; koşulmamış deploy komutunu basar | Ağa çıkmaz, deploy etmez, transport'un açık/sahibi olduğunu doğrulamaz |
 | `verify` | Env kimliğiyle canlı `…/sap/bc/ui5_ui5/sap/<bsp>/Component-preload.js?sap-client=…&cb=<ts>` çeker, modül bazında dist ile karşılaştırır: `OK` · `OK~` (yalnız kaçışlı `\r\n` farkı) · `STALE` · `ÖLÇÜLEMEDİ` | Statik dosyaları (`webapp/help/**`) kanıtlamaz → §5 |
 | `deploy` | `--user-ok` metni yoksa ya da yer tutucuysa **çıkış 3 (REDDEDİLDİ)**; env kimliği yoksa çıkış 3; **SAP yazma kapısı** reddederse çıkış 3 (§3.2a — build dahil hiçbir şey koşmaz); sonra build + `npx --no-install fiori deploy --config ui5-deploy.yaml --yes` (çıktıda parola maskelenir) + "Deployment Successful" araması + **katı** canlı kıyas | `--user-ok` bir **beyandır**, onayın kanıtı değildir — kodla zorlanan koruma §3.2a'daki yazma kapısıdır |
 
@@ -130,13 +132,15 @@ değildir; red kodları ve anlamları `sap-adt-foundation` SKILL'deki red tablos
   (host küçük harf; `:443` yazılıp yazılmaması FARK sayılır).
 - Hedef URL'si ayrıştırılamıyorsa (ör. şablondaki `<PORT>` yer tutucusu kalmış, geçersiz port) bu da `write_target_mismatch`
   (fail-closed, çıkış 3, loglanır) — traceback değil.
-- Ardından **transport** (Kesin Yasak C): `ui5-deploy.yaml` `app.package` `$TMP` DEĞİLSE `app.transport` zorunlu; boş, satır
-  yok ya da yer tutucu (`<TRANSPORT_NO>` gibi `<`/`>` içeren) → `ADR_0005_C` (çıkış 3, loglanır, build yok). Kural
+- Ardından **paket ve transport** (Kesin Yasak C): `app.package` boş, yalnız boşluk, `null`/`~` ya da yer tutucu
+  (`<SAP_PAKET>`) → `ADR_0005_C` (paketi kullanıcı verir). `app.package` `$TMP` DEĞİLSE `app.transport` zorunlu; boş,
+  satır yok, yalnız boşluk, `null`/`~`, yalnız yorum (`# TODO`) ya da yer tutucu (`<TRANSPORT_NO>` gibi `<`/`>` içeren)
+  → `ADR_0005_C`. Her iki red de çıkış 3, loglanır, build yok. Kural
   foundation'ın kanonik `guardrails.require_transport`'udur (CLI yazmalarıyla aynı): istisna yalnız TAM `$TMP`;
   `$tmp`, `$TMP2`, `" $TMP"` istisna DEĞİL (fail-closed). Transport numarasını **kullanıcı** verir ve
   `ui5-deploy.yaml`'daki `app.transport` alanına yazılır (`deploy_ui`'nin transport argümanı yok); model transport
-  yaratmaz. Transport'un açık/sahibi olup olmadığı ve biçimi denetlenmez — yalnız varlığı. `app.package` boşsa bu
-  denetim koşmaz; `prepare` adımı onu ihlal sayar ve deploy koşmaz (`prepare_failed`).
+  yaratmaz. Transport'un açık/sahibi olup olmadığı ve biçimi denetlenmez — yalnız varlığı. Paketin SAP'de var olup
+  olmadığı da denetlenmez.
 - Red → `[REDDEDİLDİ] SAP yazma kapısı (<kod>): <mesaj>`, çıkış 3, stderr'de CLI ile aynı hatırlatma. Kapı yüklenemezse de
   red (`gate_unavailable`, fail-closed). Red dahil her deneme ve sonuç (`ok`, `prepare_failed`, `deploy_failed`,
   `verify_stale`, `verify_unmeasured`) proje `.axet-code/sap-write-log.jsonl`'a yazılır.

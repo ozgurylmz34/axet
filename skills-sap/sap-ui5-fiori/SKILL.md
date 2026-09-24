@@ -147,8 +147,8 @@ python $S/check_ui_odata_refs.py --app <app> --metadata <kaydedilen $metadata> [
 - **Deploy yalnız kullanıcı lokal testten sonra sohbette açıkça OK dediğinde**, `deploy_ui.py` ile. Parola okunmaz,
   yazdırılmaz; `fiori deploy`/`npm run deploy` doğrudan koşulmaz; transport ve paket kullanıcıdan (yasak C).
 - `deploy_ui.py deploy` SAP'ye yazar ⇒ `sap_adt_cli` yazmalarıyla AYNI kapıdan geçer (`references/deploy-and-local-run.md`
-  §3.2a): anahtar kapalı, tier DEV değil, hedef `.conn_adt` ile aynı değil, paket `$TMP` değilken `ui5-deploy.yaml`
-  `app.transport` boş/yer tutucu (`ADR_0005_C`) → red. `ask` izin kuralı ikincil katmandır
+  §3.2a): anahtar kapalı, tier DEV değil, hedef `.conn_adt` ile aynı değil, `ui5-deploy.yaml` `app.package` boş/yer tutucu
+  ya da paket `$TMP` değilken `app.transport` boş/`null`/yer tutucu (`ADR_0005_C`) → red. `ask` izin kuralı ikincil katmandır
   (oturum izni verilince sormadan geçer).
 - SAP'ye yazan `deploy_ui.py deploy` etkileşimsiz `axet-code run` modunda yaptırılmaz: ask kuralları run modunda sormadan
   onaylar (ölçüldü, 1.3.0, eski `*deploy_ui.py*deploy *` deseniyle); `*deploy_ui*` deseninin kendi eşleşmesi ölçülmedi.
