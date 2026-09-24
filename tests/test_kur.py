@@ -1080,7 +1080,12 @@ class KurTest(GeciciTest):
         c = self.cikti(r)
         self.assertEqual(r.returncode, 2, c)
         self.assertIn("bulundu ama 3.12 ya da üstü gerekli", c)
-        self.assertIn("Python bulunamadı. Şirketinin yazılım merkezinden (Software Center / Company Portal) kur", c)
+        # Z80 nit: eski sürüm KURULU iken "bulunamadı" denmez — yetersiz sürüm ve bulunan sürüm söylenir.
+        # Kontrol grubu (Python hiç yok → "bulunamadı"): test_git_python_yok_varsayilanda_winget_sorulmaz_yazilim_merkezi_denir.
+        self.assertIn("EKSİK: Python sürümü yetersiz (bulunan 3.11", c)
+        self.assertIn("Python sürümü yetersiz (gerekli 3.12 ya da üstü). Şirketinin yazılım merkezinden", c)
+        self.assertNotIn("Python bulunamadı", c)
+        self.assertNotIn("Python 3.12 ya da üstü bulunamadı", c)
         self.assertNotIn("winget ile kurayım mı", c)
         self.assertFalse(kayit.exists(), "winget varsayılanda çağrıldı")
 
@@ -1147,7 +1152,7 @@ class KurTest(GeciciTest):
                     self.assertNotIn("EKSİK: Python", c)
                 else:
                     self.assertIn(f"Python {surum} bulundu ama 3.12 ya da üstü gerekli: {sahte}", c)
-                    self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
+                    self.assertIn(f"EKSİK: Python sürümü yetersiz (bulunan {surum};", c)  # Z80 nit: "bulunamadı" değil
                     self.assertNotIn("OK Python", c)
                 self.assertFalse(self.hedef.exists(), c)
 

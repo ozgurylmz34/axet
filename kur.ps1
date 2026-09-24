@@ -88,6 +88,7 @@ $script:EskiDal = $null
 # gerekce Actions kotasi, kapsam degil); bu deger onun TEK OLCULEN surumudur. Ust surumler
 # kapiyi gecer ama OLCULMEZ — bilincli kapsam daraltmasi, maintenance/IS-LISTESI.md Z18.
 $script:PyAsgari = [version]'3.12'
+$script:PyEski = $null
 
 function Yaz([string]$metin = '') { [Console]::Out.WriteLine($metin) }
 function Baslik([string]$metin) { Yaz ''; Yaz "== $metin" }
@@ -136,7 +137,12 @@ function Python-Dene([string]$exe, [string[]]$onArg) {
     if ($satir -notmatch '^(\d+)\.(\d+)\|(.+)$') { return $null }
     $surum = [version]"$($Matches[1]).$($Matches[2])"
     $yol = $Matches[3]
-    if ($surum -lt $script:PyAsgari) { Yaz "  Python $surum bulundu ama $script:PyAsgari ya da üstü gerekli: $yol"; return $null }
+    if ($surum -lt $script:PyAsgari) {
+        Yaz "  Python $surum bulundu ama $script:PyAsgari ya da üstü gerekli: $yol"
+        # Z80 nit: eski sürüm KURULU iken sonraki mesajlar "bulunamadı" demesin (ilk görülen eski aday tutulur).
+        if (-not $script:PyEski) { $script:PyEski = "$surum" }
+        return $null
+    }
     if (-not (Test-Path -LiteralPath $yol -PathType Leaf)) {
         Yaz "  UYARI: Python'un bildirdiği yol diskte bulunamadı, aday atlandı: $yol"
         return $null
@@ -213,14 +219,14 @@ function Axet-Bul {
 # Eksik aracı bildirir; -Winget verildiyse winget ile kurmayı dener (sorarak). $true = winget başarıyla bitti (araç
 # yine de yeniden aranmalı). -Winget YOKSA (varsayılan) winget ne sorulur ne çağrılır: şirket makinesinde izinsiz
 # kopya kurar (Z80, ölçülmüş vaka 2026-09-23). $istegeBagli: rg gibi; kurulum onsuz sürer, mesaj buna göre yazılır.
-function Winget-Kur([string]$ad, [string]$id, [string[]]$tarif, [bool]$istegeBagli = $false) {
+function Winget-Kur([string]$ad, [string]$id, [string[]]$tarif, [bool]$istegeBagli = $false, [string]$durum = 'bulunamadı') {
     $tarifYaz = { foreach ($t in $tarif) { Yaz "  $t" } }
     if (-not $Winget) {
         if ($DenemeModu) { Yaz "  [deneme] $ad yok: winget kullanılmaz (varsayılan; winget için -Winget). Şu yazılacaktı:" }
         if ($istegeBagli) {
             Yaz "  $ad önerilir: şirketinin yazılım merkezinden (Software Center / Company Portal) kurabilir ya da BT'den isteyebilirsin. Kurulum onsuz devam eder."
         } else {
-            Yaz "  $ad bulunamadı. Şirketinin yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste;"
+            Yaz "  $ad $durum. Şirketinin yazılım merkezinden (Software Center / Company Portal) kur ya da BT'den iste;"
             Yaz '  kurduktan sonra YENİ bir PowerShell aç ve bu komutu tekrar çalıştır.'
         }
         & $tarifYaz
@@ -238,7 +244,7 @@ function Winget-Kur([string]$ad, [string]$id, [string[]]$tarif, [bool]$istegeBag
         & $tarifYaz
         return $false
     }
-    if (-not (Sor "  $ad bulunamadı. winget ile kurayım mı? (winget install --id $id -e)")) {
+    if (-not (Sor "  $ad $durum. winget ile kurayım mı? (winget install --id $id -e)")) {
         Yaz "  $ad kurulmadı. Elle kurmak için:"
         & $tarifYaz
         return $false
@@ -737,8 +743,13 @@ try {
             Yaz '  -Hedef ile doğru klasörü ver.'
             Bitir 1
         }
+        $script:PyEski = $null
         $python = Python-Bul
-        if (-not $python) { Yaz "DURDU: Python $script:PyAsgari+ bulunamadı; kaldırma install.py ile yapılır."; Bitir 2 }
+        if (-not $python) {
+            if ($script:PyEski) { Yaz "DURDU: Python sürümü yetersiz (bulunan $script:PyEski; gerekli $script:PyAsgari ya da üstü); kaldırma install.py ile yapılır." }
+            else { Yaz "DURDU: Python $script:PyAsgari+ bulunamadı; kaldırma install.py ile yapılır." }
+            Bitir 2
+        }
         $script:PY = $python.Yol
         Yaz '  Not: kaldırma, bu klonda açılmış SAP''ye yazma iznini de kapatır (izin dosyasını siler).'
         $arg = @((Join-Path $Hedef 'scripts\install.py'), '--uninstall') + $(if ($DenemeModu) { @('--dry-run') } else { @() })
@@ -806,16 +817,23 @@ try {
     }
     if ($g) { $script:GIT = $g.Yol; Yaz "  OK Git: $($g.Surum) ($($g.Yol))" }
 
+    $script:PyEski = $null
     $python = Python-Bul
     if (-not $python) {
-        Yaz "  EKSİK: Python $script:PyAsgari ya da üstü bulunamadı."
+        $pyDurum = 'bulunamadı'
+        if ($script:PyEski) {
+            Yaz "  EKSİK: Python sürümü yetersiz (bulunan $script:PyEski; gerekli $script:PyAsgari ya da üstü)."
+            $pyDurum = "sürümü yetersiz (gerekli $script:PyAsgari ya da üstü)"
+        } else {
+            Yaz "  EKSİK: Python $script:PyAsgari ya da üstü bulunamadı."
+        }
         $tarif = @("Kurulacak: Python 3 ($script:PyAsgari ya da üstü; kurulumda ""Add python.exe to PATH"" işaretli olsun).",
                    'Resmi indirme: https://www.python.org/downloads/windows/')
         if ($Winget) { $tarif += 'winget ile: winget install --id Python.Python.3.12 -e' }
         # OLCULEN SURUMU KUR (2026-09-20): CI artik yalniz 3.12 kosuyor. Kurucu 3.14
         # kurarsa her yeni kullanici DOGRUDAN olculmemis kola duserdi — kapi (>=3.12)
         # ust surumlere izin verir, ama VARSAYILAN olarak olculen surum kurulur.
-        if (Winget-Kur 'Python' 'Python.Python.3.12' $tarif) {
+        if (Winget-Kur 'Python' 'Python.Python.3.12' $tarif $false $pyDurum) {
             $python = Python-Bul -BilinenYerler
             if (-not $python) { $yeniTerminal = $true }
         }

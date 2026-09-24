@@ -45,6 +45,10 @@ SKILLS_DIR = AXET_HOME / "skills"
 SAP_SKILLS_DIR = AXET_HOME / "skills-sap"
 PERMISSIONS_FILE = AXET_HOME / "config" / "permissions.json"
 TARAYICI_BETIK = AXET_HOME / "scripts" / "tarayici_hazirla.py"
+# Desteklenen en düşük Python (Z80 nit, 2026-09-24; önceden check_env 3.9 ile ölçüyordu, taban 3.12 — gerekçe kur.ps1
+# `$script:PyAsgari` yorumunda). kur.ps1 ve yeni-proje.cmd / proje-tamamla.cmd aynı değeri literal taşır; eşitlik
+# tests/test_install.py PythonAsgariTest'te zorlanır (birini değiştiren öbürlerini de değiştirmek zorunda).
+PY_ASGARI = (3, 12)
 TARAYICI_ZAMAN = 1000  # > tarayici_hazirla.EN_KOTU_SURE olmalı (Z64 L3; tests/test_tarayici_hazirla.py sabitler)
 # SAP'ye yazma için makine düzeyi izin; sap_adt_cli.py yazma kapısının ilk koşulu. Gitignore'lu.
 SAP_WRITE_FLAG = AXET_HOME / "config" / "sap-write.local"
@@ -213,7 +217,10 @@ def apply_ours(cfg: dict, rules: dict, sap: bool) -> None:
 
 
 def check_env() -> list[tuple[str, str, bool]]:
-    results = [("python", sys.version.split()[0], sys.version_info >= (3, 9))]
+    py_surum = sys.version.split()[0]
+    py_yeterli = tuple(sys.version_info[:2]) >= PY_ASGARI
+    results = [("python", py_surum if py_yeterli else f"{py_surum} — sürüm yetersiz, gerekli %d.%d ya da üstü" % PY_ASGARI,
+                py_yeterli)]
     for tool, args in (("git", ["--version"]), ("axet-code", ["-v"])):
         exe = shutil.which(tool)
         if not exe:
