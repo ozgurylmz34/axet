@@ -13,7 +13,7 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 ### Faz 1 — İskelet
 | ID | Kontrol | Önem | Otomatik | Ref |
 |---|---|---|---|---|
-| UI-BOOT-01 | `index.html` bootstrap backend'in kendi UI5'inden (`/sap/public/bc/ui5_ui5/resources/…`) + `language=tr` | BLOCKER | yok | `app-skeleton.md` §7 |
+| UI-BOOT-01 | `index.html` UI5 sürümü sabit + `language=tr` | BLOCKER | yok | `app-skeleton.md` §7 |
 | UI-BOOT-02 | Manifest modelleri `i18n` + `""` (TwoWay, `useBatch:false`, Inline) + `ui` JSON; `settings.data` çift sarmalama yok; Component bağımlılıkları tam | BLOCKER | yok | §8, §9 |
 | UI-BOOT-03 | Etiket/buton/mesaj metinleri spesifikasyondan, TR; tahmin değil | BLOCKER | yok | — |
 | UI-BOOT-04 | `ui/` npm workspace kökü; uygulama `package.json` minimal; kurulum kökte; uygulama başına lock yok | WARNING | yok | §2 |
@@ -114,11 +114,9 @@ Genel inceleme akışı `%code-review`; kanıt kuralı: her bulgu dosya:satır y
 | FE-40 | Rapordaki sayılar içerik çapalı değil (çıplak sayı) | MEDIUM | yok | `%verify-done` |
 | FE-41 | "0 sonuç" iddiası kontrol grupsuz | MEDIUM | yok | `%verify-done` |
 | FE-42 | İki koleksiyon anahtar birleşiminde sıfır dolgusu normalize değil | HIGH | yok | §5.6 |
-| FE-43 | `index.html` bootstrap backend UI5'i değil: dış CDN (`ui5.sap.com/<sürüm>/…` — sabitlenmiş patch silinince `cldr/<dil>.json` 404, UI5 sessizce İngilizceye düşer) ya da göreli `resources/sap-ui-core.js` (BSP altında çözülmez); ya da `minUI5Version` ≠ backend sürümü. Runtime kanıtı: `sap.ui.version` = backend · `cldr/<dil>.json` 200 · tarih proje dilinde | BLOCKER | yok (`grep`: `index.html` içinde `ui5.sap.com/` ya da `src="resources/`) | `app-skeleton.md` §7 |
-| FE-44 | Tarih-yalnız alan/parametreye (`Edm.DateTime` + `sap:display-format="Date"`) **yerel gece yarısı** gidiyor → UTC'nin doğusunda gateway bir önceki günü alır: `$filter` yanlış küme, function import / create / update'te yanlış gün **kalıcı yazılır**. "Üst sınır 23:59:59" reçetesi alt sınırı kaydırır. Doğrusu: seçilen takvim günü UTC gece yarısı (`new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))`), iki sınır + her tarih parametresi, tek yardımcıdan. Kardeş taraması `new Filter` ile sınırlı değil, `urlParameters` ve payload'u da kapsar. Kanıt: kaydı olan gün ve ertesi gün seçilir, ertesi gün 0 dönmeli. FE-27'den farkı: tip doğru, an yanlış | HIGH | yok | §5.3 |
-| FE-45 | `callFunction` `urlParameters` içinde `null` / `undefined` değer → URL'ye `Param=null` yazılır, gateway 400 "Invalid key predicate" döner (anahtar hatası gibi görünür). Değeri olmayan parametre nesneye hiç konmaz (koşullu ekle); backend'de parametrenin opsiyonel olduğu ve boş gelince doğru dalın işlendiği okunur. Kanıt: aynı function import `=null` ile ve parametresiz çağrılır → 400 ↔ 200. JSON gövdedeki `null` bu sınıfa girmez (FE-04) | HIGH | yok (`grep`: `urlParameters` bloğunda `: null`) | §7 |
+| FE-43 | `index.html` sürümsüz UI5 ya da `minUI5Version` farklı | BLOCKER | yok | `app-skeleton.md` §7 |
 
-Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–45 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
+Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42, 43 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
 
 ---
 
@@ -132,9 +130,5 @@ Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–45 çoğunlukla **HA
 - Yeni satırlar: UI-BOOT-05 (kanonik host, kaynakta playbook ön kontrol maddesiydi), UI-ARCH-05, UI-SAVE-05, UI-BIND-04,
   UI-VH-03, UI-FIN-05..07, FE-42 (sıfır dolgusu, kaynakta hafıza dersiydi), FE-43 (sürüm sabitleme, kaynakta playbook
   satırıydı).
-- FE-43 kaynakta "sürüm sabit" kuralıydı; kaynak standart bootstrap'ı backend'in kendi UI5'ine çevirince (sabitlenen CDN
-  patch'i silinip `tr` locale verisi 404 verdi) madde bootstrap kaynağı kontrolüne çevrildi; UI-BOOT-01 hizalandı.
-- Yeni satırlar: FE-44 (tarih-yalnız alanda yerel gece yarısı → gün kayması), FE-45 (`callFunction` `urlParameters`'ta
-  `null` → 400). Kaynakta bu iki madde ve bootstrap maddesi farklı numaralarla duruyor; aXet sırası korundu.
 - UI-SAVE-04 kaynakta `MessageToast` diyordu; kaynak standart ve FE-24 ile hizalandı.
 - Müşteri uygulama adları, tarihli vaka referansları ve belge uygulamalarının müşteriye özgü şablon adı çıkarıldı.

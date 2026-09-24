@@ -9,8 +9,7 @@
 
 | Belirti | Sebep | Git |
 |---|---|---|
-| Beyaz ekran, `this.oLocaleData.getDatePlaceholder is not a function` | UI5 bootstrap sürümsüz CDN'den (latest) + `tr`: core ↔ locale-data uyumsuz | `app-skeleton.md` §7 |
-| Tarih/ay adları İngilizce ("Sep 21, 2026"), konsolda anlamlı hata yok; aynı uygulama FLP'den açılınca doğru | `index.html` UI5'i dış CDN'de sabitlenmiş bir patch'ten yüklüyor; patch bakım dışı kalınca silinmiş, silme yarım: `sap-ui-core.js` 200 ama `cldr/<dil>.json` 404 → UI5 sessizce `en`'e düşer. Bölge ayarı / tarayıcı önbelleği / `ui5.yaml` proxy'si değil (mutlak CDN adresi proxy'ye uğramaz). Kanıt: kaynak dosyaları tek tek HTTP ile yokla (CDN'de `cldr/<dil>.json` 404 ↔ backend'de 200) | `app-skeleton.md` §7 · `checklists.md` FE-43 |
+| Beyaz ekran, `this.oLocaleData.getDatePlaceholder is not a function` | UI5 sürümü sabit değil (CDN latest) + `tr` | `app-skeleton.md` §7 |
 | `Component yüklenemedi: failed to resolve 'com/.../model/models'` | Namespace'in eğik çizgi biçimi değişmemiş | `app-skeleton.md` §1 |
 | Model `undefined`, binding çalışmıyor | Manifest modeli eksik / Component bağımlılığı eksik | `app-skeleton.md` §8–9 |
 | `{ui>/busy}`, `{ui>/filter}` ölü; busy dönmüyor, filtre tutmuyor | Manifest JSONModel `settings.data` çift sarmalama | `app-skeleton.md` §8 |

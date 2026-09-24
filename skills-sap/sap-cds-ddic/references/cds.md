@@ -63,7 +63,9 @@ kabuğu** açar, kaynak gövdeye konmaz (§1.3 tuzağıyla uyumlu) → kaynak ay
 1. `cli adt_get '{"name":"<AD>","object_type":"ddls"}'` → kaynak dolu, `define` satırı var, beklenen tür
    (abstract entity'de `abstract entity` geçmeli), gönderilenle içerik eşit (CRLF/son satır sonu normalize).
 2. `cli adt_inactive_objects` → obje ve bağımlıları (üst view, BDEF, servis bağlaması) listede değil.
-3. Classic view'da `adt_sql_query` ile `SELECT COUNT(*) AS cnt FROM <SQL_VIEW>` → veri olan kapsamda 0 değil (§2 NSDM).
+3. Classic view'da da view entity'de de `adt_sql_query` ile `SELECT COUNT(*) AS cnt FROM <SQL_VIEW>` → veri olan kapsamda 0
+   değil; view miktar okuyorsa ayrıca aynı süzgeçli Open SQL kontrol grubuyla **miktar toplamını** kıyasla (§2 NSDM — satır
+   var ama miktar 0 biçimi `COUNT(*)`'ı geçer).
 4. Toplu bir araç "zaten var, atlandı" deyip çıkış kodu 0 verebilir (önceki araç setinde ölçüldü: "1 başarılı, 0 hatalı",
    hiçbir şey yazılmamıştı) → çıkış kodu değil **readback** kanıttır.
 
@@ -105,7 +107,7 @@ kabuğu** açar, kaynak gövdeye konmaz (§1.3 tuzağıyla uyumlu) → kaynak ay
 ### CDS-NSDM-01 · Replacement tablosu üzerine view: 0 satır ya da 0 miktar (S/4) — classic view VE view entity
 - `@AbapCatalog.sqlViewName`'li classic view ya da SE11 view'ın `FROM`/`JOIN`'inde `DD02L-VIEWREF`'i dolu bir tablo
   (`MSEG`, `MKPF`, stok `MSSA` `MSSL` `MSSQ` `MSCD` `MSFD` `MSID` `MSKU` `MSLB` `MSPR`, değerleme `MBEW` `EBEW` `OBEW` `QBEW`
-  `VMBEW` + tarihsel `*H`, `MARCH` `MARDH` `MCHBH` `MKOLH` …) **hatasız aktive olur ve daima 0 satır döner**.
+  `VMBEW` + tarihsel `*H`, `MARCH` `MARDH` `MCHBH` `MKOLH` …) **hatasız aktive olur ve 0 satır ya da 0 miktar döner** (biçim tabloya göre değişir — aşağıda).
 - Neden: veri `MATDOC`'ta; Open SQL yönlendirmesi classic DB view'da çalışmaz, yönlendirme view'ın `DD25L-VIEWREF`'ine
   bağlıdır ve bu yalnız SAP'nin kendi view'larında doludur.
 - ⛔ **View entity de bu tuzağa düşer** (eski metin "view entity'de bu sorun yoktur" diyordu; canlı ölçüm çürüttü):
@@ -127,11 +129,11 @@ kabuğu** açar, kaynak gövdeye konmaz (§1.3 tuzağıyla uyumlu) → kaynak ay
   serbest = `'W'` + `'01'`) ya da `nsdm_e_*` (released DEĞİL — projenin clean core politikasına bak). Alan adlarını ve
   süzgeç değerlerini hedef sistemde `adt_get` / canlı veriyle teyit et.
 - Tam liste: `SELECT tabname, viewref FROM dd02l WHERE as4local = 'A' AND viewref <> ''`.
-- Teşhis: ① `dd02l` → replacement mı ② `SELECT viewname, viewref FROM dd25l WHERE viewname = '<SQL_VIEW>'` → boşsa kusur bu
+- Teşhis: ① `dd02l` → replacement mı ② (yalnız classic view) `SELECT viewname, viewref FROM dd25l WHERE viewname = '<SQL_VIEW>'` → boşsa kusur bu
   ③ aynı tabloyu taşıyan tüm view'larda `COUNT(*)` + `DD25L-VIEWREF`. ⚠ Kontrol grubunda `VIEWREF`'i de ölç: "standart bir
   view satır döndürüyor" demek yanlış elemedir — onun `VIEWREF`'i doludur.
 - Neden geç patlar: veri kapsamı boşken 0 doğru görünür; ilk gerçek veride çıkar. Aktivasyon, ATC, inaktif liste yakalamaz —
-  tek kanıt satır saymak. Boş view'a `NOT EXISTS`/anti-join yapan sayaç ise **şişer**.
+  tek kanıt satır saymak ve miktar okuyan view'da Open SQL kontrol grubuyla miktar toplamını kıyaslamak. Boş view'a `NOT EXISTS`/anti-join yapan sayaç ise **şişer**.
 
 ### CDS-NSDM-01 ek · Bilinen tuzak: çözüm seçimi ve etki taraması
 - **Belirti:** replacement kusuru bulunduktan sonra ya veri doğrudan hedef tabloya inilerek okunur ya da "başka etkilenen Z view yok" denir.

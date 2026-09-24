@@ -2,7 +2,7 @@
 name: sap-ui5-fiori
 description: >
   Use for freestyle SAPUI5 / Fiori apps on OData V2 that consume RAP or SEGW services: app skeleton (npm
-  workspace, manifest, bootstrap from the backend's own UI5, proxy), save plumbing (sequential update, to_X navigation, JSON
+  workspace, manifest, pinned bootstrap, proxy), save plumbing (sequential update, to_X navigation, JSON
   edit buffer), value help, ALV-parity list screens with sap.ui.table grid, select-options filter screens,
   i18n, UI side of delete flows, local run, BSP deploy after user OK and runtime verification. Triggers:
   "UI5 ekranı", "Fiori uygulaması", "freestyle UI", "liste ekranı", "rapor filtre ekranı", "F4 value help",

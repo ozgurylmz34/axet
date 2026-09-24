@@ -7,7 +7,7 @@ yerine geçmez, onları kapatamaz).
 ## Sözleşme
 - Çalıştırılan: yalnız bu klasörün **doğrudan** içindeki `*.py`; alt klasördeki dosyalar çalıştırılmaz
   (alt çizgiyle başlayanlar `_yardimci.py` çalıştırılmaz, içe aktarılabilir).
-- Sıra: dosya adına göre alfabetik. Her script bağımsız koşar: birinin ihlal vermesi sonrakileri durdurmaz,
+- Sıra: dosya adına göre (Python `sorted` — büyük harfle başlayan ad önce gelir). Her script bağımsız koşar: birinin ihlal vermesi sonrakileri durdurmaz,
   hepsinin sonucu rapora yazılır.
 - Çalışma dizini: proje kökü. Süre sınırı: 120 sn (script başına).
 - Ortam değişkenleri:
