@@ -23,9 +23,17 @@ Tanınan biçimler (kanıt: SAP-samples/abap-platform-rap630-ext `*.ddls.asddls`
   · abapGit TABL XML          : `<TABCLASS>APPEND</TABCLASS>` + `<SQLTAB><hedef></SQLTAB>`
 
 FAIL-CLOSED: `EXTEND`/`ANNOTATE` sözcüğü (yorum ve dize DIŞINDA) bulunup hedef çözülemezse bulgu üretilir.
-Yorum: `//` ve `/* */` atılır; `'…'` dizeleri atılır. `--` BİLEREK yorum sayılmaz (sayılmazsa yanlış pozitif
-olur, sayılırsa kaçak olabilir — kapı yönü seçildi). ABAP kaynak tipleri (class, program, include, function…)
-taranmaz: ABAP dilinde standart DDIC/CDS objesini kaynaktan genişleten ifade yoktur; ENHO yazan araç yoktur.
+Yorum: `//` ve `/* */` atılır; `'…'` dizeleri atılır. `--` satır sonuna kadar TÜKETİLİR ama SİLİNMEZ: içindeki
+`/*` blok yorum AÇMAZ (açsaydı sonraki `*/`'a kadar gerçek kod silinirdi — ölçülen kaçak 2026-09-24:
+`-- /*` … `-- */` arasındaki `extend view entity I_SalesOrder` `[]` dönüyordu), içindeki sözcükler yine taranır.
+SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı DOĞRULANMADI; bu seçim İKİ durumda da güvenlidir:
+yorum sayıyorsa `-- /*` satırı yorumdur ve arkasındaki kod canlıdır (taranır); saymıyorsa `--` satırı koddur
+(taranır) ve SAP'nin açtığı blok yorumu tarayıcı açmaz ⇒ yalnız FAZLADAN tarama (yanlış pozitif), kaçak yok.
+Hedefi OLUMLU çözen yerler `--` metnine kanmaz: CDS hedefi bitişik belirteç ister (`--` araya girerse `?`);
+BDEF başlığı baştaki `--` satırlarını atlar; `using interface` hedeflerinin HEPSİ denetlenir (ilki değil).
+Bilinen yanlış pozitif: `--` yorumunda standart hedefli genişletme metni geçerse red.
+ABAP kaynak tipleri (class, program, include, function…) taranmaz: ABAP dilinde standart DDIC/CDS objesini
+kaynaktan genişleten ifade yoktur; ENHO yazan araç yoktur.
 """
 from __future__ import annotations
 
@@ -82,12 +90,20 @@ def _kip(object_type) -> str:
 
 
 # ── temizleme: yorum + dize → boşluk (satır sonları korunur) ────────────────────────────
-_YORUM_DIZE = re.compile(r"'(?:[^'\n]|'')*'?|/\*.*?(?:\*/|\Z)|//[^\n]*", re.S)
+# `--[^\n]*` AYRI alternatiftir: eşleşme TÜKETİLİR (içindeki `/*` blok açmaz) ama metin OLDUĞU GİBİ kalır.
+_YORUM_DIZE = re.compile(r"'(?:[^'\n]|'')*'?|/\*.*?(?:\*/|\Z)|//[^\n]*|--[^\n]*", re.S)
+
+
+def _bosalt(m: re.Match) -> str:
+    metin = m.group(0)
+    if metin.startswith("--"):
+        return metin                                     # tüketildi, silinmedi (bkz. modül notu)
+    return re.sub(r"[^\n]", " ", metin)
 
 
 def _temizle(kaynak: str) -> str:
     src = kaynak.replace("\r\n", "\n").replace("\r", "\n")
-    return _YORUM_DIZE.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), src)
+    return _YORUM_DIZE.sub(_bosalt, src)
 
 
 _AD = r"(?:/[A-Z0-9_]+/)?[A-Z_][A-Z0-9_]*"
@@ -97,7 +113,9 @@ _R_EXTEND = re.compile(
     rf"EXTEND\s+(?P<ara>(?:(?:VIEW|ENTITY|CUSTOM|ABSTRACT|TYPE|PROJECTION|HIERARCHY|TABLE|STRUCTURE|ASPECT)\s+)*)"
     rf"(?P<tgt>{_AD})\s+WITH\b", _F)
 _R_ANNOTATE = re.compile(rf"ANNOTATE\s+(?P<ara>(?:VIEW|ENTITY)\s+)(?P<tgt>{_AD})\s+WITH\b", _F)
-_R_BDEF_BASLIK = re.compile(r"^\s*EXTENSION\b(?P<govde>[^;]*);?", _F)
+# Baştaki `--` satırları atlanır (temizlemede SİLİNMEZLER): `--` SAP'de yorumsa başlık onlardan sonradır.
+# Her tekrar `\n` ile biter ⇒ bölüştürme tek yollu (geri izleme patlaması yok).
+_R_BDEF_BASLIK = re.compile(r"^(?:[ \t\n]*--[^\n]*\n)*\s*(?P<bas>EXTENSION\b(?P<govde>[^;]*);?)", _F)
 _R_BDEF_ARAYUZ = re.compile(rf"\bUSING\s+INTERFACE\s+(?P<tgt>{_AD})(?![\w/])", _F)
 _R_EXTEND_BEHAVIOR = re.compile(rf"(?<![\w/])EXTEND\s+BEHAVIOR\s+FOR\s+(?P<tgt>{_AD})", _F)
 
@@ -136,14 +154,12 @@ def _bdef_bulgulari(temiz: str) -> list[Bulgu]:
     if not baslik and not davranis:
         return []                                        # BDEF tanımı (define behavior) — genişletme değil
     satir = _satir(temiz, baslik.start("govde") if baslik else davranis[0].start())
-    arayuz = _R_BDEF_ARAYUZ.search(baslik.group("govde")) if baslik else None
-    if arayuz:
-        hedef = arayuz.group("tgt").upper()
-        if izinli(hedef):
-            return []
-        return [Bulgu(satir, _gorunum(baslik.group(0)), hedef,
-                      "BDEF extension using interface <standart BO>")]
-    ifade = _gorunum(baslik.group(0)) if baslik else _gorunum(davranis[0].group(0))
+    # HEPSİ denetlenir: `--` metni silinmediği için ilk eşleşme bir `--` yorumundaki Z adı olabilir.
+    arayuzler = [a.group("tgt").upper() for a in _R_BDEF_ARAYUZ.finditer(baslik.group("govde"))] if baslik else []
+    if arayuzler:
+        return [Bulgu(satir, _gorunum(baslik.group("bas")), hedef, "BDEF extension using interface <standart BO>")
+                for hedef in dict.fromkeys(arayuzler) if not izinli(hedef)]
+    ifade = _gorunum(baslik.group("bas")) if baslik else _gorunum(davranis[0].group(0))
     return [Bulgu(satir, ifade, "?",
                   "BDEF genişletmesi: genişletilen BDEF kaynakta yazılı değil (ADT metadata'sında; "
                   "`extend behavior for <X>` alias olabilir) — standart olmadığı kanıtlanamadı, fail-closed")]

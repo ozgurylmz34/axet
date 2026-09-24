@@ -344,7 +344,12 @@ def check(root: Path, a) -> tuple[list[str], list[dict], dict]:
                     "tarama yapılmadan teslim üretilmez", rel)
             else:
                 ext_tara, ext_tara_xml, ext_mesaj = ext_scanner
-                hits = ext_tara_xml(text) if ext_xml else ext_tara(text, info["type"])
+                try:
+                    hits = ext_tara_xml(text) if ext_xml else ext_tara(text, info["type"])
+                except Exception as exc:  # noqa: BLE001 — yüklenip çalışırken patlayan tarayıcı da GEÇMEZ (fail-closed)
+                    hits = None
+                    add("FAIL", "std_ext_scan_unavailable", f"Kesin Yasak A genişletme tarayıcısı çalışırken hata verdi "
+                        f"({type(exc).__name__}: {exc}): tarama yapılmadan teslim üretilmez", rel)
                 if hits:
                     add("FAIL", "ADR_0005_A", ext_mesaj(hits), rel)
         if info["ext"] == "abap":

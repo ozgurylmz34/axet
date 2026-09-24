@@ -87,6 +87,40 @@ FAIL_CLOSED = [
     ("i4 ANNOTATE hedefsiz", "ddlx", "annotate entity with {\n  a;\n}"),
 ]
 
+# `--` satırı (bug gate BULGU 1, 2026-09-24): `--` yorum sayılmadığı için içindeki `/*` blok yorum AÇIYOR ve sonraki
+# `*/`'a kadar gerçek kod siliniyordu → `[]`, kapı allowed=True. SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı
+# DOĞRULANMADI ⇒ her vaka İKİ yorumda da güvenli olmalı. (ad, tip, kaynak, beklenen hedef, beklenen satır)
+TIRE_YORUM = [
+    ("t1 -- /* … -- */ arası extend view entity (ddls)", "ddls",
+     "-- /*\nextend view entity I_SalesOrder with { a }\n-- */", "I_SALESORDER", 2),
+    ("t2 -- /* … -- */ arası annotate entity (ddlx)", "ddlx",
+     "-- /*\nannotate entity I_Product with {\n  @UI.hidden: true Product;\n}\n-- */", "I_PRODUCT", 2),
+    ("t3 -- /* … -- */ arası BDEF extension using interface", "bdef",
+     "-- /*\nextension using interface I_SalesOrderTP\n  implementation in class zbp_ext_so unique;\n\n"
+     "extend behavior for SalesOrder\n{\n}\n-- */", "I_SALESORDERTP", 2),
+    ("t4 -- /* … -- */ arası extend type (tip None)", None,
+     "-- /*\nextend type vbak with zzavbak {\n  zz : abap.char(1);\n}\n-- */", "VBAK", 2),
+    ("t5 -- yorumundaki Z arayüzü ilk eşleşme olamaz (BDEF)", "bdef",
+     "extension -- using interface ZI_X\n  using interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "extend behavior for SalesOrder\n{\n}", "I_SALESORDERTP", 1),
+    ("t6 baştaki -- satırından sonra BDEF başlığı (extend behavior YOK, tip None)", None,
+     "-- başlık notu\nextension using interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "define behavior for ZAXET_EXT_NODE\n{\n}", "I_SALESORDERTP", 2),
+    # `--` metni SİLİNMEZ: SAP `--`'yı yorum saymıyorsa bu satır canlı koddur. Bilinen yanlış pozitif (SAP sayıyorsa).
+    ("t7 -- satırındaki genişletme metni silinmez (tüketilir, taranır)", "ddls",
+     "-- extend view entity I_SalesOrder with { a }\ndefine view entity ZI_X as select from vbak { key vbeln }",
+     "I_SALESORDER", 1),
+]
+
+TIRE_YORUM_SERBEST = [
+    ("u1 -- yorumlu Z kaynak (genişletme metni yok)", "ddls",
+     "-- yorum: Z görünümü\ndefine view entity ZI_X as select from vbak { key vbeln } -- satır sonu notu"),
+    ("u2 baştaki -- satırından sonra Z→Z BDEF extension", "bdef",
+     "-- başlık notu\nextension using interface zrap630i_shoptp_sol\nimplementation in class zbp_x unique;\n\n"
+     "extend behavior for Shop\n{\n}"),
+    ("u3 -- /* … -- */ arası Z hedefli extend", "ddls", "-- /*\nextend view entity ZI_X with { a }\n-- */"),
+]
+
 
 class Tarayici(unittest.TestCase):
     def test_std_ext_tarayici_pozitif(self):
@@ -112,6 +146,20 @@ class Tarayici(unittest.TestCase):
                 ok = len(b) == 1 and b[0].hedef == "?" and "fail-closed" in b[0].neden
                 H.kaydet(f"Z104 tarayıcı {ad}", "1 bulgu hedef ?", str([(x.hedef, x.satir) for x in b]), ok)
                 self.assertTrue(ok, b)
+
+    def test_std_ext_tarayici_tire_yorum_bypass(self):
+        for ad, tip, kaynak, hedef, satir in TIRE_YORUM:
+            with self.subTest(ad):
+                b = tara(kaynak, tip)
+                ok = len(b) == 1 and b[0].hedef == hedef and b[0].satir == satir
+                H.kaydet(f"Z104 tarayıcı {ad}", f"1 bulgu {hedef}@{satir}",
+                         str([(x.hedef, x.satir) for x in b]), ok)
+                self.assertTrue(ok, (ad, b))
+        for ad, tip, kaynak in TIRE_YORUM_SERBEST:
+            with self.subTest(ad):
+                b = tara(kaynak, tip)
+                H.kaydet(f"Z104 tarayıcı KONTROL {ad}", "0 bulgu", str([(x.hedef, x.satir) for x in b]), not b)
+                self.assertEqual(b, [], ad)
 
     def test_std_ext_tarayici_tabl_xml(self):
         std = ("<DD02V>\n <TABNAME>ZZAVBAK</TABNAME>\n <TABCLASS>APPEND</TABCLASS>\n <SQLTAB>VBAK</SQLTAB>\n</DD02V>")
@@ -172,6 +220,28 @@ class Kapi(unittest.TestCase):
                 H.kaydet(f"Z104 kapı KONTROL {ad}", "allowed", f"{g.allowed} {g.code}", g.allowed)
                 self.assertTrue(g.allowed, (g.code, g.message))
 
+    def test_std_ext_gate_tire_yorum_bypass(self):
+        for ad, tip, kaynak, hedef, _satir in TIRE_YORUM:
+            with self.subTest(ad):
+                g = self.yaz(ad="ZAXET_EXT", tip=tip, source=kaynak)
+                ok = not g.allowed and g.code == "ADR_0005_A" and f"hedef {hedef}" in (g.message or "")
+                H.kaydet(f"Z104 kapı {ad}", "ADR_0005_A", f"{g.code}", ok)
+                self.assertTrue(ok, (ad, g.code, g.message))
+        for ad, tip, kaynak in TIRE_YORUM_SERBEST:
+            with self.subTest(ad):
+                g = self.yaz(ad="ZAXET_EXT", tip=tip, source=kaynak)
+                H.kaydet(f"Z104 kapı KONTROL {ad}", "allowed", f"{g.allowed} {g.code}", g.allowed)
+                self.assertTrue(g.allowed, (ad, g.code, g.message))
+        # adt_struct_create: iki alan adıyla `-- /*` … `-- */` sarmalı (render edilen DDL taranır)
+        alan = [{"name": "x -- /*", "type": "char10"},
+                {"name": "extend type mara with zzx { b -- */", "type": "char10"}]
+        with self.subTest("t8 struct_create iki alan -- /* … -- */"):
+            g = self.yaz(tool="adt_struct_create", ad="ZAXET_S", tip=None, fields=alan, description="Test yapısı",
+                         package="ZAXET_PKG", transport="TESTK900001")
+            ok = g.code == "ADR_0005_A" and "hedef MARA" in (g.message or "")
+            H.kaydet("Z104 kapı struct_create -- /* iki alan", "ADR_0005_A hedef MARA", str(g.code), ok)
+            self.assertTrue(ok, (g.code, g.message))
+
     def test_std_ext_gate_fail_closed(self):
         for ad, tip, kaynak in FAIL_CLOSED:
             with self.subTest(ad):
@@ -191,8 +261,10 @@ class Kapi(unittest.TestCase):
         self.assertIsNone(self.gate.check_std_extension("adt_activate", {"name": "ZX"}))
 
     def test_std_ext_gate_struct_create_alan_enjeksiyonu(self):
-        """`adt_struct_create` alan adını doğrulamaz ⇒ tek satırda `extend type` enjekte edilebilir; kapı yazılacak
-        DDL'i aynı render ile üretip tarar. Kontrol: normal alanlar serbest."""
+        """`adt_struct_create` alan adını doğrulamaz ⇒ render edilen DDL'e tek satırda `extend type` metni girer; kapı
+        yazılacak DDL'i aynı render ile üretip tarar. Kontrol: normal alanlar serbest.
+        DOĞRULANMADI (savunma derinliği): SAP'nin TEK yapı kaynağında `define structure` + `extend type` birlikte
+        kabul edip etmediği ölçülmedi — kabul etmese de metni reddetmek güvenli yöndür."""
         alan = [{"name": "a : abap.char(1); } extend type vbak with zzx { b", "type": "char10"}]
         g = self.yaz(tool="adt_struct_create", ad="ZAXET_S", tip=None, fields=alan, description="Test yapısı",
                      package="ZAXET_PKG", transport="TESTK900001")
@@ -239,7 +311,7 @@ class AracIkinciKatman(unittest.TestCase):
 
     def test_std_ext_push_source_ikinci_katman(self):
         for ad, tip, kaynak in (("append", "tabl", APPEND_VBAK), ("view entity", "ddls", EXT_VIEW_ENTITY),
-                                ("annotate", "ddlx", ANNOTATE_ENTITY)):
+                                ("annotate", "ddlx", ANNOTATE_ENTITY), ("-- /* sarmalı", "ddls", TIRE_YORUM[0][2])):
             with self.subTest(ad):
                 r = self.atom.adt_push_source("ZAXET_EXT", tip, kaynak, transport="TESTK900001")
                 ok = isinstance(r, dict) and r.get("code") == "ADR_0005_A"
