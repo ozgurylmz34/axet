@@ -1026,6 +1026,22 @@ SAHTE_PIP = (
     "    sys.exit(1)\n"
     "if kip == 'yarim':\n"
     "    sys.exit(0)\n"
+    "if kip == 'izin':\n"
+    "    print('ERROR: Could not install packages due to an OSError: [WinError 5] Access is denied', file=sys.stderr)\n"
+    "    sys.exit(1)\n"
+    "if kip == 'venv':\n"
+    "    print('ERROR: Could not find an activated virtualenv (required).', file=sys.stderr)\n"
+    "    sys.exit(3)\n"
+    "if kip == 'pep668':\n"
+    "    print('error: externally-managed-environment', file=sys.stderr)\n"
+    "    sys.exit(1)\n"
+    "if kip == 'turkce':\n"
+    "    print('HATA: baglanti kurulamadi: \u015f\u011f\u00fc\u0130\u0131', file=sys.stderr)\n"
+    "    sys.exit(1)\n"
+    "if kip == 'olcumbozan':\n"
+    "    with open(os.path.join(os.environ['AXET_TEST_ENGEL'], 'sitecustomize.py'), 'w', encoding='utf-8') as fh:\n"
+    "        fh.write('import os\\nos._exit(3)\\n')\n"
+    "    sys.exit(0)\n"
     "print(sys.executable + ': No module named pip', file=sys.stderr)\n"
     "sys.exit(1)\n"
 )
@@ -1110,6 +1126,10 @@ class PaketAdimiTest(GeciciTest):
         self.assertEqual(0, r.returncode, self.cikti(r))
         self.assertEqual([], self.pip_cagrilari())
         self.assertIn("PAKETLER: TAMAM", r.stdout)
+        # tur 2 madde 1: sürüm DENETLENMEDİĞİ için TAMAM satırı sürüm belirtimi yazmaz, kapsamını söyler
+        tamam = next(s for s in r.stdout.splitlines() if s.startswith("PAKETLER: TAMAM"))
+        self.assertNotIn(">=", tamam)
+        self.assertIn("sürüm alt sınırı denetlenmez", tamam)
 
     def test_ag_hatasi_kurulumu_durdurmaz_uyari_ve_yapilacak_yazilir(self):
         self.eksik()
@@ -1130,6 +1150,45 @@ class PaketAdimiTest(GeciciTest):
         self.assertEqual(0, r.returncode, self.cikti(r))
         self.assertIn("PAKETLER: EKSİK", r.stdout)
         self.assertIn("pip bulunamadı", r.stdout)
+
+    # --- tur 2 (bağımsız inceleme WARNING): hata sınıflandırması, ölçülemeyen sonuç, kodlama ---------------------
+    def _hata(self, kip: str):
+        self.eksik()
+        self.env["AXET_TEST_PIP_KIP"] = kip
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        return r.stdout
+
+    def test_ag_disi_pip_hatasi_proxy_denmez(self):
+        """Ölçülen iki ağ-dışı hata (require-virtualenv, WinError 5) eskiden "ağ/proxy" diye raporlanıyordu."""
+        for kip in ("izin", "venv"):
+            with self.subTest(kip=kip):
+                out = self._hata(kip)
+                self.assertIn("PAKETLER: EKSİK", out)
+                self.assertNotIn("proxy", out.lower())
+                self.assertIn("pip hata verdi", out)
+                self.assertIn("pip çıktısının sonu", out)
+                self.kayit.unlink(missing_ok=True)
+
+    def test_pep668_ayri_aciklama(self):
+        out = self._hata("pep668")
+        self.assertIn("PAKETLER: EKSİK", out)
+        self.assertIn("dışarıdan yönetilen", out)
+        self.assertNotIn("proxy", out.lower())
+
+    def test_yeniden_olcum_basarisizsa_olculemedi_denir(self):
+        out = self._hata("olcumbozan")
+        self.assertIn("PAKETLER: ÖLÇÜLEMEDİ", out)
+        self.assertNotIn("PAKETLER: EKSİK", out)
+        self.assertNotIn("PAKETLER: KURULDU", out)
+
+    def test_pip_ciktisi_turkce_bozulmadan_gelir(self):
+        """pip kendi ortam kodlamasıyla yazar (ölçüldü: bu makinede cp1252 → `\\u015f` kaçışları); install.py pip'i
+        UTF-8 G/Ç ile çağırır. Değişkenler bu testte ortamdan KALDIRILIR ki düzeltme install.py'den gelsin."""
+        self.env.pop("PYTHONIOENCODING", None)
+        self.env.pop("PYTHONUTF8", None)
+        out = self._hata("turkce")
+        self.assertIn("\u015f\u011f\u00fc\u0130\u0131", out)
 
     def test_pip_basari_dese_de_import_olmuyorsa_eksik_sayilir(self):
         """pip rc=0 ≠ paket yüklenebilir: sonuç yeniden import edilerek ölçülür."""
@@ -1215,6 +1274,16 @@ class PaketKaynakTest(unittest.TestCase):
         req = siniflandir.siniflandir("skills-sap/sap-adt-foundation/scripts/requirements.txt", harita)
         req_kayit = next(s for s in harita["siniflar"] if s["sinif"] == req)
         self.assertFalse(req_kayit.get("ozel_adim"), "requirements.txt'in özel adımı yoksa tek kaynak o olamaz")
+
+    def test_readme_guncelle_iddiasi_dar(self):
+        """Tur 2 madde 4: README "%guncelle eksik olanı kurar" diyordu; oysa %guncelle install.py'yi yalnız
+        install.py'nin DEĞİŞTİĞİ yayında koşar. Madde bu sınırı, sonrasında doctor'un gösterdiğini ve kur.cmd yolunu söyler."""
+        metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
+        madde = next(m for m in metin.split("\n- ") if m.startswith("SAP bağlantısının Python paketleri"))
+        self.assertIn("install.py", madde)
+        self.assertIn("doctor", madde)
+        self.assertIn("kur.cmd", madde)
+        self.assertNotIn("kurulum aracı ve `%guncelle`, eksik olanı", madde)
 
     def test_venv_icinde_user_verilmez(self):
         import install

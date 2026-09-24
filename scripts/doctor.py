@@ -1262,10 +1262,12 @@ def check_paketler(sap: bool) -> None:
         add("PASS", f"{PAKET_ETIKETI} yüklenebiliyor: " + ", ".join(ad for ad, _ in inst.ZORUNLU_PAKETLER))
         return
     specler = [spec for _, spec in eksik]
-    add("WARN" if sap else "INFO",
-        f"{PAKET_ETIKETI} EKSİK: {', '.join(specler)} — SAP bağlantısı (sap_adt_cli) bunlarsız çalışmaz"
-        + ("" if sap else " (SAP paketi kapalı: şimdilik gerekmez)")
-        + " → kur.cmd'yi yeniden çalıştır (eksik paketi kendisi kurar); olmazsa elle: "
+    temel = f"{PAKET_ETIKETI} EKSİK: {', '.join(specler)} — SAP bağlantısı (sap_adt_cli) bunlarsız çalışmaz"
+    if not sap:
+        # kur.cmd SAP paketini AÇAR (install.py --sap) ⇒ SAP kapalı kullanıcıya önerilmez (tur 2, madde 5).
+        add("INFO", temel + " (SAP paketi kapalı: şimdilik gerekmez; SAP'yi açtığında kurulum bunları kendisi kurar)")
+        return
+    add("WARN", temel + " → kur.cmd'yi yeniden çalıştır (eksik paketi kendisi kurar); olmazsa elle: "
         + inst.elle_kurulum_komutu(specler))
 
 

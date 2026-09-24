@@ -604,7 +604,10 @@ class KurTest(GeciciTest):
                        "import os, sys\n"
                        "open(os.environ['AXET_TEST_PIP_KAYIT'], 'a', encoding='utf-8').write(\n"
                        "    sys.executable + '|' + ' '.join(sys.argv[1:]) + '\\n')\n"
-                       f"sys.exit({1 if kip == 'ag' else 0})\n")
+                       # tur 2: proxy tavsiyesi yalnız ağ imzasında verilir ⇒ sahte ağ hatası imzayı da basar
+                       + ("print(\"WARNING: Retrying ... ProxyError('Cannot connect to proxy.')\", file=sys.stderr)\n"
+                          if kip == "ag" else "")
+                       + f"sys.exit({1 if kip == 'ag' else 0})\n")
         env = {k: v for k, v in self.env.items() if k != "AXET_PAKET_KUR"}
         env.update({"AXET_PAKET_PIP": str(pip), "AXET_TEST_PIP_KAYIT": str(kayit), "PYTHONPATH": str(d)})
         return env, kayit
