@@ -21,7 +21,8 @@ Puan (Z71, 2026-09-23 — gövde taraması eklendi):
     kayıt sözcüğü onunla başlıyorsa: "aktarim" ↔ "aktarimi"); Z108'den beri başlık/özette de aynı kural geçerli
     ("transport" ↔ "transports").
   · Kayıtların çoğunda geçen (genel) sorgu sözcükleri puana katılmaz: başlık/özet için başlık/özetlerde, gövde için
-    gövdelerde ayrı ayrı sayılır (bir sözcük özetlerde seyrek, gövdelerde yaygın olabilir). Eşik altı sonuç basılmaz.
+    gövdelerde ayrı ayrı sayılır (bir sözcük özetlerde seyrek, gövdelerde yaygın olabilir). Başlık/özet sayımı TAM
+    sözcükle yapılır (önekle sayılsaydı "review" → reviewer/reviews ile genel sayılıp düşerdi). Eşik altı sonuç basılmaz.
   · İstisna — gövde adayları: toplam puanı eşik altında kalan ama gövdesinde sorgunun ≥ GOVDE_ESIK farklı sözcüğü
     geçen en çok GOVDE_TOP kayıt ayrı ve "düşük güven" etiketiyle basılır. Ölçülen sebep (Z71 kapanış C3, 2026-09-23):
     model sorgusu "... ALV rapor Excel export ..." iken belirsiz indeksli kaydın gövdesi 3 sözcükle eşleşti, eşik 5'in
@@ -59,7 +60,7 @@ GOVDE_AGIRLIK = 1
 GOVDE_ESIK = 3            # eşik altı kalan kayıt, gövdesinde bu kadar FARKLI sorgu sözcüğü geçiyorsa ayrı listelenir
 GOVDE_TOP = 3
 GOVDE_SINIRI = 20000       # kayıt başına okunan gövde karakteri (performans üst sınırı; aşan kısım taranmaz)
-ONEK_EN_AZ = 5             # gövdede önek eşleşmesi için sorgu sözcüğünün en az harf sayısı
+ONEK_EN_AZ = 5             # önek eşleşmesi (gövde + Z108'den beri başlık/özet) için sorgu sözcüğünün en az harf sayısı
 RULES_DERINLIK = 4         # <source_root> altında .rules.md aranan en derin klasör seviyesi
 PAKET_OZ = "paket kuralları: obje adlandırma, önek, naming, bağımlılık, transport, istisna"
 _LINK = re.compile(r"\[((?:[^\[\]]|\[[^\]]*\])+)\]\(([^)]+\.md)\)")
@@ -228,7 +229,11 @@ def main() -> int:
     govde_genel: set[str] = set()
     if kayitlar and q_tum:
         tavan = max(GENEL_ORAN * len(kayitlar), GENEL_TABAN)
-        genel = {t for t in q_tum if sum(1 for a in anahtar_kumeleri if eslesen({t}, a)) > tavan}
+        # Genel sayımı TAM eşleşmedir (önek DEĞİL), puanlama önekli olsa da. Ölçüldü (Z108 bug gate, TRAKYA 55 kayıt,
+        # tavan 4): önekle sayılınca "review" (tam 3 kayıt; reviewed/reviewer/reviewing/reviews ile 5) ve 22 terim daha
+        # genel sayıldı, "code review" sorgusu code-review skill'ini kaybetti. Tam sayımla 4190 sentetik sorguda
+        # (1-3 terim) tabanın (f2b2839) bulduğu kayıtlardan kaybolan 0; önekli sayımda 32.
+        genel = {t for t in q_tum if sum(1 for a in anahtar_kumeleri if t in a) > tavan}
     if govdeli and q_tum:
         g_tavan = max(GENEL_ORAN * len(govdeli), GENEL_TABAN)
         sayim: dict[str, int] = {}
