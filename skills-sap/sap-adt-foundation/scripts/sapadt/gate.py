@@ -170,12 +170,18 @@ def check_target_system(proj, url: str | None, client: str | None) -> tuple[str,
     Z106 (2026-09-24): tier `.conn_adt`'den okunur; hedef başka bir dosyadan gelirse `check_write`'ın
     "DEV" onayı BAŞKA bir sisteme yazdırır (`check_connection` ile aynı gerekçe). `check_write` geçtikten
     SONRA çağrılır. FAIL-CLOSED: iki taraftan biri boş/okunamıyorsa da red. Değerler mesaja BASILMAZ.
+    Ayrıştırılamayan URL (ör. şablonda kalmış `<PORT>` → `urlparse(...).port` ValueError) da red: traceback
+    (rc=1, logsuz) yerine `write_target_mismatch` döner ki çağıran loglayıp 3 ile çıkabilsin.
     """
     conn_url = _project.effective_conn_value("ADT_SAP_URL", None, proj)
     conn_client = _project.effective_conn_value("ADT_SAP_CLIENT", None, proj)
     ayrisan = []
-    if not _norm_url(url) or _norm_url(url) != _norm_url(conn_url):
-        ayrisan.append("url")
+    try:
+        hedef_url, conn_norm, url_etiket = _norm_url(url), _norm_url(conn_url), "url"
+    except ValueError:  # geçersiz port / bozuk IPv6 — hangisi olduğu basılmaz (değer sızmasın)
+        hedef_url, conn_norm, url_etiket = "", "", "url (ayrıştırılamadı)"
+    if not hedef_url or hedef_url != conn_norm:
+        ayrisan.append(url_etiket)
     if not (client or "").strip() or (client or "").strip() != (conn_client or "").strip():
         ayrisan.append("client")
     if ayrisan:

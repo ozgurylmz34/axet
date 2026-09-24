@@ -88,7 +88,8 @@ builder:
 S=<TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/deploy_ui.py
 python $S prepare <app> [<app2> …] [--no-build]      # ağ YOK: yaml + dosya kontrolü + build + dist parmak izi
 python $S verify  <app> [<app2> …] [--ignore-cert]   # salt okuma: canlı Component-preload.js ↔ dist
-python $S deploy  <app> --user-ok "<kullanıcının sohbetteki onay cümlesi>" \n         --sap-write --scope S1 --reason "<tek satır gerekçe>" --project-dir <proje_kökü> [--ignore-cert]   # SAP YAZMA KAPISI (§3.2a)
+python $S deploy  <app> --user-ok "<kullanıcının sohbetteki onay cümlesi>" \
+         --sap-write --scope S1 --reason "<tek satır gerekçe>" --project-dir <proje_kökü> [--ignore-cert]   # SAP YAZMA KAPISI (§3.2a)
 ```
 
 | Alt komut | Ne yapar | Ne yapmaz |
@@ -125,9 +126,13 @@ değildir; kodlar ve mesajlar `sap-adt-foundation` SKILL'deki red tablosuyla ayn
   (ya da boş) → `write_target_mismatch`. Gerekçe: deploy hedefi `.conn_adt`'den değil `ui5-deploy.yaml`'dan gelir; eşlik
   denetimi olmadan tier kapısı başka bir sistemi doğrulamış olurdu. URL `şema://host:port/yol` biçiminde karşılaştırılır
   (host küçük harf; `:443` yazılıp yazılmaması FARK sayılır).
+- Hedef URL'si ayrıştırılamıyorsa (ör. şablondaki `<PORT>` yer tutucusu kalmış, geçersiz port) bu da `write_target_mismatch`
+  (fail-closed, çıkış 3, loglanır) — traceback değil.
 - Red → `[REDDEDİLDİ] SAP yazma kapısı (<kod>): <mesaj>`, çıkış 3, stderr'de CLI ile aynı hatırlatma. Kapı yüklenemezse de
   red (`gate_unavailable`, fail-closed). Red dahil her deneme ve sonuç (`ok`, `prepare_failed`, `deploy_failed`,
   `verify_stale`, `verify_unmeasured`) proje `.axet-code/sap-write-log.jsonl`'a yazılır.
+  **Tek istisna `gate_unavailable`:** log yazıcısı kapı modülünün parçasıdır; kapı yüklenemediyse log da yazılamaz ⇒ bu red
+  yalnız ekrana (stdout, çıkış 3) basılır, write-log'da **iz bırakmaz**. Deploy yine koşmaz (build dahil).
 - `--user-ok` kalır; kapı ona **ektir**. `prepare` (ağsız) ve `verify` (salt GET) kapıdan geçmez.
 - Red geldiyse kapı ayarını, `.conn_adt`'yi, `ui5-deploy.yaml` hedefini ya da izinleri **model değiştirmez**; reddi ve
   sebebini kullanıcıya bildirir.
@@ -143,7 +148,14 @@ değildir; kodlar ve mesajlar `sap-adt-foundation` SKILL'deki red tablosuyla ayn
   (CRLF'li bir kaynaktan kopyalanan parolanın sonunda `\r` kalınca kimlik doğrulama bozuluyordu).
 - `keyring.getPassword is not a function` / `@zowe/secrets-for-zowe-sdk` uyarıları **ölümcül değil**; env kimliği kullanılır.
 
-### 3.4 Elle komut (script çalışmazsa — yine kullanıcı OK'undan sonra)
+### 3.4 Elle komut (yalnız geliştirici, kapısız — script çalışmazsa, yine kullanıcı OK'undan sonra)
+> ⛔ **Bu yol SAP yazma kapısını (§3.2a) ATLAR** — `sap-write.local` anahtarı, `.conn_adt` tier DEV denetimi,
+> `ui5-deploy.yaml` hedefi == `.conn_adt` eşliği ve write-log bu komutlarda **yoktur**.
+> - Yalnız **geliştirici kendi terminalinde** koşar. **Model bu komutu önermez ve koşmaz**; `deploy_ui.py` çalışmıyorsa
+>   model durur ve hatayı kullanıcıya bildirir.
+> - Kapı **reddettiyse bu yol KULLANILMAZ**: önce red sebebi (`<kod>` + mesaj) kullanıcıya bildirilir; reddi aşmak için
+>   elle komuta geçmek kapıyı delmektir.
+
 ```bash
 cd <app_mutlak_yol>
 npm run build                                                        # ui5 build → dist/

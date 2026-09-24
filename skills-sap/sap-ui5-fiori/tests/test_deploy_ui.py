@@ -208,9 +208,11 @@ GEREKCE = "Birim test: deploy yazma kapısı ölçümü"
 _YOKSAY = shutil.ignore_patterns("__pycache__", "*.pyc", "node_modules")
 
 
-def _home(kok: Path, optin: bool) -> Path:
-    home = kok / ("home_acik" if optin else "home_kapali")
-    for skill in ("sap-ui5-fiori", "sap-adt-foundation", "sap-intake-triage"):
+def _home(kok: Path, optin: bool, foundation: bool = True) -> Path:
+    """Geçici AXET_HOME. `foundation=False` → sap-adt-foundation KOPYALANMAZ (kapı yüklenemez senaryosu)."""
+    home = kok / (("home_acik" if optin else "home_kapali") + ("" if foundation else "_kapisiz"))
+    skiller = ("sap-ui5-fiori", "sap-adt-foundation", "sap-intake-triage") if foundation else ("sap-ui5-fiori",)
+    for skill in skiller:
         shutil.copytree(SKILLS_SAP / skill / "scripts", home / "skills-sap" / skill / "scripts", ignore=_YOKSAY)
     (home / "config").mkdir(parents=True, exist_ok=True)
     if optin:
@@ -231,7 +233,9 @@ def _proje(kok: Path, ad: str, url: str, *, tier=("ADT_SAP_TIER=DEV",), client="
 
 
 def _ortam(kimlik: bool = True) -> dict:
-    return {k: v for k, v in H.ortam(kimlik).items() if not k.upper().startswith(("ADT_", "AXET_"))}
+    # PYTHONPATH da düşülür: gerçek sap-adt-foundation'a giden bir yol "kapı yüklenemez" senaryosunu sessizce bozardı.
+    return {k: v for k, v in H.ortam(kimlik).items()
+            if not k.upper().startswith(("ADT_", "AXET_")) and k.upper() != "PYTHONPATH"}
 
 
 def _kos_home(home: Path, *args, cwd=None, kimlik: bool = True) -> tuple[int, str]:
@@ -251,13 +255,21 @@ def _son_log(proj: Path) -> dict | None:
 
 
 class TestDeployYazmaKapisi(unittest.TestCase):
-    """Alt süreç (GERÇEK giriş noktası): kapı reddinde build de deploy da koşmaz, sahte SAP'ye istek GİTMEZ."""
+    """Alt süreç (GERÇEK giriş noktası): kapı reddinde build de deploy da koşmaz.
+
+    NE ÖLÇÜLÜR (dürüst kapsam): asıl sinyal ① çıktıda `build:` satırı YOK (build adımı `hazirla` içinde basılır,
+    kapıdan sonra gelir) ② rc=3 + red kodu ③ write-log'daki sonuç kodu. `istekler == []` bu sınıfta ZAYIF bir
+    sinyaldir: sahte sunucu yalnız `do_GET` sayar ve test ortamında `ui5`/`fiori` kurulu olmadığından kapı açık
+    olsa bile build düşer, deploy (POST/PUT — sayılmaz) ve canlı doğrulama GET'i hiç olmaz ⇒ burada boş liste
+    kapının kanıtı DEĞİLDİR. "Kapı reddinde hiçbir alt süreç koşmadı" kanıtı süreç içi sınıftadır
+    (`TestDeployKapiSurecIci`: `run` sahte, `cagrilar == []`; kontrol grubunda istek sayısı 1)."""
 
     @classmethod
     def setUpClass(cls):
         cls.kok = Path(tempfile.mkdtemp(prefix="ui5kapi_"))
         cls.kapali = _home(cls.kok, optin=False)
         cls.acik = _home(cls.kok, optin=True)
+        cls.kapisiz = _home(cls.kok, optin=True, foundation=False)
         cls.sayac = 0
 
     @classmethod
@@ -265,10 +277,10 @@ class TestDeployYazmaKapisi(unittest.TestCase):
         shutil.rmtree(cls.kok, ignore_errors=True)
 
     def _deploy(self, home, *, tier=("ADT_SAP_TIER=DEV",), conn_url=None, client="100", sap_write=True,
-                sap_project=True, ek=()):
+                sap_project=True, ek=(), app_url=None):
         type(self).sayac += 1
         with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
-            app = H.gecici_app(url=srv.url)
+            app = H.gecici_app(url=app_url or srv.url)
             proj = _proje(self.kok, f"proje{self.sayac}", conn_url or srv.url, tier=tier, client=client,
                           sap_project=sap_project)
             try:
@@ -318,6 +330,29 @@ class TestDeployYazmaKapisi(unittest.TestCase):
     def test_kapi_hedef_client_farkli(self):
         self._red("ui5-deploy.yaml client ≠ .conn_adt → red", self.acik, "write_target_mismatch", client="200")
 
+    def test_kapi_hedef_port_yer_tutucu(self):
+        """Şablondaki `<PORT>` kalmış → urlparse ValueError. Traceback (rc=1, logsuz) DEĞİL: fail-closed red + log."""
+        rc, out, istekler, proj = self._deploy(self.acik, app_url="https://127.0.0.1:<PORT>")
+        log = _son_log(proj) or {}
+        ok = (rc == 3 and "[REDDEDİLDİ] SAP yazma kapısı (write_target_mismatch)" in out
+              and "ayrıştırılamadı" in out and "Traceback" not in out and "build:" not in out
+              and log.get("tool") == "deploy_ui" and log.get("result") == "write_target_mismatch"
+              and log.get("exit_code") == 3)
+        H.kaydet("deploy kapı: ui5-deploy.yaml url'de <PORT> → red (traceback yok)", "rc=3 write_target_mismatch",
+                 f"rc={rc} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} log={log}\n{out}")
+
+    def test_kapi_yuklenemez_gate_unavailable(self):
+        """AXET_HOME'da sap-adt-foundation YOK → kapı import edilemez → fail-closed red (rc=3), build yok.
+        Log yazıcısı kapı modülünde olduğundan bu red write-log'a DÜŞMEZ (dokümanda yazılı istisna) — ölçülür."""
+        rc, out, istekler, proj = self._deploy(self.kapisiz)
+        log = _son_log(proj)
+        ok = (rc == 3 and "[REDDEDİLDİ] SAP yazma kapısı (gate_unavailable)" in out and "build:" not in out
+              and "Traceback" not in out and log is None)
+        H.kaydet("deploy kapı: foundation yok → gate_unavailable (fail-closed)", "rc=3 gate_unavailable log=yok",
+                 f"rc={rc} log={log}", ok)
+        self.assertTrue(ok, f"rc={rc} log={log}\n{out}")
+
     def test_kapi_salt_okur_etkilenmez(self):
         """prepare (ağsız) ve verify (salt GET) kapıdan GEÇMEZ: anahtar kapalı + proje yokken de çalışır."""
         bos = self.kok / "projesiz_cwd"
@@ -337,7 +372,10 @@ class TestDeployYazmaKapisi(unittest.TestCase):
 
 class TestDeployKapiSurecIci(unittest.TestCase):
     """Süreç içi: build/deploy alt süreci SAHTE (`run` kaydedilir), canlı doğrulama 127.0.0.1 sahte sunucusu.
-    Kapı reddinde `run` çağrı sayısı 0 ve sahte SAP'ye istek 0; kapı açık + DEV'de mevcut akış uçtan uca geçer."""
+    Kapı reddinde `run` çağrı sayısı 0 ve sahte SAP'ye istek 0; kapı açık + DEV'de mevcut akış uçtan uca geçer.
+    Burada `istekler == []` ANLAMLIDIR: `run` sahte "Deployment Successful" döndüğü için kapı açık olsaydı canlı
+    doğrulama GET'i atılırdı — kontrol grubu (`test_kapi_acik_dev_akis_calisir`) bunu istek=1 ile ölçer.
+    Ölçülmeyen: gerçek `fiori deploy`'un POST/PUT'u (sahte sunucu yalnız GET sayar; deploy alt süreci sahte)."""
 
     def setUp(self):
         H.proxy_bypass_surec_ici()
