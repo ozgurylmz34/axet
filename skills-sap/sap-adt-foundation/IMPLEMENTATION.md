@@ -62,7 +62,9 @@ taşınan validator'lar `lib/validators/check_{rap_readonly_consumption,reuse_ga
 
 ### İçe aktarılabilir kapı (toplu/push script'leri için)
 `from sapadt import gate` → `check_write(tool, proj, obje_adi=, object_type=, ek_obje_adlari=, transport=, require_transport_flag=, scope=, reason=, intake=, sap_write_flag=, tool_args=, log=True) -> GateResult`
-(`allowed, code, message, gate_dict()`), `log_write_attempt(...)`, `check_read`, `check_data_access` (PII), `review_preflight(task, artifact)`, `tool_class`.
+(`allowed, code, message, gate_dict()`), `log_write_attempt(...)`, `check_read`, `check_data_access` (PII), `review_preflight(task, artifact)`, `tool_class`,
+`check_target_system(proj, url, client)` (Z106: hedefi `.conn_adt` DIŞINDAN alan yazıcı — UI5 deploy `ui5-deploy.yaml` — `check_write` geçtikten sonra çağırır; url/client ≠ `.conn_adt` ya da boş → `write_target_mismatch`).
+Kullanan script'ler: `sapadt/populate.py` (CLI `on_kontrol` üzerinden) · `sap-ui5-fiori/scripts/deploy_ui.py deploy` (araç adı `deploy_ui`, Z106 2026-09-24).
 Red kararını `log=True` iken kapı kendisi loglar; izin verilen işlemin sonucunu çağıran loglar.
 
 ### KURAL — kapısız yazma yok
