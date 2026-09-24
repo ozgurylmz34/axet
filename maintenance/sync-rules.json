@@ -2783,6 +2783,17 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "scripts/validators/check_fm_signature_doc_sync.py",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/scripts/"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Z85b (v0.5.7): kayit listesi yerine dokumandaki FM-IMZA bloklari + source_root *.abap; imza sonu/taninmayan satir OLCULEMEDI; KAPSAM satiri; tests 15."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "scripts/validators/check_filter_search_pattern.py",
       "decision": "uyarla",
       "targets": [
