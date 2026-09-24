@@ -121,6 +121,58 @@ TIRE_YORUM_SERBEST = [
     ("u3 -- /* … -- */ arası Z hedefli extend", "ddls", "-- /*\nextend view entity ZI_X with { a }\n-- */"),
 ]
 
+# `--` YEM arayüzü (bug gate BLOCKER, taban efbd48f): `--` metni silinmeyen TEK görünümde BDEF başlığı `--` içindeki
+# `;`'da bitiyor, `--` içindeki Z arayüzü toplanıyor, gerçek standart arayüz görünmüyordu → `[]`, kapı allowed=True.
+# Düzeltme: üç görünüm ((a) `--` tüketilir-silinmez · (b) `--` yorum · (c) `--` kod) birleşimi. (ad, tip, kaynak, hedef, satır)
+_B1 = ("extension -- using interface ZI_X ;\nusing interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+       "extend behavior for SalesOrder {}")
+TIRE_YEM = [
+    ("y1 B1 -- içindeki ; başlığı bitiriyor (bdef)", "bdef", _B1, "I_SALESORDERTP", 1),
+    ("y2 B2 using -- c araya girmiş + yem (bdef)", "bdef",
+     "extension -- using interface ZI_X\nusing -- c\ninterface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "extend behavior for SalesOrder {}", "I_SALESORDERTP", 1),
+    ("y3 B3 using interface -- c araya girmiş + yem (bdef)", "bdef",
+     "extension -- using interface ZI_X\nusing interface -- c\nI_SalesOrderTP implementation in class zbp_x unique;\n"
+     "extend behavior for SalesOrder {}", "I_SALESORDERTP", 1),
+    ("y4 B4 = B1, tip None", None, _B1, "I_SALESORDERTP", 1),
+    ("y5 B14 = B1 tip None, extend behavior YOK", None,
+     "extension -- using interface ZI_X ;\nusing interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "define behavior for ZAXET_EXT_NODE {}", "I_SALESORDERTP", 1),
+    # (c) görünümü: `--` kod sayılırsa baştaki `-- /*` gerçek blok açar, Z başlık yorumda kalır, canlı başlık standarttır
+    ("y6 baştaki -- /* yalnız (c)'de std başlık (bdef)", "bdef",
+     "-- /*\nextension using interface ZI_X implementation in class zbp_x unique;\n"
+     "-- */ extension using interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "extend behavior for SalesOrder {}", "I_SALESORDERTP", 3),
+    # tip None: Z arayüzlü BDEF başlığı kip kararını BDEF'e çevirip DDL genişletmesini gizliyordu
+    ("y7 tip None: Z extension başlığı + extend view entity <std>", None,
+     "extension using interface zi_x implementation in class zbp_x unique;\nextend view entity I_SalesOrder with { a }",
+     "I_SALESORDER", 2),
+    # DDL: (b) görünümü `--` araya girmiş hedefi ÇÖZER (önce `?` idi; iki durumda da red)
+    ("y8 extend view entity -- ZI_X with / I_SalesOrder with (ddls)", "ddls",
+     "extend view entity -- ZI_X with\nI_SalesOrder with { a }", "I_SALESORDER", 1),
+]
+
+TIRE_YEM_SERBEST = [
+    ("v1 Z→Z BDEF extension (B8)", "bdef",
+     "extension using interface zi_a implementation in class zbp_x unique;\nextend behavior for Shop {}"),
+    ("v2 başlıkta -- notu ve ; — üç görünümde de yalnız Z", "bdef",
+     "extension using interface zi_a -- not: ; using interface zi_b\nimplementation in class zbp_x unique;\n"
+     "extend behavior for Shop {}"),
+    ("v3 BOM'lu Z→Z BDEF extension (tip None)", None,
+     "﻿extension using interface zi_a implementation in class zbp_x unique;\nextend behavior for Shop {}"),
+]
+
+# Baştaki BOM (U+FEFF): `\s` onu boşluk saymadığı için BDEF başlığı `^` çapası eşleşmiyordu (B13: `[]`).
+BOM = [
+    ("bom1 BOM + BDEF extension, extend behavior YOK (tip None)", None,
+     "﻿extension using interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "define behavior for ZAXET_EXT_NODE {}", "I_SALESORDERTP", 1),
+    ("bom2 BOM + BDEF extension (bdef)", "bdef",
+     "﻿extension using interface I_SalesOrderTP implementation in class zbp_x unique;\n"
+     "define behavior for ZAXET_EXT_NODE {}", "I_SALESORDERTP", 1),
+    ("bom3 BOM + extend view entity (ddls)", "ddls", "﻿" + EXT_VIEW_ENTITY, "I_SALESORDER", 1),
+]
+
 
 class Tarayici(unittest.TestCase):
     def test_std_ext_tarayici_pozitif(self):
@@ -160,6 +212,29 @@ class Tarayici(unittest.TestCase):
                 b = tara(kaynak, tip)
                 H.kaydet(f"Z104 tarayıcı KONTROL {ad}", "0 bulgu", str([(x.hedef, x.satir) for x in b]), not b)
                 self.assertEqual(b, [], ad)
+
+    def test_std_ext_tarayici_tire_yem_arayuz(self):
+        for ad, tip, kaynak, hedef, satir in TIRE_YEM:
+            with self.subTest(ad):
+                b = tara(kaynak, tip)
+                ok = len(b) == 1 and b[0].hedef == hedef and b[0].satir == satir
+                H.kaydet(f"Z104 tarayıcı {ad}", f"1 bulgu {hedef}@{satir}",
+                         str([(x.hedef, x.satir) for x in b]), ok)
+                self.assertTrue(ok, (ad, b))
+        for ad, tip, kaynak in TIRE_YEM_SERBEST:
+            with self.subTest(ad):
+                b = tara(kaynak, tip)
+                H.kaydet(f"Z104 tarayıcı KONTROL {ad}", "0 bulgu", str([(x.hedef, x.satir) for x in b]), not b)
+                self.assertEqual(b, [], ad)
+
+    def test_std_ext_tarayici_bom(self):
+        for ad, tip, kaynak, hedef, satir in BOM:
+            with self.subTest(ad):
+                b = tara(kaynak, tip)
+                ok = len(b) == 1 and b[0].hedef == hedef and b[0].satir == satir
+                H.kaydet(f"Z104 tarayıcı {ad}", f"1 bulgu {hedef}@{satir}",
+                         str([(x.hedef, x.satir) for x in b]), ok)
+                self.assertTrue(ok, (ad, b))
 
     def test_std_ext_tarayici_tabl_xml(self):
         std = ("<DD02V>\n <TABNAME>ZZAVBAK</TABNAME>\n <TABCLASS>APPEND</TABCLASS>\n <SQLTAB>VBAK</SQLTAB>\n</DD02V>")
@@ -242,6 +317,19 @@ class Kapi(unittest.TestCase):
             H.kaydet("Z104 kapı struct_create -- /* iki alan", "ADR_0005_A hedef MARA", str(g.code), ok)
             self.assertTrue(ok, (g.code, g.message))
 
+    def test_std_ext_gate_tire_yem_arayuz_ve_bom(self):
+        for ad, tip, kaynak, hedef, _satir in TIRE_YEM + BOM:
+            with self.subTest(ad):
+                g = self.yaz(ad="ZAXET_EXT", tip=tip, source=kaynak)
+                ok = not g.allowed and g.code == "ADR_0005_A" and f"hedef {hedef}" in (g.message or "")
+                H.kaydet(f"Z104 kapı {ad}", "ADR_0005_A", f"{g.code}", ok)
+                self.assertTrue(ok, (ad, g.code, g.message))
+        for ad, tip, kaynak in TIRE_YEM_SERBEST:
+            with self.subTest(ad):
+                g = self.yaz(ad="ZAXET_EXT", tip=tip, source=kaynak)
+                H.kaydet(f"Z104 kapı KONTROL {ad}", "allowed", f"{g.allowed} {g.code}", g.allowed)
+                self.assertTrue(g.allowed, (ad, g.code, g.message))
+
     def test_std_ext_gate_fail_closed(self):
         for ad, tip, kaynak in FAIL_CLOSED:
             with self.subTest(ad):
@@ -311,7 +399,8 @@ class AracIkinciKatman(unittest.TestCase):
 
     def test_std_ext_push_source_ikinci_katman(self):
         for ad, tip, kaynak in (("append", "tabl", APPEND_VBAK), ("view entity", "ddls", EXT_VIEW_ENTITY),
-                                ("annotate", "ddlx", ANNOTATE_ENTITY), ("-- /* sarmalı", "ddls", TIRE_YORUM[0][2])):
+                                ("annotate", "ddlx", ANNOTATE_ENTITY), ("-- /* sarmalı", "ddls", TIRE_YORUM[0][2]),
+                                ("-- yem arayüz B1", "bdef", _B1), ("BOM bdef", "bdef", BOM[1][2])):
             with self.subTest(ad):
                 r = self.atom.adt_push_source("ZAXET_EXT", tip, kaynak, transport="TESTK900001")
                 ok = isinstance(r, dict) and r.get("code") == "ADR_0005_A"

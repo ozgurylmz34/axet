@@ -23,15 +23,18 @@ Tanınan biçimler (kanıt: SAP-samples/abap-platform-rap630-ext `*.ddls.asddls`
   · abapGit TABL XML          : `<TABCLASS>APPEND</TABCLASS>` + `<SQLTAB><hedef></SQLTAB>`
 
 FAIL-CLOSED: `EXTEND`/`ANNOTATE` sözcüğü (yorum ve dize DIŞINDA) bulunup hedef çözülemezse bulgu üretilir.
-Yorum: `//` ve `/* */` atılır; `'…'` dizeleri atılır. `--` satır sonuna kadar TÜKETİLİR ama SİLİNMEZ: içindeki
-`/*` blok yorum AÇMAZ (açsaydı sonraki `*/`'a kadar gerçek kod silinirdi — ölçülen kaçak 2026-09-24:
-`-- /*` … `-- */` arasındaki `extend view entity I_SalesOrder` `[]` dönüyordu), içindeki sözcükler yine taranır.
-SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı DOĞRULANMADI; bu seçim İKİ durumda da güvenlidir:
-yorum sayıyorsa `-- /*` satırı yorumdur ve arkasındaki kod canlıdır (taranır); saymıyorsa `--` satırı koddur
-(taranır) ve SAP'nin açtığı blok yorumu tarayıcı açmaz ⇒ yalnız FAZLADAN tarama (yanlış pozitif), kaçak yok.
-Hedefi OLUMLU çözen yerler `--` metnine kanmaz: CDS hedefi bitişik belirteç ister (`--` araya girerse `?`);
-BDEF başlığı baştaki `--` satırlarını atlar; `using interface` hedeflerinin HEPSİ denetlenir (ilki değil).
-Bilinen yanlış pozitif: `--` yorumunda standart hedefli genişletme metni geçerse red.
+Yorum: `//` ve `/* */` atılır; `'…'` dizeleri atılır; baştaki BOM (U+FEFF) atılır.
+`--`: SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı DOĞRULANMADI ⇒ kaynak ÜÇ görünümde taranır ve bulgular
+BİRLEŞTİRİLİR (görünümler aynı uzunlukta, konum/satır hizalı):
+  (a) `--` satırı TÜKETİLİR ama SİLİNMEZ — içindeki `/*` blok açmaz, metni taranır (en geniş görünüm);
+  (b) `--` satır yorumudur — içeriği boşaltılır (SAP yorum sayıyorsa gerçek kod budur);
+  (c) `--` özel değildir — içindeki `/*`, `//`, `'` normal işler (SAP yorum saymıyorsa gerçek kod budur).
+Birleştirme kuralı: herhangi bir görünüm standart hedef çözerse bulgu; hiçbiri standart çözmez ama bir görünüm
+genişletmeyi görüp hedefi çözemezse `?` (fail-closed); ancak genişletmeyi gören TÜM görünümler yalnız Z/Y
+çözdüyse serbest. Tek görünüm yetmiyordu (ölçüldü 2026-09-24): (a) tek başına `-- /*` … `-- */` sarmalına karşı
+güvenliydi ama `--` içindeki `;` BDEF başlığını erken bitirip `--` içindeki YEM Z arayüzünü topluyordu → `[]`.
+Güvenlik iddiası iki SAP davranışının (b)/(c) doğru modellenmesine dayanır; SAP'nin gerçek davranışı ölçülmedi.
+Bilinen yanlış pozitif: `--` satırında standart hedefli genişletme metni geçerse red ((a)/(c) görür).
 ABAP kaynak tipleri (class, program, include, function…) taranmaz: ABAP dilinde standart DDIC/CDS objesini
 kaynaktan genişleten ifade yoktur; ENHO yazan araç yoktur.
 """
@@ -89,21 +92,36 @@ def _kip(object_type) -> str:
     return "abap" if uzanti.endswith(".abap") else "ddl"
 
 
-# ── temizleme: yorum + dize → boşluk (satır sonları korunur) ────────────────────────────
-# `--[^\n]*` AYRI alternatiftir: eşleşme TÜKETİLİR (içindeki `/*` blok açmaz) ama metin OLDUĞU GİBİ kalır.
+# ── temizleme: yorum + dize → boşluk (satır sonları ve konumlar korunur) ─────────────────
+# SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı DOĞRULANMADI ⇒ kaynak ÜÇ görünümde taranır, bulgular BİRLEŞİR:
+#   (a) `--` satırı TÜKETİLİR ama SİLİNMEZ (içindeki `/*` blok açmaz, metni taranır) — en geniş görünüm
+#   (b) `--` satır yorumudur → içeriği boşaltılır            (SAP yorum sayıyorsa gerçek kod budur)
+#   (c) `--` özel değildir → içindeki `/*`, `//`, `'` normal işler (SAP yorum saymıyorsa gerçek kod budur)
+# Tek görünüm kördü (bug gate 2026-09-24): (a)'da `--` içindeki `;` BDEF başlığını erken bitiriyor, `--` içindeki
+# yem Z arayüzü toplanıyor, gerçek standart arayüz görünmüyordu → `[]`.
 _YORUM_DIZE = re.compile(r"'(?:[^'\n]|'')*'?|/\*.*?(?:\*/|\Z)|//[^\n]*|--[^\n]*", re.S)
+_YORUM_DIZE_KOD = re.compile(r"'(?:[^'\n]|'')*'?|/\*.*?(?:\*/|\Z)|//[^\n]*", re.S)
 
 
 def _bosalt(m: re.Match) -> str:
     metin = m.group(0)
     if metin.startswith("--"):
-        return metin                                     # tüketildi, silinmedi (bkz. modül notu)
+        return metin                                     # (a): tüketildi, silinmedi (bkz. modül notu)
     return re.sub(r"[^\n]", " ", metin)
 
 
-def _temizle(kaynak: str) -> str:
+def _bosalt_tumu(m: re.Match) -> str:
+    return re.sub(r"[^\n]", " ", m.group(0))
+
+
+def _gorunumler(kaynak: str) -> tuple[str, str, str]:
+    """(a), (b), (c) görünümleri — aynı uzunlukta (konum ve satır numaraları hizalı). Baştaki BOM (U+FEFF) atılır:
+    `\\s` onu boşluk saymaz ⇒ BDEF başlığının `^` çapası BOM'lu kaynakta eşleşmiyordu (ölçüldü 2026-09-24: `[]`)."""
     src = kaynak.replace("\r\n", "\n").replace("\r", "\n")
-    return _YORUM_DIZE.sub(_bosalt, src)
+    if src.startswith("﻿"):
+        src = src[1:]
+    return (_YORUM_DIZE.sub(_bosalt, src), _YORUM_DIZE.sub(_bosalt_tumu, src),
+            _YORUM_DIZE_KOD.sub(_bosalt_tumu, src))
 
 
 _AD = r"(?:/[A-Z0-9_]+/)?[A-Z_][A-Z0-9_]*"
@@ -113,7 +131,7 @@ _R_EXTEND = re.compile(
     rf"EXTEND\s+(?P<ara>(?:(?:VIEW|ENTITY|CUSTOM|ABSTRACT|TYPE|PROJECTION|HIERARCHY|TABLE|STRUCTURE|ASPECT)\s+)*)"
     rf"(?P<tgt>{_AD})\s+WITH\b", _F)
 _R_ANNOTATE = re.compile(rf"ANNOTATE\s+(?P<ara>(?:VIEW|ENTITY)\s+)(?P<tgt>{_AD})\s+WITH\b", _F)
-# Baştaki `--` satırları atlanır (temizlemede SİLİNMEZLER): `--` SAP'de yorumsa başlık onlardan sonradır.
+# Baştaki `--` satırları atlanır ((a)/(c) görünümünde SİLİNMEZLER): `--` SAP'de yorumsa başlık onlardan sonradır.
 # Her tekrar `\n` ile biter ⇒ bölüştürme tek yollu (geri izleme patlaması yok).
 _R_BDEF_BASLIK = re.compile(r"^(?:[ \t\n]*--[^\n]*\n)*\s*(?P<bas>EXTENSION\b(?P<govde>[^;]*);?)", _F)
 _R_BDEF_ARAYUZ = re.compile(rf"\bUSING\s+INTERFACE\s+(?P<tgt>{_AD})(?![\w/])", _F)
@@ -129,40 +147,62 @@ def _gorunum(s: str, azami: int = 80) -> str:
     return s if len(s) <= azami else s[: azami - 1] + "…"
 
 
-def _ddl_bulgulari(temiz: str) -> list[Bulgu]:
-    out: list[Bulgu] = []
-    for m in _ANAHTAR.finditer(temiz):
-        kw = m.group("kw").upper()
-        rx = _R_EXTEND if kw == "EXTEND" else _R_ANNOTATE
-        e = rx.match(temiz, m.start())
-        satir = _satir(temiz, m.start())
-        if not e:
-            parca = temiz[m.start(): m.start() + 80].split("\n", 2)
-            out.append(Bulgu(satir, _gorunum(" ".join(parca[:2])), "?",
-                             f"{kw} sözcüğü var ama hedef çözülemedi (tanınmayan biçim) — fail-closed"))
+def _ddl_bulgulari(gorunumler) -> list[Bulgu]:
+    """Her görünümde her EXTEND/ANNOTATE sözcüğü. Görünümler konumca hizalı: aynı sözcükte HERHANGİ bir görünüm
+    standart hedef çözerse o bulgu; hiçbiri standart çözmez ama biri çözemezse `?` (fail-closed); hepsi Z/Y → serbest."""
+    std: dict[tuple[int, str], Bulgu] = {}
+    belirsiz: dict[int, Bulgu] = {}
+    for temiz in gorunumler:
+        for m in _ANAHTAR.finditer(temiz):
+            kw = m.group("kw").upper()
+            rx = _R_EXTEND if kw == "EXTEND" else _R_ANNOTATE
+            e = rx.match(temiz, m.start())
+            satir = _satir(temiz, m.start())
+            if not e:
+                parca = temiz[m.start(): m.start() + 80].split("\n", 2)
+                belirsiz.setdefault(m.start(), Bulgu(
+                    satir, _gorunum(" ".join(parca[:2])), "?",
+                    f"{kw} sözcüğü var ama hedef çözülemedi (tanınmayan biçim) — fail-closed"))
+                continue
+            hedef = e.group("tgt").upper()
+            if not izinli(hedef):
+                bicim = " ".join([kw.lower()] + e.group("ara").lower().split())
+                std.setdefault((m.start(), hedef),
+                               Bulgu(satir, _gorunum(e.group(0)), hedef, f"{bicim} <standart obje>"))
+    std_konum = {konum for konum, _h in std}
+    return list(std.values()) + [b for konum, b in belirsiz.items() if konum not in std_konum]
+
+
+def _bdef_bulgulari(gorunumler) -> tuple[list[Bulgu], bool]:
+    """→ (bulgular, BDEF genişletmesi algılandı mı). Başlık ve `using interface` HER görünümde ayrı çözülür, bulgular
+    birleşir: herhangi bir görünümde standart arayüz → bulgu; standart yok ama algılayan bir görünümde arayüz
+    çözülemedi → `?` (fail-closed); algılayan tüm görünümler yalnız Z/Y arayüz çözdüyse serbest."""
+    std: dict[str, Bulgu] = {}
+    belirsiz: Bulgu | None = None
+    algilandi = False
+    for temiz in gorunumler:
+        baslik = _R_BDEF_BASLIK.match(temiz)
+        davranis = list(_R_EXTEND_BEHAVIOR.finditer(temiz))
+        if not baslik and not davranis:
+            continue                                     # bu görünümde BDEF genişletmesi yok (define behavior)
+        algilandi = True
+        satir = _satir(temiz, baslik.start("govde") if baslik else davranis[0].start())
+        # HEPSİ denetlenir (ilki değil): (a) görünümünde ilk eşleşme bir `--` satırındaki Z adı olabilir.
+        arayuzler = [a.group("tgt").upper() for a in _R_BDEF_ARAYUZ.finditer(baslik.group("govde"))] if baslik else []
+        if not arayuzler:
+            if belirsiz is None:
+                ifade = _gorunum(baslik.group("bas")) if baslik else _gorunum(davranis[0].group(0))
+                belirsiz = Bulgu(satir, ifade, "?",
+                                 "BDEF genişletmesi: genişletilen BDEF kaynakta yazılı değil (ADT metadata'sında; "
+                                 "`extend behavior for <X>` alias olabilir) — standart olmadığı kanıtlanamadı, fail-closed")
             continue
-        hedef = e.group("tgt").upper()
-        if not izinli(hedef):
-            bicim = " ".join([kw.lower()] + e.group("ara").lower().split())
-            out.append(Bulgu(satir, _gorunum(e.group(0)), hedef, f"{bicim} <standart obje>"))
-    return out
-
-
-def _bdef_bulgulari(temiz: str) -> list[Bulgu]:
-    baslik = _R_BDEF_BASLIK.match(temiz)
-    davranis = list(_R_EXTEND_BEHAVIOR.finditer(temiz))
-    if not baslik and not davranis:
-        return []                                        # BDEF tanımı (define behavior) — genişletme değil
-    satir = _satir(temiz, baslik.start("govde") if baslik else davranis[0].start())
-    # HEPSİ denetlenir: `--` metni silinmediği için ilk eşleşme bir `--` yorumundaki Z adı olabilir.
-    arayuzler = [a.group("tgt").upper() for a in _R_BDEF_ARAYUZ.finditer(baslik.group("govde"))] if baslik else []
-    if arayuzler:
-        return [Bulgu(satir, _gorunum(baslik.group("bas")), hedef, "BDEF extension using interface <standart BO>")
-                for hedef in dict.fromkeys(arayuzler) if not izinli(hedef)]
-    ifade = _gorunum(baslik.group("bas")) if baslik else _gorunum(davranis[0].group(0))
-    return [Bulgu(satir, ifade, "?",
-                  "BDEF genişletmesi: genişletilen BDEF kaynakta yazılı değil (ADT metadata'sında; "
-                  "`extend behavior for <X>` alias olabilir) — standart olmadığı kanıtlanamadı, fail-closed")]
+        for hedef in arayuzler:
+            if not izinli(hedef):
+                std.setdefault(hedef, Bulgu(satir, _gorunum(baslik.group("bas")), hedef,
+                                            "BDEF extension using interface <standart BO>"))
+    if std:
+        return list(std.values()), algilandi
+    return ([belirsiz] if belirsiz else []), algilandi
 
 
 def tara(kaynak: str, object_type: str | None = None) -> list[Bulgu]:
@@ -172,10 +212,22 @@ def tara(kaynak: str, object_type: str | None = None) -> list[Bulgu]:
     kip = _kip(object_type)
     if kip == "abap":
         return []
-    temiz = _temizle(kaynak)
-    if kip == "bilinmiyor":
-        kip = "bdef" if (_R_BDEF_BASLIK.match(temiz) or _R_EXTEND_BEHAVIOR.search(temiz)) else "ddl"
-    bulgular = _bdef_bulgulari(temiz) if kip == "bdef" else _ddl_bulgulari(temiz)
+    gorunumler = _gorunumler(kaynak)
+    if kip == "bdef":
+        bulgular = _bdef_bulgulari(gorunumler)[0]
+    elif kip == "ddl":
+        bulgular = _ddl_bulgulari(gorunumler)
+    else:
+        # Tip bilinmiyor: BDEF genişletmesi algılanırsa BDEF kuralları + DDL taramasının ÇÖZÜLMÜŞ standart hedefleri
+        # (`extend behavior` DDL tarayıcısında `?` üretir — o atlanır). Tek-yollu karar kördü (ölçüldü 2026-09-24):
+        # Z arayüzlü `extension` başlığı, arkasındaki `extend view entity <std>`'yi `[]`'e gizliyordu.
+        bulgular, bdef_mi = _bdef_bulgulari(gorunumler)
+        ddl = _ddl_bulgulari(gorunumler)
+        if bdef_mi:
+            gorulen = {(b.satir, b.hedef) for b in bulgular}
+            bulgular = bulgular + [b for b in ddl if b.hedef != "?" and (b.satir, b.hedef) not in gorulen]
+        else:
+            bulgular = ddl
     bulgular.sort(key=lambda b: (b.satir, b.hedef))
     return bulgular
 

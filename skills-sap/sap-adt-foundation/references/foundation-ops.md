@@ -233,10 +233,14 @@ ad denetimi yetmez; yazma kapısı (`gate.check_std_extension`, adım 5) ve `adt
 - BDEF `extension …;`: genişletilen BDEF kaynakta YAZMAZ (ADT metadata'sı; `extend behavior for <X>`'teki X alias olabilir —
   SAP örneği `extend behavior for Shop`). Hedef yalnız `extension using interface <I>` ile görünür; yoksa fail-closed red.
 - Hedef Z/Y ya da `/Z…/`, `/Y…/` ise serbest (Z objeyi Z extend ile genişletmek). Yorum (`//`, `/* */`) ve `'…'` içindeki metin
-  taranmaz. `--` satırı **tüketilir, silinmez**: içindeki `/*` blok yorum açmaz (açsaydı `-- /*` … `-- */` arasındaki gerçek
-  kod silinip kapıdan geçerdi — ölçülen kaçak, 2026-09-24), içindeki metin yine taranır. SAP'nin CDS/BDL'de `--`'yı yorum
-  sayıp saymadığı DOĞRULANMADI; seçim iki davranışta da güvenlidir (sayıyorsa arkasındaki kod canlıdır ve taranır, saymıyorsa
-  `--` satırı koddur ve taranır). BDEF başlığı baştaki `--` satırlarını atlar; `using interface` hedeflerinin hepsi denetlenir.
+  taranmaz; baştaki BOM (U+FEFF) atılır. SAP'nin CDS/BDL'de `--`'yı yorum sayıp saymadığı DOĞRULANMADI ⇒ kaynak **üç
+  görünümde** taranır ve bulgular birleştirilir: (a) `--` satırı tüketilir, silinmez (içindeki `/*` blok açmaz) · (b) `--`
+  satır yorumu (SAP yorum sayıyorsa gerçek kod) · (c) `--` özel değil, içindeki `/*` blok açar (SAP saymıyorsa gerçek kod).
+  Herhangi bir görünüm standart hedef çözerse red; hiçbiri standart çözmez ama biri hedefi çözemezse `?` red; genişletmeyi
+  gören tüm görünümler yalnız Z/Y çözdüyse serbest. Tek görünüm yetmedi (ölçülen iki kaçak, 2026-09-24): `--` içindeki `/*`
+  blok açınca `-- /*` … `-- */` arasındaki gerçek kod siliniyordu; `--` metni korununca da BDEF başlığı `--` içindeki `;`'da
+  bitip `--` içindeki yem Z arayüzünü topluyordu (`extension -- using interface ZI_X ;` + alt satırda standart arayüz → `[]`).
+  Güvenlik, iki SAP davranışının (b)/(c) ile doğru modellenmesine dayanır — SAP'nin gerçek davranışı ölçülmedi.
 - Bilinen yanlış pozitifler (fail-closed yönü, kod değiştirilmez): ① `--` yorumunda standart hedefli genişletme metni geçerse
   red. ② Alan/alias adı tam olarak `extend` / `annotate` ise hedef çözülemez → `?` red (ölçüldü:
   `{ key extend, extend_flag as Extend }` → 2 bulgu `?`; `note as Annotate` → `?`; `extend_flag` tek başına serbest).
