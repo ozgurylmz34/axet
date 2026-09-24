@@ -379,7 +379,7 @@ python <foundation>/scripts/sap_adt_populate.py msag --name <ZMSG> --description
 
 | Adım | Kim · nasıl | Sonuç |
 |---|---|---|
-| Slot oluştur (şablonla) | geliştirici: proje klasöründeki `KURULUMU-TAMAMLA.cmd` (→ `<TEMPLATE>/proje-tamamla.cmd` → `scripts/conn_sablon.py hazirla/dogrula`); `conn/DEV.env` + `conn/QA.env` şablonu Notepad'de doldurulur | denetim alan adı + kural basar, değer basmaz; parola dahil `<...>` yer tutucu reddedilir |
+| Slot oluştur (şablonla) | geliştirici: proje klasöründeki `KURULUMU-TAMAMLA.cmd` (→ `<TEMPLATE>/proje-tamamla.cmd` → `scripts/conn_sablon.py hazirla/dogrula`); `conn/DEV.env` + `conn/QA.env` şablonunu kullanıcı doldurur (pencere tam yolu + alanları söyler, editör açmaz) | denetim alan adı + kural basar, değer basmaz; parola dahil `<...>` yer tutucu reddedilir |
 | Slot oluştur | geliştirici, kendi terminalinde: `python <foundation>/scripts/setup_credentials.py --slot <SISTEM_ADI> --project-dir <proje>` | `conn/<SISTEM_ADI>.env` (değer basılmaz) |
 | Slotları gör | `python <foundation>/scripts/switch_tier.py --list --project-dir <proje>` | JSON: yalnız ad + tier + aktif sistem |
 | Sistemi seç (aXet) | `%sistem` skill'i: `conn_sablon.py ozet --json` (ad + tier + durum) → seçim → `switch_tier.py <AD>` | canlı ölçüldü 2026-09-23 (sahte slotlar): QA'ya geçiş ve DEV'e dönüş `.conn_adt`'yi değiştirdi, sandbox engellemedi |

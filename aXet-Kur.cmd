@@ -19,6 +19,7 @@ echo.
 echo %* | findstr /i "DenemeModu" >nul && goto deneme
 if "%RC%"=="0" goto tamam
 if "%RC%"=="3" goto yeniden
+if "%RC%"=="2" goto eksik
 echo  Kurulum TAMAMLANMADI - cikis kodu %RC%.
 echo  Yukaridaki mesajlari okuyun. Gerekirse ekran goruntusunu destek ekibine gonderin.
 goto son
@@ -28,13 +29,18 @@ echo  DENEME MODU: hicbir sey kurulmadi. Gercek kurulum icin dosyaya secenek ver
 goto son
 
 :tamam
-echo  Kurulum TAMAM.
-echo  Simdi aXet'i acin ve bir sey yazin: ilk cevabin ilk satiri [AXET-CORE- ile baslamali.
+echo  Kurulum TAMAM - aXet'i acin.
+echo  Ilk cevabin ilk satiri [AXET-CORE- ile baslamali. Guncelleme icin aXet'te %%guncelle yazin.
 goto son
 
 :yeniden
 echo  Bu pencereyi kapatin ve bu dosyaya TEKRAR cift tiklayin.
 echo  (Yeni kurulan bir program bu pencerede henuz gorunmuyor.)
+goto son
+
+:eksik
+echo  Eksik program var (listesi yukarida). Sirket portalindan (Software Center / Company Portal) kurun.
+echo  Bitince bu pencereyi kapatin ve bu dosyaya TEKRAR cift tiklayin.
 goto son
 
 :indirilemedi

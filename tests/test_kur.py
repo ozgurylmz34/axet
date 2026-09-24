@@ -130,14 +130,42 @@ class KurTest(GeciciTest):
             KurTest._kur_python = Path(r.stdout.strip().splitlines()[-1])
         return KurTest._kur_python
 
-    def path_kaydi(self, makine: str, kullanici: str, tur: str = "ExpandString") -> Path:
+    def git_dizini(self, env: dict | None = None) -> str:
+        """Test ortamının PATH'inde ilk bulunan git'in klasörü (kur.ps1'in `git` çözümüyle aynı sıra)."""
+        yol = shutil.which("git", path=self.path_oku(env or self.env))
+        if not yol:
+            raise RuntimeError("test ortamında git çözülemedi")
+        return str(Path(yol).parent)
+
+    def path_kaydi(self, makine: str, kullanici: str, tur: str = "ExpandString", git: bool = True,
+                   python_kayit: list | None = None) -> Path:
         """Z98 enjeksiyon noktası: AXET_KUR_PATH_KAYDI sahte kayıt hedefi (JSON). kur.ps1 bu değişken varken kayıt
-        defterini ne okur ne yazar, ayar yayını da yapmaz; makine PATH'ini de buradan okur."""
+        defterini ne okur ne yazar, ayar yayını da yapmaz; makine PATH'ini de buradan okur. Kayıt defterindeki PEP 514
+        Python kayıtları da yerine `python_kayit` dizisinden okunur (verilmezse boş: gerçek makinenin kaydı görünmez).
+        git=True: gerçek git'in klasörü makine PATH'inin SONUNA eklenir — yeni terminalde `git` çözülür, kurulumun Git
+        PATH kolu (Z98 Git) hiçbir şey yazmaz; eklenen değer `self.makine_kaydi`nda."""
+        if git:
+            makine = os.pathsep.join([m for m in (makine, self.git_dizini()) if m])
+        self.makine_kaydi = makine
+        veri = {"makine": makine, "kullanici": kullanici, "tur": tur}
+        if python_kayit is not None:
+            veri["python_kayit"] = python_kayit
         f = self.tmp / "_path_kaydi.json"
-        f.write_text(json.dumps({"makine": makine, "kullanici": kullanici, "tur": tur}, ensure_ascii=False),
-                     encoding="utf-8")
+        f.write_text(json.dumps(veri, ensure_ascii=False), encoding="utf-8")
         self.env["AXET_KUR_PATH_KAYDI"] = str(f)
         return f
+
+    def bos_program_files(self, env: dict) -> dict:
+        """Bilinen kurulum klasörleri (ProgramFiles*, LOCALAPPDATA) boş geçici klasörleri gösterir: kur.ps1 artık Git'i
+        ve Python'u bu klasörlerde VARSAYILAN olarak arar; dar ortam testleri makinedeki gerçek kurulumu görmesin."""
+        pf = self.tmp / "_programfiles"
+        pf.mkdir(exist_ok=True)
+        env = dict(env)
+        for k in list(env):
+            if k.upper() in ("PROGRAMFILES", "PROGRAMFILES(X86)", "PROGRAMW6432"):
+                del env[k]
+        env.update({"ProgramFiles": str(pf), "ProgramFiles(x86)": str(pf), "ProgramW6432": str(pf)})
+        return env
 
     @staticmethod
     def path_kaydi_oku(f: Path) -> dict:
@@ -200,9 +228,10 @@ class KurTest(GeciciTest):
         if axet:
             (lad / "axet-code" / "bin").mkdir(parents=True)
             (lad / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        self.path_kaydi("", "", git=False)  # kayıttaki PATH de boş: PATH tazeleme gerçek python/git getirmesin
         env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(SYS32), str(POWERSHELL.parent)]))
         env["LOCALAPPDATA"] = str(lad)
-        return env, kayit
+        return self.bos_program_files(env), kayit
 
     def sahte_python_ortami(self, surum: str) -> tuple[dict, Path]:
         """Sürümünü <surum> diye bildiren, GERÇEKTEN ÇALIŞAN sahte bir python'un tek başına PATH'te olduğu ortam.
@@ -222,9 +251,10 @@ class KurTest(GeciciTest):
         lad = self.tmp / f"_lad{etiket}"
         (lad / "axet-code" / "bin").mkdir(parents=True)
         (lad / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        self.path_kaydi("", "", git=False)
         env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(SYS32), str(POWERSHELL.parent)]))
         env["LOCALAPPDATA"] = str(lad)
-        return env, sahte
+        return self.bos_program_files(env), sahte
 
     def sahte_py_launcher_ortami(self) -> tuple[dict, Path, Path]:
         """`py` launcher kolunun TEK yol olarak kaldığı ortam: PATH'te python/python3 YOK, yalnız `-0p` listesi
@@ -243,9 +273,10 @@ class KurTest(GeciciTest):
         lad = self.tmp / "_lad_pylauncher"
         (lad / "axet-code" / "bin").mkdir(parents=True)
         (lad / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        self.path_kaydi("", "", git=False)
         env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(SYS32), str(POWERSHELL.parent)]))
         env["LOCALAPPDATA"] = str(lad)
-        return env, sahte_py, gercek
+        return self.bos_program_files(env), sahte_py, gercek
 
     def yabanci_repo(self, ad: str) -> tuple[Path, Path]:
         """scripts/install.py + scripts/doctor.py + skills-sap/ + core/00-temel.md taşıyan ama `CORE-ID: AXET-CORE-`
@@ -289,11 +320,20 @@ class KurTest(GeciciTest):
         self.assertIn((self.hedef / "core" / "sap").as_posix(), ctx)
         self.assertIn((self.hedef / "skills-sap").as_posix(), skills)
         self.assertIn("SONUÇ: 0 FAIL", c)  # doctor.py koştu
-        self.assertIn("Kurulum tamam (yeni klon)", c)
+        self.assertIn("Kurulum TAMAM — aXet'i aç. (yeni klon)", c)
         self.assertIn("YENİ bir aXet oturumu aç", c)  # Türkçe çıktı bozulmadan geldi
         self.assertIn("AXET-CORE", c)
         self.assertIn("%yeni-proje", c)
+        self.assertIn("%guncelle", c)  # tek güncelleme yolu aXet içinden
+        self.assertIn("KURULUMU-TAMAMLA", c)
+        self.assertNotIn("kur.cmd -Kaldir", c)  # son mesaj kullanıcıya komut vermez
         self.assertNotIn("beklenmeyen hata", c)
+        # Git kimliği adımı işe başlamadan koştu; pencere etkileşimsiz (stdin NUL) → soru SORULMADI, hiçbir şey yazılmadı
+        self.assertLess(c.index("== 2/5 Git kimliği"), c.index("== 3/5 Template klonu"), c)
+        self.assertIn("Git kimliği SORULMADI", c)
+        self.assertEqual(Path(self.env["GIT_CONFIG_GLOBAL"]).read_text(encoding="utf-8"), "")
+        # Z98 Git kolu kablolu: kayıttaki makine PATH'i git'i içeriyor → yazılmaz, ölçülür
+        self.assertIn("OK 'git' komutu yeni terminallerde çalışıyor", c)
 
     def test_tekrar_calistirma_degisiklik_yok_sonra_guncelleme(self):
         self.kurulu()
@@ -517,8 +557,8 @@ class KurTest(GeciciTest):
         # Ölçüldü (HEAD f179e14): doctor.py iki template kopyasının aynı skill adlarını FAIL sayar -> kurulum yazılır
         # ama doğrulama geçmez, kur.ps1 çıkış 4 verir. İki çekirdek durumunun kullanıcıya görünür olduğu yer burası.
         self.assertEqual(r.returncode, 4, c)
-        self.assertIn("doctor.py doğrulaması geçmedi", c)
-        self.assertNotIn("Kurulum tamam", c)
+        self.assertIn("son kontrol (doctor) sorun buldu", c)
+        self.assertNotIn("Kurulum TAMAM", c)
         ctx = self.cfg_oku()["options"]["context_paths"]
         # Ölçüm: install.py yalnız kendi klonunun kayıtlarını yönetir -> iki çekirdek birlikte kalır.
         self.assertIn((AXET_HOME / "core" / "00-temel.md").as_posix(), ctx)
@@ -533,7 +573,7 @@ class KurTest(GeciciTest):
         self.assertIsNotNone(komut, c)
         self.assertTrue(Path(komut.group(1)).is_file(), komut.group(1))
         # Y1a: doctor'ın FAIL satırlarından SONRA, son mesajda doğru çözüm yeniden basılır
-        son = c[c.index("doctor.py doğrulaması geçmedi"):]
+        son = c[c.index("son kontrol (doctor) sorun buldu"):]
         self.assertIn("önerisini UYGULAMA", son)
         self.assertRegex(son, desen)
         self.assertIn("kur.cmd", son[son.index("önerisini UYGULAMA"):])
@@ -562,7 +602,7 @@ class KurTest(GeciciTest):
         ctx = self.cfg_oku()["options"]["context_paths"]
         self.assertIn((hedef / "core" / "00-temel.md").as_posix(), ctx)
         self.assertIn("SONUÇ: 0 FAIL", c)
-        self.assertIn("Kurulum tamam (yeni klon)", c)
+        self.assertIn("Kurulum TAMAM — aXet'i aç. (yeni klon)", c)
         self.assertNotIn("beklenmeyen hata", c)
 
         r = self.kur("-Evet", env=env, hedef=hedef)
@@ -626,7 +666,7 @@ class KurTest(GeciciTest):
         self.assertIn("PAKETLER: EKSİK", c)
         self.assertIn("proxy", c)
         self.assertTrue(any(s.startswith("[WARN]") and "SAP Python paketleri EKSİK" in s for s in c.splitlines()), c)
-        self.assertIn("Kurulum tamam", c)
+        self.assertIn("Kurulum TAMAM", c)
 
     def test_z101_kontrol_grubu_paketler_kuruluysa_pip_cagrilmaz(self):
         env, kayit = self._paket_ortami("basari", kurulu=True)
@@ -687,7 +727,7 @@ class KurTest(GeciciTest):
         self.assertNotIn("Config zaten bu klonu gösteriyor", c)
         self.assertNotIn(str(silinmis / "scripts" / "install.py"), c)  # olmayan betik önerilmez
         self.assertNotIn("doctor'ın FAIL satırları", c)  # doctor 0 FAIL
-        son = c[c.index("Kurulum tamam"):]
+        son = c[c.index("Kurulum TAMAM"):]
         self.assertIn(str(self.cfg), son)  # elle temizlenecek dosya
         for giris in (bayat_core, bayat_skills, bayat_desen):
             self.assertIn(giris, son)
@@ -943,8 +983,11 @@ class KurTest(GeciciTest):
         bin_ = self.tmp / "_sahte_git"
         bin_.mkdir()
         shutil.copy(SYS32 / "where.exe", bin_ / "git.exe")  # `git --version` rc 1 veren, git olmayan bir exe
+        # Gerçek Git ne kayıttaki PATH'ten (tazeleme) ne bilinen klasörlerden gelsin: aday YALNIZ sahte git.exe.
+        self.path_kaydi(str(Path(sys.executable).parent), "", git=False)
         env = self.path_degistir(self.env, os.pathsep.join([str(bin_), str(Path(sys.executable).parent), str(SYS32),
                                                             str(POWERSHELL.parent)]))
+        env = self.bos_program_files(env)
         self.assertTrue(env.get("XDG_CONFIG_HOME"))  # XDG tanımlı ve geçerli: XDG notu yine de basılmamalı
         r = self.kur("-DenemeModu", env=env)
         c = self.cikti(r)
@@ -1038,8 +1081,12 @@ class KurTest(GeciciTest):
         k = subprocess.run([str(stub), "-c", "print(1)"], capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
         if k.returncode == 0:
             self.skipTest("WindowsApps python.exe bu makinede gerçek bir yorumlayıcı (Store yönlendirmesi değil)")
+        # kayıttaki PATH boş + ProgramFiles* boş: PATH tazeleme ve bilinen klasörler gerçek git'i getirmesin
+        # (LOCALAPPDATA gerçek kalır: stub orada; oradaki gerçek Python bulunursa aşağıdaki dal onu kabul eder)
+        self.path_kaydi("", "", git=False)
         env = self.path_degistir(self.env, os.pathsep.join([str(wa), str(SYS32), str(POWERSHELL.parent)]))
-        r = self.kur(env=env)  # git PATH'te yok -> 2. adımda durur; -WingetKapali
+        env = self.bos_program_files(env)
+        r = self.kur(env=env)  # git bulunmaz -> ön koşulda durur (2); -WingetKapali
         c = self.cikti(r)
         self.assertEqual(r.returncode, 2, c)
         secilen = re.search(r"OK Python: \S+ \((.+)\)", c)
@@ -1066,8 +1113,8 @@ class KurTest(GeciciTest):
         c = self.cikti(r)
         self.assertEqual(r.returncode, 0, c)
         self.assertIn("DENEME MODU bitti", c)
-        self.assertIn("İsteğe bağlı: rg (ripgrep)", c)
-        self.assertIn("Ön koşul: Git ve Python", c)
+        self.assertIn("Ön koşullar: aXet, Git, Python", c)
+        self.assertIn("2/5 Git kimliği", c)
         for bozuk in ("ParserError", "Ã", "Ä", "\ufffd"):
             self.assertNotIn(bozuk, c)
         self.assertFalse(self.hedef.exists())
@@ -1097,13 +1144,81 @@ class KurTest(GeciciTest):
         self.assertFalse(self.hedef.exists())
 
     # --- ön koşul eksik ---------------------------------------------------------------------------------------
-    def test_axet_yoksa_durur(self):
+    def test_axet_yoksa_durur_git_python_da_ayni_mesajda(self):
+        """aXet yokken Git/Python'a da bakılır; eksiklerin HEPSİ tek mesajda (kullanıcı portaldan bir seferde kurar,
+        dosyaya bir kez daha çift tıklar). Eskiden aXet yoksa hemen çıkılıyor, Git/Python ancak 2. denemede görülüyordu."""
         env, kayit = self.dar_ortam(axet=False)
         r = self.kur("-Evet", env=env, winget_kapali=False)
-        self.assertEqual(r.returncode, 2, self.cikti(r))
-        self.assertIn("şirket kanalından kurulur", self.cikti(r))
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 2, c)
+        self.assertIn("şirket kanalından kurulur", c)
+        self.assertIn("EKSİK: Git bulunamadı", c)  # aXet yokken de Git'e bakıldı
+        self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
+        self.assertEqual(c.count("DURDU:"), 1, c)  # tek durdurma mesajı
+        blok = c[c.index("DURDU:"):]
+        for satir in ("    - aXet", "    - Git (Git for Windows)", "    - Python 3.12 ya da üstü"):
+            self.assertIn(satir, blok)
+        self.assertIn("Şirket portalından (Software Center / Company Portal) kur", blok)
+        self.assertIn("bu dosyaya TEKRAR çift tıkla", blok)
         self.assertFalse(kayit.exists(), "winget çağrıldı")
         self.assertFalse(self.hedef.exists())
+
+    def test_tek_eksik_varsa_yalniz_o_listelenir(self):
+        # Kontrol grubu (tek mesaj testinin): aXet VAR → listede yalnız Git + Python; aXet satırı yok.
+        env, _kayit = self.dar_ortam(axet=True)
+        c = self.cikti(self.kur(env=env))
+        blok = c[c.index("DURDU:"):]
+        self.assertNotIn("    - aXet", blok)
+        self.assertIn("    - Git (Git for Windows)", blok)
+        self.assertIn("OK aXet:", c)
+
+    def test_portaldan_yeni_kurulan_python_path_tazelemeyle_ayni_pencerede_gorulur(self):
+        """Pencere Explorer'ın ESKİ PATH'iyle açıldı; Python portaldan az önce kuruldu ve yalnız KAYITTAKİ kullanıcı
+        PATH'inde. kur.ps1 başta PATH'i kayıttan tazeler → Python aynı pencerede bulunur (kapat-aç gerekmez).
+        Kontrol grubu: aynı ortam, kayıtta girdi yok → Python EKSİK (test_git_python_yok...)."""
+        env, _ = self.sahte_python_ortami("3.12")
+        sahte = next(Path(p) for p in self.path_oku(env).split(os.pathsep) if (Path(p) / "python.cmd").is_file())
+        env = self.path_degistir(env, os.pathsep.join([str(SYS32), str(POWERSHELL.parent)]))  # PATH'ten çıkar
+        self.path_kaydi("", str(sahte), git=False)
+        env["AXET_KUR_PATH_KAYDI"] = self.env["AXET_KUR_PATH_KAYDI"]
+        c = self.cikti(self.kur(env=env))
+        self.assertIn("PATH   : kayıttan tazelendi (1 yeni girdi", c)
+        self.assertIn(f"OK Python: 3.12 ({sahte / 'python.cmd'})", c)
+        self.assertNotIn("EKSİK: Python", c)
+
+    def test_python_kayit_defterinden_bulunur_path_disinda(self):
+        """PEP 514 kaydı (sahte: AXET_KUR_PATH_KAYDI python_kayit): portal Python'u PATH'e koymadıysa da bulunur.
+        3.11 kaydı sürüm kapısında elenir, 3.12 seçilir (sıra: kayıt sürümü büyükten küçüğe DEĞİL, dizi sırası —
+        sahte kayıt gerçek kaydın sıralanmış çıktısının yerine geçer)."""
+        env, _ = self.sahte_python_ortami("3.12")
+        sahte = next(Path(p) / "python.cmd" for p in self.path_oku(env).split(os.pathsep) if (Path(p) / "python.cmd").is_file())
+        eski = self.eski_python_dizini("3.11") / "python.cmd"
+        env = self.path_degistir(env, os.pathsep.join([str(SYS32), str(POWERSHELL.parent)]))
+        for kayit, beklenen in (([str(eski), str(sahte)], f"OK Python: 3.12 ({sahte})"), ([], "EKSİK: Python")):
+            with self.subTest(kayit=kayit):
+                self.path_kaydi("", "", git=False, python_kayit=kayit)
+                env["AXET_KUR_PATH_KAYDI"] = self.env["AXET_KUR_PATH_KAYDI"]
+                c = self.cikti(self.kur(env=env))
+                self.assertIn(beklenen, c)
+
+    def test_python_bilinen_klasorde_varsayilanda_bulunur(self):
+        """%LOCALAPPDATA%\\Programs\\Python\\Python3*\\python.exe winget'e bağlı olmadan taranır. Gerçek bir python.exe
+        gerekir (adı python.exe olmalı): venv başlatıcısı + pyvenv.cfg klasöre kopyalanır (ölçüldü: sys.executable
+        kopyanın yolu, taban gerçek kurulum). Kontrol grubu: klasör boşken Python EKSİK."""
+        env, _kayit = self.dar_ortam(axet=True)
+        lad = Path(env["LOCALAPPDATA"])
+        hedef = lad / "Programs" / "Python" / "Python312"
+        c = self.cikti(self.kur(env=env))
+        self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)  # kontrol grubu
+        v = self.tmp / "_venv_bilinen"
+        r = subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(v)], capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        hedef.mkdir(parents=True)
+        shutil.copy2(v / "Scripts" / "python.exe", hedef / "python.exe")
+        shutil.copy2(v / "pyvenv.cfg", hedef / "pyvenv.cfg")
+        c = self.cikti(self.kur(env=env))
+        self.assertIn(f"OK Python: {sys.version_info.major}.{sys.version_info.minor} ({hedef / 'python.exe'})", c)
 
     # --- Z80: şirket ortamı — winget varsayılanda KAPALI, yalnız -Winget ile ----------------------------------------
     # Neden (ölçülmüş vaka, 2026-09-23): kullanıcı "E" deyince winget izinsiz bir Git'i kullanıcı klasörüne kurdu;
@@ -1117,9 +1232,12 @@ class KurTest(GeciciTest):
         self.assertNotIn("OK Python", c)  # 0 baytlık sahte python.exe/python3.exe aday olarak elendi
         self.assertIn("EKSİK: Git bulunamadı", c)
         self.assertIn("EKSİK: Python 3.12 ya da üstü bulunamadı", c)
-        self.assertIn("Git bulunamadı. Şirketinin yazılım merkezinden (Software Center / Company Portal) kur", c)
-        self.assertIn("Python bulunamadı. Şirketinin yazılım merkezinden (Software Center / Company Portal) kur", c)
-        self.assertIn("YENİ bir PowerShell aç", c)
+        blok = c[c.index("DURDU:"):]
+        self.assertIn("Şirket portalından (Software Center / Company Portal) kur", blok)
+        self.assertIn("    - Git (Git for Windows)", blok)
+        self.assertIn("    - Python 3.12 ya da üstü", blok)
+        self.assertIn("bu dosyaya TEKRAR çift tıkla", blok)
+        self.assertNotIn("PowerShell aç", c)  # kullanıcıya terminal komutu/terminal açma talimatı yok
         self.assertIn("https://git-scm.com/download/win", c)
         self.assertIn("https://www.python.org/downloads/windows/", c)
         self.assertNotIn("winget ile kurayım mı", c)
@@ -1173,7 +1291,7 @@ class KurTest(GeciciTest):
         # Z80 nit: eski sürüm KURULU iken "bulunamadı" denmez — yetersiz sürüm ve bulunan sürüm söylenir.
         # Kontrol grubu (Python hiç yok → "bulunamadı"): test_git_python_yok_varsayilanda_winget_sorulmaz_yazilim_merkezi_denir.
         self.assertIn("EKSİK: Python sürümü yetersiz (bulunan 3.11", c)
-        self.assertIn("Python sürümü yetersiz (gerekli 3.12 ya da üstü). Şirketinin yazılım merkezinden", c)
+        self.assertIn("    - Python 3.12 ya da üstü (bulunan 3.11, eski)", c[c.index("DURDU:"):])
         self.assertNotIn("Python bulunamadı", c)
         self.assertNotIn("Python 3.12 ya da üstü bulunamadı", c)
         self.assertNotIn("winget ile kurayım mı", c)
@@ -1184,9 +1302,10 @@ class KurTest(GeciciTest):
         r = self.kur("-DenemeModu", env=env, winget_kapali=False)
         c = self.cikti(r)
         self.assertEqual(r.returncode, 2, c)
-        self.assertIn("[deneme] Git yok: winget kullanılmaz", c)
-        self.assertIn("Git bulunamadı. Şirketinin yazılım merkezinden", c)
+        self.assertIn("[deneme] Eksik ön koşul var", c)
+        self.assertIn("    - Git (Git for Windows)", c)
         self.assertNotIn("önerilecekti (sorarak)", c)
+        self.assertNotIn("winget", c)  # varsayılanda winget ne anılır ne çağrılır
         # kontrol grubu: -Winget ile deneme modu eski planı anlatır
         r = self.kur("-DenemeModu", "-Winget", env=env, winget_kapali=False)
         c = self.cikti(r)
@@ -1208,12 +1327,15 @@ class KurTest(GeciciTest):
         self.assertEqual(kontrol.returncode, 0, "ortamda rg hâlâ bulunuyor — test rg'siz yolu sınamıyor")
         r = self.kur("-Evet", env=env, winget_kapali=False)
         c = self.cikti(r)
-        self.assertIn("rg yok", c)
-        self.assertIn("yazılım merkezinden", c.split("== 3/5")[1].split("== 4/5")[0])
-        self.assertIn("https://github.com/BurntSushi/ripgrep/releases", c)
-        self.assertNotIn("winget ile kurayım mı", c)
-        self.assertIn("== 4/5", c)  # kurulum 3. adımda durmadı
-        self.assertIn("Kurulum tamam (yeni klon)", c)
+        self.assertIn("rg yok (isteğe bağlı; atlandı)", c)
+        # sessiz geçiş: kullanıcıdan kurması İSTENMEZ (ne portal ne adres ne winget)
+        onkosul = c.split("== 1/5")[1].split("== 2/5")[0]
+        self.assertNotIn("yazılım merkez", onkosul)
+        # kapsam: kur.ps1'in kendi ön koşul bölümü (install.py/doctor'un Ortam satırındaki rg WARN'ı ayrı araçtır)
+        self.assertNotIn("ripgrep/releases", onkosul)
+        self.assertNotIn("winget", c)
+        self.assertIn("== 4/5", c)  # kurulum durmadı
+        self.assertIn("Kurulum TAMAM — aXet'i aç. (yeni klon)", c)
         self.assertFalse(kayit.exists(), "rg için winget varsayılanda çağrıldı")
 
     def test_asgari_python_surum_kapisi_karari(self):
@@ -1762,7 +1884,7 @@ class KurTest(GeciciTest):
         # başa eklendi; mevcut değer AYNEN (sıra, %VAR% genişletilmeden) korundu; tür korundu
         self.assertEqual(k["kullanici"], ";".join(beklenen) + ";" + ilk, c)
         self.assertEqual(k["tur"], "ExpandString")
-        self.assertEqual(k["makine"], str(SYS32))
+        self.assertEqual(k["makine"], self.makine_kaydi)
         self.assertIn(f"Python yolu kullanıcı PATH'ine eklendi: {beklenen[0]}", c)
         self.assertIn("yeni terminal / yeni aXet oturumu aç", c)
         self.assertNotIn("UYARI: yeni terminalde 'python'", c)
@@ -1814,7 +1936,7 @@ class KurTest(GeciciTest):
         self.assertIn("UYARI: yeni terminalde 'python'", c)
         self.assertIn(str(eski / "python.cmd"), c)
         self.assertIn("makine PATH", c)  # çözülen komut makine PATH'inden geliyor: BT'ye yönlendirilir
-        self.assertIn("Kurulum tamam", c)
+        self.assertIn("Kurulum TAMAM", c)
 
     def test_z98_deneme_modu_eklenecegi_gosterir_yazmaz(self):
         f = self.path_kaydi(str(SYS32), r"C:\x")
@@ -1880,9 +2002,12 @@ class KurTest(GeciciTest):
             for yasak in ("--depth", "--shallow", "--filter", "--single-branch"):
                 self.assertNotIn(yasak, s, f"sığ/kısmi klon: {s.strip()}")
 
-    def test_readme_sifirla_tek_satir_varyanti(self):
-        """Bozuk yerel kur.ps1'den bağımsız sıfırlama: indirilen dosyayı -Sifirla ile çalıştıran varyant (TASARIM §10)."""
-        metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
+    def test_onboarding_sifirla_tek_satir_varyanti(self):
+        """Bozuk yerel kur.ps1'den bağımsız sıfırlama: indirilen dosyayı -Sifirla ile çalıştıran varyant (TASARIM §10).
+        Kurulum sadeleştirme (2026-09-24): terminal satırları README'den onboarding "Sorun giderme"ye taşındı —
+        sözleşme onunla birlikte taşındı (gevşetilmedi)."""
+        metin = (AXET_HOME / "docs" / "onboarding.md").read_text(encoding="utf-8")
+        metin = metin[metin.index("## 5. Sorun giderme"):]
         self.assertIn("-File $f -Sifirla", metin)
         self.assertIn("kur.cmd -Sifirla", metin)
 
@@ -1961,7 +2086,8 @@ class KurPythonYoluTest(GeciciTest):
     def klon_kaydi(self) -> Path:
         return self.klon / ".axet-kurulum" / "kullanici-path.json"
 
-    def kos(self, govde: str, py: Path | None = None, deneme: bool = False) -> subprocess.CompletedProcess:
+    def kos(self, govde: str, py: Path | None = None, deneme: bool = False, git: str | None = None,
+            girdi: str | None = None) -> subprocess.CompletedProcess:
         asgari = re.search(r"^\$script:PyAsgari = \[version\]'([\d.]+)'", KUR_PS1.read_text(encoding="utf-8-sig"), re.M)
         satirlar = [
             "Set-StrictMode -Version 2",
@@ -1974,14 +2100,157 @@ class KurPythonYoluTest(GeciciTest):
             "$script:PyEski = $null",
             f"$DenemeModu = ${'true' if deneme else 'false'}",
             f"$script:PY = '{py or sys.executable}'",
+            f"$script:GIT = '{git or ''}'",
+            "$script:GitKod = 0",
             f"$klon = '{self.klon}'",
             govde,
         ]
         surucu = self.tmp / "_surucu.ps1"
         surucu.write_bytes(b"\xef\xbb\xbf" + "\r\n".join(satirlar).encode("utf-8") + b"\r\n")
+        girdi_kw = {"input": girdi} if girdi is not None else {"stdin": subprocess.DEVNULL}
         return subprocess.run([str(POWERSHELL), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(surucu)],
                               env=self.env, cwd=str(self.tmp), capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", stdin=subprocess.DEVNULL, timeout=300)
+                              errors="replace", timeout=300, **girdi_kw)
+
+    # --- PATH tazeleme (kurulumun başı) -------------------------------------------------------------------------
+    def test_path_tazele_kayittaki_eksik_girdileri_sona_ekler_sirayi_bozmaz(self):
+        self.env["AXET_TAZE_DENEME"] = str(self.tmp)
+        self.path_yaz(r"C:\m1;%AXET_TAZE_DENEME%\m2", r"C:\U1\;c:\p")
+        r = self.kos("$env:Path = 'C:\\p;C:\\m1'\r\n$n = Path-Tazele\r\nYaz \"N=$n\"\r\nYaz \"P=$env:Path\"\r\n"
+                     "$n = Path-Tazele\r\nYaz \"N2=$n\"")
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        # mevcut sıra aynen; eksikler (%VAR% açılmış) sona; harf/sondaki \ farkı aynı girdi sayılır (c:\p tekrar eklenmez)
+        self.assertIn(f"P=C:\\p;C:\\m1;{self.tmp}\\m2;C:\\U1\\", c)
+        self.assertIn("N=2", c)
+        self.assertIn("N2=0", c)  # ikinci çağrı: eklenecek bir şey yok
+
+    # --- Git bilinen klasör + Z98 Git kolu -----------------------------------------------------------------------
+    def gercek_git_koku(self) -> Path:
+        """Git for Windows kök klasörü (içinde cmd\\git.exe olan). PATH'teki git cmd\\ ya da mingw64\\bin\\ altında
+        olabilir (Git Bash'ten koşunca ikincisi önde — ölçüldü)."""
+        yol = shutil.which("git", path=next(v for k, v in self.env.items() if k.upper() == "PATH"))
+        for kok in ((Path(yol).parents[1], Path(yol).parents[2]) if yol else ()):
+            if (kok / "cmd" / "git.exe").is_file():
+                return kok
+        self.skipTest(f"Git for Windows düzeni (<kök>\\cmd\\git.exe) bulunamadı: {yol}")
+
+    def test_git_bilinen_klasorde_varsayilanda_bulunur(self):
+        """Git PATH'te değil, %ProgramFiles%\\Git\\cmd\\git.exe'de (portal Git'i PATH'e koymadıysa). ProgramFiles geçici bir
+        klasörü gösterir; içindeki Git bağlantısı (junction, yönetici gerekmez) gerçek Git kurulumuna gider. Kontrol grubu:
+        bağlantı yokken Git bulunamaz."""
+        kok = self.gercek_git_koku()
+        pf = self.tmp / "_pf"
+        pf.mkdir()
+        for k in list(self.env):
+            if k.upper() in ("PROGRAMFILES", "PROGRAMFILES(X86)", "PROGRAMW6432", "LOCALAPPDATA", "PATH"):
+                del self.env[k]
+        self.env.update({"ProgramFiles": str(pf), "ProgramFiles(x86)": str(pf), "ProgramW6432": str(pf),
+                         "LOCALAPPDATA": str(self.tmp / "_lad"), "PATH": os.pathsep.join([str(SYS32), str(POWERSHELL.parent)])})
+        govde = "$g = Git-Bul\r\nif ($g) { Yaz \"GIT=$($g.Yol)\" } else { Yaz 'GIT=YOK' }"
+        r = self.kos(govde)
+        self.assertIn("GIT=YOK", r.stdout + r.stderr)  # kontrol grubu
+        bag = pf / "Git"
+        subprocess.run([COMSPEC, "/c", "mklink", "/J", str(bag), str(kok)], check=True, capture_output=True,
+                       stdin=subprocess.DEVNULL, timeout=60)
+        try:
+            r = self.kos(govde)
+            self.assertIn(f"GIT={bag / 'cmd' / 'git.exe'}", r.stdout + r.stderr)
+        finally:
+            os.rmdir(bag)  # YALNIZ bağlantı kaldırılır; hedefe (gerçek Git) dokunulmaz
+        self.assertTrue((kok / "cmd" / "git.exe").is_file(), "gerçek Git kurulumu etkilendi!")
+
+    def test_git_yolu_kullanici_pathinin_sonuna_eklenir_kaldir_geri_alir(self):
+        kok = self.gercek_git_koku()
+        git = kok / "cmd" / "git.exe"
+        self.path_yaz(str(SYS32), "C:\\a;%AXET_Z98_DENEME%\\b")
+        r = self.kos("Git-Yolu-Adimi $klon", git=str(git))
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        self.assertEqual(self.path_oku()["kullanici"], f"C:\\a;%AXET_Z98_DENEME%\\b;{git.parent}", c)  # sona, metin aynen
+        self.assertIn("Git yolu kullanıcı PATH'ine eklendi", c)
+        self.assertNotIn("UYARI", c)
+        self.assertEqual(json.loads(self.klon_kaydi().read_text(encoding="utf-8-sig"))["eklenen"], [str(git.parent)])
+        # ikinci koşum: yeni terminalde git artık çözülüyor → yazılmaz
+        once = self.kayit.read_bytes()
+        r = self.kos("Git-Yolu-Adimi $klon", git=str(git))
+        self.assertIn("OK 'git' komutu yeni terminallerde çalışıyor", r.stdout)
+        self.assertEqual(self.kayit.read_bytes(), once)
+        # -Kaldir: yalnız kurulumun eklediği Git klasörü çıkar
+        r = self.kos("Python-Yolu-Kaldir-Adimi $klon")
+        c = r.stdout + r.stderr
+        self.assertEqual(self.path_oku()["kullanici"], "C:\\a;%AXET_Z98_DENEME%\\b", c)
+        self.assertIn("kullanıcı PATH'inden çıkarıldı", c)
+        self.assertFalse(self.klon_kaydi().exists(), c)
+
+    def test_git_yolu_kontrol_grubu_ve_deneme_modu_yazmaz(self):
+        kok = self.gercek_git_koku()
+        git = kok / "cmd" / "git.exe"
+        for makine, deneme, beklenen in ((f"{SYS32};{git.parent}", False, "OK 'git' komutu"),
+                                         (str(SYS32), True, "[deneme] Git yolu kullanıcı PATH'ine eklenecekti")):
+            with self.subTest(deneme=deneme):
+                self.path_yaz(makine, "C:\\a")
+                once = self.kayit.read_bytes()
+                r = self.kos("Git-Yolu-Adimi $klon", git=str(git), deneme=deneme)
+                self.assertIn(beklenen, r.stdout + r.stderr)
+                self.assertEqual(self.kayit.read_bytes(), once)
+                self.assertFalse(self.klon_kaydi().exists())
+
+    # --- Git kimliği (işe başlamadan) ---------------------------------------------------------------------------
+    def kimlik(self, anahtar: str) -> str:
+        return self.git(self.tmp, "config", "--global", "--get", anahtar, kontrol=False).stdout.strip()
+
+    def git_exe(self) -> str:
+        return shutil.which("git", path=next(v for k, v in self.env.items() if k.upper() == "PATH"))
+
+    def test_git_kimligi_etkilesimsiz_konsolda_sorulmaz_yazilmaz(self):
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe())  # stdin NUL: gerçek konsol değil
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("Git kimliği SORULMADI", c)
+        self.assertEqual((self.kimlik("user.name"), self.kimlik("user.email")), ("", ""))
+
+    def test_git_kimligi_sorulur_eposta_bicimi_denetlenir_yazilir(self):
+        self.env["AXET_KUR_KONSOL"] = "1"  # yalnız test: yanıtlar boruyla
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe(), girdi="Ayse Yilmaz\nayse-at-firma\nayse.yilmaz@firma.com\n")
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("e-posta adresine benzemiyor", c)  # geçersiz biçim reddedildi, yeniden soruldu
+        self.assertEqual((self.kimlik("user.name"), self.kimlik("user.email")), ("Ayse Yilmaz", "ayse.yilmaz@firma.com"))
+        self.assertIn("Git kimliği kaydedildi: Ayse Yilmaz <ayse.yilmaz@firma.com>", c)
+
+    def test_git_kimligi_tanimliysa_gosterilir_dogru_mu_sorulur(self):
+        self.git(self.tmp, "config", "--global", "user.name", "Eski Ad")
+        self.git(self.tmp, "config", "--global", "user.email", "eski@firma.com")
+        self.env["AXET_KUR_KONSOL"] = "1"
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe(), girdi="\n")  # Enter = doğru
+        c = r.stdout + r.stderr
+        self.assertIn("Git kimliğin: Eski Ad <eski@firma.com>", c)
+        self.assertIn("aynen kaldı", c)
+        self.assertEqual(self.kimlik("user.name"), "Eski Ad")
+        # "h" → yeniden sorulur; boş yanıt köşeli parantezdeki mevcut değeri korur
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe(), girdi="h\nYeni Ad\n\n")
+        c = r.stdout + r.stderr
+        self.assertEqual((self.kimlik("user.name"), self.kimlik("user.email")), ("Yeni Ad", "eski@firma.com"), c)
+
+    def test_git_kimligi_ortam_degiskeni_ve_deneme_modu(self):
+        self.env.update({"AXET_KUR_GIT_AD": "Öykü Şahin", "AXET_KUR_GIT_EPOSTA": "oto@firma.com"})
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe(), deneme=True)
+        self.assertIn("[deneme] Git kimliği yazılacaktı: Öykü Şahin <oto@firma.com>", r.stdout)
+        self.assertEqual(self.kimlik("user.name"), "")  # deneme modu yazmaz
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe())
+        self.assertEqual((self.kimlik("user.name"), self.kimlik("user.email")), ("Öykü Şahin", "oto@firma.com"), r.stdout)
+        # geçersiz e-posta ortamdan gelse de yazılmaz
+        self.env["AXET_KUR_GIT_EPOSTA"] = "bozuk"
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe())
+        self.assertIn("geçerli bir e-posta değil", r.stdout)
+        self.assertEqual(self.kimlik("user.email"), "oto@firma.com")
+
+    def test_git_kimligi_sorma_kapali(self):
+        self.env.update({"AXET_KUR_KONSOL": "1", "AXET_KUR_SORMA": "1"})  # SORMA konsol zorlamasından önce gelir
+        r = self.kos("Git-Kimligi-Adimi", git=self.git_exe(), girdi="Ad\nad@firma.com\n")
+        self.assertIn("SORULMADI", r.stdout)
+        self.assertEqual(self.kimlik("user.name"), "")
 
     def test_magaza_kisayolu_arkasindaki_klasor_basa_tasinir_kaldir_silmez(self):
         wa = self.tmp / "_wa"
@@ -2073,13 +2342,44 @@ class IlkKurulumCmdTest(unittest.TestCase):
         self.assertTrue(satirlar and all(s.endswith(b"\r") for s in satirlar),
                         "her satır CRLF olmalı (cmd LF'li dosyada goto/etiketleri yanlış okuyabilir)")
 
-    def test_readme_tek_satiriyla_ayni_adresi_indirir(self):
+    def test_onboarding_tek_satiriyla_ayni_adresi_indirir(self):
+        """Terminal tek satırı README'den onboarding "Sorun giderme"ye taşındı (2026-09-24); eşlik sözleşmesi onunla."""
         adres = re.findall(r"https://raw\.githubusercontent\.com/\S+?/kur\.ps1", self.CMD.read_text("ascii"))
-        readme = re.findall(r"https://raw\.githubusercontent\.com/\S+?/kur\.ps1",
-                            (AXET_HOME / "README.md").read_text("utf-8"))
+        onb = re.findall(r"https://raw\.githubusercontent\.com/\S+?/kur\.ps1",
+                         (AXET_HOME / "docs" / "onboarding.md").read_text("utf-8"))
         self.assertEqual(len(set(adres)), 1, adres)
-        self.assertTrue(readme)
-        self.assertEqual(set(adres), set(readme), "cmd ile README'deki tek satır aynı kur.ps1'i indirmeli")
+        self.assertTrue(onb)
+        self.assertEqual(set(adres), set(onb), "cmd ile onboarding'deki tek satır aynı kur.ps1'i indirmeli")
+
+    def test_readme_kurulumu_sade_uc_adim_powershell_yok(self):
+        """Kullanıcı kararı (2026-09-24): README kurulum kısmı teknik olmayan okuyucu için: portaldan üç program →
+        aXet-Kur.cmd'ye çift tık (git kimliği sorulur) → aXet'te %guncelle → %yeni-proje / %guncelle-proje →
+        KURULUMU-TAMAMLA → conn\\DEV.env → tekrar çift tık. PowerShell komutu (tek satır dahil) kurulum kısmında YOK;
+        ayrıntı onboarding'e tek satır linkle. SAP yazma bölümü AYRI ve aynen kalır."""
+        readme = (AXET_HOME / "README.md").read_text("utf-8")
+        bas = readme.index("## Gereksinimler")
+        yazma = readme.index("**SAP'ye yazma varsayılan kapalıdır.**")
+        kurulum = readme[bas:yazma]
+        for ifade in ("aXet", "Git", "Python 3.12", "şirket portalından", "aXet-Kur.cmd", "çift", "git adın",
+                      "tekrar çift tıkla", "%guncelle", "%yeni-proje", "%guncelle-proje", "KURULUMU-TAMAMLA",
+                      "conn\\DEV.env", "docs/onboarding.md#5-sorun-giderme"):
+            self.assertIn(ifade, kurulum)
+        for yasak in ("```powershell", "Invoke-WebRequest", "raw.githubusercontent.com", "kur.cmd -", "-Kaldir",
+                      "-Sifirla", "git config --global", "winget", "Winget"):
+            self.assertNotIn(yasak, kurulum, "README kurulum kısmında terminal/ayrıntı kalmış: " + yasak)
+        # güncelleme bölümü tek yolu gösterir
+        guncelleme = readme[readme.index("## Güncelleme"):readme.index("## Günlük kullanım")]
+        self.assertIn("%guncelle", guncelleme)
+        self.assertNotIn("kur.cmd", guncelleme)
+        # SAP yazma bölümü ayrı ve yerinde (dokunulmadı)
+        self.assertIn("python $HOME\\axet\\scripts\\install.py --sap --sap-write      # kapatmak: --no-sap-write",
+                      readme[yazma:yazma + 400])
+        # onboarding git kimlik komutlarını ve ön koşul kontrol komutlarını taşımaz (kurulum sorar/denetler)
+        onb = (AXET_HOME / "docs" / "onboarding.md").read_text("utf-8")
+        self.assertNotIn("git config --global user.name", onb)
+        onkosul = onb[onb.index("## 0. Makine"):onb.index("## 1. Kurulum")]
+        for yasak in ("--version", "axet-code -v", "```powershell"):
+            self.assertNotIn(yasak, onkosul)
 
     def test_secenekleri_gecirir_pencereyi_acik_tutar_kodu_dondurur(self):
         metin = self.CMD.read_text("ascii")
@@ -2089,8 +2389,13 @@ class IlkKurulumCmdTest(unittest.TestCase):
         self.assertIn("-ExecutionPolicy Bypass", calistir[0])
         self.assertRegex(metin, r"(?m)^pause\s*$", "çift tıklamada pencere mesaj okunmadan kapanmamalı")
         self.assertRegex(metin, r"(?m)^exit /b %RC%\s*$", "kur.ps1'in çıkış kodu korunmalı")
-        for kod in ("0", "3"):
+        for kod in ("0", "2", "3"):
             self.assertIn(f'if "%RC%"=="{kod}"', metin, f"çıkış kodu {kod} için ayrı kullanıcı mesajı")
+        # 2 (eksik program) ve 3 (yeni kurulan program görünmüyor): ikisi de "tekrar çift tıkla" der; komut vermez
+        for etiket in (":eksik", ":yeniden"):
+            govde = metin.split(f"\n{etiket}\n", 1)[1].split("goto son", 1)[0]  # read_text CRLF'i \n'e çevirir
+            self.assertIn("TEKRAR cift tiklayin", govde, etiket)
+            self.assertNotIn("PowerShell", govde, etiket)
         self.assertNotIn("sap-write", metin.lower())
         self.assertNotIn("invoke-expression", metin.lower())
 

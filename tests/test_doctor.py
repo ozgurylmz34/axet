@@ -1645,15 +1645,19 @@ class PaketDoctorTest(GeciciTest):
         self.assertEqual("WARN", durum, mesaj)
         self.assertIn("requests", mesaj)
         self.assertIn("python-dotenv", mesaj)
-        self.assertIn("kur.cmd", mesaj)           # birincil yol: kurulumu yeniden çalıştır (ayrı komut değil)
-        self.assertIn("-m pip install --user", mesaj)  # yedek: elle komut
+        self.assertIn("%guncelle", mesaj)         # birincil yol: tek güncelleme yolu (Z102: her %guncelle paketleri kurar)
+        self.assertIn("aXet-Kur.cmd", mesaj)      # ikinci yol: kurulumu yeniden çalıştır (ayrı komut değil)
+        self.assertNotIn("kur.cmd'yi yeniden çalıştır", mesaj)
+        self.assertIn("BT için elle kurulum komutu (sen çalıştırma)", mesaj)
+        self.assertIn("-m pip install --user", mesaj)  # yedek: elle komut (BT için)
 
     def test_sap_kapaliyken_eksik_info(self):
         durum, mesaj = self._durum(False, [("requests", "requests>=2.31.0")])
         self.assertEqual("INFO", durum, mesaj)
         self.assertIn("requests", mesaj)
         # tur 2 madde 5: kur.cmd SAP'yi AÇAR — SAP kapalı kullanıcıya önerilmez
-        self.assertNotIn("kur.cmd", mesaj)
+        self.assertNotIn("kur.cmd", mesaj.lower())
+        self.assertNotIn("%guncelle", mesaj)
         self.assertIn("SAP'yi açtığında", mesaj)
 
     def test_kontrol_grubu_hepsi_kurulu_pass(self):

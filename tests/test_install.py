@@ -1226,6 +1226,86 @@ class PaketAdimiTest(GeciciTest):
         self.assertIn("Değişiklik yok", r2.stdout)
         self.assertEqual(1, len(self.pip_cagrilari()))
 
+    # --- Z102: `--paketler` — %guncelle her güncellemede koşar; config'e YAZMAZ ---------------------------------------
+    def _config_izi(self) -> dict:
+        """Global config klasörünün tam izi: dosya adı → (sha256, mtime_ns). Yeni .bak ya da içerik değişimi görünür."""
+        import hashlib
+        kok = self.xdg / "axet-code"
+        if not kok.exists():
+            return {}
+        return {f.name: (hashlib.sha256(f.read_bytes()).hexdigest(), f.stat().st_mtime_ns)
+                for f in sorted(kok.iterdir()) if f.is_file()}
+
+    def test_paketler_kipi_config_yazmaz_eksigi_kurar(self):
+        self.hepsi_kurulu()
+        r = self.install("--sap")  # SAP açık kurulum: config yazıldı
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        once = self._config_izi()
+        self.assertIn("axet-code.json", once)
+        yazma = self.klon / "config" / "sap-write.local"
+        self.eksik()
+        r = self.install("--paketler")
+        c = self.cikti(r)
+        self.assertEqual(0, r.returncode, c)
+        self.assertEqual(1, len(self.pip_cagrilari()))  # eksik paket kuruldu (install.py değişmemiş olsa da)
+        self.assertIn("PAKETLER: KURULDU", r.stdout)
+        self.assertEqual(once, self._config_izi(), "--paketler global config klasörüne yazdı (içerik/mtime/.bak)")
+        self.assertFalse(yazma.exists(), "--paketler SAP yazma bayrağına dokundu")
+        self.assertNotIn("Global config", r.stdout)  # kurulum kipinin çıktısı yok
+        self.assertNotIn("Tarayıcı hazırlığı", r.stdout)  # tarayıcı adımı %guncelle'de ayrı adım
+
+    def test_paketler_kipi_sap_kapaliysa_atlar_config_olusturmaz(self):
+        self.eksik()
+        r = self.install("--paketler")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertIn("PAKETLER: ATLANDI — SAP paketi kapalı", r.stdout)
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertEqual({}, self._config_izi())  # config yoktu, yine yok
+
+    def test_paketler_kipi_bozuk_config_olculemedi_rc0_dokunmaz(self):
+        f = self.yaz(self.xdg / "axet-code" / "axet-code.json", "{bozuk")
+        once = self._config_izi()
+        self.eksik()
+        r = self.install("--paketler")
+        self.assertEqual(0, r.returncode, self.cikti(r))  # güncellemeyi bozmaz
+        self.assertIn("PAKETLER: ÖLÇÜLEMEDİ", r.stdout)
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertEqual(once, self._config_izi())
+        self.assertEqual("{bozuk", f.read_text(encoding="utf-8"))
+
+    def test_paketler_kipi_dry_run_kurmaz(self):
+        self.hepsi_kurulu()
+        self.assertEqual(0, self.install("--sap").returncode)
+        self.eksik()
+        r = self.install("--paketler", "--dry-run")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertIn("kurulacaktı", r.stdout)
+
+    def test_paketler_baska_bayrakla_birlesmez(self):
+        self.eksik()
+        for ek in ("--sap", "--no-sap", "--sap-write", "--no-sap-write", "--uninstall"):
+            with self.subTest(ek=ek):
+                r = self.install("--paketler", ek)
+                self.assertEqual(3, r.returncode, self.cikti(r))
+                self.assertIn("--paketler yalnız başına", r.stdout)
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertEqual({}, self._config_izi())
+        self.assertFalse((self.klon / "config" / "sap-write.local").exists())
+
+    def test_pip_mesaji_sade_ve_elle_komut_bt_etiketli(self):
+        """Kullanıcıya dönük: önce sade Türkçe ne olduğu, tekrar deneme yolu %guncelle; elle komut yalnız BT için
+        etiketli. Eski 'kur.cmd'yi yeniden çalıştır' (terminal komutu) ve etiketsiz 'Elle kurulum:' kalmadı."""
+        out = self._hata("ag")
+        self.assertIn("Paket internetten indirilemedi", out)
+        self.assertIn("%guncelle", out)
+        self.assertIn("BT için elle kurulum komutu (sen çalıştırma): ", out)
+        self.assertNotIn("  Elle kurulum:", out)
+        self.assertNotIn("kur.cmd'yi yeniden çalıştır", out)
+        uyari = next(s for s in out.splitlines() if "UYARI:" in s)
+        bt = next(i for i, s in enumerate(out.splitlines()) if "BT için elle kurulum komutu" in s)
+        self.assertLess(out.splitlines().index(uyari), bt)  # önce açıklama, sonra BT komutu
+
     def test_kapatma_ortami_pip_cagirmaz(self):
         """Test takımının güvencesi: _helpers AXET_PAKET_KUR=0 verir → hiçbir install.py koşumu pip'e gitmez."""
         self.eksik()
@@ -1275,15 +1355,57 @@ class PaketKaynakTest(unittest.TestCase):
         req_kayit = next(s for s in harita["siniflar"] if s["sinif"] == req)
         self.assertFalse(req_kayit.get("ozel_adim"), "requirements.txt'in özel adımı yoksa tek kaynak o olamaz")
 
-    def test_readme_guncelle_iddiasi_dar(self):
-        """Tur 2 madde 4: README "%guncelle eksik olanı kurar" diyordu; oysa %guncelle install.py'yi yalnız
-        install.py'nin DEĞİŞTİĞİ yayında koşar. Madde bu sınırı, sonrasında doctor'un gösterdiğini ve kur.cmd yolunu söyler."""
-        metin = (AXET_HOME / "README.md").read_text(encoding="utf-8")
+    def test_onboarding_paket_maddesi_guncelle_iddiasi_olculu(self):
+        """Tur 2 madde 4: belge "%guncelle eksik olanı kurar" diyordu ama o zaman %guncelle install.py'yi yalnız
+        install.py'nin DEĞİŞTİĞİ yayında koşuyordu. Z102 (2026-09-24) bu sınırı kaldırdı: %guncelle HER seferinde
+        `install.py --paketler` koşar — iddia artık doğru VE mekanizmasıyla yazılı olmalı (GUNCELLE.md 17. adım ayrıca
+        test_guncelle_her_seferinde_paket_adimini_kosar'da). Madde README'den onboarding "Sorun giderme"ye taşındı
+        (README sadeleştirme); doctor'un gösterdiği ve kur.cmd yolu yine yazılı."""
+        metin = (AXET_HOME / "docs" / "onboarding.md").read_text(encoding="utf-8")
         madde = next(m for m in metin.split("\n- ") if m.startswith("SAP bağlantısının Python paketleri"))
         self.assertIn("install.py", madde)
+        self.assertIn("install.py --paketler", madde)  # iddianın mekanizması
+        self.assertIn("%guncelle", madde)
         self.assertIn("doctor", madde)
         self.assertIn("kur.cmd", madde)
+        self.assertIn("BT için elle kurulum komutu (sen çalıştırma)", madde)  # install.py'nin bastığı etiketle aynı
         self.assertNotIn("kurulum aracı ve `%guncelle`, eksik olanı", madde)
+        self.assertNotIn("yalnız `scripts/install.py`'nin değiştiği", madde)  # Z102 öncesi sınır artık yanlış
+        kaynak = (AXET_HOME / "scripts" / "install.py").read_text(encoding="utf-8")
+        self.assertIn("BT için elle kurulum komutu (sen çalıştırma)", kaynak)
+
+    def test_guncelle_her_seferinde_paket_adimini_kosar(self):
+        """Z102: %guncelle install.py'yi yalnız install.py DEĞİŞİNCE koşuyordu (harita özel adımı) ⇒ paketi eksik
+        kullanıcı, install.py'ye dokunmayan her yayında eksik kalıyordu. GUNCELLE.md'nin otomatik 17. adımı paket
+        kipini HER güncellemede — klon güncel çıkıp 2/3/4'te bitse de — koşar; skill aynı adımı anar."""
+        import re
+        metin = (AXET_HOME / "GUNCELLE.md").read_text(encoding="utf-8")
+        satirlar = {m.group(1): m.group(0) for m in re.finditer(r"^\|\s*(\d+)\s*\|.*$", metin, re.M)}
+        adim = satirlar.get("17", "")
+        self.assertIn('`python "<klon>/scripts/install.py" --paketler`', adim)
+        self.assertIn("soru SORMA", adim)
+        self.assertIn("BOZMAZ", adim)
+        self.assertIn("çıkış daima 0", adim)
+        self.assertEqual(6, adim.count("|"), "tablo hücresi içinde çıplak '|' var (satır bölünür)")
+        for no in ("2", "3", "4"):  # "güncel → BİTİR" dalları paket adımını atlamaz
+            self.assertIn("adım 17", satirlar[no], f"adım {no}")
+        skill = (AXET_HOME / "skills" / "guncelle" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn('python "<KLON>/scripts/install.py" --paketler', skill)
+        # belge ile motor aynı bayrağı konuşuyor (bayrak adı install.py'nin argparse'ında)
+        self.assertIn('"--paketler"', (AXET_HOME / "scripts" / "install.py").read_text(encoding="utf-8"))
+
+    def test_paketler_komutu_izin_desenlerine_takilmaz(self):
+        """%guncelle `python "<klon>/scripts/install.py" --paketler` çağırır; bu metin template bash desenlerinden
+        hiçbirine uymamalı (fnmatch simülasyonu; aXet eşleştiricisi değil — test_tarayici_hazirla ile aynı yöntem).
+        Kontrol grubu: `--sap-write` çağrısı deny desenine UYAR (simülasyon kör değil)."""
+        import fnmatch
+        kurallar = json.loads((AXET_HOME / "config" / "permissions.json").read_text(encoding="utf-8"))["rules"]["bash"]
+        for komut in ('python "C:/Users/x/axet/scripts/install.py" --paketler',
+                      'python "C:/Users/x/axet/scripts/install.py" --paketler --dry-run'):
+            with self.subTest(komut=komut):
+                self.assertEqual([], [d for d in kurallar if fnmatch.fnmatchcase(komut, d)])
+        kontrol = 'python "C:/Users/x/axet/scripts/install.py" --sap --sap-write'
+        self.assertEqual(["deny"], [kurallar[d] for d in kurallar if fnmatch.fnmatchcase(kontrol, d)])
 
     def test_venv_icinde_user_verilmez(self):
         import install
