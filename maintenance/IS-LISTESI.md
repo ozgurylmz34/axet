@@ -7,7 +7,9 @@
 > Etiketler: ✅ tamam · 🟡 kısmi (kod var, canlı doğrulama yok) · ⬜ yapılmadı · ⛔ alınmadı (gerekçeli) · ❓ kullanıcı kararı.
 > Son tam denetim: **2026-09-14** (dal `wip/2026-09-13-partiler`).
 
-## ▶ YARIN BURADAN (gün sonu 2026-09-23 gece) — v0.5.7 PR'da, YAYIN KULLANICI ONAYI BEKLİYOR
+## ▶ YARIN BURADAN (gün sonu 2026-09-23 gece) — ✅ v0.5.7 YAYINDA (2026-09-24); sıradaki: adım 3-5
+
+**Güncelleme 2026-09-24 (ölçüldü):** adım 1 ✅ PR #39 CI 5/5 (head `489f1af`) → squash-merge (kullanıcı `!` ile koştu; auto mode sınıflandırıcısı lider merge'ünü "Merge Without Review" ile reddetti) → private `main` `187f788`, main CI 5/5. Adım 2 ✅ kullanıcı onayı → `yayin_hazirla` önce public klon kopyasında prova (0 bulgu, 20 yol / 0 sorun), sonra gerçek klonda (`hepsi_yesil=True`) → public `axet-template` `8d56672` + etiket `v0.5.7` (yazar/committer noreply, `git ls-remote` ile doğrulandı) · public CI yeşil (`prova` bilinçli `skipped`). **Açık:** adım 3 (kullanıcıda `%guncelle` + canlı ölçüm) · adım 4 (worktree temizliği) · adım 5 (sıradaki işler; ⑨ Z87/Z88 eklendi).
 
 **Nerede kaldık (ölçüldü):** Z83 + Z84 + Z85 birleşik dal `wip/v057-birlesim`'de tamam (worktree
 `C:/AI_WORKS/.wt/axet/birlesim`); katalog v0.5.7 (4 kalem: 0.5.7-01 Z83 düzeltme · -02 Z84 yetenek · -03 Z85 yetenek ·
