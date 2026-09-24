@@ -1652,6 +1652,9 @@ class PaketDoctorTest(GeciciTest):
         durum, mesaj = self._durum(False, [("requests", "requests>=2.31.0")])
         self.assertEqual("INFO", durum, mesaj)
         self.assertIn("requests", mesaj)
+        # tur 2 madde 5: kur.cmd SAP'yi AÇAR — SAP kapalı kullanıcıya önerilmez
+        self.assertNotIn("kur.cmd", mesaj)
+        self.assertIn("SAP'yi açtığında", mesaj)
 
     def test_kontrol_grubu_hepsi_kurulu_pass(self):
         durum, mesaj = self._durum(True, [])

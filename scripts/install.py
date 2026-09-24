@@ -328,6 +328,32 @@ def elle_kurulum_komutu(specler: list[str]) -> str:
             + " ".join(f'"{s}"' for s in specler))
 
 
+# pip hatasını sınıflandıran imzalar (tur 2, bağımsız inceleme). "ağ/proxy" tavsiyesi YALNIZ bunlardan biri görülürse
+# verilir; ölçüldü: require-virtualenv ve WinError 5 (izin) rc≠0 döner ama ağla ilgisi yoktur. Liste pip'in ağ
+# katmanının standart hata adları/metinleridir: urllib3/requests istisnaları (ProxyError, NewConnectionError,
+# ConnectionError, SSLError, ReadTimeoutError, "Max retries exceeded", "Tunnel connection failed"), sertifika
+# doğrulaması, ad çözümleme ("getaddrinfo failed", "Temporary failure in name resolution"), zaman aşımı ve indekse
+# ulaşılamayınca pip'in son mesajı ("Could not find a version that satisfies", "No matching distribution found" —
+# paket adları sabit ve doğru olduğundan pratikte indeks erişimsizliğidir). Listede olmayan hata "pip hata verdi"
+# olarak raporlanır ve çıktının sonu gösterilir: yanlış tavsiye vermektense ham kanıtı göstermek.
+PIP_AG_IMZALARI = ("ProxyError", "NewConnectionError", "ConnectionError", "SSLError", "CERTIFICATE_VERIFY_FAILED",
+                   "ReadTimeoutError", "timed out", "Max retries exceeded", "Tunnel connection failed",
+                   "getaddrinfo failed", "Temporary failure in name resolution",
+                   "Could not find a version that satisfies", "No matching distribution found")
+PIP_ZAMAN_ASIMI_NOTU = "pip {} sn içinde bitmedi"
+
+
+def pip_hata_sinifi(cikti: str, rc: int | None) -> str:
+    """'pip-yok' · 'pep668' · 'ag' · 'rc0' (pip bitti dedi, paket yine yüklenmiyor) · 'diger'."""
+    if "No module named pip" in cikti:
+        return "pip-yok"
+    if "externally-managed-environment" in cikti:
+        return "pep668"
+    if any(imza in cikti for imza in PIP_AG_IMZALARI) or cikti.startswith(PIP_ZAMAN_ASIMI_NOTU.format(PAKET_ZAMAN)):
+        return "ag"
+    return "rc0" if rc == 0 else "diger"
+
+
 def paket_adimi(sap: bool, dry_run: bool = False) -> None:
     """Eksik zorunlu paketleri kurar (Z101 — kullanıcı ayrı komut çalıştırmaz). Hiçbir sonucu kurulumu DURDURMAZ ve
     install.py'nin çıkış kodunu DEĞİŞTİRMEZ; durumu ilk `PAKETLER:` satırı söyler. `AXET_PAKET_KUR=0` ile kapatılır."""
@@ -344,7 +370,9 @@ def paket_adimi(sap: bool, dry_run: bool = False) -> None:
               "doğrulama: python scripts/doctor.py")
         return
     if not eksik:
-        print("PAKETLER: TAMAM — " + ", ".join(spec for _, spec in ZORUNLU_PAKETLER) + " yüklenebiliyor")
+        # Yalnız import ölçülür ⇒ sürüm belirtimi yazılmaz (yazılsa "sürüm de tutuyor" diye okunurdu).
+        print("PAKETLER: TAMAM — " + ", ".join(ad for ad, _ in ZORUNLU_PAKETLER)
+              + " yüklenebiliyor (yalnız import denetlendi; sürüm alt sınırı denetlenmez)")
         return
     specler = [spec for _, spec in eksik]
     adlar = ", ".join(specler)
@@ -355,32 +383,51 @@ def paket_adimi(sap: bool, dry_run: bool = False) -> None:
     print(f"Eksik paket kuruluyor: {adlar}")
     sys.stdout.flush()
     rc, cikti = None, ""
+    # pip kendi G/Ç kodlamasıyla yazar; boruya yazan Python Windows'ta ANSI sayfası kullanır (ölçüldü: cp1252 makinede
+    # Türkçe harfler `ş` kaçışı olarak geldi, cp1254'te UTF-8 çözümü bozar) ⇒ pip UTF-8 G/Ç ile çağrılır.
+    pip_env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
     try:
         r = subprocess.run(pip_komutu(specler), capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=PAKET_ZAMAN, stdin=subprocess.DEVNULL)
+                           timeout=PAKET_ZAMAN, stdin=subprocess.DEVNULL, env=pip_env)
         rc, cikti = r.returncode, (r.stdout or "") + (r.stderr or "")
     except subprocess.TimeoutExpired:
-        cikti = f"pip {PAKET_ZAMAN} sn içinde bitmedi"
+        cikti = PIP_ZAMAN_ASIMI_NOTU.format(PAKET_ZAMAN)
     except Exception as exc:  # noqa: BLE001 — kurulumu durdurma
         cikti = f"pip çalıştırılamadı ({exc})"
     kalan = eksik_paketler()
+    son = [s.strip() for s in cikti.strip().splitlines() if s.strip()][-3:]
     if kalan == []:
         print(f"PAKETLER: KURULDU — {adlar} (yeniden denetlendi: yüklenebiliyor)")
         return
-    kalan_adlar = adlar if kalan is None else ", ".join(spec for _, spec in kalan)
+    if kalan is None:
+        # Sonuç bilinmiyor: "kurulamadı" demek kanıtsız olurdu (ilk ölçümdeki ÖLÇÜLEMEDİ ile aynı dil).
+        print(f"PAKETLER: ÖLÇÜLEMEDİ — pip koştu (çıkış {rc}) ama kurulum sonrası denetim çalışmadı ({sys.executable}); "
+              "doğrulama: python scripts/doctor.py")
+        print(f"  Elle kurulum: {elle}")
+        if son:
+            print("  pip çıktısının sonu: " + " | ".join(son))
+        return
+    kalan_adlar = ", ".join(spec for _, spec in kalan)
     print(f"PAKETLER: EKSİK — {kalan_adlar} kurulamadı. Kurulum DEVAM ediyor: SAP bağlantısı bu paketler olmadan "
           "çalışmaz, diğer özellikler çalışır.")
-    if "No module named pip" in cikti:
+    sinif = pip_hata_sinifi(cikti, rc)
+    if sinif == "pip-yok":
         print(f"  UYARI: pip bulunamadı ({sys.executable}). Yapılacak: BT'den Python'u pip ile birlikte kurmasını "
               "iste, sonra kur.cmd'yi yeniden çalıştır.")
-    elif rc == 0:
+    elif sinif == "pep668":
+        print("  UYARI: bu Python 'dışarıdan yönetilen' bir kurulum (PEP 668): paketleri pip ile değil, onu kuran "
+              "yönetici kurar. Yapılacak: BT'den şirketin standart Python kurulumunu (python.org dağıtımı) iste ya da "
+              "paketleri onlara kurdur, sonra kur.cmd'yi yeniden çalıştır.")
+    elif sinif == "ag":
+        print("  UYARI: pip paketi indiremedi (ağ ya da şirket proxy'si). Yapılacak: BT'den bu makine için pip proxy "
+              "ayarını (ya da şirket paket aynasını) iste, sonra kur.cmd'yi yeniden çalıştır.")
+    elif sinif == "rc0":
         print("  UYARI: pip kurulumun bittiğini söyledi ama paket yine yüklenemiyor (farklı Python ya da bozuk kurulum). "
               "Yapılacak: python scripts/doctor.py çıktısını BT'ye ilet.")
     else:
-        print("  UYARI: pip paketi indiremedi (ağ ya da şirket proxy'si). Yapılacak: BT'den bu makine için pip proxy "
-              "ayarını (ya da şirket paket aynasını) iste, sonra kur.cmd'yi yeniden çalıştır.")
+        print(f"  UYARI: pip hata verdi (çıkış {rc}); sebep aşağıdaki pip çıktısının sonunda. Yapılacak: o satırları "
+              "BT'ye ilet, sonra kur.cmd'yi yeniden çalıştır.")
     print(f"  Elle kurulum: {elle}")
-    son = [s.strip() for s in cikti.strip().splitlines() if s.strip()][-3:]
     if son:
         print("  pip çıktısının sonu: " + " | ".join(son))
 

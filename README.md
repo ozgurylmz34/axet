@@ -27,9 +27,10 @@ bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
   Python kurulu ama `python` komutu çalışmıyorsa (PATH'te değil ya da Windows mağaza kısayolu çıkıyor) bir şey
   yapman gerekmez: kurulum aracı bulduğu Python'un klasörünü kullanıcı PATH'ine kendisi ekler.
 - SAP bağlantısının Python paketleri (`requests`, `urllib3`, `python-dotenv`) — **kendiliğinden kurulur**:
-  kurulum aracı ve `%guncelle`, eksik olanı bulduğu Python'un pip'iyle (`--user`) kurar; ayrı komut gerekmez.
-  İnternet ya da şirket proxy'si engellerse kurulum **durmaz**, UYARI verir; `doctor.py` eksikliği SAP açıkken
-  WARN olarak gösterir (aşağıda "Sorun giderme").
+  kurulum aracı (`kur.cmd`) eksik olanı bulduğu Python'un pip'iyle (`--user`) kurar; ayrı komut gerekmez.
+  `%guncelle` bunu yalnız `scripts/install.py`'nin değiştiği bir güncellemede yapar. Paket sonradan eksik kalırsa
+  `doctor.py` (ve oturum açılışı) SAP açıkken WARN verir; o zaman `kur.cmd`'yi tekrar çalıştırman yeter. İnternet
+  ya da şirket proxy'si engellerse kurulum **durmaz**, UYARI verir (aşağıda "Sorun giderme").
 - Git kimliği — bir kez, bu makinede: `git config --global user.name "Ad Soyad"` ve
   `git config --global user.email "ad.soyad@sirket.com"` (değer `git config --global` dosyasına — genelde
   `%USERPROFILE%\.gitconfig` — yazılır, tüm repolarda geçerlidir; kontrol: `git config --global user.email`). Girmezsen kurulum ve aXet etkilenmez; ama
