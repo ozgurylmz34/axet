@@ -133,9 +133,12 @@ def _msag_xml(durum) -> str:
     if durum.get("paket", True):
         ET.SubElement(kok, f"{{{NS_AC}}}packageRef", {f"{{{NS_AC}}}name": "ZAXET_PKG"})
     for no, metin, se, doc in durum["msgs"]:
-        ET.SubElement(kok, f"{{{NS_MC}}}messages", {f"{{{NS_MC}}}msgno": no, f"{{{NS_MC}}}msgtext": metin,
-                                                     f"{{{NS_MC}}}selfexplainatory": "true" if se else "false",
-                                                     f"{{{NS_MC}}}documented": "true" if doc else "false"})
+        oz = {f"{{{NS_MC}}}msgno": no, f"{{{NS_MC}}}msgtext": metin,
+              f"{{{NS_MC}}}selfexplainatory": "true" if se else "false",
+              f"{{{NS_MC}}}documented": "true" if doc else "false"}
+        if metin is None:   # canlı XML'de `mc:msgtext` özniteliği HİÇ yok (Z113 L1 vakası)
+            del oz[f"{{{NS_MC}}}msgtext"]
+        ET.SubElement(kok, f"{{{NS_MC}}}messages", oz)
     return ET.tostring(kok, encoding="unicode")
 
 
@@ -861,6 +864,72 @@ class DomainVeMesajSinifi(unittest.TestCase):
                     f"ok={r.get('ok')} err={r.get('error')} 030={m030!r}",
                     r.get("ok") is True and m030 == "İlk satır\nikinci\tsatır"
                     and "006" not in [m[0] for m in durum["msgs"]])
+
+    # ── Z113 bug gate LOW bulguları ─────────────────────────────────────────────────────────────
+    def test_ML1a_msgtext_yok_ayristirici_bos_dize(self):
+        """L1: canlı XML'de `mc:msgtext` özniteliği yoksa ayrıştırıcı '' döner, None DEĞİL (kaynak çekirdek
+        populate_message_class.py:462 `m.get(..., '')`)."""
+        xml = _msag_xml({"ml": "TR", "msgs": [("001", None, False, False), ("002", "Var", False, False)]})
+        p = self.atom._parse_msgclass_xml(xml)
+        metinler = [m["text"] for m in p["messages"]]
+        self.kaydet("ML1a msgtext özniteliği yok → text '' (None değil)", "['', 'Var']", repr(metinler),
+                    "msgtext" not in xml.split('msgno="001"')[1].split("/>")[0] and metinler == ["", "Var"])
+
+    def test_ML1b_msgtext_none_govde_ve_kiyas(self):
+        """L1: `_govde` None metne `mc:msgtext=""` yazar ("None" değil); `_tam`/`_kiyas_listesi` None ile "None" dizesini
+        KARIŞTIRMAZ (eskiden ikisi de `str()` ile "None" oluyordu ⇒ öz-denetim/kapı sahte eşitlik görüyordu)."""
+        govde = self.mc._govde("ZAXET_MSG", "Açıklama", "TR", "U", "ZAXET_PKG",
+                               [{"no": "001", "text": None, "selfexplanatory": False, "documented": False}])
+        n, s = {"no": "001", "text": None}, {"no": "001", "text": "None"}
+        ok = ('mc:msgtext=""' in govde and "None" not in govde and _put_mesajlari(govde)[0][1] == ""
+              and self.mc._tam(n) != self.mc._tam(s) and self.mc._kiyas_listesi([n]) != self.mc._kiyas_listesi([s])
+              and self.mc._tam(n) == self.mc._tam({"no": "001", "text": ""}))
+        self.kaydet("ML1b _govde None → msgtext=\"\" · _tam/_kiyas None ≠ 'None'", 'msgtext="" · ayrık',
+                    f"govde_msgtext={_put_mesajlari(govde)[0][1]!r} tam={self.mc._tam(n)} vs {self.mc._tam(s)}", ok)
+
+    def test_ML1c_msgtext_yok_arac_silme_ve_birlestirme(self):
+        """L1 araç düzeyi: `mc:msgtext`'siz canlı mesaj hem SİLME hem BİRLEŞTİRME (silmesiz) yolunda gövdeye
+        `mc:msgtext=""` ile gider; gövdede "None" dizesi YOK, canlı metin "None" olmaz. İki yol aynı ayrıştırıcıyı
+        (`_msgclass_oku` → `_parse_msgclass_xml`) kullanır."""
+        bas = [("001", None, False, True), ("002", "İki", False, False), ("003", "Üç", False, False)]
+        for ad, kw in (("silme", {"delete_numbers": ["003"]}),
+                       ("birleştirme", {"messages": [{"no": "004", "text": "Dört"}]})):
+            adt, durum = self._msag(bas)
+            self.atom.adt_msgclass_read("ZAXET_MSG")
+            adt.cagri.clear()
+            r = self._yaz(**kw)
+            put = [c for c in adt.cagri if c["method"] == "PUT"]
+            g = put[0]["data"] if put else ""
+            m001 = [m for m in _put_mesajlari(g) if m[0] == "001"] if g else None
+            canli001 = dict((m[0], m[1]) for m in durum["msgs"]).get("001")
+            self.kaydet(f"ML1c {ad}: msgtext'siz 001 → gövdede msgtext=\"\" · 'None' yok · canlı metin 'None' olmaz",
+                        "ok · ('001','',False,True)",
+                        f"ok={r.get('ok')} err={r.get('error')} m001={m001} canli001={canli001!r}",
+                        r.get("ok") is True and len(put) == 1 and 'mc:msgtext=""' in g and "None" not in g
+                        and m001 == [("001", "", False, True)] and canli001 == "")
+
+    def test_ML2_oz_denetim_kablolamasi(self):
+        """L2: öz-denetim ARACA kablolu — `_govde` bozuk gövde üretirse `delete_body_selfcheck_failed`, LOCK 0, PUT 0.
+        (`_silme_govdesi_denetle` MS6'da kendi başına sınanır; bu test onun ÇAĞRILDIĞINI ve sonucunun uygulandığını sınar.)"""
+        adt, durum = self._sil_kur()
+        gercek = self.mc._govde
+        cagri = []
+
+        def bozuk(*a, **k):   # deletedmessages'ı düşürür → tam PUT no-op olurdu (§27.5: 229→229)
+            cagri.append(1)
+            return gercek(*a, **k).replace('<mc:deletedmessages mc:msgno="006"/>', "")
+        self.mc._govde = bozuk
+        try:
+            r = self._yaz(delete_numbers=["006"])
+        finally:
+            self.mc._govde = gercek
+        self.kaydet("ML2 bozuk silme gövdesi → delete_body_selfcheck_failed · LOCK 0 · PUT 0 · canlı değişmez",
+                    "delete_body_selfcheck_failed · 0/0",
+                    f"err={r.get('error')} govde_cagri={len(cagri)} lock={self._say(adt, 'POST', 'LOCK')} "
+                    f"put={self._say(adt, 'PUT')}",
+                    r.get("ok") is False and r.get("error") == "delete_body_selfcheck_failed" and len(cagri) == 1
+                    and self._say(adt, "POST", "LOCK") == 0 and self._say(adt, "PUT") == 0
+                    and self._say(adt, "POST", "UNLOCK") == 0 and durum["msgs"] == self._SIL_BAS)
 
 
 if __name__ == "__main__":

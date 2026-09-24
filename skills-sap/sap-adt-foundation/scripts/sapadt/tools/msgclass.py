@@ -75,6 +75,12 @@ def _att(v) -> str:
     return _xml_escape(str(v), _ATTR_KACIS)
 
 
+def _metin(v) -> str:
+    """Mesaj metni: None → '' (kaynak çekirdek populate_message_class.py:462 `m.get(..., '')`). `str(None)` kullanılmaz —
+    "None" dizesi gövdeye yazılır ve öz-denetim/kapı `"None" == "None"` eşitliğiyle bunu GÖRMEZ (Z113 L1)."""
+    return "" if v is None else str(v)
+
+
 def _hata(kod: str, mesaj: str, **ek) -> dict:
     return {"ok": False, "error": kod, "message": mesaj, **ek}
 
@@ -174,7 +180,7 @@ def _govde(name: str, aciklama: str, ml: str, sorumlu: str, paket: str, liste: l
     `ST_ADT_MESSAGE_CLASS` sırası; populate_message_class.py:229-239). Tam PUT'tan mesajı ÇIKARMAK SİLMEZ — ölçüldü
     229→229 (adt-message-class.md §27.5); silme YALNIZ bu koleksiyonla olur (229→228)."""
     satirlar = [
-        f'  <mc:messages mc:msgno="{_att(m["no"])}" mc:msgtext="{_att(m["text"])}" '
+        f'  <mc:messages mc:msgno="{_att(m["no"])}" mc:msgtext="{_att(_metin(m["text"]))}" '
         f'mc:selfexplainatory="{"true" if m["selfexplanatory"] else "false"}" '
         f'mc:documented="{"true" if m.get("documented") else "false"}" adtcore:name=""/>'
         for m in liste]
@@ -197,7 +203,7 @@ def _govde(name: str, aciklama: str, ml: str, sorumlu: str, paket: str, liste: l
 
 
 def _kiyas_listesi(liste) -> list:
-    return sorted((str(m.get("no")), str(m.get("text")), bool(m.get("selfexplanatory"))) for m in (liste or []))
+    return sorted((str(m.get("no")), _metin(m.get("text")), bool(m.get("selfexplanatory"))) for m in (liste or []))
 
 
 # ── silme (Z113 — kaynak çekirdek 2026-09-24 portu: populate_message_class.py:414-749) ─────────────────────────────
@@ -217,7 +223,7 @@ SILME_KAPSAM_BAKILMAYAN = (
 
 
 def _tam(m) -> tuple:
-    return (str(m.get("no")), str(m.get("text")), bool(m.get("selfexplanatory")), bool(m.get("documented")))
+    return (str(m.get("no")), _metin(m.get("text")), bool(m.get("selfexplanatory")), bool(m.get("documented")))
 
 
 def _silme_govdesi_denetle(govde: str, liste: list, silinecek: list) -> list:
@@ -316,7 +322,7 @@ def adt_msgclass_write(
     allow_overwrite: bool = False,
     package: str | None = None,
 ) -> dict:
-    """Write messages into an existing Z/Y message class (merge by number; overwrite/delete only explicitly).
+    """Write messages into an existing Z/Y message class (merge by number; overwrite/delete only explicitly; delete_numbers and messages never in the same call).
 
     Önce `adt_msgclass_read(name)` (canlı liste + pull kaydı) şarttır. Kabuk yoksa önce
     `adt_post_shell(object_type="msag")` (kabuksuz PUT sahte-200 döner, adt-message-class.md:21).
@@ -327,7 +333,8 @@ def adt_msgclass_write(
         messages: [{"no":"001","text":"<master_language metni, ≤73>","selfexplanatory":false}] — yeni numara
             eklenir; mevcut numara aynıysa değişmez, farklıysa yalnız `allow_overwrite=true` ile değişir.
             `selfexplanatory` verilmezse mevcut mesajda canlı değer, yeni mesajda false.
-        delete_numbers: Silinecek MEVCUT numaralar (["005"]). Verilmeyen hiçbir mesaj silinmez.
+        delete_numbers: Silinecek MEVCUT numaralar (["005"]). Verilmeyen hiçbir mesaj silinmez. `messages` ile AYNI
+            çağrıda verilmez (`invalid_argument`) — önce silme, sonra `adt_msgclass_read` → ayrı yazma çağrısı.
         allow_overwrite: Mevcut mesajın metnini/bayrağını değiştirmeye açık izin.
         package: Canlı okumada paket yoksa kullanılır; canlıdakiyle farklıysa red.
 

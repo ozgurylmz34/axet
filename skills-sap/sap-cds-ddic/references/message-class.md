@@ -26,7 +26,7 @@ dönüş: `%sap-adt-foundation` → `tool-catalog.md`. Ham REST ile yazılmaz.
 - **Yol:** kabuk yoksa `adt_post_shell` `msag` → `adt_msgclass_read` (canlı liste + pull kaydı; kayıt yoksa yazma reddedilir) → nihai tam
   mesaj listesini (numara · metin · kendi kendini açıklar mı) kullanıcıya göster → `adt_msgclass_write` → dönüşte `readback_verified` ve `plan`.
 - **Birleştirme:** araç canlı listeyi okuyup tam gövdeyi kurar — verilmeyen mevcut mesajlar korunur. Mevcut numarayı değiştirmek
-  `allow_overwrite=true` ister; ikisini de kullanıcı onayı olmadan verme.
+  `allow_overwrite=true` ister; `allow_overwrite=true`'yu kullanıcı onayı olmadan verme (önce `plan.overwritten`'i göster).
 - **Silme:** yalnız `delete_numbers=["006", …]` ile ve **ayrı bir çağrıda** (aynı çağrıda `messages` verilirse `invalid_argument`).
   ⛔ Mesajı listeden/gövdeden **çıkarmak SİLMEZ** — SAP gövdede olmayan mesaja dokunmaz (§3.5). Araç gövdeye `<mc:deletedmessages>` yazar;
   ayrıntı, korumalar ve dönüşteki `delete_gate`: §3.7. Silinecek numaraları ve metinlerini önce kullanıcıya göster, onay al.
