@@ -27,4 +27,5 @@ description: >
 ## Kurallar
 - Çıkan kayıt hipotezdir: içindeki dosya/komut/obje hâlâ var mı, kullanmadan önce doğrula.
 - "Eşik üstü kayıt yok" ≠ "ilgili ders yok": script hafıza kaydı gövdelerini ve `<source_root>` altındaki `.rules.md`'leri de tarar ama skill gövdelerine, paket `SESSION_NOTES`/`SPEC`'ine ve kaynak koda bakmaz; gövde eşleşmesi indeks eşleşmesinden düşük puanlıdır; eşik altı kalan gövde eşleşmeleri ayrı "düşük güven" listesinde çıkar — göreve dokunuyorsa aç (çıktıdaki `KAPSAM` satırı neye bakılmadığını söyler).
+- Eşik sorgunun terim sayısına göre ayarlanır: 1 terim → 1, 2 terim → 3, 3 ve daha çok terim → 5. Terimin çoğul/ekli biçimi de eşleşir (5+ harfli terimde önek: `transport` ↔ `transports`). Yalnız gövdesiyle eşleşen kayıt her durumda 5 ister; `--esik N` verilirse ölçekleme yapılmaz. `UYARI: … genel sayıldı` çıkarsa terim çok kayıtta geçtiği için puana katılmamıştır: daha belirli bir terim ekle.
 - Script hiçbir şey yazmaz, ağa çıkmaz; güvenle her işte çalıştırılabilir.

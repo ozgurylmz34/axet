@@ -55,7 +55,9 @@ scope: package:$TMP
 """
 
 
-class RecallTest(GeciciTest):
+class _RecallTaban(GeciciTest):
+    """Ortak kurulum/çağırma yardımcıları (test yok — alt sınıflar testleri iki kez koşturmasın)."""
+
     def proje_kur(self, indeks_satirlari: list[str], kayitlar: dict[str, str], source_root: str | None = None,
                   rules: dict[str, str] | None = None) -> Path:
         d = self.tmp / "proje"
@@ -79,6 +81,8 @@ class RecallTest(GeciciTest):
     def yollar(o: dict) -> list[str]:
         return [Path(s["yol"]).name for s in o["sonuc"]]
 
+
+class RecallTest(_RecallTaban):
     # ⓐ C3 vakası: konu söylemeyen indeks satırı + anahtar kelimeler yalnız GÖVDEDE
     def test_govdede_gecen_kayit_bulunur(self):
         d = self.proje_kur(["- [Çıktı kanalı kararı](project_cikti-kanali.md) — kullanıcı çıktı kanalı hakkında karar"],
@@ -137,6 +141,115 @@ class RecallTest(GeciciTest):
         self.assertIn("paket kuralı 1", kapsam, r.stdout)
         self.assertIn("gövde", kapsam, r.stdout)
         self.assertNotIn("bakılmayan: kayıt/skill gövdeleri", kapsam, r.stdout)
+
+
+class RecallEsikOlceklemeTest(_RecallTaban):
+    """Z108 (2026-09-24): tek terimli sorgu, terimi yalnız AÇIKLAMASINDA taşıyan skill'i bulmuyordu. Ölçülen: TRAKYA'da
+    `recall.py "transport" --esik 1` → sap-adt-foundation 2, sap-cds-ddic 1 puan; sap-gui-scripting hiç (açıklamada çoğul
+    "transports", indeks eşleşmesi tam sözcük). Sabit eşik 5'e tek terimli sorgu yapısal olarak ulaşamıyordu.
+    Burada ölçülen: ⓐ varsayılan eşik sorgunun terim sayısına göre ölçeklenir ⓑ indekste (başlık/açıklama) önek eşleşmesi
+    gövdedeki ONEK_EN_AZ kuralıyla aynı ⓒ açık --esik ölçeklenmez ⓓ çok (≥ 5) terimli sorguda sonuç/sıra değişmez
+    (kontrol grubu — düzeltmeden önce de yeşildir) ⓔ KAPSAM satırı etkin eşiği ve ölçeklemeyi beyan eder.
+    KAPSAM — bakılmayanlar: gerçek hafıza setinde sıralama kalitesi (önce/sonra ölçümü PR notunda, test değil)."""
+
+    TERIM = "kilimbalik"   # sentetik; template'in hafıza/skill metinlerinde geçmez (rg ile bakıldı, 2026-09-24)
+
+    def skill_kur(self, aciklama: str, ad: str = "kilim-araci") -> Path:
+        d = self.proje_kur([], {})
+        self.yaz(d / ".axet-code" / "skills" / ad / "SKILL.md",
+                 f"---\nname: {ad}\ndescription: >\n  {aciklama}\n---\n\n# {ad}\n")
+        return d
+
+    def skill_yollari(self, o: dict) -> list[str]:
+        return [Path(s["yol"]).parent.name for s in o["sonuc"]]
+
+    # ⓐ terim yalnız açıklamada, bir kez → puan 1; sabit eşik 5'te bulunamıyordu
+    def test_tek_terimli_sorgu_aciklamadaki_skilli_bulur(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        o = self.recall(d, self.TERIM)
+        self.assertIn("kilim-araci", self.skill_yollari(o), o)
+        self.assertEqual(o["esik"], 1, o)
+
+    # ⓑ çoğul/ekli biçim: sorgu "kilimbalik" ↔ açıklama "kilimbaliklar" (≥ ONEK_EN_AZ harf → önek eşleşmesi)
+    def test_indekste_onek_eslesmesi(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM}lar icin desen hazirlar.")
+        o = self.recall(d, self.TERIM, "--esik", "1")
+        self.assertIn("kilim-araci", self.skill_yollari(o), o)
+
+    # ⓑ' negatif kontrol: ONEK_EN_AZ'dan kısa sorgu sözcüğü önekle eşleşmez (gövdedeki kuralla aynı)
+    def test_kisa_sorgu_sozcugu_onekle_eslesmez(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        o = self.recall(d, self.TERIM[:4], "--esik", "1")
+        self.assertNotIn("kilim-araci", self.skill_yollari(o), o)
+
+    # ⓒ kullanıcının açıkça verdiği eşik ölçeklenmez
+    def test_acik_esik_olceklenmez(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        o = self.recall(d, self.TERIM, "--esik", "5")
+        self.assertNotIn("kilim-araci", self.skill_yollari(o), o)
+        self.assertEqual(o["esik"], 5, o)
+        self.assertIs(o["esik_olceklendi"], False, o)
+
+    # ⓓ kontrol grubu: 5 terimli sorguda eşik 5 kalır; sıralama ve eşik altı kayıtlar değişmez
+    def test_cok_terimli_sorgu_sonucu_degismez(self):
+        d = self.proje_kur(
+            ["- [Zeytinbahce limonagaci kaydi](project_r1.md) — portakalbahce notu",
+             "- [Baska bir konu](project_r2.md) — zeytinbahce limonagaci portakalbahce incirdali",
+             "- [Ucuncu konu](project_r3.md) — zeytinbahce hakkinda tek satir",
+             "- [Narcicegi incirdali kaydi](project_r4.md) — zeytinbahce limonagaci"],
+            {f"project_r{i}.md": f"---\nname: r{i}\ndescription: x\ntype: project\n---\n\nAyrinti yok.\n"
+             for i in range(1, 5)})
+        o = self.recall(d, "zeytinbahce limonagaci portakalbahce incirdali narcicegi")
+        self.assertEqual(self.yollar(o), ["project_r4.md", "project_r1.md"], o)
+        self.assertEqual(o["esik"], 5, o)
+        self.assertIs(o["esik_olceklendi"], False, o)
+
+    # ⓐ' iki terimli sorguda eşik 3 (biçim: min(5, max(1, 2n − 1)); 3+ terim → 5, değişmez)
+    def test_iki_terimli_sorguda_esik_uc(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        o = self.recall(d, f"{self.TERIM} tezgahduzen")
+        self.assertEqual((o["esik"], o["terim_sayisi"], o["esik_olceklendi"]), (3, 2, True), o)
+
+    # ⓐ'' ölçeklenmiş eşik YALNIZ gövdesiyle eşleşen kayda uygulanmaz (TRAKYA ölçümü: "test"/"ui5" tek terimli sorgusu
+    # gövdesinde sözcüğü bir kez geçen alakasız kayıtları listeliyordu). Düzeltmeden önce de yeşildir (eşik 5).
+    def test_olceklenmis_esik_yalniz_govde_eslesmesine_uygulanmaz(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        self.yaz(d / ".axet-code" / "memory" / "MEMORY.md",
+                 "# PROJE HAFIZASI\n\n- [Dokuma notu](project_dokuma.md) — tezgah ayarlari\n")
+        self.yaz(d / ".axet-code" / "memory" / "project_dokuma.md",
+                 f"---\nname: dokuma\ndescription: x\ntype: project\n---\n\nBu projede {self.TERIM} kullanilmaz.\n")
+        o = self.recall(d, self.TERIM)
+        self.assertIn("kilim-araci", self.skill_yollari(o), o)
+        self.assertNotIn("project_dokuma.md", self.yollar(o), o)
+
+    # ③ tek terim başlık/özetlerde GENEL sayılırsa (çok kayıtta geçer) indeks puanı kalmaz → sessiz boş sonuç yerine uyarı
+    def test_tum_terimler_genel_sayilinca_uyari(self):
+        d = self.proje_kur([f"- [Zeytinbahce kaydi {i}](project_z{i}.md) — zeytinbahce notu" for i in range(12)], {})
+        o = self.recall(d, "zeytinbahce")
+        self.assertEqual(o["genel_sayilan"], ["zeytinbahce"], o)
+        self.assertIn("genel sayıldı", o["uyari"], o)
+        r = self.calistir(RECALL, "zeytinbahce", "--project-dir", str(d))
+        self.assertIn("UYARI: sorgunun tüm terimleri", r.stdout, self.cikti(r))
+
+    # ⓐ''' terim sayısı indekste GENEL sayılanlar çıkarılarak alınır (TRAKYA: "UI5 bootstrap backend" → ui5/backend genel,
+    # sap-ui5-fiori açıklamasındaki "bootstrap" ile bulunur; genel terimler de sayılsaydı eşik 5 kalır, bulunmazdı)
+    def test_genel_terimler_terim_sayisina_katilmaz(self):
+        d = self.proje_kur([f"- [Zeytinbahce kaydi {i}](project_z{i}.md) — zeytinbahce limonagaci notu" for i in range(12)],
+                           {})
+        self.yaz(d / ".axet-code" / "skills" / "kilim-araci" / "SKILL.md",
+                 f"---\nname: kilim-araci\ndescription: >\n  Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.\n---\n")
+        o = self.recall(d, f"zeytinbahce limonagaci {self.TERIM}")
+        self.assertEqual(o["genel_sayilan"], ["limonagaci", "zeytinbahce"], o)
+        self.assertEqual((o["esik"], o["terim_sayisi"]), (1, 1), o)
+        self.assertIn("kilim-araci", self.skill_yollari(o), o)
+
+    # ⓔ düz metin KAPSAM satırı etkin eşiği ve ölçekleme gerekçesini söyler
+    def test_kapsam_satiri_olceklenen_esigi_beyan_eder(self):
+        d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
+        r = self.calistir(RECALL, self.TERIM, "--project-dir", str(d))
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        kapsam = next((s for s in r.stdout.splitlines() if s.startswith("KAPSAM:")), "")
+        self.assertIn("eşik 1 (varsayılan 5, 1 terimli sorgu için ölçeklendi)", kapsam, r.stdout)
 
 
 class HatirlamaYonlendirmeMetniTest(GeciciTest):
