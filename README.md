@@ -353,27 +353,44 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   `*npm*run deploy*`, `*npm*run-script deploy*`, `*npm*run -* deploy*`, `*npm*run-script -* deploy*`, `*npm*undeploy*`,
   `*yarn deploy*`, `*yarn.cmd deploy*`, `*yarn*run deploy*`, `*yarn --cwd * deploy*`, `*yarn workspace * deploy*`,
   `*yarn*undeploy*`, `*bun deploy*`, `*bun run deploy*`, `*bun run -* deploy*`, `*bun *undeploy*`,
-  `*ui5 build*ui5-deploy*`. `ui5 build` deseninin dayanağı **belgedir** (ui5-deploy.yaml'daki `deploy-to-abap` özel
-  görevi build içinde koşar — UI5 CLI + `@sap-ux/deploy-tooling` belgeleri), canlı ölçülmedi. Desenler **bitişik**
+  `*ui5 build*ui5-deploy*`. Bug gate sonrası (gerçek npm 10.9.3'te koştuğu ölçüldü) 4 deny daha: npm'in `run-script`
+  takma adları `*npm*rum deploy*`, `*npm*urn deploy*` ve tırnaklı ad `*npm*run "deploy*`, `*npm*run 'deploy*`.
+  `ui5 build` deseninin dayanağı **belgedir** (ui5-deploy.yaml'daki `deploy-to-abap` özel
+  görevi build içinde koşar — UI5 CLI + `@sap-ux/deploy-tooling` belgeleri), canlı ölçülmedi. `deploy` desenleri **bitişik**
   metin taşır (`run deploy`): daha geniş `*npm*run* deploy*` taslağı kapılı yolun kendisini (`npm run build && …
   deploy_ui.py deploy …`, hatta onay cümlesinde "npm run" geçen zincirsiz çağrıyı) deny'a düşürdüğü için seçilmedi.
+  ⚠ `undeploy` desenleri **bitişik DEĞİLDİR** (`*npm*undeploy*`, `*yarn*undeploy*`, `*bun *undeploy*` araya `*` alır):
+  paket yöneticisi adından sonra herhangi bir yerde `undeploy` geçen metin de düşer — `yarn test undeploy`,
+  `npm run test -- --grep undeploy`, `npm pkg get scripts.undeploy`, `rg -n "npm.*undeploy" .`,
+  `npm run build && rg undeploy .` (simülasyon, testte kilitli).
   Kontrol grubu (`npm run build/start/lint`, `npm install/test`, `yarn build/install`, `pnpm install`,
   `npm run build -- --dest deploy`, `npm run start:deploy-preview`, `npm run lint && echo deploy`, `yarn test deploy`)
   ve kapılı yol düşmez (`tests/test_install.py::PaketYoneticisiDeployTest`). **Canlı ölçüldü** (2026-09-24,
   `axet-code run`, lab config, motor kanıtı: DB `denied … rule bash:<desen>=deny` + işaret dosyası): `npm run undeploy`,
   `yarn deploy`, `ui5 build --config ui5-deploy.yaml`, `npm run --silent deploy` (echo biçimleri) reddedildi; `npm run build`,
-  `npm run lint && echo deploy`, `npm run build && python deploy_ui.py deploy app` çalıştı. Kalan 12 desen yalnız simülasyon. *Bilinen yanlış pozitif:* `npm run deploy-config`; bayraklı zincir
+  `npm run lint && echo deploy`, `npm run build && python deploy_ui.py deploy app` çalıştı. İkinci koşumda
+  `npm rum deploy`, `npm urn deploy`, `npm run "deploy"` reddedildi; `docker run ubuntu ls /srv/undeploy` ve
+  `rg -n "run deploy" .` çalıştı. Kalan 13 yeni desen yalnız simülasyon (`config/permissions.json` `_aciklama`
+  "GÜNCEL KAPSAM SAYIMI" tam listeyi verir). *Bilinen yanlış pozitif:* `npm run deploy-config`,
+  `npm ci && echo return deploy` (`*npm*urn deploy*`); bayraklı zincir
   (`npm run -s build && … deploy_ui.py deploy …`, `yarn --cwd x build && …`) — `deploy_ui.py` build'i kendisi yapar,
   **zincirsiz çağır**; `ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap`. *Bilinen açık:* `pnpm deploy`
   (pnpm'in yerleşik komutu, script koşmaz — DOĞRULANMADI), `npx deploy`/`undeploy` ve `node_modules/.bin/deploy`
   (`@sap-ux/deploy-tooling` bin'leri; iskelette doğrudan bağımlılık değil), `node …/fiori.cjs deploy`, başka adla
-  eklenmiş deploy script'i (`npm run ship`) ya da başka adlı deploy config'i, `yarn --silent deploy`, çift boşluk, harf varyantı.
+  eklenmiş deploy script'i (`npm run ship`) ya da başka adlı deploy config'i, `yarn --silent deploy`, çift boşluk, harf varyantı,
+  takma adın bayraklı biçimi (`npm rum -s deploy`), `npm run-script "deploy"`, kabuk dolaylaması (`X=deploy; npm run $X`,
+  `npm run $(echo deploy)` — script adı komut metninde geçmez, desenle kapatılamaz), PowerShell
+  `Start-Process npm -ArgumentList "run","deploy"`, `npx @ui5/cli build --config ui5-deploy.yaml`,
+  `.exe`/`.cmd` uzantısı bayrakla birlikteyse (`bun.exe run deploy`, `yarn.cmd --cwd app deploy`), `bun --cwd app run deploy`,
+  `pnpm --dir app deploy`.
 - **Yanlış pozitif: desen metni komutun herhangi bir yerinde geçerse eşleşir.** Ölçülen: `echo "rm -rf notu"`,
   `python x.py "rd /s metni"`, `git commit -m "git push --force notu"`, `echo "git reset --hard açıklaması"`.
   Simülasyonla beklenen (ölçülmedi): `rg -n "git reset --hard" .` ve `grep -rn "git reset --hard" docs` (deny),
   `git log --grep="git clean -xdf"` (deny), `git push -u origin dal && gh pr create -f` (deny),
   `git -C x push origin main --force-with-lease` (deny), `git rm -r --cached build` ve `git rm -R x` (ask),
-  `rg -n "rm -fr" docs` ve `rg "rmdir /s" docs` (ask). Commit mesajında bu metinler geçecekse mesaj dosyasını bash `echo`
+  `rg -n "rm -fr" docs` ve `rg "rmdir /s" docs` (ask), `rg "yarn deploy" .` (deny, `*yarn deploy*`). Aramada çıkış yolu:
+  aranan metinden paket yöneticisi/komut adını çıkar — `rg -n "run deploy" .` hiçbir desene uymaz (canlı çalıştı
+  2026-09-24). Commit mesajında bu metinler geçecekse mesaj dosyasını bash `echo`
   ile değil düzenleme aracıyla yaz (echo komutu da eşleşir) ve `git commit -F <dosya>` ile ver (`-F` yolu ölçülmedi).
 - **Yerel MCP yok sayılır:** entegrasyonlar script ya da kurumsal Connector ile yapılır.
 - Koşullu (dosya türüne göre) kural yükleme yok: çekirdek her oturum yüklenir, bu yüzden kısa tutulur.
