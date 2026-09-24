@@ -28,7 +28,19 @@ kalemi (0.5.6-09 · 0.5.7-04 · 0.5.8-12).
    ne yapılacağını söylemeli) · `doctor` paket satırı. Eski makinelerde `%guncelle` → v0.5.8, sonra YENİ aXet oturumu
    (çekirdek 0.7.0). ÖLÇÜLMEDİ listesi: gerçek HKCU yazımı · Store Python `_base_executable` · gerçek pip/proxy · Z98
    "PATH kaynağı kullanıcı PATH'i" uyarı dalı · Z87 canlı SAP.
-2. **Worktree temizliği** (`python core/scripts/team_setup.py --wt-denetim` → temizse kapat; junction-önce):
+   **🟡 KISMEN ÖLÇÜLDÜ (2026-09-24 akşam, ESKİ makine, TRAKYA — kullanıcı `%guncelle` + `%guncelle-proje`):** klon
+   `%USERPROFILE%\axet` içeriği public `v0.5.8` `a213ac3` ile **fark 0 dosya**, ağaç temiz (`ahead 7, behind 14` =
+   kalem commit'leri, içerik aynı) · `.axet-guncelleme/RAPOR.md` 17:37 → **25/25 PASS** · CORE-ID `AXET-CORE-0.7.0` ·
+   TRAKYA `doctor` **0 FAIL · 0 WARN**, Z101 satırı `[PASS] SAP Python paketleri yüklenebiliyor: requests, urllib3, dotenv` ·
+   `%guncelle-proje` 17:41–17:42 koştu (log), commit ÜRETMEDİ — **beklenen**: v0.5.7→v0.5.8 `templates/project*` farkı
+   boş; `sablon-surumu.json` `836d7a1` (09:22) kaldı, doctor `[PASS] proje şablonu güncel`. **Hâlâ ÖLÇÜLMEDİ:** Z98
+   (yeni makine kurulumu) · Z101 kurulum-anı satırı/proxy dalı (paketler zaten yüklüydü) · yeni aXet oturumunda
+   çekirdek 0.7.0 kanaryası · yukarıdaki ÖLÇÜLMEDİ listesi.
+2. ✅ **Worktree temizliği — TAMAM (2026-09-24 akşam):** 10 dalın 10'u merge edilmiş PR head'inde (dal ucu ⊆
+   `pull/<N>/head`: #38 · #39 · #41 · #42; `--wt-denetim`'in 7 `git cherry` FAIL'i squash yanlış alarmı + yerel `main`
+   bayattı `354d9d9`); kirli ağaç 0 · 9 × `--wt-kapat --zorla` · doğrulama (kullanıcı): `git worktree list` yalnız ana klon
+   `d1844da [main]`, `.wt/axet` boş, `.git/worktrees` yok. Ana klon `main`'e alındı. Eski metin:
+   **Worktree temizliği** (`python core/scripts/team_setup.py --wt-denetim` → temizse kapat; junction-önce):
    `.wt/axet/{birlesim,v058,z82,z84,z85,z90,z93,z98,z101}` — hepsinin işi main'de (v0.5.7 #39 · v0.5.8 #41). ⚠ Ana klon
    `C:/AI_WORKS/AXET` `docs/z84-git-kimlik` dalında duruyor (main'de değil) — önce durumuna bak, sonra `main`'e al.
 3. Sıradaki işler (öneri): ① Z69b ② Z102 ③ Z88 + Z89/Z92 canlı lab turu ④ Z77/Z78/Z73 ölçümleri ⑤ Z95/Z96/Z97
