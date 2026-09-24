@@ -145,6 +145,34 @@ def _put_mesajlari(govde: str) -> list:
              e.get(f"{{{NS_MC}}}documented") == "true") for e in kok.findall(f"{{{NS_MC}}}messages")]
 
 
+def _silinenler(govde: str) -> list:
+    kok = ET.fromstring(govde.encode("utf-8"))
+    return [e.get(f"{{{NS_MC}}}msgno") for e in kok.findall(f"{{{NS_MC}}}deletedmessages")]
+
+
+def _sap_put_uygula(msgs, govde: str, kip: str = "sap") -> list:
+    """SAP'nin ölçülmüş PUT davranışı (bkz. `_msag` docstring'i). Eski sahte tam listeyle DEĞİŞTİRİYORDU — kaynak çekirdek
+    canlıda çürüttü (tam PUT'tan çıkarmak no-op); o sahte, silmeyi hiç yapmayan aracı yeşil gösteriyordu."""
+    mevcut = {m[0]: m for m in msgs}
+    for m in _put_mesajlari(govde):
+        if m[0] not in mevcut or mevcut[m[0]][1] != m[1]:
+            mevcut[m[0]] = m
+    if kip != "noop_sil":
+        for no in _silinenler(govde):
+            mevcut.pop(no or "000", None)
+    if kip == "fazla":
+        mevcut.pop(sorted(mevcut)[0], None)
+    if kip == "degistir":
+        ilk = sorted(mevcut)[0]
+        eski = mevcut[ilk]
+        mevcut[ilk] = (eski[0], eski[1] + " (değişti)", eski[2], eski[3])
+    if kip == "doc":   # yalnız `documented` bayrağı değişir — genel readback kıyası (no,text,self) bunu GÖRMEZ, kapı görür
+        ilk = sorted(mevcut)[0]
+        eski = mevcut[ilk]
+        mevcut[ilk] = (eski[0], eski[1], eski[2], not eski[3])
+    return [mevcut[k] for k in sorted(mevcut)]
+
+
 class DomainVeMesajSinifi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -387,17 +415,32 @@ class DomainVeMesajSinifi(unittest.TestCase):
                     "unmeasured · exists · create 1", str(sonuc), ok)
 
     # ═════════════════════════════ MESAJ SINIFI ═══════════════════════════════════════════════════
-    def _msag(self, msgs, *, ml="TR", put_gunceller=True, lock=None, get_durum=200, paket=True, put_durum=200):
-        durum = {"msgs": list(msgs), "ml": ml, "paket": paket, "get": get_durum}
+    def _msag(self, msgs, *, ml="TR", put_gunceller=True, lock=None, get_durum=200, paket=True, put_durum=200,
+              put_kip="sap", on_lock=None, put_istisna=False):
+        """Sahte MSAG ucu. PUT semantiği SAP'nin ÖLÇÜLMÜŞ davranışıdır (kaynak çekirdek `playbook/adt-message-class.md`
+        §27.5, s4_private 2025: 229→229 no-op / 229→228 deletedmessages): gövdedeki mesaj eklenir, METNİ farklıysa
+        güncellenir; gövdede OLMAYAN mesaja DOKUNULMAZ; yalnız `<mc:deletedmessages>` siler (boş msgno → 000).
+        `put_kip`: "sap" · "noop_sil" (deletedmessages yok sayılır) · "fazla" (istenmeyen bir mesaj da gider) ·
+        "degistir" (kalan bir mesajın metni değişir). `durum["get_plan"]`: sıradaki GET'lerin durum kodları
+        (200/500 ya da istisna nesnesi; tükenince `durum["get"]`). `on_lock(durum)`: LOCK anında canlıyı değiştirir
+        (TOCTOU). `put_istisna`: PUT işlenir ama yanıt yerine ağ istisnası."""
+        durum = {"msgs": list(msgs), "ml": ml, "paket": paket, "get": get_durum, "get_plan": []}
 
         def yon(c):
             if c["method"] == "GET" and c["path"] == "/sap/bc/adt/messageclass/zaxet_msg":
-                return Yanit(durum["get"], _msag_xml(durum) if durum["get"] == 200 else "hata")
+                kod = durum["get_plan"].pop(0) if durum["get_plan"] else durum["get"]
+                if isinstance(kod, BaseException):
+                    return kod
+                return Yanit(kod, _msag_xml(durum) if kod == 200 else "hata")
             if c["method"] == "POST" and c["params"].get("_action") == "LOCK":
+                if on_lock:
+                    on_lock(durum)
                 return lock(c) if lock else Yanit(200, "<asx:abap><DATA><LOCK_HANDLE>HX9</LOCK_HANDLE></DATA></asx:abap>")
             if c["method"] == "PUT":
                 if put_gunceller and put_durum == 200:
-                    durum["msgs"] = _put_mesajlari(c["data"])
+                    durum["msgs"] = _sap_put_uygula(durum["msgs"], c["data"], put_kip)
+                if put_istisna:
+                    return ConnectionError("Read timed out (PUT)")
                 return Yanit(put_durum, "")
             if c["method"] == "POST" and c["params"].get("_action") == "UNLOCK":
                 return Yanit(200, "")
@@ -632,6 +675,192 @@ class DomainVeMesajSinifi(unittest.TestCase):
                     "yok · kaydedildi", f"yok={yok} {g.get('pull_state')} keys={sorted(g)}",
                     yok and g.get("pull_state") == "kaydedildi" and "_responsible" not in g
                     and H.KULLANICI not in json.dumps(g, ensure_ascii=False))
+
+    # ═════════════════════════════ MESAJ SİLME (Z113 — kaynak çekirdek 2026-09-24 portu) ══════════════════
+    # Kök (kaynak çekirdek canlı, s4_private 2025): tam PUT'tan mesajı ÇIKARMAK silmez (229→229); silme yalnız
+    # `<mc:deletedmessages mc:msgno="NNN"/>` ile (229→228). Senaryolar kaynak çekirdek `tests/fixtures/msag_mesaj_silme/run.py`
+    # S1/S4-S8/S9-S11/S19-S22/S25/U5'ten uyarlandı. Zor metinler bilerek: `&` yer tutucu, çift tırnak, `<`, documented=true.
+    _SIL_BAS = [("000", "&1 &2 &3 &4", True, False), ("001", 'Belge "&1" bulunamadı.', False, True),
+                ("002", "Miktar < 0 olamaz (&1).", False, False), ("006", "Atıl mesaj — silinecek.", True, False),
+                ("011", "İkinci atıl mesaj; uzun metinli.", False, True), ("020", "Şube & depo eşleşmedi.", True, False)]
+    _GET = ("GET", "/sap/bc/adt/messageclass/zaxet_msg")
+    _PUT = ("PUT", "/sap/bc/adt/messageclass/zaxet_msg")
+
+    def _sil_kur(self, **kw):
+        adt, durum = self._msag(self._SIL_BAS, **kw)
+        g = self.atom.adt_msgclass_read("ZAXET_MSG")
+        self.assertEqual(g.get("pull_state"), "kaydedildi")
+        adt.cagri.clear()
+        return adt, durum
+
+    @staticmethod
+    def _say(adt, method, action=None):
+        return len([c for c in adt.cagri if c["method"] == method
+                    and (action is None or c["params"].get("_action") == action)])
+
+    def test_MS1_silme_govdesi_deletedmessages(self):
+        """(a) delete_numbers → gövdede `mc:deletedmessages`; silinen yalnız listeden çıkarılmaz; canlıdan gerçekten gider."""
+        adt, durum = self._sil_kur()
+        r = self._yaz(delete_numbers=["006", "011"])
+        put = [c for c in adt.cagri if c["method"] == "PUT"]
+        g = put[0]["data"] if put else ""
+        kalan_bekl = [m for m in self._SIL_BAS if m[0] not in ("006", "011")]
+        ok = (r.get("ok") is True and r.get("readback_verified") is True and r.get("changed") is True
+              and len(put) == 1 and _silinenler(g) == ["006", "011"]
+              and _put_mesajlari(g) == kalan_bekl                                  # kalanlar CANLI öznitelikleriyle birebir
+              and g.rfind("<mc:messages ") < g.find("<mc:deletedmessages")        # son mesajdan SONRA (ST sırası)
+              and 'mc:msgno=""' not in g
+              and durum["msgs"] == kalan_bekl                                      # canlıdan gerçekten gitti
+              and [d["no"] for d in r["plan"]["deleted"]] == ["006", "011"]
+              and r.get("message_count_before") == 6 and r.get("message_count_after") == 4
+              and (r.get("delete_gate") or {}).get("ok") is True
+              and (r.get("delete_gate") or {}).get("scope_not_checked"))
+        self.kaydet("MS1 delete_numbers=[006,011] → gövdede deletedmessages 006,011 (mesajlardan sonra) · kalanlar birebir · "
+                    "canlı 6→4 · kapı tuttu", "ok · deletedmessages · 6→4",
+                    f"ok={r.get('ok')} err={r.get('error')} del={_silinenler(g) if g else None} "
+                    f"canli={[m[0] for m in durum['msgs']]} gate={r.get('delete_gate')}", ok)
+
+    def test_MS2_kilit_altinda_yeniden_okuma_ve_sira(self):
+        """(b) silmede kilit ALTINDA canlı yeniden okunur (TOCTOU); sıra GET→LOCK→GET→PUT→UNLOCK→GET."""
+        adt, durum = self._sil_kur()
+        r = self._yaz(delete_numbers=["006"])
+        sira = self._yollar(adt)
+        self.kaydet("MS2 silme sırası: GET → LOCK → GET (kilit altında) → PUT → UNLOCK → GET (readback)",
+                    "6 adım", f"ok={r.get('ok')} sıra={sira}",
+                    r.get("ok") is True and sira == [self._GET, ("POST", "LOCK"), self._GET, self._PUT,
+                                                     ("POST", "UNLOCK"), self._GET])
+
+        def baskasi_degistirir(d):   # ÖNCE okumasından sonra, kilit alınırken başkası 002'nin metnini değiştirir
+            d["msgs"] = [(n, t + " [başkası]", s, dc) if n == "002" else (n, t, s, dc) for n, t, s, dc in d["msgs"]]
+        adt, durum = self._sil_kur(on_lock=baskasi_degistirir)
+        r = self._yaz(delete_numbers=["006"])
+        m002 = dict((m[0], m[1]) for m in durum["msgs"]).get("002", "")
+        self.kaydet("MS2 TOCTOU: kilit altında canlı değişmiş → source_changed_since_pull · SIFIR PUT · 1 UNLOCK · 002 korunur",
+                    "source_changed_since_pull · PUT 0", f"{r.get('error')} sıra={self._yollar(adt)} 002={m002!r}",
+                    r.get("error") == "source_changed_since_pull" and r.get("ok") is False
+                    and self._say(adt, "PUT") == 0 and self._say(adt, "POST", "UNLOCK") == 1
+                    and m002.endswith("[başkası]") and "006" in [m[0] for m in durum["msgs"]])
+
+        adt, durum = self._sil_kur()
+        durum["get_plan"] = [200, 500]   # 1 = yazma öncesi canlı · 2 = kilit altında
+        r = self._yaz(delete_numbers=["006"])
+        self.kaydet("MS2 kilit altında okuma 500 → pull_live_read_failed · SIFIR PUT · 1 UNLOCK (ölçülemeyen = yazılmaz)",
+                    "pull_live_read_failed · PUT 0", f"{r.get('error')} sıra={self._yollar(adt)}",
+                    r.get("error") == "pull_live_read_failed" and self._say(adt, "PUT") == 0
+                    and self._say(adt, "POST", "UNLOCK") == 1 and durum["msgs"] == self._SIL_BAS)
+
+    def test_MS3_silme_korumalari_yazmadan_durur(self):
+        """(c) olmayan numara / tüm sınıf / oturum dili ≠ master / yaz+sil karışık → red, SAP'ye LOCK/PUT GİTMEZ."""
+        vakalar = [
+            ("canlıda olmayan 999", {"delete_numbers": ["999"]}, "invalid_argument", None),
+            ("tüm sınıf", {"delete_numbers": [m[0] for m in self._SIL_BAS]}, "invalid_argument", None),
+            ("oturum dili EN ≠ master TR", {"delete_numbers": ["006"]}, "ADR_0005_D", "EN"),
+            ("yaz + sil aynı çağrıda", {"messages": [{"no": "030", "text": "Yeni"}], "delete_numbers": ["006"]},
+             "invalid_argument", None),
+            ("numara '6'", {"delete_numbers": ["6"]}, "invalid_argument", None),
+            ("boş numara", {"delete_numbers": [""]}, "invalid_argument", None),
+        ]
+        for ad, arg, kod, dil in vakalar:
+            adt, durum = self._sil_kur()
+            if dil:
+                adt.language = dil
+            r = self._yaz(**arg)
+            gercek = r.get("code") if r.get("error") == "guardrail_violation" else r.get("error")
+            yazma = self._say(adt, "PUT") + self._say(adt, "POST", "LOCK")
+            self.kaydet(f"MS3 silme koruması: {ad} → {kod}, LOCK/PUT YOK", kod, f"{gercek} yazma={yazma}",
+                        gercek == kod and yazma == 0 and durum["msgs"] == self._SIL_BAS)
+
+    def test_MS4_silme_sonrasi_readback_kapisi(self):
+        """(d) PUT 200 ≠ silindi: mesaj hâlâ varsa / fazlası gittiyse / kalan değiştiyse / okunamadıysa başarı DÖNMEZ."""
+        for ad, kip in (("NEGATİF noop (deletedmessages yok sayılır — eski tam-PUT davranışı)", "noop_sil"),
+                        ("fazla silen sunucu", "fazla"), ("kalan metni değiştiren sunucu", "degistir"),
+                        ("kalanın yalnız documented bayrağını değiştiren sunucu", "doc")):
+            adt, durum = self._sil_kur(put_kip=kip)
+            r = self._yaz(delete_numbers=["006"])
+            gate = r.get("delete_gate") or {}
+            self.kaydet(f"MS4 {ad} → ok:false readback_mismatch + delete_gate hata + pull kaydı silindi",
+                        "readback_mismatch · gate.ok False",
+                        f"ok={r.get('ok')} err={r.get('error')} gate={gate}",
+                        r.get("ok") is False and r.get("error") == "readback_mismatch"
+                        and gate.get("ok") is False and gate.get("errors")
+                        and self.ps.kayit_al("ZAXET_MSG", "msag")[0] is None
+                        and self._say(adt, "POST", "UNLOCK") == 1)
+        adt, durum = self._sil_kur(put_kip="noop_sil")
+        r = self._yaz(delete_numbers=["006"])
+        self.kaydet("MS4 noop: kapı silinmeyen numarayı ADIYLA söyler (006)", "006 not_deleted",
+                    str((r.get("delete_gate") or {}).get("not_deleted")),
+                    (r.get("delete_gate") or {}).get("not_deleted") == ["006"])
+        adt, durum = self._sil_kur()
+        durum["get_plan"] = [200, 200, 500]   # önce · kilit altı · SONRA
+        r = self._yaz(delete_numbers=["006"])
+        self.kaydet("MS4 SONRA okunamaz → readback_failed ok:false (ölçülemedi ≠ tuttu)", "readback_failed",
+                    f"ok={r.get('ok')} err={r.get('error')} gate={r.get('delete_gate')}",
+                    r.get("ok") is False and r.get("error") == "readback_failed"
+                    and (r.get("delete_gate") or {}).get("ok") is None)
+        adt, durum = self._sil_kur(put_istisna=True)
+        r = self._yaz(delete_numbers=["006"])
+        self.kaydet("MS4 PUT gönderildikten sonra ağ istisnası → ok:false · 'OLABİLİR' · pull kaydı silindi · UNLOCK",
+                    "ok False · ölçülemedi", f"ok={r.get('ok')} err={r.get('error')} msg={str(r.get('message'))[:80]}",
+                    r.get("ok") is False and "silindi" in str(r.get("pull_state"))
+                    and (r.get("delete_gate") or {}).get("ok") is None
+                    and "OLABİLİR" in str((r.get("delete_gate") or {}).get("note"))
+                    and self._say(adt, "POST", "UNLOCK") == 1)
+
+    def test_MS5_silmesiz_yazma_kontrol_grubu(self):
+        """(e) KONTROL GRUBU — silme yokken yazma akışı DEĞİŞMEZ: kilit altı okuma yok, gövdede deletedmessages yok."""
+        adt, durum = self._sil_kur()
+        r = self._yaz(messages=[{"no": "030", "text": "Yeni mesaj"}])
+        put = [c for c in adt.cagri if c["method"] == "PUT"]
+        g = put[0]["data"] if put else ""
+        ok = (r.get("ok") is True and r.get("readback_verified") is True
+              and self._yollar(adt) == [self._GET, ("POST", "LOCK"), self._PUT, ("POST", "UNLOCK"), self._GET]
+              and g and "deletedmessages" not in g and "delete_gate" not in r
+              and [m[0] for m in durum["msgs"]] == ["000", "001", "002", "006", "011", "020", "030"])
+        self.kaydet("MS5 kontrol: silmesiz ekleme → GET→LOCK→PUT→UNLOCK→GET · deletedmessages YOK · 7 mesaj",
+                    "ok · 5 adım", f"ok={r.get('ok')} sıra={self._yollar(adt)}", ok)
+
+    def test_MS6_silme_govdesi_oz_denetimi(self):
+        """Gövde öz-denetimi KENDİ BAŞINA (kaynak çekirdek U5): doğru gövde → [], her bozuk gövde → hata listesi."""
+        liste = [{"no": m[0], "text": m[1], "selfexplanatory": m[2], "documented": m[3]}
+                 for m in self._SIL_BAS if m[0] != "006"]
+        iyi = self.mc._govde("ZAXET_MSG", "Açıklama", "TR", "U", "ZAXET_PKG", liste, ["006"])
+        satir = iyi.split("\n")
+        di = next(i for i, s in enumerate(satir) if "<mc:deletedmessages" in s)
+        mi = next(i for i, s in enumerate(satir) if "<mc:messages " in s)
+        once = satir[:]
+        once.insert(mi, once.pop(di))
+        bozuklar = {
+            "deleted mesajlardan önce": "\n".join(once),
+            "boş msgno": iyi.replace('<mc:deletedmessages mc:msgno="006"/>', '<mc:deletedmessages mc:msgno=""/>'),
+            "kalan metin değişmiş": iyi.replace("Miktar &lt; 0 olamaz", "Miktar &lt; 1 olamaz"),
+            "yanlış numara silinir": iyi.replace('<mc:deletedmessages mc:msgno="006"/>',
+                                                 '<mc:deletedmessages mc:msgno="020"/>'),
+            "deletedmessages yok": iyi.replace('<mc:deletedmessages mc:msgno="006"/>', ""),
+        }
+        sonuc = {k: self.mc._silme_govdesi_denetle(v, liste, ["006"]) for k, v in bozuklar.items()}
+        degismeyen = [k for k, v in bozuklar.items() if v == iyi]
+        self.kaydet("MS6 gövde öz-denetimi: doğru gövde boş liste, 5 bozuk gövdenin her biri hata listesi",
+                    "[] · 5 hata", f"iyi={self.mc._silme_govdesi_denetle(iyi, liste, ['006'])} "
+                                   f"boş dönen={[k for k, v in sonuc.items() if not v]} bozulamayan={degismeyen}",
+                    self.mc._silme_govdesi_denetle(iyi, liste, ["006"]) == [] and not degismeyen
+                    and all(sonuc.values()))
+
+    def test_MS7_tab_lf_cr_kacisi(self):
+        """kaynak çekirdek T13/S25: öznitelikte çıplak TAB/LF/CR boşluğa normalleşir → geri gönderilen canlı metin değişir."""
+        cok = "Satır1\nSatır2\tsekme\rSON"
+        govde = self.mc._govde("ZAXET_MSG", "Açıklama", "TR", "U", "ZAXET_PKG",
+                               [{"no": "001", "text": cok, "selfexplanatory": False, "documented": False}])
+        geri = _put_mesajlari(govde)[0][1]
+        self.kaydet("MS7 _govde TAB/LF/CR: geri ayrıştırma AYNI metni verir", repr(cok), repr(geri), geri == cok)
+        adt, durum = self._msag(self._SIL_BAS + [("030", "İlk satır\nikinci\tsatır", False, False)])
+        self.atom.adt_msgclass_read("ZAXET_MSG")
+        adt.cagri.clear()
+        r = self._yaz(delete_numbers=["006"])
+        m030 = dict((m[0], m[1]) for m in durum["msgs"]).get("030")
+        self.kaydet("MS7 çok satırlı canlı metinle silme → ok · 030 metni birebir", "ok · 030 aynı",
+                    f"ok={r.get('ok')} err={r.get('error')} 030={m030!r}",
+                    r.get("ok") is True and m030 == "İlk satır\nikinci\tsatır"
+                    and "006" not in [m[0] for m in durum["msgs"]])
 
 
 if __name__ == "__main__":
