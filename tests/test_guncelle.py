@@ -1994,6 +1994,36 @@ class AkisTest(AkisTemel):
         self.assertIn("doctor YEREL",
                       (self.f.tuketici / "scripts/doctor.py").read_text(encoding="utf-8"))
 
+    # --- Z82: geri-al, uygula SONRASI elle yapılan düzenlemeyi yedeksiz ezmez ------------------
+    def _yerel_yedekler(self) -> list[str]:
+        return sorted(p.relative_to(self.f.tuketici).as_posix()
+                      for p in self.f.tuketici.rglob("*.yerel*")
+                      if ".git" not in p.relative_to(self.f.tuketici).parts)
+
+    def test_Z82_geri_al_uygula_sonrasi_elle_duzenlemeyi_yerel_olarak_saklar(self):
+        """Etikette blob'u olan yol `git checkout <etiket> --` ile geri yazılır; uygula'dan SONRA
+        yapılan düzenlemenin hiçbir yerde kopyası yoktur (ne etikette ne yeni ref'te)."""
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        (self.f.tuketici / "LICENSE").write_text("MIT elle duzenlendi\n", encoding="utf-8")
+        r = self.f.calistir("geri-al", "LICENSE")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual((self.f.tuketici / "LICENSE").read_text(encoding="utf-8"), "MIT yerel\n",
+                         "geri-al etiketteki hâli geri yazmalı (davranış değişmez)")
+        yedekler = self._yerel_yedekler()
+        self.assertEqual(yedekler, ["LICENSE.yerel"], self.cikti(r))
+        self.assertEqual((self.f.tuketici / "LICENSE.yerel").read_text(encoding="utf-8"),
+                         "MIT elle duzenlendi\n", "elle düzenleme geri alınamaz biçimde ezildi")
+        self.assertIn("Yedeksiz yerel içerik saklandı: LICENSE.yerel", self.cikti(r))
+
+    def test_Z82_kontrol_geri_al_hepsi_elle_duzenleme_yoksa_yerel_uretmez(self):
+        """Diskteki içerik motorun yazdığı (yeni ref blob'u ya da birleştirme sonucu) ise
+        kurtarılabilir: `.yerel` çöpü üretilmez. Tek beklenen yedek fixture'ın V7 kullanıcı dosyasıdır
+        (izlenmeyen; Z82 öncesinden beri saklanır — `test_geri_al_hepsi_izlenmeyen_kullanici_dosyasini_silmez`)."""
+        self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
+        r = self.f.calistir("geri-al", "--hepsi")
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertEqual(self._yerel_yedekler(), ["skills/cakisan/SKILL.md.yerel"], self.cikti(r))
+
     def test_durum_tablo_basar(self):
         self.assertEqual(self.f.calistir("uygula", "--otomatik").returncode, 0)
         r = self.f.calistir("durum")
