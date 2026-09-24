@@ -949,3 +949,52 @@ class PythonAsgariTest(unittest.TestCase):
         c = r.stdout + r.stderr
         self.assertNotIn("surumu yetersiz", c)
         self.assertIn("proje klasoru bulunamadi", c)
+
+    # --- Z98: `python` çalışmıyorsa .cmd başlatıcıları `py -3` ile dener ------------------------------------------
+    def _py_yedek_path(self, py_var: bool) -> dict:
+        """PATH'te `python` YOK (yalnız geçici klasör + System32). py_var=True ise klasörde yalnız `-3`'ü tanıyan sahte
+        bir py.cmd var ve gerçek yorumlayıcıya yönlendirir (başka argümanda rc 1). .cmd başlatıcı seçtiği yorumlayıcının
+        TAM yolunu (sys.executable) kullanmalı: sahte py.cmd yalnız seçimde çağrılır, sonraki çağrılar gerçek exe'ye gider."""
+        import os
+        import tempfile
+        from pathlib import Path
+        d = Path(tempfile.mkdtemp(prefix="axet-pyyedek-"))
+        self.addCleanup(shutil.rmtree, d, True)
+        if py_var:
+            (d / "py.cmd").write_text(
+                '@echo off\r\nif not "%~1"=="-3" exit /b 1\r\n'
+                f'"{Path(sys.executable).resolve()}" %2 %3 %4 %5 %6 %7 %8 %9\r\nexit /b %errorlevel%\r\n',
+                encoding="ascii", newline="")
+        env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
+        for k in [k for k in env if k.upper() == "PATH"]:
+            del env[k]
+        sys32 = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32"
+        env["PATH"] = os.pathsep.join([str(d), str(sys32)])
+        # enjeksiyon tuttu mu: bu PATH'le `python` çalışmamalı (yoksa test py kolunu hiç ölçmez)
+        dene = subprocess.run(["cmd", "/c", "python", "--version"], env=env, capture_output=True, text=True,
+                              stdin=subprocess.DEVNULL, timeout=60)
+        self.assertNotEqual(dene.returncode, 0, dene.stdout + dene.stderr)
+        return env
+
+    @unittest.skipUnless(sys.platform == "win32", ".cmd yalnız Windows'ta koşar")
+    def test_cmd_python_yoksa_py_3_ile_devam_eder(self):
+        env = self._py_yedek_path(True)
+        r = self._cmd("yeni-proje.cmd", env, "--help")
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        self.assertNotIn("python bulunamadi", c)
+        r = self._cmd("proje-tamamla.cmd", env, str(AXET_HOME / "yok-klasor"))
+        c = r.stdout + r.stderr
+        self.assertNotIn("python bulunamadi", c)
+        self.assertIn("proje klasoru bulunamadi", c)
+
+    @unittest.skipUnless(sys.platform == "win32", ".cmd yalnız Windows'ta koşar")
+    def test_cmd_python_da_py_da_yoksa_python_yok_mesaji(self):
+        env = self._py_yedek_path(False)
+        for ad, args in (("yeni-proje.cmd", ("--help",)), ("proje-tamamla.cmd", (str(AXET_HOME / "yok-klasor"),))):
+            with self.subTest(cmd=ad):
+                r = self._cmd(ad, env, *args)
+                c = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 9009, c)
+                self.assertIn("python bulunamadi", c)
+                self.assertNotIn("surumu yetersiz", c)
