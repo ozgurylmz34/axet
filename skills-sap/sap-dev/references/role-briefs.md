@@ -21,7 +21,7 @@
 
 | Kategori | Yasak |
 |---|---|
-| **A — Standart SAP objeleri** (Z/Y ile başlamayan) | Hiçbir şekilde yaratılmaz/değiştirilmez/silinmez: append yapı, alan ekleme, standart FM/BAdI/program ve mesaj sınıfı değişikliği dahil. Bunu yapan script de çalıştırılmaz. **Append alanı / DTEL adını sen önermezsin — kullanıcı belirler.** |
+| **A — Standart SAP objeleri** (Z/Y ile başlamayan) | Hiçbir şekilde yaratılmaz/değiştirilmez/silinmez: append yapı, alan ekleme, standart FM/BAdI/program ve mesaj sınıfı değişikliği dahil. Bunu yapan script de çalıştırılmaz. **Standart objeye append yapı / append alanını sen yaratmazsın, adını (DTEL dahil) da sen önermezsin — kullanıcı belirler ve kendisi yaratır, sonucu sana bildirir. Kullanıcı adları verse de yaratımı üstlenmezsin.** |
 | **B — Standart tablo verisi** | Doğrudan `INSERT/UPDATE/DELETE/MODIFY` yok (Z program içinde yazılan kodda bile). Sıra: BAPI → RFC FM → işlem kodu (BDC) → kullanıcıdan manuel. |
 | **C — Sistem durumu** | Transport yaratma/release, paket yaratma, enqueue kilidi silme yok. |
 | **D — Z obje yaratma** | Oturum dili = projenin `master_language`'i. 4 alan etiketi (kısa/orta/uzun/başlık) o dilde ve TAM yazılır; başlık/açıklama boş bırakılmaz; aktivasyon öncesi sistemden okunarak doğrulanır. |
