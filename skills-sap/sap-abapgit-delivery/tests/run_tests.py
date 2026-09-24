@@ -232,6 +232,44 @@ class RuleTests(Base):
         self.assertEqual(rc, 2)
         self.assertIn("std_dml_scan_unavailable", {f["code"] for f in json.loads(out)["findings"]})
 
+    def test_standard_extension_A(self):
+        """Z104: Z adlı obje içinden standart objeyi genişletme — foundation tarayıcısı (yazma kapısıyla aynı)."""
+        self.write("src/zzavbak.tabl.xml", "<abapGit><DD02V><TABNAME>ZZAVBAK</TABNAME><DDTEXT>Ek</DDTEXT>"
+                   "<TABCLASS>APPEND</TABCLASS><SQLTAB>VBAK</SQLTAB></DD02V></abapGit>\n")
+        self.write("src/ze_i_so.ddls.asddls", "extend view entity I_SalesOrder with {\n  zz_x\n}\n")
+        self.write("src/ze_i_so.ddls.xml", "<abapGit><DDLS><DDTEXT>Ek</DDTEXT></DDLS></abapGit>\n")
+        self.write("src/zc_prod_mde.ddlx.asddlxs", "annotate entity I_Product with {\n  @UI.hidden: true Product;\n}\n")
+        self.write("src/zc_prod_mde.ddlx.xml", "<abapGit><DDLX><DDTEXT>Ek</DDTEXT></DDLX></abapGit>\n")
+        for rel in ("src/zzavbak.tabl.xml", "src/ze_i_so.ddls.asddls", "src/zc_prod_mde.ddlx.asddlxs"):
+            rc, _, fails, _ = self.check("--files", rel)
+            self.assertIn("ADR_0005_A", fails, rel)
+            self.assertEqual(rc, 2, rel)
+        rc, out, _ = run("pack", "--root", self.ws, "--files", "src/ze_i_so.ddls.asddls", "--project-dir", self.project)
+        self.assertEqual(rc, 2)
+        self.assertIn("hedef I_SALESORDER", out)
+        self.assertFalse((self.ws / "dist").exists())
+
+    def test_customer_extension_allowed_A(self):
+        """Z104 kontrol grubu: Z hedefli append/extend ve yorumdaki metin serbest."""
+        self.write("src/zzaxet_t_ek.tabl.xml", "<abapGit><DD02V><TABNAME>ZZAXET_T_EK</TABNAME><DDTEXT>Ek</DDTEXT>"
+                   "<TABCLASS>APPEND</TABCLASS><SQLTAB>ZAXET_T</SQLTAB></DD02V></abapGit>\n")
+        self.write("src/ze_i_x.ddls.asddls", "// extend view entity I_SalesOrder with\nextend view entity ZI_X with {\n  a\n}\n")
+        self.write("src/ze_i_x.ddls.xml", "<abapGit><DDLS><DDTEXT>Ek</DDTEXT></DDLS></abapGit>\n")
+        _, _, fails, _ = self.check("--files", "src/zzaxet_t_ek.tabl.xml", "src/ze_i_x.ddls.asddls")
+        self.assertNotIn("ADR_0005_A", fails)
+        self.assertNotIn("std_ext_scan_unavailable", fails)
+
+    def test_extension_scanner_unavailable_is_fail_closed(self):
+        fake = self.d / "kopya2" / "skills-sap" / "sap-abapgit-delivery" / "scripts" / "abapgit_zip.py"
+        fake.parent.mkdir(parents=True)
+        shutil.copy(SCRIPT, fake)
+        self.write("src/ze_i_x.ddls.asddls", "extend view entity ZI_X with {\n  a\n}\n")
+        self.write("src/ze_i_x.ddls.xml", "<abapGit><DDLS><DDTEXT>Ek</DDTEXT></DDLS></abapGit>\n")
+        rc, out, _ = run("check", "--root", self.ws, "--files", "src/ze_i_x.ddls.asddls", "--project-dir", self.project,
+                         "--json", script=fake)
+        self.assertEqual(rc, 2)
+        self.assertIn("std_ext_scan_unavailable", {f["code"] for f in json.loads(out)["findings"]})
+
     def test_repo_language_mismatch_D(self):
         self.write(".abapgit.xml", DOT.format(lang="E"))
         self.write("src/zcl_demo.clas.abap", ABAP_OK + "* değişti\n")

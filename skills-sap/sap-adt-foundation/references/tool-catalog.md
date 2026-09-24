@@ -293,6 +293,7 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   (`skip_reviewer`) ve Z tablo alanı silme BLOCKER'ını onaylı geçirmek (`ack_drop`) aXet'te kapıda reddedilir — alan silme
   gerekiyorsa DUR, veri kaybı riskini kullanıcıya açıkla · 412/423 → `known-errors-adt.md` K-01…K-03 ·
   **Kesin Yasak B:** kaynakta standart tabloya doğrudan DML → `ADR_0005_B` (çıkış 2, mesajda satır + hedef; kaynak taranamazsa `std_dml_scan_unavailable`) ·
+  **Kesin Yasak A (Z104):** kaynak standart objeyi genişletiyorsa (`extend type|view [entity]|custom|abstract entity <std>`, `annotate view|entity <std>`, BDEF `extension` — `using interface <Z…>` yoksa hedef kanıtlanamaz) → `ADR_0005_A` (çıkış 2, mesajda satır + hedef; kaynak taranamazsa `std_ext_scan_unavailable`; `adt_struct_create`'te yazılacak DDL de taranır) ·
   **pull-before-edit:** önce `adt_get` şart — kayıt yok `pull_before_edit_missing` (2) · çekildikten sonra SAP'de değişmiş `source_changed_since_pull` (2) ·
   canlı okuma başarısız `pull_live_read_failed` (1) · durum dosyası bozuk `pull_state_unreadable` (2); başarılı push kaydı günceller (`pull_state: guncellendi`).
 - **Tipe özel yazma (2026-09-13; çevrimdışı test edildi, canlı DOĞRULANMADI):**

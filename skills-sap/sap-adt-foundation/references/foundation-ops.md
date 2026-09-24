@@ -224,6 +224,20 @@ zararsız" diye geçiştirmek de yanlış (push ≠ aktif). Include tek başına
   guard'ı aşmaya çalışma; kullanıcı bağlam programını SE80/ADT GUI'den aktive edebilir (kanıtlı çözüm).
 - Tek-obje yolu (include URI'si, `also` olmadan) bağlam programını çözmez → kullanma.
 
+### 4.3b Z adlı genişletme objesi — standart hedef kapıda reddedilir (Yasak A, Z104)
+Genişletme objesinin KENDİ adı Z'lidir (`ZZAVBAK`, `ZE_I_SO`); genişlettiği standart obje kaynağın İÇİNDE yazar. Bu yüzden
+ad denetimi yetmez; yazma kapısı (`gate.check_std_extension`, adım 5) ve `adt_push_source` (ikinci katman) kaynağı
+`sapadt/std_ext_scan.py` ile tarar. Yazma anahtarı açık + DEV olsa da red:
+- `extend type <std> with <append>` (DDIC append) · `extend view [entity] <std> with` · `extend custom|abstract entity <std> with`
+  · `annotate view|entity <std> with` (metadata extension) → `ADR_0005_A`, mesajda satır + hedef.
+- BDEF `extension …;`: genişletilen BDEF kaynakta YAZMAZ (ADT metadata'sı; `extend behavior for <X>`'teki X alias olabilir —
+  SAP örneği `extend behavior for Shop`). Hedef yalnız `extension using interface <I>` ile görünür; yoksa fail-closed red.
+- Hedef Z/Y ya da `/Z…/`, `/Y…/` ise serbest (Z objeyi Z extend ile genişletmek). Yorum (`//`, `/* */`) ve `'…'` içindeki metin
+  taranmaz; `--` bilerek yorum sayılmaz (yanlış pozitif yönü seçildi).
+- Kaynak yok / tarayıcı koşamadı → `std_ext_scan_unavailable`. ABAP kaynak tipleri (class, program, FM…) taranmaz.
+- Ne yapılır: DUR → kullanıcıya açıkla. Append/extend'i kullanıcı yaratır, sonucu sana bildirir; sen `adt_get` ile okuyup
+  doğrularsın. Append/DTEL adı önerme.
+
 ### 4.4 Function module (FUNC/FF) — protokol notları
 - DENENEN — BAŞARISIZ: genel kaynak-yazma yolu (ETag/retry'lı stateful kilit) FM'de `423 InvalidLockHandle` verdi.
 - ÇALIŞAN (önceki araç setinin yardımcı fonksiyonu): **sıkı** kilit → PUT → aktivasyon → kilidi bırak, tek oturum.

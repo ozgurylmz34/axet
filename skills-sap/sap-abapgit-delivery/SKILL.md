@@ -52,6 +52,9 @@ description: >
 
 ## Rules (Kesin Yasaklar ile eşleşme)
 - **A:** Z/Y dışı nesne dosyası teslime giremez (kilit nesnesi EZ/EY; ad alanı `/Z…/`, `/Y…/`). → `ADR_0005_A`
+- **A (genişletme, Z104):** Z adlı DDLS/DDLX/DCLS/BDEF/SRVD/TABL kaynağı standart objeyi genişletiyorsa (`extend type|view …`,
+  `annotate …`, BDEF `extension`; TABL XML'inde `TABCLASS=APPEND` + standart `SQLTAB`) → `ADR_0005_A`. Tarayıcı yazma kapısıyla
+  AYNI fonksiyondur (`sapadt/std_ext_scan.py`); yüklenemezse teslim üretilmez (`std_ext_scan_unavailable`).
 - **B:** `.abap` kaynağında standart tabloya doğrudan `INSERT/UPDATE/DELETE/MODIFY` → `ADR_0005_B`; tarayıcı
   yüklenemezse teslim üretilmez (`std_dml_scan_unavailable`).
 - **C:** paket tanımı (`*.devc.xml`) ve taban çizgisinde olmayan yeni klasör (abapGit alt paket yaratır) → FAIL.
