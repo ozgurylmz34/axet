@@ -862,7 +862,7 @@ Z106_KAPILI_YOL = [
 # (b) desen metni argümanda/mesajda/aramada geçer (dosyanın genel yan etkisi); (c) `ui5 build` ile ui5-deploy aynı
 # metinde; (d) `undeploy` ailesi BİTİŞİK DEĞİLDİR (`*npm*undeploy*`, `*yarn*undeploy*`, `*bun *undeploy*` araya `*`
 # alır) → paket yöneticisi adından sonra herhangi bir yerde `undeploy` geçen metin düşer; (e) `*npm*urn deploy*`
-# "return deploy" gibi metne de uyar; (f) `*npm*rum deploy*` Türkçe metinde sık geçen "durum/forum/spectrum deploy"
+# "return deploy" gibi metne de uyar; (f) `*npm*rum deploy*` Türkçe metinde sık geçen "-rum ile biten kelime + deploy" (durum/yorum/forum/spectrum)
 # metnine de uyar — kapılı yol zincirinde onay cümlesinde geçerse deny (13 sabit karakter) `*deploy_ui*` ask'ını ezer.
 Z106_BILINEN_YANLIS_POZITIF = [
     ('npm run deploy-config',                            ['*npm run deploy*', '*npm*run deploy*']),   # (b) eskiden de
@@ -885,6 +885,7 @@ Z106_BILINEN_YANLIS_POZITIF = [
     ('npm ci && echo return deploy',                     ['*npm*urn deploy*']),                         # (e)
     ('npm run build && echo "durum deploy hazir"',       ['*npm*rum deploy*']),                         # (f)
     ('npm install && echo "spectrum deploy"',            ['*npm*rum deploy*']),                         # (f)
+    ('npm run build && echo "yorum deploy"',             ['*npm*rum deploy*']),                         # (f)
     (f'npm run build && {DEPLOY_UI} deploy app --user-ok "forum deploy onayı"', ['*deploy_ui*', '*npm*rum deploy*']),  # (f)
 ]
 

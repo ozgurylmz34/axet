@@ -166,7 +166,7 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/verify_ui_static_assets.py <a
 Model tarafında sessiz deploy yolu kalmasın diye (ayrıntı skill raporunda):
 - deny: `*fiori deploy*` · `*npm run deploy*` · `*npm --prefix * run deploy*` · `*fiori undeploy*`
 - deny (paket yöneticisi yolları, 2026-09-24): `npm`/`pnpm` `run`/`run-script` (bayraklı, `-w`/`--prefix`/`.cmd`
-  biçimleri; `rum`/`urn` takma adı ve tırnaklı ad yalnız TEK BAŞINA — `npm rum deploy`, `npm run "deploy"`) · `yarn`/`bun` ile `deploy` ve her `undeploy` script'i · `ui5 build … ui5-deploy.yaml` (özel görev
+  biçimleri; `rum`/`urn` takma adı yalnız bayraksız ve tırnaksız, tırnaklı ad yalnız `run` ile — `npm rum deploy`, `npm run "deploy"`; `run-script "deploy"` yakalanmaz) · `yarn`/`bun` ile `deploy` ve her `undeploy` script'i · `ui5 build … ui5-deploy.yaml` (özel görev
   `deploy-to-abap` build içinde koşar — belge kanıtı, canlı ölçülmedi). Desen listesi ve bilinen açıklar:
   `config/permissions.json` `_aciklama` + README "Bilinen sınırlar". `deploy_ui.py`'yi **zincirsiz** çağır: bayraklı
   bir paket yöneticisi komutuyla zincirlenirse (`npm run -s build && … deploy_ui.py deploy`) deny'a düşer.
