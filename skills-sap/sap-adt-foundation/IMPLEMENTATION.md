@@ -244,6 +244,11 @@ Geri alınınca 3/3 OK. Araç katmanı süreç-içi testle (`test_inprocess_guar
   1. kayıt dosyası bozuk → exit 2 `pull_state_unreadable` · kayıt yok → exit 2 `pull_before_edit_missing` (ağa gidilmez);
   2. canlı kaynak `_adt_get_oku` ile okunur (kapının TEK ağ çağrısı) — okunamazsa exit 1 `pull_live_read_failed` (sessiz geçiş yok);
   3. canlı özet ≠ kayıt → exit 2 `source_changed_since_pull` (push yapılmaz; mesaj: yeniden çek, değişikliği yeni kaynağa uygula);
+  3b. (Z87 ⓑ+, 2026-09-24) aynı canlı metin ile yeni kaynak `difflib` ile kıyaslanır (iki taraf `normalize_source`'tan geçer, ek ağ çağrısı
+     YOK); canlıda olup yeni kaynakta olmayan satır varsa yanıta `removed_lines_warning: {removed, added, sample[≤5, 120 karakter]}` +
+     `warning` konur — **uyarı, red değil**, push sürer (kullanıcı kararı: sert red / onay argümanı yok). Yazmadan ÖNCE hesaplanır;
+     push istisnayla düşerse hata yanıtına da eklenir. Kıyas noktası dört push yolundan (düz, sınıf alt-include'u, BDEF, FM) önce
+     ortaktır ⇒ hepsi kapsanır; yalnız ilk yaratımı yapılan (canlıda KANITLI yok) sınıf alt-include'unda kıyaslanacak canlı metin yoktur.
   4. push; kaynak yüklendiyse canlı **yeniden okunur** ve o özet yazılır (`pull_state: guncellendi`). Okunamazsa kayıt silinir; yükleme belirsizse (istisna / beklenmedik dönüş) kayıt silinir → sonraki push yeniden çekme ister.
 - **"yerel dosya ≠ canlı" kıyası YAPILMAZ** — kaynak çekirdekte her meşru düzenlemeyi bloklayan eski kontrol bu yüzden kaldırılmıştı. Kıyas çekme anındaki canlı ↔ yazma anındaki canlıdır.
 - `adt_post_shell` bu kontrole girmez. Yeni kabuğa ilk push'tan önce de `adt_get` gerekir (boş kabuk kaynağı kaydedilir).
@@ -257,7 +262,9 @@ Kayıt host/client taşımaz: kıyas içerik tabanlıdır; başka sistemden çek
 
 ### 13.3 Sınırlar
 - Canlı okuma ile push arasında (saniyeler) başka birinin yazması yakalanmaz (TOCTOU); `push_object`'in SAP kilidi özete bağlı değil.
-- Kontrol "SAP çekildikten sonra değişmedi"yi kanıtlar; düzenlemenin gerçekten çekilen metin üzerinde yapıldığını kanıtlamaz.
+- Kontrol "SAP çekildikten sonra değişmedi"yi kanıtlar; düzenlemenin gerçekten çekilen metin üzerinde yapıldığını kanıtlamaz
+  (Z87 ölçüldü: canlı A+B → bayat yerel A → push geçti, B kayboldu). 3b'deki uyarı bunu GÖRÜNÜR kılar, engellemez; meşru satır
+  silme ile bayat tabanı ayıramaz. Testler `tests/test_pull_before_edit.py` 7-9 (8 = kontrol grubu: ekleme ve CRLF'li eşitlik → uyarı yok).
 - Paralel CLI süreçleri dosyayı aynı anda yazarsa bir kayıt kaybolabilir → o obje `pull_before_edit_missing` alır (güvenli yön). Yazma atomiktir (geçici dosya + `os.replace`).
 - Model durum dosyasını elle yazabilir; bu bir güvenlik sınırı değil, kaza/kısayol önleyicidir (§10).
 - Push başına ek maliyet: öncesinde 1 okuma (class/program yolunda kaynak + metadata GET), sonrasında 1 okuma — **ölçülmedi**.
