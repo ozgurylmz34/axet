@@ -25,6 +25,9 @@ echo.
 
 python --version >nul 2>nul
 if errorlevel 1 goto python_yok
+rem Z80 nit: eski Python 'bulunamadi' degil 'surum yetersiz' der ve erken durur (esik: install.PY_ASGARI, parite testi).
+python -c "import sys;sys.exit(0 if sys.version_info>=(3,12) else 1)" >nul 2>nul
+if errorlevel 1 goto python_eski
 if not exist "%AXET_HOME%scripts\doctor.py" goto klon_yok
 if not exist "%AXET_HOME%scripts\conn_sablon.py" goto klon_yok
 if not exist "%PROJE%\" goto klasor_yok
@@ -128,6 +131,14 @@ goto doldur
 :sablon_hata
 echo   HATA: conn\ sablonlari yazilamadi - yukaridaki mesaja bak.
 set "RC=3"
+goto son
+
+:python_eski
+echo HATA: python bulundu ama surumu yetersiz - Python 3.12+ gerekli. Kurulu surum:
+python --version
+echo Guncelleme: sirketinin yazilim merkezinden (Software Center / Company Portal) kur ya da BT'den iste;
+echo resmi indirme: https://www.python.org/downloads/windows/  - sonra bu dosyaya tekrar cift tikla.
+set "RC=9009"
 goto son
 
 :python_yok

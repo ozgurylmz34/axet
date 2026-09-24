@@ -1527,3 +1527,92 @@ class GitKimlikTest(GeciciTest):
         self.assertIn("git bulunamadı", mesaj)
         self.assertIn("git kimliği", mesaj)
         doctor.results.clear()
+
+
+class CommitsizKuralTest(GeciciTest):
+    """Z93 (2026-09-24): proje validator'ları / paket `.rules.md` yalnız COMMIT anında (pre-commit) denetleniyor;
+    commit'siz bozuk bir `validators-local/*.py` ya da `.rules.md` birden çok tur kullanılabilir. doctor proje modunda
+    commit'siz (izlenen+değişmiş, stage'li ya da izlenmeyen) olanları WARN listeler; session_brief SAĞLIK bunu taşır.
+    Kontrol grubu: commit'lenmiş temiz repo WARN üretmez; template'in `validators-local/README.md`'si validator değildir.
+    KAPSAM — bakılmayan: dosya içeriğinin doğruluğu (yalnız commit'siz olup olmadığı) · gitignore'lu dosyalar."""
+
+    def _olc(self, d: Path) -> list[tuple[str, str]]:
+        doctor.results.clear()
+        doctor.check_commitsiz_kurallar(d)
+        sonuc = [(s, m) for s, m in doctor.results if doctor.COMMITSIZ_ETIKETI in m]
+        doctor.results.clear()
+        self.assertEqual(len(sonuc), 1, sonuc)
+        return sonuc
+
+    def _commitli(self) -> tuple[Path, Path]:
+        d = self.proje(sap=True)
+        pkg = self.paket(d)
+        self.yaz(d / "validators-local" / "kontrol.py", "import sys\nsys.exit(0)\n")
+        self.git(d, "add", "-A")
+        self.git(d, "commit", "-q", "--no-verify", "-m", "ilk")
+        return d, pkg
+
+    def test_kontrol_grubu_commitli_temiz_repo_warn_yok(self):
+        d, _ = self._commitli()
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "PASS", mesaj)
+
+    def test_izlenmeyen_validator_warn(self):
+        d, _ = self._commitli()
+        self.yaz(d / "validators-local" / "yeni_kontrol.py", "raise SystemExit(1)\n")
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "WARN", mesaj)
+        self.assertIn("validators-local/yeni_kontrol.py", mesaj)
+
+    def test_degismis_ve_stagelenmis_kural_warn(self):
+        d, pkg = self._commitli()
+        kural = pkg / ".rules.md"
+        self.yaz(kural, kural.read_text(encoding="utf-8") + "\nek satır\n")
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "WARN", mesaj)
+        self.assertIn(".rules.md", mesaj)
+        self.git(d, "add", "-A")  # stage'li ama commit'siz de commit'sizdir (pre-commit henüz koşmadı)
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "WARN", mesaj)
+        self.assertIn(".rules.md", mesaj)
+
+    def test_degismis_validator_warn_ve_ilgisiz_dosya_sayilmaz(self):
+        d, _ = self._commitli()
+        self.yaz(d / "notlar.md", "ilgisiz\n")  # kontrol: validator/kural olmayan commit'siz dosya
+        self.yaz(d / "validators-local" / "README.md", "belge\n")  # .py değil → runner koşturmaz
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "PASS", mesaj)
+        self.yaz(d / "validators-local" / "kontrol.py", "import sys\nsys.exit(1)\n")
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "WARN", mesaj)
+        self.assertIn("validators-local/kontrol.py", mesaj)
+        self.assertNotIn("notlar.md", mesaj)
+        self.assertNotIn("README.md", mesaj)
+
+    def test_git_reposu_degilse_olculemedi(self):
+        d = self.proje("gitsiz", git_init=False)
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "INFO", mesaj)
+        self.assertIn("ÖLÇÜLEMEDİ", mesaj)
+
+    def test_bozuk_indexte_temiz_denmez(self):
+        d, _ = self._commitli()
+        (d / ".git" / "index").write_bytes(b"bozuk")
+        self.assertNotEqual(self.git(d, "status", "--porcelain", kontrol=False).returncode, 0,
+                            "enjeksiyon tutmadı — test hiçbir şey ölçmez")
+        (durum, mesaj), = self._olc(d)
+        self.assertEqual(durum, "WARN", mesaj)
+        self.assertIn("ÖLÇÜLEMEDİ", mesaj)
+
+    def test_uctan_uca_doctor_ve_session_brief_saglik(self):
+        self.global_config(sap=True)
+        d, _ = self._commitli()
+        self.yaz(d / "validators-local" / "yeni_kontrol.py", "raise SystemExit(1)\n")
+        r = self.calistir("doctor.py", cwd=d)
+        self.assertTrue(any(s.startswith("[WARN]") and doctor.COMMITSIZ_ETIKETI in s and "yeni_kontrol.py" in s
+                            for s in r.stdout.splitlines()), r.stdout)
+        r = self.calistir("session_brief.py", "--no-fetch", "--project-dir", str(d))
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        saglik = r.stdout.split("SAĞLIK:", 1)[1]
+        self.assertIn("WARN: " + doctor.COMMITSIZ_ETIKETI, saglik)
+        self.assertIn("yeni_kontrol.py", saglik)

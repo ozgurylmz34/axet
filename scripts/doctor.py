@@ -25,6 +25,7 @@ import sap_stamp  # noqa: E402  (kesin yasak damgası)
 import new_package as npk  # noqa: E402  (paket katmanı)
 import behavior_manifest as bm  # noqa: E402  (davranış yüzeyi)
 import new_project as nprj  # noqa: E402  (proje şablonu sürüm kaydı — TASARIM §9 tetiği)
+import project_precommit as pp  # noqa: E402  (pre-commit'in validator/kural yol tanımları — Z93)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -1051,6 +1052,7 @@ def check_project(cwd: Path, sap_global: bool = False) -> None:
                         "git init -b main, sonra new_project.py'yi yeniden çalıştır (var olanı ezmez; core.hooksPath'i ayarlar)")
     except OSError:
         add("INFO", "git bulunamadı: .conn_adt gitignore ve pre-commit kablolama kontrolü yapılmadı")
+    check_commitsiz_kurallar(cwd)
     agents_metni = agents.read_text(encoding="utf-8", errors="replace") if agents.exists() else ""
     damga_var = sap_stamp._BASLA_ONEK in agents_metni or sap_stamp._BITIR_ONEK in agents_metni
     if (cwd / "sap-project.json").exists():
@@ -1175,6 +1177,58 @@ def check_precommit(cwd: Path) -> None:
                         "→ .githooks/pre-commit içindeki RUNNER yolunu düzelt")
         else:
             add("PASS", "pre-commit kablolu (core.hooksPath=.githooks)")
+
+
+COMMITSIZ_ETIKETI = "commit'siz validator/kural"
+# Z93 (2026-09-24): hangi yollar "validator/kural" sayılır — pre-commit'in KENDİ tanımlarından (yeni liste yok):
+#   · project_precommit.kontrol_yerel_validatorler `<VALIDATORS_LOCAL>/*.py`'yi koşturur; alt klasördeki ya da `_`
+#     önekli yardımcı modüller onlardan import edilebildiği için `**/*.py` alınır (README gibi .py olmayanlar koşmaz).
+#   · project_precommit.kontrol_kural_degisikligi `.rules.md`'yi `:(glob)**/.rules.md` ile arar (aynı pathspec).
+COMMITSIZ_PATHSPEC = (f":(glob){pp.VALIDATORS_LOCAL}/**/*.py", ":(glob)**/.rules.md")
+
+
+def check_commitsiz_kurallar(cwd: Path) -> None:
+    """Z93: proje validator'ları ve paket `.rules.md`'leri yalnız COMMIT anında (pre-commit) denetlenir; commit'siz
+    (izlenen+değişmiş, stage'li ya da izlenmeyen) olanlar denetimden geçmeden oturumlarda kullanılabilir → WARN.
+    Git reposu değilse INFO ÖLÇÜLEMEDİ; `git status` çökerse WARN ÖLÇÜLEMEDİ (temiz sayılmaz)."""
+    try:
+        repo = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--is-inside-work-tree"], capture_output=True,
+                              text=True, stdin=subprocess.DEVNULL, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        add("INFO", f"{COMMITSIZ_ETIKETI} denetimi ÖLÇÜLEMEDİ: git çalıştırılamadı ({type(exc).__name__})")
+        return
+    if repo.returncode != 0:
+        add("INFO", f"{COMMITSIZ_ETIKETI} denetimi ÖLÇÜLEMEDİ: git reposu değil (pre-commit de koşmaz)")
+        return
+    try:
+        # -z ŞART: onsuz core.quotePath ASCII olmayan yolu tırnaklar (project_precommit'teki ölçülmüş tuzak).
+        r = subprocess.run(["git", "-C", str(cwd), "status", "--porcelain=v1", "-z", "--untracked-files=all", "--",
+                            *COMMITSIZ_PATHSPEC], capture_output=True, stdin=subprocess.DEVNULL, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        add("WARN", f"{COMMITSIZ_ETIKETI} denetimi ÖLÇÜLEMEDİ: git status çalıştırılamadı ({type(exc).__name__})")
+        return
+    if r.returncode != 0:
+        hata = r.stderr.decode("utf-8", "replace").strip().splitlines()
+        add("WARN", f"{COMMITSIZ_ETIKETI} denetimi ÖLÇÜLEMEDİ: git status rc={r.returncode} "
+                    f"({hata[0] if hata else 'çıktı yok'}) — temiz sayılmadı")
+        return
+    parca = r.stdout.decode("utf-8", "replace").split("\0")
+    kirli, i = [], 0
+    while i < len(parca):
+        girdi = parca[i]
+        i += 1
+        if len(girdi) < 4:
+            continue
+        xy, yol = girdi[:2], girdi[3:]
+        if "R" in xy or "C" in xy:
+            i += 1  # -z'de yeniden adlandırmanın kaynak yolu ayrı alandadır
+        kirli.append(f"{xy.strip()} {yol}")
+    if kirli:
+        add("WARN", f"{COMMITSIZ_ETIKETI} dosyası ({len(kirli)}): {_kisalt(kirli)} — pre-commit bunları yalnız commit "
+                    "anında denetler; o zamana kadar bu hâlleriyle kullanılıyor → gözden geçir: doğruysa commit'le "
+                    "(pre-commit denetimi koşar), değilse geri al")
+    else:
+        add("PASS", f"{COMMITSIZ_ETIKETI} değişikliği yok ({pp.VALIDATORS_LOCAL}/**/*.py · **/.rules.md)")
 
 
 def check_tarayici(env: dict | None = None) -> None:
@@ -1338,6 +1392,7 @@ def main() -> int:
     else:
         print("\nKAPSAM — bakılmayanlar: skill içeriklerinin doğruluğu · izin kurallarının fiilen blokladığı · "
               "denylist davranışı · model seçimi · pre-commit'in fiilen koştuğu (yalnız kablolaması) · "
+              "commit'siz validator/kural dosyalarının İÇERİĞİ (yalnız commit'siz oldukları; gitignore'lu olanlar görünmez) · "
               "davranış yüzeyi değişikliğinin içeriği (yalnız onaylı olup olmadığı) · "
               "tarayıcı testinin fiilen açıldığı (yalnız kurulum/config durumu okunur; duman testi tarayici_hazirla.py'de) · "
               "AGENTS.md SAP satırında yalnız anahtar taşıyan `- SAP` satırlarının profil/master_language'i (FAIL) ile "

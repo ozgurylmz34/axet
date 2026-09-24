@@ -848,3 +848,104 @@ class OrtamDenetimiRcTest(unittest.TestCase):
         bilgi, ok = self._kos(0, "git version 2.55.0\n")["git"]
         self.assertTrue(ok, bilgi)
         self.assertEqual(bilgi, "git version 2.55.0")
+
+
+class PythonAsgariTest(unittest.TestCase):
+    """Z80 nit (2026-09-24): `check_env` Python eşiği 3.9'du, kur.ps1 tabanı 3.12 ⇒ doctor 3.9-3.11'i PASS sayıyordu.
+    Eşik `install.PY_ASGARI`'dir; kur.ps1 `$script:PyAsgari` ve .cmd başlatıcılarındaki literal ile EŞİTLİĞİ burada
+    zorlanır (parite = tek kaynak; biri değişip öbürü değişmezse kırmızı).
+    .cmd davranışı GERÇEK koşumla ölçülür: PATH'in başına konan `python.cmd` gerçek yorumlayıcıyı çağırır, yalnız
+    `sitecustomize` ile `sys.version_info`'yu 3.11'e çevirir ⇒ .cmd'deki kontrol satırı gerçekten değerlendirilir.
+    KAPSAM — bakılmayan: gerçek bir 3.11 kurulumu (sürüm sahte, yorumlayıcı gerçek) · Windows dışı."""
+
+    CMDLER = ("yeni-proje.cmd", "proje-tamamla.cmd")
+
+    def _python_satiri(self, surum: tuple):
+        import install
+        from unittest import mock
+        with mock.patch.object(install.sys, "version_info", surum), \
+                mock.patch.object(install.sys, "version", ".".join(map(str, surum[:3])) + " (sahte)"), \
+                mock.patch.object(install.shutil, "which", return_value=None):
+            satir = [s for s in install.check_env() if s[0] == "python"]
+        self.assertEqual(len(satir), 1)
+        return satir[0][1], satir[0][2]
+
+    def test_eski_python_gecmez_ve_gerekli_surum_yazilir(self):
+        bilgi, ok = self._python_satiri((3, 11, 9, "final", 0))
+        self.assertFalse(ok, bilgi)
+        self.assertIn("3.11.9", bilgi)
+        self.assertIn("3.12", bilgi)  # gerekli sürüm söylenir
+
+    def test_kontrol_grubu_asgari_ve_ustu_gecer(self):
+        for surum in ((3, 12, 0, "final", 0), (3, 13, 1, "final", 0)):
+            with self.subTest(surum=surum):
+                bilgi, ok = self._python_satiri(surum)
+                self.assertTrue(ok, bilgi)
+
+    def test_parite_kur_ps1_ve_cmd_baslaticilari(self):
+        import re
+        import install
+        self.assertIsInstance(install.PY_ASGARI, tuple)
+        m = re.search(r"^\$script:PyAsgari = \[version\]'(\d+)\.(\d+)'", (AXET_HOME / "kur.ps1").read_text(encoding="utf-8-sig"), re.M)
+        self.assertIsNotNone(m, "kur.ps1'de $script:PyAsgari satırı bulunamadı")
+        self.assertEqual((int(m.group(1)), int(m.group(2))), install.PY_ASGARI)
+        etiket = "%d.%d+" % install.PY_ASGARI
+        for ad in self.CMDLER:
+            with self.subTest(cmd=ad):
+                metin = (AXET_HOME / ad).read_text(encoding="utf-8")
+                esik = re.findall(r"sys\.version_info>=\((\d+),(\d+)\)", metin)
+                self.assertEqual(len(esik), 1, f"{ad}: sürüm kontrol satırı tam 1 kez olmalı")
+                self.assertEqual(tuple(map(int, esik[0])), install.PY_ASGARI)
+                self.assertIn(":python_eski", metin)
+                self.assertIn(etiket, metin)  # kullanıcı mesajındaki sürüm de aynı
+
+    def _eski_python_path(self, surum: str | None) -> dict:
+        import os
+        import tempfile
+        from pathlib import Path
+        d = Path(tempfile.mkdtemp(prefix="axet-pyeski-"))
+        self.addCleanup(shutil.rmtree, d, True)
+        env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8")
+        if surum is not None:
+            maj, mn = surum.split(".")
+            (d / "site").mkdir()
+            (d / "site" / "sitecustomize.py").write_text(
+                f"import sys\nsys.version_info = ({maj}, {mn}, 9, 'final', 0)\n", encoding="utf-8")
+            env["PYTHONPATH"] = str(d / "site")
+        # Sahte python.cmd KULLANILMAZ (ölçüldü): .cmd içinden `call`sız çağrılan bir .cmd denetimi geri vermez,
+        # başlatıcı sessizce rc 0 ile biter. Gerçek python.exe PATH'in başına konur; sürüm yalnız sitecustomize'la sahte.
+        env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
+        return env
+
+    def _cmd(self, ad: str, env: dict, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["cmd", "/c", "call", str(AXET_HOME / ad), *args], env=env, capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, timeout=120)
+
+    @unittest.skipUnless(sys.platform == "win32", ".cmd yalnız Windows'ta koşar")
+    def test_cmd_eski_python_python_eski_yoluna_girer(self):
+        env = self._eski_python_path("3.11")
+        # enjeksiyon tuttu mu (tutmazsa test hiçbir şey ölçmez)
+        dene = subprocess.run(["cmd", "/c", "python", "-c", "import sys;print(sys.version_info[:2])"], env=env,
+                              capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+        self.assertIn("(3, 11)", dene.stdout, dene.stdout + dene.stderr)
+        for ad, args in (("yeni-proje.cmd", ("--help",)), ("proje-tamamla.cmd", (str(AXET_HOME / "yok-klasor"),))):
+            with self.subTest(cmd=ad):
+                r = self._cmd(ad, env, *args)
+                c = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 9009, c)
+                self.assertIn("surumu yetersiz", c)
+                self.assertNotIn("python bulunamadi", c)
+
+    @unittest.skipUnless(sys.platform == "win32", ".cmd yalnız Windows'ta koşar")
+    def test_cmd_kontrol_grubu_yeterli_python_devam_eder(self):
+        env = self._eski_python_path(None)  # gerçek yorumlayıcı (>= PY_ASGARI; test ortamı)
+        self.assertGreaterEqual(tuple(sys.version_info[:2]), __import__("install").PY_ASGARI)
+        r = self._cmd("yeni-proje.cmd", env, "--help")
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        self.assertNotIn("surumu yetersiz", c)
+        # proje-tamamla: sürüm kapısını geçer, sonraki kapıda (klasör yok) durur
+        r = self._cmd("proje-tamamla.cmd", env, str(AXET_HOME / "yok-klasor"))
+        c = r.stdout + r.stderr
+        self.assertNotIn("surumu yetersiz", c)
+        self.assertIn("proje klasoru bulunamadi", c)
