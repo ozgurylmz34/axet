@@ -24,6 +24,9 @@ Argümanları dosyadan vermek için `--args-json` yerine `--args-file <json dosy
 - **Yönlendirme ipuçları (engellemez, 2026-09-13):** yazma sınıfı her yanıtta üst düzey `checklist_hint` (obje tipine göre okunacak
   skill referansları; `status: var|yazılıyor`) ve çıkış 1/2'de `known_errors_hint` (hata kodu + SAP mesaj sınıfı/numarası deseninden
   bilinen-hata maddesi, `sap_message_keys`) bulunabilir. Karar vermez, çıkış kodunu değiştirmez; eşleşme desen tabanlıdır, teşhis değildir.
+- **Patinaj kesicisi (2026-09-24):** yazma sınıfı araçta aynı obje aynı hata koduyla art arda 3 kez başarısız olunca sonraki çağrı
+  SAP'ye gidilmeden `repeated_failure` (çıkış 2) alır → DUR, kök sebebi kullanıcıyla konuş. Başarısız yanıtta `failure_streak: {code, count, limit}`.
+  Başarı, farklı hata kodu ya da 2 saat seriyi sıfırlar; erken sıfırlama kullanıcının (`.axet-code/sap-write-failures.json`). Ayrıntı: `IMPLEMENTATION.md` §23.
 - Üç değerli alanlar (`true` / `false` / `null`): `null` = **ÖLÇÜLEMEDİ**, "hayır" ya da "doğrulandı" değildir.
 - `client_log` alt katmanın ham satırlarıdır; `exists:false` ya da boş sonuçta önce buna bak.
 - Sayı döndüren her araçta limite eşit sonuç = kırpılmış olabilir.
