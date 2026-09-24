@@ -144,7 +144,7 @@ class RecallTest(_RecallTaban):
 
 
 class RecallEsikOlceklemeTest(_RecallTaban):
-    """Z108 (2026-09-24): tek terimli sorgu, terimi yalnız AÇIKLAMASINDA taşıyan skill'i bulmuyordu. Ölçülen: TRAKYA'da
+    """Z108 (2026-09-24): tek terimli sorgu, terimi yalnız AÇIKLAMASINDA taşıyan skill'i bulmuyordu. Ölçülen: gerçek bir tüketici projesinde
     `recall.py "transport" --esik 1` → sap-adt-foundation 2, sap-cds-ddic 1 puan; sap-gui-scripting hiç (açıklamada çoğul
     "transports", indeks eşleşmesi tam sözcük). Sabit eşik 5'e tek terimli sorgu yapısal olarak ulaşamıyordu.
     Burada ölçülen: ⓐ varsayılan eşik sorgunun terim sayısına göre ölçeklenir ⓑ indekste (başlık/açıklama) önek eşleşmesi
@@ -204,7 +204,7 @@ class RecallEsikOlceklemeTest(_RecallTaban):
     # ⓕ genel sayımı TAM sözcükle yapılır, puanlama önekli olsa da (Z108 bug gate, bulgu 1-2). Kurgu "code review"
     # vakasının sentetik eşi: ilk terim 12 kayıtta tam geçer (gerçekten genel); ikinci terim tam olarak YALNIZ skill
     # açıklamasında, önekli biçimi ("…lar") 4 kayıtta daha geçer. Önekle sayılsaydı 5 > tavan 4 → genel sayılır, sorgunun
-    # iki terimi de düşer ve skill hiç bulunmazdı (TRAKYA'da "code review" → "Eşik üstü kayıt yok").
+    # iki terimi de düşer ve skill hiç bulunmazdı (gerçek bir tüketici projesinde "code review" → "Eşik üstü kayıt yok").
     def test_genel_sayimi_tam_eslesmeyle_onekli_bicimler_terimi_dusurmez(self):
         d = self.proje_kur([f"- [Zeytinbahce kaydi {i}](project_z{i}.md) — zeytinbahce notu" for i in range(12)]
                            + [f"- [Tezgah notu {i}](project_t{i}.md) — {self.TERIM}lar hakkinda" for i in range(4)], {})
@@ -262,7 +262,7 @@ class RecallEsikOlceklemeTest(_RecallTaban):
         o = self.recall(d, f"{self.TERIM} tezgahduzen")
         self.assertEqual((o["esik"], o["terim_sayisi"], o["esik_olceklendi"]), (3, 2, True), o)
 
-    # ⓐ'' ölçeklenmiş eşik YALNIZ gövdesiyle eşleşen kayda uygulanmaz (TRAKYA ölçümü: "test"/"ui5" tek terimli sorgusu
+    # ⓐ'' ölçeklenmiş eşik YALNIZ gövdesiyle eşleşen kayda uygulanmaz (tüketici projesi ölçümü: "test"/"ui5" tek terimli sorgusu
     # gövdesinde sözcüğü bir kez geçen alakasız kayıtları listeliyordu). Düzeltmeden önce de yeşildir (eşik 5).
     def test_olceklenmis_esik_yalniz_govde_eslesmesine_uygulanmaz(self):
         d = self.skill_kur(f"Dokuma tezgahinda {self.TERIM} desenlerini hazirlar.")
@@ -283,7 +283,7 @@ class RecallEsikOlceklemeTest(_RecallTaban):
         r = self.calistir(RECALL, "zeytinbahce", "--project-dir", str(d))
         self.assertIn("UYARI: sorgunun tüm terimleri", r.stdout, self.cikti(r))
 
-    # ⓐ''' terim sayısı indekste GENEL sayılanlar çıkarılarak alınır (TRAKYA: "UI5 bootstrap backend" → ui5/backend genel,
+    # ⓐ''' terim sayısı indekste GENEL sayılanlar çıkarılarak alınır (tüketici projesi: "UI5 bootstrap backend" → ui5/backend genel,
     # sap-ui5-fiori açıklamasındaki "bootstrap" ile bulunur; genel terimler de sayılsaydı eşik 5 kalır, bulunmazdı)
     def test_genel_terimler_terim_sayisina_katilmaz(self):
         d = self.proje_kur([f"- [Zeytinbahce kaydi {i}](project_z{i}.md) — zeytinbahce limonagaci notu" for i in range(12)],

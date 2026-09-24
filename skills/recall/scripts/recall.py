@@ -229,7 +229,7 @@ def main() -> int:
     govde_genel: set[str] = set()
     if kayitlar and q_tum:
         tavan = max(GENEL_ORAN * len(kayitlar), GENEL_TABAN)
-        # Genel sayımı TAM eşleşmedir (önek DEĞİL), puanlama önekli olsa da. Ölçüldü (Z108 bug gate, TRAKYA 55 kayıt,
+        # Genel sayımı TAM eşleşmedir (önek DEĞİL), puanlama önekli olsa da. Ölçüldü (Z108 bug gate, tüketici projesi 55 kayıt,
         # tavan 4): önekle sayılınca "review" (tam 3 kayıt; reviewed/reviewer/reviewing/reviews ile 5) ve 22 terim daha
         # genel sayıldı, "code review" sorgusu code-review skill'ini kaybetti. Tam sayımla 4190 sentetik sorguda
         # (1-3 terim) tabanın (f2b2839) bulduğu kayıtlardan kaybolan 0; önekli sayımda 32.
@@ -252,7 +252,7 @@ def main() -> int:
     else:
         esik, olceklendi = (ESIK_VARSAYILAN if args.esik is None else args.esik), False
     # Ölçeklenmiş eşik yalnız başlık/özette eşleşen kayda uygulanır; YALNIZ gövdesiyle eşleşen kayıt varsayılan eşiği
-    # (sorgunun ESIK_VARSAYILAN farklı sözcüğü) korur. Ölçüldü (TRAKYA): aksi hâlde "test", "backend", "UI5 bootstrap
+    # (sorgunun ESIK_VARSAYILAN farklı sözcüğü) korur. Ölçüldü (tüketici projesi): aksi hâlde "test", "backend", "UI5 bootstrap
     # backend" sorgusu gövdesinde sözcüğü bir kez geçen alakasız kayıtları listeliyordu (sonuncusunda 7 kayıt).
     govde_esik = ESIK_VARSAYILAN if olceklendi else esik
     uyari = ""
