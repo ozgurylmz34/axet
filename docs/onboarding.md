@@ -25,6 +25,9 @@ Kurulum aracı Git ve Python'u **kurmaz**: eksikse durur ve yazılım merkezini 
 yoldan (winget, internetten indirme) kurma; şirketin izin verdiği sürüm yazılım merkezindekidir. Yalnız şirket
 dışı, kişisel bir makinede `kur.cmd -Winget` eksikleri winget ile kurmayı sorar.
 
+Python kurulu ama `python --version` "bulunamadı" diyorsa (PATH'te değil ya da Windows mağaza kısayolu çıkıyor)
+elle ayar yapma: kurulum aracı Python'u `py` ile de bulur ve klasörünü kullanıcı PATH'ine kendisi ekler.
+
 **Git kimliği (bir kez):** Git kurulduktan sonra adını ve iş e-postanı tanıt:
 
 ```powershell
@@ -69,6 +72,9 @@ Kurulum aracının yaptıkları:
 3. Template'i `%USERPROFILE%\axet` klasörüne klonlar (makinede **bir kez**; tüm projeler aynı klonu kullanır).
 4. `install.py --sap` çalıştırır: global aXet config'ine yalnız kendi yollarını ve izin kurallarını ekler, önce yedek alır.
 5. `doctor.py` ile kontrol eder.
+6. `python` komutu yeni terminalde çalışmıyorsa bulduğu Python'un klasörünü (ve `Scripts`) kullanıcı PATH'inin başına
+   ekler: "Python yolu kullanıcı PATH'ine eklendi" görürsen yeni terminal / yeni aXet oturumu aç. `kur.cmd -Kaldir`
+   yalnız bu eklediğini geri alır.
 
 Durursa ekrandaki mesaj ne yapacağını söyler. "Yeni terminal aç" derse (çıkış kodu 3), yeni bir PowerShell
 penceresinde `& $HOME\axet\kur.cmd` komutunu çalıştır. Çıkış kodu 3 değilse aynı başlatma satırını tekrar yapıştır.

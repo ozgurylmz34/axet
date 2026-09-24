@@ -14,6 +14,9 @@ Ne yapar (sırayla):
      saklamaz, geri almaz.
   4. python <Hedef>\scripts\install.py --sap   (global aXet config'ine yolları ve izin kurallarını yazar)
   5. python <Hedef>\scripts\doctor.py          (statik doğrulama)
+  6. `python` komutu yeni terminalde asgari sürüme gitmiyorsa bulunan Python'un klasörünü (+ Scripts) KULLANICI
+     PATH'inin başına ekler (HKCU, yönetici gerekmez; mevcut girdiler ve %VAR% biçimi aynen kalır). Eklediğini
+     <Hedef>\.axet-kurulum\kullanici-path.json'a yazar; -Kaldir yalnız onları geri alır (Z98).
 
 Kullanım (kur.cmd aynı parametreleri geçirir):
   kur.cmd                          kur ya da güncelle (klon: %USERPROFILE%\axet)
@@ -126,7 +129,7 @@ function Path-Yenile {
 }
 
 # --- araç bulma --------------------------------------------------------------------------------------------------
-function Python-Dene([string]$exe, [string[]]$onArg) {
+function Python-Dene([string]$exe, [string[]]$onArg, [switch]$Sessiz) {
     # Gerçek yorumlayıcının sürümünü ve sys.executable yolunu döndürür; asgari sürümün altındaysa ya da yol diskte
     # yoksa $null (asgari: $script:PyAsgari, tanımı dosyanın başında).
     $kod = "import sys;print('%d.%d|%s' % (sys.version_info[0], sys.version_info[1], sys.executable))"
@@ -138,12 +141,14 @@ function Python-Dene([string]$exe, [string[]]$onArg) {
     $surum = [version]"$($Matches[1]).$($Matches[2])"
     $yol = $Matches[3]
     if ($surum -lt $script:PyAsgari) {
+        if ($Sessiz) { return $null }
         Yaz "  Python $surum bulundu ama $script:PyAsgari ya da üstü gerekli: $yol"
         # Z80 nit: eski sürüm KURULU iken sonraki mesajlar "bulunamadı" demesin (ilk görülen eski aday tutulur).
         if (-not $script:PyEski) { $script:PyEski = "$surum" }
         return $null
     }
     if (-not (Test-Path -LiteralPath $yol -PathType Leaf)) {
+        if ($Sessiz) { return $null }
         Yaz "  UYARI: Python'un bildirdiği yol diskte bulunamadı, aday atlandı: $yol"
         return $null
     }
@@ -214,6 +219,210 @@ function Axet-Bul {
     $varsayilan = Join-Path "$env:LOCALAPPDATA" 'axet-code\bin\axet-code.exe'
     if ($env:LOCALAPPDATA -and (Test-Path -LiteralPath $varsayilan)) { return [pscustomobject]@{ Yol = $varsayilan; PathDe = $false } }
     return $null
+}
+
+# --- Z98: `python` komutu yeni terminallerde de çalışsın -----------------------------------------------------------
+# Skill'ler, yeni-proje.cmd ve proje-tamamla.cmd çıplak `python` çağırır. Python kurulu ama PATH'te değilse (ya da önde
+# WindowsApps mağaza yönlendirmesi varsa) bunlar çalışmaz; kullanıcıdan elle PATH ayarı istenmez (kullanıcı kararı
+# 2026-09-24). Kurulum, bulduğu yorumlayıcının klasörünü (ve Scripts'ini) KULLANICI PATH'inin BAŞINA ekler (HKCU,
+# yönetici gerekmez); `-Kaldir` yalnız kurulumun eklediğini geri alır.
+# Ölçüldü (2026-09-24, Windows 11 / PS 5.1): [Environment]::GetEnvironmentVariable('Path','User') %USERPROFILE% gibi
+# girdileri GENİŞLETİLMİŞ döndürür (ham kayıt değeri % içeriyor, dönen değer içermiyor). Onunla okuyup geri yazmak %VAR%
+# girdilerini kalıcı olarak bozardı. Bu yüzden kayıt defteri DoNotExpandEnvironmentNames ile HAM okunur, mevcut değer
+# harfi harfine korunur, değer türü (REG_EXPAND_SZ / REG_SZ) aynen yazılır, sonra WM_SETTINGCHANGE yayını yapılır.
+# Test enjeksiyonu: AXET_KUR_PATH_KAYDI bir JSON dosyasını gösteriyorsa ({"makine","kullanici","tur"}) kayıt defteri ne
+# okunur ne yazılır, yayın yapılmaz; makine PATH'i de o dosyadan okunur. Testler GERÇEK PATH'e asla yazmasın diye.
+function KullaniciPath-Oku {
+    $sahte = $env:AXET_KUR_PATH_KAYDI
+    if ($sahte) {
+        $j = [IO.File]::ReadAllText($sahte) | ConvertFrom-Json
+        $tur = if ("$($j.tur)" -eq 'String') { 'String' } else { 'ExpandString' }
+        return [pscustomobject]@{ Deger = "$($j.kullanici)"; Tur = $tur; Makine = "$($j.makine)" }
+    }
+    $deger = ''
+    $tur = 'ExpandString'
+    $k = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment')
+    if ($k) {
+        try {
+            $v = $k.GetValue('Path', $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+            if ($null -ne $v) {
+                $deger = "$v"
+                if ($k.GetValueKind('Path') -eq [Microsoft.Win32.RegistryValueKind]::String) { $tur = 'String' }
+            }
+        } finally { $k.Close() }
+    }
+    return [pscustomobject]@{ Deger = $deger; Tur = $tur; Makine = "$([Environment]::GetEnvironmentVariable('Path', 'Machine'))" }
+}
+
+function KullaniciPath-Yaz([string]$deger, [string]$tur) {
+    $sahte = $env:AXET_KUR_PATH_KAYDI
+    if ($sahte) {
+        $j = [IO.File]::ReadAllText($sahte) | ConvertFrom-Json
+        $yeni = [ordered]@{ makine = "$($j.makine)"; kullanici = $deger; tur = $tur }
+        [IO.File]::WriteAllText($sahte, (ConvertTo-Json -InputObject $yeni), (New-Object System.Text.UTF8Encoding $false))
+        return
+    }
+    $k = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Environment')
+    try { $k.SetValue('Path', $deger, [Microsoft.Win32.RegistryValueKind]$tur) } finally { $k.Close() }
+    Ortam-Yayinla
+}
+
+# Açık Explorer'ın (ve ondan açılan yeni terminallerin) yeni PATH'i görmesi için WM_SETTINGCHANGE("Environment").
+function Ortam-Yayinla {
+    try {
+        if (-not ('AxetOrtamYayini' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class AxetOrtamYayini {
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, UIntPtr wParam, string lParam, uint fuFlags, uint uTimeout, out UIntPtr lpdwResult);
+}
+'@
+        }
+        $sonuc = [UIntPtr]::Zero
+        [void][AxetOrtamYayini]::SendMessageTimeout([IntPtr]0xffff, 0x1A, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$sonuc)
+    } catch {
+        Yaz "  Not: ayar değişikliği Windows'a duyurulamadı ($($_.Exception.Message)); yeni terminal görmezse oturumu kapatıp aç."
+    }
+}
+
+# Karşılaştırma anahtarı: %VAR% açılır, tırnak ve sondaki \ / atılır, harf farkı yok sayılır.
+function PathGirdi-Anahtari([string]$g) {
+    return ([Environment]::ExpandEnvironmentVariables($g.Trim().Trim('"')).TrimEnd('\', '/')).ToLowerInvariant()
+}
+
+# Yeni bir terminalin göreceği PATH: makine, sonra kullanıcı (Windows'un sırası), %VAR% açılmış.
+function Path-Birlesik($kayit) {
+    return (@($kayit.Makine, $kayit.Deger) | Where-Object { $_ } | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_) }) -join ';'
+}
+
+# `python` komutu verilen PATH ile nereye çözülür. Komut: ilk bulunan python dosyası ($null = yok). Python: asgari sürüm
+# ve üstü çalışan bir yorumlayıcıysa Python-Dene sonucu, değilse $null (mağaza yönlendirmesi rc 9009 → $null).
+function Python-Cozumu([string]$pathDegeri) {
+    $eski = $env:Path
+    try {
+        $env:Path = $pathDegeri
+        $c = @(Get-Command python -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1)
+        $komut = if ($c.Count -gt 0) { $c[0].Source } else { $null }
+        $p = if ($komut) { Python-Dene 'python' @() -Sessiz } else { $null }
+        return [pscustomobject]@{ Komut = $komut; Python = $p }
+    } finally {
+        $env:Path = $eski
+    }
+}
+
+# Kurulumun kullanıcı PATH'ine eklediği girdilerin kaydı: klonun içinde, git'e girmez. Neden klonda: -Kaldir hedef olarak
+# bu klonu alır (kaydı orada bulur), birden çok klon birbirinin kaydına karışmaz, -Sifirla gitignore'lu dosyayı korur.
+# Klasöre `*` içeren kendi .gitignore'u konur: kök .gitignore eski bir klonda bu satırı taşımasa da git durumu temiz kalır.
+function PathKaydi-Yolu([string]$klon) { return (Join-Path $klon '.axet-kurulum\kullanici-path.json') }
+
+function PathKaydi-Oku([string]$klon) {
+    $f = PathKaydi-Yolu $klon
+    if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return @() }
+    $j = [IO.File]::ReadAllText($f) | ConvertFrom-Json
+    return @(@($j.eklenen) | Where-Object { $_ } | ForEach-Object { "$_" })
+}
+
+function PathKaydi-Yaz([string]$klon, [string[]]$eklenen) {
+    $f = PathKaydi-Yolu $klon
+    $d = Split-Path -Parent $f
+    if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
+    $gi = Join-Path $d '.gitignore'
+    if (-not (Test-Path -LiteralPath $gi)) { [IO.File]::WriteAllText($gi, "*`r`n") }
+    $veri = [ordered]@{
+        aciklama = 'kur.ps1 kullanıcı PATH''ine bu girdileri ekledi; kur.cmd -Kaldir yalnız bunları geri alır.'
+        eklenen  = @($eklenen)
+    }
+    [IO.File]::WriteAllText($f, (ConvertTo-Json -InputObject $veri), (New-Object System.Text.UTF8Encoding $false))
+}
+
+function Python-Yolunu-Ayarla([string]$klon) {
+    $kayit = KullaniciPath-Oku
+    $once = Python-Cozumu (Path-Birlesik $kayit)
+    if ($once.Python) {
+        Yaz "  OK 'python' komutu yeni terminallerde çalışıyor: $($once.Python.Yol)"
+        return
+    }
+    $dizin = Split-Path -Parent $script:PY
+    $adaylar = @($dizin)
+    $scr = Join-Path $dizin 'Scripts'
+    if (Test-Path -LiteralPath $scr -PathType Container) { $adaylar += $scr }
+    $mevcut = @($kayit.Deger -split ';' | Where-Object { $_.Trim() } | ForEach-Object { PathGirdi-Anahtari $_ })
+    $eklenecek = @($adaylar | Where-Object { $mevcut -notcontains (PathGirdi-Anahtari $_) })
+    if ($eklenecek.Count -eq 0) {
+        Yaz "  Python klasörü kullanıcı PATH'inde zaten var: $dizin"
+    } elseif ($DenemeModu) {
+        Yaz "  [deneme] Python yolu kullanıcı PATH'ine eklenecekti: $($eklenecek -join '; ') (başa; mevcut girdiler aynen kalır)"
+        return
+    } else {
+        # Önce kayıt, sonra PATH: PATH yazımı yarıda kalırsa -Kaldir yalnız PATH'te bulduğunu siler, zarar vermez.
+        PathKaydi-Yaz $klon (@(PathKaydi-Oku $klon) + $eklenecek)
+        $yeni = ($eklenecek -join ';') + $(if ($kayit.Deger) { ';' + $kayit.Deger } else { '' })
+        KullaniciPath-Yaz $yeni $kayit.Tur
+        $env:Path = ($eklenecek -join ';') + ';' + $env:Path
+        Yaz "  Python yolu kullanıcı PATH'ine eklendi: $($eklenecek -join '; ') — yeni terminal / yeni aXet oturumu aç."
+        $kayit = KullaniciPath-Oku
+    }
+    # Ekledikten sonra ÖLÇ: yeni bir terminalin PATH'iyle `python` nereye gidiyor.
+    $sonra = Python-Cozumu (Path-Birlesik $kayit)
+    if ($sonra.Python) { return }
+    if ($sonra.Komut) {
+        Yaz "  UYARI: yeni terminalde 'python' hâlâ başka bir yere gidiyor: $($sonra.Komut)"
+        Yaz '         Sebep: Windows önce makine PATH''ine (tüm kullanıcılar) bakar; orada önde eski ya da çalışmayan bir python var.'
+    } else {
+        Yaz "  UYARI: yeni terminalde 'python' hâlâ bulunamıyor."
+    }
+    Yaz "         Yapılacak: BT'den makine PATH'indeki o girdiyi kaldırmasını ya da sona almasını iste. Kullanılacak Python: $($script:PY)"
+    Yaz '         Kurulum tamamlandı; yalnız ''python'' komutunu doğrudan çağıran adımlar bu düzelene kadar çalışmayabilir.'
+}
+
+# Kurulumu durdurmaz: PATH ayarı yapılamazsa yalnız uyarı.
+function Python-Yolu-Adimi([string]$klon) {
+    Yaz ''
+    Yaz "-- 'python' komutu (yeni terminaller) --"
+    try {
+        Python-Yolunu-Ayarla $klon
+    } catch {
+        Yaz "  UYARI: 'python' komutu için kullanıcı PATH'i ayarlanamadı: $($_.Exception.Message)"
+        Yaz "         Kurulum sürüyor. 'python' yeni terminalde çalışmazsa şu klasörü kullanıcı PATH'ine ekle: $(Split-Path -Parent $script:PY)"
+    }
+}
+
+function Python-Yolunu-Kaldir([string]$klon) {
+    $eklenen = @(PathKaydi-Oku $klon)
+    if ($eklenen.Count -eq 0) { Yaz "  Kullanıcı PATH'i: kurulumun eklediği girdi yok, dokunulmadı."; return }
+    $kayit = KullaniciPath-Oku
+    $parcalar = New-Object 'System.Collections.Generic.List[string]'
+    foreach ($g in ($kayit.Deger -split ';')) { $parcalar.Add($g) }
+    $silinen = @()
+    foreach ($e in $eklenen) {
+        $a = PathGirdi-Anahtari $e
+        for ($i = 0; $i -lt $parcalar.Count; $i++) {
+            if ($parcalar[$i].Trim() -and (PathGirdi-Anahtari $parcalar[$i]) -eq $a) {
+                $silinen += $parcalar[$i]
+                $parcalar.RemoveAt($i)
+                break
+            }
+        }
+    }
+    if ($DenemeModu) {
+        if ($silinen.Count -gt 0) { Yaz "  [deneme] kullanıcı PATH'inden çıkarılacaktı: $($silinen -join '; ')" }
+        else { Yaz "  [deneme] kurulumun eklediği girdiler kullanıcı PATH'inde artık yok; PATH'e dokunulmayacaktı." }
+        return
+    }
+    if ($silinen.Count -gt 0) { KullaniciPath-Yaz ($parcalar -join ';') $kayit.Tur }
+    $f = PathKaydi-Yolu $klon
+    Remove-Item -LiteralPath $f -Force
+    $d = Split-Path -Parent $f
+    if (-not @(Get-ChildItem -LiteralPath $d -Force | Where-Object { $_.Name -ne '.gitignore' }).Count) {
+        Remove-Item -LiteralPath $d -Recurse -Force
+    }
+    if ($silinen.Count -gt 0) {
+        Yaz "  Kurulumun eklediği Python yolu kullanıcı PATH'inden çıkarıldı: $($silinen -join '; ')"
+    } else {
+        Yaz "  Kurulumun eklediği girdiler kullanıcı PATH'inde artık yoktu; PATH'e dokunulmadı."
+    }
 }
 
 # Eksik aracı bildirir; -Winget verildiyse winget ile kurmayı dener (sorarak). $true = winget başarıyla bitti (araç
@@ -755,6 +964,7 @@ try {
         $arg = @((Join-Path $Hedef 'scripts\install.py'), '--uninstall') + $(if ($DenemeModu) { @('--dry-run') } else { @() })
         $kod = Python-Calistir $arg
         if ($kod -ne 0) { Yaz "DURDU: install.py --uninstall $(if ($kod -eq -1) { 'çalıştırılamadı' } else { "çıkış kodu $kod" })."; Bitir 1 }
+        Python-Yolunu-Kaldir $Hedef
         Yaz ''
         if ($DenemeModu) { Yaz '[deneme] Config değiştirilmedi.'; Bitir 0 }
         Yaz "Global config'ten bu klonun kayıtları kaldırıldı. Klon klasörü SİLİNMEDİ: $Hedef"
@@ -1052,6 +1262,7 @@ try {
             if ($kod -ne 0) { Yaz "DURDU: install.py --sap --dry-run $(if ($kod -eq -1) { 'çalıştırılamadı' } else { "çıkış kodu $kod" })."; Bitir 1 }
         }
         Yaz "  [deneme] çalıştırılacaktı: python $doctorPy"
+        Python-Yolu-Adimi $Hedef
         Yaz ''
         Yaz 'DENEME MODU bitti: hiçbir dosya, klon ya da config yazılmadı.'
         Bitir 0
@@ -1071,6 +1282,7 @@ try {
     } finally {
         Pop-Location
     }
+    Python-Yolu-Adimi $Hedef
 
     Yaz ''
     Yaz '================================================================================'
