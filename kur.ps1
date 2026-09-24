@@ -330,7 +330,8 @@ function PathKaydi-Oku([string]$klon) {
     $sonuc = [pscustomobject]@{ Var = $false; Eklenen = @(); Tasinan = @() }
     $f = PathKaydi-Yolu $klon
     if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return $sonuc }
-    $j = [IO.File]::ReadAllText($f) | ConvertFrom-Json
+    try { $j = [IO.File]::ReadAllText($f) | ConvertFrom-Json }
+    catch { throw "kayıt dosyası okunamadı: $f — dosyayı sil ve kur.cmd'yi tekrar çalıştır ($($_.Exception.Message))" }
     $sonuc.Var = $true
     if ($null -ne $j -and $j.PSObject.Properties['eklenen']) { $sonuc.Eklenen = @(@($j.eklenen) | Where-Object { $_ } | ForEach-Object { "$_" }) }
     if ($null -ne $j -and $j.PSObject.Properties['tasinan']) { $sonuc.Tasinan = @(@($j.tasinan) | Where-Object { $_ } | ForEach-Object { "$_" }) }
@@ -465,7 +466,7 @@ function Python-Yolu-Adimi([string]$klon) {
         Python-Yolunu-Ayarla $klon
     } catch {
         Yaz "  UYARI: 'python' komutu için kullanıcı PATH'i ayarlanamadı: $($_.Exception.Message)"
-        Yaz "         Kurulum sürüyor. 'python' yeni terminalde çalışmazsa şu klasörü kullanıcı PATH'ine ekle: $(Split-Path -Parent $script:PY)"
+        Yaz "         Kurulum sürüyor. 'python' yeni terminalde çalışmazsa Python'un kurulu olduğu klasörü (sanal ortam klasörünü değil) kullanıcı PATH'ine ekle."
     }
 }
 
