@@ -165,6 +165,11 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/verify_ui_static_assets.py <a
 ## 6. Önerilen izin kuralları (proje/kurulum yöneticisi için)
 Model tarafında sessiz deploy yolu kalmasın diye (ayrıntı skill raporunda):
 - deny: `*fiori deploy*` · `*npm run deploy*` · `*npm --prefix * run deploy*` · `*fiori undeploy*`
+- deny (paket yöneticisi yolları, 2026-09-24): `npm`/`pnpm` `run`/`run-script` (bayraklı ve `-w`/`--prefix`/`.cmd`
+  biçimleri dahil) · `yarn`/`bun` ile `deploy` ve her `undeploy` script'i · `ui5 build … ui5-deploy.yaml` (özel görev
+  `deploy-to-abap` build içinde koşar — belge kanıtı, canlı ölçülmedi). Desen listesi ve bilinen açıklar:
+  `config/permissions.json` `_aciklama` + README "Bilinen sınırlar". `deploy_ui.py`'yi **zincirsiz** çağır: bayraklı
+  bir paket yöneticisi komutuyla zincirlenirse (`npm run -s build && … deploy_ui.py deploy`) deny'a düşer.
 - ask: `*deploy_ui*` (deploy her seferinde kullanıcıya sorulsun). Desen bilerek kısa: aynı komuta bir ask ve bir deny
   uyunca uzun desen kazanır, eşitlikte ask (ölçüldü 2026-09-14, tek seri); eski `*deploy_ui.py*deploy *` zincirli bir
   komutta deny kurallarını ezebilirdi. Bedeli: `prepare`, `verify` ve `--help` de onay ister.

@@ -723,6 +723,189 @@ class ZorlaDalSilmeTest(unittest.TestCase):
                          + "\n".join(kapanan))
 
 
+# Z106-EK — PAKET YÖNETİCİSİ İLE KAPISIZ DEPLOY/UNDEPLOY (2026-09-24, kullanıcı onayı). SAP'ye yazan tek meşru yol
+# kapılı `deploy_ui.py deploy`dır (`*deploy_ui*` ask). İskelet package.json'da `deploy`/`undeploy`/`deploy-test`
+# script'leri durur (skills-sap/sap-ui5-fiori/references/app-skeleton.md §4) ve eski 4 desen (`*fiori deploy*`,
+# `*fiori undeploy*`, `*npm run deploy*`, `*npm --prefix * run deploy*`) şu biçimleri KAÇIRIYORDU (ölçüldü,
+# fnmatchcase simülasyonu, eklemeden ÖNCE): `npm run undeploy`, `npm --prefix app run undeploy`, `npm run-script
+# deploy`, `npm run --silent deploy`, `npm -w app run deploy`, `yarn deploy`, `yarn run undeploy`, `pnpm undeploy`,
+# `bun run deploy`, `npm.cmd run deploy` (PowerShell'de npm.ps1 bloklanınca kullanılan biçim) ve
+# `ui5 build --config ui5-deploy.yaml` (iskeletteki ui5-deploy.yaml'da `builder.customTasks: deploy-to-abap` var;
+# UI5 CLI belgesi: özel görev "designated position"ında koşar, başvurduğu standart görev devre dışı olsa bile ·
+# @sap-ux/deploy-tooling README: `deploy` komutu "the same functionality as the abap-deploy UI5 task independent of
+# the ui5 build execution" ⇒ görev `ui5 build` İÇİNDE deploy eder — BELGE kanıtı, canlı ÖLÇÜLMEDİ).
+# DESEN SEÇİMİ (ölçülerek karşılaştırıldı): ilk taslak `*npm*run* deploy*` / `*yarn* deploy*` / `*bun * deploy*`
+# biçimindeydi; paket yöneticisi komutundan SONRA herhangi bir ` deploy` geçen metni tutuyordu ⇒ kapılı yolun
+# kendisini (`npm run build && … deploy_ui.py deploy …` ve hatta ZİNCİRSİZ `deploy_ui.py deploy app --user-ok "npm run
+# build tamam, deploy et"`) deny'a düşürüyordu. Seçilen set `run deploy` / `run-script deploy` / `yarn deploy` gibi
+# BİTİŞİK metin taşır; `*` yalnız paket yöneticisi ile `run` arasında ya da `run -` bayrak aralığında durur. Ölçülen
+# hedeflerin tamamı yine tutuldu; yalnız bayraklı zincir (`npm run -s build && … deploy`) yanlış pozitif kaldı (kilitli).
+# ⚠ Bu tablo SİMÜLASYONLA ölçüldü (fnmatchcase, ölçülmüş semantik: tam metne glob, harfe duyarlı). CANLI `axet-code run`
+# (2026-09-24, lab config XDG_CONFIG_HOME, kanıt DB 'denied … rule bash:<desen>=deny' + işaret dosyası) yalnız 4 desen
+# ölçüldü ve reddetti: `*npm*undeploy*`, `*yarn deploy*`, `*ui5 build*ui5-deploy*`, `*npm*run -* deploy*`; kontrol
+# `npm run build`, `npm run lint && echo deploy`, `npm run build && python deploy_ui.py deploy app` çalıştı. Her satırın 2. alanı yalnız O desenin tuttuğu biçimdir (başka desenle çakışmayan
+# biçim seçildi) → bir desen silinirse adıyla FAIL verir (mutasyonla doğrulandı).
+Z106_PAKET_YONETICISI_DEPLOY = [
+    ('npm -w app run deploy',                              '*npm*run deploy*'),
+    ('npm --workspace app run deploy',                     '*npm*run deploy*'),
+    ('pnpm --filter app run deploy',                       '*npm*run deploy*'),
+    ('npm.cmd run deploy',                                 '*npm*run deploy*'),
+    ('npm run-script deploy',                              '*npm*run-script deploy*'),
+    ('npm run --silent deploy',                            '*npm*run -* deploy*'),
+    ('npm run -s deploy',                                  '*npm*run -* deploy*'),
+    ('npm run -w app deploy',                              '*npm*run -* deploy*'),
+    ('npm run --workspace=app deploy',                     '*npm*run -* deploy*'),
+    ('npm run-script --silent deploy',                     '*npm*run-script -* deploy*'),
+    ('npm run undeploy',                                   '*npm*undeploy*'),
+    ('npm --prefix app run undeploy',                      '*npm*undeploy*'),
+    ('npm run-script undeploy',                            '*npm*undeploy*'),
+    ('npm run --silent undeploy',                          '*npm*undeploy*'),
+    ('cd ui/app && npm run undeploy',                      '*npm*undeploy*'),
+    ('pnpm undeploy',                                      '*npm*undeploy*'),
+    ('pnpm run undeploy',                                  '*npm*undeploy*'),
+    ('yarn deploy',                                        '*yarn deploy*'),
+    ('yarn deploy-test',                                   '*yarn deploy*'),
+    ('cd app; yarn deploy',                                '*yarn deploy*'),
+    ('yarn.cmd deploy',                                    '*yarn.cmd deploy*'),
+    ('yarn run deploy',                                    '*yarn*run deploy*'),
+    ('yarn --cwd app deploy',                              '*yarn --cwd * deploy*'),
+    ('yarn workspace app deploy',                          '*yarn workspace * deploy*'),
+    ('yarn undeploy',                                      '*yarn*undeploy*'),
+    ('yarn run undeploy',                                  '*yarn*undeploy*'),
+    ('bun deploy',                                         '*bun deploy*'),
+    ('bun run deploy',                                     '*bun run deploy*'),
+    ('bun run --silent deploy',                            '*bun run -* deploy*'),
+    ('bun undeploy',                                       '*bun *undeploy*'),
+    ('bun run undeploy',                                   '*bun *undeploy*'),
+    ('ui5 build --config ui5-deploy.yaml',                 '*ui5 build*ui5-deploy*'),
+    ('ui5 build --config=ui5-deploy.yaml',                 '*ui5 build*ui5-deploy*'),
+    ('npx ui5 build -c ui5-deploy.yaml',                   '*ui5 build*ui5-deploy*'),
+    ('npx ui5 build preload --clean-dest --config ui5-deploy.yaml --include-task=generateCachebusterInfo',
+     '*ui5 build*ui5-deploy*'),
+    # Eski desenlerin tuttuğu biçimler (regresyon kilidi):
+    ('npm run deploy',                                     '*npm run deploy*'),
+    ('npm run deploy-test',                                '*npm run deploy*'),
+    ('pnpm run deploy',                                    '*npm run deploy*'),
+    ('npm --prefix app run deploy',                        '*npm --prefix * run deploy*'),
+    ('npx --no-install fiori undeploy --config ui5-deploy.yaml', '*fiori undeploy*'),
+    ('npx fiori deploy --config ui5-deploy.yaml --yes',    '*fiori deploy*'),
+]
+
+DEPLOY_UI = 'python C:/x/skills-sap/sap-ui5-fiori/scripts/deploy_ui.py'
+
+# Yanlış pozitif kontrolü: HİÇBİR kurala uymamalı (deny DE ask DA).
+Z106_KONTROL_GRUBU = [
+    'npm run build', 'npm run start', 'npm start', 'npm install', 'npm ci', 'npm test', 'npm run lint',
+    'npm run start-noflp', 'npm run start-mock', 'npm --prefix app run build', 'npm -w app run start',
+    'yarn build', 'yarn install', 'yarn run build', 'pnpm install', 'pnpm run build', 'bun run build',
+    'ui5 build --config=ui5.yaml --clean-dest --dest dist',
+    'cat ui5-deploy.yaml',
+    'grep -n "url:" ui5*.yaml',
+    'npm install -D @sap-ux/deploy-tooling',             # adında deploy geçen paket kurulumu
+    'yarn add -D @sap-ux/deploy-tooling',
+    'docker run ubuntu echo deploy',                     # "ubuntu" içindeki "bun" düşmemeli
+    'git commit -m "deploy notu"',
+    'git commit -m "npm run build sonrasi deploy notu"',
+    # zincirde ` deploy` geçen ama deploy ETMEYEN biçimler (lider ölçüm listesi):
+    'npm run lint && echo deploy',
+    'npm run build -- --dest deploy',
+    'npm run start:deploy-preview',
+    'npm run test -- deploy.test.js',
+    'yarn test deploy',
+]
+
+# Kapılı meşru yol: `deploy_ui.py` çağrıları YALNIZ `*deploy_ui*` ask'ına uymalı — yeni deny'lara TAKILMAMALI.
+# Zincirli biçimler dahil (bayraksız paket yöneticisi komutu + deploy_ui) ve onay cümlesinde "npm run" geçse bile.
+Z106_KAPILI_YOL = [
+    f'{DEPLOY_UI} prepare app',
+    f'{DEPLOY_UI} prepare app --no-build',
+    f'{DEPLOY_UI} verify app',
+    f'{DEPLOY_UI} deploy app --user-ok "OK deploy et"',
+    f'{DEPLOY_UI} --help',
+    f'{DEPLOY_UI} deploy app --user-ok "npm run build tamam, deploy et"',
+    f'npm run build && {DEPLOY_UI} deploy app --user-ok "OK"',
+    f'cd ui && npm run build && {DEPLOY_UI} deploy app --user-ok "OK"',
+    f'npm install && {DEPLOY_UI} deploy app --user-ok "OK"',
+    f'yarn install; {DEPLOY_UI} deploy app --user-ok "OK"',
+    f'bun run build && {DEPLOY_UI} deploy app --user-ok "OK"',
+    f'npm run build; {DEPLOY_UI} prepare app',
+]
+
+# BİLİNEN YANLIŞ POZİTİF (bilinçli, kilitli): deny ALIR ama deploy etmez. Daralırsa test FAIL → README/_aciklama
+# güncellenir. Kaynakları: (a) bayrak aralığı `run -*` / `--cwd *` / `workspace *` zincirde sonraki ` deploy`e uzanır;
+# (b) desen metni argümanda/mesajda geçer (dosyanın genel yan etkisi); (c) `ui5 build` ile ui5-deploy aynı metinde.
+Z106_BILINEN_YANLIS_POZITIF = [
+    'npm run deploy-config',                             # (b) eski `*npm run deploy*` de tutuyordu (fiori add deploy-config)
+    'npm run -s build && echo deploy',                   # (a)
+    f'npm run -s build && {DEPLOY_UI} deploy app --user-ok "OK"',        # (a) kapılı yol bayraklı zincirde düşer
+    f'yarn --cwd app build && {DEPLOY_UI} deploy app --user-ok "OK"',    # (a)
+    f'{DEPLOY_UI} deploy app --user-ok "npm run deploy yerine bunu kullan"',  # (b) onay cümlesinde desen metni
+    'git commit -m "npm run deploy notu"',               # (b)
+    'ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap',  # (c) görevi dışlayan build de düşer
+    'ui5 build && cat ui5-deploy.yaml',                  # (c)
+]
+
+# BİLİNEN AÇIK (bilinçli, kilitli): kapanırsa test FAIL → README/_aciklama güncellenir.
+Z106_BILINEN_ACIK = [
+    'pnpm deploy',               # pnpm'in YERLEŞİK `deploy` komutu (paketi dizine kopyalar) script'i koşmaz (DOĞRULANMADI)
+    'pnpm -C app deploy',
+    'npx deploy',                # @sap-ux/deploy-tooling bin'i; iskelette doğrudan bağımlılık değil (registry:
+    'npx undeploy',              #   @sap/ux-ui5-tooling 1.32.0 dependencies={}, bin yalnız `fiori`)
+    './node_modules/.bin/deploy -c ui5-deploy.yaml',
+    'node node_modules/@sap/ux-ui5-tooling/bin/fiori.cjs deploy',   # CLI dosyasının doğrudan çağrısı
+    'npm run ship',              # package.json'a başka adla eklenmiş deploy script'i — desenle kapatılamaz
+    'ui5 build --config my-deploy.yaml',                  # başka adlı deploy config'i
+    'yarn --silent deploy',      # yarn'da script öncesi bayrak (`--cwd`/`workspace` dışı)
+    'bun --cwd app deploy',
+    'npm run  deploy',           # çift boşluk
+    'NPM RUN DEPLOY',            # harf duyarlılığı (ölçülmüş semantik)
+    'npm run Deploy',
+    'yarn Deploy',
+]
+
+
+class PaketYoneticisiDeployTest(unittest.TestCase):
+    """Z106-EK: paket yöneticisi ile kapısız deploy/undeploy deny'a düşer; kapılı `deploy_ui.py` ask'ta kalır."""
+
+    def setUp(self):
+        self.kurallar = guncel_kurallar()
+
+    def test_paket_yoneticisi_deploy_bicimleri_deny(self):
+        eksik = []
+        for komut, desen in Z106_PAKET_YONETICISI_DEPLOY:
+            if self.kurallar.get("bash", {}).get(desen) != "deny":
+                eksik.append(f"{desen!r} config/permissions.json'da deny değil → {komut!r} SAP'ye kapısız deploy eder")
+                continue
+            eslesen = _eslesen_desenler(self.kurallar, komut)
+            if desen not in [p for p, _ in eslesen]:
+                eksik.append(f"{desen!r} artık {komut!r} metnine uymuyor (eşleşenler: {eslesen})")
+            if any(k != "deny" for _, k in eslesen):
+                eksik.append(f"{komut!r} deny DIŞI bir desene de uyuyor: {eslesen}")
+        self.assertEqual(eksik, [], "\n".join(eksik))
+
+    def test_kontrol_grubu_dusmez(self):
+        ihlal = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z106_KONTROL_GRUBU
+                 if _eslesen_desenler(self.kurallar, k)]
+        self.assertEqual(ihlal, [], "\n".join(ihlal))
+
+    def test_kapili_deploy_ui_yalniz_ask(self):
+        ihlal = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z106_KAPILI_YOL
+                 if _eslesen_desenler(self.kurallar, k) != [("*deploy_ui*", "ask")]]
+        self.assertEqual(ihlal, [], "kapılı yol yalnız `*deploy_ui*` ask'ına uymalı:\n" + "\n".join(ihlal))
+
+    def test_bilinen_yanlis_pozitif_hala_deny(self):
+        degisen = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z106_BILINEN_YANLIS_POZITIF
+                   if "deny" not in [v for _, v in _eslesen_desenler(self.kurallar, k)]]
+        self.assertEqual(degisen, [], "Belgelenmiş yanlış pozitif artık deny almıyor; README/_aciklama "
+                                      "güncellenmeli:\n" + "\n".join(degisen))
+
+    def test_bilinen_acik_hala_acik(self):
+        kapanan = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z106_BILINEN_ACIK
+                   if _eslesen_desenler(self.kurallar, k)]
+        self.assertEqual(kapanan, [], "Bilinen açık biçim kural alıyor; README/_aciklama güncellenmeli:\n"
+                         + "\n".join(kapanan))
+
+
 class KlonKorumasiKaldirildiTest(GeciciTest):
     """A3 — `CLONE_PROTECTED` kaldırıldı (TASARIM §"7 karar" / §13 P4).
 

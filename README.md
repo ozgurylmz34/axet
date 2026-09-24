@@ -346,6 +346,28 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   (ölçüldü); kurtarma yalnız HEAD reflog'u ya da `git fsck` dangling commit ile, gc'ye kadar. Bilinen yanlış pozitif:
   `git branch …` ile **zincirlenmiş** ve sonrasında ` -d…`/` -f…` bayrakları geçen başka komut. Bilinen açık: harf
   varyantı, `-d`/`-f` ilk harf olmayan kümeler (`-vdf`), çift boşluk.
+- **Paket yöneticisi ile kapısız deploy/undeploy (Z106-EK, 2026-09-24, kullanıcı onayı).** SAP'ye yazan tek meşru yol
+  kapılı `deploy_ui.py deploy`dır (`*deploy_ui*` ask). Eski 4 desen `npm run undeploy`, `npm run-script deploy`,
+  `npm run --silent deploy`, `npm -w app run deploy`, `npm.cmd run deploy`, `yarn deploy`, `pnpm undeploy`,
+  `bun run deploy` ve `ui5 build --config ui5-deploy.yaml` biçimlerini kaçırıyordu (simülasyon). 16 deny eklendi:
+  `*npm*run deploy*`, `*npm*run-script deploy*`, `*npm*run -* deploy*`, `*npm*run-script -* deploy*`, `*npm*undeploy*`,
+  `*yarn deploy*`, `*yarn.cmd deploy*`, `*yarn*run deploy*`, `*yarn --cwd * deploy*`, `*yarn workspace * deploy*`,
+  `*yarn*undeploy*`, `*bun deploy*`, `*bun run deploy*`, `*bun run -* deploy*`, `*bun *undeploy*`,
+  `*ui5 build*ui5-deploy*`. `ui5 build` deseninin dayanağı **belgedir** (ui5-deploy.yaml'daki `deploy-to-abap` özel
+  görevi build içinde koşar — UI5 CLI + `@sap-ux/deploy-tooling` belgeleri), canlı ölçülmedi. Desenler **bitişik**
+  metin taşır (`run deploy`): daha geniş `*npm*run* deploy*` taslağı kapılı yolun kendisini (`npm run build && …
+  deploy_ui.py deploy …`, hatta onay cümlesinde "npm run" geçen zincirsiz çağrıyı) deny'a düşürdüğü için seçilmedi.
+  Kontrol grubu (`npm run build/start/lint`, `npm install/test`, `yarn build/install`, `pnpm install`,
+  `npm run build -- --dest deploy`, `npm run start:deploy-preview`, `npm run lint && echo deploy`, `yarn test deploy`)
+  ve kapılı yol düşmez (`tests/test_install.py::PaketYoneticisiDeployTest`). **Canlı ölçüldü** (2026-09-24,
+  `axet-code run`, lab config, motor kanıtı: DB `denied … rule bash:<desen>=deny` + işaret dosyası): `npm run undeploy`,
+  `yarn deploy`, `ui5 build --config ui5-deploy.yaml`, `npm run --silent deploy` (echo biçimleri) reddedildi; `npm run build`,
+  `npm run lint && echo deploy`, `npm run build && python deploy_ui.py deploy app` çalıştı. Kalan 12 desen yalnız simülasyon. *Bilinen yanlış pozitif:* `npm run deploy-config`; bayraklı zincir
+  (`npm run -s build && … deploy_ui.py deploy …`, `yarn --cwd x build && …`) — `deploy_ui.py` build'i kendisi yapar,
+  **zincirsiz çağır**; `ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap`. *Bilinen açık:* `pnpm deploy`
+  (pnpm'in yerleşik komutu, script koşmaz — DOĞRULANMADI), `npx deploy`/`undeploy` ve `node_modules/.bin/deploy`
+  (`@sap-ux/deploy-tooling` bin'leri; iskelette doğrudan bağımlılık değil), `node …/fiori.cjs deploy`, başka adla
+  eklenmiş deploy script'i (`npm run ship`) ya da başka adlı deploy config'i, `yarn --silent deploy`, çift boşluk, harf varyantı.
 - **Yanlış pozitif: desen metni komutun herhangi bir yerinde geçerse eşleşir.** Ölçülen: `echo "rm -rf notu"`,
   `python x.py "rd /s metni"`, `git commit -m "git push --force notu"`, `echo "git reset --hard açıklaması"`.
   Simülasyonla beklenen (ölçülmedi): `rg -n "git reset --hard" .` ve `grep -rn "git reset --hard" docs` (deny),
