@@ -374,7 +374,7 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   "GÜNCEL KAPSAM SAYIMI" tam listeyi verir). *Bilinen yanlış pozitif:* `npm run deploy-config`,
   `npm run "deploy-config"`, `npm ci && echo return deploy` (`*npm*urn deploy*`), Türkçe metinde sık geçen
   **"-rum" ile biten bir kelime + "deploy"** (ör. durum/yorum/forum/spectrum deploy; `*npm*rum deploy*`: `npm run build && echo "durum deploy hazir"`; kapılı yol zincirinde
-  onay cümlesi `--user-ok "forum deploy onayı"` ise deny `*deploy_ui*` ask'ını ezer — onay cümlesinde "deploy"dan hemen önce -rum ile biten kelime ya da "npm run deploy" yazma); bayraklı zincir
+  onay cümlesi `--user-ok "forum deploy onayı"` ise deny `*deploy_ui*` ask'ını ezer — onay cümlesinde deny desen metni geçmesin: ör. `fiori deploy`, `yarn deploy`, `npm run deploy`, "deploy"dan hemen önce -rum/-urn ile biten kelime); bayraklı zincir
   (`npm run -s build && … deploy_ui.py deploy …`, `yarn --cwd x build && …`) — `deploy_ui.py` build'i kendisi yapar,
   **zincirsiz çağır**; `ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap`. *Bilinen açık:* `pnpm deploy`
   (pnpm'in yerleşik komutu, script koşmaz — DOĞRULANMADI), `npx deploy`/`undeploy` ve `node_modules/.bin/deploy`
