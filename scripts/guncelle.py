@@ -2217,14 +2217,28 @@ def komut_geri_al(b: Baglam, args) -> int:
         return 2
 
     hata = 0
+    kayitlar = durum_oku(k)["dosyalar"]
     for yol in sorted(set(yollar)):
         if k.blob_sha(etiket, yol):
+            # Z82: `checkout` diskteki içeriği ezer. O içerik etikette, yeni ref'te ya da motorun
+            # kendi yazdığı (durum.json `beklenen_sha`, ör. birleştirme sonucu) değilse uygula'dan
+            # SONRA elle düzenlenmiştir ve başka kopyası yoktur ⇒ önce `.yerel` olarak saklanır.
+            korunan = None
+            if (_yedeksiz_mi(k, yol)
+                    and k.disk_sha(yol) not in (k.blob_sha(yeni_ref, yol),
+                                                kayitlar.get(yol, {}).get("beklenen_sha"))):
+                korunan = _yerel_kopya(k, yol)
             r = k.git("checkout", etiket, "--", yol)
             if r.returncode != 0:
                 print(f"FAIL geri-al {yol}: {r.stderr.strip()}", file=sys.stderr)
+                if korunan and not (k.kok / yol).exists():
+                    shutil.move(str(k.kok / korunan), str(k.kok / yol))   # geri-al olmadı ⇒ yerine koy
+                    korunan = None
                 hata = 1
                 continue
             print(f"GERİ ALINDI: {yol}")
+            if korunan:
+                print(f"Yedeksiz yerel içerik saklandı: {korunan}")
         elif (k.kok / yol).is_file():
             # Etikette blob yok ⇒ ya motorun yazdığı dosya (yeni ref'te var, kurtarılabilir) ya da
             # kullanıcının İZLENMEYEN dosyası (V7: hiçbir yerde yedeği yok — ölçüldü 2026-09-23).
