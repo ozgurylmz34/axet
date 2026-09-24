@@ -1775,6 +1775,22 @@
       "python tests/run_tests.py -k Paket",
       "python tests/run_tests.py -k z101"
      ]
+    },
+    {
+     "id": "0.5.8-12",
+     "baslik": "Yayın kataloğu ve CI kaydı",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri"
+     ]
     }
    ]
   }
