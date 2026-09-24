@@ -1022,9 +1022,12 @@ def _parse_msgclass_xml(xml_text: str) -> dict:
     for el in root.findall("{%s}messages" % _MC_NS_MC):
         def _g(a: str, _el=el):
             return _el.get("{%s}%s" % (_MC_NS_MC, a))
+        # `mc:msgtext` özniteliği yoksa '' (None DEĞİL): kaynak çekirdek populate_message_class.py:462
+        # `m.get(_NS_MC + 'msgtext', '')`. None kalırsa yazma aracı gövdeye `mc:msgtext="None"` yazardı (Z113 L1).
+        metin = _g("msgtext")
         messages.append({
             "no": _g("msgno"),
-            "text": _g("msgtext"),
+            "text": "" if metin is None else metin,
             "selfexplanatory": (_g("selfexplainatory") == "true"),
             "documented": (_g("documented") == "true"),
         })

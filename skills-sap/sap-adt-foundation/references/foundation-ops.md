@@ -98,8 +98,9 @@ cli adt_get '{"name":"ZCL_DEMO_CLASS","object_type":"class","include_source":fal
   `create_not_persisted` (MSAG'de DEV olmayan paketle ölçülmüş sahte-200 sınıfı). `ddlx`/`dcls` kabuğu v0.5.2'den beri var (canlı ölçüldü
   2026-09-22); `srvb` → `unsupported_type` (kabuğu kullanıcı ADT/Eclipse'te açar). Açıklama boşsa `ADR_0005_D`.
 - **Mesaj sınıfına mesaj yazma (2026-09-13, çevrimdışı test edildi, canlı DOĞRULANMADI):** `adt_msgclass_read` (canlı liste + pull kaydı) →
-  nihai listeyi kullanıcıya göster → `adt_msgclass_write`. SAP PUT'u tüm listeyi değiştirir; araç canlı listeyi okuyup **birleştirir** (verilmeyen
-  mesajlar korunur), mevcut mesajı değiştirmek `allow_overwrite=true`, silmek `delete_numbers` ister; yazma sonrası canlı liste beklenenle kıyaslanır.
+  nihai listeyi kullanıcıya göster → `adt_msgclass_write`. Araç canlı listeyi okuyup **birleştirir** (verilmeyen mesajlar korunur), mevcut mesajı
+  değiştirmek `allow_overwrite=true` ister; yazma sonrası canlı liste beklenenle kıyaslanır. ⛔ Gövdeden çıkarmak mesajı SİLMEZ (SAP no-op); silme
+  yalnız ayrı çağrıda `delete_numbers` ile (`<mc:deletedmessages>` + kilit altı yeniden okuma + `delete_gate`; `sap-cds-ddic` message-class §3.7).
   Kaynak reçetenin kilit silen "güvenlik ağı" alınmadı (Yasak C): kilit alınamazsa `lock_conflict` → kullanıcı SM12'de kendi kilidini kontrol eder
   (§5). Metin ≤ 73 karakter, `master_language`'de. Ayrıntı: `tool-catalog.md` → `adt_msgclass_write`.
 
@@ -125,7 +126,7 @@ bir kez düzeltme) aynı politikayla (atomik yaratma, geri alma yok) — `tool-c
   birlikte yükseltir/düşürür (5-900 sn), yalnız gate payı için `AXET_DTEL_GATE_BUTCE_SN`; zaman aşımı mesajı bu yolu kendisi yazar (K10 — IMPLEMENTATION §20.9). Standart DTEL'ler
   denetlenmez — onları `adt_get` ile doğrula.
 - DTEL: 4 etiket (kısa/orta/uzun/başlık) `master_language`'de, dolu. Metinler spesifikasyondan; tahmin yok.
-  **Standart objeye append: adı AI önermez, append'i AI yaratmaz — kullanıcı yaratır (kesin yasak A).** Yeni Z DTEL
+  **Standart objeye append: adı AI önermez, append'i ve append alanının Z DTEL'ini AI yaratmaz — kullanıcı yaratır (kesin yasak A; standart objeler yalnız okunur).** Yeni bağımsız Z DTEL
   adı `%sap-dev` §6 kuralıyla: standarda uygun öneri + canlı kontrol + kullanıcının açık onayı.
 - ⚠ **`adt_struct_create` tek başına alanları YAZMAYABİLİR** (ölçülmüş: SAP'de
   `component_to_be_changed : abap.string(0)` yer tutucusu kaldı, araç create+activate OK dedi).
