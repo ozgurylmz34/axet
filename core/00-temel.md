@@ -52,7 +52,7 @@ Yeni kural/ders/hafıza kaydı yazmadan ya da "bu yapılamaz" demeden önce:
 - Önemli bir kod/obje değişikliğini bitirince "tamam" demeden `%code-review` ile taze, bağımsız inceleme yaptır; BLOCKER varsa önce düzelt. WARNING'i ve ÖLÇÜLEMEDİ/SKIP sonuçlarını raporda açıkça say; SKIP'i PASS diye yuvarlama.
 - Rapor: yapılan · nasıl doğrulandı (komut + sonuç) · yapılmayan/ertelenen · açık sorular. Başarısız testi başarılı gibi sunma.
 - Bir madde (açık iş, karar, bulgu) konuşmada kapanınca yazılı yerinde de aynı anda kapat; aynı açık maddeyi iki yerde tutma. Denemelerden sonra çalışan bir yöntem bulduysan `%remember` ile kaydet.
-- **Kabuk ortamı:** `bash` aracı Go tabanlıdır: `grep`/`head`/`tail`/`wc`/`type`/`dir` yoktur → `rg` kullan. `find` vardır ama `-iname` ve `-maxdepth` desteklemez (hata: `flag provided but not defined`) — bu hatayı "dosya yok" sanma; dosya adı aramasında `rg --files --iglob "*desen*"` kullan. `python -c` içinde Türkçe metin için `encoding="utf-8"` ya da `PYTHONIOENCODING=utf-8` ver. Kodlama hatası alınca metni ASCII'ye DÜŞÜRME; kodlamayı düzelt.
+- **Kabuk ortamı:** `bash` aracı Go tabanlıdır: `grep`/`head`/`tail`/`wc`/`type`/`dir` yoktur → `rg` kullan. `find` vardır ama `-iname` ve `-maxdepth` desteklemez (hata: `flag provided but not defined`) — bu hatayı "dosya yok" sanma; dosya adı aramasında `rg --files --iglob "*desen*"` kullan. `python -c` içinde Türkçe metin için `encoding="utf-8"` ya da `PYTHONIOENCODING=utf-8` ver. Kodlama hatası alınca metni ASCII'ye DÜŞÜRME; kodlamayı düzelt. Yolları `C:/...` biçiminde yaz: Git Bash biçimi `/c/...` sürücü kökü değil çalışma dizinine göreli çözülür (proje içinde boş `c/...` ağacı kalır); ad üretmek için `$(date …)` kullanma, boş genişleyebilir.
 
 ## 5. Kapsam dışı bir kusur görürsen
 - Bizim işimizin yan etkisi mi → düzelt.
@@ -71,6 +71,7 @@ Her dalda kanıt şart; "sanırım bozuk" ile kalem açılmaz.
 ## 7. Alt görev devri (`agent` aracı)
 - aXet'te özel ajan tanımı çalışmaz; iş yerleşik görev ajanına `agent` aracıyla devredilir. Token-ağır araştırma ya da bağımsız inceleme için kullan; önemsiz işte kullanma.
 - Alt ajan konuşmayı da, bu çekirdeği, SAP kurallarını ve proje `AGENTS.md`'sini de GÖRMEZ (ölçüldü). Brifing tek başına yetmeli: amaç · kapsam ve sınırlar (neyi değiştirmeyecek) · kanıt kuralları (§1) · işe dokunan kesin yasaklar ve proje kuralları (metniyle) · beklenen çıktı biçimi. SAP'ye yazma işini alt ajana verme.
+- Brifingde iş türünü yaz: **salt-okur bağımsız inceleme** ya da **yazma**. İnceleme ise önceki bulguları (senin ya da başka ajanın) verme ve incelenecek hâli sabitle (commit ya da dosya hash'i); aksi hâlde ajan bağımsız değil, senin görüşünü doğrular.
 - Hazır rol şablonları skill'lerdedir (ör. `%explore`, `%code-review`).
 - Alt ajanın "yapılamaz / yok / blocker" dönüşünü kanıtsız kabul etme; alternatif yol ara ya da kendin doğrula.
 
