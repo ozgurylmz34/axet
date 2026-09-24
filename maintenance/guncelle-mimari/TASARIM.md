@@ -261,8 +261,8 @@ Yer: `guncelle/kartlar/<KOD>.md`. Ajan kartı **yeni sürümden** okur: `python 
 
 | Komut | Yapar | Çıkış kodları |
 |---|---|---|
-| `onkontrol` | klon kimliği (`kur.ps1` `Template-Eksikleri` ile aynı dosya listesi), `origin` adresi, dal, git sürümü, sığ klon mu (`git rev-parse --is-shallow-repository`), aXet sürümü (DOĞRULANMADI yöntem), izole TMP repo dışı mı | 0 tamam · 2 DUR (sebep satırı) |
-| `hazirla` | yerel anlık commit + `guncelle-oncesi-<tarih>` etiketi + `git fetch --tags` | 0 · 2 |
+| `onkontrol` | klon kimliği (`kur.ps1` `Template-Eksikleri` ile aynı dosya listesi), `origin` adresi, dal, git sürümü, sığ klon mu (`git rev-parse --is-shallow-repository`), aXet sürümü (DOĞRULANMADI yöntem), izole TMP repo dışı mı; bekleyen yayın kalemi var mı (Z69) | 0 tamam · 1 güncel, iş yok (`Klon güncel:` satırıyla; satırsız 1 = beklenmeyen hata → DUR) · 2 DUR (sebep satırı) |
+| `hazirla` | yerel anlık commit + `guncelle-oncesi-<tarih>` etiketi + `git fetch --tags`; bekleyen kalem yoksa hiçbirini yapmaz (Z69) | 0 · 1 güncel (`Klon güncel:` satırıyla; commit/etiket yok) · 2 |
 | `plan` | `guncelle/yayinlar.json` + harita + §4 sınıflandırma → `plan.json`; özet tablo basar | 0 plan var · 1 güncel, iş yok · 2 hata |
 | `sec --hepsi` / `sec --kalem …` / `sec --cikar …` | seçimi yazar; kritikler varsayılan seçili; paket ve `gerektirir` tutarlılığı | 0 · 2 tutarsız seçim |
 | `olc --asama once|sonra` | seçili sınıfların test komutları (haritadan), repo dışı TMP, sonuç test kimliği bazında | 0 koştu (kırmızı olsa bile) · 2 koşturulamadı |
