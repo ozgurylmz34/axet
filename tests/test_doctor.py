@@ -1616,3 +1616,71 @@ class CommitsizKuralTest(GeciciTest):
         saglik = r.stdout.split("SAĞLIK:", 1)[1]
         self.assertIn("WARN: " + doctor.COMMITSIZ_ETIKETI, saglik)
         self.assertIn("yeni_kontrol.py", saglik)
+
+
+class PaketDoctorTest(GeciciTest):
+    """Z101: SAP bağlantısının zorunlu Python paketleri eksikse doctor söyler (paket adı + kurulum yolu). Liste
+    install.ZORUNLU_PAKETLER'den okunur. Ölçüm gerçek import'tur (ayrı süreç); testte "eksik" PYTHONPATH başındaki
+    engel modülleri, "kurulu" boş sahte modüllerdir — makinenin gerçek paket durumu sonucu değiştirmez."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        doctor.results.clear()
+        self.env["LOCALAPPDATA"] = str(self.tmp / "_lad")
+
+    def tearDown(self) -> None:
+        doctor.results.clear()
+        super().tearDown()
+
+    def _durum(self, sap: bool, eksik):
+        with mock.patch.object(doctor.inst, "eksik_paketler", return_value=eksik):
+            doctor.results.clear()
+            doctor.check_paketler(sap)
+            self.assertEqual(1, len(doctor.results), doctor.results)
+            return doctor.results[0]
+
+    def test_sap_acikken_eksik_warn_ad_ve_komut(self):
+        eksik = [("requests", "requests>=2.31.0"), ("dotenv", "python-dotenv>=1.0.0")]
+        durum, mesaj = self._durum(True, eksik)
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("requests", mesaj)
+        self.assertIn("python-dotenv", mesaj)
+        self.assertIn("kur.cmd", mesaj)           # birincil yol: kurulumu yeniden çalıştır (ayrı komut değil)
+        self.assertIn("-m pip install --user", mesaj)  # yedek: elle komut
+
+    def test_sap_kapaliyken_eksik_info(self):
+        durum, mesaj = self._durum(False, [("requests", "requests>=2.31.0")])
+        self.assertEqual("INFO", durum, mesaj)
+        self.assertIn("requests", mesaj)
+
+    def test_kontrol_grubu_hepsi_kurulu_pass(self):
+        durum, mesaj = self._durum(True, [])
+        self.assertEqual("PASS", durum, mesaj)
+
+    def test_olculemezse_temiz_denmez(self):
+        durum, mesaj = self._durum(True, None)
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("ÖLÇÜLEMEDİ", mesaj)
+
+    def _engel(self) -> None:
+        import install
+        engel = self.tmp / "_engel"
+        for ithal, _ in install.ZORUNLU_PAKETLER:
+            self.yaz(engel / f"{ithal}.py", f"raise ModuleNotFoundError(\"No module named '{ithal}'\", name='{ithal}')\n")
+        self.env["PYTHONPATH"] = str(engel)
+
+    def test_uctan_uca_doctor_sap_config_eksik_paket_warn(self):
+        self.global_config(sap=True)
+        self._engel()
+        r = self.calistir("doctor.py", cwd=self.tmp)
+        self.assertTrue(any(s.startswith("[WARN]") and "requests" in s for s in r.stdout.splitlines()), r.stdout)
+        self.assertIn("Python paketleri", r.stdout.split("KAPSAM", 1)[1])
+
+    def test_uctan_uca_session_brief_saglik_eksik_paketi_tasir(self):
+        self.global_config(sap=True)
+        d = self.proje(sap=True)
+        self._engel()
+        r = self.calistir("session_brief.py", "--no-fetch", "--project-dir", str(d))
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        saglik = r.stdout.split("SAĞLIK:", 1)[1]
+        self.assertIn("requests", saglik)

@@ -590,6 +590,50 @@ class KurTest(GeciciTest):
         self.assertEqual(gitconfig.read_bytes(), once, "global git config'e yazıldı")
         self.assertEqual(self.git(self.hedef, "rev-parse", "HEAD").stdout.strip(), head)
 
+    # --- Z101: SAP'nin zorunlu Python paketleri kur.cmd akışında, bulunan yorumlayıcıyla kurulur ----------------
+    def _paket_ortami(self, kip: str, kurulu: bool = False) -> tuple[dict, Path]:
+        """Gerçek pip yok, ağ yok. "eksik" = PYTHONPATH başında engel modülleri; "kurulu" = boş sahte modüller.
+        Sahte pip (AXET_PAKET_PIP) kendisini çalıştıran yorumlayıcıyı + argümanlarını kayda yazar."""
+        import install
+        d = self.tmp / ("_paket_kurulu" if kurulu else "_paket_engel")
+        for ithal, _ in install.ZORUNLU_PAKETLER:
+            govde = "" if kurulu else f"raise ModuleNotFoundError(\"No module named '{ithal}'\", name='{ithal}')\n"
+            self.yaz(d / f"{ithal}.py", govde)
+        kayit = self.tmp / "_pip_kayit.txt"
+        pip = self.yaz(self.tmp / "_sahte_pip.py",
+                       "import os, sys\n"
+                       "open(os.environ['AXET_TEST_PIP_KAYIT'], 'a', encoding='utf-8').write(\n"
+                       "    sys.executable + '|' + ' '.join(sys.argv[1:]) + '\\n')\n"
+                       f"sys.exit({1 if kip == 'ag' else 0})\n")
+        env = {k: v for k, v in self.env.items() if k != "AXET_PAKET_KUR"}
+        env.update({"AXET_PAKET_PIP": str(pip), "AXET_TEST_PIP_KAYIT": str(kayit), "PYTHONPATH": str(d)})
+        return env, kayit
+
+    def test_z101_eksik_paket_bulunan_python_ile_kurulmaya_calisilir_ag_hatasi_durdurmaz(self):
+        env, kayit = self._paket_ortami("ag")
+        r = self.kur("-Evet", env=env)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)  # çıkış sözleşmesi: paket kurulamadı diye 1/2/4 DEĞİL
+        cagri = kayit.read_text(encoding="utf-8").splitlines()
+        self.assertEqual(1, len(cagri), c)
+        exe, argumanlar = cagri[0].split("|", 1)
+        self.assertEqual(os.path.normcase(exe), os.path.normcase(str(self.kur_python())),
+                         "pip, kur.ps1'in bulduğu yorumlayıcıyla çağrılmalı")
+        self.assertIn("install", argumanlar.split())
+        self.assertIn("PAKETLER: EKSİK", c)
+        self.assertIn("proxy", c)
+        self.assertTrue(any(s.startswith("[WARN]") and "SAP Python paketleri EKSİK" in s for s in c.splitlines()), c)
+        self.assertIn("Kurulum tamam", c)
+
+    def test_z101_kontrol_grubu_paketler_kuruluysa_pip_cagrilmaz(self):
+        env, kayit = self._paket_ortami("basari", kurulu=True)
+        r = self.kur("-Evet", env=env)
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertFalse(kayit.exists(), c)
+        self.assertIn("PAKETLER: TAMAM", c)
+        self.assertTrue(any(s.startswith("[PASS]") and "SAP Python paketleri" in s for s in c.splitlines()), c)
+
     # --- geçersiz karakterli XDG_CONFIG_HOME: git var ama `git --version` hata veriyor -------------------------
     def test_gecersiz_xdg_git_bulundu_calismadi(self):
         # Ölçüldü (Git 2.55.0.windows.5, GIT_CONFIG_GLOBAL tanımsız): XDG_CONFIG_HOME içinde < ya da | varsa

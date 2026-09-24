@@ -1247,6 +1247,28 @@ def check_tarayici(env: dict | None = None) -> None:
             "bunu kendisi koşar)")
 
 
+PAKET_ETIKETI = "SAP Python paketleri"
+
+
+def check_paketler(sap: bool) -> None:
+    """Z101: SAP bağlantısının zorunlu Python paketleri (liste: install.ZORUNLU_PAKETLER — tek kaynak) bu
+    yorumlayıcıda yüklenebiliyor mu. SALT-OKUNUR: kurmaz (kurulum install.py'de; kur.cmd ve %guncelle onu koşar).
+    SAP açıkken (global SAP paketi ya da sap-project.json) eksik = WARN, kapalıyken INFO; ölçülemezse temiz denmez."""
+    eksik = inst.eksik_paketler()
+    if eksik is None:
+        add("WARN" if sap else "INFO", f"{PAKET_ETIKETI}: ÖLÇÜLEMEDİ ({sys.executable} ile import denetimi çalışmadı)")
+        return
+    if not eksik:
+        add("PASS", f"{PAKET_ETIKETI} yüklenebiliyor: " + ", ".join(ad for ad, _ in inst.ZORUNLU_PAKETLER))
+        return
+    specler = [spec for _, spec in eksik]
+    add("WARN" if sap else "INFO",
+        f"{PAKET_ETIKETI} EKSİK: {', '.join(specler)} — SAP bağlantısı (sap_adt_cli) bunlarsız çalışmaz"
+        + ("" if sap else " (SAP paketi kapalı: şimdilik gerekmez)")
+        + " → kur.cmd'yi yeniden çalıştır (eksik paketi kendisi kurar); olmazsa elle: "
+        + inst.elle_kurulum_komutu(specler))
+
+
 GIT_KIMLIK_KAPSAM = ("yalnız tanımsızlık ölçülür; tanımlı adresin doğruluğu ya da türetilmiş olup olmadığı "
                      "yargılanmaz · remote yalnız bulunulan repoda ölçülür · GIT_AUTHOR_*/GIT_COMMITTER_* ortam "
                      "değişkenlerine bakılmaz")
@@ -1381,6 +1403,7 @@ def main() -> int:
         for name, info, ok in inst.check_env():
             add("PASS" if ok else "WARN", f"{name}: {info}")
         check_git_kimlik(cwd)
+        check_paketler(sap or (cwd / "sap-project.json").exists())
         check_tarayici()
         if args.live:
             check_live(sap, cwd)
@@ -1395,6 +1418,9 @@ def main() -> int:
               "commit'siz validator/kural dosyalarının İÇERİĞİ (yalnız commit'siz oldukları; gitignore'lu olanlar görünmez) · "
               "davranış yüzeyi değişikliğinin içeriği (yalnız onaylı olup olmadığı) · "
               "tarayıcı testinin fiilen açıldığı (yalnız kurulum/config durumu okunur; duman testi tarayici_hazirla.py'de) · "
+              "SAP Python paketleri yalnız ZORUNLU liste (install.ZORUNLU_PAKETLER) için ve yalnız bu yorumlayıcıda "
+              "import edilerek ölçülür — sürüm alt sınırı ve isteğe bağlı skill paketleri (python-docx/pptx, openpyxl, "
+              "markdown, Pillow) denetlenmez · "
               "AGENTS.md SAP satırında yalnız anahtar taşıyan `- SAP` satırlarının profil/master_language'i (FAIL) ile "
               "yazılmışsa sürüm/cleancore_policy'si (WARN; ilk yazan satırdan) karşılaştırılır — anahtar biçimi (`:`/`=`) "
               "ya da geçerli değer taşımayan `- SAP…` maddeleri (serbest metin) atlanır; aktif paket, transport ve `- SAP` ile başlamayan satırlardaki SAP ifadeleri bakılmaz · "

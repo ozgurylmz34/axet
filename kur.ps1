@@ -12,7 +12,10 @@ Ne yapar (sırayla):
      Hedef bu template'in klonu değilse (core/00-temel.md CORE-ID + scripts/install.py + skills-sap/) DURUR ve o
      reponun hiçbir betiğini çalıştırmaz. Yerel değişiklik ya da ayrışma varsa DURUR; hiçbir yerel değişikliği silmez,
      saklamaz, geri almaz.
-  4. python <Hedef>\scripts\install.py --sap   (global aXet config'ine yolları ve izin kurallarını yazar)
+  4. python <Hedef>\scripts\install.py --sap   (global aXet config'ine yolları ve izin kurallarını yazar; SAP
+     bağlantısının zorunlu Python paketlerinden eksik olanı AYNI yorumlayıcının pip'iyle `--user` kurar — liste
+     install.py ZORUNLU_PAKETLER, Z101. pip yoksa ya da ağ/proxy hatasında UYARI basar, kurulum DURMAZ ve çıkış
+     kodu değişmez; -DenemeModu'nda install.py --dry-run yalnız "kurulacaktı" der)
   5. python <Hedef>\scripts\doctor.py          (statik doğrulama)
   6. `python` komutu yeni terminalde asgari sürüme gitmiyorsa bulunan Python'un klasörünü (+ Scripts) KULLANICI
      PATH'inin başına ekler (HKCU, yönetici gerekmez; mevcut girdiler ve %VAR% biçimi aynen kalır). Eklediğini
