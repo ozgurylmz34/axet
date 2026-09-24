@@ -237,7 +237,10 @@ def apply_ours(cfg: dict, rules: dict, sap: bool) -> None:
         current.update(patterns)
 
 
-def check_env() -> list[tuple[str, str, bool]]:
+def check_env() -> list[tuple[str, str, bool | None]]:
+    """Ortam satırları (ad, bilgi, durum). durum: True = tamam · False = uyarı · None = yalnız bilgi (isteğe bağlı araç
+    yok; uyarı değildir, kurulum önerisi ya da indirme adresi basılmaz — kullanıcı kararı 2026-09-24: kullanıcıya ek
+    uygulama önerilmez, rg bunlardan biridir)."""
     py_surum = sys.version.split()[0]
     py_yeterli = tuple(sys.version_info[:2]) >= PY_ASGARI
     results = [("python", py_surum if py_yeterli else f"{py_surum} — sürüm yetersiz, gerekli %d.%d ya da üstü" % PY_ASGARI,
@@ -261,9 +264,7 @@ def check_env() -> list[tuple[str, str, bool]]:
         except Exception as exc:  # noqa: BLE001 — teşhis çıktısı
             results.append((tool, f"çalıştırılamadı: {exc}", False))
     rg = shutil.which("rg")
-    rg_yok = ("YOK — aXet grep aracı yavaşlar (kurulum: şirketinin yazılım merkezinden ya da "
-              "https://github.com/BurntSushi/ripgrep/releases)")
-    results.append(("rg", rg or rg_yok, bool(rg)))
+    results.append(("rg", rg, True) if rg else ("rg", "yok (isteğe bağlı)", None))
     return results
 
 
@@ -534,7 +535,7 @@ def main() -> int:
         print(f"UYARI: eski template kuralının kararı config'te değiştirilmiş, dokunulmadı: {satir}")
     print("Ortam:")
     for name, info, ok in check_env():
-        print(f"  [{'OK' if ok else 'UYARI'}] {name}: {info}")
+        print(f"  [{'BİLGİ' if ok is None else ('OK' if ok else 'UYARI')}] {name}: {info}")
 
     if args.dry_run:
         print("\n--- yazılacak içerik ---\n" + new_text + "(dry-run: hiçbir şey yazılmadı)")

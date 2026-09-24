@@ -1406,7 +1406,7 @@ def main() -> int:
         check_skills(proje, cfg)
         check_baglam_boyutu(cwd)
         for name, info, ok in inst.check_env():
-            add("PASS" if ok else "WARN", f"{name}: {info}")
+            add("INFO" if ok is None else ("PASS" if ok else "WARN"), f"{name}: {info}")  # None = isteğe bağlı araç yok
         check_git_kimlik(cwd)
         check_paketler(sap or (cwd / "sap-project.json").exists())
         check_tarayici()

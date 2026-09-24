@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from unittest import mock
 
-from _helpers import GeciciTest  # önce: scripts/ yolunu ekler
+from _helpers import GeciciTest, rg_siz_path  # önce: scripts/ yolunu ekler
 import doctor
 import sap_stamp
 
@@ -38,6 +38,22 @@ class DoctorTest(GeciciTest):
         r = self.calistir("behavior_manifest.py", "generate", "--project-dir", str(d))
         self.assertEqual(r.returncode, 0, self.cikti(r))
         return d
+
+    def test_rg_yoksa_yalniz_bilgi_oneri_adres_yok(self):
+        """Kullanıcı kararı (2026-09-24): ek uygulama önerilmez. rg yoksa doctor satırı WARN değil INFO; kurulum
+        yeri/indirme adresi yok. Kontrol grubu: rg varsa PASS. doctor rg'yi başka hiçbir denetimde kullanmaz (yalnız
+        install.check_env satırı; koddan okundu 2026-09-24)."""
+        self.env = rg_siz_path(self.env)
+        r = self.doctor(self.tmp)
+        self.var(r, "INFO", "rg: yok (isteğe bağlı)")
+        for yasak in ("ripgrep", "[WARN] rg"):
+            self.assertNotIn(yasak, r.stdout)
+        bin_ = self.tmp / "_rg"
+        bin_.mkdir()
+        (bin_ / "rg.cmd").write_text("@echo off\r\nexit /b 0\r\n", encoding="ascii", newline="")
+        self.env = rg_siz_path(self.env, bin_)
+        r = self.doctor(self.tmp)
+        self.var(r, "PASS", f"rg: {bin_ / 'rg'}.")  # uzantı harfi PATHEXT'ten gelir (ölçüldü: rg.CMD)
 
     def test_global_config_yok(self):
         d = self.proje()

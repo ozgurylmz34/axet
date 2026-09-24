@@ -7,7 +7,7 @@ Ne yapar (sırayla):
   1. aXet (axet-code), Git ve Python >= 3.12'ye BİRLİKTE bakar. Python: PATH, py launcher, bilinen klasörler ve kayıt
      defteri (PEP 514: HKCU/HKLM Software\Python\PythonCore\*\InstallPath). Git: PATH ve bilinen klasörler. Eksik
      varsa KURMAZ ve SORMAZ: eksiklerin hepsini TEK mesajda "şirket portalından kur, bitince bu dosyaya tekrar çift
-     tıkla" diye söyler ve durur (çıkış 2). rg (ripgrep) yoksa sessizce geçer. winget YALNIZ -Winget verilirse
+     tıkla" diye söyler ve durur (çıkış 2). rg (ripgrep) yoksa yalnız bilgi satırı basar, önermez. winget YALNIZ -Winget verilirse
      kullanılır (o zaman sorarak). Neden (2026-09-23, ölçülmüş vaka): şirket makinesinde "E" yanıtı winget'e izinsiz
      bir Git kopyası kurdurdu; yazılım merkezinden kurulan izinli Git ile yan yana kaldı.
   2. Git kimliği (user.name / user.email): İŞE BAŞLAMADAN sorulur. Tanımlıysa gösterilir ve "doğru mu?" sorulur;
@@ -119,13 +119,15 @@ function Sor([string]$soru) {
 }
 
 # Gerçek bir konsol mu (çift tıklanan pencere)? stdin tutamacında GetConsoleMode başarılı olmalı. Ölçüldü
-# (setup_credentials.py etkilesimli_mi, 2026-09-13): NUL aygıtı karakter aygıtıdır, "yönlendirilmiş" görünmez; bu yüzden
-# [Console]::IsInputRedirected yetmez. Ölçülemezse etkileşimsiz sayılır (soru sorulmaz). AXET_KUR_SORMA=1 soruları
+# (setup_credentials.py etkilesimli_mi, 2026-09-13): NUL aygıtı karakter aygıtıdır; Python tarafında dosya türüne bakan
+# denetim onu "yönlendirilmiş" saymaz. Birincil yol bu yüzden GetConsoleMode; Add-Type derlenemezse [Console] yedeği
+# (aşağıda, ölçüm notuyla). İkisi de ölçülemezse etkileşimsiz sayılır (soru sorulmaz). AXET_KUR_SORMA=1 soruları
 # kapatır; AXET_KUR_KONSOL=1 denetimi atlar (YALNIZ testler: yanıtlar boruyla verilir).
 function Konsol-Etkilesimli {
     if ($env:AXET_KUR_SORMA -eq '1') { return $false }
     if ($env:AXET_KUR_KONSOL -eq '1') { return $true }
     try {
+        if ($env:AXET_KUR_KONSOL_YEDEK -eq '1') { throw 'test: Add-Type kolu atlandı' }
         if (-not ('AxetKonsol' -as [type])) {
             Add-Type -TypeDefinition @'
 using System;
@@ -140,7 +142,13 @@ public static class AxetKonsol {
         }
         $mod = [uint32]0
         return [AxetKonsol]::GetConsoleMode([AxetKonsol]::GetStdHandle(-10), [ref]$mod)
-    } catch { return $false }
+    } catch {
+        # Add-Type derlenemezse (ör. uygulama denetimi csc.exe'yi ya da geçici klasörü engeller) kimlik sorusu sessizce
+        # düşmesin: saf .NET yedeği. Ölçüldü (2026-09-24, PS 5.1): [Console]::IsInputRedirected NUL ve boru girişinde
+        # True, gerçek konsolda False — .NET NUL gibi karakter aygıtında da konsol modunu kendisi sınar.
+        # AXET_KUR_KONSOL_YEDEK=1 yalnız testler içindir (Add-Type kolunu atlayıp bu yedeği sınar).
+        try { return ([Environment]::UserInteractive -and -not [Console]::IsInputRedirected) } catch { return $false }
+    }
 }
 
 # Serbest metin sorusu: $null = giriş kapalı / okunamadı.
@@ -326,17 +334,28 @@ function Python-Kayit-Adaylari {
 }
 
 # Bilinen kurulum klasörleri (winget'e bağlı DEĞİL, her koşumda): python.org kurucusunun kullanıcı ve tüm-kullanıcı
-# varsayılanları + sürücü kökü (eski "C:\Python312" biçimi). Klasör adı Python3* olanlar, büyükten küçüğe.
+# varsayılanları + sürücü kökü (eski "C:\Python312" biçimi). Klasör adı Python3* olanlar, SÜRÜME göre büyükten küçüğe
+# (tüm kökler birlikte; eşit sürümde kök sırası korunur). Sürüm klasör adından okunur: Python313 → 3.13, Python39 → 3.9,
+# Python312-32 → 3.12. Ad sırası kullanılmaz: alfabetik azalan sırada "Python39" "Python313"ün önüne düşer ve eski
+# sürüm önce denenip gereksiz "3.9 bulundu ama 3.12 gerekli" satırı basılırdı. Adı ayrıştırılamayan klasör en sona.
 function Python-Bilinen-Adaylari {
     $kokler = @((Join-Path "$env:LOCALAPPDATA" 'Programs\Python'), $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramW6432,
                 $(if ($env:SystemDrive) { "$env:SystemDrive\" })) | Where-Object { $_ }
+    $adaylar = @()
+    $sira = 0
     foreach ($k in @($kokler | Select-Object -Unique)) {
-        foreach ($d in @(Get-ChildItem -LiteralPath $k -Directory -Filter 'Python3*' -ErrorAction SilentlyContinue |
-                         Sort-Object Name -Descending)) {
+        foreach ($d in @(Get-ChildItem -LiteralPath $k -Directory -Filter 'Python3*' -ErrorAction SilentlyContinue)) {
             $exe = Join-Path $d.FullName 'python.exe'
-            if (Test-Path -LiteralPath $exe -PathType Leaf) { $exe }
+            if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { continue }
+            $surum = [version]'0.0'
+            if ($d.Name -match '^Python(\d)\.?(\d+)') { $surum = [version]"$($Matches[1]).$($Matches[2])" }
+            $adaylar += [pscustomobject]@{ Surum = $surum; Sira = $sira; Yol = $exe }
+            $sira++
         }
     }
+    # PS 5.1 Sort-Object kararlı değil: eşit sürümde kök sırası ikinci anahtarla korunur.
+    @($adaylar | Sort-Object @{ Expression = 'Surum'; Descending = $true }, @{ Expression = 'Sira'; Descending = $false }) |
+        ForEach-Object { $_.Yol }
 }
 
 function Python-Bul {

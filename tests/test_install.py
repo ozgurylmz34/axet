@@ -10,7 +10,7 @@ import subprocess
 import sys
 import unittest
 
-from _helpers import AXET_HOME, GeciciTest
+from _helpers import AXET_HOME, GeciciTest, rg_siz_path
 
 # Önceden kurulmuş makinelerin config'indeki template kuralları: 42b37b8'de yayımlanan config/permissions.json
 # (bash). Git'ten okunmaz ki test sığ klonda da çalışsın ve RETIRED_RULES'tan türetilmez ki listeden eksik anahtar
@@ -849,6 +849,40 @@ class OrtamDenetimiRcTest(unittest.TestCase):
         bilgi, ok = self._kos(0, "git version 2.55.0\n")["git"]
         self.assertTrue(ok, bilgi)
         self.assertEqual(bilgi, "git version 2.55.0")
+
+
+class OrtamRgBilgiTest(GeciciTest):
+    """Kullanıcı kararı (2026-09-24): kullanıcıya ek uygulama önerilmez; rg bunlardan biri. rg yoksa install.py Ortam
+    satırı UYARI değil BİLGİ'dir ve kurulum yeri/indirme adresi basmaz (eskiden "[UYARI] rg: YOK ... yazılım merkezinden
+    ya da https://github.com/BurntSushi/ripgrep/releases" — aXet-Kur.cmd penceresinde görünüyordu). Kontrol grubu: rg
+    varsa [OK] + yol. doctor karşılığı: test_doctor.DoctorTest.test_rg_yoksa_yalniz_bilgi_oneri_adres_yok."""
+
+    def test_check_env_rg_yoksa_durum_none_bilgi(self):
+        import install
+        from unittest import mock
+        sahte = subprocess.CompletedProcess([], 0, stdout="v 1\n", stderr="")
+        with mock.patch.object(install.shutil, "which", side_effect=lambda ad: None if ad == "rg" else "arac"), \
+                mock.patch.object(install.subprocess, "run", return_value=sahte):
+            satir = {ad: (bilgi, ok) for ad, bilgi, ok in install.check_env()}
+        self.assertEqual(satir["rg"], ("yok (isteğe bağlı)", None))
+        self.assertIs(satir["git"][1], True)  # diğer araçlar etkilenmez
+
+    def test_install_rg_yoksa_bilgi_satiri_oneri_adres_yok(self):
+        self.env = rg_siz_path(self.env)
+        r = self.calistir("install.py", "--dry-run")
+        c = self.cikti(r)
+        self.assertEqual(r.returncode, 0, c)
+        self.assertIn("  [BİLGİ] rg: yok (isteğe bağlı)", c)
+        for yasak in ("ripgrep", "yazılım merkez", "[UYARI] rg"):
+            self.assertNotIn(yasak, c)
+        # kontrol grubu: rg varsa [OK] + yolu
+        bin_ = self.tmp / "_rg"
+        bin_.mkdir()
+        (bin_ / "rg.cmd").write_text("@echo off\r\nexit /b 0\r\n", encoding="ascii", newline="")
+        self.env = rg_siz_path(self.env, bin_)
+        c = self.cikti(self.calistir("install.py", "--dry-run"))
+        self.assertIn(f"  [OK] rg: {bin_ / 'rg'}.", c)  # uzantı harfi PATHEXT'ten gelir (ölçüldü: rg.CMD)
+        self.assertNotIn("[BİLGİ] rg", c)
 
 
 class PythonAsgariTest(unittest.TestCase):

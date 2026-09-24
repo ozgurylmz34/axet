@@ -31,7 +31,7 @@ klasörü **kullanıcı** PATH'ine kendisi ekler (yönetici gerekmez).
 
 **Git kimliğini** (adın ve iş e-postan) kurulum aracı sorar ve kaydeder; zaten tanımlıysa gösterip "doğru mu?" diye
 sorar. **GitHub hesabı gerekmez:** template herkese açık klonlanır. `rg` (ripgrep) isteğe bağlıdır; yoksa kurulum
-aracı sessizce geçer.
+penceresi yalnız "rg yok (isteğe bağlı)" diye bilgi verir ve devam eder; kurmanı istemez, adres göstermez.
 
 İsteğe bağlı paketler (yalnız ilgili iş gelince kur; kurmak senin kararın; ilgili skill kurulum satırını söyler):
 

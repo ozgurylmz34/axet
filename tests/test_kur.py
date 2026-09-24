@@ -1272,13 +1272,16 @@ class KurTest(GeciciTest):
         self.assertFalse(kayit.exists(), "-WingetKapali varken winget çağrıldı")
 
     def test_kur_disi_yardim_metinleri_winget_onermez(self):
-        """Aynı politika kur.ps1 dışındaki yardım metinlerinde: Python/rg eksik mesajı winget komutu önermez,
-        yazılım merkezini gösterir. Kapsam: yalnız bu üç dosyanın metni (çalıştırılmaz)."""
-        for yol in ("yeni-proje.cmd", "proje-tamamla.cmd", "scripts/install.py"):
+        """Aynı politika kur.ps1 dışındaki yardım metinlerinde: Python eksik mesajı winget komutu önermez, yazılım
+        merkezini gösterir. rg için HİÇBİR kurulum yolu gösterilmez (kullanıcı kararı 2026-09-24: ek uygulama önerilmez;
+        install.py rg yokken yalnız bilgi satırı basar). Kapsam: yalnız bu üç dosyanın metni (çalıştırılmaz)."""
+        for yol in ("yeni-proje.cmd", "proje-tamamla.cmd", "scripts/install.py", "scripts/doctor.py"):
             with self.subTest(yol=yol):
                 metin = (AXET_HOME / yol).read_bytes().decode("utf-8")
                 self.assertNotIn("winget install", metin)
-                self.assertRegex(metin.lower(), r"yaz[iı]l[iı]m merkez")
+                self.assertNotIn("ripgrep/releases", metin)
+                if yol.endswith(".cmd"):
+                    self.assertRegex(metin.lower(), r"yaz[iı]l[iı]m merkez")
 
     def test_eski_python_varsayilanda_winget_sorulmaz(self):
         env, _sahte = self.sahte_python_ortami("3.11")
@@ -1328,11 +1331,12 @@ class KurTest(GeciciTest):
         r = self.kur("-Evet", env=env, winget_kapali=False)
         c = self.cikti(r)
         self.assertIn("rg yok (isteğe bağlı; atlandı)", c)
-        # sessiz geçiş: kullanıcıdan kurması İSTENMEZ (ne portal ne adres ne winget)
+        # yalnız bilgi: kullanıcıdan kurması İSTENMEZ (ne portal ne adres ne winget). Kapsam: kur.ps1'in kendi ön koşul
+        # bölümü. Aynı pencerede koşan install.py/doctor bu testte KAYNAK klonun (bare = commit'lenmiş HEAD) sürümüdür;
+        # onların rg satırı (yalnız bilgi, öneri/adres yok) test_install.OrtamRgBilgiTest + test_doctor'da ölçülür.
         onkosul = c.split("== 1/5")[1].split("== 2/5")[0]
         self.assertNotIn("yazılım merkez", onkosul)
-        # kapsam: kur.ps1'in kendi ön koşul bölümü (install.py/doctor'un Ortam satırındaki rg WARN'ı ayrı araçtır)
-        self.assertNotIn("ripgrep/releases", onkosul)
+        self.assertNotIn("ripgrep", onkosul)
         self.assertNotIn("winget", c)
         self.assertIn("== 4/5", c)  # kurulum durmadı
         self.assertIn("Kurulum TAMAM — aXet'i aç. (yeni klon)", c)
@@ -1407,6 +1411,82 @@ class KurTest(GeciciTest):
         self.assertIn("winget Git kurulumunda hata verdi", c)
         self.assertIn("https://www.python.org/downloads/windows/", c)
         self.assertFalse(self.hedef.exists())
+
+    # --- aXet-Kur.cmd çıkış 2: dört üretici, tek son mesaj (bug gate 2026-09-24, MEDIUM) ---------------------------
+    def axet_kur_cmd(self, *args: str, env: dict, lf: bool) -> subprocess.CompletedProcess:
+        """Çift tıklamalık aXet-Kur.cmd'yi GERÇEKTEN koşar: geçici kopyada yalnız indirme adresi bu klonun kur.ps1'ine
+        (file:// — Invoke-WebRequest PS 5.1'de okur, ölçüldü) çevrilir; geri kalan satırlar, çıkış kodu eşlemesi ve
+        etiketler aynen. lf=True: GitHub'dan indirilen kopya gibi LF satır sonlu (depoda blob LF'tir; .gitattributes
+        eol=crlf yalnız checkout'u etkiler). TEMP geçici klasör: indirilen kur.ps1 oraya yazılır."""
+        metin = AXET_HOME.joinpath("aXet-Kur.cmd").read_bytes()
+        adres = re.search(rb"https://raw\.githubusercontent\.com/\S+?/kur\.ps1", metin).group(0)
+        metin = metin.replace(adres, KUR_PS1.as_uri().encode("ascii"))
+        if lf:
+            metin = metin.replace(b"\r\n", b"\n")
+        kopya = self.tmp / ("_axetkur_lf.cmd" if lf else "_axetkur_crlf.cmd")
+        kopya.write_bytes(metin)
+        temp = self.tmp / "_temp_axetkur"
+        temp.mkdir(exist_ok=True)
+        env = dict(env, TEMP=str(temp), TMP=str(temp))
+        return subprocess.run([COMSPEC, "/c", "call", str(kopya), *args], env=env, cwd=str(self.tmp),
+                              capture_output=True, text=True, encoding="utf-8", errors="replace",
+                              stdin=subprocess.DEVNULL, timeout=600)
+
+    def test_axet_kur_cmd_cikis_2_son_mesaji_dort_durumda_dogru(self):
+        """kur.ps1 dört durumda çıkış 2 verir: ① portaldan kurulacak program eksik ② Git kurulu ama çalışmıyor
+        ③ -Winget yolu ④ -Kaldir sırasında Python yok. aXet-Kur.cmd eskiden 2'yi koşulsuz "Eksik program var ... portaldan
+        kurun" diye kapatıyordu: ②'de kullanıcıyı Git'i yeniden kurmaya yolluyordu (kur.ps1 "destek ekibine gönder" der).
+        Karar: ayrı çıkış kodu DEĞİL, tarafsız son mesaj — ①+② aynı koşumda birlikte olabilir (tek kod ikisini birden
+        doğru anlatamaz) ve ne yapılacağını kur.ps1 her durumda hemen yukarıda kendisi yazar. Ölçülen: GERÇEK cmd (LF
+        kopya; ① ayrıca CRLF) + GERÇEK kur.ps1; her durumda kur.ps1'in kendi talimatı + cmd'nin tarafsız kapanışı."""
+        env_portal, _ = self.dar_ortam(axet=False)
+        # ② Git kurulu ama çalışmıyor: aday YALNIZ `--version`da rc 1 veren sahte git.exe; Python gerçek, aXet sahte
+        bin_git = self.tmp / "_sahte_git"
+        bin_git.mkdir()
+        shutil.copy(SYS32 / "where.exe", bin_git / "git.exe")
+        env_git = self.path_degistir(env_portal, os.pathsep.join([str(bin_git), str(Path(sys.executable).parent),
+                                                                  str(SYS32), str(POWERSHELL.parent)]))
+        lad_git = self.tmp / "_lad_git"
+        (lad_git / "axet-code" / "bin").mkdir(parents=True)
+        (lad_git / "axet-code" / "bin" / "axet-code.exe").write_bytes(b"")
+        env_git["LOCALAPPDATA"] = str(lad_git)
+        # ④ -Kaldir: hedef imzalı bir template klonu gibi görünür (Template-Eksikleri geçer), Python yok
+        sahte_klon = self.tmp / "_sahte_klon"
+        self.yaz(sahte_klon / "core" / "00-temel.md", "# aXet\nCORE-ID: AXET-CORE-0.0.0\n")
+        self.yaz(sahte_klon / "scripts" / "install.py", "raise SystemExit('çalıştırılmamalı')\n")
+        (sahte_klon / "skills-sap").mkdir()
+        portal = "Şirket portalından (Software Center / Company Portal) kur:"
+        durumlar = [  # (ad, argümanlar, ortam, kur.ps1'in kendi son talimatı, o durumda OLMAMASI gereken)
+            ("eksik program", ["-Kaynak", str(self.kaynak), "-Hedef", str(self.hedef), "-Evet", "-WingetKapali"],
+             env_portal, ["    - Git (Git for Windows)", "bu dosyaya TEKRAR çift tıkla"], []),
+            ("git çalışmıyor", ["-Kaynak", str(self.kaynak), "-Hedef", str(self.hedef), "-Evet", "-WingetKapali"],
+             env_git, ["Git kurulu ama çalışmıyor: bu ekranın görüntüsünü destek ekibine gönder.",
+                       "DURDU: Ön koşul sorunu var (yukarıda)."], [portal]),
+            ("winget", ["-Kaynak", str(self.kaynak), "-Hedef", str(self.hedef), "-Evet", "-Winget"],
+             env_portal, ["DURDU: Eksik ön koşul var (yukarıda). Kurduktan sonra bu dosyaya TEKRAR çift tıkla."], [portal]),
+            ("kaldır python yok", ["-Kaldir", "-Hedef", str(sahte_klon), "-WingetKapali"],
+             env_portal, ["bulunamadı; kaldırma install.py ile yapılır."], [portal, "== 1/5"]),
+        ]
+        kapanis = "Kurulum DURDU: on kosul sorunu var. Ne yapmaniz gerektigi hemen yukaridaki mesajda yazar."
+        for ad, args, env, kendi, yasak in durumlar:
+            for lf in ((True, False) if ad == "eksik program" else (True,)):
+                with self.subTest(durum=ad, lf=lf):
+                    r = self.axet_kur_cmd(*args, env=env, lf=lf)
+                    c = self.cikti(r)
+                    self.assertEqual(r.returncode, 2, c)  # cmd kur.ps1'in kodunu aynen döndürür
+                    for s in kendi:
+                        self.assertIn(s, c)
+                    for s in yasak:
+                        self.assertNotIn(s, c)
+                    # son mesaj: cmd'nin tarafsız kapanışı, kur.ps1'in talimatından SONRA; koşulsuz "portaldan kurun" yok
+                    self.assertIn(kapanis, c)
+                    self.assertLess(max(c.rindex(s) for s in kendi), c.index(kapanis), c)
+                    self.assertNotIn("Eksik program var", c)
+                    son = c[c.index(kapanis):]
+                    self.assertIn("Program eksik dediyse", son)  # portal yalnız koşullu anılır
+                    self.assertIn("TEKRAR cift tiklayin", son)
+                    self.assertIn("destek ekibine", son)
+                    self.assertFalse(self.hedef.exists())
 
     # --- internet işareti (Zone.Identifier) -------------------------------------------------------------------
     def test_internet_isaretli_kopya_kur_cmd_ile_calisir(self):
@@ -2107,9 +2187,17 @@ class KurPythonYoluTest(GeciciTest):
         ]
         surucu = self.tmp / "_surucu.ps1"
         surucu.write_bytes(b"\xef\xbb\xbf" + "\r\n".join(satirlar).encode("utf-8") + b"\r\n")
+        komut = [str(POWERSHELL), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(surucu)]
+        if girdi == "<konsol>":
+            # Gerçek konsol girişi: yeni (gizli) konsol, standart tutamaçlar YÖNLENDİRİLMEZ (çift tıklanan pencere gibi).
+            # Çıktı yakalanamaz; gövde sonucunu dosyaya yazmalıdır.
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0
+            return subprocess.run(komut, env=self.env, cwd=str(self.tmp), timeout=300,
+                                  creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=si)
         girdi_kw = {"input": girdi} if girdi is not None else {"stdin": subprocess.DEVNULL}
-        return subprocess.run([str(POWERSHELL), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(surucu)],
-                              env=self.env, cwd=str(self.tmp), capture_output=True, text=True, encoding="utf-8",
+        return subprocess.run(komut, env=self.env, cwd=str(self.tmp), capture_output=True, text=True, encoding="utf-8",
                               errors="replace", timeout=300, **girdi_kw)
 
     # --- PATH tazeleme (kurulumun başı) -------------------------------------------------------------------------
@@ -2124,6 +2212,73 @@ class KurPythonYoluTest(GeciciTest):
         self.assertIn(f"P=C:\\p;C:\\m1;{self.tmp}\\m2;C:\\U1\\", c)
         self.assertIn("N=2", c)
         self.assertIn("N2=0", c)  # ikinci çağrı: eklenecek bir şey yok
+
+    # --- Python bilinen klasörler: SÜRÜM sırası (bug gate 2026-09-24, LOW) -------------------------------------------
+    def test_python_bilinen_klasorler_surume_gore_denenir_eski_surum_satiri_yok(self):
+        """Python39 + Python310 + Python312 + Python313: ilk aday 3.13, eski sürüm hiç denenmez (satırı basılmaz).
+        Eskiden `Sort-Object Name -Descending` alfabetikti: "Python39" > "Python313" → 3.9 önce denenip
+        "3.9 bulundu ama 3.12 gerekli" basılıyordu. Klasörlerde GERÇEK yorumlayıcı (venv başlatıcısı + pyvenv.cfg);
+        bildirdiği sürüm site-packages'taki .pth ile klasör adından türetilir (yorumlayıcı gerçek, yalnız
+        sys.version_info sahte). Kontrol grubu: sahte 3.9 gerçekten 3.9 bildirir ve Python-Dene onu eski sayar."""
+        lad = self.tmp / "_lad"
+        kok = lad / "Programs" / "Python"
+        klasorler = ["Python39", "Python310", "Python312", "Python313"]
+        paketler = set()
+        for ad in klasorler:
+            (kok / ad).mkdir(parents=True)
+            shutil.copy2(self.venv / "Scripts" / "python.exe", kok / ad / "python.exe")
+            shutil.copy2(self.venv / "pyvenv.cfg", kok / ad / "pyvenv.cfg")
+            r = subprocess.run([str(kok / ad / "python.exe"), "-c", "import site;print(site.getsitepackages()[-1])"],
+                               capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            paketler.add(r.stdout.strip())
+        for sp in paketler:  # "import" ile başlayan .pth satırı site yüklenirken çalışır
+            self.yaz(Path(sp) / "_axet_sahte_surum.pth",
+                     "import sys, os, re; _m = re.match(r'Python(\\d)(\\d+)$', os.path.basename(os.path.dirname("
+                     "sys.executable))); _m and setattr(sys, 'version_info', (int(_m[1]), int(_m[2]), 0, 'final', 0))\n")
+        bos = self.tmp / "_bos"
+        bos.mkdir()
+        self.path_yaz("", "")  # PEP 514 adayları boş (python_kayit yok)
+        govde = "\r\n".join([
+            f"$env:Path = '{SYS32}'",  # PATH'te python/py yok: yalnız bilinen klasör kolu kalır
+            f"$env:LOCALAPPDATA = '{lad}'",
+            f"$env:ProgramFiles = '{bos}'", f"$env:ProgramW6432 = '{bos}'", f"${{env:ProgramFiles(x86)}} = '{bos}'",
+            f"$env:SystemDrive = '{bos}'",
+            "Yaz ('ADAY=' + ((@(Python-Bilinen-Adaylari) | ForEach-Object { Split-Path -Leaf (Split-Path -Parent $_) }) -join ','))",
+            "$p = Python-Bul",
+            "Yaz \"SECILEN=$($p.Surum)|$($p.Yol)\"",
+            "Yaz '--KONTROL--'",
+            f"$null = Python-Dene '{kok / 'Python39' / 'python.exe'}' @()",
+        ])
+        r = self.kos(govde)
+        c = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, c)
+        asil, kontrol = c.split("--KONTROL--", 1)
+        self.assertIn("ADAY=Python313,Python312,Python310,Python39", asil)
+        self.assertIn(f"SECILEN=3.13|{kok / 'Python313' / 'python.exe'}", asil)
+        self.assertNotIn("bulundu ama", asil)  # eski sürüm hiç denenmedi
+        self.assertIn(f"Python 3.9 bulundu ama 3.12 ya da üstü gerekli: {kok / 'Python39' / 'python.exe'}", kontrol)
+
+    # --- Konsol-Etkilesimli: Add-Type derlenemezse saf .NET yedeği (bug gate 2026-09-24, ÖNERİ) -------------------
+    def test_konsol_etkilesimli_add_type_yoksa_yedek_ayni_karari_verir(self):
+        """Gerçek konsol (yeni gizli konsol, giriş yönlendirilmemiş) → True; NUL ve boru → False. Hem birincil yol
+        (Add-Type + GetConsoleMode) hem yedek ([Console]::IsInputRedirected; AXET_KUR_KONSOL_YEDEK=1 Add-Type kolunu
+        atlar) için. Eskiden Add-Type hatası her zaman False'tu: gerçek çift tıkta kimlik hiç sorulmazdı.
+        KAPSAM — bakılmayan: Add-Type'ın GERÇEKTEN derlenemediği ortam (uygulama denetimi) üretilmedi; yedek kol test
+        anahtarıyla sınanır. Constrained Language'ta kur.ps1'in kendisi de çalışmaz ([Console] çağrıları)."""
+        for k in ("AXET_KUR_SORMA", "AXET_KUR_KONSOL", "AXET_KUR_KONSOL_YEDEK"):
+            self.env.pop(k, None)
+        cikis = self.tmp / "_konsol.txt"
+        govde = f"[IO.File]::WriteAllText('{cikis}', \"SONUC=$(Konsol-Etkilesimli)\")"
+        for yedek in (False, True):
+            if yedek:
+                self.env["AXET_KUR_KONSOL_YEDEK"] = "1"
+            for giris, beklenen in (("<konsol>", "True"), (None, "False"), ("", "False")):  # None = NUL, "" = boru
+                with self.subTest(yedek=yedek, giris={"<konsol>": "konsol", None: "NUL", "": "boru"}[giris]):
+                    cikis.unlink(missing_ok=True)
+                    r = self.kos(govde, girdi=giris)
+                    self.assertEqual(r.returncode, 0, getattr(r, "stderr", ""))
+                    self.assertEqual(cikis.read_text(encoding="utf-8-sig"), f"SONUC={beklenen}")
 
     # --- Git bilinen klasör + Z98 Git kolu -----------------------------------------------------------------------
     def gercek_git_koku(self) -> Path:
@@ -2391,11 +2546,16 @@ class IlkKurulumCmdTest(unittest.TestCase):
         self.assertRegex(metin, r"(?m)^exit /b %RC%\s*$", "kur.ps1'in çıkış kodu korunmalı")
         for kod in ("0", "2", "3"):
             self.assertIn(f'if "%RC%"=="{kod}"', metin, f"çıkış kodu {kod} için ayrı kullanıcı mesajı")
-        # 2 (eksik program) ve 3 (yeni kurulan program görünmüyor): ikisi de "tekrar çift tıkla" der; komut vermez
-        for etiket in (":eksik", ":yeniden"):
+        # 2 (ön koşul sorunu: eksik program, çalışmayan Git, -Winget, -Kaldir'da Python yok) ve 3 (yeni kurulan program
+        # görünmüyor): ikisi de "tekrar çift tıkla" der; komut vermez. 2'nin metni tarafsızdır (dört durumun gerçek koşumu:
+        # KurTest.test_axet_kur_cmd_cikis_2_son_mesaji_dort_durumda_dogru)
+        for etiket in (":onkosul", ":yeniden"):
             govde = metin.split(f"\n{etiket}\n", 1)[1].split("goto son", 1)[0]  # read_text CRLF'i \n'e çevirir
             self.assertIn("TEKRAR cift tiklayin", govde, etiket)
             self.assertNotIn("PowerShell", govde, etiket)
+        onkosul = metin.split("\n:onkosul\n", 1)[1].split("goto son", 1)[0]
+        self.assertNotIn("Eksik program var", onkosul)  # koşulsuz "eksik program" iddiası yok
+        self.assertIn("yukaridaki mesajda", onkosul)
         self.assertNotIn("sap-write", metin.lower())
         self.assertNotIn("invoke-expression", metin.lower())
 

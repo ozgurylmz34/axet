@@ -25,7 +25,7 @@ Bir adım geçmeden sonrakine geçme; kullanıcı atlamak isterse atlanan adım�
 
 | # | Adım | Kontrol (model çalıştırır) | Geçti sayılır |
 |---|---|---|---|
-| 0 | Ön koşullar | `axet-code -v` · `git --version` · `python --version` · `rg --version` | ilk üçü sürüm basar (rg yoksa yalnız öneri) |
+| 0 | Ön koşullar | `axet-code -v` · `git --version` · `python --version` · `rg --version` | ilk üçü sürüm basar (rg isteğe bağlı: yoksa yalnız bilgi; kurmayı önerme) |
 | 1 | Kurulum | `git -C <AXET_HOME> rev-parse --show-toplevel` · `python <AXET_HOME>/scripts/doctor.py` | klon yolu basılır · global config satırlarında FAIL yok |
 | 2 | Yükleme | bu oturumun ilk satırı (kanarya) | `AXET-CORE-…` var; SAP işi yapılacaksa `SAP:` açık |
 | 3 | Proje | proje kökünde `doctor.py` proje satırları · `session_brief.py --no-fetch` | 0 FAIL · hatasız özet · ilk satırda `proje: <ad>` |
