@@ -362,7 +362,7 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   ⚠ `undeploy` desenleri **bitişik DEĞİLDİR** (`*npm*undeploy*`, `*yarn*undeploy*`, `*bun *undeploy*` araya `*` alır):
   paket yöneticisi adından sonra herhangi bir yerde `undeploy` geçen metin de düşer — `yarn test undeploy`,
   `npm run test -- --grep undeploy`, `npm pkg get scripts.undeploy`, `rg -n "npm.*undeploy" .`,
-  `npm run build && rg undeploy .` (simülasyon, testte kilitli).
+  `npm run build && rg undeploy .`, `bun test src/undeploy.test.ts` (simülasyon, testte kilitli).
   Kontrol grubu (`npm run build/start/lint`, `npm install/test`, `yarn build/install`, `pnpm install`,
   `npm run build -- --dest deploy`, `npm run start:deploy-preview`, `npm run lint && echo deploy`, `yarn test deploy`)
   ve kapılı yol düşmez (`tests/test_install.py::PaketYoneticisiDeployTest`). **Canlı ölçüldü** (2026-09-24,
@@ -372,7 +372,9 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   `npm rum deploy`, `npm urn deploy`, `npm run "deploy"` reddedildi; `docker run ubuntu ls /srv/undeploy` ve
   `rg -n "run deploy" .` çalıştı. Kalan 13 yeni desen yalnız simülasyon (`config/permissions.json` `_aciklama`
   "GÜNCEL KAPSAM SAYIMI" tam listeyi verir). *Bilinen yanlış pozitif:* `npm run deploy-config`,
-  `npm ci && echo return deploy` (`*npm*urn deploy*`); bayraklı zincir
+  `npm run "deploy-config"`, `npm ci && echo return deploy` (`*npm*urn deploy*`), Türkçe metinde sık geçen
+  **"durum/forum/spectrum deploy"** (`*npm*rum deploy*`: `npm run build && echo "durum deploy hazir"`; kapılı yol zincirinde
+  onay cümlesi `--user-ok "forum deploy onayı"` ise deny `*deploy_ui*` ask'ını ezer — onay cümlesinde bu kelimeleri kullanma); bayraklı zincir
   (`npm run -s build && … deploy_ui.py deploy …`, `yarn --cwd x build && …`) — `deploy_ui.py` build'i kendisi yapar,
   **zincirsiz çağır**; `ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap`. *Bilinen açık:* `pnpm deploy`
   (pnpm'in yerleşik komutu, script koşmaz — DOĞRULANMADI), `npx deploy`/`undeploy` ve `node_modules/.bin/deploy`
@@ -382,7 +384,10 @@ Klonu günceller ve kurulumu yeniler. Yeni kurallar ve skill'ler bir sonraki aXe
   `npm run $(echo deploy)` — script adı komut metninde geçmez, desenle kapatılamaz), PowerShell
   `Start-Process npm -ArgumentList "run","deploy"`, `npx @ui5/cli build --config ui5-deploy.yaml`,
   `.exe`/`.cmd` uzantısı bayrakla birlikteyse (`bun.exe run deploy`, `yarn.cmd --cwd app deploy`), `bun --cwd app run deploy`,
-  `pnpm --dir app deploy`.
+  `pnpm --dir app deploy`. ⚠ **Sınıf olarak:** desenler yalnız listelenen yazımları yakalar; takma ad/bayrak/tırnak BİRLEŞİMLERİ (ör. `npm rum "deploy"`, `npm urn -s deploy`, `npm run -s "deploy"`, `npm run-script 'deploy'`) yakalanmaz — izin kuralı güvenlik sınırı değildir, SAP'ye yazmanın güvenli yolu deploy_ui.py kapısıdır. Ölçülen (gate, npm 10.9.3, deploy script'i
+  ÇALIŞTI): `npm run -s "deploy"`, `npm rum "deploy"`, `npm urn "deploy"`, `npm urn -s deploy`, `npm rum --silent deploy`,
+  `npm run-script 'deploy'`. yarn/bun tırnaklı biçimler (`yarn "deploy"`, `yarn run "deploy"`, `bun run "deploy"`) de desensiz;
+  araç kurulu olmadığı için script'i çalıştırdıkları DOĞRULANAMADI. Hepsi testte "hâlâ açık" diye kilitli.
 - **Yanlış pozitif: desen metni komutun herhangi bir yerinde geçerse eşleşir.** Ölçülen: `echo "rm -rf notu"`,
   `python x.py "rd /s metni"`, `git commit -m "git push --force notu"`, `echo "git reset --hard açıklaması"`.
   Simülasyonla beklenen (ölçülmedi): `rg -n "git reset --hard" .` ve `grep -rn "git reset --hard" docs` (deny),

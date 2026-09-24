@@ -746,7 +746,10 @@ class ZorlaDalSilmeTest(unittest.TestCase):
 # ölçüldü ve reddetti: `*npm*undeploy*`, `*yarn deploy*`, `*ui5 build*ui5-deploy*`, `*npm*run -* deploy*` (ikinci
 # koşumda `*npm*rum deploy*`, `*npm*urn deploy*`, `*npm*run "deploy*` de; `*npm*run 'deploy*` yalnız simülasyon); kontrol
 # `npm run build`, `npm run lint && echo deploy`, `npm run build && python deploy_ui.py deploy app` çalıştı.
-# Her satırın 2. alanı yalnız O desenin tuttuğu biçimdir (başka desenle çakışmayan biçim seçildi) → bir desen silinirse adıyla FAIL verir (mutasyonla doğrulandı).
+# Her satırın 2. alanı o biçimi tutan desenlerden biridir ve testte adıyla aranır → desen silinirse adıyla FAIL verir
+# (mutasyonla doğrulandı). Yeni desen satırlarında başka desenle çakışmayan biçim seçildi; ⚠ sondaki "eski desenler"
+# bloğundan 4 satır (`npm run deploy`, `npm run deploy-test`, `pnpm run deploy`, `npm --prefix app run deploy`) yeni
+# `*npm*run deploy*` deseninin de alt kümesidir — eski desen silinirse satır yine adıyla FAIL verir ama komut deny'da kalır.
 Z106_PAKET_YONETICISI_DEPLOY = [
     ('npm -w app run deploy',                              '*npm*run deploy*'),
     ('npm --workspace app run deploy',                     '*npm*run deploy*'),
@@ -794,7 +797,7 @@ Z106_PAKET_YONETICISI_DEPLOY = [
     ('npx ui5 build -c ui5-deploy.yaml',                   '*ui5 build*ui5-deploy*'),
     ('npx ui5 build preload --clean-dest --config ui5-deploy.yaml --include-task=generateCachebusterInfo',
      '*ui5 build*ui5-deploy*'),
-    # Eski desenlerin tuttuğu biçimler (regresyon kilidi):
+    # Eski desenlerin tuttuğu biçimler (regresyon kilidi; ilk 4'ü `*npm*run deploy*` ile de örtüşür):
     ('npm run deploy',                                     '*npm run deploy*'),
     ('npm run deploy-test',                                '*npm run deploy*'),
     ('pnpm run deploy',                                    '*npm run deploy*'),
@@ -859,7 +862,8 @@ Z106_KAPILI_YOL = [
 # (b) desen metni argümanda/mesajda/aramada geçer (dosyanın genel yan etkisi); (c) `ui5 build` ile ui5-deploy aynı
 # metinde; (d) `undeploy` ailesi BİTİŞİK DEĞİLDİR (`*npm*undeploy*`, `*yarn*undeploy*`, `*bun *undeploy*` araya `*`
 # alır) → paket yöneticisi adından sonra herhangi bir yerde `undeploy` geçen metin düşer; (e) `*npm*urn deploy*`
-# "return deploy" gibi metne de uyar.
+# "return deploy" gibi metne de uyar; (f) `*npm*rum deploy*` Türkçe metinde sık geçen "durum/forum/spectrum deploy"
+# metnine de uyar — kapılı yol zincirinde onay cümlesinde geçerse deny (13 sabit karakter) `*deploy_ui*` ask'ını ezer.
 Z106_BILINEN_YANLIS_POZITIF = [
     ('npm run deploy-config',                            ['*npm run deploy*', '*npm*run deploy*']),   # (b) eskiden de
     ('npm run "deploy-config"',                          ['*npm*run "deploy*']),                        # (b)
@@ -879,6 +883,9 @@ Z106_BILINEN_YANLIS_POZITIF = [
     ('npm run build && rg undeploy .',                   ['*npm*undeploy*']),                           # (d)
     ('bun test src/undeploy.test.ts',                    ['*bun *undeploy*']),                          # (d)
     ('npm ci && echo return deploy',                     ['*npm*urn deploy*']),                         # (e)
+    ('npm run build && echo "durum deploy hazir"',       ['*npm*rum deploy*']),                         # (f)
+    ('npm install && echo "spectrum deploy"',            ['*npm*rum deploy*']),                         # (f)
+    (f'npm run build && {DEPLOY_UI} deploy app --user-ok "forum deploy onayı"', ['*deploy_ui*', '*npm*rum deploy*']),  # (f)
 ]
 
 # BİLİNEN AÇIK (bilinçli, kilitli): kapanırsa test FAIL → README/_aciklama güncellenir.
@@ -908,6 +915,19 @@ Z106_BILINEN_ACIK = [
     'bun.exe run deploy',
     'pnpm --dir app deploy',     # pnpm'in yerleşik deploy'u (DOĞRULANMADI) — `pnpm deploy` ile aynı sınıf
     'yarn.cmd --cwd app deploy', # `.cmd` + bayrak birlikte
+    # SINIF (lider kararı 2026-09-24): takma ad / bayrak / tırnak BİRLEŞİMLERİ desenle kovalanmaz — izin kuralı güvenlik
+    # sınırı değildir, SAP'ye yazmanın güvenli yolu deploy_ui.py kapısıdır. npm 10.9.3'te bu 6'sının deploy script'ini
+    # ÇALIŞTIRDIĞI gate tarafından ölçüldü:
+    'npm run -s "deploy"',
+    'npm rum "deploy"',
+    'npm urn "deploy"',
+    'npm urn -s deploy',
+    'npm rum --silent deploy',
+    "npm run-script 'deploy'",
+    # yarn/bun tırnaklı — araç kurulu değil, script'i çalıştırdığı DOĞRULANAMADI; desen yok:
+    'yarn "deploy"',
+    'yarn run "deploy"',
+    'bun run "deploy"',
 ]
 
 
