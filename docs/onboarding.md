@@ -71,6 +71,9 @@ Kurulum aracının yaptıkları:
    adresini de yazar (çıkış kodu 2). Kurduktan sonra yeni bir PowerShell aç ve aynı satırı tekrar yapıştır.
 3. Template'i `%USERPROFILE%\axet` klasörüne klonlar (makinede **bir kez**; tüm projeler aynı klonu kullanır).
 4. `install.py --sap` çalıştırır: global aXet config'ine yalnız kendi yollarını ve izin kurallarını ekler, önce yedek alır.
+   SAP bağlantısının Python paketleri (`requests`, `urllib3`, `python-dotenv`) eksikse bulduğu Python'un pip'iyle
+   kurar (`PAKETLER:` satırı). Ağ/proxy engeli olursa durmaz, UYARI verir: BT'den pip proxy ayarını iste, sonra
+   kurulum aracını tekrar çalıştır.
 5. `doctor.py` ile kontrol eder.
 6. `python` komutu yeni terminalde çalışmıyorsa bulduğu Python'un klasörünü (ve `Scripts`) kullanıcı PATH'inin başına
    ekler: "Python yolu kullanıcı PATH'ine eklendi" görürsen yeni terminal / yeni aXet oturumu aç. `kur.cmd -Kaldir`

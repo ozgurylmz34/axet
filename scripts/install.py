@@ -9,6 +9,9 @@ Yazdığı şeyler (yalnız bunlar; kullanıcının diğer ayarları korunur):
 Sonra (kur/güncelle kipinde; --dry-run ve --uninstall'da DEĞİL) `scripts/tarayici_hazirla.py`'yi ayrı süreçte
 çağırır: klonda `.araclar/playwright-cli` + `~/.playwright/cli.config.json` (v0.5.4, Z60). Sonucu ne olursa olsun
 install.py'nin çıkış kodunu DEĞİŞTİRMEZ; `AXET_TARAYICI_HAZIRLA=0` ile kapatılır.
+Ondan önce (aynı kiplerde; --dry-run yalnız gösterir) SAP paketi açıksa ZORUNLU_PAKETLER'den eksik olanları bu
+yorumlayıcının pip'iyle kurar (Z101). pip yoksa ya da ağ/proxy hatasında UYARI basar, kurulumu DURDURMAZ, çıkış
+kodunu DEĞİŞTİRMEZ; `AXET_PAKET_KUR=0` ile kapatılır.
 
 Kullanım:
   python scripts/install.py              kur / güncelle (SAP durumu korunur; ilk kurulumda kapalı)
@@ -50,6 +53,21 @@ TARAYICI_BETIK = AXET_HOME / "scripts" / "tarayici_hazirla.py"
 # tests/test_install.py PythonAsgariTest'te zorlanır (birini değiştiren öbürlerini de değiştirmek zorunda).
 PY_ASGARI = (3, 12)
 TARAYICI_ZAMAN = 1000  # > tarayici_hazirla.EN_KOTU_SURE olmalı (Z64 L3; tests/test_tarayici_hazirla.py sabitler)
+# SAP bağlantısının ZORUNLU üçüncü-parti Python paketleri — TEK KAYNAK (Z101, 2026-09-24): (içe aktarma adı, pip
+# belirtimi). Ölçüldü: üçünden BİRİ eksikken `sap_adt_cli.py adt_get` rc=1 "No module named '<ad>'" ile düşer
+# (`--list`/`ping` yereldir, düşmez); doctor/session_brief/guncelle/install üçüncü-parti paket kullanmaz. İsteğe bağlı
+# skill paketleri (python-docx, python-pptx, openpyxl, markdown, Pillow) BURAYA GİRMEZ: fonksiyon içinde yüklenir.
+# NEDEN BU DOSYADA (requirements.txt'te değil): %guncelle haritası `scripts/install.py`'yi özel adımı GERÇEK
+# `python scripts/install.py` olan sınıfa koyar ⇒ listeye paket ekleyen yayın, güncelleyen kullanıcıda install.py'yi
+# koşturur ve paket kurulur. `skills-sap/sap-adt-foundation/scripts/requirements.txt` (CI onu kurar) özel adımsız
+# sınıftadır: yalnız orada yapılan değişiklik mevcut kullanıcıya ULAŞMAZDI. Eşitliği tests/test_install.py
+# PaketKaynakTest zorlar (birini değiştiren öbürünü de değiştirir).
+ZORUNLU_PAKETLER: tuple = (
+    ("requests", "requests>=2.31.0"),
+    ("urllib3", "urllib3>=1.26"),
+    ("dotenv", "python-dotenv>=1.0.0"),
+)
+PAKET_ZAMAN = 300  # pip kurulumunun üst sınırı (sn); %guncelle özel adım bütçesi (5400) içinde kalır
 # SAP'ye yazma için makine düzeyi izin; sap_adt_cli.py yazma kapısının ilk koşulu. Gitignore'lu.
 SAP_WRITE_FLAG = AXET_HOME / "config" / "sap-write.local"
 # Önceki sürümlerde config/permissions.json ile yayımlanıp artık dosyada olmayan kurallar: alan → desen → o zaman
@@ -261,6 +279,112 @@ def tarayici_adimi() -> None:
         print(f"TARAYICI: EKSİK — betik çalıştırılamadı ({exc})")
 
 
+# Ölçüm GERÇEK import'tur ve ayrı süreçte yapılır: pip kurulumundan sonra bu sürecin import önbelleği yeni paketi
+# görmeyebilir; paket meta verisinin varlığı da "yüklenebilir" demek değildir. `-P`: bulunulan klasör sys.path'e
+# girmez (orada duran bir `requests.py` ölçümü yanıltmasın); PYTHONPATH ve kullanıcı site-packages'ı AÇIK kalır —
+# `--user` kurulumu tam oraya gider.
+_PAKET_OLCUM = ("import importlib, json, sys\n"
+                "eksik = []\n"
+                "for ad in sys.argv[1:]:\n"
+                "    try:\n"
+                "        importlib.import_module(ad)\n"
+                "    except Exception:\n"
+                "        eksik.append(ad)\n"
+                "print('AXETPAKET:' + json.dumps(eksik))\n")
+
+
+def eksik_paketler(python: str | None = None) -> list[tuple[str, str]] | None:
+    """ZORUNLU_PAKETLER'den bu yorumlayıcıda YÜKLENEMEYENLER (sıra korunur). None = ÖLÇÜLEMEDİ (temiz DEĞİL)."""
+    adlar = [ad for ad, _ in ZORUNLU_PAKETLER]
+    try:
+        r = subprocess.run([python or sys.executable, "-P", "-c", _PAKET_OLCUM, *adlar], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=120, stdin=subprocess.DEVNULL)
+    except Exception:  # noqa: BLE001 — ölçülemedi
+        return None
+    satir = [s for s in (r.stdout or "").splitlines() if s.startswith("AXETPAKET:")]
+    if r.returncode != 0 or len(satir) != 1:
+        return None
+    try:
+        eksik = set(json.loads(satir[0][len("AXETPAKET:"):]))
+    except ValueError:
+        return None
+    return [(ad, spec) for ad, spec in ZORUNLU_PAKETLER if ad in eksik]
+
+
+def pip_komutu(specler: list[str]) -> list[str]:
+    """Bu yorumlayıcının pip'i. Sanal ortamda `--user` verilmez (pip orada reddeder). AXET_PAKET_PIP yalnız testin
+    enjeksiyon noktasıdır: pip modülü yerine o betik koşar (testler gerçek pip çalıştırmaz, ağa çıkmaz)."""
+    sahte = os.environ.get("AXET_PAKET_PIP")
+    bas = [sys.executable, sahte] if sahte else [sys.executable, "-m", "pip"]
+    venv = sys.prefix != sys.base_prefix
+    return [*bas, "install", *([] if venv else ["--user"]), "--disable-pip-version-check", "--no-input", *specler]
+
+
+def elle_kurulum_komutu(specler: list[str]) -> str:
+    """Kullanıcıya gösterilen PowerShell komutu. Belirtimler tırnaklı: `>=` tırnaksız verilirse kabuk yönlendirme
+    sayar (dosyaya yazar, sürüm koşulu kaybolur)."""
+    venv = sys.prefix != sys.base_prefix
+    return (f'& "{sys.executable}" -m pip install{"" if venv else " --user"} '
+            + " ".join(f'"{s}"' for s in specler))
+
+
+def paket_adimi(sap: bool, dry_run: bool = False) -> None:
+    """Eksik zorunlu paketleri kurar (Z101 — kullanıcı ayrı komut çalıştırmaz). Hiçbir sonucu kurulumu DURDURMAZ ve
+    install.py'nin çıkış kodunu DEĞİŞTİRMEZ; durumu ilk `PAKETLER:` satırı söyler. `AXET_PAKET_KUR=0` ile kapatılır."""
+    print("\nPython paketleri (SAP bağlantısı):")
+    if not sap:
+        print("PAKETLER: ATLANDI — SAP paketi kapalı (bu paketler yalnız SAP bağlantısı için gerekir)")
+        return
+    if os.environ.get("AXET_PAKET_KUR") == "0":
+        print("PAKETLER: ATLANDI — AXET_PAKET_KUR=0")
+        return
+    eksik = eksik_paketler()
+    if eksik is None:
+        print(f"PAKETLER: ÖLÇÜLEMEDİ — paketlerin yüklenip yüklenmediği denetlenemedi ({sys.executable}); "
+              "doğrulama: python scripts/doctor.py")
+        return
+    if not eksik:
+        print("PAKETLER: TAMAM — " + ", ".join(spec for _, spec in ZORUNLU_PAKETLER) + " yüklenebiliyor")
+        return
+    specler = [spec for _, spec in eksik]
+    adlar = ", ".join(specler)
+    elle = elle_kurulum_komutu(specler)
+    if dry_run:
+        print(f"PAKETLER: EKSİK — {adlar} (dry-run: kurulmadı; kurulacaktı: {elle})")
+        return
+    print(f"Eksik paket kuruluyor: {adlar}")
+    sys.stdout.flush()
+    rc, cikti = None, ""
+    try:
+        r = subprocess.run(pip_komutu(specler), capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=PAKET_ZAMAN, stdin=subprocess.DEVNULL)
+        rc, cikti = r.returncode, (r.stdout or "") + (r.stderr or "")
+    except subprocess.TimeoutExpired:
+        cikti = f"pip {PAKET_ZAMAN} sn içinde bitmedi"
+    except Exception as exc:  # noqa: BLE001 — kurulumu durdurma
+        cikti = f"pip çalıştırılamadı ({exc})"
+    kalan = eksik_paketler()
+    if kalan == []:
+        print(f"PAKETLER: KURULDU — {adlar} (yeniden denetlendi: yüklenebiliyor)")
+        return
+    kalan_adlar = adlar if kalan is None else ", ".join(spec for _, spec in kalan)
+    print(f"PAKETLER: EKSİK — {kalan_adlar} kurulamadı. Kurulum DEVAM ediyor: SAP bağlantısı bu paketler olmadan "
+          "çalışmaz, diğer özellikler çalışır.")
+    if "No module named pip" in cikti:
+        print(f"  UYARI: pip bulunamadı ({sys.executable}). Yapılacak: BT'den Python'u pip ile birlikte kurmasını "
+              "iste, sonra kur.cmd'yi yeniden çalıştır.")
+    elif rc == 0:
+        print("  UYARI: pip kurulumun bittiğini söyledi ama paket yine yüklenemiyor (farklı Python ya da bozuk kurulum). "
+              "Yapılacak: python scripts/doctor.py çıktısını BT'ye ilet.")
+    else:
+        print("  UYARI: pip paketi indiremedi (ağ ya da şirket proxy'si). Yapılacak: BT'den bu makine için pip proxy "
+              "ayarını (ya da şirket paket aynasını) iste, sonra kur.cmd'yi yeniden çalıştır.")
+    print(f"  Elle kurulum: {elle}")
+    son = [s.strip() for s in cikti.strip().splitlines() if s.strip()][-3:]
+    if son:
+        print("  pip çıktısının sonu: " + " | ".join(son))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="aXet.code template kurulumu")
     sap_group = ap.add_mutually_exclusive_group()
@@ -329,6 +453,8 @@ def main() -> int:
 
     if args.dry_run:
         print("\n--- yazılacak içerik ---\n" + new_text + "(dry-run: hiçbir şey yazılmadı)")
+        if not args.uninstall:
+            paket_adimi(sap, dry_run=True)
         return 0
     if write_new != was_write:
         if write_new:
@@ -346,6 +472,7 @@ def main() -> int:
     if new_text == original:
         print("\nDeğişiklik yok; config zaten güncel.")
         if not args.uninstall:
+            paket_adimi(sap)
             tarayici_adimi()
         return 0
 
@@ -361,6 +488,7 @@ def main() -> int:
         return 1
     print(f"Yazıldı ve geri okunarak doğrulandı: {cfg_file}")
     if not args.uninstall:
+        paket_adimi(sap)
         tarayici_adimi()
         print("\nSonraki adım: YENİ bir aXet oturumu aç. İlk yanıtın ilk satırında "
               "'AXET-CORE-…' görünmeli.\nDoğrulama: python scripts/doctor.py  (model çağrılı test: --live)")

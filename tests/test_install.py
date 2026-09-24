@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fnmatch
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -998,3 +999,234 @@ class PythonAsgariTest(unittest.TestCase):
                 self.assertEqual(r.returncode, 9009, c)
                 self.assertIn("python bulunamadi", c)
                 self.assertNotIn("surumu yetersiz", c)
+
+
+
+# --- Z101: SAP bağlantısının ZORUNLU üçüncü-parti Python paketleri ------------------------------------------------
+# Yeni makinede requests yoktu ⇒ `sap_adt_cli adt_get` "No module named 'requests'" ile düştü (ölçüldü 2026-09-24:
+# PYTHONPATH'e konan engelleyici modülle requests/urllib3/dotenv'in HER BİRİ ayrı ayrı adt_get'i rc=1 düşürdü;
+# kontrol grubu engelsiz → gerçek bağlantı hatası). Gerçek pip HİÇBİR testte çalışmaz, ağa çıkılmaz:
+#   · "eksik" = PYTHONPATH başındaki ENGEL klasörü (import edilince ModuleNotFoundError fırlatan modüller)
+#   · "kurulu" = PYTHONPATH başındaki SAHTE klasör (boş modüller — makinede gerçek paket olmasa da import olur)
+#   · pip = AXET_PAKET_PIP ile verilen sahte betik: argümanlarını kayıt dosyasına yazar; kipine göre engeli kaldırır
+#     ("kurmuş" olur), ağ hatası ya da "pip yok" basar.
+
+SAHTE_PIP = (
+    "import os, shutil, sys\n"
+    "with open(os.environ['AXET_TEST_PIP_KAYIT'], 'a', encoding='utf-8') as fh:\n"
+    "    fh.write(' '.join(sys.argv[1:]) + '\\n')\n"
+    "kip = os.environ.get('AXET_TEST_PIP_KIP', 'basari')\n"
+    "if kip == 'basari':\n"
+    "    shutil.rmtree(os.environ['AXET_TEST_ENGEL'], ignore_errors=True)\n"
+    "    print('Successfully installed (sahte)')\n"
+    "    sys.exit(0)\n"
+    "if kip == 'ag':\n"
+    "    print(\"WARNING: Retrying ... ProxyError('Cannot connect to proxy.')\", file=sys.stderr)\n"
+    "    print('ERROR: Could not find a version that satisfies the requirement requests', file=sys.stderr)\n"
+    "    sys.exit(1)\n"
+    "if kip == 'yarim':\n"
+    "    sys.exit(0)\n"
+    "print(sys.executable + ': No module named pip', file=sys.stderr)\n"
+    "sys.exit(1)\n"
+)
+
+
+def _paket_modulleri() -> list[str]:
+    import install
+    return [ithal for ithal, _ in install.ZORUNLU_PAKETLER]
+
+
+class PaketAdimiTest(GeciciTest):
+    """install.py → eksik zorunlu paketleri bulunan yorumlayıcının pip'iyle kurar; kurulumu DURDURMAZ."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.klon = self.tmp / "klon"
+        for rel in ("scripts/install.py", "config/permissions.json", "core/00-temel.md", "core/sap/00-sap.md",
+                    "memory/MEMORY.md"):
+            hedef = self.klon / rel
+            hedef.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(AXET_HOME / rel, hedef)
+        (self.klon / "skills").mkdir()
+        (self.klon / "skills-sap").mkdir()
+        self.engel = self.tmp / "_engel"
+        self.kurulu = self.tmp / "_kurulu"
+        self.kayit = self.tmp / "_pip_kayit.txt"
+        pip = self.yaz(self.tmp / "_sahte_pip.py", SAHTE_PIP)
+        self.env.pop("AXET_PAKET_KUR", None)  # _helpers testlerde kapatır; burada adım AÇIK ölçülür
+        self.env.update({"AXET_PAKET_PIP": str(pip), "AXET_TEST_PIP_KAYIT": str(self.kayit),
+                         "AXET_TEST_ENGEL": str(self.engel), "AXET_TEST_PIP_KIP": "basari"})
+
+    def eksik(self, *moduller: str) -> None:
+        self.engel.mkdir(exist_ok=True)
+        for m in moduller or _paket_modulleri():
+            self.yaz(self.engel / f"{m}.py", f"raise ModuleNotFoundError(\"No module named '{m}'\", name='{m}')\n")
+        self.env["PYTHONPATH"] = str(self.engel)
+
+    def hepsi_kurulu(self) -> None:
+        for m in _paket_modulleri():
+            self.yaz(self.kurulu / f"{m}.py", "")
+        self.env["PYTHONPATH"] = str(self.kurulu)
+
+    def install(self, *args: str):
+        return self.calistir(self.klon / "scripts" / "install.py", *args)
+
+    def pip_cagrilari(self) -> list[str]:
+        return self.kayit.read_text(encoding="utf-8").splitlines() if self.kayit.exists() else []
+
+    def test_eksik_paket_pip_ile_kurulur_ve_dogrulanir(self):
+        import install
+        self.eksik()
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        cagri = self.pip_cagrilari()
+        self.assertEqual(1, len(cagri), cagri)
+        parca = cagri[0].split()
+        self.assertEqual("install", parca[0])
+        self.assertIn("--user", parca)
+        for _, spec in install.ZORUNLU_PAKETLER:
+            self.assertIn(spec, parca)
+        self.assertIn("PAKETLER: KURULDU", r.stdout)
+
+    def test_yalniz_eksik_olan_kurulur(self):
+        import install
+        self.eksik("dotenv")
+        # engelsiz modüller gerçek makinede olmayabilir ⇒ sahte kurulu klasör de yola eklenir (engel önde)
+        for m in _paket_modulleri():
+            if m != "dotenv":
+                self.yaz(self.kurulu / f"{m}.py", "")
+        self.env["PYTHONPATH"] = str(self.engel) + os.pathsep + str(self.kurulu)
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        cagri = self.pip_cagrilari()
+        self.assertEqual(1, len(cagri), cagri)
+        specler = dict(install.ZORUNLU_PAKETLER)
+        self.assertIn(specler["dotenv"], cagri[0].split())
+        self.assertNotIn(specler["requests"], cagri[0].split())
+
+    def test_kontrol_grubu_hepsi_kuruluysa_pip_cagrilmaz(self):
+        self.hepsi_kurulu()
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertIn("PAKETLER: TAMAM", r.stdout)
+
+    def test_ag_hatasi_kurulumu_durdurmaz_uyari_ve_yapilacak_yazilir(self):
+        self.eksik()
+        self.env["AXET_TEST_PIP_KIP"] = "ag"
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertIn("PAKETLER: EKSİK", r.stdout)
+        self.assertIn("UYARI", r.stdout)
+        self.assertIn("proxy", r.stdout.lower())
+        self.assertIn("requests", r.stdout)
+        # config yine yazıldı: paket adımı kurulumun geri kalanını etkilemez
+        self.assertTrue((self.xdg / "axet-code" / "axet-code.json").is_file())
+
+    def test_pip_yoksa_ayri_mesaj_kurulum_durmaz(self):
+        self.eksik()
+        self.env["AXET_TEST_PIP_KIP"] = "pipyok"
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertIn("PAKETLER: EKSİK", r.stdout)
+        self.assertIn("pip bulunamadı", r.stdout)
+
+    def test_pip_basari_dese_de_import_olmuyorsa_eksik_sayilir(self):
+        """pip rc=0 ≠ paket yüklenebilir: sonuç yeniden import edilerek ölçülür."""
+        self.eksik()
+        self.env["AXET_TEST_PIP_KIP"] = "yarim"
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertIn("PAKETLER: EKSİK", r.stdout)
+        self.assertNotIn("PAKETLER: KURULDU", r.stdout)
+
+    def test_dry_run_yalniz_gosterir(self):
+        self.eksik()
+        r = self.install("--sap", "--dry-run")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertIn("PAKETLER: EKSİK", r.stdout)
+        self.assertIn("kurulacaktı", r.stdout)
+
+    def test_uninstall_ve_sap_kapaliyken_kurmaz(self):
+        self.eksik()
+        for args in (("--uninstall",), ("--no-sap",)):
+            with self.subTest(args=args):
+                r = self.install(*args)
+                self.assertEqual(0, r.returncode, self.cikti(r))
+                self.assertEqual([], self.pip_cagrilari())
+        self.assertIn("PAKETLER: ATLANDI", r.stdout)  # --no-sap: SAP paketi kapalı
+
+    def test_degisiklik_yok_dalinda_da_kurar(self):
+        self.hepsi_kurulu()
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.eksik()
+        r2 = self.install("--sap")
+        self.assertEqual(0, r2.returncode, self.cikti(r2))
+        self.assertIn("Değişiklik yok", r2.stdout)
+        self.assertEqual(1, len(self.pip_cagrilari()))
+
+    def test_kapatma_ortami_pip_cagirmaz(self):
+        """Test takımının güvencesi: _helpers AXET_PAKET_KUR=0 verir → hiçbir install.py koşumu pip'e gitmez."""
+        self.eksik()
+        self.env["AXET_PAKET_KUR"] = "0"
+        r = self.install("--sap")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertEqual([], self.pip_cagrilari())
+        self.assertIn("PAKETLER: ATLANDI — AXET_PAKET_KUR=0", r.stdout)
+
+
+class PaketKaynakTest(unittest.TestCase):
+    """Zorunlu paket listesinin TEK kaynağı install.py'dir; diğer her yer oradan okur ya da eşitliği burada zorlanır."""
+
+    def test_helpers_testlerde_paket_adimini_kapatir(self):
+        import _helpers
+        t = _helpers.GeciciTest("run")
+        t.setUp()
+        try:
+            self.assertEqual("0", t.env.get("AXET_PAKET_KUR"))
+        finally:
+            t.tearDown()
+
+    def test_requirements_txt_install_sabitiyle_ayni(self):
+        import install
+        dosya = AXET_HOME / "skills-sap" / "sap-adt-foundation" / "scripts" / "requirements.txt"
+        satirlar = [s.strip() for s in dosya.read_text(encoding="utf-8").splitlines()
+                    if s.strip() and not s.strip().startswith("#")]
+        self.assertEqual(sorted(satirlar), sorted(spec for _, spec in install.ZORUNLU_PAKETLER),
+                         "requirements.txt (CI) ile install.ZORUNLU_PAKETLER ayrıştı — birini değiştiren öbürünü de değiştirir")
+
+    def test_guncelle_install_py_degisince_install_kosar(self):
+        """%guncelle bağlaması: liste install.py'de durduğu için listeye eklenen paket install.py'yi değiştirir;
+        harita o dosyanın özel adımında GERÇEK install.py'yi (yalnız --dry-run değil) koşar ⇒ mevcut kullanıcıda da
+        kurulur. Liste başka dosyaya taşınırsa bu bağ kopar (requirements.txt → skill-script, özel adım yok)."""
+        import re
+        if str(AXET_HOME / "guncelle") not in sys.path:
+            sys.path.insert(0, str(AXET_HOME / "guncelle"))
+        import siniflandir
+        harita = siniflandir.harita_yukle()
+        sinif = siniflandir.siniflandir("scripts/install.py", harita)
+        kayit = next(s for s in harita["siniflar"] if s["sinif"] == sinif)
+        komutlar = [k.strip() for k in re.findall(r"python\s+[\w./\\-]+\.py[^,;\n]*", kayit["ozel_adim"] or "")]
+        self.assertIn("python scripts/install.py", komutlar)
+        kaynak = (AXET_HOME / "scripts" / "install.py").read_text(encoding="utf-8")
+        self.assertIsNotNone(re.search(r"(?m)^ZORUNLU_PAKETLER\b", kaynak), "liste install.py'nin kendisinde tanımlı olmalı")
+        req = siniflandir.siniflandir("skills-sap/sap-adt-foundation/scripts/requirements.txt", harita)
+        req_kayit = next(s for s in harita["siniflar"] if s["sinif"] == req)
+        self.assertFalse(req_kayit.get("ozel_adim"), "requirements.txt'in özel adımı yoksa tek kaynak o olamaz")
+
+    def test_venv_icinde_user_verilmez(self):
+        import install
+        from unittest import mock
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("AXET_PAKET_PIP", None)
+            with mock.patch.object(install.sys, "prefix", "C:/venv"), \
+                    mock.patch.object(install.sys, "base_prefix", "C:/Python312"):
+                self.assertNotIn("--user", install.pip_komutu(["requests"]))
+            with mock.patch.object(install.sys, "prefix", "C:/Python312"), \
+                    mock.patch.object(install.sys, "base_prefix", "C:/Python312"):
+                komut = install.pip_komutu(["requests"])
+        self.assertEqual([sys.executable, "-m", "pip", "install"], komut[:4])
+        self.assertIn("--user", komut)
+        self.assertEqual("requests", komut[-1])
