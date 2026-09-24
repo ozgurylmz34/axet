@@ -125,7 +125,7 @@ bir kez düzeltme) aynı politikayla (atomik yaratma, geri alma yok) — `tool-c
   birlikte yükseltir/düşürür (5-900 sn), yalnız gate payı için `AXET_DTEL_GATE_BUTCE_SN`; zaman aşımı mesajı bu yolu kendisi yazar (K10 — IMPLEMENTATION §20.9). Standart DTEL'ler
   denetlenmez — onları `adt_get` ile doğrula.
 - DTEL: 4 etiket (kısa/orta/uzun/başlık) `master_language`'de, dolu. Metinler spesifikasyondan; tahmin yok.
-  **Standart objeye append: adı AI önermez, append'i AI yaratmaz — kullanıcı yaratır (kesin yasak A).** Yeni Z DTEL
+  **Standart objeye append: adı AI önermez, append'i ve append alanının Z DTEL'ini AI yaratmaz — kullanıcı yaratır (kesin yasak A; standart objeler yalnız okunur).** Yeni bağımsız Z DTEL
   adı `%sap-dev` §6 kuralıyla: standarda uygun öneri + canlı kontrol + kullanıcının açık onayı.
 - ⚠ **`adt_struct_create` tek başına alanları YAZMAYABİLİR** (ölçülmüş: SAP'de
   `component_to_be_changed : abap.string(0)` yer tutucusu kaldı, araç create+activate OK dedi).
