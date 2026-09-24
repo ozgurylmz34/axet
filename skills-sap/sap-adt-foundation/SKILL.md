@@ -125,6 +125,7 @@ ağ çağrısından **önce** çalışır. CLI'nin yazma kapısı sırası ve re
 | `reviewer_blocker` | gömülü inceleme BLOCKER → kaynağı düzelt |
 | `preflight_blocker` | `adt_domain_create` argüman ön kontrolü BLOCKER (formülsüz datatype, geçersiz length/decimals/lowercase, boş sabit değer metni) → `result.steps.pre_flight.findings` |
 | `msgclass_overwrite_not_allowed` | `adt_msgclass_write` mevcut mesajı değiştirirdi → `plan.overwritten`'i (önce/sonra) kullanıcıya göster; açık onay gelirse `allow_overwrite=true` |
+| `repeated_failure` | patinaj kesicisi: aynı obje aynı hata koduyla art arda 3 kez başarısız oldu, bu yazma denenmedi → DUR; aynı çağrıyı tekrarlama, ham hata + denenenlerle kök sebebi kullanıcıyla konuş. Seri başarılı yazma, farklı hata kodu ya da 2 saat sonra sıfırlanır; erken sıfırlama kararı kullanıcının (`.axet-code/sap-write-failures.json`) — dosyayı sen silme |
 | `tool_not_available_for_profile` · `type_not_available_for_profile` | araç ya da obje tipi bu `sap_profile`'da kapalı (ör. `adt_screen_generate`, `adt_set_description`, `fugr`/`func`; tablo: `references/profiles.md`) → başka yol yok, kullanıcıya bildir |
 
 Kullanım/araç kodları (çıkış 3, SAP'ye gidilmedi): `invalid_argument` (argüman biçimi — ör. dynpro 4 hane değil, `extra` bu tipte geçersiz) ·
