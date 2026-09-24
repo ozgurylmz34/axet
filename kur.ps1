@@ -135,14 +135,18 @@ function Path-Yenile {
 function Python-Dene([string]$exe, [string[]]$onArg, [switch]$Sessiz) {
     # Gerçek yorumlayıcının sürümünü ve sys.executable yolunu döndürür; asgari sürümün altındaysa ya da yol diskte
     # yoksa $null (asgari: $script:PyAsgari, tanımı dosyanın başında).
-    $kod = "import sys;print('%d.%d|%s' % (sys.version_info[0], sys.version_info[1], sys.executable))"
+    # Taban: sanal ortamın (venv) arkasındaki asıl kurulumun python.exe'si (sys._base_executable, yoksa base_prefix);
+    # belirlenemezse $null. Z98: etkin bir venv'den koşulunca kalıcı PATH'e venv\Scripts yazılmasın diye.
+    # Kodda çift tırnak YOK: PS 5.1 yerel komuta gömülü çift tırnağı bozarak geçirir.
+    $kod = "import sys,os;b=getattr(sys,'_base_executable','') or '';b=b if os.path.isfile(b) else os.path.join(sys.base_prefix,'python.exe');b=b if os.path.isfile(b) else '';print('%d.%d|%s|%s' % (sys.version_info[0], sys.version_info[1], sys.executable, b))"
     $global:LASTEXITCODE = $null
     try { $out = & $exe @onArg -c $kod 2>$null } catch { return $null }
     if ((Son-Kod) -ne 0 -or -not $out) { return $null }
     $satir = @($out)[-1].ToString().Trim()
-    if ($satir -notmatch '^(\d+)\.(\d+)\|(.+)$') { return $null }
+    if ($satir -notmatch '^(\d+)\.(\d+)\|([^|]+)(?:\|(.*))?$') { return $null }
     $surum = [version]"$($Matches[1]).$($Matches[2])"
     $yol = $Matches[3]
+    $taban = if ($Matches[4]) { $Matches[4].Trim() } else { $null }
     if ($surum -lt $script:PyAsgari) {
         if ($Sessiz) { return $null }
         Yaz "  Python $surum bulundu ama $script:PyAsgari ya da üstü gerekli: $yol"
@@ -155,7 +159,7 @@ function Python-Dene([string]$exe, [string[]]$onArg, [switch]$Sessiz) {
         Yaz "  UYARI: Python'un bildirdiği yol diskte bulunamadı, aday atlandı: $yol"
         return $null
     }
-    return [pscustomobject]@{ Yol = $yol; Surum = $surum }
+    return [pscustomobject]@{ Yol = $yol; Surum = $surum; Taban = $taban }
 }
 
 function Python-Bul([switch]$BilinenYerler) {
@@ -321,23 +325,54 @@ function Python-Cozumu([string]$pathDegeri) {
 function PathKaydi-Yolu([string]$klon) { return (Join-Path $klon '.axet-kurulum\kullanici-path.json') }
 
 function PathKaydi-Oku([string]$klon) {
+    # Var: kayıt dosyası var mı. Eklenen: kurulumun eklediği girdiler (-Kaldir bunları siler). Tasinan: kullanıcı
+    # PATH'inde zaten olup başa taşınan girdiler (kullanıcınındı; -Kaldir SİLMEZ). Bozuk JSON'da istisna fırlar.
+    $sonuc = [pscustomobject]@{ Var = $false; Eklenen = @(); Tasinan = @() }
     $f = PathKaydi-Yolu $klon
-    if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return @() }
+    if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return $sonuc }
     $j = [IO.File]::ReadAllText($f) | ConvertFrom-Json
-    return @(@($j.eklenen) | Where-Object { $_ } | ForEach-Object { "$_" })
+    $sonuc.Var = $true
+    if ($null -ne $j -and $j.PSObject.Properties['eklenen']) { $sonuc.Eklenen = @(@($j.eklenen) | Where-Object { $_ } | ForEach-Object { "$_" }) }
+    if ($null -ne $j -and $j.PSObject.Properties['tasinan']) { $sonuc.Tasinan = @(@($j.tasinan) | Where-Object { $_ } | ForEach-Object { "$_" }) }
+    return $sonuc
 }
 
-function PathKaydi-Yaz([string]$klon, [string[]]$eklenen) {
+# Aynı klasörü gösteren girdilerden yalnız ilki kalır (PathGirdi-Anahtari ile; sıra korunur).
+function Girdi-Tekil([string[]]$liste) {
+    $gorulen = @{}
+    foreach ($g in @($liste)) {
+        if (-not $g) { continue }
+        $a = PathGirdi-Anahtari $g
+        if (-not $gorulen.ContainsKey($a)) { $gorulen[$a] = $true; $g }
+    }
+}
+
+function PathKaydi-Yaz([string]$klon, [string[]]$eklenen, [string[]]$tasinan) {
     $f = PathKaydi-Yolu $klon
     $d = Split-Path -Parent $f
     if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
     $gi = Join-Path $d '.gitignore'
     if (-not (Test-Path -LiteralPath $gi)) { [IO.File]::WriteAllText($gi, "*`r`n") }
+    $eklenen = @(Girdi-Tekil $eklenen)
+    $ekAnahtar = @($eklenen | ForEach-Object { PathGirdi-Anahtari $_ })
+    # Kurulumun eklediği bir girdi sonradan başa taşınırsa yine "eklenen"dir: -Kaldir onu silmeli.
+    $tasinan = @(Girdi-Tekil $tasinan | Where-Object { $ekAnahtar -notcontains (PathGirdi-Anahtari $_) })
     $veri = [ordered]@{
-        aciklama = 'kur.ps1 kullanıcı PATH''ine bu girdileri ekledi; kur.cmd -Kaldir yalnız bunları geri alır.'
+        aciklama = 'kur.ps1 kullanıcı PATH''ine "eklenen" girdileri ekledi, "tasinan" girdileri (kullanıcınındı) başa taşıdı; kur.cmd -Kaldir yalnız "eklenen"leri siler.'
         eklenen  = @($eklenen)
+        tasinan  = @($tasinan)
     }
     [IO.File]::WriteAllText($f, (ConvertTo-Json -InputObject $veri), (New-Object System.Text.UTF8Encoding $false))
+}
+
+# Bir klasör (ya da komut dosyası) nereden geliyor: 'makine' | 'kullanici' | $null. Makine PATH'i önce okunur.
+function Path-Kaynagi([string]$dizin, $kayit) {
+    $a = PathGirdi-Anahtari $dizin
+    $makine = @($kayit.Makine -split ';' | Where-Object { $_.Trim() } | ForEach-Object { PathGirdi-Anahtari $_ })
+    if ($makine -contains $a) { return 'makine' }
+    $kullanici = @($kayit.Deger -split ';' | Where-Object { $_.Trim() } | ForEach-Object { PathGirdi-Anahtari $_ })
+    if ($kullanici -contains $a) { return 'kullanici' }
+    return $null
 }
 
 function Python-Yolunu-Ayarla([string]$klon) {
@@ -347,36 +382,78 @@ function Python-Yolunu-Ayarla([string]$klon) {
         Yaz "  OK 'python' komutu yeni terminallerde çalışıyor: $($once.Python.Yol)"
         return
     }
-    $dizin = Split-Path -Parent $script:PY
+    # Eklenecek klasör TABAN yorumlayıcıdan: etkin bir venv'den koşulduysa venv\Scripts kalıcı PATH'e yazılmaz.
+    $bilgi = Python-Dene $script:PY @() -Sessiz
+    $taban = if ($bilgi) { $bilgi.Taban } else { $null }
+    if (-not $taban) {
+        Yaz "  UYARI: Python'un taban kurulumu belirlenemedi; 'python' için kullanıcı PATH'ine bir şey eklenmedi."
+        Yaz "         Kullanılan yorumlayıcı: $($script:PY). 'python' yeni terminalde çalışmazsa Python'un kurulu olduğu klasörü kullanıcı PATH'ine ekle."
+        return
+    }
+    $dizin = Split-Path -Parent $taban
     $adaylar = @($dizin)
     $scr = Join-Path $dizin 'Scripts'
     if (Test-Path -LiteralPath $scr -PathType Container) { $adaylar += $scr }
-    $mevcut = @($kayit.Deger -split ';' | Where-Object { $_.Trim() } | ForEach-Object { PathGirdi-Anahtari $_ })
-    $eklenecek = @($adaylar | Where-Object { $mevcut -notcontains (PathGirdi-Anahtari $_) })
-    if ($eklenecek.Count -eq 0) {
+
+    # Ham girdiler (boşlar dahil; metinleri hiç değiştirilmez) ve karşılaştırma anahtarları.
+    $parcalar = @($kayit.Deger -split ';')
+    $anahtarlar = @($parcalar | ForEach-Object { if ("$_".Trim()) { PathGirdi-Anahtari $_ } else { '' } })
+    # Çözülen (çalışmayan) python kullanıcı PATH'indeyse sırası: klasörümüz ondan SONRA ise başa taşınır. Makine
+    # PATH'indeyse taşımak işe yaramaz (makine önce okunur); o durumda sonda BT'ye yönlendiren uyarı çıkar.
+    $komutSira = -1
+    if ($once.Komut -and (Path-Kaynagi (Split-Path -Parent $once.Komut) $kayit) -eq 'kullanici') {
+        $komutSira = [array]::IndexOf($anahtarlar, (PathGirdi-Anahtari (Split-Path -Parent $once.Komut)))
+    }
+    $on = @()
+    $eklenecek = @()
+    $tasinacak = @()
+    $cikar = @{}
+    foreach ($a in $adaylar) {
+        $i = [array]::IndexOf($anahtarlar, (PathGirdi-Anahtari $a))
+        if ($i -lt 0) {
+            $eklenecek += $a; $on += $a
+        } elseif ($komutSira -ge 0 -and $i -gt $komutSira) {
+            $tasinacak += $parcalar[$i]; $on += $parcalar[$i]; $cikar[$i] = $true
+        }
+    }
+    if ($on.Count -eq 0) {
         Yaz "  Python klasörü kullanıcı PATH'inde zaten var: $dizin"
     } elseif ($DenemeModu) {
-        Yaz "  [deneme] Python yolu kullanıcı PATH'ine eklenecekti: $($eklenecek -join '; ') (başa; mevcut girdiler aynen kalır)"
+        if ($eklenecek.Count -gt 0) { Yaz "  [deneme] Python yolu kullanıcı PATH'ine eklenecekti: $($eklenecek -join '; ') (başa; mevcut girdiler aynen kalır)" }
+        if ($tasinacak.Count -gt 0) { Yaz "  [deneme] Python yolu kullanıcı PATH'inde başa taşınacaktı: $($tasinacak -join '; ') (önünde çalışmayan bir python var)" }
         return
     } else {
         # Önce kayıt, sonra PATH: PATH yazımı yarıda kalırsa -Kaldir yalnız PATH'te bulduğunu siler, zarar vermez.
-        PathKaydi-Yaz $klon (@(PathKaydi-Oku $klon) + $eklenecek)
-        $yeni = ($eklenecek -join ';') + $(if ($kayit.Deger) { ';' + $kayit.Deger } else { '' })
+        $eski = PathKaydi-Oku $klon
+        PathKaydi-Yaz $klon (@($eski.Eklenen) + $eklenecek) (@($eski.Tasinan) + $tasinacak)
+        $kalan = @(for ($i = 0; $i -lt $parcalar.Count; $i++) { if (-not $cikar.ContainsKey($i)) { $parcalar[$i] } }) -join ';'
+        $yeni = ($on -join ';') + $(if ($kalan) { ';' + $kalan } else { '' })
         KullaniciPath-Yaz $yeni $kayit.Tur
-        $env:Path = ($eklenecek -join ';') + ';' + $env:Path
-        Yaz "  Python yolu kullanıcı PATH'ine eklendi: $($eklenecek -join '; ') — yeni terminal / yeni aXet oturumu aç."
+        $env:Path = (@($on | ForEach-Object { [Environment]::ExpandEnvironmentVariables($_) }) -join ';') + ';' + $env:Path
+        if ($eklenecek.Count -gt 0) {
+            Yaz "  Python yolu kullanıcı PATH'ine eklendi: $($eklenecek -join '; ') — yeni terminal / yeni aXet oturumu aç."
+        }
+        if ($tasinacak.Count -gt 0) {
+            Yaz "  Python yolu kullanıcı PATH'inde başa taşındı (önünde çalışmayan bir python vardı): $($tasinacak -join '; ') — yeni terminal / yeni aXet oturumu aç."
+        }
         $kayit = KullaniciPath-Oku
     }
-    # Ekledikten sonra ÖLÇ: yeni bir terminalin PATH'iyle `python` nereye gidiyor.
+    # Yazdıktan sonra ÖLÇ: yeni bir terminalin PATH'iyle `python` nereye gidiyor.
     $sonra = Python-Cozumu (Path-Birlesik $kayit)
     if ($sonra.Python) { return }
     if ($sonra.Komut) {
         Yaz "  UYARI: yeni terminalde 'python' hâlâ başka bir yere gidiyor: $($sonra.Komut)"
-        Yaz '         Sebep: Windows önce makine PATH''ine (tüm kullanıcılar) bakar; orada önde eski ya da çalışmayan bir python var.'
+        if ((Path-Kaynagi (Split-Path -Parent $sonra.Komut) $kayit) -eq 'kullanici') {
+            Yaz '         Sebep: kullanıcı PATH''inde Python klasöründen önce başka bir python var (örn. Windows mağaza kısayolu).'
+            Yaz '         Yapılacak: o girdiyi kullanıcı PATH''inde sona al ya da Ayarlar > Uygulamalar > Gelişmiş uygulama ayarları >'
+            Yaz "         Uygulama yürütme diğer adları'ndan python kısayollarını kapat. Kullanılacak Python: $taban"
+        } else {
+            Yaz '         Sebep: Windows önce makine PATH''ine (tüm kullanıcılar) bakar; orada önde eski ya da çalışmayan bir python var.'
+            Yaz "         Yapılacak: BT'den makine PATH'indeki o girdiyi kaldırmasını ya da sona almasını iste. Kullanılacak Python: $taban"
+        }
     } else {
-        Yaz "  UYARI: yeni terminalde 'python' hâlâ bulunamıyor."
+        Yaz "  UYARI: yeni terminalde 'python' hâlâ bulunamıyor. Kullanılacak Python: $taban"
     }
-    Yaz "         Yapılacak: BT'den makine PATH'indeki o girdiyi kaldırmasını ya da sona almasını iste. Kullanılacak Python: $($script:PY)"
     Yaz '         Kurulum tamamlandı; yalnız ''python'' komutunu doğrudan çağıran adımlar bu düzelene kadar çalışmayabilir.'
 }
 
@@ -393,13 +470,13 @@ function Python-Yolu-Adimi([string]$klon) {
 }
 
 function Python-Yolunu-Kaldir([string]$klon) {
-    $eklenen = @(PathKaydi-Oku $klon)
-    if ($eklenen.Count -eq 0) { Yaz "  Kullanıcı PATH'i: kurulumun eklediği girdi yok, dokunulmadı."; return }
+    $k = PathKaydi-Oku $klon
+    if (-not $k.Var) { Yaz "  Kullanıcı PATH'i: kurulumun eklediği girdi yok, dokunulmadı."; return }
     $kayit = KullaniciPath-Oku
     $parcalar = New-Object 'System.Collections.Generic.List[string]'
     foreach ($g in ($kayit.Deger -split ';')) { $parcalar.Add($g) }
     $silinen = @()
-    foreach ($e in $eklenen) {
+    foreach ($e in @($k.Eklenen)) {
         $a = PathGirdi-Anahtari $e
         for ($i = 0; $i -lt $parcalar.Count; $i++) {
             if ($parcalar[$i].Trim() -and (PathGirdi-Anahtari $parcalar[$i]) -eq $a) {
@@ -412,6 +489,7 @@ function Python-Yolunu-Kaldir([string]$klon) {
     if ($DenemeModu) {
         if ($silinen.Count -gt 0) { Yaz "  [deneme] kullanıcı PATH'inden çıkarılacaktı: $($silinen -join '; ')" }
         else { Yaz "  [deneme] kurulumun eklediği girdiler kullanıcı PATH'inde artık yok; PATH'e dokunulmayacaktı." }
+        if (@($k.Tasinan).Count -gt 0) { Yaz "  [deneme] başa taşınan girdiler senindi, yerinde bırakılacaktı: $($k.Tasinan -join '; ')" }
         return
     }
     if ($silinen.Count -gt 0) { KullaniciPath-Yaz ($parcalar -join ';') $kayit.Tur }
@@ -425,6 +503,19 @@ function Python-Yolunu-Kaldir([string]$klon) {
         Yaz "  Kurulumun eklediği Python yolu kullanıcı PATH'inden çıkarıldı: $($silinen -join '; ')"
     } else {
         Yaz "  Kurulumun eklediği girdiler kullanıcı PATH'inde artık yoktu; PATH'e dokunulmadı."
+    }
+    if (@($k.Tasinan).Count -gt 0) {
+        Yaz "  Not: kurulumun başa taşıdığı girdiler senindi, yerinde bırakıldı: $($k.Tasinan -join '; ')"
+    }
+}
+
+# Kaldırmayı durdurmaz: kayıt bozuksa ya da PATH yazılamazsa yalnız uyarı.
+function Python-Yolu-Kaldir-Adimi([string]$klon) {
+    try {
+        Python-Yolunu-Kaldir $klon
+    } catch {
+        Yaz "  UYARI: kurulumun kullanıcı PATH'ine eklediği girdiler geri alınamadı: $($_.Exception.Message)"
+        Yaz "         Kaldırma sürüyor. Kullanıcı PATH'ini elle kontrol et; kayıt dosyası: $(PathKaydi-Yolu $klon)"
     }
 }
 
@@ -967,7 +1058,7 @@ try {
         $arg = @((Join-Path $Hedef 'scripts\install.py'), '--uninstall') + $(if ($DenemeModu) { @('--dry-run') } else { @() })
         $kod = Python-Calistir $arg
         if ($kod -ne 0) { Yaz "DURDU: install.py --uninstall $(if ($kod -eq -1) { 'çalıştırılamadı' } else { "çıkış kodu $kod" })."; Bitir 1 }
-        Python-Yolunu-Kaldir $Hedef
+        Python-Yolu-Kaldir-Adimi $Hedef
         Yaz ''
         if ($DenemeModu) { Yaz '[deneme] Config değiştirilmedi.'; Bitir 0 }
         Yaz "Global config'ten bu klonun kayıtları kaldırıldı. Klon klasörü SİLİNMEDİ: $Hedef"

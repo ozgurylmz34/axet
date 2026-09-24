@@ -76,7 +76,11 @@ Kurulum aracı sırayla şunları yapar:
 4. `install.py --sap` ile global aXet config'ini bu klona bağlar.
 5. `doctor.py` ile kontrol eder.
 6. `python` komutu yeni terminalde çalışmıyorsa bulduğu Python'un klasörünü (ve `Scripts`) **kullanıcı** PATH'inin
-   başına ekler (yönetici gerekmez, mevcut girdilere dokunmaz). `kur.cmd -Kaldir` yalnız bu eklediğini geri alır. Klonu silmeden ÖNCE çalıştır: kayıt klonun içinde durur, klon silinirse PATH girdisi kalır.
+   başına ekler (yönetici gerekmez, mevcut girdilerin metnini değiştirmez). `kur.cmd -Kaldir` yalnız bu eklediğini geri alır. Klonu silmeden ÖNCE çalıştır: kayıt klonun içinde durur, klon silinirse PATH girdisi kalır.
+   Python klasörü PATH'inde zaten var ama önünde çalışmayan bir `python` (ör. Windows mağaza kısayolu) duruyorsa
+   klasörü başa taşır; `-Kaldir` taşınan girdiyi silmez (o senin girdindi). Birden çok klon kullanıyorsan
+   PATH'e yalnız ilk kuran klon ekler ve yalnız onun `-Kaldir`'ı geri alır; öbür klonda `kur.cmd`'yi tekrar
+   çalıştırman yeter.
 
 Bitince **yeni** bir aXet oturumu aç. İlk yanıtın ilk satırı `[AXET-CORE-…` ile başlamalıdır. Görünmüyorsa
 kurulum çalışmıyordur; `python $HOME\axet\scripts\doctor.py` çıktısına bak.
