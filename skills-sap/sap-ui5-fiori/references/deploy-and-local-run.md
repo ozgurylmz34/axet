@@ -77,7 +77,8 @@ builder:
         exclude:
           - /test/
 ```
-- Paket ve transport **kullanıcıdan** gelir; model transport yaratmaz, paket yaratmaz (kesin yasak C).
+- Paket ve transport **kullanıcıdan** gelir; model transport yaratmaz, paket yaratmaz (kesin yasak C). Paket `$TMP`
+  değilse `deploy` transport'suz reddeder (`ADR_0005_C`, §3.2a); `prepare` bunu yalnız UYARI olarak gösterir.
 - Hedef URL alias değil kanonik host (aksi hâlde başka sistemin repository'sine gider).
 - Validation'daki **"application name must be prefixed with [ZZ1_]"** kaynak sistemde **yumuşak uyarıydı**: `Z…` adlı
   uygulamalar deploy oldu. Başka sistemde davranış DOĞRULANMADI.
@@ -116,7 +117,8 @@ göremeyince fark edildi. Script build'i gömer ve başarı mesajına değil **i
 ### 3.2a SAP yazma kapısı (kodda — Z106, 2026-09-24)
 `deploy` SAP'ye (BSP) yazar ⇒ onay ve kimlik kontrolünden sonra, **build'den ve ağdan önce** `sap_adt_cli.py` yazmalarıyla
 **aynı** kapıdan geçer: `sap-adt-foundation/scripts/sapadt/gate.py::check_write` (araç adı `deploy_ui`). Kapı ayrı bir kopya
-değildir; kodlar ve mesajlar `sap-adt-foundation` SKILL'deki red tablosuyla aynıdır.
+değildir; red kodları ve anlamları `sap-adt-foundation` SKILL'deki red tablosundadır (yalnız deploy'a özgü
+`write_target_mismatch` ve `gate_unavailable` dahil). Tek fark çıkış kodudur: CLI reddi çıkış 2, deploy reddi çıkış 3.
 - `config/sap-write.local` yok → `write_not_optin_global` (anahtarı kullanıcı `install.py --sap-write` ile açar) · `--sap-write`
   yok → `write_flag_missing` · proje kökünde (`--project-dir`, yoksa cwd) `sap-project.json` yok/bozuk → `sap_project_*`.
 - `.conn_adt` `ADT_SAP_TIER` DEV değil (QA/PRD, satır yok, çakışık) → `tier_not_writable` · ortam `.conn_adt`'yi eziyor →
@@ -128,6 +130,13 @@ değildir; kodlar ve mesajlar `sap-adt-foundation` SKILL'deki red tablosuyla ayn
   (host küçük harf; `:443` yazılıp yazılmaması FARK sayılır).
 - Hedef URL'si ayrıştırılamıyorsa (ör. şablondaki `<PORT>` yer tutucusu kalmış, geçersiz port) bu da `write_target_mismatch`
   (fail-closed, çıkış 3, loglanır) — traceback değil.
+- Ardından **transport** (Kesin Yasak C): `ui5-deploy.yaml` `app.package` `$TMP` DEĞİLSE `app.transport` zorunlu; boş, satır
+  yok ya da yer tutucu (`<TRANSPORT_NO>` gibi `<`/`>` içeren) → `ADR_0005_C` (çıkış 3, loglanır, build yok). Kural
+  foundation'ın kanonik `guardrails.require_transport`'udur (CLI yazmalarıyla aynı): istisna yalnız TAM `$TMP`;
+  `$tmp`, `$TMP2`, `" $TMP"` istisna DEĞİL (fail-closed). Transport numarasını **kullanıcı** verir ve
+  `ui5-deploy.yaml`'daki `app.transport` alanına yazılır (`deploy_ui`'nin transport argümanı yok); model transport
+  yaratmaz. Transport'un açık/sahibi olup olmadığı ve biçimi denetlenmez — yalnız varlığı. `app.package` boşsa bu
+  denetim koşmaz; `prepare` adımı onu ihlal sayar ve deploy koşmaz (`prepare_failed`).
 - Red → `[REDDEDİLDİ] SAP yazma kapısı (<kod>): <mesaj>`, çıkış 3, stderr'de CLI ile aynı hatırlatma. Kapı yüklenemezse de
   red (`gate_unavailable`, fail-closed). Red dahil her deneme ve sonuç (`ok`, `prepare_failed`, `deploy_failed`,
   `verify_stale`, `verify_unmeasured`) proje `.axet-code/sap-write-log.jsonl`'a yazılır.

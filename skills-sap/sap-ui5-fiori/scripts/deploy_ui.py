@@ -13,7 +13,9 @@ yalnız AÇIK KULLANICI ONAYIYLA deploy eder.
    `deploy_ui`) — `config/sap-write.local` anahtarı + `--sap-write` + `.conn_adt` tier DEV + sap-project.json +
    kapsam beyanı (`--scope S0|S1 --reason` / `S2 --intake`) + bağlantı dili; ardından `gate.check_target_system`:
    `ui5-deploy.yaml` target.url/client ≠ `.conn_adt` ADT_SAP_URL/ADT_SAP_CLIENT → red (tier başka sistemi
-   doğrulamış olurdu). Kapı yüklenemezse de red (fail-closed). Her deneme proje `.axet-code/sap-write-log.jsonl`'a
+   doğrulamış olurdu); ardından `$TMP` dışı pakette `app.transport` ZORUNLU (foundation'ın kanonik
+   `guardrails.require_transport`'u, kod `ADR_0005_C`; `$TMP` TAM eşleşme, yer tutucu transport yok sayılır).
+   Kapı yüklenemezse de red (fail-closed). Her deneme proje `.axet-code/sap-write-log.jsonl`'a
    yazılır. `--user-ok` kalır; kapı ona EKTİR. İzin katmanındaki `*deploy_ui*` `ask` kuralı artık ikincil katmandır
    (oturum izni verilince sormadan geçer — Z106 ölçümü). `prepare` (ağsız) ve `verify` (salt GET) kapıdan GEÇMEZ.
 
@@ -368,15 +370,41 @@ def _kapi_modulleri():
     return gate, KAPI_HATIRLATMA
 
 
+def transport_denetimi(ayar: dict, require_transport, ihlal_sinifi) -> tuple[str, str] | None:
+    """Kesin Yasak C — `$TMP` dışı pakette transport ZORUNLU. Kuralın kendisi foundation'ın KANONİK
+    `guardrails.require_transport`'udur (sap_adt_cli yazmalarıyla aynı: `$TMP` TAM eşleşme; `$tmp`, `$TMP2`,
+    `" $TMP"` istisna DEĞİL — fail-closed). Burada yalnız iki uyarlama var:
+      · yer tutucu transport (`<TRANSPORT_NO>` gibi `<`/`>` içeren) YOK sayılır — require_transport yalnız
+        boşluğa bakar, şablondan kalan yer tutucuyu geçirirdi;
+      · paket alanı BOŞSA bu denetim koşmaz: `hazirla` bunu İHLAL sayar ve deploy KOŞMAZ (mevcut davranış).
+    Döner: None (geçti / uygulanmaz) ya da (red kodu, mesaj). Transport YARATILMAZ, yalnız varlığı istenir."""
+    paket = ayar.get("package") or ""
+    if not paket.strip():
+        return None
+    tr = ayar.get("transport") or ""
+    yer_tutucu = "<" in tr or ">" in tr
+    try:
+        require_transport(None if yer_tutucu else tr, what="deploy_ui (BSP deploy)", package=paket)
+    except ihlal_sinifi as gv:
+        durum = f"yer tutucu kalmış ({tr})" if yer_tutucu else "boş"
+        return (gv.code, f"{gv}. Paket '{paket}' yerel ($TMP) değil ⇒ transport numarası zorunlu, ama "
+                         f"ui5-deploy.yaml `app.transport` {durum}. Transport numarasını KULLANICI verir; "
+                         "ui5-deploy.yaml'daki deploy-to-abap görevinin `app.transport` alanına yazılır "
+                         "(deploy_ui'nin transport argümanı yok). Model transport yaratmaz (Kesin Yasak C).")
+    return None
+
+
 def sap_yazma_kapisi(a, app: Path):
     """SAP'ye yazmadan (build + deploy) ÖNCE kapı. Döner: int (red çıkış kodu 3) ya da `logla(sonuc, cikis)`.
 
     Sıra: `gate.check_write` (sap_adt_cli `on_kontrol` ile aynı çağrı, log=False) → `gate.check_target_system`
-    (ui5-deploy.yaml hedefi == .conn_adt). Red de izin sonrası sonuç da proje write-log'una yazılır."""
+    (ui5-deploy.yaml hedefi == .conn_adt) → `transport_denetimi` (kanonik `require_transport`; `$TMP` dışı pakette
+    transport zorunlu). Red de izin sonrası sonuç da proje write-log'una yazılır."""
     proj = Path(a.project_dir).resolve() if getattr(a, "project_dir", None) else Path.cwd().resolve()
     try:
         gate, hatirlatma = _kapi_modulleri()
         from sapadt.project import PROJECT_ENV
+        from sapadt.guardrails import GuardrailViolation, require_transport
     except Exception as exc:  # noqa: BLE001 — kapı koşamıyorsa YAZMA YOK
         print(f"[REDDEDİLDİ] SAP yazma kapısı (gate_unavailable): kapı yüklenemedi ({type(exc).__name__}: {exc}) "
               f"— {FOUNDATION_SCRIPTS} beklenen yerde değil ya da bozuk. Fail-closed: deploy KOŞULMADI. (exit 3)")
@@ -390,6 +418,8 @@ def sap_yazma_kapisi(a, app: Path):
     red = None if sonuc.allowed else (sonuc.code, sonuc.message)
     if red is None:
         red = gate.check_target_system(proj, ayar.get("url"), ayar.get("client"))
+    if red is None:
+        red = transport_denetimi(ayar, require_transport, GuardrailViolation)
 
     def logla(sonuc_kodu: str, cikis: int) -> None:
         if not gate.log_write_attempt(proj, tool=KAPI_ARACI, obje_adi=bsp, object_type="bsp", scope=sonuc.scope,
@@ -403,7 +433,8 @@ def sap_yazma_kapisi(a, app: Path):
         print(hatirlatma, file=sys.stderr)
         return 3
     print(f"  SAP yazma kapısı: GEÇTİ (araç={KAPI_ARACI}, tier={sonuc.tier}, kapsam={sonuc.scope}, "
-          f"BSP={bsp}; hedef == .conn_adt)")
+          f"BSP={bsp}; hedef == .conn_adt; paket={ayar.get('package') or '-'} "
+          f"transport={ayar.get('transport') or '-'})")
     return logla
 
 

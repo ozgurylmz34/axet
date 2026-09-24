@@ -246,6 +246,18 @@ def _kos_home(home: Path, *args, cwd=None, kimlik: bool = True) -> tuple[int, st
     return p.returncode, (p.stdout or "") + (p.stderr or "")
 
 
+_PAKET_TR_SATIRLARI = "          package: ZXX001\n          transport: ZXXK900001\n"
+
+
+def _paket_tr(app: Path, paket: str, transport: str | None) -> None:
+    """ui5-deploy.yaml `app.package`/`app.transport`'u değiştirir; transport=None → satır HİÇ yok."""
+    y = app / "ui5-deploy.yaml"
+    metin = y.read_text(encoding="utf-8")
+    assert _PAKET_TR_SATIRLARI in metin, "fixture değişti: paket/transport satırları bulunamadı"
+    yeni = f"          package: {paket}\n" + (f"          transport: {transport}\n" if transport is not None else "")
+    y.write_text(metin.replace(_PAKET_TR_SATIRLARI, yeni), encoding="utf-8")
+
+
 def _son_log(proj: Path) -> dict | None:
     f = proj / ".axet-code" / "sap-write-log.jsonl"
     if not f.is_file():
@@ -277,10 +289,12 @@ class TestDeployYazmaKapisi(unittest.TestCase):
         shutil.rmtree(cls.kok, ignore_errors=True)
 
     def _deploy(self, home, *, tier=("ADT_SAP_TIER=DEV",), conn_url=None, client="100", sap_write=True,
-                sap_project=True, ek=(), app_url=None):
+                sap_project=True, ek=(), app_url=None, paket_tr=None):
         type(self).sayac += 1
         with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
             app = H.gecici_app(url=app_url or srv.url)
+            if paket_tr:
+                _paket_tr(app, *paket_tr)
             proj = _proje(self.kok, f"proje{self.sayac}", conn_url or srv.url, tier=tier, client=client,
                           sap_project=sap_project)
             try:
@@ -353,6 +367,29 @@ class TestDeployYazmaKapisi(unittest.TestCase):
                  f"rc={rc} log={log}", ok)
         self.assertTrue(ok, f"rc={rc} log={log}\n{out}")
 
+    # ── Transport zorunluluğu (Kesin Yasak C; kanonik `guardrails.require_transport`, kod ADR_0005_C) ──
+    def test_transport_z_paket_transport_yok_red(self):
+        self._red("Z paket + app.transport satırı yok → red", self.acik, "ADR_0005_C", paket_tr=("ZXX001", None))
+
+    def test_transport_z_paket_transport_bos_red(self):
+        self._red("Z paket + app.transport '' → red", self.acik, "ADR_0005_C", paket_tr=("ZXX001", "''"))
+
+    def test_transport_z_paket_yer_tutucu_red(self):
+        """`<TRANSPORT_NO>` şablondan kalmış: require_transport yalnız boşluğa bakar → deploy_ui yer tutucuyu yok sayar."""
+        self._red("Z paket + app.transport <TRANSPORT_NO> → red", self.acik, "ADR_0005_C",
+                  paket_tr=("ZXX001", "<TRANSPORT_NO>"))
+
+    def test_transport_kucuk_tmp_red(self):
+        """`$tmp` istisna DEĞİL (kanonik kural `$TMP` TAM eşleşme; test_cli_gate.py:224 ile aynı yön, fail-closed)."""
+        self._red("paket $tmp (küçük harf) + transport yok → red", self.acik, "ADR_0005_C", paket_tr=("$tmp", None))
+
+    def test_transport_red_mesaji_nereye_yazilacagini_soyler(self):
+        rc, out, istekler, proj = self._deploy(self.acik, paket_tr=("ZXX001", None))
+        ok = rc == 3 and "app.transport" in out and "ui5-deploy.yaml" in out and "KULLANICI verir" in out
+        H.kaydet("deploy kapı: transport reddi ne eksik/nereye yazılır söyler", "app.transport + ui5-deploy.yaml",
+                 f"rc={rc}", ok)
+        self.assertTrue(ok, out)
+
     def test_kapi_salt_okur_etkilenmez(self):
         """prepare (ağsız) ve verify (salt GET) kapıdan GEÇMEZ: anahtar kapalı + proje yokken de çalışır."""
         bos = self.kok / "projesiz_cwd"
@@ -404,12 +441,14 @@ class TestDeployKapiSurecIci(unittest.TestCase):
             return 0, "info deploy-to-abap Deployment Successful.\n"
         return 0, "build ok\n"
 
-    def _kos(self, *, optin: bool, tier=("ADT_SAP_TIER=DEV",)):
+    def _kos(self, *, optin: bool, tier=("ADT_SAP_TIER=DEV",), paket_tr=None):
         if optin:
             self.optin.parent.mkdir(parents=True, exist_ok=True)
             self.optin.write_text("x", encoding="utf-8")
         with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
             app = H.gecici_app(url=srv.url)
+            if paket_tr:
+                _paket_tr(app, *paket_tr)
             proj = _proje(self.kok, "proje", srv.url, tier=tier)
             a = argparse.Namespace(app=str(app), user_ok=ONAY, ignore_cert=False, sap_write=True, scope="S1",
                                    reason=GEREKCE, intake=None, project_dir=str(proj))
@@ -441,6 +480,25 @@ class TestDeployKapiSurecIci(unittest.TestCase):
         ok = (rc == 0 and self.cagrilar == [D.BUILD_KOMUTU, D.DEPLOY_KOMUTU] and len(istekler) == 1
               and log.get("tool") == "deploy_ui" and log.get("result") == "ok" and log.get("exit_code") == 0)
         H.kaydet("deploy kapı (süreç içi): açık + DEV → akış çalışır", "rc=0 build+deploy",
+                 f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
+
+    def test_transport_tmp_transportsuz_akis_calisir(self):
+        """KONTROL GRUBU (transport): paket `$TMP` + transport satırı yok → kapıdan geçer, build + deploy koşar."""
+        rc, istekler, proj = self._kos(optin=True, paket_tr=("$TMP", None))
+        log = _son_log(proj) or {}
+        ok = (rc == 0 and self.cagrilar == [D.BUILD_KOMUTU, D.DEPLOY_KOMUTU] and len(istekler) == 1
+              and log.get("result") == "ok")
+        H.kaydet("deploy kapı (süreç içi): $TMP + transport yok → akış çalışır", "rc=0 build+deploy",
+                 f"rc={rc} run={len(self.cagrilar)} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
+
+    def test_transport_z_paket_transport_yok_run_ve_istek_sifir(self):
+        rc, istekler, proj = self._kos(optin=True, paket_tr=("ZXX001", None))
+        log = _son_log(proj) or {}
+        ok = (rc == 3 and self.cagrilar == [] and istekler == [] and log.get("result") == "ADR_0005_C"
+              and log.get("exit_code") == 3)
+        H.kaydet("deploy kapı (süreç içi): Z paket + transport yok → run=0 istek=0", "rc=3 0/0 ADR_0005_C",
                  f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)} log={log.get('result')}", ok)
         self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
 

@@ -170,8 +170,11 @@ def check_target_system(proj, url: str | None, client: str | None) -> tuple[str,
     Z106 (2026-09-24): tier `.conn_adt`'den okunur; hedef başka bir dosyadan gelirse `check_write`'ın
     "DEV" onayı BAŞKA bir sisteme yazdırır (`check_connection` ile aynı gerekçe). `check_write` geçtikten
     SONRA çağrılır. FAIL-CLOSED: iki taraftan biri boş/okunamıyorsa da red. Değerler mesaja BASILMAZ.
-    Ayrıştırılamayan URL (ör. şablonda kalmış `<PORT>` → `urlparse(...).port` ValueError) da red: traceback
-    (rc=1, logsuz) yerine `write_target_mismatch` döner ki çağıran loglayıp 3 ile çıkabilsin.
+    Ayrıştırılamayan HEDEF URL (`ui5-deploy.yaml`; ör. şablonda kalmış `<PORT>` → `urlparse(...).port`
+    ValueError) da red: traceback (rc=1, logsuz) yerine `write_target_mismatch` döner ki çağıran loglayıp 3 ile
+    çıkabilsin. Bilinen sınır (açık kalem): `.conn_adt` ADT_SAP_URL'nin KENDİSİ ayrıştırılamıyorsa bu fonksiyon
+    yine red döner ama çağıranın log yolu (`log_write_attempt` → `redact.host_sirlari` `u.port`) ValueError ile
+    traceback verir (rc=1, log yok, yazma da yok).
     """
     conn_url = _project.effective_conn_value("ADT_SAP_URL", None, proj)
     conn_client = _project.effective_conn_value("ADT_SAP_CLIENT", None, proj)
