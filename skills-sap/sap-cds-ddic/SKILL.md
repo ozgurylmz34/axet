@@ -76,7 +76,7 @@ okuyarak doğrularsın. `adt_post_shell` `structure`/`tabl`/`doma`/`dtel` → `u
 
 Yeni Z DDIC adı (domain, DTEL, tablo, yapı, tablo tipi …): önce yeniden kullanım; değilse standarda uygun **öner** →
 canlıda kontrol et (`adt_search_objects` / `adt_get`; varsa başka ad) → tablo hâlinde sun → **açık onay** (`%sap-dev` §6).
-Standart objeye append alanı adını önerme; açıklama ve etiketleri tahmin etme (kesin yasak A/D).
+Standart objeye append alanı adını önerme, append'i yaratma (kullanıcı yaratır); açıklama ve etiketleri tahmin etme (kesin yasak A/D).
 
 ### 3. Yaz — bağımlılık sırasıyla
 Sıra: **domain → DTEL → structure / table type → Z tablo → lock object → CDS (alt view'dan üste)**; mesaj sınıfı bağımsız.
