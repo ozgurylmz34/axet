@@ -100,8 +100,8 @@ ya da "ekle → tüketiciyi çevir → sil" üç turu (`cds.md` §4 T6/T11).
 - "HTTP 201 / 200 / activated / uploaded" kanıt değildir. `adt_get` ile canlı kaynağı oku, gönderdiğinle kıyasla
   (boyut + içerik; CRLF normalize). "Active source differs" uyarısını **ölç**: boyut farkı büyükse kaynak persist etmemiştir.
 - DDIC: `adt_sql_query` ile `DD03L` alan sayısı (tablo/yapı) · `DD40L.ROWTYPE` (table type) · DTEL `typeName` + 4 etiket.
-- CDS: `adt_inactive_objects` (bağımlı view/BDEF sessizce inaktif kalabilir) · classic view'da `COUNT(*)` ile satır say
-  (replacement tablo tuzağı aktivasyonda görünmez) · abstract entity'de kaynakta `abstract entity` geçmeli.
+- CDS: `adt_inactive_objects` (bağımlı view/BDEF sessizce inaktif kalabilir) · classic view'da da view entity'de de `COUNT(*)` ile satır say
+  (replacement tablo tuzağı aktivasyonda görünmez — `references/cds.md` NSDM-01) · abstract entity'de kaynakta `abstract entity` geçmeli.
 - Yeni Z objede metadata'dan `masterLanguage` ve açıklama.
 
 ### 5. Kapanış

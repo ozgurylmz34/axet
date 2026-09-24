@@ -13,7 +13,7 @@
 
 ## 0. PRE-FLIGHT — kod yazmadan karara bağla
 
-1. **İskelet** `app-skeleton.md` §13 listesiyle kuruldu (sabit UI5 sürümü, `language=tr`, manifest modelleri
+1. **İskelet** `app-skeleton.md` §13 listesiyle kuruldu (bootstrap backend'in kendi UI5'inden — `/sap/public/bc/ui5_ui5/resources/sap-ui-core.js`, `language=tr`, manifest modelleri
    `i18n` + `""` (TwoWay, `useBatch:false`, Inline) + `ui` JSON `{busy, filter:{}}`, kanonik host).
 2. **Düzenlenebilir alt grid var mı?** (composition kalemleri ekrandan eklenip/silinip/düzenlenecek mi?) → **varsa en
    baştan JSON edit-buffer** (§1.3). V2 nav-binding + `createEntry` ile düzenlenebilir grid **denenmez** — kaynak
