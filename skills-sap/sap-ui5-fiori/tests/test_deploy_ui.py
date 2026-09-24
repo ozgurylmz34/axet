@@ -185,5 +185,227 @@ class TestDeployRed(unittest.TestCase):
             H.temizle(app)
 
 
+# ── Z106: SAP YAZMA KAPISI (sap_adt_cli ile AYNI `gate.check_write`) ──────────────────────────────
+# Gerçek `<repo>/config/` altına dosya YAZILMAZ: kapı AXET_HOME'u kendi konumundan türettiği için alt süreç
+# testleri script ağaçlarını geçici bir AXET_HOME'a kopyalar (sap-adt-foundation testleriyle aynı yöntem).
+# Süreç içi testler `gate.optin_file`'ı geçici dosyaya yönlendirir (test_populate_hat.py:158 ile aynı yöntem).
+# `.conn_adt` fixture'ları sahte, çalışma anında tempfile altında üretilir; SAP yerine 127.0.0.1 sahte sunucusu.
+
+import argparse  # noqa: E402
+import json  # noqa: E402
+import os  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+import tempfile  # noqa: E402
+from pathlib import Path  # noqa: E402
+from unittest import mock  # noqa: E402
+
+SKILLS_SAP = H.SKILL.parent
+FOUNDATION_SCRIPTS = SKILLS_SAP / "sap-adt-foundation" / "scripts"
+ONAY = "Kullanıcı: lokal test tamam, deploy et"
+GEREKCE = "Birim test: deploy yazma kapısı ölçümü"
+_YOKSAY = shutil.ignore_patterns("__pycache__", "*.pyc", "node_modules")
+
+
+def _home(kok: Path, optin: bool) -> Path:
+    home = kok / ("home_acik" if optin else "home_kapali")
+    for skill in ("sap-ui5-fiori", "sap-adt-foundation", "sap-intake-triage"):
+        shutil.copytree(SKILLS_SAP / skill / "scripts", home / "skills-sap" / skill / "scripts", ignore=_YOKSAY)
+    (home / "config").mkdir(parents=True, exist_ok=True)
+    if optin:
+        (home / "config" / "sap-write.local").write_text("test opt-in\n", encoding="utf-8")
+    return home
+
+
+def _proje(kok: Path, ad: str, url: str, *, tier=("ADT_SAP_TIER=DEV",), client="100", sap_project=True) -> Path:
+    p = kok / ad
+    p.mkdir(parents=True)
+    satirlar = ["# test fixture — sahte sistem", f"ADT_SAP_URL={url}", "ADT_SAP_USER=AXETTEST",
+                "ADT_SAP_PASSWORD=S3cr3t-Parola!9", f"ADT_SAP_CLIENT={client}", "ADT_SAP_LANGUAGE=TR", *tier]
+    (p / ".conn_adt").write_text("\n".join(satirlar) + "\n", encoding="utf-8")
+    if sap_project:
+        (p / "sap-project.json").write_text(json.dumps({"sap_profile": "s4_private", "release": "2025",
+                                                        "master_language": "TR"}), encoding="utf-8")
+    return p
+
+
+def _ortam(kimlik: bool = True) -> dict:
+    return {k: v for k, v in H.ortam(kimlik).items() if not k.upper().startswith(("ADT_", "AXET_"))}
+
+
+def _kos_home(home: Path, *args, cwd=None, kimlik: bool = True) -> tuple[int, str]:
+    betik = home / "skills-sap" / "sap-ui5-fiori" / "scripts" / "deploy_ui.py"
+    p = subprocess.run([sys.executable, str(betik), *map(str, args)], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", env=_ortam(kimlik), timeout=180,
+                       cwd=str(cwd) if cwd else None, stdin=subprocess.DEVNULL)
+    return p.returncode, (p.stdout or "") + (p.stderr or "")
+
+
+def _son_log(proj: Path) -> dict | None:
+    f = proj / ".axet-code" / "sap-write-log.jsonl"
+    if not f.is_file():
+        return None
+    satirlar = [s for s in f.read_text(encoding="utf-8").splitlines() if s.strip()]
+    return json.loads(satirlar[-1]) if satirlar else None
+
+
+class TestDeployYazmaKapisi(unittest.TestCase):
+    """Alt süreç (GERÇEK giriş noktası): kapı reddinde build de deploy da koşmaz, sahte SAP'ye istek GİTMEZ."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.kok = Path(tempfile.mkdtemp(prefix="ui5kapi_"))
+        cls.kapali = _home(cls.kok, optin=False)
+        cls.acik = _home(cls.kok, optin=True)
+        cls.sayac = 0
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.kok, ignore_errors=True)
+
+    def _deploy(self, home, *, tier=("ADT_SAP_TIER=DEV",), conn_url=None, client="100", sap_write=True,
+                sap_project=True, ek=()):
+        type(self).sayac += 1
+        with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
+            app = H.gecici_app(url=srv.url)
+            proj = _proje(self.kok, f"proje{self.sayac}", conn_url or srv.url, tier=tier, client=client,
+                          sap_project=sap_project)
+            try:
+                argv = ["deploy", app, "--user-ok", ONAY, "--scope", "S1", "--reason", GEREKCE,
+                        "--project-dir", proj, *ek]
+                if sap_write:
+                    argv.insert(4, "--sap-write")
+                rc, out = _kos_home(home, *argv)
+                return rc, out, list(srv.istekler), proj
+            finally:
+                H.temizle(app)
+
+    def _red(self, ad, home, kod, **kw):
+        rc, out, istekler, proj = self._deploy(home, **kw)
+        log = _son_log(proj) or {}
+        ok = (rc == 3 and "[REDDEDİLDİ] SAP yazma kapısı" in out and kod in out and "build:" not in out
+              and istekler == [] and log.get("tool") == "deploy_ui" and log.get("result") == kod)
+        H.kaydet(f"deploy kapı: {ad}", f"rc=3 {kod} istek=0", f"rc={rc} istek={len(istekler)} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} istekler={istekler} log={log}\n{out}")
+
+    def test_kapi_anahtar_kapali(self):
+        self._red("anahtar (sap-write.local) yok → red", self.kapali, "write_not_optin_global")
+
+    def test_kapi_sap_write_bayragi_yok(self):
+        self._red("--sap-write yok → red", self.acik, "write_flag_missing", sap_write=False)
+
+    def test_kapi_tier_qa(self):
+        self._red("tier QA → red", self.acik, "tier_not_writable", tier=("ADT_SAP_TIER=QA",))
+
+    def test_kapi_tier_prd(self):
+        self._red("tier PRD → red", self.acik, "tier_not_writable", tier=("ADT_SAP_TIER=PRD",))
+
+    def test_kapi_tier_okunamaz(self):
+        self._red("tier satırı yok (UNKNOWN) → red", self.acik, "tier_not_writable", tier=())
+
+    def test_kapi_tier_cakisik(self):
+        self._red("tier çakışık DEV+PRD → red", self.acik, "tier_not_writable",
+                  tier=("ADT_SAP_TIER=DEV", "ADT_SAP_TIER=PRD"))
+
+    def test_kapi_sap_project_yok(self):
+        self._red("sap-project.json yok → red", self.acik, "sap_project_missing", sap_project=False)
+
+    def test_kapi_hedef_url_farkli(self):
+        self._red("ui5-deploy.yaml url ≠ .conn_adt → red", self.acik, "write_target_mismatch",
+                  conn_url="http://127.0.0.1:9")
+
+    def test_kapi_hedef_client_farkli(self):
+        self._red("ui5-deploy.yaml client ≠ .conn_adt → red", self.acik, "write_target_mismatch", client="200")
+
+    def test_kapi_salt_okur_etkilenmez(self):
+        """prepare (ağsız) ve verify (salt GET) kapıdan GEÇMEZ: anahtar kapalı + proje yokken de çalışır."""
+        bos = self.kok / "projesiz_cwd"
+        bos.mkdir(exist_ok=True)
+        with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
+            app = H.gecici_app(url=srv.url)
+            try:
+                rc1, out1 = _kos_home(self.kapali, "prepare", app, "--no-build", cwd=bos, kimlik=False)
+                rc2, out2 = _kos_home(self.kapali, "verify", app, cwd=bos)
+            finally:
+                H.temizle(app)
+        ok = (rc1 == 0 and "[HAZIR]" in out1 and "--sap-write" in out1 and rc2 == 0 and "[OK]" in out2
+              and "REDDEDİLDİ" not in out1 + out2)
+        H.kaydet("deploy kapı: prepare/verify kapıdan etkilenmez", "rc=0/0", f"rc={rc1}/{rc2}", ok)
+        self.assertTrue(ok, out1 + "\n" + out2)
+
+
+class TestDeployKapiSurecIci(unittest.TestCase):
+    """Süreç içi: build/deploy alt süreci SAHTE (`run` kaydedilir), canlı doğrulama 127.0.0.1 sahte sunucusu.
+    Kapı reddinde `run` çağrı sayısı 0 ve sahte SAP'ye istek 0; kapı açık + DEV'de mevcut akış uçtan uca geçer."""
+
+    def setUp(self):
+        H.proxy_bypass_surec_ici()
+        self.kok = Path(tempfile.mkdtemp(prefix="ui5kapi_ic_"))
+        if str(FOUNDATION_SCRIPTS) not in sys.path:
+            sys.path.insert(0, str(FOUNDATION_SCRIPTS))
+        from sapadt import gate
+        self.gate = gate
+        self.optin = self.kok / "config" / "sap-write.local"
+        self.eski_optin = gate.optin_file
+        gate.optin_file = lambda axet_home=None: self.optin
+        temiz = {k: v for k, v in os.environ.items() if not k.upper().startswith(("ADT_", "AXET_"))}
+        temiz.update(FIORI_TOOLS_USER=H.KULLANICI, FIORI_TOOLS_PASSWORD=H.PAROLA)
+        self.env = mock.patch.dict(os.environ, temiz, clear=True)
+        self.env.start()
+        self.cagrilar: list[str] = []
+
+    def tearDown(self):
+        self.env.stop()
+        self.gate.optin_file = self.eski_optin
+        shutil.rmtree(self.kok, ignore_errors=True)
+
+    def _sahte_run(self, cmd, cwd, env):
+        self.cagrilar.append(cmd)
+        if cmd == D.DEPLOY_KOMUTU:
+            return 0, "info deploy-to-abap Deployment Successful.\n"
+        return 0, "build ok\n"
+
+    def _kos(self, *, optin: bool, tier=("ADT_SAP_TIER=DEV",)):
+        if optin:
+            self.optin.parent.mkdir(parents=True, exist_ok=True)
+            self.optin.write_text("x", encoding="utf-8")
+        with H.SahteSunucu({_canli_yol(): H.PRELOAD}) as srv:
+            app = H.gecici_app(url=srv.url)
+            proj = _proje(self.kok, "proje", srv.url, tier=tier)
+            a = argparse.Namespace(app=str(app), user_ok=ONAY, ignore_cert=False, sap_write=True, scope="S1",
+                                   reason=GEREKCE, intake=None, project_dir=str(proj))
+            try:
+                with mock.patch.object(D, "run", self._sahte_run):
+                    rc = D.komut_deploy(a)
+            finally:
+                H.temizle(app)
+            return rc, list(srv.istekler), proj
+
+    def test_kapi_kapali_run_ve_istek_sifir(self):
+        rc, istekler, proj = self._kos(optin=False)
+        ok = rc == 3 and self.cagrilar == [] and istekler == []
+        H.kaydet("deploy kapı (süreç içi): anahtar kapalı → run=0 istek=0", "rc=3 0/0",
+                 f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler}")
+
+    def test_kapi_tier_prd_run_ve_istek_sifir(self):
+        rc, istekler, proj = self._kos(optin=True, tier=("ADT_SAP_TIER=PRD",))
+        ok = rc == 3 and self.cagrilar == [] and istekler == []
+        H.kaydet("deploy kapı (süreç içi): tier PRD → run=0 istek=0", "rc=3 0/0",
+                 f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler}")
+
+    def test_kapi_acik_dev_akis_calisir(self):
+        """KONTROL GRUBU: anahtar açık + DEV + hedef == .conn_adt → build + deploy + canlı doğrulama (rc 0)."""
+        rc, istekler, proj = self._kos(optin=True)
+        log = _son_log(proj) or {}
+        ok = (rc == 0 and self.cagrilar == [D.BUILD_KOMUTU, D.DEPLOY_KOMUTU] and len(istekler) == 1
+              and log.get("tool") == "deploy_ui" and log.get("result") == "ok" and log.get("exit_code") == 0)
+        H.kaydet("deploy kapı (süreç içi): açık + DEV → akış çalışır", "rc=0 build+deploy",
+                 f"rc={rc} run={len(self.cagrilar)} istek={len(istekler)} log={log.get('result')}", ok)
+        self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} log={log}")
+
+
 if __name__ == "__main__":
     unittest.main()

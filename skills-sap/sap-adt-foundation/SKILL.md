@@ -127,6 +127,7 @@ ağ çağrısından **önce** çalışır. CLI'nin yazma kapısı sırası ve re
 | `language_mismatch` | bağlantı dili ≠ `master_language` → kullanıcı `.conn_adt`'yi düzeltir (dil sessizce eşitlenmez) |
 | `reviewer_bypass_forbidden` | `skip_reviewer` ya da `ack_drop` verildi → aXet'te kabul edilmez, argümanı kaldır |
 | `write_log_unavailable` | yazma logu yazılamıyor → iz bırakmadan yazma yok |
+| `write_target_mismatch` | (yalnız `deploy_ui.py deploy`, çıkış 3) `ui5-deploy.yaml` target.url/client ≠ `.conn_adt` → tier başka sistemi doğrulamış olurdu; kullanıcı hedefi eşitler |
 | `reviewer_blocker` | gömülü inceleme BLOCKER → kaynağı düzelt |
 | `preflight_blocker` | `adt_domain_create` argüman ön kontrolü BLOCKER (formülsüz datatype, geçersiz length/decimals/lowercase, boş sabit değer metni) → `result.steps.pre_flight.findings` |
 | `msgclass_overwrite_not_allowed` | `adt_msgclass_write` mevcut mesajı değiştirirdi → `plan.overwritten`'i (önce/sonra) kullanıcıya göster; açık onay gelirse `allow_overwrite=true` |
