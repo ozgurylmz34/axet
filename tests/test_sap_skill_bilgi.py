@@ -180,6 +180,15 @@ class DdicAdOnerisiKuraliTest(unittest.TestCase):
         ornek = next(s for s in md.splitlines() if s.startswith("**Örnek (A):**"))
         self.assertIn("yaratımı sen yapmazsın", ornek)
 
+    def test_kanonik_yasak_a_standart_obje_yalniz_okunur(self):
+        """Kullanıcı kuralı 2026-09-24: standart DDIC objesi/program YALNIZ okunur; append alanının Z DTEL'ini de AI yaratmaz."""
+        md = _oku(AXET_HOME / "core" / "sap" / "00-sap.md")
+        a = next(s for s in md.splitlines() if s.startswith("| **A — "))
+        self.assertIn("Standart objeler YALNIZ OKUNUR", a)
+        self.assertIn("program", a)
+        self.assertRegex(a, r"append alanını ve o alanın Z DTEL'ini")
+        self.assertRegex(a, r"Standarda eklenmeyen bağımsız Z DDIC")
+
     def test_rol_brifingi_s1_kanonik_bolumun_birebir_kopyasi(self):
         """role-briefs S1 'birebir kopya' der: kanonik KESİN YASAKLAR bölümüyle aynı olmalı (Z103 bug gate)."""
         import sys
