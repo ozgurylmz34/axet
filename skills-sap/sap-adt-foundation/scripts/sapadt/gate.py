@@ -28,6 +28,8 @@ KAPI SIRASI (her red ayrı kod; ilk red döner):
                    kaynak yok/taranamadı → std_dml_scan_unavailable) · ADR_0005_C (transport) ·
        language_mismatch (bağlantı dili ≠ master_language) · reviewer_bypass_forbidden
   6. write_log_unavailable                          — deneme logu yazılamıyor (iz bırakmadan yazma YOK)
+  (Hedefi `.conn_adt` dışından alan yazıcılar — UI5 deploy `ui5-deploy.yaml` — `check_write` geçtikten sonra
+   `check_target_system()` da çağırır: hedef ≠ .conn_adt → `write_target_mismatch`.)
   (Reviewer ön kontrolü araç fonksiyonunun içinde koşar: `adt_push_source` + composite'ler;
    BLOCKER → `reviewer_blocker`. Script'ler için `review_preflight()`.)
 """
@@ -158,6 +160,39 @@ def check_connection(proj) -> tuple[str, str] | None:
                 f"Ortam değişkeni .conn_adt'yi eziyor: {', '.join(ayrisan)} (değerler basılmadı). "
                 "Bağlantı ortamdaki sisteme giderdi, tier ise .conn_adt'den okunuyor. "
                 "Bu değişkenleri ortamdan kaldır; sistem yalnız proje kökündeki .conn_adt'den seçilir.")
+    return None
+
+
+def check_target_system(proj, url: str | None, client: str | None) -> tuple[str, str] | None:
+    """Yazma hedefini `.conn_adt` DIŞINDAN alan yol (ör. UI5 deploy: `ui5-deploy.yaml` target.url/client)
+    `.conn_adt`'deki sistemle AYNI sisteme mi yazıyor?
+
+    Z106 (2026-09-24): tier `.conn_adt`'den okunur; hedef başka bir dosyadan gelirse `check_write`'ın
+    "DEV" onayı BAŞKA bir sisteme yazdırır (`check_connection` ile aynı gerekçe). `check_write` geçtikten
+    SONRA çağrılır. FAIL-CLOSED: iki taraftan biri boş/okunamıyorsa da red. Değerler mesaja BASILMAZ.
+    Ayrıştırılamayan HEDEF URL (`ui5-deploy.yaml`; ör. şablonda kalmış `<PORT>` → `urlparse(...).port`
+    ValueError) da red: traceback (rc=1, logsuz) yerine `write_target_mismatch` döner ki çağıran loglayıp 3 ile
+    çıkabilsin. Bilinen sınır (açık kalem): `.conn_adt` ADT_SAP_URL'nin KENDİSİ ayrıştırılamıyorsa bu fonksiyon
+    yine red döner ama çağıranın log yolu (`log_write_attempt` → `redact.host_sirlari` `u.port`) ValueError ile
+    traceback verir (rc=1, log yok, yazma da yok).
+    """
+    conn_url = _project.effective_conn_value("ADT_SAP_URL", None, proj)
+    conn_client = _project.effective_conn_value("ADT_SAP_CLIENT", None, proj)
+    ayrisan = []
+    try:
+        hedef_url, conn_norm, url_etiket = _norm_url(url), _norm_url(conn_url), "url"
+    except ValueError:  # geçersiz port / bozuk IPv6 — hangisi olduğu basılmaz (değer sızmasın)
+        hedef_url, conn_norm, url_etiket = "", "", "url (ayrıştırılamadı)"
+    if not hedef_url or hedef_url != conn_norm:
+        ayrisan.append(url_etiket)
+    if not (client or "").strip() or (client or "").strip() != (conn_client or "").strip():
+        ayrisan.append("client")
+    if ayrisan:
+        return ("write_target_mismatch",
+                f"Yazma hedefi .conn_adt'deki sistemle aynı değil ya da okunamadı: {', '.join(ayrisan)} "
+                "(değerler basılmadı). Tier .conn_adt'den okunuyor; ayrışan hedef, DEV diye doğrulanan kapıyı "
+                "başka bir sisteme yazdırırdı. Hedef dosyasındaki url/client .conn_adt ADT_SAP_URL/ADT_SAP_CLIENT "
+                "ile aynı olmalı.")
     return None
 
 
