@@ -280,7 +280,9 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 - **Amaç:** mevcut objeye tam kaynak gönderme.
 - **Argümanlar:** `name` (Z/Y) · `object_type` · `source` (tam içerik) · `transport` (obje zaten atanmışsa isteğe bağlı) ·
   `skip_reviewer=false` · `ack_drop=""` (ikisi de aXet yazma kapısında **yasak**: verilirse `reviewer_bypass_forbidden`, çıkış 2).
-- **Dönüş:** `{ok, name, type, result, readback_verified, readback_notice?, syntax_precheck?, syntax_precheck_notice?, syntax_errors?, reviewer?, post_check?}`.
+- **Dönüş:** `{ok, name, type, result, readback_verified, readback_notice?, syntax_precheck?, syntax_precheck_notice?, syntax_errors?, reviewer?, post_check?, removed_lines_warning?, warning?}`.
+  `removed_lines_warning: {removed, added, sample}` (2026-09-24): canlıda olup yeni kaynakta olmayan satırlar — yazma DURMAZ; yerel kopya
+  `adt_get` çıktısından türemediyse bu satırlar kaybolur → satırları kullanıcıya göster, onaysız tekrar yazma (SKILL §2).
   `syntax_precheck:"olculemedi"` → aktivasyon öncesi sözdizimi ön-kontrolü **ölçülemedi** (`valid:null`, kontrol istisnası
   ya da çağrı istisnası); push aktivasyona devam etti, `ok` değişmez, `syntax_precheck_notice` sebebi yazar — "sözdizimi temiz" DEĞİLDİR.
 - **Uyarılar:** açıklama "aktivasyon ayrı adım" der, alt katman kilit→yükleme→aktivasyon→readback dener → sonucu

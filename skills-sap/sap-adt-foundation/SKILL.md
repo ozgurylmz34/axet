@@ -77,6 +77,11 @@ python <TEMPLATE>/skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py <tool> --
   | `source_changed_since_pull` (çıkış 2) | çektikten sonra SAP'de biri değiştirmiş → üzerine YAZMA; yeniden çek, değişikliği yeni kaynağa uygula, kullanıcıya bildir |
   | `pull_live_read_failed` (çıkış 1) | yazma öncesi canlı okuma başarısız → bağlantıyı düzelt; kontrolsüz yazma yok |
   | `pull_state_unreadable` (çıkış 2) | durum dosyası bozuk → `adt_get` ile yeniden çek (dosya yeniden yazılır); dosyayı elle düzenleme |
+- Düzenlemeyi DAİMA `adt_get` çıktısının üzerine yap; eski yerel kopyayı (repo, önceki oturum) taban alma. Kıyas "SAP
+  değişmedi"yi kanıtlar, yerel kopyanın çekilen kaynaktan türediğini kanıtlamaz: bayat kopya canlıdaki satırları sessizce geri alır.
+  Bu yüzden push, zaten okuduğu canlı kaynakla yeni kaynağı yazmadan önce kıyaslar; canlıda olup yeni kaynakta olmayan satır varsa
+  yanıta `removed_lines_warning: {removed, added, sample}` + `warning` konur. Yazma DURMAZ. Bu alanı görünce silinen satırları
+  kullanıcıya göster; kasıtlı değilse `adt_get` ile yeniden çekip düzenlemeyi onun üzerine uygula, kullanıcı onayı olmadan tekrar yazma.
 - `adt_post_shell` bu kontrole girmez; ama yeni kabuğa ilk `adt_push_source`'tan önce de `adt_get` çalıştır.
 - Mesaj sınıfında aynı kural mesaj listesine uygulanır: `adt_msgclass_read` kaydeder, `adt_msgclass_write` yazma anındaki canlı listeyi kıyaslar
   (aynı dört kod).
