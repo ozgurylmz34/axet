@@ -98,6 +98,14 @@ Otomatik kurulum yok.
 - **Yeni içerik nereye:** projeye özel değer/istisna → proje (`AGENTS.md`, `sap-project.json`, paket `.rules.md`,
   `.axet-code/memory/`); her projeye genellenebilen yöntem/ders → template (skill/çekirdek/`memory/`, PR ile, nötr adlarla).
   Emin değilsen önce proje tarafına yaz, genellenince template'e taşı.
+- **Müşteri/kurum ad listesi (yayın sızıntı taraması, 2026-09-25):** bu depo da public olduğu için müşteri ve kurum
+  adları `yayin_hazirla.py`'de yazılı DEĞİLDİR (adı yakalayan desen adın kendisini yayınlar). Liste iki kaynaktan okunur,
+  ikisi birleşir: ① `maintenance/sizinti-yerel.txt` — `.gitignore`'da, her çalışma ağacında (worktree dahil) elle kurulur;
+  satır başına bir regex, büyük/küçük harf duyarsız, `#` yorum ② `AXET_SIZINTI_EK` ortam değişkeni (satır ya da `;`
+  ayrımlı; CI gizli değişkeni için). Liste yoksa `--yalniz-tara` bunu KAPSAM satırında "YÜKLENMEDİ … ÖLÇÜLEMEDİ" diye
+  söyler, **gerçek yayın başlamaz**. Liste dosyası git'te izleniyorsa ya da bir satır geçersiz regex ise araç durur
+  (desenin kendisini basmaz). ⚠ CI'da gizli değişken tanımlı değilse CI taraması müşteri/kurum adlarına bakmaz — bu
+  yüzden yerel yayın taraması asıl kapıdır. Geçmiş commit'lerdeki adlar bu değişiklikle silinmez.
 
 ## Parti kapanış kuralı
 Bir parti ancak şu üçü sağlanınca "tamam" sayılır: o partinin kurallarında `bekliyor` kalmadı · `sync_check`
