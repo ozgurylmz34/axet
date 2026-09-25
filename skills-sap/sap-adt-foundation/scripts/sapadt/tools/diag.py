@@ -162,7 +162,8 @@ def adt_revisions(name: str, object_type: str = "class", limit: int = 20,
            "returned": min(len(surumler), limit), "revisions": surumler[:limit], "author_masked": maske}
     if not surumler:
         out["notice"] = ("Sürüm feed'i okundu ama <atom:entry> yok. Ayrıştırma kütüphaneyle aynı desendir "
-                         "(`<atom:entry>` önekli); farklı biçimli feed'de 0 görünebilir — canlı DOĞRULANMADI.")
+                         "(`<atom:entry>` önekli; canlıda sınıf/include/arayüz feed'lerinde kayıt ayrıştı, 2026-09-25); "
+                         "başka obje tipinin farklı biçimli feed'inde 0 görünebilir — o tipler DOĞRULANMADI.")
     if maske:
         out["author_notice"] = "DEV dışı tier: yazarlar maskelendi (kullanıcı kimliği). Açık görmek: acknowledge_risk=true."
     return _temizle(out, adt)

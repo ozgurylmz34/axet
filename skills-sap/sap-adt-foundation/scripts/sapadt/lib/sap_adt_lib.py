@@ -310,12 +310,13 @@ def versions_links(body):
 
 
 def select_versions_link(hrefs):
-    """Ana kaynağın sürüm akışını seç: yolu `main/versions` ile biten ilk bağlantı (sınıfta `includes/main/versions`,
-    include/arayüzde `source/main/versions`); yoksa İLK bağlantı; liste boşsa None."""
+    """Ana kaynağın sürüm akışını seç: son iki yol parçası `main`/`versions` olan ilk bağlantı (sınıfta
+    `includes/main/versions`, include/arayüzde `source/main/versions`; `…/zdomain/versions` gibi sonek benzerliği
+    sayılmaz); yoksa İLK bağlantı; liste boşsa None."""
     if not hrefs:
         return None
     for h in hrefs:
-        if h.split("?", 1)[0].rstrip("/").endswith("main/versions"):
+        if h.split("?", 1)[0].rstrip("/").split("/")[-2:] == ["main", "versions"]:
             return h
     return hrefs[0]
 

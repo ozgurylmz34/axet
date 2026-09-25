@@ -283,6 +283,10 @@ class LibRegresyon(unittest.TestCase):
             "sec_ilk": select_versions_link(["includes/definitions/versions", "includes/macros/versions"])
             == "includes/definitions/versions",
             "sec_bos": select_versions_link([]) is None,
+            "sec_sinir": select_versions_link(["includes/definitions/versions", "/sap/bc/adt/x/zdomain/versions"])
+            == "includes/definitions/versions",
+            "sec_mutlak_main": select_versions_link(["includes/definitions/versions", "/sap/bc/adt/x/main/versions"])
+            == "/sap/bc/adt/x/main/versions",
             "coz_goreli": resolve_adt_href("/sap/bc/adt/oo/classes/zcl_x", "includes/main/versions")
             == "/sap/bc/adt/oo/classes/zcl_x/includes/main/versions",
             "coz_nokta": resolve_adt_href("/sap/bc/adt/oo/classes/zcl_x/", "./source/main/versions")

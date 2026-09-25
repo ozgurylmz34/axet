@@ -161,7 +161,7 @@ sonraki farkını raporlar. **Birim bütünüyle** biçimlenmelidir.
       kullanıcısının ADT Pretty Printer ayarı olduğu varsayılıyor) canlı **ÖLÇÜLMEDİ**. Varyant parametrelerini
       ve kullanıcının ADT ayarını kullanıcıdan teyit et; teyit yoksa devam etme.
    2. `adt_pretty_print` ile yerel biçimli dosya üret: `{"name":"ZCL_ZSD001_X","object_type":"class",
-      "output_path":"tmp/pp/zcl_zsd001_x.clas.abap"}` (test include'u için `object_type:"ccau"`). SAP değişmez;
+      "output_path":".tmp/pp/zcl_zsd001_x.clas.abap"}` (test include'u için `object_type:"ccau"`). SAP değişmez;
       `changed:false` ise servis bu ayarla fark üretmemiştir.
    3. Taban (adım 2) ile biçimli dosyanın farkını birimlere grupla: sınıf ana kaynağında her `METHOD … ENDMETHOD`
       bloğu bir birim, alt-include'un tamamı tek birim (mekanizma md. 1-2).

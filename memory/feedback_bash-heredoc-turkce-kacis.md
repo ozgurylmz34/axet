@@ -19,7 +19,7 @@ uygulama motordan bağımsız olarak güvenlidir.
 - Türkçe/diyakritik ya da ters bölü içeren dosya içeriğini, betiği ve düzenlemeyi `write`/`edit` araçlarıyla yaz; kabuk
   heredoc'u ve `python -c` ile değil. Betiği dosyaya yazıp `python <dosya>` ile koş.
 - Ters bölü gerekiyorsa betik içinde üret (`chr(92)`), kaynak metne koyma.
-- `PYTHONIOENCODING=utf-8` çıktı tarafını düzeltir, girdi bozulmasını düzeltmez; ikisini karıştırma.
+- `PYTHONIOENCODING=utf-8` çıktı tarafını düzeltir, girdi bozulmasını düzeltmez; ikisini karıştırma. Çekirdek §4 "Kabuk ortamı"ndaki `python -c` + `PYTHONIOENCODING` önerisi **çıktı** içindir; betiğin kendisi Türkçe metin ya da `\` kaçışı taşıyorsa (girdi tarafı) betiği dosyaya yaz.
 - Düzeltmeyi dosyayı yeniden okuyup ölçerek doğrula ([[yesil-sinyal-kapsamini-sor]]).
 - Deneme betiği türetiyorsan önce eskisini sil, koşmadan önce gerçek yolu taşımadığını kontrol et, gerçek dosyanın hash'ini
   önce/sonra ölç.

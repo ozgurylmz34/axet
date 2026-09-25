@@ -10,7 +10,7 @@ Yalnız kullanıcı commit / push / PR / dalı `main`'e birleştirme istediğind
 
 ## How to use this skill
 1. **Oku:** `git status`, `git diff` ve `git diff --staged`. Alakasız değişiklik varsa hangilerinin girmesi gerektiğini sor.
-2. **Kimlik bilgisi taraması:** eklenecek dosyalarda `password|passwd|secret|token|api[_-]?key|BEGIN .*PRIVATE KEY` desenlerini `grep` ile ara; `.conn*`, `*.env` gibi dosyalar eklenmesin. Şüphe varsa DUR ve kullanıcıya göster.
+2. **Kimlik bilgisi taraması:** eklenecek dosyalarda `password|passwd|secret|token|api[_-]?key|BEGIN .*PRIVATE KEY` desenlerini `rg` ile ara (aXet `bash` aracında `grep` yok); `.conn*`, `*.env` gibi dosyalar eklenmesin. Şüphe varsa DUR ve kullanıcıya göster.
 3. **Dal:** `main` üzerindeysen yeni dal aç ve başlangıç noktasını açık yaz. Remote var mı önce ölç: `git remote` — çıktı boşsa **yerel repo** (remote yok; push, PR ve CI yoktur).
    - remote varsa: `git fetch origin` → `git switch -c <dal> origin/main`
    - yerel repo: `git switch -c <dal> main`

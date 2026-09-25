@@ -297,8 +297,8 @@
   `application/vnd.sap…versions.v1+xml` ile **406**. Z132 öncesi `adt_revisions` obje isteğinde objectstructure
   gönderdiği için bu üç tipte 406 → `revisions_unavailable` dönüyordu (kütüphanedeki `get_object_revisions` aynı hatayı
   sessizce boş listeye çeviriyordu). Düzeltildi: obje isteği `*/*`, akış isteği değişmedi (`atom+xml;type=feed`);
-  kütüphane artık hatayı istisna olarak fırlatır. Düzeltmenin kendisi canlıda yeniden **ÖLÇÜLMEDİ** (birim testleri
-  ölçülen gövde biçimiyle taklitli).
+  kütüphane artık hatayı istisna olarak fırlatır. Düzeltme aXet CLI ile DEV'de canlı yeniden ölçüldü (2026-09-25): sınıf 2 kayıt, include 2, arayüz 1; var olmayan ad `not_found`
+  (birim testleri ölçülen gövde biçimiyle taklitli).
 - ⚠ **Bağlantı biçimi (aynı ölçüm):** sürüm bağlantısı `<atom:link href="…" rel="http://www.sap.com/adt/relations/versions" …/>`
   biçimindedir ve href GÖRELİDİR (obje URL'inin altına eklenir). Sınıfta birden çok bağlantı vardır, ilki
   `includes/definitions/versions`; ana kaynağın akışı `includes/main/versions` (sınıfta `source/main/versions` → 404).

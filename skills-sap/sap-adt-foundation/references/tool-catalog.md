@@ -235,7 +235,7 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
 - **Z132 (2026-09-25, canlı ölçüm DEV; sınıf · include · arayüz):** obje isteği `Accept: */*` (objectstructure → 406 idi, araç bu üç tipte sürüm
   okuyamıyordu); bağlantı `<atom:link …>` ve href GÖRELİ (obje URL'inin altına eklenir); sınıfta ilk bağlantı `includes/definitions`, araç ana kaynağın
   akışını (`includes/main/versions`; include/arayüzde `source/main/versions`) seçer, yoksa ilk bağlantıyı; okunan akış `versions_link`'te. Tanım/implementasyon
-  include'larının geçmişi okunmaz. Düzeltme canlıda yeniden **ÖLÇÜLMEDİ**. Ayrıntı: `known-errors-adt.md` K-27.
+  include'larının geçmişi okunmaz. Düzeltme aXet CLI ile DEV'de canlı yeniden ölçüldü (2026-09-25): sınıf 2 kayıt, include 2, arayüz 1; var olmayan ad `not_found`. Ayrıntı: `known-errors-adt.md` K-27.
 
 ### `adt_object_structure`
 - **Amaç:** obje yapısı (metot, attribute, include … bileşenleri).
