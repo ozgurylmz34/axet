@@ -215,7 +215,7 @@ Model tarafında sessiz deploy yolu kalmasın diye (ayrıntı skill raporunda):
   `deploy-to-abap` build içinde koşar — belge kanıtı, canlı ölçülmedi). Desen listesi ve bilinen açıklar:
   `config/permissions.json` `_aciklama` + [`docs/izin-kurallari.md`](../../../docs/izin-kurallari.md). `deploy_ui.py`'yi **zincirsiz** çağır: bayraklı
   bir paket yöneticisi komutuyla zincirlenirse (`npm run -s build && … deploy_ui.py deploy`) deny'a düşer.
-- ⚠ Sınıf olarak: desenler yalnız listelenen yazımları yakalar; takma ad/bayrak/tırnak BİRLEŞİMLERİ (ör. `npm rum "deploy"`, `npm urn -s deploy`, `npm run -s "deploy"`, `npm run-script 'deploy'`) yakalanmaz — izin kuralı güvenlik sınırı değildir, SAP'ye yazmanın güvenli yolu deploy_ui.py kapısıdır. Ayrıntı: README "Bilinen sınırlar".
+- ⚠ Sınıf olarak: desenler yalnız listelenen yazımları yakalar; takma ad/bayrak/tırnak BİRLEŞİMLERİ (ör. `npm rum "deploy"`, `npm urn -s deploy`, `npm run -s "deploy"`, `npm run-script 'deploy'`) yakalanmaz — izin kuralı güvenlik sınırı değildir, SAP'ye yazmanın güvenli yolu deploy_ui.py kapısıdır. Ayrıntı: [`docs/izin-kurallari.md`](../../../docs/izin-kurallari.md).
 - ask: `*deploy_ui*` (deploy her seferinde kullanıcıya sorulsun). Desen bilerek kısa: aynı komuta bir ask ve bir deny
   uyunca uzun desen kazanır, eşitlikte ask (ölçüldü 2026-09-14, tek seri); eski `*deploy_ui.py*deploy *` zincirli bir
   komutta deny kurallarını ezebilirdi. Bedeli: `prepare`, `verify` ve `--help` de onay ister.

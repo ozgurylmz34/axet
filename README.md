@@ -4,7 +4,7 @@ aXet.code'un Claude Code'a olabildiğince yakın çalışması için ortak kural
 kurulum araçları. Repo makinede **bir kez** klonlanır; kurulum aracı kullanıcının global aXet config'ini
 bu klasöre bağlar. Güncelleme tek komutla tüm projelere birden yansır.
 
-> Sürüm notları: `CHANGELOG.md` · Ölçüldüğü aXet.code sürümü: 1.3.0 · Lisans: [MIT + ek koşullar](#lisans)
+> Sürüm: v0.5.9 · Sürüm notları: `CHANGELOG.md` · Ölçüldüğü aXet.code sürümü: 1.3.0 · Lisans: [MIT + ek koşullar](#lisans)
 
 ## Ne sağlar
 
@@ -140,9 +140,11 @@ oturumunda yüklenir. Projelerin için ayrıca `%guncelle-proje`.
 aXet.code 1.3.0'da ölçüldü. Bilmen gerekenler:
 
 - **Bash izninde "Allow for Session" verme.** Tek bir komuta verilen oturum onayı o oturumdaki bütün bash
-  komutlarını kapsar; "sor" kuralları da sorulmadan geçer (yasaklar geçerli kalır). Her komutu tek tek onayla.
+  komutlarını kapsar; "sor" kuralları da sorulmadan geçer (yasaklar geçerli kalır; ölçüldü 2026-09-18). Her komutu
+  tek tek onayla.
 - **`axet-code run` ve `-y` izin sormaz:** "sor" kuralları sormadan onaylanır, yalnız yasaklar bloklar. SAP'ye yazan
-  işi bu kipte yaptırma. Betikten çağırırken stdin kapatılmalı.
+  işi bu kipte yaptırma. Betikten çağırırken stdin kapatılmalı. Etkileşimli ekranda (TUI) "sor"un gerçekten
+  sorması beklenir; bu DOĞRULANMADI.
 - **İzin kuralları bir güvenlik sınırı değildir.** Kazaya karşı frendir: farklı yazım, takma ad ya da kabuk
   dolaylamasıyla atlatılabilir. Desen metni komutun herhangi bir yerinde geçerse zararsız bir komutu da
   engelleyebilir (ör. `echo "git reset --hard notu"`). SAP'ye yazmanın güvenli yolu kapılı araçlardır.
@@ -151,12 +153,15 @@ aXet.code 1.3.0'da ölçüldü. Bilmen gerekenler:
 - **Özel ajan tanımı çalışmaz** (`.axet-code/agents`, `agent create`): iş devri yerleşik `agent` aracıyla yapılır.
 - **Merkezi klon yazmaya kapalı değildir.** Sapmayı `doctor.py` git'e karşı raporlar: klonun davranış yüzeyindeki
   (`core/`, `skills/`, `skills-sap/`, `AGENTS.md`, `config/permissions.json`, `.axetcode-denylist`) senden gelen
-  değişiklik WARN olur, `%guncelle`'nin kendi commit'leri bilgi satırı olur.
+  değişiklik WARN olur, `%guncelle`'nin kendi commit'leri bilgi satırı olur. Eski yazma koruması (config'e yazılan
+  `edit` yasakları) 2026-09-18'de kaldırıldı: `%guncelle` klonun içine yazdığı için kendi akışını engelliyordu, bash
+  ve farklı harf karışımıyla da atlatılabiliyordu. Yeniden kurulum eski sürümlerin yazdığı bu yasakları config'ten siler.
 - **Aynı adlı skill uyarısız çoğalır:** marketplace ya da proje skill'i template skill'iyle aynı adı taşırsa aXet
   ikisini de listeler ve hangisinin okunacağını model seçer (`doctor.py` bunu FAIL olarak gösterir).
 - **Bağlam dosyaları kesilmez:** `context_paths` dosyaları tamamen gönderilir. Toplam 1M token aşılınca oturum
-  uyarısız hatayla biter (Türkçe metinde yaklaşık 1,9 MB); ~940K token civarında satır hatırlama bozuldu.
-  `doctor.py` toplamı 200 KB'ta WARN, 1 MB'ta FAIL verir.
+  uyarısız hatayla biter (Türkçe metinde yaklaşık 1,9 MB); ~940K token civarında satır hatırlama bozuldu. Projenin
+  listesi global listeyi ezmez, ona eklenir. `doctor.py` toplamı 200 KB'ta WARN, 1 MB'ta FAIL verir; alt klasörler ve
+  `.md` dışı dosyalar ölçülmediği için yalnız üst sınır olarak raporlanır.
 - **Yerel MCP yok sayılır:** entegrasyonlar betikle ya da kurumsal Connector ile yapılır.
 - **Koşullu kural yükleme yok:** çekirdek her oturumda yüklenir, bu yüzden kısa tutulur.
 
@@ -164,8 +169,9 @@ aXet.code 1.3.0'da ölçüldü. Bilmen gerekenler:
 ```
 aXet-Kur.cmd     çift tıkla kurulum          kur.cmd · kur.ps1  kurulum ve güncelleme aracı (terminal yolu)
 yeni-proje.cmd   terminalden proje kurulumu  proje-tamamla.cmd  projedeki KURULUMU-TAMAMLA'nın hedefi
-GUNCELLE.md      %guncelle adımları          guncelle/          güncelleme kataloğu (yayinlar.json) ve sınıf haritası
-CHANGELOG.md     yayın notları
+GUNCELLE.md      %guncelle adımları          guncelle/          güncelleme kataloğu (yayinlar.json), sınıf haritası, kartlar
+CHANGELOG.md     yayın notları               AGENTS.md          template reposunun bakım talimatı (projelere gitmez)
+.axetcode-denylist  aXet'in okumadığı ve yazmadığı yollar (.conn_adt, .env, secrets …)
 core/            çekirdek kurallar (00-temel.md) · sap/ SAP paketi
 skills/          genel skill'ler            skills-sap/   SAP skill'leri
 memory/          ekip hafızası (indeks + kayıtlar)

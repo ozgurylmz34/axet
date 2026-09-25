@@ -1802,7 +1802,7 @@
      "id": "0.5.9-01",
      "baslik": "SAP çekirdeği: standart objeler yalnız okunur; append ve Z DTEL'ini AI yaratmaz (AXET-SAP-0.5.1)",
      "tur": "kural",
-     "kritik": false,
+     "kritik": true,
      "neden": "Standart DDIC objesi, program, FM, sınıf, BAdI, CDS ve mesaj sınıfı yalnız okunur; enhancement ve metin değişikliği de buna dahil. Standart tabloya append eklemek ve append alanının Z DTEL'ini ya da domain'ini yaratmak kullanıcıya bırakılır: adları sen versen de AI yaratımı üstlenmez, sen yaratınca sonucu sistemden okuyup doğrular. Çekirdek kimliği `AXET-SAP-0.5.1`: SAP projelerinde `%guncelle-proje` ile `AGENTS.md` damgasını yenile, sonra yeni aXet oturumu aç.",
      "dosyalar": [
       "core/sap/00-sap.md",
@@ -1855,7 +1855,7 @@
      "baslik": "UI5 deploy artık SAP yazma kapısından geçer (davranış değişikliği)",
      "tur": "guvenlik",
      "kritik": true,
-     "neden": "UI5 uygulamasını SAP'ye deploy etmek hiçbir kapıdan geçmiyordu. Artık diğer SAP yazmalarıyla aynı kapıdan geçer: SAP yazma anahtarı açık olmalı, bağlantı DEV olmalı, `ui5-deploy.yaml` hedefi `.conn_adt` ile aynı sistemi göstermeli (port farkı bile reddedilir), oturum dili projenin ana diliyle aynı olmalı ve `$TMP` dışı pakette transport numarası dolu olmalı. Biri eksikse deploy build'den önce durur ve sebebini söyler.",
+     "neden": "UI5 uygulamasını SAP'ye deploy etmek hiçbir kapıdan geçmiyordu. Artık diğer SAP yazmalarıyla aynı kapıdan geçer: SAP yazma anahtarı açık olmalı, çağrıda `--sap-write` ve kapsam beyanı (S0/S1 gerekçe ya da S2 intake) bulunmalı, bağlantı DEV olmalı, `ui5-deploy.yaml` hedefi `.conn_adt` ile aynı sistemi göstermeli (port farkı bile reddedilir), oturum dili projenin ana diliyle aynı olmalı ve `$TMP` dışı pakette transport numarası dolu olmalı. Biri eksikse deploy build'den önce durur ve sebebini söyler.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
       "skills-sap/sap-adt-foundation/SKILL.md",
@@ -1975,7 +1975,7 @@
      "gerektirir": [],
      "test": [
       "python tests/run_tests.py -k proje_tamamla",
-      "python tests/run_tests.py -k Paketler"
+      "python tests/run_tests.py -k PaketAdimi"
      ]
     },
     {
@@ -1983,7 +1983,7 @@
      "baslik": "README sadeleşti; izin kuralı ayrıntıları `docs/izin-kurallari.md`'de",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "README'nin \"Bilinen sınırlar\" bölümü kullanıcının bilmesi gereken kısa maddelere indi; izin desenlerinin eşleşme kuralları, ölçümleri, bilinçli açıkları ve yanlış pozitifleri kelimesi kelimesine yeni `docs/izin-kurallari.md` belgesine taşındı. Kaldırılmış olan klon yazma korumasını hâlâ varmış gibi anlatan eski madde silindi. \"Yapı\" bölümü güncel klasörleri gösteriyor.",
+     "neden": "README'nin \"Bilinen sınırlar\" bölümü kullanıcının bilmesi gereken kısa maddelere indi; izin desenlerinin eşleşme kuralları, ölçümleri, bilinçli açıkları ve yanlış pozitifleri kelimesi kelimesine yeni `docs/izin-kurallari.md` belgesine taşındı, diğer maddelerin olguları README'de kısaltılarak korundu. Kaldırılmış olan klon yazma korumasını hâlâ varmış gibi anlatan eski madde silindi. \"Yapı\" bölümü güncel klasörleri gösteriyor.",
      "dosyalar": [
       "README.md",
       "docs/izin-kurallari.md",
@@ -1992,19 +1992,22 @@
      ],
      "gerektirir": [],
      "test": [
-      "python tests/run_tests.py -k Readme"
+      "python tests/run_tests.py -k Readme",
+      "python tests/run_tests.py -k IlkKurulumCmd"
      ]
     },
     {
      "id": "0.5.9-10",
-     "baslik": "Yayın kataloğu ve CI kaydı",
+     "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir.",
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) — her yayında beyan edilir. README'nin başındaki `Sürüm:` satırı artık her yayında yayın etiketiyle yazılır (önceki yayınlarda elle yazılmış `0.3.0` kalmıştı); satır yoksa yayın durur.",
      "dosyalar": [
       "CHANGELOG.md",
       "guncelle/yayinlar.json",
-      "guncelle/ci-durum.json"
+      "guncelle/ci-durum.json",
+      "README.md",
+      "tests/test_yayin_surumleri.py"
      ],
      "gerektirir": [],
      "test": [
