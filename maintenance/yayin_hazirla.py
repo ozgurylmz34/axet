@@ -43,12 +43,19 @@ DISLANANLAR = ["maintenance/", "docs/agentic-connectors.md", "docs/axet-davranis
 ZORUNLU_DOSYALAR = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt",
                     "README.md", "AGENTS.md", "kur.cmd", "kur.ps1", "yeni-proje.cmd", "aXet-Kur.cmd"]
 
-# Yayın anında ÜRETİLEN / normalize edilen dosyalar: kalem-dosya eşlemesinden MUAFtırlar, çünkü
-# bakımcının elle dokunduğu bir değişiklik değil, bu aracın çıktısıdırlar. Muafiyet KAPSAM'da basılır.
+# Yayın anında ÜRETİLEN / normalize edilen dosyalar. 2026-09-20'den beri (Z17) kalem-diff kapsamına DAHİLdirler:
+# her yayında bir kaleme beyan edilirler, edilmezlerse yayın durur (bkz. `kapsam_dogrula`).
 URETILEN_DOSYALAR = ("CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json")
 YAYINLAR_YOLU = "guncelle/yayinlar.json"
 CHANGELOG_YOLU = "CHANGELOG.md"
 CI_DURUM_YOLU = "guncelle/ci-durum.json"
+# README'nin sürüm satırı yayın anında katalogdaki son etiketle yazılır (2026-09-25: public README "Sürüm: 0.3.0"
+# satırını v0.4.0'dan v0.5.8'e kadar bayat taşıdı — elle yazılan sayı hiç güncellenmedi). Satır yoksa ya da birden
+# çoksa BLOCKER: sessizce damgasız yayın çıkmaz. Kalem-diff MUAFİYETİ YOK: README her yayında bir kaleme beyan
+# edilir, çünkü tüketici `%guncelle` motoru kalemsiz değişen dosyayı uygulamaz. Yalnız sürüm satırı değiştiyse
+# (`yalniz_surum_satiri_degisti`) araç ne yapılacağını söyleyen bir İPUCU basar; yayın yine durur.
+README_YOLU = "README.md"
+SURUM_SATIRI = re.compile(r"^(> Sürüm: )(\S+)( · )", re.M)
 # `%guncelle`nin `once` turunu ikame edebilmesi için gereken ASGARİ takım adları. Bir yayın
 # bunlardan birini taşımıyorsa `hepsi_yesil` YAZILMAZ ⇒ tüketici normal ölçer (fail-safe).
 CI_ASGARI_TAKIMLAR = ("Testler (kok · Python 3.12)", "Testler (foundation · Python 3.12)",
@@ -567,6 +574,37 @@ def yayinlar_oku(yol: Path) -> tuple[dict | None, str | None]:
         return None, f"{YAYINLAR_YOLU} ayrıştırılamadı: {e}"
 
 
+def readme_surum_damgala(yol: Path, etiket: str) -> str | None:
+    """README'deki `> Sürüm: <x> · …` satırının <x>'ini `etiket` yapar. Sorun varsa metnini, yoksa None döner."""
+    try:
+        metin = yol.read_bytes().decode("utf-8")
+    except (OSError, UnicodeDecodeError) as e:
+        return f"{README_YOLU} okunamadı ({e.__class__.__name__}: {e})"
+    adet = len(SURUM_SATIRI.findall(metin))
+    if adet != 1:
+        return (f"{README_YOLU}'de `> Sürüm: <etiket> · …` satırı {adet} kez var (tam 1 olmalı) — "
+                "yayın sürümü README'ye yazılamaz")
+    yeni = SURUM_SATIRI.sub(lambda m: m.group(1) + etiket + m.group(3), metin)
+    if yeni != metin:
+        yol.write_bytes(yeni.encode("utf-8"))
+    return None
+
+
+def yalniz_surum_satiri_degisti(hedef: Path) -> bool:
+    """Staged README ile HEAD'deki README, sürüm satırındaki etiket dışında bayt bayt aynı mı."""
+    rc_eski, _ = git_sessiz("cat-file", "-e", f"HEAD:{README_YOLU}", cwd=hedef)
+    rc_yeni, _ = git_sessiz("cat-file", "-e", f":{README_YOLU}", cwd=hedef)
+    if rc_eski != 0 or rc_yeni != 0:
+        return False
+
+    def notr(ref: str) -> str:
+        metin = git("show", ref, cwd=hedef).decode("utf-8", errors="replace")
+        return SURUM_SATIRI.sub(lambda m: m.group(1) + "<etiket>" + m.group(3), metin)
+
+    eski, yeni = notr(f"HEAD:{README_YOLU}"), notr(f":{README_YOLU}")
+    return eski == yeni and SURUM_SATIRI.search(eski) is not None
+
+
 def degisen_yollar(hedef: Path) -> set[str] | None:
     """Staged ağaç ile HEAD arasındaki fark. HEAD yoksa None (ilk commit)."""
     if git_sessiz("rev-parse", "--verify", "-q", "HEAD", cwd=hedef)[0] != 0:
@@ -695,6 +733,7 @@ def main() -> int:
     # --- yayın kalemleri: şema + CHANGELOG ---------------------------------------------------------
     veri, okuma_hatasi = yayinlar_oku(hedef / YAYINLAR_YOLU)
     yayin = None
+    readme_hatasi = None
     if okuma_hatasi:
         if yayin_kipi:
             print(f"HATA: {okuma_hatasi} — yayın kalemleri olmadan yayın yapılamaz "
@@ -717,6 +756,8 @@ def main() -> int:
         (hedef / CHANGELOG_YOLU).write_text(changelog_uret(veri), encoding="utf-8", newline="\n")
         if CHANGELOG_YOLU not in yollar:
             yollar.append(CHANGELOG_YOLU)
+        if veri.get("yayinlar"):
+            readme_hatasi = readme_surum_damgala(hedef / README_YOLU, veri["yayinlar"][-1]["etiket"])
         # --- ci-durum.json (Z16): tüketicinin `once` turunu ikame edebilmesi için CI hükmü ----
         if veri.get("yayinlar"):
             _etiket = veri["yayinlar"][-1]["etiket"]
@@ -752,6 +793,8 @@ def main() -> int:
             return 1
 
     bulgular = tara(hedef, yollar)
+    if readme_hatasi:
+        bulgular.append((BLOCKER, f"README sürüm satırı: {readme_hatasi}"))
 
     print(f"Kaynak: {kaynak} -> {hedef}")
     print(f"Kopyalanan dosya: {len(yollar)} · dışlananlar: {', '.join(DISLANANLAR)}")
@@ -771,6 +814,9 @@ def main() -> int:
     print(f"KAPSAM — üretilen dosyalar ({', '.join(URETILEN_DOSYALAR)}) 2026-09-20'den beri "
           "kalem-diff kapsamına DAHİL: beyan edilmezlerse yayın durur (Z17 — eskiden muaftılar "
           "ve tüketici klonuna hiç ulaşmıyorlardı).")
+    if yayin:
+        print(f"KAPSAM — README sürüm satırı: {'yazılamadı (BLOCKER)' if readme_hatasi else yayin['etiket']} "
+              "(yalnız `> Sürüm: … · ` biçimli tek satır; README'nin başka yerindeki sürüm anmalarına bakılmaz).")
     engelleyen = [b for siddet, b in bulgular if siddet == BLOCKER]
     uyari = [b for siddet, b in bulgular if siddet == WARNING]
     if uyari:
@@ -802,9 +848,16 @@ def main() -> int:
         print("KALEM-DİFF KAPSAMI: ÖLÇÜLEMEDİ (hedefte önceki commit yok — ilk yayın)")
     else:
         kapsam_sorunlari = kapsam_dogrula(yayin, degisen)
+        ipucu = None
+        if (any(s.endswith(f": {README_YOLU}") for s in kapsam_sorunlari)
+                and yalniz_surum_satiri_degisti(hedef)):
+            ipucu = (f"İPUCU: {README_YOLU} yalnız sürüm satırında değişti (bu aracın yazdığı) — onu her yayının "
+                     "yayın kaydı kalemine (\"Yayın kataloğu, README sürüm satırı ve CI kaydı\") ekle. Muafiyet YOK: "
+                     "kalemsiz değişen dosyayı tüketici `%guncelle` motoru uygulamaz "
+                     "(scripts/guncelle.py 'beyansız EYLEM vakası').")
         print(f"KALEM-DİFF KAPSAMI: {len(degisen)} değişen yol · {len(kapsam_sorunlari)} sorun")
         if kapsam_sorunlari:
-            for s in kapsam_sorunlari:
+            for s in kapsam_sorunlari + ([ipucu] if ipucu else []):
                 print("  " + s)
             git("reset", "-q", cwd=hedef)
             print("\nGit geçmişi kurulmadı (kalem eşlemesi eksik).")
