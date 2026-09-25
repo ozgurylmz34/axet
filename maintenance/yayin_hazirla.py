@@ -79,7 +79,6 @@ BLOCKER, WARNING = "BLOCKER", "WARNING"
 #   BLOCKER = bilgi sızıntısı -> çıkış 1, git geçmişi kurulmaz.
 #   WARNING = tüketici klonunda kırık kalacak işaretçi (belge kalitesi sorunu) -> listelenir, ÇIKIŞI DEĞİŞTİRMEZ.
 DESENLER = [
-    (BLOCKER, "şirket adı", r"ntt\s*data|nttdata|\bNTT\b", re.I),
     # C:\Users\ (D16): gerçek kullanıcı adı = en az 3 karakter + yer tutucu DEĞİL. Muaf olanlar: `<...>`
     # biçimi, 1-2 karakterlik adlar (`C:\Users\u`) ve yer-tutucu sözcükler (örnek/kullanıcı/user/example...).
     # İki körlük 2026-09-17'de ÖLÇÜLEREK kapatıldı (ikisi de `tests/test_kur.py` fixture'ında gerçek bir ad
@@ -88,8 +87,7 @@ DESENLER = [
     (BLOCKER, "iç kullanıcı/dizin",
      r"tr\d{5}\b|C:[\\/]Users[\\/](?!<)"
      r"(?!(?:örnek|ornek|kullanıcı|kullanici|user|username|example|sample)\b)[^\W\d_][\w.-]{2,}", re.I),
-    (BLOCKER, "iç repo adı", r"DEV_CORE|\bPROVA\b|ix-works|ix_doctor|TrakyaDokum", 0),
-    (BLOCKER, "müşteri izi", r"trakya", re.I),
+    (BLOCKER, "iç repo adı", r"DEV_CORE|\bPROVA\b|ix-works|ix_doctor", 0),
     (BLOCKER, "oturum bağlantısı", r"claude\.ai/code/session_", 0),
     (BLOCKER, "gerçek alan adı örneği", r"your-sap-server\.com|//server\.com", 0),
     # Yalnız MARKDOWN LİNK biçimindeki atıf (D16): tüketici klonunda dangling olan şey linktir; yorum
@@ -97,6 +95,13 @@ DESENLER = [
     (WARNING, "dışlanan dosyaya atıf",
      r"\]\([^)\s]*(?:maintenance/|agentic-connectors|axet-davranis-olcumleri)", 0),
 ]
+# Müşteri / kurum adları KODDA DURMAZ (2026-09-25, kullanıcı kararı): bu depo da public'tir; adı yakalayan desen
+# adın kendisini yayınlar. Liste iki kaynaktan okunur, ikisi birleştirilir: git'e GİRMEYEN yerel dosya (satır başına
+# bir regex, `#` yorum; `.gitignore`'da) ve CI gizli değişkeni için ortam değişkeni (satır ya da `;` ayrımlı).
+# Liste yoksa tarama bunu KAPSAM satırında ÖLÇÜLEMEDİ diye söyler; GERÇEK YAYIN listesiz başlamaz (fail-closed).
+YEREL_LISTE_YOLU = "maintenance/sizinti-yerel.txt"
+YEREL_LISTE_ORTAM = "AXET_SIZINTI_EK"
+YEREL_LISTE_ADI = "yerel liste (müşteri/kurum)"
 IKILI_UZANTI = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".docx", ".xlsx", ".pptx", ".zip", ".exe"}
 
 
@@ -174,8 +179,47 @@ def kopyala(hedef: Path, ref: str, calisma_agaci: bool) -> list[str]:
     return sorted(alinan)
 
 
-def tara(hedef: Path, yollar: list[str]) -> list[tuple[str, str]]:
-    """(şiddet, metin) çiftleri döner. Yapısal eksikler (zorunlu dosya, NOTICE yolu, okunamayan dosya) BLOCKER'dır."""
+def yerel_desenler(kok: Path = KOK, ortam: dict | None = None) -> tuple[list[tuple], str]:
+    """(desenler, kaynak beyanı). Desenler DESENLER biçimindedir (BLOCKER, büyük/küçük harf duyarsız).
+
+    Hata (SystemExit): liste dosyası git'te İZLENİYORSA (ad public'e gider — amacın tersi) ya da bir satır geçersiz
+    regex ise. Mesaj desenin kendisini BASMAZ; yalnız kaynağı ve satır numarasını söyler."""
+    ortam = os.environ if ortam is None else ortam
+    satirlar: list[tuple[str, str]] = []
+    kaynaklar = []
+    dosya = kok / YEREL_LISTE_YOLU
+    if dosya.is_file():
+        rc, _ = git_sessiz("ls-files", "--error-unmatch", YEREL_LISTE_YOLU, cwd=kok)
+        if rc == 0:
+            raise SystemExit(f"HATA: {YEREL_LISTE_YOLU} git'te izleniyor — içindeki adlar bu depoyla yayınlanır. "
+                             f"`git rm --cached {YEREL_LISTE_YOLU}` ve `.gitignore` satırını kontrol et.")
+        n = 0
+        for no, satir in enumerate(dosya.read_text(encoding="utf-8").splitlines(), 1):
+            satir = satir.strip()
+            if satir and not satir.startswith("#"):
+                satirlar.append((f"{YEREL_LISTE_YOLU}:{no}", satir))
+                n += 1
+        kaynaklar.append(f"dosya {n}")
+    ham = ortam.get(YEREL_LISTE_ORTAM, "")
+    if ham.strip():
+        parcalar = [p.strip() for p in re.split(r"[;\n]", ham) if p.strip()]
+        for i, p in enumerate(parcalar, 1):
+            satirlar.append((f"${YEREL_LISTE_ORTAM}[{i}]", p))
+        kaynaklar.append(f"ortam {len(parcalar)}")
+    desenler = []
+    for yer, desen in satirlar:
+        try:
+            re.compile(desen, re.I)
+        except re.error as e:
+            raise SystemExit(f"HATA: {yer} geçersiz regex ({e.msg}) — desen basılmadı.") from e
+        desenler.append((BLOCKER, YEREL_LISTE_ADI, desen, re.I))
+    return desenler, (" + ".join(kaynaklar) if kaynaklar else "")
+
+
+def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[tuple[str, str]]:
+    """(şiddet, metin) çiftleri döner. Yapısal eksikler (zorunlu dosya, NOTICE yolu, okunamayan dosya) BLOCKER'dır.
+    `ek` = `yerel_desenler()` çıktısı (müşteri/kurum adları; DESENLER'le aynı biçim)."""
+    desenler = DESENLER + list(ek or [])
     bulgular = [(BLOCKER, f"EKSİK zorunlu dosya: {z}") for z in ZORUNLU_DOSYALAR if not (hedef / z).is_file()]
     notice = hedef / "NOTICE"
     if notice.is_file():
@@ -191,8 +235,11 @@ def tara(hedef: Path, yollar: list[str]) -> list[tuple[str, str]]:
         except UnicodeDecodeError:
             bulgular.append((BLOCKER, f"OKUNAMADI (utf-8 değil, taranmadı): {y}"))
             continue
-        for no, satir in enumerate(metin.splitlines(), 1):
-            for siddet, ad, desen, bayrak in DESENLER:
+        # split("\n"), splitlines() DEĞİL: splitlines U+2028/U+0085/\f gibi ayraçlarda da böler, git bölmez ⇒
+        # raporlanan `dosya:satır` git'teki satırdan kayardı (Z133). Tespit etkilenmez, yalnız numara.
+        for no, satir in enumerate(metin.split("\n"), 1):
+            satir = satir.removesuffix("\r")
+            for siddet, ad, desen, bayrak in desenler:
                 if re.search(desen, satir, bayrak):
                     bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))
     return bulgular
@@ -702,6 +749,12 @@ def main() -> int:
         return 2
 
     yayin_kipi = not a.yalniz_tara          # gerçek yayın mı (commit + etiket)
+    ek_desenler, ek_kaynak = yerel_desenler()
+    if yayin_kipi and not ek_desenler:
+        print(f"HATA: müşteri/kurum ad listesi yok ({YEREL_LISTE_YOLU} ya da ${YEREL_LISTE_ORTAM}) — liste olmadan "
+              "sızıntı taraması müşteri adlarına bakmaz ve public yayın GERİ ALINAMAZ. Listeyi kur, sonra tekrar "
+              "çalıştır (biçim: maintenance/UPDATE-PROCEDURE.md).", file=sys.stderr)
+        return 1
     sonraki_yayin = yayin_kipi and not a.ilk
     if sonraki_yayin:
         rc = hedef_klonu_hazirla(hedef, a.origin)
@@ -792,7 +845,7 @@ def main() -> int:
             print("HATA: guncelle/yayinlar.json boş — yayınlanacak kalem yok.", file=sys.stderr)
             return 1
 
-    bulgular = tara(hedef, yollar)
+    bulgular = tara(hedef, yollar, ek_desenler)
     if readme_hatasi:
         bulgular.append((BLOCKER, f"README sürüm satırı: {readme_hatasi}"))
 
@@ -803,6 +856,11 @@ def main() -> int:
               f"kritik: {sum(1 for k in yayin.get('kalemler', []) if k.get('kritik'))} · CHANGELOG.md üretildi")
     print("KAPSAM — bakılan (BLOCKER = çıkış 1): zorunlu dosyalar, NOTICE yolları, utf-8 metin dosyalarında "
           "şu sınıflar: " + ", ".join(d[1] for d in DESENLER if d[0] == BLOCKER))
+    if ek_desenler:
+        print(f"KAPSAM — {YEREL_LISTE_ADI}: {len(ek_desenler)} desen ({ek_kaynak}; içerik basılmaz)")
+    else:
+        print(f"KAPSAM — {YEREL_LISTE_ADI}: YÜKLENMEDİ ({YEREL_LISTE_YOLU} ve ${YEREL_LISTE_ORTAM} yok) — "
+              "müşteri/kurum adları TARANMADI: ÖLÇÜLEMEDİ, temiz değil. Gerçek yayın listesiz başlamaz.")
     print("KAPSAM — bakılan (WARNING = yalnız listelenir, çıkışı etkilemez): "
           + ", ".join(d[1] for d in DESENLER if d[0] == WARNING))
     print("KAPSAM — bakılan (yayın kalemleri): guncelle/yayinlar.json şeması" +

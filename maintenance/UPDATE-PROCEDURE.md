@@ -59,10 +59,25 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 1. Template script/şablon testleri: `python tests\run_tests.py` — 0 failure olmadan merge edilmez.
 2. `python scripts\doctor.py` (frontmatter, çekirdek boyutu, damga/kanonik bütünlük, davranış yüzeyi) — 0 FAIL.
 3. Değişen skill'in testleri (ör. `python skills-sap\sap-adt-foundation\tests\run_tests.py`, `skills-sap\sap-fs-ts-docs\tests\run_tests.py`).
-3. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
-4. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
-5. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
+4. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
+5. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
+6. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
    etkilediği kuralı/script'i güncelle.
+7. **Kullanıcı belgeleri turu — HER yayında, sorulmadan, yayın PR'ından önce (kullanıcı kuralı 2026-09-25).**
+   Yayın, belgeleri de public'e taşır; kod ya da skill değişip belge eski kalırsa kullanıcı yanlış bilgiyle çalışır.
+   - **Kapsam:** kökteki `README.md` · `GUNCELLE.md` · `AGENTS.md` · `docs/*.md` (`yayin_hazirla.DISLANANLAR`
+     hariç) · `skills-sap/README.md` · `templates/project/AGENTS.md` · değişen her skill'in `SKILL.md` açıklaması.
+   - **Kalem kalem sor:** yayındaki her katalog kalemi kullanıcının gördüğü bir akışı, komutu, sırayı, sayıyı ya da
+     sınırı değiştiriyor mu? Değiştiriyorsa ilgili belge bölümünü güncelle; değiştirmiyorsa "belge etkisi yok" de.
+   - **Sayılar koddan yeniden ölçülür, elle taşınmaz:** araç sayısı `sap_adt_cli.py --list` → `counts` · çekirdek
+     kimlikleri `CORE-ID` / `SAP-CORE-ID` satırları · README sürüm satırını `yayin_hazirla` yazar. Elle yazılan
+     sayı bayatlar ve hiçbir test yakalamaz.
+   - Değişen belge katalogta bir kaleme beyan edilir (kalemsiz dosya tüketiciye uygulanmaz).
+   - Sonucu `IS-LISTESI.md` yayın satırına yaz: "belge turu: değişen <dosyalar> · etkisiz <sayı> kalem".
+   *Vaka (v0.5.10):* README'nin bildirim bölümü yeni kapanış akışını anlatmıyordu ve `docs/sap-api-policy.md`
+   araç sayısı 2026-09-15'ten beri bayattı (37 → 41). İkisi de testlerden, üç bağımsız incelemeden ve sızıntı
+   taramasından geçti; kullanıcı sormasa yayına öyle girecekti. İnceleme brifingi yalnız farkı gösterdiği için
+   farkta OLMAYAN belgeyi göremez — bu adım o yüzden ayrıdır.
 
 ## 6. Haritayı kapat
 1. `sync-rules.json`'da işlenen kuralların `status`/`targets` alanlarını güncelle (aktarılan → `tamam`).
@@ -70,7 +85,10 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
    ```powershell
    python maintenance\sync_check.py --source DEV_CORE=<...> --source PROVA=<...> --update-lock
    ```
-3. README "Değişiklik notu"na sürüm + "IX <kısa commit> ile senkron" + gerekiyorsa "install.py tekrar çalıştırılmalı".
+3. Senkron notu **yayın kataloğuna** gider: aktarılan içerik sıradaki yayının `guncelle/yayinlar.json` kalemlerine
+   (her dosya en az bir kalemde; `neden` kullanıcının diliyle, gerekiyorsa "install.py tekrar çalıştırılmalı").
+   Kaynak repo adı ve commit YAZILMAZ (katalog public yayına girer); kaynak konumu yalnız `sync-lock.json`'da durur.
+   README "Değişiklik notu" yeni kayıt almaz — `CHANGELOG.md` katalogdan üretilir.
 4. Aktarım, `sync-rules.json` ve `sync-lock.json` **aynı commit/PR'da** gider; ayrı giderse harita içerikten kopar.
 
 ## 7. Araç radarı (elle, ~3 haftada bir)
@@ -95,6 +113,14 @@ Otomatik kurulum yok.
 - **Yeni içerik nereye:** projeye özel değer/istisna → proje (`AGENTS.md`, `sap-project.json`, paket `.rules.md`,
   `.axet-code/memory/`); her projeye genellenebilen yöntem/ders → template (skill/çekirdek/`memory/`, PR ile, nötr adlarla).
   Emin değilsen önce proje tarafına yaz, genellenince template'e taşı.
+- **Müşteri/kurum ad listesi (yayın sızıntı taraması, 2026-09-25):** bu depo da public olduğu için müşteri ve kurum
+  adları `yayin_hazirla.py`'de yazılı DEĞİLDİR (adı yakalayan desen adın kendisini yayınlar). Liste iki kaynaktan okunur,
+  ikisi birleşir: ① `maintenance/sizinti-yerel.txt` — `.gitignore`'da, her çalışma ağacında (worktree dahil) elle kurulur;
+  satır başına bir regex, büyük/küçük harf duyarsız, `#` yorum ② `AXET_SIZINTI_EK` ortam değişkeni (satır ya da `;`
+  ayrımlı; CI gizli değişkeni için). Liste yoksa `--yalniz-tara` bunu KAPSAM satırında "YÜKLENMEDİ … ÖLÇÜLEMEDİ" diye
+  söyler, **gerçek yayın başlamaz**. Liste dosyası git'te izleniyorsa ya da bir satır geçersiz regex ise araç durur
+  (desenin kendisini basmaz). ⚠ CI'da gizli değişken tanımlı değilse CI taraması müşteri/kurum adlarına bakmaz — bu
+  yüzden yerel yayın taraması asıl kapıdır. Geçmiş commit'lerdeki adlar bu değişiklikle silinmez.
 
 ## Parti kapanış kuralı
 Bir parti ancak şu üçü sağlanınca "tamam" sayılır: o partinin kurallarında `bekliyor` kalmadı · `sync_check`

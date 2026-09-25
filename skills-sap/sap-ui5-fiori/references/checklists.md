@@ -18,6 +18,7 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-BOOT-03 | Etiket/buton/mesaj metinleri spesifikasyondan, TR; tahmin değil | BLOCKER | yok | — |
 | UI-BOOT-04 | `ui/` npm workspace kökü; uygulama `package.json` sade + `ui5*.yaml`'ın kullandığı middleware paket adları `devDependencies`'te (yoksa `start-*` açılmaz); kurulum kökte; uygulama başına lock yok | WARNING | yok | §2 |
 | UI-BOOT-05 | Tüm `ui5*.yaml` aynı kanonik host | BLOCKER | yok (`grep url: ui5*.yaml`) | §6 |
+| UI-BOOT-06 | Manifest DIŞI her istek (`new ODataModel(...)` — varyant/`$batch`/ikinci model; ham `fetch`/XHR; `sServiceUrl +` URL) ana modelin `sap-client`'ını (`aUrlParams`) taşır; literal client yazılmaz. Yoksa iki client aynı tarayıcıda açıkken çapraz-client okuma/yazma — hatasız | BLOCKER | yok | `freestyle-odata-v2.md` §7.4 · FE-48 |
 
 ### Faz 2 — Mimari karar
 | ID | Kontrol | Önem | Otomatik | Ref |
@@ -36,6 +37,7 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-SAVE-03 | İşlemler sıralı | BLOCKER | yok | §1 S2 |
 | UI-SAVE-04 | Başarı `MessageBox.success` (+ `onClose` navigasyon); hata `_parseError` | WARNING | yok | §6 |
 | UI-SAVE-05 | Commit bariyeri (`blur` + `setTimeout 0`) | HIGH | yok | §1.2 |
+| UI-SAVE-06 | Belge kilidi varsa: sayfadan ayrılırken bırakma = `fetch` + `keepalive` + CSRF + client parametresi (senkron XHR gitmez — Chromium, navigasyonda ölçüldü); kilit bırakılan her çıkış yolunda (geri/kayıt/silme) kilit bayrağı sıfırlanır ve unload dinleyicisi bayrağa bakar | BLOCKER | yok | §7.5 · FE-49 · `%sap-rap` `draft-and-locks.md` §6 |
 
 ### Faz 4 — Binding / kontrol tipleri
 | ID | Kontrol | Önem | Otomatik | Ref |
@@ -86,7 +88,7 @@ Genel inceleme akışı `%code-review`; kanıt kuralı: her bulgu dosya:satır y
 | FE-12 | Spesifikasyondaki kural UI'da uygulanmamış | BLOCKER | yok | `runtime-verification.md` §3 |
 | FE-13 | Liste/rapor grid değil | HIGH | `check_list_view_grid.py` | `list-grid-alv.md` §1 |
 | FE-14 | Denetim alanları (oluşturan/değiştiren, tarih/saat) otomatik doldurulmuyor | HIGH | yok | backend sözleşmesi `%sap-rap` / `%sap-cds-ddic` |
-| FE-15 | Belge/uygulama kilidi eksik ya da yanlış (salt okunur mod, heartbeat, `beforeunload`) | HIGH | yok | kilit sözleşmesi `%sap-rap` |
+| FE-15 | Belge/uygulama kilidi eksik ya da yanlış (salt okunur mod, heartbeat, `beforeunload`; bırakmanın taşıma biçimi FE-49) | HIGH | yok | kilit sözleşmesi `%sap-rap` |
 | FE-16 | Kontrol API'si / navigation adı tahmin edilmiş | HIGH | kısmen `check_ui_odata_refs.py` | §8 |
 | FE-17 | "Done" runtime'da doğrulanmamış | HIGH | yok | `runtime-verification.md` §3 |
 | FE-18 | VH alanında alt tanım gösterilmiyor | HIGH (EKSİK) | yok | §3 C8 |
@@ -117,8 +119,12 @@ Genel inceleme akışı `%code-review`; kanıt kuralı: her bulgu dosya:satır y
 | FE-43 | `index.html` bootstrap backend UI5'i değil: dış CDN (`ui5.sap.com/<sürüm>/…` — sabitlenmiş patch silinince `cldr/<dil>.json` 404, UI5 sessizce İngilizceye düşer) ya da göreli `resources/sap-ui-core.js` (BSP altında çözülmez); ya da `minUI5Version` ≠ backend sürümü. Runtime kanıtı: `sap.ui.version` = backend · `cldr/<dil>.json` 200 · tarih proje dilinde | BLOCKER | yok (`grep`: `index.html` içinde `ui5.sap.com/` ya da `src="resources/`) | `app-skeleton.md` §7 |
 | FE-44 | Tarih-yalnız alan/parametreye (`Edm.DateTime` + `sap:display-format="Date"`) **yerel gece yarısı** gidiyor → UTC'nin doğusunda gateway bir önceki günü alır: `$filter` yanlış küme, function import / create / update'te yanlış gün **kalıcı yazılır**. "Üst sınır 23:59:59" reçetesi alt sınırı kaydırır. Doğrusu: seçilen takvim günü UTC gece yarısı (`new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))`), iki sınır + her tarih parametresi, tek yardımcıdan. Kardeş taraması `new Filter` ile sınırlı değil, `urlParameters` ve payload'u da kapsar. Kanıt: kaydı olan gün ve ertesi gün seçilir, ertesi gün 0 dönmeli. FE-27'den farkı: tip doğru, an yanlış | HIGH | yok | §5.3 |
 | FE-45 | `callFunction` `urlParameters` içinde `null` / `undefined` değer → URL'ye `Param=null` yazılır, gateway 400 "Invalid key predicate" döner (anahtar hatası gibi görünür). Değeri olmayan parametre nesneye hiç konmaz (koşullu ekle); backend'de parametrenin opsiyonel olduğu ve boş gelince doğru dalın işlendiği okunur. Kanıt: aynı function import `=null` ile ve parametresiz çağrılır → 400 ↔ 200. JSON gövdedeki `null` bu sınıfa girmez (FE-04) | HIGH | yok (`grep`: `urlParameters` bloğunda `: null`) | §7 |
+| FE-46 | `callFunction` BÜYÜK yük taşıyor (dosya/base64/uzun metin) → OData V2 `urlParameters` **URL'e** serileşir, ters proxy (SAP Web Dispatcher) sınırını aşınca **HTTP 414** (Request-URI Too Long); `icm/HTTP/max_request_size_KB` gövde sınırıdır, İLGİSİZ. Satır sayısıyla doğrusal büyür (tek kurulumda, bir ekranda ölçülen: ~437 B/satır ⇒ ~20 satırda patladı; eşik sistemden sisteme değişir). Çözüm: o TEK çağrı için `useBatch:true` ikinci model, `manifest.json` DEĞİŞMEZ | HIGH | yok (aday: `callFunction` parametrelerinde sınırsız-uzunluk kaynağı — `JSON.stringify`/base64 — taraması) | `freestyle-odata-v2.md` §7.3 |
+| FE-47 | İkinci `ODataModel` kurulurken `metadataUrlParams` ana modelden DEVRALINMADI → metadata isteği hata alırsa `loaded()` hiç settle olmayan promise döner, her istek ona asılır (`.catch`/`timeout` yok) ⇒ **kalıcı busy**, hata görünmez. Kontrol: `new ODataModel(` her çağrı yerinde `metadataUrlParams: <anaModel>.mMetadataUrlParams` devri var mı. Devralmıyorsan busy'yi zaman aşımıyla kurtar + kullanıcıya söyle. Kanıt AĞ İZİNDEN gelir (kaynak okuması "paylaşılıyor" derse bile) | MEDIUM | yok (aday: `new ODataModel(` → `metadataUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.3 |
+| FE-48 | Elle kurulan istek `sap-client` taşımıyor → iki client aynı tarayıcıda açıkken **çapraz-client okuma/yazma, hatasız**. Manifest modeline Component `sap-client`/`sap-server` ekler; `new ODataModel(...)`, ham `fetch`/`XMLHttpRequest` ve `sServiceUrl +` URL'i bunu almaz (`sServiceUrl` sorgusuz saklanır, parametreler `aUrlParams`'ta). `sap-client`'sız istek tarayıcının tek `sap-usercontext` çerezine göre yönlenir; çerezi en son açılan client yazar ⇒ tek client açıkken görünmez. Doğrusu: ana modelin `aUrlParams`'ını (`sap-statistics` hariç) URL sorgusuna devret; util'de ana modeli `Component.getOwnerComponentFor(ctrl).getModel()` ile al. Kontrol: (a) `new ODataModel(` / `new XMLHttpRequest` / `fetch(` / `sServiceUrl +` her satır — kardeş taraması tüm uygulamaları kapsar (b) kanıt = iki client'lı iki sekme + **ayırıcı veri** (sayısı iki client'ta farklı entity) + ağ izinde `sap-client=<beklenen>`; kaynak okuması tek başına kanıt değil. FE-47'nin yerine geçmez, ikisi birlikte | HIGH | yok (aday: `new ODataModel(`/ham istek → `aUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.4 |
+| FE-49 | Sayfadan ayrılırken gönderilen istek **senkron XHR** → Chromium göndermez (navigasyonda ölçüldü: 0/3; `fetch`+`keepalive` 3/3); `try/catch` yutar ⇒ belge kilidi zaman aşımına kadar kalır. Sekme kapatma ayırt edilemedi; Firefox/Safari/FLP ölçülmedi. `sendBeacon` CSRF başlığı taşıyamaz. Doğrusu: `fetch` + `keepalive:true` + `x-csrf-token` (`getSecurityToken()`) + URL'de `/` ve ana modelin client parametreleri (FE-48) + `.catch`. **İkinci ayak:** bırakılan her çıkış yolunda kilit bayrağı sıfırlanır, unload dinleyicisi bayrağa bakar (`if (!readOnly && id)`) — yoksa listedeyken sayfadan ayrılınca tekrar bırakma gider ve kullanıcının başka sekmedeki kilidi düşer. Kontrol: unload dinleyicisinde senkron XHR / `sendBeacon`+CSRF; bırakma URL'inde `/` + client parametresi; `_releaseLock` çağıranlarından sonra bayrak | HIGH | yok (`grep`: `.open(` + `, false)` → çağrıyı unload dinleyicisine kadar izle; XHR çoğu kez ayrı yardımcıdadır) | `freestyle-odata-v2.md` §7.5 |
 
-Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–45 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
+Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–49 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
 
 ---
 
@@ -137,4 +143,7 @@ Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–45 çoğunlukla **HA
 - Yeni satırlar: FE-44 (tarih-yalnız alanda yerel gece yarısı → gün kayması), FE-45 (`callFunction` `urlParameters`'ta
   `null` → 400). Kaynakta bu iki madde ve bootstrap maddesi farklı numaralarla duruyor; aXet sırası korundu.
 - UI-SAVE-04 kaynakta `MessageToast` diyordu; kaynak standart ve FE-24 ile hizalandı.
+- Yeni satırlar: FE-48 (elle kurulan istek `sap-client` taşımıyor), FE-49 (sayfadan ayrılırken senkron XHR), UI-BOOT-06,
+  UI-SAVE-06. Kaynakta oluşturma satırları UI-BOOT-05 / UI-SAVE-05 numarasıyla duruyor; aXet'te bu numaralar başka
+  maddelerde olduğu için 06 verildi.
 - Müşteri uygulama adları, tarihli vaka referansları ve belge uygulamalarının müşteriye özgü şablon adı çıkarıldı.

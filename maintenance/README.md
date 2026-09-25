@@ -13,4 +13,6 @@ bağlantısı yoktur.
 - `sync_check.py` — fark denetimi
 - [`rule-coverage.md`](rule-coverage.md) — kural dosyalarının (CLAUDE.core, kesin yasaklar, proje CLAUDE.md, hafıza tohumu) MADDE bazında aXet karşılığı
 - [`IS-LISTESI.md`](IS-LISTESI.md) — bakım işlerinin **tek** açık madde listesi (parti denetimi, aktif iş, kararlar, tetikler)
+- [`howto-cekirdek-bulgu-bildirimi.md`](howto-cekirdek-bulgu-bildirimi.md) — kaynak çekirdekte görülen kusuru bildirme (ölç → taslak → onay → gönder → iş listesi)
+- [`howto-gelen-bildirim-degerlendirme.md`](howto-gelen-bildirim-degerlendirme.md) — aXet kullanıcısından gelen bildirimi değerlendirme (kimlik taraması → iddia başına yeniden ölçüm → etki analizi → sahip onayı → düzeltme + yayın → kapanış; durum etiketleri)
 - [`canli-test-plani.md`](canli-test-plani.md) — "DOĞRULANMADI" kalemlerinin aXet üzerinden canlı ölçüm planı

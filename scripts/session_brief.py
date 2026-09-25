@@ -371,7 +371,7 @@ def sap_profili(proj: Path) -> list[str]:
     out = [f"profil: {_sap_degeri(veri, 'sap_profile')}/{_sap_degeri(veri, 'release')} · "
            f"cleancore: {_sap_degeri(veri, 'cleancore_policy')} · master_language: {ml}",
            "⛔ SAP KESİN YASAKLAR geçerli: A standart obje yaratma/değiştirme/silme yok (append/DTEL adını önermezsin) · "
-           "B standart tablo verisine doğrudan yazma yok (BAPI → RFC → BDC → manuel) · C transport/paket yaratma, "
+           "B standart tablo verisine doğrudan yazma yok (released API/EML → BAPI → RFC → BDC → manuel) · C transport/paket yaratma, "
            f"release, kilit silme yok · D Z obje: dil = master_language ({ml}), 4 etiket tam, aktivasyon öncesi "
            "sistemden oku. Tam metin: AGENTS.md damgası."]
     if ml == "YOK":
