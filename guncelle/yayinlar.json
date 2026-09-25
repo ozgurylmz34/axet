@@ -2420,6 +2420,24 @@
      "test": [
       "python tests/run_tests.py -k hata"
      ]
+    },
+    {
+     "id": "0.5.10-19",
+     "baslik": "İlk kurulum her yerde `aXet-Kur.cmd`: proje kısayolunun hata mesajı artık var olan dosyayı gösterir",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Projedeki `KURULUMU-TAMAMLA` kısayolu aXet klonunu bulamayınca \"aXet'i kur.cmd ile kur\" diyordu; oysa `kur.cmd` klonun içinde durur, klon yoksa o dosya da yoktur. Mesaj artık ilk kurulum dosyası `aXet-Kur.cmd`'yi (çift tık) gösterir. `%guncelle` ve `%onboard` açıklamaları da ilk kurulumu `aXet-Kur.cmd` olarak anlatır; `kur.cmd` klonun içindeki yerel onarım yoludur (bağlantısız yeniden kurulum, `-Sifirla`, `-Kaldir`). Mevcut projelerdeki kısayol `%guncelle-proje` ile yenilenir; yalnız bu hata mesajı değişti.",
+     "dosyalar": [
+      "scripts/yeni_proje.py",
+      "tests/test_proje_tamamla.py",
+      "skills/guncelle/SKILL.md",
+      "skills/onboard/SKILL.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k z70",
+      "python tests/run_tests.py -k skill"
+     ]
     }
    ]
   }
