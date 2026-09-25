@@ -127,9 +127,14 @@ class AcilisBriefTest(GeciciTest):
         from datetime import datetime
         govde = ["SESSION_NOTES son kayıt:", "  CORE-ID: AXET-CORE-9.9.9 · SAP-CORE-ID : X · PROJECT-MEMORY-ID: Y",
                  "  MEMORY-ID: Z · PROJECT-ID: P · SAP-STAMP-ID: S"]
+        # bug gate MEDIUM-1 (ölçülen kaçaklar): markdown, küçük harf, tam genişlikli iki nokta, kanarya kopyası
+        govde += ["  **CORE-ID**: AXET-CORE-0.8.0", "  core-id: axet-core-0.8.0", "  CORE-ID：AXET-CORE-0.8.0",
+                  "  [AXET-CORE-0.8.0 · SAP: AXET-SAP-0.5.1 · proje: P1]", "  MEMORY-ID AXET-TEAM-MEMORY"]
         metin = session_brief.brief_metni(datetime(2026, 1, 2, 3, 4), govde)
-        self.assertNotRegex(metin, r"\b(?:SAP-CORE|SAP-STAMP|PROJECT-MEMORY|PROJECT|MEMORY|CORE)-ID\s*:")
-        self.assertIn("CORE-ID (etiket) AXET-CORE-9.9.9", metin)  # içerik kaybolmaz, yalnız etiket bozulur
+        self.assertNotRegex(metin, r"(?i)\b(?:SAP-CORE|SAP-STAMP|PROJECT-MEMORY|PROJECT|MEMORY|CORE)-ID\W{0,3}[:：]")
+        self.assertNotRegex(metin, r"(?i)AXET-(?:CORE|SAP|TEAM)-")
+        self.assertIn("CORE-ID (etiket) AXET·CORE-9.9.9", metin)  # içerik okunur kalır, yalnız eşleşme bozulur
+        self.assertIn("PROJECT-ID (etiket) P", metin)
         # kontrol grubu: yönerge başlığı çekirdek kimliğini/kanarya biçimini taşımaz
         self.assertNotIn("AXET-CORE", session_brief.brief_metni(datetime(2026, 1, 2, 3, 4), []))
         self.assertNotRegex(session_brief.brief_metni(datetime(2026, 1, 2, 3, 4), []), r"-ID\s*:")
@@ -164,8 +169,16 @@ class AcilisBriefTest(GeciciTest):
         d = self.proje()
         hedef = d / ".axet-code" / "acilis-brief.md"
         hedef.write_text("ESKİ BRIEF\n", encoding="utf-8")
-        self.assertIn("yazıldı", session_brief.brief_yaz(d, "YENİ\n"))  # kontrol grubu
+        from unittest import mock
+        gercek_replace = session_brief.os.replace
+        kaynaklar = []
+        with mock.patch.object(session_brief.os, "replace",
+                               side_effect=lambda a, b: (kaynaklar.append(str(a)), gercek_replace(a, b))[1]):
+            self.assertIn("yazıldı", session_brief.brief_yaz(d, "YENİ\n"))  # kontrol grubu
         self.assertEqual(hedef.read_text(encoding="utf-8"), "YENİ\n")
+        # bug gate LOW-1: geçici ad süreçe özgü (eşzamanlı iki süreç birbirinin geçici dosyasını taşımasın)
+        self.assertEqual(len(kaynaklar), 1)
+        self.assertIn(f".{session_brief.os.getpid()}.yaziliyor", kaynaklar[0])
         hedef.write_text("ESKİ BRIEF\n", encoding="utf-8")
         from unittest import mock
         with mock.patch.object(session_brief.os, "replace", side_effect=PermissionError(13, "kilitli")):

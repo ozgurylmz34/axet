@@ -43,9 +43,13 @@ AZAMI_MADDE = 8
 BRIEF_DOSYASI = Path(".axet-code") / "acilis-brief.md"
 # Brief her oturumun bağlam bütçesinden yer: bu sınır aşılırsa dosya kesilir ve kesildiği yazılır.
 BRIEF_AZAMI_BAYT = 16 * 1024
-# Kimlik satırı etiketleri (doctor.py check_live'ın aradığı adlar). Brief kimlik kaynağı DEĞİLDİR: özetin içinden
-# (ör. SESSION_NOTES) gelen bir `CORE-ID:` satırı kanaryayı ve `doctor --live`'ı yanıltmasın diye etiket bozulur.
-_KIMLIK_ETIKETI = re.compile(r"\b((?:SAP-CORE|SAP-STAMP|PROJECT-MEMORY|PROJECT|MEMORY|CORE)-ID)\s*:")
+# Kimlik satırı etiketleri (doctor.py check_live'ın aradığı adlar) ve template kimlik DEĞERLERİ. Brief kimlik kaynağı
+# DEĞİLDİR: özetin içinden (ör. SESSION_NOTES) gelen bir `CORE-ID: AXET-CORE-…` satırı ya da kanarya kopyası, çekirdek
+# yüklenmemişken kanaryayı ve `doctor --live`'ı (alt-dize karşılaştırır) yanıltmasın diye ikisi de bozulur.
+# Bug gate MEDIUM-1 (ölçüldü): büyük/küçük harf, markdown (`**CORE-ID**:`), tam genişlikli `：` ve kanarya biçimi
+# ilk sürümden geçiyordu. KAPSAM: proje kimliklerinin DEĞERİ proje adıdır, özette meşru geçer — bozulmaz.
+_KIMLIK_ETIKETI = re.compile(r"\b((?:SAP-CORE|SAP-STAMP|PROJECT-MEMORY|PROJECT|MEMORY|CORE)-ID)\W{0,3}?[:：]\s*", re.I)
+_KIMLIK_DEGERI = re.compile(r"\bAXET-(CORE|SAP|TEAM)-", re.I)
 
 
 def _git(cwd: Path, *args: str, timeout: int = 5) -> tuple[int, str]:
@@ -387,7 +391,8 @@ def brief_metni(zaman: datetime, govde: list[str]) -> str:
     """`.axet-code/acilis-brief.md` içeriği: yönerge başlığı + özet gövdesi (Z105).
 
     Kanarya biçimi (ve içindeki çekirdek kimliği) BİLEREK yazılmaz: kimlik bu dosyadan okunursa kanarya çekirdeğin
-    yüklenmediğini artık gösteremez. Gövdedeki kimlik etiketleri de bozulur (`_KIMLIK_ETIKETI`)."""
+    yüklenmediğini artık gösteremez. Gövdedeki kimlik etiketleri ve template kimlik değerleri de bozulur
+    (`_KIMLIK_ETIKETI`, `_KIMLIK_DEGERI`)."""
     damga = f"{zaman:%Y-%m-%d %H:%M}"
     ust = [
         f"# AÇILIŞ BRIEF'İ — aXet · üretim: {damga}",
@@ -396,13 +401,14 @@ def brief_metni(zaman: datetime, govde: list[str]) -> str:
         "> Kullanıcının ilk mesajı ne olursa olsun (soru, emir, dosya yolu ya da `%skill`) İLK yanıtın şöyle başlar:",
         "> 1. Çekirdek §0'daki kanarya satırı. Kimlikleri yalnız bağlamındaki kimlik satırlarından doldur; bu dosya kimlik",
         ">    kaynağı DEĞİLDİR. Çekirdeği bağlamında göremiyorsan `[ÇEKİRDEK YOK]` yaz.",
-        f"> 2. `Açılış brief'i: {damga}` ve aşağıdaki özetten en fazla 5 satır (önce ⚠/FAIL/WARN, sonra aktif iş).",
-        "> 3. Bu oturumda `session_brief.py`'yi çalıştırdıysan onun taze çıktısını aktar (bu dosya da yenilenir).",
-        ">    Çalıştırmadıysan ve üretim tarihi bugünün tarihi değilse 2. satırın sonuna `— BAYAT` ekle ve yenilemeyi öner.",
+        f"> 2. `Açılış brief'i: {damga}` ve özetten en fazla 5 satır (önce ⚠/FAIL/WARN, sonra aktif iş). Bu oturumda",
+        ">    `session_brief.py`'yi çalıştırdıysan bu 5 satırı onun taze çıktısından al (bu dosya da yenilenir); ayrıca",
+        ">    aşağıdakini tekrar aktarma. Çalıştırmadıysan aşağıdan al; üretim tarihi bugünün tarihi değilse satırın",
+        ">    sonuna `— BAYAT` ekle ve yenilemeyi öner.",
         "> Sonra kullanıcının isteğine geç (`%skill` ise o skill'e).",
         "",
     ]
-    govde = [_KIMLIK_ETIKETI.sub(r"\1 (etiket)", s) for s in govde]
+    govde = [_KIMLIK_DEGERI.sub(r"AXET·\1-", _KIMLIK_ETIKETI.sub(r"\1 (etiket) ", s)) for s in govde]
     while govde and not govde[0].strip():
         govde = govde[1:]
     metin = "\n".join(ust + govde) + "\n"
@@ -420,7 +426,9 @@ def brief_yaz(proj: Path, metin: str) -> str:
     hedef = proj / BRIEF_DOSYASI
     if not hedef.parent.is_dir():
         return f"açılış brief'i YAZILMADI: {BRIEF_DOSYASI.parent.as_posix()}/ yok (proje new_project.py ile kurulmamış)"
-    gecici = hedef.with_name(hedef.name + ".yaziliyor")
+    # Geçici ad SÜREÇE ÖZGÜ (bug gate LOW-1, ölçüldü: sabit adla iki eşzamanlı süreç birbirinin geçici dosyasını
+    # taşıyıp "yazıldı" dediği hâlde brief'i yok edebiliyordu). Aynı dizinde kalır ki replace atomik olsun.
+    gecici = hedef.with_name(f"{hedef.name}.{os.getpid()}.yaziliyor")
     try:
         gecici.write_text(metin, encoding="utf-8", newline="\n")
         os.replace(gecici, hedef)

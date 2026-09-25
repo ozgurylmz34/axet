@@ -1126,8 +1126,11 @@ def check_project(cwd: Path, sap_global: bool = False) -> None:
             if BRIEF_DOSYASI in ctx:
                 add("PASS", "proje config'i açılış brief'ini yüklüyor")
             else:
+                # Özelleştirilmiş config %guncelle-proje'de V4c+ESIK'e düşer (5 satırlık dosyada yerel fark eşiği kolay
+                # aşılır — bug gate MEDIUM-2, ölçüldü) ⇒ elle yol da yazılır, yoksa öneri kısır döngü olur.
                 add("WARN", f"proje config'i açılış brief'ini yüklemiyor ({BRIEF_DOSYASI} context_paths'te yok) "
-                            "→ %guncelle-proje")
+                            f"→ %guncelle-proje; config'i özelleştirdiysen .axet-code.json context_paths'e "
+                            f"\"{BRIEF_DOSYASI}\" girdisini elle ekle")
             # Ölçüldü (aXet 1.3.0): aynı desen projede farklı kararla yazılırsa global kuralı ezer.
             perms = data.get("permissions")
             rules = perms.get("rules") if isinstance(perms, dict) else None

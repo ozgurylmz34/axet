@@ -971,6 +971,8 @@ class BozukConfigTest(GeciciTest):
         self.var(s, "PASS", "proje config'i proje hafızasını yüklüyor")
         s = self.proje_kos(b'{"options": {"context_paths": [".axet-code/memory/MEMORY.md"]}}')  # eski şablon
         self.var(s, "WARN", "açılış brief'ini yüklemiyor (.axet-code/acilis-brief.md context_paths'te yok) → %guncelle-proje")
+        # bug gate MEDIUM-2: özelleştirilmiş config %guncelle-proje'de ESIK'e düşer → elle yol da yazılı olmalı
+        self.var(s, "WARN", "context_paths'e \".axet-code/acilis-brief.md\" girdisini elle ekle")
         self.assertFalse(any("brief'ini yüklüyor" in x for x in s), "\n".join(s))
 
 
