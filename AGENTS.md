@@ -11,7 +11,14 @@ PROJECT-ID: axet-template
 - `memory/` — ekip hafızası (indeks + kayıtlar)
 - `templates/project/` — `new_project.py`'nin kopyaladığı proje iskeleti
 - `scripts/` — `install.py` · `yeni_proje.py` · `new_project.py` · `doctor.py` (tam liste README "Yapı")
-- `kur.cmd` / `kur.ps1` — son kullanıcı kurulum ve güncelleme aracı (UTF-8 **BOM'lu** kalmalı: PS 5.1 BOM'suz dosyada Türkçeyi bozar); `yeni-proje.cmd` — terminalden proje kurulumu
+- `aXet-Kur.cmd` — ilk kurulum (çift tık; `kur.ps1`'i yayın deposundan indirip çalıştırır)
+- `kur.ps1` — kurulum motoru · `kur.cmd` — terminal yolu: yeniden kurulum, `-Sifirla`, `-Kaldir`, `-DenemeModu`
+  (`kur.ps1` UTF-8 **BOM'lu** kalmalı: PS 5.1 BOM'suz dosyada Türkçeyi bozar; `.cmd` satır sonu CRLF — `.gitattributes`)
+- `yeni-proje.cmd` — `%yeni-proje`'nin terminal yedeği (aynı `scripts/yeni_proje.py`) · `proje-tamamla.cmd` — projedeki
+  `KURULUMU-TAMAMLA` kısayolunun hedefi (bağlantı şablonu · ayar onayı · doctor · aXet'i aç)
+- `GUNCELLE.md` + `guncelle/` — `%guncelle` akışı ve yayın kataloğu (`guncelle/yayinlar.json`); `CHANGELOG.md` her
+  yayında katalogdan üretilir, elle düzenlenmez
+- `.axetcode-denylist` — aXet'in okumadığı dosyalar (klonda da bağlantı/gizli dosya koruması)
 - `docs/` — onboarding rehberi ve tasarım notları
 - `LICENSE` · `NOTICE` · `THIRD_PARTY_NOTICES.md` — izinle eklenen bölüm ya da açık kaynaktan türetilen kod eklenince aynı değişiklikte güncellenir
 - `_lab/` — deneme alanı (repoya girmez)
