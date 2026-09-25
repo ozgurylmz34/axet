@@ -570,6 +570,11 @@ BAGLAM_WARN = 200 * 1024
 BAGLAM_FAIL = 1024 * 1024
 BAGLAM_OTOMATIK = ("AGENTS.md", "CLAUDE.md", "CLAUDE.local.md", "GEMINI.md", ".cursorrules", ".github/copilot-instructions.md")
 BAGLAM_ETIKETI = "bağlam boyutu"
+# Z105 açılış brief'i: session_brief.py yazar (ad orada da BRIEF_DOSYASI). Proje config'inde listelenip diskte YOKSA
+# ÖLÇÜLEMEDİ sayılmaz: boyutu bilinir (0) ve aXet eksik context_paths dosyasını atlar, oturum açılır (ölçüldü aXet 1.3.0,
+# 2026-09-25: eksik brief + ikinci bağlam dosyası → ikinci dosyanın işareti döndü, rc=0). İstisna YALNIZ bu tam yol
+# ve YALNIZ "dosya yok" durumu içindir; okunamayan ya da dizin olan brief yine ÖLÇÜLEMEDİ.
+BRIEF_DOSYASI = ".axet-code/acilis-brief.md"
 # Bir dizin girdisinde yürünen en çok dosya; aşılırsa yürüme kesilir ve ÖLÇÜLEMEDİ yazılır (bug gate LOW-3 ölçümü:
 # 20 000 dosyalı dizin ≈ 35 sn). Sınır dizin girdisi başınadır.
 BAGLAM_DOSYA_SINIRI = 5000
@@ -627,6 +632,9 @@ def baglam_olcumu(cwd: Path | None, cfg_file: Path) -> dict:
             return
         else:
             yol = kok / p
+        if kaynak == "proje-config" and p == BRIEF_DOSYASI and not os.path.lexists(yol):
+            taranan.append(f"açılış brief'i {p} henüz yok (0 bayt; aXet eksik dosyayı atlar — session_brief.py yazar)")
+            return
         if yol.is_dir():
             dizin(yol, kaynak)
         else:
@@ -1114,6 +1122,12 @@ def check_project(cwd: Path, sap_global: bool = False) -> None:
             ctx = opts.get("context_paths") or []
             ctx = ctx if isinstance(ctx, list) else []
             add("PASS" if ".axet-code/memory/MEMORY.md" in ctx else "WARN", "proje config'i proje hafızasını yüklüyor")
+            # Z105: brief bağlamda değilse, model özeti atladığında (ör. oturum `%skill` ile açıldı) hiçbir özet görmez.
+            if BRIEF_DOSYASI in ctx:
+                add("PASS", "proje config'i açılış brief'ini yüklüyor")
+            else:
+                add("WARN", f"proje config'i açılış brief'ini yüklemiyor ({BRIEF_DOSYASI} context_paths'te yok) "
+                            "→ %guncelle-proje")
             # Ölçüldü (aXet 1.3.0): aynı desen projede farklı kararla yazılırsa global kuralı ezer.
             perms = data.get("permissions")
             rules = perms.get("rules") if isinstance(perms, dict) else None

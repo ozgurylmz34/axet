@@ -10,6 +10,8 @@
 | Otomatik yüklenen bağlam dosyaları (proje kökü) | `AGENTS.md`, `CLAUDE.md`, `CLAUDE.local.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` | `run` ve TUI aynı 6 dosya + context_paths |
 | Yüklenmeyenler | `AXET.md`, `CRUSH.md` (tek başına da), alt dizin `AGENTS.md`, üst dizin `AGENTS.md`, config dizinindeki `AGENTS.md` | işaretler çıkmadı; negatif kontrol de çıkmadı |
 | `options.context_paths` | Göreli, mutlak ve dizin (içindeki .md'ler) çalışır; proje `.axet-code.json` ve global `%USERPROFILE%\.config\axet-code\axet-code.json` | global, `XDG_CONFIG_HOME` ile lab'a yönlendirilerek ölçüldü |
+| `context_paths` dosyası diskte YOK (2026-09-25) | Girdi sessizce atlanır; oturum açılır, listedeki öteki bağlam dosyası yine yüklenir | 1 `run` koşusu: eksik brief + ikinci dosya → ikinci dosyanın işareti döndü, rc=0 |
+| `context_paths`'teki yönergeli blok ilk mesajdan bağımsız mı (Z105, 2026-09-25) | Evet: brief dosyası bağlamdayken ilk yanıt işaretli satırla başladı — `merhaba`, dosya listeleme emri ve `%skill` ile açılışta **3/3**; aynı dosya diskte ama `context_paths`'te değilken **0/3**. `%skill` koşusunda aktarım skill'i `view` ile okuduktan sonra geldi | `run` modu, bash/edit deny; hüküm DB'den. TUI ve aynı istemlerin 3×3 tekrarı ÖLÇÜLMEDİ |
 | `options.skills_paths` + `.axet-code/skills` + `AXET_SKILLS_DIR` | Skill keşfi çalışır; `%ad` ile çağrıda model `SKILL.md` gövdesini `view` ile okur | işaret doğru döndü |
 | `.claude/skills`, `.agents/skills`, `./skills` | Taranmaz | listede yok |
 | Global + proje config birlikte | **Birleşir, ezmez**: `context_paths`, `skills_paths` ve `permissions.rules` iki kaynaktan birlikte uygulanır | iki bağlam işareti + 3 skill + iki deny kuralı birlikte çalıştı |

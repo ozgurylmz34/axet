@@ -43,7 +43,8 @@ Hükmü ve raporu SCRIPT verir; sen yalnız yargı gereken yerde kullanıcıya s
 | 4 | Otomatik vakalar (V1/V2/V5/V6) | `… uygula --otomatik` | 0 | 1 → `durum` göster, DUR |
 | 5 | Yargı vakaları (V4t/V4c/V4B/V7/VTB) | `… oneri <yol>` → sor → `… isaretle <yol> --karar …` | her biri 0 | aşağıdaki karar tablosu |
 | 6 | Kapanış | `… kapanis` | 0 | 1 → raporu göster, seçenek sun |
-| 7 | Son | `RAPOR.md`'yi aynen göster | — | — |
+| 7 | Açılış brief'i | kapanış 0 ise proje `AGENTS.md` "Oturum" bölümündeki `session_brief.py` komutu — `.axet-code/acilis-brief.md`'yi güncel şablonla yeniler (git'e girmez) | 0 | çıktının son satırını aynen göster ("YAZILMADI/YAZILAMADI" ise nedeni) |
+| 8 | Son | `RAPOR.md`'yi aynen göster | — | — |
 
 **Adım 3 neden 2. adımdan sonra:** plan görülmeden onay istemek, kullanıcıya ne onayladığını
 söylemeden onay istemektir. Önce planı göster, sonra onayı iste.

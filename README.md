@@ -110,7 +110,10 @@ oturumunda yüklenir. Projelerin için ayrıca `%guncelle-proje`.
 
 ## Günlük kullanım
 - Oturum açılışı: model ilk yanıttan önce `scripts/session_brief.py`'yi çalıştırır (proje `AGENTS.md` "Oturum" bölümü) —
-  dal ve değişiklikler, template güncelliği, doctor uyarıları, aktif paketin son kaydı, iş listesi, devir notları
+  dal ve değişiklikler, template güncelliği, doctor uyarıları, SAP profili, aktif paketin son kaydı, iş listesi, devir notları.
+  Özet `.axet-code/acilis-brief.md`'ye de yazılır (git'e girmez) ve proje `.axet-code.json` bu dosyayı her oturumda
+  bağlama koyar: model özeti çalıştırmasa da (ör. oturum `%skill` ile açıldı) son özeti üretim saatiyle görür;
+  tarihi bugün değilse "BAYAT" der ve yenilemeyi önerir. Brief'i her özet koşusu, `%gun-sonu` ve `%guncelle-proje` yeniler
 - `%yeni-proje` — yeni projeyi sorarak kur
 - `%gun-sonu` — kaldığın yeri yaz (SESSION_NOTES, iş listesi, devir notu), çalışma dalını commit + push et
   (projenin uzak deposu yoksa push yapılmaz)
