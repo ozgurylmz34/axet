@@ -64,7 +64,7 @@ server:
   yüklendi ama kaynak kökünü yanlış hesapladı (`…/sap-ui-core.js/sap/ui/core/library.js` 404), sayfa boş · proxy
   `directLoad: true` → servis edilen `index.html`'deki bu `src`'yi DEĞİŞTİRMEDİ · tam patch (`/1.120.50/resources`)
   çalıştı ama CDN o patch'i silince sessizce İngilizceye düşme riski taşır (`%sap-ui5-fiori` → `app-skeleton.md` §7 ②).
-- Kontrol: `grep -n "backend:" ui5-mock.yaml` → boş olmalı · `kd_ortam.py check` bunu ve bootstrap eşlemesini denetler.
+- Kontrol: `grep -n "backend:" ui5-mock.yaml` → boş olmalı · `kd_ortam.py check` `backend:` satırını ve eşlemenin biçimini (path + `pathReplace: /resources`) METİN olarak denetler; `url`'nin doğru CDN olduğuna ve yolun gerçekten 200 döndüğüne bakmaz → §6 curl.
 
 Servis kontrolleri (sırayla):
 1. `urlPath` = `manifest.json` → `sap.app.dataSources.mainService.uri` (sondaki `/` dahil birebir). Kopyalanmış

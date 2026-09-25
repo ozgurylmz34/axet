@@ -788,7 +788,33 @@ class KdOrtamMockYamlTest(unittest.TestCase):
         _, yollar, _ = kd_ortam.yaml_tara(
             "c:\n  ui5:\n    path: [ /resources, \"/sap/public/bc/ui5_ui5/resources/\" ]\n    url: u\n"
             "  backend:\n    - path: /sap\n")
-        self.assertEqual(["/resources", "/sap/public/bc/ui5_ui5/resources"], yollar, "backend path'i sayılmamalı")
+        self.assertEqual([("/resources", None), ("/sap/public/bc/ui5_ui5/resources", None)], yollar,
+                         "backend path'i sayılmamalı")
+
+    def test_akis_bicimi_ve_tirnakli_backend_sayilir_deger_sayilmaz(self):
+        """Tehlikeli yön (yanlış PASS) kapalı: akış biçimi ve tırnaklı anahtar backend'dir; `name:` değeri değildir."""
+        backend, _, _ = kd_ortam.yaml_tara(
+            "a:\n  configuration: {backend: [{path: /sap}]}\n  b:\n    \"backend\":\n  name: backend: x\n")
+        self.assertEqual([2, 4], backend)
+
+    def test_eslesme_pathreplace_ister_onek_saymaz(self):
+        d = "/sap/public/bc/ui5_ui5/resources"
+        self.assertEqual((d, "/resources"), kd_ortam.bootstrap_eslesmesi(d, [(d, "/resources")]))
+        self.assertIsNone(kd_ortam.bootstrap_eslesmesi(d, [(d, None)]), "pathReplace'siz → CDN'de 404")
+        self.assertIsNone(kd_ortam.bootstrap_eslesmesi(d, [("/sap", None), ("/sap", "/resources")]), "önek eşlemesi")
+        self.assertEqual(("/resources", None), kd_ortam.bootstrap_eslesmesi("/resources", [("/resources", None)]))
+        self.assertEqual(("/resources", None),
+                         kd_ortam.bootstrap_eslesmesi("/resources/sap/ui", [("/resources", None)]))
+        _, yollar, _ = kd_ortam.yaml_tara(IYI_MOCK_YAML)
+        self.assertIn((d, "/resources"), yollar, "pathReplace son path öğesine bağlanmalı")
+
+    def test_pathreplace_siz_yaml_eksik(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"),
+                               mock_yaml=IYI_MOCK_YAML.replace("              pathReplace: /resources\n", ""))
+            r = self._check(app, t)
+        self.assertEqual(2, r.returncode)
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml bootstrap yolu\s+/sap/public/bc/ui5_ui5/resources için")
 
     def test_backend_path_bootstrap_eslemesi_sayilmaz(self):
         """backend `path: /sap` bootstrap'ı önek olarak kapsar ama mock'ta SAP'ye gider → eşleme değildir."""
@@ -797,22 +823,59 @@ class KdOrtamMockYamlTest(unittest.TestCase):
             satirlar, _ = kd_ortam.mock_yaml_denetle(app, kd_ortam.package_json_oku(app)[0])
         self.assertIn(("mock yaml bootstrap yolu", False), [s[:2] for s in satirlar])
 
-    def test_yaml_yok_ve_config_bayraksiz_varsayilan(self):
+    def test_yaml_yok_eksik(self):
         with gecici_dizin() as t:
             app = tam_uygulama(os.path.join(t, "app"), mock_yaml=None)
             r = self._check(app, t)
-            app2 = tam_uygulama(os.path.join(t, "app2"), start_mock="fiori run --open index.html")
-            r2 = self._check(app2, t)
         self.assertEqual(2, r.returncode)
         self.assertRegex(r.stdout, r"EKSİK\s+mock yaml\s+YOK: ui5-mock.yaml")
-        self.assertRegex(r2.stdout, r"EKSİK\s+mock yaml\s+YOK: ui5.yaml \(--config yok")
+
+    def test_config_bayraksiz_canli_ui5_yaml_onerisi_bozmaz(self):
+        """--config yoksa fiori run canlı ui5.yaml'ı kullanır; araç onun backend'ini kaldırmayı ÖNERMEMELİ
+        (canlı start/start-noflp bozulur) — tek öneri: start-mock'a --config ekle (bug gate 2026-09-25 #1)."""
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"), start_mock="fiori run --open index.html", mock_yaml=None)
+            yaz(os.path.join(app, "ui5.yaml"), URETICI_MOCK_YAML)  # canlı yaml: backend'li, eşlemesiz
+            r = self._check(app, t)
+        self.assertEqual(2, r.returncode)
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml\s+start-mock'ta --config YOK")
+        self.assertIn("start-mock'a `--config ./ui5-mock.yaml` ekle", r.stdout)
+        self.assertNotIn("bloğunu kaldır", r.stdout)
+        self.assertNotIn("mock yaml bootstrap yolu", r.stdout)
+        self.assertNotIn("mock yaml backend'siz", r.stdout)
 
     def test_config_bayrak_bicimleri(self):
         for scr, beklenen in (('fiori run --config "./m k.yaml" --open x', "m k.yaml"),
                               ("fiori run --config=ui5-mock.yaml", "ui5-mock.yaml"),
-                              ("fiori run --open x", "ui5.yaml")):
-            yol, _ = kd_ortam.mock_yaml_yolu("app", scr)
+                              ("fiori run -c ui5-mock.yaml", "ui5-mock.yaml"),
+                              ("ui5 build --config ui5-deploy.yaml && fiori run --config ./ui5-mock.yaml",
+                               "ui5-mock.yaml")):
+            yol, bayrak = kd_ortam.mock_yaml_yolu("app", scr)
+            self.assertTrue(bayrak, scr)
             self.assertEqual(os.path.normpath(os.path.join("app", beklenen)), yol, scr)
+        self.assertEqual((None, False), kd_ortam.mock_yaml_yolu("app", "fiori run --open x --accept-remote-connections"))
+
+    @unittest.skipUnless(WIN, "sürücü harfi Windows'a özgü")
+    def test_farkli_surucudeki_config_cokmez(self):
+        with gecici_dizin() as t:
+            surucu = "D:" if not os.path.abspath(t).upper().startswith("D:") else "E:"
+            app = tam_uygulama(os.path.join(t, "app"), start_mock="fiori run --config %s/yok/m.yaml" % surucu)
+            r = self._check(app, t)
+        self.assertNotIn("Traceback", r.stderr)
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml\s+YOK: %s" % surucu)
+
+    def test_workspace_uyesi_olmayan_uygulamaya_workspace_onerisi_yok(self):
+        with gecici_dizin() as t:
+            kok = os.path.join(t, "ui")
+            yaz_json(os.path.join(kok, "package.json"), {"private": True, "workspaces": ["packages/*"]})
+            app = tam_uygulama(os.path.join(kok, "tools", "app"), dev={})
+            self.assertIsNone(kd_ortam.workspace_koku(app))
+            yaz_json(os.path.join(kok, "package.json"), {"private": True, "workspaces": {"packages": ["tools/*"]}})
+            self.assertEqual(os.path.abspath(kok), kd_ortam.workspace_koku(app))
+            yaz_json(os.path.join(kok, "package.json"), {"private": True, "workspaces": ["packages/*"]})
+            r = self._check(app, t)
+        self.assertIn("--save-dev @sap/ux-ui5-tooling", r.stdout)
+        self.assertNotIn("adını ekle", r.stdout)
 
     def test_cdn_ve_indexsiz_bootstrap_bilgi_satiri_kosulsuz_gecmez(self):
         with gecici_dizin() as t:
@@ -847,7 +910,7 @@ class KdOrtamMockYamlTest(unittest.TestCase):
         self.assertIsNotNone(m, "mock-ortam.md'de yaml bloğu yok")
         backend, yollar, adlar = kd_ortam.yaml_tara(m.group(1))
         self.assertEqual([], backend)
-        self.assertIn("/sap/public/bc/ui5_ui5/resources", yollar)
+        self.assertIsNotNone(kd_ortam.bootstrap_eslesmesi("/sap/public/bc/ui5_ui5/resources", yollar))
         self.assertIn("fiori-tools-proxy", adlar)
 
 
