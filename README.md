@@ -75,7 +75,7 @@ Parola dosyada düz metindir; `conn/` git'e girmez ve aXet ajanına kapalıdır.
 `KURULUMU-TAMAMLA`'ya çift tıkla (ayar onayını o sorar).
 
 SAP projesinde `AGENTS.md` içindeki kesin yasak bloğunu elle değiştirme: template güncellenince
-`new_project.py --sap` bloğu yeniler, `doctor.py` eski ya da değiştirilmiş damgayı FAIL olarak gösterir.
+`%guncelle-proje` (terminalde `new_project.py --sap`) bloğu yeniler, `doctor.py` eski ya da değiştirilmiş damgayı FAIL olarak gösterir.
 Terminal yolu, elle kurulum ve bağlantı teşhisi: [`docs/onboarding.md`](docs/onboarding.md) §3.
 
 ## Yeni paket (SAP projesi)
@@ -117,8 +117,11 @@ projende `.axet-code/bildirimler/` altına kaydeder (bu klasör git'e girmez). B
   ilet; Issue'yu o açar ve adresini sana bildirir. Hesap açman gerekmez; bildirim bu hâliyle eksiksizdir. Hesapsız
   formu açmayı denersen form yerine GitHub giriş sayfası gelir ve hiçbir şey gönderilmez; dosyan projende durur.
 
-Bakımcı her iddiayı güncel aXet'te kendisi yeniden ölçer; düzeltme bir yayına girerse Issue'da hangi sürümde geldiği
-yazılır ve `%guncelle` ile alırsın.
+Bakımcı her iddiayı güncel aXet'te kendisi yeniden ölçer. Issue yedi bölümlü bir kapanış yorumuyla kapanır: sonuç ·
+yapılan · yapılmayan ve nedeni · senin yapacağın adımlar · dikkat · doğrulama · yeniden açma koşulu. "Senin
+yapacağın adımlar"ı uygula (çoğunlukla `%guncelle`; SAP projelerinde ayrıca `%guncelle-proje` — güncelleme
+yerel ayarlarını değiştirmez), sonra "doğrulama" komutuyla kendi makinende ölç: yayında olması sende düzeldiği
+anlamına gelmez. Ayrıntı: `%hata-bildir` → "Gönderdikten sonra".
 
 ## Güncelleme
 aXet içinde **`%guncelle`** yaz. Klonu yeni yayına seçmeli olarak taşır (senin değişikliklerin korunur), SAP Python

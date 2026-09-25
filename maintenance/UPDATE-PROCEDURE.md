@@ -63,6 +63,21 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 5. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
 6. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
    etkilediği kuralı/script'i güncelle.
+7. **Kullanıcı belgeleri turu — HER yayında, sorulmadan, yayın PR'ından önce (kullanıcı kuralı 2026-09-25).**
+   Yayın, belgeleri de public'e taşır; kod ya da skill değişip belge eski kalırsa kullanıcı yanlış bilgiyle çalışır.
+   - **Kapsam:** kökteki `README.md` · `GUNCELLE.md` · `AGENTS.md` · `docs/*.md` (`yayin_hazirla.DISLANANLAR`
+     hariç) · `skills-sap/README.md` · `templates/project/AGENTS.md` · değişen her skill'in `SKILL.md` açıklaması.
+   - **Kalem kalem sor:** yayındaki her katalog kalemi kullanıcının gördüğü bir akışı, komutu, sırayı, sayıyı ya da
+     sınırı değiştiriyor mu? Değiştiriyorsa ilgili belge bölümünü güncelle; değiştirmiyorsa "belge etkisi yok" de.
+   - **Sayılar koddan yeniden ölçülür, elle taşınmaz:** araç sayısı `sap_adt_cli.py --list` → `counts` · çekirdek
+     kimlikleri `CORE-ID` / `SAP-CORE-ID` satırları · README sürüm satırını `yayin_hazirla` yazar. Elle yazılan
+     sayı bayatlar ve hiçbir test yakalamaz.
+   - Değişen belge katalogta bir kaleme beyan edilir (kalemsiz dosya tüketiciye uygulanmaz).
+   - Sonucu `IS-LISTESI.md` yayın satırına yaz: "belge turu: değişen <dosyalar> · etkisiz <sayı> kalem".
+   *Vaka (v0.5.10):* README'nin bildirim bölümü yeni kapanış akışını anlatmıyordu ve `docs/sap-api-policy.md`
+   araç sayısı 2026-09-15'ten beri bayattı (37 → 41). İkisi de testlerden, üç bağımsız incelemeden ve sızıntı
+   taramasından geçti; kullanıcı sormasa yayına öyle girecekti. İnceleme brifingi yalnız farkı gösterdiği için
+   farkta OLMAYAN belgeyi göremez — bu adım o yüzden ayrıdır.
 
 ## 6. Haritayı kapat
 1. `sync-rules.json`'da işlenen kuralların `status`/`targets` alanlarını güncelle (aktarılan → `tamam`).

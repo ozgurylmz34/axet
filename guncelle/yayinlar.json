@@ -2155,7 +2155,7 @@
      "baslik": "ADT: kaynağı SAP'ye dokunmadan biçimleme (`adt_pretty_print`), sürüm geçmişi okuma düzeltmesi (`adt_revisions`), ATC Pretty Print reçetesi",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "ATC 'Incorrect Pretty Print state' bulgusunu kapatmak için kaynağın SAP biçimleyicisinden geçmiş hâli gerekiyordu, ama bunu yalnız ADT editöründe elle yapabiliyordunuz. Yeni `adt_pretty_print` aracı biçimlenmiş metni sistemde hiçbir şeyi değiştirmeden yerel dosyaya alır; hangi bölümlerin sisteme gideceğine siz karar verirsiniz, kayıt her zamanki onaylı yazma adımıyla yapılır (`classes.md` §7.1 reçetesi). Ayrıca bir objenin sürüm geçmişi (ne zaman, kim, hangi transportla değişti) `adt_revisions` ile sınıf, include ve arayüzlerde hiç okunamıyordu: sistem aracın istek biçimini reddediyor, bağlantıyı da bulamıyordu. Artık geçmiş okunuyor; okunamadığında 'sürüm yok' diye boş liste yerine açık hata döner. İkisi de salt-okur araçtır ve canlı sistemde ölçüldü.",
+     "neden": "ATC 'Incorrect Pretty Print state' bulgusunu kapatmak için kaynağın SAP biçimleyicisinden geçmiş hâli gerekiyordu, ama bunu yalnız ADT editöründe elle yapabiliyordunuz. Yeni `adt_pretty_print` aracı biçimlenmiş metni sistemde hiçbir şeyi değiştirmeden yerel dosyaya alır; hangi bölümlerin sisteme gideceğine siz karar verirsiniz, kayıt her zamanki onaylı yazma adımıyla yapılır (`classes.md` §7.1 reçetesi). Ayrıca bir objenin sürüm geçmişi (ne zaman, kim, hangi transportla değişti) `adt_revisions` ile sınıf, include ve arayüzlerde hiç okunamıyordu: sistem aracın istek biçimini reddediyor, bağlantıyı da bulamıyordu. Artık geçmiş okunuyor; okunamadığında 'sürüm yok' diye boş liste yerine açık hata döner. İkisi de salt-okur araçtır ve canlı sistemde ölçüldü. `docs/sap-api-policy.md`'deki araç sayısı yeniden ölçüldü: 41 araç (25 okuma · 16 yazma; önceki belge 37 diyordu).",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
       "skills-sap/sap-adt-foundation/SKILL.md",
@@ -2170,7 +2170,8 @@
       "skills-sap/sap-adt-foundation/tests/test_diag_tools.py",
       "skills-sap/sap-adt-foundation/tests/test_lib_regressions.py",
       "skills-sap/sap-adt-foundation/tests/test_pretty_print.py",
-      "skills-sap/sap-classic-abap/references/classes.md"
+      "skills-sap/sap-classic-abap/references/classes.md",
+      "docs/sap-api-policy.md"
      ],
      "gerektirir": [],
      "test": [
@@ -2267,7 +2268,7 @@
      "baslik": "SAP çekirdeği: standart veriye yazma sırası released API ile başlıyor (AXET-SAP-0.5.2)",
      "tur": "kural",
      "kritik": true,
-     "neden": "Kesin yasak B değişmedi: standart tabloya doğrudan INSERT/UPDATE/DELETE/MODIFY hâlâ yok. Değişen yalnız izinli yolların sırası: önce released API (released RAP BO ile EML, released BAPI, released OData), sonra BAPI → RFC FM → BDC → kullanıcıdan manuel. Yazma kapısının red mesajı, oturum açılış özeti ve SAP alt görev brifingleri de yeni sırayı gösteriyor. Yazma kapısı yalnız doğrudan tablo yazımını reddeder; hangi API'nin seçildiğini zorlamaz (bunu inceleme maddesi BE-79 yakalar, 0.5.10-15). Çekirdek kimliği `AXET-SAP-0.5.2`: SAP projelerinde kesin yasak damgası \"farklı\" görünür ve `doctor` FAIL verir — `%guncelle-proje` ile `AGENTS.md` damgasını yenile, sonra yeni aXet oturumu aç.",
+     "neden": "Kesin yasak B değişmedi: standart tabloya doğrudan INSERT/UPDATE/DELETE/MODIFY hâlâ yok. Değişen yalnız izinli yolların sırası: önce released API (released RAP BO ile EML, released BAPI, released OData), sonra BAPI → RFC FM → BDC → kullanıcıdan manuel. Yazma kapısının red mesajı, oturum açılış özeti ve SAP alt görev brifingleri de yeni sırayı gösteriyor. Yazma kapısı yalnız doğrudan tablo yazımını reddeder; hangi API'nin seçildiğini zorlamaz (bunu inceleme maddesi BE-79 yakalar, 0.5.10-15). Çekirdek kimliği `AXET-SAP-0.5.2`: SAP projelerinde kesin yasak damgası \"farklı\" görünür ve `doctor` FAIL verir — `%guncelle-proje` ile `AGENTS.md` damgasını yenile, sonra yeni aXet oturumu aç. README artık damga yenilemesi için önce `%guncelle-proje`'yi gösterir (terminal yolu `new_project.py --sap`).",
      "dosyalar": [
       "core/sap/00-sap.md",
       "scripts/session_brief.py",
@@ -2276,7 +2277,8 @@
       "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
       "skills-sap/sap-adt-foundation/SKILL.md",
       "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
-      "skills-sap/sap-dev/references/role-briefs.md"
+      "skills-sap/sap-dev/references/role-briefs.md",
+      "README.md"
      ],
      "gerektirir": [],
      "test": [
@@ -2409,9 +2411,10 @@
      "baslik": "`%hata-bildir`: Issue kapanış yorumunu görünce ne yapılır",
      "tur": "yetenek",
      "kritik": false,
-     "neden": "Bakımcı bildirimleri artık yedi bölümlü bir kapanış yorumuyla kapatır: sonuç · yapılan · yapılmayan ve nedeni · senin yapacağın adımlar · dikkat · doğrulama · yeniden açma koşulu. `%hata-bildir` kapanışı görünce yapılacakları sıralar: yerel adımları sen uygularsın (`%guncelle` proje dosyalarını ve yerel ayarları değiştirmez), çıkarılan şeyi yerelde yeniden eklemezsin, düzeldiğini kendi makinende ölçer ve sonucu bildirim dosyasının `## Takip` bölümüne yazarsın; tutmuyorsa aynı Issue'ya yorum yazılır. Üretilemeyen bildirim de aynı yorumla kapanır.",
+     "neden": "Bakımcı bildirimleri artık yedi bölümlü bir kapanış yorumuyla kapatır: sonuç · yapılan · yapılmayan ve nedeni · senin yapacağın adımlar · dikkat · doğrulama · yeniden açma koşulu. `%hata-bildir` kapanışı görünce yapılacakları sıralar: yerel adımları sen uygularsın (`%guncelle` proje dosyalarını ve yerel ayarları değiştirmez), çıkarılan şeyi yerelde yeniden eklemezsin, düzeldiğini kendi makinende ölçer ve sonucu bildirim dosyasının `## Takip` bölümüne yazarsın; tutmuyorsa aynı Issue'ya yorum yazılır. Üretilemeyen bildirim de aynı yorumla kapanır. README'nin \"Hata / öneri bildirme\" bölümü de bu akışı anlatır.",
      "dosyalar": [
-      "skills/hata-bildir/SKILL.md"
+      "skills/hata-bildir/SKILL.md",
+      "README.md"
      ],
      "gerektirir": [],
      "test": [
