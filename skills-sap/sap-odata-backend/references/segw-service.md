@@ -21,7 +21,7 @@ Profil matrisi rehberdir, kanıt değildir: yetenek şüphesinde canlı sistemde
 | Öncelik | Senaryo | Teknoloji |
 |---|---|---|
 | 1 | Okuma ağırlıklı liste, rapor, value help | CDS view → OData V2 (salt-okur ise `@OData.publish`, §6) |
-| 2 | İşlem (create/update/delete) | DPC_EXT içinde BAPI / RFC FM |
+| 2 | İşlem (create/update/delete) | DPC_EXT içinde BAPI / RFC FM — standart nesnede API seçimi: `%sap-dev` → `write-api-selection.md` |
 | 3 | Join/aggregation'lı karmaşık sorgu | CDS (HANA'ya özgü mantık gerekirse AMDP) |
 | 4 | Karma (CDS ile oku, RFC ile yaz) | MPC'de CDS entity + DPC_EXT'te RFC çağrısı |
 | 5 | CDS mümkün olmayan eski entegrasyon | RFC → SEGW function import |

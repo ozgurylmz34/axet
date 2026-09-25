@@ -63,11 +63,27 @@ yok; Issue açık kalır.
 
 1. `IS-LISTESI.md`'ye madde (Issue adresiyle) → dal → düzeltme + test → bağımsız inceleme → PR → CI → merge.
 2. Sıradaki yayının kataloğuna (`guncelle/yayinlar.json`) kalem; `neden` metni kullanıcının diliyle.
-3. Yayından sonra Issue'ya kısa, kimliksiz yorum: hangi sürümde geldi + kullanıcının koşacağı adım (`%guncelle`,
-   gerekiyorsa `%guncelle-proje`) + "yeniden üretimi bir kez koşup sonucu yaz" → kapat.
-4. Çürüyen ya da yapılmayacak bildirim de gerekçesiyle (hangi ortamda ne ölçüldü) kapatılır — bu ret değil
-   **kapsam beyanıdır**; daha dar bir yeniden üretimle yeniden açılabilir. Aynı konunun yeni Issue'su `duplicate`
-   yorumuyla ilk Issue'ya yönlendirilir.
+3. Yayından sonra Issue'ya **kimliksiz KAPANIŞ YORUMU** (aşağıdaki iskelet) → kapat.
+4. Çürüyen ya da yapılmayacak bildirim de **aynı iskeletle** kapatılır (1. bölüm = gerekçe: hangi ortamda ne
+   ölçüldü) — bu ret değil **kapsam beyanıdır**; daha dar bir yeniden üretimle yeniden açılabilir. Aynı konunun yeni
+   Issue'su `duplicate` yorumuyla ilk Issue'ya yönlendirilir.
+
+**KAPANIŞ YORUMU İSKELETİ (MUST — yedi bölüm; uygulanmayan bölüm "yok" diye yazılır, atlanmaz).** Okuyucusu bildiren
+kullanıcı ya da onun aXet'i: değerlendirmeyi, iş listesini ve kararları **görmez** — işi kendi tarafında kapatabilmesi
+için bilmesi gereken her şey yorumdadır. *"Sürüm + `%guncelle`"* yetmez: onaylı kapsam daraltılmış olabilir ve
+güncelleme her şeyi taşımaz (kullanıcının proje dosyaları, yerel ayarları, kendi eklediği kurallar değişmez).
+
+1. **Sonuç** — iddia bazında hüküm (DOĞRULANDI · KISMEN · ÇÜRÜDÜ · ÖLÇÜLEMEDİ) + hangi ortamda ölçüldü.
+2. **Yapılan** — hangi sürümde geldi · kullanıcının göreceği değişiklik (katalog kalemi başlığı).
+3. **Yapılmayan ve nedeni** — önerinin uygulanmayan / daraltılan / ertelenen her parçası, kanıtıyla.
+4. **Senin yapacağın adımlar** — sıralı, komutlarıyla: önce `%guncelle` (gerekiyorsa `%guncelle-proje`), sonra
+   güncellemenin TAŞIMADIĞI yerel adımlar (ör. proje dosyasında elle yapılacak değişiklik).
+5. **Dikkat** — yapılmaması gerekenler (ör. çıkarılan bir izni yerelde yeniden ekleme), ölçülmeyen yüzeyler,
+   bilinen sınırlar.
+6. **Doğrulama** — "bende düzeldi" demek için koşulacak komut + beklenen çıktı ("yayında" ≠ "bende düzeldi").
+7. **Yeniden açma koşulu** — hangi gözlemde aynı Issue'ya yorum yazılır.
+
+Yorum kimliksizdir (3. bölümdeki tarama); yol ve komutlar yer tutucuyla yazılır (`<AXET_HOME>`, `<proje>`).
 
 ## 7. Durum etiketleri — mükerrer değerlendirmeyi önler, bildirene takip verir
 
@@ -76,7 +92,7 @@ yok; Issue açık kalır.
 | `durum:degerlendiriliyor` | bildirim ilk görüldüğünde (2. adım) | yok — salt etiket |
 | `durum:onay-bekliyor` | analiz sahibe sunulduğunda (5. adım) | yok — salt etiket |
 | `durum:onaylandi` | açık onaydan sonra | kısa, kimliksiz: iddia bazında hüküm + onaylanan kapsam |
-| `durum:reddedildi` | çürüyen / yapılmayacak bildirim | gerekçe (hangi ortamda ne ölçüldü) → kapat |
+| `durum:reddedildi` | çürüyen / yapılmayacak bildirim | KAPANIŞ YORUMU iskeleti (1. bölüm = gerekçe) → kapat |
 
 5. adımdan önce Issue'ya yalnız etiket konur; yorum ve kapatma sonradır (public ve kalıcıdır). Etiketler public
 depoda yoksa yaratılması depoya dışa dönük bir değişikliktir: aXet sahibinin onayıyla bir kez yapılır.

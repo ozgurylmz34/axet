@@ -29,6 +29,8 @@ MEMORY-ID: AXET-TEAM-MEMORY
 - [UI5 i18n iki dosya](feedback_ui5-i18n-iki-dosya.md) — TR uygulamada metin/anahtar i18n + i18n_tr ikisinde, sonra Ctrl+F5
 - [UI5 runtime sayıyla doğrula](feedback_ui5-runtime-sayiyla-dogrula.md) — click() değil firePress/model API; dolgu farkını runtime'da yan yana oku
 - [UI5 lokal popup ↔ hesap kilidi](feedback_ui5-lokal-popup-hesap-kilidi.md) — lrep/varyant 401 teknik; ısrarlı $metadata 401 = kilit, deneme yapma
+- [UI5 elle kurulan istek sap-client taşımaz](feedback_ui5-elle-kurulan-istek-sap-client.md) — ikinci model/ham istek ana modelin `aUrlParams`'ını devralır; iki client + ayırıcı veriyle ölç
+- [UI5 sayfadan ayrılırken senkron XHR gitmez](feedback_ui5-sayfadan-ayrilirken-senkron-xhr.md) — kilit bırakma `fetch`+`keepalive`+CSRF; bırakınca bayrağı sıfırla (navigasyonda ölçüldü)
 - [Kanıtın kapsamı ve zamanı korunur](feedback_kanit-kapsam-ve-zaman-korunur.md) — aktarırken niteleyici/birim düşmez; önce/sonra kıyasında zaman damgası; ölçüm artefaktın kendi join/filtresiyle; üreticinin girdisi
 - [Sıfır sonuçtan önce kontrol grubu](feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md) — "0 eşleşme" ≠ "yok": TR karakter varyantı, ASCII kaynak, CRLF'li liste, hiç koşmamış komut; bilinen-pozitifle sına
 - [Yeşil sinyalin kapsamını sor](feedback_yesil-sinyal-kapsamini-sor.md) — exit 0/OK/0 bulgu ≠ kanıt, kanıt çıktıdır; ters yönü koş; öneri ve onay da iddiadır

@@ -42,8 +42,10 @@ varsayılır; tek uygulamada maliyeti yoktur, ikinci uygulama gelince yeniden ya
   `@sap/ux-ui5-tooling` 1.32.0):** UI5 CLI `customMiddleware`'i (`fiori-tools-proxy`, `sap-fe-mockserver` …) yalnız
   **uygulamanın kendi** `package.json` bağımlılıklarından çözer; `devDependencies` boş uygulamada `start-noflp` ve
   `start-mock` açılmaz: `Could not find custom middleware fiori-tools-proxy`. Adlar eklenince, uygulama klasöründe
-  kurulum yapılmadan sunucu açıldı (kontrol grubu). `%sap-ui5-user-guide` `kd_ortam.py check` de mockserver adını
-  uygulamanın `package.json`'unda arar.
+  kurulum yapılmadan sunucu açıldı (kontrol grubu). Aynı sonuç başka bir kurulumda `@ui5/cli` 4.0.57'de de görüldü.
+  **Sınır:** UI5 CLI 3.x · build/deploy script'leri · adları ekledikten sonra kökte yeniden `npm install` gerekip
+  gerekmediği **ÖLÇÜLMEDİ** — şüphede kurulumu kökte koş. Bin'in (`ui5`) bulunması middleware'in bulunması demek değildir.
+  `%sap-ui5-user-guide` `kd_ortam.py check` de mockserver adını uygulamanın `package.json`'unda arar.
 - **`npm install` yalnız `ui/` kökünde.** Uygulama klasöründe `npm install/ci/add` = gereksiz ikinci `node_modules`.
   Uygulamaya yeni bir middleware eklenince adı uygulamanın `package.json`'una elle yazılır, kurulum kökte koşar.
   `npm run start-noflp` bin'i üst klasördeki `ui/node_modules/.bin`'den çözer.
@@ -378,7 +380,7 @@ webapp/localService/mainService/<ANNO_MDL>.xml    ← yalnız annotation kullan�
   güncellendi (sabitlenen CDN patch'i silinip `tr` locale verisi 404 verince UI5 sessizce İngilizceye düştü, §7).
   Kaynağın kapsamadığı backend'siz mock modu aXet'te ölçülerek eklendi (§7 notu; `mock-ortam.md` §2).
 - Kaynak "uygulama `package.json`'unda devDependencies yok" diyordu; aXet'te ölçüldü: UI5 CLI 4.0.69 middleware'i
-  uygulamanın kendi bağımlılıklarından çözdüğü için bu biçimde sunucu açılmadı → adlar eklendi (§2). Kaynakta 8
-  uygulamalı bir workspace'te çalıştığı yazılı; fark (UI5 CLI sürümü mü, uygulamaların gerçekte ad taşıması mı)
-  DOĞRULANMADI.
+  uygulamanın kendi bağımlılıklarından çözdüğü için bu biçimde sunucu açılmadı → adlar eklendi (§2). Kaynak da sonradan
+  aynı ölçümle (UI5 CLI 4.0.57 ve 4.0.69) bu kurala hizalandı; önceki "8 uygulamalı workspace'te çalıştı" kaydının
+  neden farklı olduğu (UI5 CLI sürümü mü, uygulamaların gerçekte ad taşıması mı) DOĞRULANMADI.
 - Uygulama klasöründe `npm install`'ı engelleyen otomatik kapı aXet'te yok; kural metin olarak kaldı.

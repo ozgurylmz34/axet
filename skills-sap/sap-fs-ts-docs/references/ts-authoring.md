@@ -73,8 +73,8 @@ Her FR/KR için seviyeler **sırayla** değerlendirilir ve **uygun olan en düş
 | 4 | Klasik genişletme (BAdI, user exit, enhancement, klasik program) | üsttekiler yetmiyorsa |
 
 Kurallar: daima en düşük uygun seviye · 4. seviye seçildiyse **istisna gerekçesi** yazılır · standart objeyi değiştiren
-çözüm **hiçbir seviyede** önerilmez (Yasak A) · standart tabloya doğrudan yazan çözüm yazılmaz (Yasak B: BAPI → RFC FM →
-BDC → manuel) · bir API/CDS'in released olduğu **canlıda doğrulanır**, hatırlanmaz (`%sap-dev` → `references/coding-patterns.md` §7).
+çözüm **hiçbir seviyede** önerilmez (Yasak A) · standart tabloya doğrudan yazan çözüm yazılmaz (Yasak B: released API (released RAP BO/EML · released BAPI ·
+released OData) → BAPI → RFC FM → BDC → manuel; seçim §6.4'e — `%sap-dev` → `references/write-api-selection.md`) · bir API/CDS'in released olduğu **canlıda doğrulanır**, hatırlanmaz (`%sap-dev` → `references/coding-patterns.md` §7).
 Profil sınırı seviyeyi kısıtlar: `ecc`'de 2. seviye yok; `s4_public`/`btp_abap`'ta 4. seviyenin klasik obje yolu yok.
 
 ## 5. Bölüm yapısı (zorunlu)
@@ -88,7 +88,7 @@ Profil sınırı seviyeyi kısıtlar: `ecc`'de 2. seviye yok; `s4_public`/`btp_a
 | 4 Veri sözlüğü | 4.1 domain (tip, uzunluk, sabit değerler) · 4.2 data element (4 etiket: kısa/orta/uzun/başlık, `master_language`'de TAM; metin spesifikasyondan) · 4.3 tablo (alan, DTEL, anahtar, istemci alanı) · 4.4 index. DTEL/append adını kullanıcı verir |
 | 4.5 Ekran/UI tasarımı | 4.5.1 ekran/view listesi · 4.5.2 her ekran: (a) alan tablosu (b) buton/aksiyon tablosu (c) grid kolon tablosu (d) açıklama kolonu kararı (e) klasik ALV alan kataloğu kararı · 4.5.3 etkileşim matrisi · 4.5.4 kullanılan API/BAPI/OData ve test yöntemi |
 | 5 Program/sınıf tasarımı | 5.1 program yapısı (klasik program include'lara bölünür, `%sap-classic-abap`) · 5.2 sınıf: metot, tip (statik/örnek/özel), parametre adları ve tipleri, dönüş · 5.3 **numaralı sözde kod** (metot başına; gerçek kod değil) |
-| 6 Veritabanı erişimi | 6.1 kullanılan standart tablolar/CDS ve erişim tipi (yalnız okuma; S/4'te released CDS tercih) · 6.2 kritik okumalar · 6.3 performans (gereken alanlar, WHERE'siz okuma yok, döngü içinde okuma yok, büyük veride paketleme) |
+| 6 Veritabanı erişimi | 6.1 kullanılan standart tablolar/CDS ve erişim tipi (yalnız okuma; S/4'te released CDS tercih) · 6.2 kritik okumalar · 6.3 performans (gereken alanlar, WHERE'siz okuma yok, döngü içinde okuma yok, büyük veride paketleme) · **6.4 API seçimi** — standart nesneye create/update/delete/action varsa ZORUNLU: değerlendirilen **her** yöntem (EML `I_…TP` · BAPI · OData · RFC FM · BDC) için sistemde var mı (canlı) · released mı · ADIM 0 bağlamının commit kuralı · hata yönetimi · karar ve **reddedilenlerin nedeni** + clean core seviyesi (`%sap-dev` → `references/write-api-selection.md`) |
 | 7 İyileştirmeler | BAdI / enhancement spot / exit adı, implementasyon adı (kullanıcı onaylı), sözde kod |
 | 8 Form/çıktı (varsa) | form tipi, driver, çıktı tipi, yapı |
 | 9 Arayüz/RFC (varsa) | FM imzası, parametreler, hata durumları; senkron/asenkron |
@@ -192,6 +192,7 @@ Teslim edilen tek dokümandır; parçalar çalışma dosyasıdır. Birleşik dok
 [ ] §2-A FS denetimi dolu; sorunlu maddeler bilgilendirildi (İlke 4)
 [ ] §11-A yalnız teknik teyit; fonksiyonel kararlar kapalı: eşleştirme + çoklu eşleşme · tüm anahtar · dönüşüm · birim · alan taşıma · kenar durumlar · kilit · hata birleştirme (İlke 5)
 [ ] Genişletme seviyesi her madde için en düşük uygun; 4. seviyede istisna gerekçesi; standart obje/tablo yazımı yok
+[ ] Standart nesneye yazma varsa §6.4 API seçimi — EML teyitleri canlı, reddedilenler nedeniyle yazılı
 [ ] Geliştirici geri-soru simülasyonu yapıldı
 [ ] Canlı teyit turu koşuldu (ya da "canlı teyit bekliyor" açıkça yazılı)
 [ ] Teknik lider onayı

@@ -57,7 +57,7 @@ inceleme yorgunluğu doğar ve kapı mekanik onaya döner.
 | ID | Kontrol | Önem | Mekanik yardımcı |
 |---|---|---|---|
 | DOC-TS-01 | Gerçek ekran görüntüsü yok; §4.5 ayrıntılı mockup + yapısal tablolar | HIGH (HATA) | yok |
-| DOC-TS-02 | Zorunlu bölümler tam (genel bakış, 2-A, obje listesi, veri sözlüğü, ekran tasarımı, program/sınıf, DB erişimi, iyileştirme, form, arayüz, hata, test, 11-A, transport, onay) | HIGH (EKSİK) | yok |
+| DOC-TS-02 | Zorunlu bölümler tam (genel bakış, 2-A, obje listesi, veri sözlüğü, ekran tasarımı, program/sınıf, DB erişimi, iyileştirme, form, arayüz, hata, test, 11-A, transport, onay; standart nesneye yazma varsa **§6.4 API seçimi** — reddedilenler nedeniyle, `%sap-dev` `write-api-selection.md`) | HIGH (EKSİK) | yok |
 | DOC-TS-03 | **Obje adları/alanlar canlı sistemle tutarlı** (uydurma değil) ve adlandırma kuralına uygun. Klasik program include adları program kökünden türer (`%sap-dev` → `references/naming.md` §4.1); genel `_TOP`/`_F01` gibi kökten bağımsız ad yok | HIGH (HATA) | yok — canlı teyit turu C-1/C-2 kanıtı |
 | DOC-TS-04 | Clean core ve yasak farkındalığı: en düşük genişletme seviyesi, 4. seviyede istisna gerekçesi; standart tablo yerine released CDS; standart obje/tabloya yazan çözüm yok | MEDIUM (ÖNERİ; yasak ihlali varsa BLOCKER) | yok |
 | DOC-TS-05 | **Mesaj envanteri tam (§10.1):** her mesaj; metin birebir **≤ 73 karakter**; numaralı `&1..&4` + her birinin anlamı; üretim noktası; `E`/`A`'da kullanıcı aksiyonu; metinleri kullanıcı vermiş; build'de doğan mesaj TS'e geri işlenmiş; uzun metin varsa "SE91" şerhi | HIGH (EKSİK) | yok — inceleyici yargısı |

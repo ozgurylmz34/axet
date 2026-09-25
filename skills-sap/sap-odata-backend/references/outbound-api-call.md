@@ -85,9 +85,11 @@ DATA(lv_sap_msg)  = VALUE string( lt_hdr[ name = 'sap-message' ]-value OPTIONAL 
   **ama token yine gelir** → token GET'inde durum koduna değil başlığa bak.
 
 ### 2.4 Released BO EML kapalıysa
-Released BO'da `UPDATE/CREATE` EML operasyonu sistemde kapalıysa standart OData API'sine MERGE/PATCH bu proxy ile
-yapılır; ilgili özel alanların (custom field) servise açılmış ve yayınlanmış olması gerekir. Önce operasyonun kapalı
-olduğunu canlı ölç (`references/deep-insert-function-import.md` §4).
+Released BO'da `UPDATE/CREATE` EML operasyonu sistemde kapalıysa önce released değişiklik-BAPI aranır; yoksa standart OData
+API'sine MERGE/PATCH bu proxy ile yapılır (sıra: `%sap-dev` → `write-api-selection.md` ADIM 2 → 3); ilgili özel alanların
+(custom field) servise açılmış ve yayınlanmış olması gerekir. Önce operasyonun kapalı olduğunu canlı ölç
+(`references/deep-insert-function-import.md` §4). OData'nın kendisi de teyit ister: `$metadata`'da EntitySet üzerinde
+`sap:creatable="false"` / `sap:updatable="false"` yoksa operasyon açıktır (CLI'de `$metadata` aracı yok → kullanıcıdan).
 
 ---
 

@@ -298,7 +298,8 @@ log'a düşer (dosya içeriği loglanır), yönetilen bulutta parametre müşter
 _getBatchModel: function () {
   if (!this._oBatchModel) {
     var oMain = this.getView().getModel();
-    this._oBatchModel = new ODataModel(oMain.sServiceUrl, {
+    // ⛔ ZORUNLU: URL ana modelin istemci parametrelerini (sap-client …) taşır — §7.4
+    this._oBatchModel = new ODataModel(this._secondModelUrl(oMain.sServiceUrl, oMain), {
       useBatch: true, defaultBindingMode: "TwoWay", defaultCountMode: "Inline",
       metadataUrlParams: oMain.mMetadataUrlParams   // ⛔ ZORUNLU, aşağıya bak
     });
@@ -329,6 +330,83 @@ havuzu paylaşılır ama metadata havuzu paylaşılmaz; kanıt AĞ İZİNDEN (ik
 `null`, `0`) kontrol **sessizce atlanır**; sınırı birim dönüşümüyle ver ve değerin dolu geldiğini ölç.
 
 Denetim: `checklists.md` **FE-46** (414) / **FE-47** (`metadataUrlParams`).
+
+### 7.4 Elle kurulan istek `sap-client` TAŞIMAZ — ana modelin istemci parametrelerini devret
+
+**Kural:** manifest'te tanımlı OLMAYAN her istek — `new ODataModel(...)` (ikinci/yardımcı model, varyant modeli,
+`$batch` modeli), ham `fetch`/`XMLHttpRequest`, `sServiceUrl` ile elle kurulan URL — ana modelin sorgu
+parametrelerini (`sap-client`, `sap-server` ve ana modelde ne varsa; `sap-statistics` hariç) **URL sorgusunda**
+taşır. Eksikliğin belirtisi **yanlış veridir, hata değil**.
+
+**Mekanizma (UI5 1.120 kaynağı + tek kurulumda canlı ölçüm):**
+1. Bileşen yalnız **manifest** modellerinin URI'sine `sap-client`/`sap-server` ekler (değer doluysa: sayfa
+   URL'inde ya da yapılandırmada varsa). Elle kurulan model bunu **almaz**.
+2. `ODataModel` servis URL'inin sorgusunu `aUrlParams`'a ayırır, `sServiceUrl`'i **sorgusuz** saklar (sondaki `/`
+   da silinir) ve her kendi isteğine `aUrlParams`'ı ekler ⇒ `new ODataModel(oMain.sServiceUrl)` ya da
+   `oMain.sServiceUrl + "/X?…"` `sap-client`'ı **sessizce düşürür**.
+3. `sap-client`'sız istek tarayıcının **tek** `sap-usercontext` çerezine göre yönlenir; çerezi en son açılan
+   `sap-client`'lı yanıt yazar. Aynı host'un iki client'ı aynı tarayıcıda açıkken ikinci sekme ilkinin çerezini
+   ezer ⇒ **çapraz-client okuma VE yazma**. Tek client açıkken görünmez. Ölçülen vakada ikinci client'ın
+   sekmesindeki varyant modeli ve veri yazan yükleme modeli ilk client'ın verisini okudu; ana model doğruydu.
+
+**Doğrusu — ana modelden devral (literal client YAZMA):**
+```javascript
+// Ana modelin sorgu parametreleri; sap-statistics hariç (UI5 her modele kendi ekler).
+_mainClientParams: function (oMain) {
+  var aFlat = [];
+  ((oMain && Array.isArray(oMain.aUrlParams)) ? oMain.aUrlParams : []).forEach(function (s) {
+    String(s || "").split("&").forEach(function (p) { if (p) { aFlat.push(p); } });
+  });
+  return aFlat.filter(function (s) { return !/^sap-statistics=/i.test(s); });
+},
+_secondModelUrl: function (sBaseUrl, oMain) {
+  var a = this._mainClientParams(oMain);
+  return sBaseUrl + (a.length ? ("?" + a.join("&")) : "");
+}
+```
+- **Ana model = manifest modeli.** `onInit` sırasında view henüz yerleşmemiştir ⇒ `this.getView().getModel()`
+  (ya da util'e verilen kontrolün `getModel()`'i) `undefined` olabilir ve boş parametre önbelleğe girer. Util'lerde
+  sahip bileşenden al: `Component.getOwnerComponentFor(oControl).getModel()`.
+- `aUrlParams` UI5'in iç alanıdır (lint `sap-no-ui5base-prop` uyarır) — bilinçli istisna: public karşılığı yok;
+  `Array.isArray` koruması alan kaybolursa eski davranışa (çereze) düşer, patlamaz.
+- Ham istek URL'i: `oMain.sServiceUrl + "/<Yol>?" + <kendi sorgun> + "&" + params.join("&")`.
+- `metadataUrlParams` devri (§7.3, FE-47) **ayrıca** gerekir — biri öbürünün yerine geçmez.
+
+**Doğrulama (kaynak okuması YETMEZ — ağ izi + ayırıcı veri):** aynı tarayıcıda iki client'lı iki sekme aç: önce A,
+sonra B, sonra A'da elle kurulan modeli/isteği tetikle. İstek URL'inde `sap-client=<A>` ve dönen veri A'nın verisi
+olmalı. **Ayırıcı veri şart:** iki client'ta sayısı FARKLI bir entity seç (biri boş olabilir); iki client'ta aynı
+sayı dönen entity hiçbir şey kanıtlamaz. Deploy öncesi: dağıtılmış uygulamada `Component-preload.js` engellenip
+yerel `webapp/` dosyaları servis edilerek aynı ölçüm koşulabilir (Playwright `page.route`).
+
+**Kardeş taraması ZORUNLU:** `new ODataModel(`, `new XMLHttpRequest`, `fetch(` ve `sServiceUrl +` geçen **her**
+satır — tek util çoğu kez birebir kopyalarla birden çok uygulamada yaşar (ölçülen vakada 14 kopya). Denetim:
+`checklists.md` **FE-48** · UI-BOOT-06. Sayfadan ayrılırken gönderilen istek (belge kilidi bırakma) ayrıca §7.5 /
+**FE-49**'a tabidir.
+
+### 7.5 Sayfadan ayrılırken senkron XHR GİTMEZ — `fetch` + `keepalive`
+
+`beforeunload`/`pagehide`/`unload` içindeki `XMLHttpRequest(..., false)` Chromium'da sunucuya **ulaşmaz**;
+`try/catch` hatayı yutar ⇒ belge kilidi yalnız zaman aşımıyla düşer. Ölçülen (Chromium 153, lokal sunucu, üç olay ×
+navigasyonla sayfadan ayrılış): senkron XHR **0/3** (aynı istek normal anda 1/1), `fetch` + `keepalive` **3/3**
+CSRF başlığıyla; gerçek fonksiyon gövdeleriyle eski **0/5** · yeni **5/5**. `sendBeacon` özel başlık (CSRF)
+taşıyamaz. **Sınır:** sekme KAPATMA ayırt edilemedi (`page.close({runBeforeUnload:true})` tetiğinde `sendBeacon`
+dahil hiçbir yöntem ulaşmadı — ölçüm sınırı, iddia değil); Firefox / Safari / FLP ölçülmedi.
+```javascript
+fetch(oModel.sServiceUrl + "/ReleaseLock?<KeyParam>=" + encodeURIComponent("'" + sId + "'")
+      + "&" + this._mainClientParams(oModel).join("&"),          // §7.4
+  { method: "POST", keepalive: true, credentials: "same-origin",
+    headers: { "x-csrf-token": oModel.getSecurityToken() } }).catch(function () {});
+```
+- URL'deki `/` şart: `sServiceUrl` sondaki `/`'ı taşımaz; unutulursa istek olmayan bir servise gider
+  (ölçülen: 307 → 403 "No service found").
+- CSRF token önbellekte: kilit yalnız `AcquireLock` POST'undan sonra açık olduğundan `getSecurityToken()` doludur.
+- **İkinci ayak:** bırakma artık gerçekten ulaştığı için, ekrandan çıkılan her yolda (geri/kayıt/silme) kilit
+  bırakıldıktan sonra kilit bayrağı (`readOnly=true` ya da kimlik temizliği) sıfırlanır ve unload dinleyicisi bayrağa
+  bakar (`if (!readOnly && id)`). Yoksa kullanıcı listedeyken sayfadan ayrılınca (yenileme / başka adrese gitme) aynı
+  belgeye tekrar bırakma gider ve kullanıcının **başka sekmede** tuttuğu kilidi düşürür (backend bırakma
+  `locked_by = sy-uname` kaydını siler). Kilit sözleşmesinin tamamı: `%sap-rap` → `draft-and-locks.md` §6.
+
+Denetim: `checklists.md` **FE-49** · UI-SAVE-06.
 
 ## 8. Canlı `$metadata` ile statik çapraz kontrol
 
@@ -397,4 +475,8 @@ function import — `manifest.json` değişmez, o çağrı için ayrı bir `useB
 - `check_ui_odata_refs` kaynakta canlı `$metadata`'yı bağlantı dosyasından kimlikle çekiyordu; aXet'te çevrimdışı dosya
   alır. `check_ui5_freestyle_traps` T4 (Form içinde container) kaynakta aday satırdı; aXet script'inde ERROR olarak var.
 - Belge kilidi (uygulama kilidi, heartbeat) ve denetim alanı otomatik doldurma kuralları bu skill'e alınmadı: backend
-  sözleşmesi `%sap-rap`/`%sap-cds-ddic`; UI kontrol satırı `checklists.md`'de.
+  sözleşmesi `%sap-rap`/`%sap-cds-ddic`; UI kontrol satırı `checklists.md`'de. İstisna: kilit bırakmanın sayfadan
+  ayrılırken **taşıma biçimi** (§7.5) — bir tarayıcı davranışıdır, backend sözleşmesi değil.
+- §7.4 (elle kurulan istek `sap-client`) ve §7.5 (sayfadan ayrılırken senkron XHR) kaynakta standart + playbook +
+  kontrol listesine dağılmıştı; burada tek yerde. §7.3 örneği kaynakta da aynı `sap-client` kusurunu taşıyordu,
+  kaynak düzeltmesiyle birlikte düzeltildi. Müşteri client numaraları ve kayıt sayıları çıkarıldı.

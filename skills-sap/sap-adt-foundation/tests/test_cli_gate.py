@@ -287,8 +287,9 @@ class Kapi(unittest.TestCase):
         mesaj = d["error"]["message"]
         # Kapı katmanında reddedildi mi (araç katmanı değil)? result=None + review NOT_RUN kapıyı kanıtlar.
         kapida = d["result"] is None and str(d["gate"]["review"]).startswith("NOT_RUN: kapı")
-        icerik = "satır 3" in mesaj and "hedef VBAK" in mesaj and "BAPI → RFC FM → işlem kodu (BDC)" in mesaj
-        H.kaydet("6j2 red KAPIDA (result=null) + mesajda satır/hedef/yönlendirme", "kapıda + satır 3/VBAK/BAPI",
+        icerik = ("satır 3" in mesaj and "hedef VBAK" in mesaj
+                  and "released API (released RAP BO/EML · released BAPI · released OData) → BAPI → RFC FM → işlem kodu (BDC) → kullanıcıdan manuel" in mesaj)
+        H.kaydet("6j2 red KAPIDA (result=null) + mesajda satır/hedef/yönlendirme", "kapıda + satır 3/VBAK/released API→BAPI",
                  f"kapida={kapida} icerik={icerik}", kapida and icerik)
         self.assertTrue(kapida, d)
         self.assertTrue(icerik, mesaj)

@@ -89,6 +89,12 @@ Kaynak depo herkese açık kabul edilir; Issue metni cache'lenir, **geri alınam
   yorum mu · durum ("cevap bekleniyor"). Ayrı liste tutulmaz; açık madde tek yerde yaşar.
 - Takip: yayın öncesi ve gün sonunda `gh issue view <N> --repo <ORG>/<REPO> --json state,labels,comments`.
   Kaynağın durum etiketleri varsa (değerlendiriliyor / onay bekliyor / onaylandı / reddedildi) maddeye işle.
+- Kaynak Issue'yu **yedi bölümlü kapanış yorumuyla** kapatır: sonuç · yapılan · yapılmayan ve nedeni · senin
+  yapacağın adımlar · dikkat · doğrulama · yeniden açma koşulu. Kapanışı görünce: ① 4. bölümü sırayla uygula —
+  kaynağın güncelleme prosedürü yerel dosyaları (kurulu ayar dosyaları, app `package.json`'ları vb.) DEĞİŞTİRMEZ;
+  "güncelleme onarır" diyen bir adımı da güncellemeden sonra **ölç** ② 3. ve 5. bölümde çıkarılanı yerelde yeniden
+  ekleme ③ 6. bölümdeki komutla kendi makinende ölç ④ tutmuyorsa 7. bölüme göre aynı Issue'ya yorum taslağı hazırla
+  (gönderim yine kullanıcı onayıyla, §4-§5).
 - Kaynak düzeltmesi geldiğinde: aXet'e olağan eşitleme akışıyla ([`UPDATE-PROCEDURE.md`](UPDATE-PROCEDURE.md)) aktar,
   aXet tarafındaki geçici düzeltmeyle çakışıyorsa uyumla ve kusurun **aXet'te de** kapandığını ölç —
   "kaynakta merge edildi" ≠ "aXet'te düzeldi". Sonra iş listesindeki maddeyi kaynağıyla kapat.

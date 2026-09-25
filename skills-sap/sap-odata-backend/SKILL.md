@@ -66,7 +66,8 @@ Reçete: `references/segw-service.md`.
 readback + `adt_inactive_objects` (`%sap-adt-foundation` §5-7; sınıf push ayrıntısı `%sap-classic-abap`).
 SEGW'nin ürettiği temel `MPC`/`DPC` sınıflarına yazılmaz; iş mantığı yalnız `_EXT`'tedir.
 - Standart tabloya OData üzerinden yazma ihtiyacı = **kesin yasak B**: DPC içinde doğrudan
-  `INSERT/UPDATE/MODIFY/DELETE` yok; BAPI → RFC FM → BDC → kullanıcıdan manuel (`references/dpc-crud.md` §3).
+  `INSERT/UPDATE/MODIFY/DELETE` yok; released API (released RAP BO/EML · released BAPI · released OData) → BAPI → RFC FM →
+  BDC → kullanıcıdan manuel (`references/dpc-crud.md` §3). Hangi API, hangi canlı teyitle: `%sap-dev` → `write-api-selection.md`.
 - Push `ADR_0005_B` ile reddedilirse komutu değiştirme; DUR, BAPI yolunu kullanıcıyla konuş.
 
 ### 6. Doğrula

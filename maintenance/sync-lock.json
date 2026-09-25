@@ -2,7 +2,7 @@
  "_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
  "sources": {
   "DEV_CORE": {
-   "commit": "46cdcaf079ca155cfc165ac92035a5504082041e",
+   "commit": "635ad3ee6855518fc2867f050e2eab705523ea06",
    "files": {
     ".gitattributes": {
      "decision": "uyarla",
@@ -55,13 +55,13 @@
     "CLAUDE.core.md": {
      "decision": "uyarla",
      "rule": "CLAUDE.core.md",
-     "sha256": "7ecd070a9b9d38244aac7a9b123f1f847fa4e68200147004e093bf5b3b65c132",
+     "sha256": "4fc0db254996583bb79a499bbd6ba0bb8f59da747af4361d010b09ceeefffc1d",
      "status": "kismi"
     },
     "MAINTENANCE.md": {
      "decision": "uyarla",
      "rule": "MAINTENANCE.md",
-     "sha256": "5a2c3bda0117e6f9fd4993af9294fa9b75a3dedbea6d3ed9f0cc0b670667ee28",
+     "sha256": "7beacbdaf864143c4da3309e73ac594a635814394d4b82ffdc24d2a2697ea970",
      "status": "tamam"
     },
     "ONBOARDING.md": {
@@ -199,7 +199,7 @@
     "claude/agents/adt-gateway.md": {
      "decision": "telafi",
      "rule": "claude/agents/adt-gateway.md",
-     "sha256": "6a9805a3499f29eac1cfb5dedf361bfee832d7ca05ddd1bcb5b82ab08b735279",
+     "sha256": "8aa57b1e67b5cc466bd0a85ec974a447230dab8ca07097b46fe0397cba03e5a8",
      "status": "kismi"
     },
     "claude/agents/backend-expert.md": {
@@ -217,7 +217,7 @@
     "claude/agents/frontend-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "14a7c3a48306823baa35a73739f44d03ba2226abe28bb6dca2d832d78c16db6c",
+     "sha256": "0c2e3276953985c574e382a21bfbf42d9d5a00863f23ffe236b5364256dab24a",
      "status": "tamam"
     },
     "claude/agents/infra-expert.md": {
@@ -271,7 +271,7 @@
     "claude/kesin-yasaklar.canonical.md": {
      "decision": "uyarla",
      "rule": "claude/kesin-yasaklar.canonical.md",
-     "sha256": "fc36de0228ecbfa5d746f3c8d730e27d8390576c9fdc3539a24d6a4db944019f",
+     "sha256": "e0ac039f86d81bae66dba2e3cd75f080991a49172d9ba2637bfcf99233c2c0c8",
      "status": "tamam"
     },
     "claude/managed-policy.template.json": {
@@ -283,7 +283,7 @@
     "claude/memory-seed/MEMORY.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/MEMORY.md",
-     "sha256": "0990664661c0a6bfb506b581c957b860ded7a519f68a24a8318ec7ece50b1152",
+     "sha256": "83fe23c805190416d54b18c10c498687566ef2f78b00ed390f7f050f947e9b75",
      "status": "-"
     },
     "claude/memory-seed/_indeks-ajan-takim.md": {
@@ -343,7 +343,7 @@
     "claude/memory-seed/_indeks-ui.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/_indeks-ui.md",
-     "sha256": "a91eec1655b9030d0f903dc9bf8cadfc1014c46e7425aca2f1255d9f8dc5b008",
+     "sha256": "58d80360264b8ffb01623285f4f73978e50920d06e8d6d9eba50c8a14728fca7",
      "status": "-"
     },
     "claude/memory-seed/feedback_abap-decimal-odata-serialize-locale.md": {
@@ -812,6 +812,12 @@
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_edid4-sdata-lchr-dtint2-ile-okunur.md",
      "sha256": "86b54f5f47545ffbe5d39791698ffd4f782fa9f427e556d83ef61181c062afd3",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_elle-kurulan-istek-sap-client-tasimaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_elle-kurulan-istek-sap-client-tasimaz.md",
+     "sha256": "7cc61313ad7b709a541fbb65e97d776c2a7d2b0c310f6f96a16855db940ca3b8",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_empty-key-tabloda-olcutsuz-sort.md": {
@@ -1576,6 +1582,12 @@
      "sha256": "a2ba42c7dd8950bc96448b326208257691253943aec4f903f8ac2c1373e762d7",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_sayfa-kapanirken-senkron-xhr-gitmez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_sayfa-kapanirken-senkron-xhr-gitmez.md",
+     "sha256": "f5af3b10512af50d912b82fb8db59d0b897c8c71d21f78d726440578eecafcd2",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md",
@@ -1873,7 +1885,7 @@
     "claude/rules/sap-source-protokolu.md": {
      "decision": "uyarla",
      "rule": "claude/rules/sap-source-protokolu.md",
-     "sha256": "6be1901a6d471b4f7adbb5e394a38ca91f8db15b754c6142a630c77d2c264c0d",
+     "sha256": "d77a7b8b751e0437cf3e8c87e1dcd8bbe23bd8ce9f487c202ff6212f80928910",
      "status": "kismi"
     },
     "claude/rules/ui5-freestyle.md": {
@@ -1885,7 +1897,7 @@
     "claude/settings.template.json": {
      "decision": "telafi",
      "rule": "claude/settings.template.json",
-     "sha256": "96fb9891a138c7aae8bf2aebcd4ccbac655042eb608c45c818152a334d6342c4",
+     "sha256": "ab3529bbc0e17114ca0ea2402eb0ccdce24bf374a6bf2ae33ab6e801cb6a2a02",
      "status": "kismi"
     },
     "claude/skills/intake-triage/SKILL.md": {
@@ -1957,7 +1969,7 @@
     "claude/skills/sap-abap-dev/SKILL.md": {
      "decision": "uyarla",
      "rule": "claude/skills/sap-abap-dev/*",
-     "sha256": "ca1bcfce170b55cb32090d3ebcd0bbce94771ce37b511a5ad1b6b6cc43d838e6",
+     "sha256": "fc5dd46dedf74b1c3d3f81b623d5b9a5763c861a8169abc1b7b23829efb91181",
      "status": "kismi"
     },
     "claude/skills/sap-abap-dev/references/clean-core-replacements.md": {
@@ -2053,7 +2065,7 @@
     "governance/decisions/0005-sap-standart-obje-koruma-ve-sistem-state-yasaklari.md": {
      "decision": "uyarla",
      "rule": "governance/decisions/0005-*",
-     "sha256": "aec26bad0f00b6ffc970aa5dcebf6c5ca579d7f96efedffa4bd406463a8f4aed",
+     "sha256": "0131b444d123b679746fed35890c7b00dfe4819a533affffcad2d8dca1044c50",
      "status": "tamam"
     },
     "governance/decisions/0006-reviewer-agent-pattern.md": {
@@ -2107,7 +2119,7 @@
     "governance/decisions/0014-document-lock-app-level-vs-draft.md": {
      "decision": "uyarla",
      "rule": "governance/decisions/0014-*",
-     "sha256": "804edd9ee772b0dcf6df8dd919968b444ca3deb0cc204b079e3daf6cf7b505b3",
+     "sha256": "782239f36ce6cc2f4d945890bf702366a5a6f3fb936ba6fce8cb956bfe9fe52f",
      "status": "tamam"
     },
     "governance/decisions/0016-source-drift-onleme-repo-canli-senkron.md": {
@@ -2161,7 +2173,7 @@
     "governance/infra-changelog.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "f308624c362bf4b6b893a9ae8d6194d246acda5a35113206853c2b5375e78116",
+     "sha256": "69fb74373777a9ef77ee41d434589bab298fe93c0583a579fb023eed5f800b9c",
      "status": "-"
     },
     "governance/infra-test-recipes.md": {
@@ -2413,13 +2425,13 @@
     "playbook/checklists/bug-checklist-backend.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/bug-checklist-backend.md",
-     "sha256": "9a50b4e0896d1b34f4811820c85322c4d2fc4f869558d155fe2aa5aaab0d715e",
+     "sha256": "e653bfcd9357d7f73809dac6e3f6ed253f0b182e3a216f9e9f22bec3dbb571a1",
      "status": "tamam"
     },
     "playbook/checklists/bug-checklist-frontend.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/bug-checklist-frontend.md",
-     "sha256": "048caf0bd2cf8c2c0cc669b2759d3f97c090e4bc4c55bbf91a52d88ea8a37bf0",
+     "sha256": "7bdc9806dddaa66424eb4efa17379339503f6a4f2dbb7549ef1143ee055f6653",
      "status": "tamam"
     },
     "playbook/checklists/cds-creation.md": {
@@ -2443,7 +2455,7 @@
     "playbook/checklists/doc-checklist.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/doc-checklist.md",
-     "sha256": "a9eb83eede26e092fe9955decd6689a6f1c1616ae98dcda88809121b36757293",
+     "sha256": "9a61a8a2a394257767e4b394b8874893f3e5d0444d2fb41ea6433ed642b86496",
      "status": "tamam"
     },
     "playbook/checklists/domain-dtel-creation.md": {
@@ -2467,7 +2479,7 @@
     "playbook/checklists/rap-creation.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/rap-creation.md",
-     "sha256": "4562b82f8157c5067d0a62aeb8ef99e15ca3eb66738a43a54ae5f5649070b52a",
+     "sha256": "a1374ae6a9ba38f72eacc7fe75ebd2f20888ebede3859179c52636b5156ba719",
      "status": "tamam"
     },
     "playbook/checklists/rap-troubleshoot.md": {
@@ -2497,7 +2509,7 @@
     "playbook/checklists/ui-freestyle-creation.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/ui-freestyle-creation.md",
-     "sha256": "d699bbe2dfe412d96fb46b1aba4cd0bc4bd8043ac102eed80f33c6b970f283f4",
+     "sha256": "4e81244c2de73ce76c292f2ce4de6b8c4fe31a37d5a3b1da78dc4fb61d0fe32c",
      "status": "tamam"
     },
     "playbook/coding-patterns.md": {
@@ -2521,13 +2533,13 @@
     "playbook/howto-cekirdek-bulgu-bildirimi.md": {
      "decision": "uyarla",
      "rule": "playbook/howto-cekirdek-bulgu-bildirimi.md",
-     "sha256": "2159d9a12cdff56c5a392cf96111bb8332ccc1696993a82eed6773e636239c0a",
+     "sha256": "d3a3ada4072b9e816bc217b62ac8c42f88539e05a2511ba86ddc8c7ce33400ad",
      "status": "tamam"
     },
     "playbook/howto-cekirdek-guncelleme.md": {
      "decision": "alinmaz",
      "rule": "playbook/howto-cekirdek-guncelleme.md",
-     "sha256": "4a8ff22dee7c14c3693e60b689c2a8cde77544e80fd3f3066e660ee0cba00d76",
+     "sha256": "a88b264d942ec4470990d99e5ad128a197210ba6c8c1a9686d7300d06973a917",
      "status": "-"
     },
     "playbook/howto-classic-dynpro-datafield-screens.md": {
@@ -2551,7 +2563,7 @@
     "playbook/howto-document-lock.md": {
      "decision": "uyarla",
      "rule": "playbook/howto-document-lock.md",
-     "sha256": "75136b1fd72613aa71f8b2c649b2bfd451be4aaa11e4f2b9bceddfe645f83995",
+     "sha256": "b804accf184b99991d71e819724f6fad7fabad0534a6e4ac7c4c7f3f415039e8",
      "status": "tamam"
     },
     "playbook/howto-dynpro-gui-status-generation.md": {
@@ -2611,13 +2623,13 @@
     "playbook/lessons-learned.md": {
      "decision": "uyarla",
      "rule": "playbook/lessons-learned.md",
-     "sha256": "f767befd65e6b604b4f1460144a27f01340358ef9a1ba026afaa755a1de079cb",
+     "sha256": "cdf8bbcd5712105e146fd41d4b234a75cf1f0e4d12dfb656b138f7a2b68d1a6c",
      "status": "tamam"
     },
     "playbook/modules/sd.md": {
      "decision": "uyarla",
      "rule": "playbook/modules/*",
-     "sha256": "0b5920c0a10ea3a4d3883e6a0aee8956a652d1a6316e65f05933844a885a6a0d",
+     "sha256": "26f2056fa9ecea5ad2073f14cf23191ca1a1f197450b31343ac9790e3d01f9e8",
      "status": "tamam"
     },
     "playbook/odata-services.md": {
@@ -2647,7 +2659,7 @@
     "playbook/ui-freestyle-odata-v2.md": {
      "decision": "uyarla",
      "rule": "playbook/ui-freestyle-odata-v2.md",
-     "sha256": "ec86166aeec24a6fed9826ef6903c6f0b58d0d6b3adcc832c0332be7a772532f",
+     "sha256": "d47630891a94182c299619268dc6e1c85b38c88b529f9ee4240053360432a10c",
      "status": "tamam"
     },
     "profiles/btp_abap.yaml": {
@@ -3031,7 +3043,7 @@
     "scripts/guest_mode.py": {
      "decision": "alinmaz",
      "rule": "scripts/*",
-     "sha256": "372f4f0184e86557a15121f993703fc255796acd620d3b067d27cb586ee8ea30",
+     "sha256": "0b34add984872c38bc40b64614342bba44a97a1eaa9c99034200a1e75628c528",
      "status": "-"
     },
     "scripts/hooks/README.md": {
@@ -3349,7 +3361,7 @@
     "scripts/seed_memory.py": {
      "decision": "telafi",
      "rule": "scripts/seed_memory.py",
-     "sha256": "e3b393c02c67e69cd563fa65160823a65d8d38fcc82ac1614cfe63dd66bc5cf0",
+     "sha256": "5004482bafef0cfaa23825d219299ded8f5367968e6b97c4ce83910bbb9dfe2f",
      "status": "tamam"
     },
     "scripts/session/__init__.py": {
@@ -3427,7 +3439,7 @@
     "scripts/team_setup.py": {
      "decision": "telafi",
      "rule": "scripts/team_setup.py",
-     "sha256": "fd310951dc0de3fb800c39dd74fd0dba8ed4b45978b315252e50c3d23ef9760d",
+     "sha256": "7b6e24b26b396023c7b390892d0bab0139f6885d461dacaf04f5027d3410625f",
      "status": "tamam"
     },
     "scripts/tests/guard_conformance.py": {
@@ -3973,7 +3985,7 @@
     "scripts/validators/run_review.py": {
      "decision": "uyarla",
      "rule": "scripts/validators/run_review.py",
-     "sha256": "9ba8ed64ffd74facd55fc975be381f617f7e1c89113bd13cf3ea08d712fb9d48",
+     "sha256": "344beb390487145a5cab7cc91d100cfc827bd468d3f903c92d8d973fba96bfb8",
      "status": "kismi"
     },
     "scripts/validators/sprint_retrospective.py": {
@@ -4021,25 +4033,25 @@
     "standards/02-coding-backend.md": {
      "decision": "uyarla",
      "rule": "standards/02-coding-backend.md",
-     "sha256": "f80c34c9e72895ddb9a33b822ba94124f0cc3af34340453815b1f710a7644829",
+     "sha256": "460659e28f3b8a968a1016f1724801a82da663f1cc3215f063afda7bdd664b47",
      "status": "tamam"
     },
     "standards/03-coding-ui-fiori.md": {
      "decision": "uyarla",
      "rule": "standards/03-coding-ui-fiori.md",
-     "sha256": "92711a2e9afcf76cd7b5ed78a4f98eefe660c10543e3483964d71c6234b40878",
+     "sha256": "fd3772b39351352169c0efd7048b967883e66be99faf44ee56b8cc75a87ad20e",
      "status": "tamam"
     },
     "standards/04-documentation-fs-ts.md": {
      "decision": "uyarla",
      "rule": "standards/04-documentation-fs-ts.md",
-     "sha256": "f185252bd6244428991bbc75ae29e2a4be9b86927849a8ef117bc53ec42ca9fb",
+     "sha256": "83290613b8130a88b4d68996e9e39f669019e68ab8e6a0423f4c82a80cacb142",
      "status": "tamam"
     },
     "standards/05-coding-rap.md": {
      "decision": "uyarla",
      "rule": "standards/05-coding-rap.md",
-     "sha256": "5c8bda05f956710c12b4edc6e2e04cf1c67a0c716cd190edac3f2721d3f9a104",
+     "sha256": "33c544f87af01fdf1a73737c00b048f46f16c0e699cbd3d291a425f165f5c8e9",
      "status": "tamam"
     },
     "standards/06-coding-classic-dialog.md": {
@@ -4066,10 +4078,16 @@
      "sha256": "ee4654b5cd562b751b8425e698531e623e5871d3fbfd282219f5afd16e85029f",
      "status": "tamam"
     },
+    "standards/10-standart-veriye-yazma-api-secimi.md": {
+     "decision": "uyarla",
+     "rule": "standards/10-standart-veriye-yazma-api-secimi.md",
+     "sha256": "82df7484c666d7ca663dd72654a6fcb71185bca99f1c5d1e4e8fe17654e24596",
+     "status": "tamam"
+    },
     "standards/README.md": {
      "decision": "telafi",
      "rule": "standards/*",
-     "sha256": "a8cc31b41cef45cf8f4cba8eb328265d305fcc56b7feee7c96114a060c95380b",
+     "sha256": "32da83a8b710b3462863347e1b3b2f4c4abebb73b03a41129820e8aff16a126e",
      "status": "tamam"
     },
     "templates/README.md": {
@@ -4996,6 +5014,12 @@
      "sha256": "7c2bc8120156c754faae8c034488e69a69e5a7562f79efc61ae39ff06d1cf393",
      "status": "kismi"
     },
+    "tests/fixtures/reviewer_uzun_yol_ipucu/run.py": {
+     "decision": "telafi",
+     "rule": "tests/fixtures/reviewer_uzun_yol_ipucu/*",
+     "sha256": "9164f5906e83f9c0945466276d5779ad4710540a9b3fea1da71c236e4c7082e4",
+     "status": "tamam"
+    },
     "tests/fixtures/run_all_ozet_kipi/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -5107,7 +5131,7 @@
     "tests/fixtures/tohum_terfi_gorunurlugu/run.py": {
      "decision": "alinmaz",
      "rule": "tests/fixtures/tohum_terfi_gorunurlugu/*",
-     "sha256": "24e4d025b2b37777263a1a16d4b64e934565ee225d6e54b46145d6078b05c662",
+     "sha256": "0e7de410f5c63ed7b4ccced41ba6d883cb129f7d964f9524fcffe523310b8026",
      "status": "-"
     },
     "tests/fixtures/transport_gorev_istek_cevrimi/run.py": {
@@ -5183,10 +5207,10 @@
      "status": "kismi"
     },
     "tests/fixtures/worktree_yasam_dongusu/run.py": {
-     "decision": "uyarla",
-     "rule": "tests/fixtures/*",
-     "sha256": "008edd29600666d694ad63216529d0abc9e6b7f2a5254abb617a08d6186bcdae",
-     "status": "kismi"
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/worktree_yasam_dongusu/*",
+     "sha256": "f91be4cac03ae1a07ff9d0aa7e46dc45a9094c98dba4c767f946ae2987c157f1",
+     "status": "-"
     },
     "tests/fixtures/worktype_alt_tur/run.py": {
      "decision": "uyarla",
@@ -5221,7 +5245,7 @@
     "tests/run_fixture_tests.py": {
      "decision": "uyarla",
      "rule": "tests/*",
-     "sha256": "c8429e352234143e9ef88228ba64a1dc3379270b007627cbf4378eaeedefe581",
+     "sha256": "0dc400bf16db01728f20c73f8ddfff465f51653e829f3fdadf0ca7c724861f78",
      "status": "tamam"
     },
     "tests/run_guard_fixture_tests.py": {
@@ -5231,15 +5255,15 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-25T16:16:40"
+   "locked_at": "2026-09-25T18:49:12"
   },
   "PROVA": {
-   "commit": "c405a9a405d262ce04cff5b2d293c5d09b1cf7f6",
+   "commit": "d738a11c6bb389153aa92b7c7a226f057d801f69",
    "files": {
     ".claude/settings.json": {
      "decision": "telafi",
      "rule": ".claude/settings.json",
-     "sha256": "1362d0289571d5340f00bd278684fc32d67460be05ab18054074ed13b7ff79d7",
+     "sha256": "ab3529bbc0e17114ca0ea2402eb0ccdce24bf374a6bf2ae33ab6e801cb6a2a02",
      "status": "kismi"
     },
     ".gitattributes": {
@@ -5263,7 +5287,7 @@
     "CLAUDE.md": {
      "decision": "uyarla",
      "rule": "CLAUDE.md",
-     "sha256": "869be1428ca641d968893c5565633ff25d180a029f17a899ba4e7ec71623b344",
+     "sha256": "8d86d79ca435b53ca6897cd6b985160733a647ae33356dd512cd07f47baf02a0",
      "status": "kismi"
     },
     "README.md": {
@@ -5323,7 +5347,7 @@
     "governance/CORE-INDEX.md": {
      "decision": "alinmaz",
      "rule": "governance/CORE-INDEX.md",
-     "sha256": "d20d825514f6882740935d5788fabca1b55eea29518922fe85063426f8e933a4",
+     "sha256": "3b49898271957541ea8a198664420c398406c54752f944392fc74c73e2b92db2",
      "status": "-"
     },
     "governance/archive/2026-09-20-tasima-RESUME.md": {
@@ -5405,7 +5429,7 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-25T16:16:40"
+   "locked_at": "2026-09-25T18:49:12"
   }
  }
 }

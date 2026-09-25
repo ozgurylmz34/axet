@@ -173,16 +173,17 @@ kurdur; projede farklıysa spesifikasyondan al.
   `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` ya da ASCII çıktı. Geçici script `.tmp/`'ye.
 
 ## 7. Clean core — standart obje yerine ne kullanılır
-Standart tabloyu okumak yasak değildir; yeni okuma modelinde released CDS/API tercih edilir. Yazma her durumda
-BAPI / RFC FM / BDC ile yapılır (kesin yasak B).
+Standart tabloyu okumak yasak değildir; yeni okuma modelinde released CDS/API tercih edilir. Yazma hiçbir durumda
+doğrudan SQL değildir (kesin yasak B); hangi yol (released RAP BO/EML → released BAPI → released OData → BAPI/RFC FM → BDC →
+manuel) ve hangi canlı teyitle: `write-api-selection.md`.
 
 | Standart obje | Yerine (released) |
 |---|---|
 | `MARA` | `I_Product` |
 | `TCURR` | `I_ExchangeRate` |
 | `BSEG` | doğrudan eşdeğer yok — released API / CDS araştır |
-| `VBAK` / `VBAP` | released satış belgesi CDS (okuma); yazma BAPI |
-| `LIKP` / `LIPS` | released teslimat CDS (okuma); yazma BAPI |
+| `VBAK` / `VBAP` | released satış belgesi CDS (okuma); yazma `write-api-selection.md` (ölçülmüş: `I_SalesOrderTP` EML) |
+| `LIKP` / `LIPS` | released teslimat CDS (okuma); yazma `write-api-selection.md` (released BO kapsamı ölçülmedi) |
 | `T001` | released organizasyon CDS |
 | `CL_GUI_ALV_GRID` | `CL_SALV_TABLE` (klasik) / UI5 grid (RAP) |
 | `CL_GUI_ALV_TREE` | `CL_SALV_TREE` |

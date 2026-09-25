@@ -129,8 +129,8 @@ Başlıklar Issue formunun alanlarıyla aynıdır; alanı boş bırakma — bilm
 ## Gönderdikten sonra (kullanıcının beklentisi)
 - Bakımcı önce kimlik taraması yapar: kimlik taşıyan Issue **düzenlenmez, kapatılır** ve temiz hâli yeniden istenir (public metin geri alınamaz).
 - Sonra her iddiayı güncel aXet'te **kendisi yeniden ölçer**; bildirimdeki çıktı kanıt sayılmaz. Doğrulanan iddia için etki analizi yapılır, değişiklik aXet sahibinin onayıyla yapılır. Bu yüzden cevap gecikebilir ve önerilen çözüm aynen uygulanmayabilir.
-- Düzeltme bir yayına girerse Issue'ya hangi sürümde geldiği ve kullanıcının koşacağı adım (çoğunlukla `%guncelle`) yazılır. "Yayında" ≠ "bende düzeldi": `%guncelle` sonrası yeniden üretimi bir kez koş.
-- Üretilemeyen bildirim "üretilemedi + hangi ortamda denendi" diye kapatılır; bu bir ret değil kapsam beyanıdır, daha dar bir yeniden üretimle yeniden açılabilir. Aynı bulguyu yeni Issue olarak açma: ek kanıt mevcut Issue'ya yorum olarak gider.
+- Issue yedi bölümlü bir **kapanış yorumuyla** kapanır: sonuç · yapılan · yapılmayan ve nedeni · senin yapacağın adımlar · dikkat · doğrulama · yeniden açma koşulu. Kapanışı görünce: ① "senin yapacağın adımlar"ı sırayla uygula — `%guncelle` proje dosyalarını ve yerel ayarlarını DEĞİŞTİRMEZ, orada yazan yerel adımları sen yaparsın ② "yapılmayan" ve "dikkat" bölümünde çıkarılan şeyi yerelde yeniden ekleme ③ "doğrulama" bölümündeki komutla kendi makinende ölç — "yayında" ≠ "bende düzeldi" ④ sonucu bildirim dosyanın `## Takip` bölümüne yaz; tutmuyorsa "yeniden açma koşulu"na göre aynı Issue'ya yorum yaz (hesabın yoksa aracı kişiye ilet).
+- Üretilemeyen bildirim de aynı yorumla kapanır; 1. bölümde "üretilemedi + hangi ortamda denendi" yazar. Bu bir ret değil kapsam beyanıdır, daha dar bir yeniden üretimle yeniden açılabilir. Aynı bulguyu yeni Issue olarak açma: ek kanıt mevcut Issue'ya yorum olarak gider.
 - Beklerken aXet klonunu (`<AXET_HOME>`) elle düzeltme: `%guncelle` o dosyayı yerel değişiklik olarak ayırır ya da çakışır ve sonraki güncellemeleri zorlaştırır. İşin durmasın diye gereken geçici yol projeye `%remember` ile not edilir.
 
 ## Rules

@@ -59,6 +59,8 @@
 | Birden çok yeni kalem aynı anahtarla | Thunk kapanış tuzağı | §1 S11 · `delete-flow-ui.md` §3 |
 | Toast görünmüyor ("mesaj gelmedi") | `MessageToast` + hemen `navTo` | §6.1 |
 | İki koleksiyon birleşince tüm alanlar boş, hata yok | Sıfır dolgusu ("10" ↔ "000010") | §5.6 |
+| İki client aynı tarayıcıda açıkken bir sekmede yanlış veri (varyant listesi, yükleme, kaydet öbür client'a gidiyor); tek sekmede sorun yok; hata yok | Elle kurulan model/istek `sap-client` taşımıyor, tarayıcının tek `sap-usercontext` çerezine göre yönleniyor. Kanıt: iki client + ayırıcı veri + ağ izinde `sap-client` | §7.4 · `checklists.md` FE-48 |
+| Belge kilidi sayfadan ayrılınca bırakılmıyor, başkası zaman aşımına kadar bekliyor; konsolda hata yok | Bırakma unload'da senkron XHR ile gidiyor (Chromium göndermez, `try/catch` yutar) ya da URL'de `/` eksik (307 → 403) | §7.5 · FE-49 |
 
 ## Value-help / filtre / liste
 

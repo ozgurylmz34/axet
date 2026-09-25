@@ -178,7 +178,8 @@ CLI `test_cli_gate.py::test_10`, §14.9).
 ## 12. Kesin Yasak B tarayıcısı (`sapadt/std_dml_scan.py`)
 
 Amaç: `adt_push_source` ile gönderilen ABAP kaynağında standart (Z/Y dışı) tabloya **doğrudan** veritabanı yazımı varsa
-yazmayı reddetmek (kullanıcı kararı 2026-09-13: doğrudan BLOCKER). Doğru yol BAPI → RFC FM → işlem kodu (BDC) → kullanıcıdan manuel.
+yazmayı reddetmek (kullanıcı kararı 2026-09-13: doğrudan BLOCKER). Doğru yol released API (released RAP BO/EML · released BAPI · released OData) → BAPI → RFC FM → işlem kodu (BDC) →
+kullanıcıdan manuel (`skills-sap/sap-dev/references/write-api-selection.md`).
 
 ### 12.1 Nerede koşar
 - **Kapı** (`gate.check_std_dml`, `check_write` içinde isim kontrolünden hemen sonra, transport/dil/reviewer'dan önce): bulgu → exit 2 `ADR_0005_B`,

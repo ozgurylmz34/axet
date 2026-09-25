@@ -22,7 +22,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (satirlar orada listeli). 2026-09-25 turu: 'Ertelenmiş-iş süpürmesi' PORTLANDI → skills/gun-sonu/SKILL.md adım 4 (:37-39) + rule-coverage.md #19 notu (:38). 'Tohum terfi gözlemi', 'Gelen çekirdek bildirimi gözlemi', 'Spawn brief agent_stall_watch referansı', 'Memory §5 iki-yüzeyli terfi (metadata.seed)' — dördü de ALINMAZ: kaynağın auto-memory/alt-ajan/tohum mimarisine özgü, aXet'te karşılık mekanizma yok."
+      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (satirlar orada listeli). 2026-09-25 turu: 'Ertelenmiş-iş süpürmesi' PORTLANDI → skills/gun-sonu/SKILL.md adım 4 (:37-39) + rule-coverage.md #19 notu (:38). 'Tohum terfi gözlemi', 'Gelen çekirdek bildirimi gözlemi', 'Spawn brief agent_stall_watch referansı', 'Memory §5 iki-yüzeyli terfi (metadata.seed)' — dördü de ALINMAZ: kaynağın auto-memory/alt-ajan/tohum mimarisine özgü, aXet'te karşılık mekanizma yok. 2026-09-25 tur 2: B özet satırı → core/sap/00-sap.md (G2). §1.1 worktree ⓑ içerik karşılaştırması ALINMAZ: aXet'te worktree denetim aracı yok (harness:statusline/worktrees alinmaz). Dosya indeksindeki standards/10 satiri -> skills-sap/README.md sap-dev satiri + sap-dev router (aXet'te CLAUDE.core dosya indeksinin karsiligi skill indeksi)."
     },
     {
       "source": "DEV_CORE",
@@ -39,11 +39,12 @@
       "decision": "uyarla",
       "targets": [
         "maintenance/UPDATE-PROCEDURE.md",
-        "maintenance/howto-gelen-bildirim-degerlendirme.md"
+        "maintenance/howto-gelen-bildirim-degerlendirme.md",
+        "skills/hata-bildir/SKILL.md"
       ],
       "party": 8,
       "status": "tamam",
-      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda. 2026-09-25: yeni §6c (gelen bildirim değerlendirme protokolü) → maintenance/howto-gelen-bildirim-degerlendirme.md (iş listesi Z131: ihbar ≠ kanıt, kimlik taraması, iddia başına yeniden ölçüm, etki analizi, açık onay, durum etiketleri). §6b'nin fork/PR topolojisi ve CI secret kısıtı kaynağın kendi deposuna özgü, alınmadı."
+      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda. 2026-09-25: yeni §6c (gelen bildirim değerlendirme protokolü) → maintenance/howto-gelen-bildirim-degerlendirme.md (iş listesi Z131: ihbar ≠ kanıt, kimlik taraması, iddia başına yeniden ölçüm, etki analizi, açık onay, durum etiketleri). §6b'nin fork/PR topolojisi ve CI secret kısıtı kaynağın kendi deposuna özgü, alınmadı. 2026-09-25 tur 2: §6c yedi bölümlü KAPANIŞ YORUMU iskeleti → howto-gelen-bildirim-degerlendirme.md §6 (okuyucu = bildiren kullanıcı; 4. bölüm önce %guncelle) + hata-bildir 'Gönderdikten sonra' (kullanıcı kapanışı görünce ne yapar)."
     },
     {
       "source": "DEV_CORE",
@@ -146,7 +147,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "A/B/C/D kodla zorlaniyor (paket yasagi, std_dml_scan ADR_0005_B, kilit silme araci yok, dil/etiket kontrolleri); fiziksel damga sap_stamp + doctor. Canli yazma davranisi DOGRULANMADI."
+      "note": "A/B/C/D kodla zorlaniyor (paket yasagi, std_dml_scan ADR_0005_B, kilit silme araci yok, dil/etiket kontrolleri); fiziksel damga sap_stamp + doctor. 2026-09-25: B sirasi released API (RAP BO/EML · released BAPI · released OData) ile basliyor, AXET-SAP-0.5.2 (sap_stamp kodu degismedi, damga kanonikten turer; projelerde %guncelle-proje). Canli yazma davranisi DOGRULANMADI."
     },
     {
       "source": "DEV_CORE",
@@ -179,7 +180,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Hook kayitlari tasinamaz; izin kurallari permissions.json'da."
+      "note": "Hook kayitlari tasinamaz; izin kurallari permissions.json'da. 2026-09-25 tur 2: 4 allow kalıbı (tasklist · git merge-base · git cherry · git check-ignore) ALINMAZ — aXet permissions.json'da allow kuralı yok (ölçüldü: 71 deny + 11 ask + 0 allow). git grep (-O program çalıştırır) / git rev-list (--output= dosyayı boşaltır) dersi: aXet'e allow eklenirse bu ikisi girmez."
     },
     {
       "source": "DEV_CORE",
@@ -226,11 +227,12 @@
       "pattern": "claude/agents/adt-gateway.md",
       "decision": "telafi",
       "targets": [
-        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py"
+        "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py"
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Tek SAP yazicisi rolu yerine tek yazma kapisi (gate.check_write). Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+      "note": "Tek SAP yazicisi rolu yerine tek yazma kapisi (gate.check_write). Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). Tur 2 (2026-09-25): B sirasi aynasi -> kapi red mesaji (std_dml_scan YONLENDIRME) released API ile basliyor."
     },
     {
       "source": "DEV_CORE",
@@ -262,7 +264,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "backend/frontend/sap-feature/sap-research -> agent araci icin rol brifingleri (ortak yasak/KVKK/ALV bloklari 00-sap.md'den birebir). Alt ajanin arac yuzeyi canli olculmedi."
+      "note": "backend/frontend/sap-feature/sap-research -> agent araci icin rol brifingleri (ortak yasak/KVKK/ALV bloklari 00-sap.md'den birebir). Alt ajanin arac yuzeyi canli olculmedi. Tur 2: frontend-expert sap-client/unload maddesi → (c) UI5 brifingi (:174); bayat 'UI5 skill henüz yok' cümlesi (:152) ve alınmayanlar satırı (:210) düzeltildi."
     },
     {
       "source": "DEV_CORE",
@@ -3036,6 +3038,30 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_elle-kurulan-istek-sap-client-tasimaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-elle-kurulan-istek-sap-client.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 10,
+      "status": "tamam",
+      "note": "Emsal: ui5-v2-plumbing-reuse (ders + skill ref). Ders memory'de (MEMORY.md :32), reçete freestyle §7.4. Müşteri client numaraları/sayıları çıkarıldı; aXet'te ayrıca ölçülmedi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sayfa-kapanirken-senkron-xhr-gitmez.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_ui5-sayfadan-ayrilirken-senkron-xhr.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 10,
+      "status": "tamam",
+      "note": "Ders memory'de (MEMORY.md :33), reçete freestyle §7.5; ölçüm sınırı (navigasyonda ölçüldü, sekme kapatma ayırt edilemedi, Firefox/Safari/FLP ölçülmedi) korundu. aXet'te ayrıca ölçülmedi."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "claude/memory-seed/*",
       "decision": "bekliyor",
       "targets": [],
@@ -3053,7 +3079,7 @@
       ],
       "party": 3,
       "status": "kismi",
-      "note": "§1 pull-before-edit foundation + yazma kapisi (kod ajani), §2 reviewer gate, §3 ADT sirasi sap-dev §5, §4 once-oku sap-dev §4, §5 tek yazici = alt ajana yazma verilmez, §6-7 klasor core/sap + .rules.md, §10 teyit tablosu sap-dev §6. Eksik: §12 paket naming/obje paket siniri validator'lari (parti 7)."
+      "note": "§1 pull-before-edit foundation + yazma kapisi (kod ajani), §2 reviewer gate, §3 ADT sirasi sap-dev §5, §4 once-oku sap-dev §4, §5 tek yazici = alt ajana yazma verilmez, §6-7 klasor core/sap + .rules.md, §10 teyit tablosu sap-dev §6. Eksik: §12 paket naming/obje paket siniri validator'lari (parti 7). Tur 2 (2026-09-25): §9 yasak B sirasi -> sap-dev router + foundation SKILL ADR_0005_B satiri."
     },
     {
       "source": "DEV_CORE",
@@ -3083,11 +3109,12 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-dev/SKILL.md",
-        "skills-sap/sap-dev/references/coding-patterns.md"
+        "skills-sap/sap-dev/references/coding-patterns.md",
+        "skills-sap/sap-dev/references/write-api-selection.md"
       ],
       "party": 3,
       "status": "kismi",
-      "note": "Router: intake->profil->paket->is turu->ADT sirasi->kullanicidan gelenler->kapanis. operational-lessons: ADT protokol kismi foundation'da, ABAP/islem tuzaklari coding-patterns §5-6; clean-core-replacements -> coding-patterns §7. Eksik: obje tipi skill satirlari (RAP, klasik dialog, UI5 deploy, Adobe, dynpro uretimi) — skill'ler geldikce router tablosu guncellenir. Musteri FM'i (ekran uretici) ve deferred-triggers alinmadi."
+      "note": "Router: intake->profil->paket->is turu->ADT sirasi->kullanicidan gelenler->kapanis. operational-lessons: ADT protokol kismi foundation'da, ABAP/islem tuzaklari coding-patterns §5-6; clean-core-replacements -> coding-patterns §7. Eksik: obje tipi skill satirlari (RAP, klasik dialog, UI5 deploy, Adobe, dynpro uretimi) — skill'ler geldikce router tablosu guncellenir. Musteri FM'i (ekran uretici) ve deferred-triggers alinmadi. Tur 2 (2026-09-25): yasak B ozeti -> router satiri 'standart veriye yazma' + description tetikleri + coding-patterns §7."
     },
     {
       "source": "DEV_CORE",
@@ -3196,11 +3223,12 @@
         "core/sap/00-sap.md",
         "scripts/sap_stamp.py",
         "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
-        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py"
+        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py",
+        "skills-sap/sap-dev/references/write-api-selection.md"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "A/C/D metin + gate.check_names; B kaynak taramasi std_dml_scan (ADR_0005_B dogrudan BLOCKER, kullanici karari); proje AGENTS.md damgasi."
+      "note": "A/C/D metin + gate.check_names; B kaynak taramasi std_dml_scan (ADR_0005_B dogrudan BLOCKER, kullanici karari); proje AGENTS.md damgasi. 2026-09-25: ZORUNLU akis released API ile basliyor + B6 -> 00-sap B satiri, std_dml_scan YONLENDIRME mesaji, ayrinti write-api-selection.md (gate.py metni sira tasimiyor, degismedi)."
     },
     {
       "source": "DEV_CORE",
@@ -3303,7 +3331,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": ""
+      "note": "Tur 2: değişiklik notu (karar aynı, yalnız unload taşıma biçimi) draft-and-locks.md §6 uyarı kutusunda (:122)."
     },
     {
       "source": "DEV_CORE",
@@ -3507,11 +3535,13 @@
         "skills-sap/sap-classic-abap/references/",
         "core/sap/00-sap.md",
         "memory/feedback_olcum-onkosullu-risk-notu.md",
-        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md",
+        "memory/feedback_ui5-elle-kurulan-istek-sap-client.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok)."
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63)."
     },
     {
       "source": "DEV_CORE",
@@ -3533,7 +3563,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Yalniz SD var; diger moduller uydurulmaz."
+      "note": "Yalniz SD var; diger moduller uydurulmaz. 2026-09-25: SD-K3 sirasi (RFC FM eklendi) + write-api-selection linki + SD_SCDS_CREATE ADIM 4 notu."
     },
     {
       "source": "DEV_CORE",
@@ -3555,7 +3585,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "DOC-KD/FS/TS/CR + mekanik yardimci kolonu + bagimsiz inceleme brifingi."
+      "note": "DOC-KD/FS/TS/CR + mekanik yardimci kolonu + bagimsiz inceleme brifingi. 2026-09-25: DOC-TS-02'ye §6.4 API secimi."
     },
     {
       "source": "DEV_CORE",
@@ -3623,15 +3653,15 @@
     },
     {
       "source": "DEV_CORE",
-      "decision": "uyarla",
-      "party": 3,
       "pattern": "playbook/checklists/rap-creation.md",
+      "decision": "uyarla",
       "targets": [
         "skills-sap/sap-rap/references/checklists.md",
         "skills-sap/sap-rap/references/troubleshoot.md"
       ],
+      "party": 3,
       "status": "tamam",
-      "note": ""
+      "note": "2026-09-25: C-RAP-STD-01/BD-01 -> checklists.md sekil secimi satiri (write-api-selection sirasi + TS §6.4); troubleshoot'a released BO 'operation not activated' satiri."
     },
     {
       "source": "DEV_CORE",
@@ -3691,7 +3721,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Oluşturma 6 faz + FE-01..47; Otomatik sütunu script adı ya da yok. 2026-09-25: kaynak FE-45/46/47 aXet'te farklı numarayla zaten vardı (FE-44/FE-43/FE-45). Kaynak FE-42 (büyük yük → HTTP 414) ve FE-43 (ikinci modelde metadataUrlParams) → FE-46/FE-47 (:120-121) + freestyle-odata-v2.md §7.3 (:287)."
+      "note": "Oluşturma 6 faz + FE-01..49; Otomatik sütunu script adı ya da yok. 2026-09-25: kaynak FE-45/46/47 aXet'te farklı numarayla zaten vardı (FE-44/FE-43/FE-45). Kaynak FE-42 (büyük yük → HTTP 414) ve FE-43 (ikinci modelde metadataUrlParams) → FE-46/FE-47 (:120-121) + freestyle-odata-v2.md §7.3 (:287). Tur 2: kaynak FE-48/FE-49 aXet'te aynı numarayla (çakışma yok) → checklists.md :124-125 + freestyle §7.4/§7.5; FE-15 FE-49'a atıf."
     },
     {
       "source": "DEV_CORE",
@@ -3702,7 +3732,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Olusturma 6 faz + FE-01..43; Otomatik sutunu script adi ya da yok."
+      "note": "Olusturma 6 faz + FE-01..49; Otomatik sutunu script adi ya da yok. Tur 2 (2026-09-25): UI-BOOT-04 devDeps adlari zaten vardi (:19); kaynak UI-BOOT-05 / UI-SAVE-05 aXet'te baska maddelerde dolu oldugu icin UI-BOOT-06 (:21) / UI-SAVE-06 (:40) olarak eklendi."
     },
     {
       "source": "DEV_CORE",
@@ -3710,11 +3740,12 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-code-review/references/checklist-abap.md",
+        "skills-sap/sap-code-review/references/checklist-rap.md",
         "skills-sap/sap-cds-ddic/references/table-types.md"
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164)."
+      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164). Tur 2 (2026-09-25): BE-79 (WARNING, kaynak MEDIUM) checklist-abap §E; BE-24 sirasi (released BAPI -> OData) + BE-08 savemode_direct checklist-rap; SKILL §6 siradaki BE-80; validator-map 73."
     },
     {
       "source": "DEV_CORE",
@@ -3846,11 +3877,12 @@
       "pattern": "playbook/howto-document-lock.md",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-rap/references/draft-and-locks.md"
+        "skills-sap/sap-rap/references/draft-and-locks.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "UI kodu yalniz backend sozlesmesi olarak."
+      "note": "UI kodu yalniz backend sozlesmesi olarak. Tur 2: §4 unload bırakma senkron XHR → fetch+keepalive+CSRF+client param + bayrak sıfırlama → draft-and-locks.md §6 (:116-139, S3/S4); UI tarafı taşıma biçimi freestyle §7.5 (:386)."
     },
     {
       "source": "DEV_CORE",
@@ -3962,7 +3994,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "freestyle-odata-v2, list-grid-alv, app-skeleton, deploy-and-local-run."
+      "note": "freestyle-odata-v2, list-grid-alv, app-skeleton, deploy-and-local-run. Tur 2: §E TablePersonalizer 'kopyalamadan önce' notu → list-grid-alv.md §3 (:93)."
     },
     {
       "source": "DEV_CORE",
@@ -4067,7 +4099,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "aXet bakımcısının kaynak çekirdekte gördüğü kusuru bildirme akışı: kusurun yerini ayır, kontrol grubuyla ölç, kanıt formatında taslak, sızıntı kontrolü, kullanıcı onayı, iş listesinde takip (iş listesi Z131)."
+      "note": "aXet bakımcısının kaynak çekirdekte gördüğü kusuru bildirme akışı: kusurun yerini ayır, kontrol grubuyla ölç, kanıt formatında taslak, sızıntı kontrolü, kullanıcı onayı, iş listesinde takip (iş listesi Z131). 2026-09-25 tur 2: kaynağın yedi bölümlü kapanışını görünce yapılacaklar → §6 (4. bölüm uygulanır; 'güncelleme onarır' adımı güncellemeden sonra ÖLÇÜLÜR)."
     },
     {
       "source": "DEV_CORE",
@@ -4271,7 +4303,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-25 tur 2: uzun-yol teşhis ipucu aXet'te ZATEN VAR (sapadt/lib/validators/run_review.py uzun_yol_ipucu + tests/test_uzun_yol_teshisi.py). Kaynağın ek LongPathsEnabled değeri + \\\\?\\ önekli varlık sondası alınmadı (yazma kapısı altyapısı; kazanç düşük)."
     },
     {
       "source": "DEV_CORE",
@@ -5490,7 +5522,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Hafiza repoda, context_paths ile yuklenir."
+      "note": "Hafiza repoda, context_paths ile yuklenir. 2026-09-25 tur 2: --terfi-adaylari KAPSAM satırına bildirim kanalı yönlendirmesi ALINMAZ (terfi aracı aXet'te yok; kullanıcı dersini %hata-bildir önerisiyle iletir)."
     },
     {
       "source": "DEV_CORE",
@@ -5501,7 +5533,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": ""
+      "note": "2026-09-25 tur 2: --wt-denetim içerik karşılaştırması + ReadOnly silme onarıcısı ALINMAZ — aXet install.py worktree yönetmez."
     },
     {
       "source": "DEV_CORE",
@@ -5536,7 +5568,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "FLP/PFCG/UI5 kısmı parti 4; rol metni alınmadı. 2026-09-25: 'BAPI sarmalayıcı — TABLES aktüeli yazılabilir olmalı' (BE-71) table-types.md §5.4'e yazıldı (BE-69/BE-72 ile aynı TABLES ailesi)."
+      "note": "FLP/PFCG/UI5 kısmı parti 4; rol metni alınmadı. 2026-09-25: 'BAPI sarmalayıcı — TABLES aktüeli yazılabilir olmalı' (BE-71) table-types.md §5.4'e yazıldı (BE-69/BE-72 ile aynı TABLES ailesi). Tur 2 (2026-09-25): oncelik tablosu satir 2 -> segw-service §1.2 write-api-selection.md linki; dpc-crud §3 sira guncellendi."
     },
     {
       "source": "DEV_CORE",
@@ -5549,7 +5581,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Müşteri özel §12.3/§12.4 alınmadı. Kaynaktaki çelişkiler referanslarda tavrıyla yazılı. 2026-09-25: §2.5 bootstrap zaten vardı (app-skeleton.md §7 :136); §18.5a (büyük yük → HTTP 414, ikinci model, $batch) → freestyle-odata-v2.md §7.3 (:287) + checklists.md FE-46/FE-47."
+      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Müşteri özel §12.3/§12.4 alınmadı. Kaynaktaki çelişkiler referanslarda tavrıyla yazılı. 2026-09-25: §2.5 bootstrap zaten vardı (app-skeleton.md §7 :136); §18.5a (büyük yük → HTTP 414, ikinci model, $batch) → freestyle-odata-v2.md §7.3 (:287) + checklists.md FE-46/FE-47. 2026-09-25 tur 2: §18.5b (elle kurulan istek sap-client) → freestyle-odata-v2.md §7.4 (:334) + §7.3 örneği _secondModelUrl ile düzeltildi (:302); §2.0 app package.json devDep ADLARI zaten vardı (app-skeleton.md §2, aXet'te 4.0.69 ile ölçülmüş) — 4.0.57 teyidi + CLI 3.x/build-deploy/yeniden-install ÖLÇÜLMEDİ sınırı eklendi (:45-47), ÇIKARILAN notu güncellendi (:384)."
     },
     {
       "source": "DEV_CORE",
@@ -5562,7 +5594,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "fs/ts/kd-authoring + traceability + sablonlar; F1 uretimi %sap-classic-abap'a, S0/S1/S2 %sap-intake-triage'e bagli. Sirket fs-generator uydurma-yok kurallari + fs2ts 4 seviyeli clean-core agaci/5 parca uyarlandi (2026-09-13)."
+      "note": "fs/ts/kd-authoring + traceability + sablonlar; F1 uretimi %sap-classic-abap'a, S0/S1/S2 %sap-intake-triage'e bagli. Sirket fs-generator uydurma-yok kurallari + fs2ts 4 seviyeli clean-core agaci/5 parca uyarlandi (2026-09-13). Tur 2 (2026-09-25): TS §6.4 API secimi -> TS-template.md 6.4 tablo + ts-authoring §5 bolum 6 + §7 kalite satiri + Yasak B sirasi."
     },
     {
       "source": "DEV_CORE",
@@ -5571,11 +5603,12 @@
       "targets": [
         "skills-sap/sap-rap/SKILL.md",
         "skills-sap/sap-rap/references/layering-and-bdef.md",
-        "skills-sap/sap-rap/references/behavior-impl.md"
+        "skills-sap/sap-rap/references/behavior-impl.md",
+        "skills-sap/sap-rap/references/eml.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "§4 naming sap-dev naming.md'de; §5 numbering ic celiskisi olculmus yontemle yazildi."
+      "note": "§4 naming sap-dev naming.md'de; §5 numbering ic celiskisi olculmus yontemle yazildi. 2026-09-25: §2/§5/§6 B satiri -> layering-and-bdef (:13 :114 :213) + SKILL §1/Rules + eml.md basligi write-api-selection.md'ye baglandi; behavior-impl degismedi (ayri LUW deseni zaten var)."
     },
     {
       "source": "DEV_CORE",
@@ -5625,6 +5658,19 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "standards/10-standart-veriye-yazma-api-secimi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/write-api-selection.md",
+        "skills-sap/sap-dev/SKILL.md",
+        "core/sap/00-sap.md"
+      ],
+      "party": 10,
+      "status": "tamam",
+      "note": "2026-09-25: yeni karar agaci aXet arac adlariyla (adt_get bdef/ddls/function, adt_search_objects, adt_atc_check, adt_where_used + CROSS, released_successors.py lookup); $metadata araci yok -> kullanicidan; FM releaseState/processingType aXet'te OLCULMEDI; DOGRULANMADI etiketleri korundu; profil tablosu sap-project.json sap_profile+cleancore_policy ile eslendi. Genel standards/* telafi kuralina dusmemesi icin ozel kural."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "standards/*",
       "decision": "telafi",
       "targets": [
@@ -5633,7 +5679,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "standards/README indeksinin karsiligi skill indeksi + sap-dev is turu tablosu."
+      "note": "standards/README indeksinin karsiligi skill indeksi + sap-dev is turu tablosu. 2026-09-25: standards/README'deki 10 satiri -> skills-sap/README.md sap-dev satiri (write-api-selection.md)."
     },
     {
       "source": "DEV_CORE",
@@ -5734,6 +5780,26 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "tests/fixtures/worktree_yasam_dongusu/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 10,
+      "status": "-",
+      "note": "Kaynağı team_setup --wt-* worktree araçları; aXet'te worktree yönetimi yok. Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/reviewer_uzun_yol_ipucu/*",
+      "decision": "telafi",
+      "targets": [
+        "skills-sap/sap-adt-foundation/tests/test_uzun_yol_teshisi.py"
+      ],
+      "party": 10,
+      "status": "tamam",
+      "note": "Aynı teşhis aXet'te kendi testiyle ZATEN VAR (kısa yol boş, sınır uzun sayılmaz, uzun yolda ipucu). Kaynağın \\\\?\\ sondası vektörleri alınmadı."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "tests/fixtures/*",
       "decision": "uyarla",
       "targets": [
@@ -5764,7 +5830,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Madde bazli: rule-coverage.md bolum 4."
+      "note": "Madde bazli: rule-coverage.md bolum 4. 2026-09-25 tur 2: yalniz yasak damgasinin B satiri degisti (released API ile baslayan sira) -> core/sap/00-sap.md B satiri, AXET-SAP-0.5.2; proje AGENTS.md damgasi %guncelle-proje ile yenilenir."
     },
     {
       "source": "PROVA",
@@ -5798,7 +5864,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": ""
+      "note": "2026-09-25 tur 2: proje dosyasi cekirdek sablonundan yenilendi (4 salt-okur allow kalibi + dd deny bicimi) -> aXet'e ALINMAZ, aXet permissions.json'da allow kurali yok (DEV_CORE claude/settings.template.json notu)."
     },
     {
       "source": "PROVA",
