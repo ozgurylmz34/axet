@@ -561,7 +561,7 @@ docstring'lerindedir (kaynak çekirdek dosyaları salt-okur okundu, repoya kopya
 ### 16.1 Yeni okuma araçları (`sapadt/tools/diag.py`)
 | Araç | Sınıf · profil | Ne yapar | Bilinçli fark |
 |---|---|---|---|
-| `adt_revisions` | okuma · all | yapı GET → versions linki → feed GET → sürümler | kütüphane `get_object_revisions` hataları `[]` ile yutuyordu; araç aynı iki GET'i yapar ve `not_found` / `revisions_unavailable` / `revisions_feed_failed` / link yok (ok, kanıt değil) ayırır. DEV dışında yazar maskelenir (ret değil; kapı moratoryumu) |
+| `adt_revisions` | okuma · all | yapı GET → versions linki → feed GET → sürümler | Z132 (2026-09-25): obje GET `Accept: */*` (objectstructure → 406, canlı ölçüldü); bağlantı `atom:link` + göreli href, seçim/çözüm kütüphanedeki `versions_links`/`select_versions_link`/`resolve_adt_href` (tek kaynak); kütüphane artık hatayı yutmaz (`SAPADTError`). Araç `not_found` / `revisions_unavailable` / `revisions_feed_failed` / link yok (ok, kanıt değil) ayırır. DEV dışında yazar maskelenir (ret değil; kapı moratoryumu) |
 | `adt_object_structure` | okuma · all | `get_object_structure` + `sap_client.get_structure` ile aynı bileşen ayrıştırma | `sap_client` sarmalayıcısı istisnayı yutuyordu → doğrudan kütüphane; 404 → `exists:false` |
 | `adt_system_info` | okuma · all | discovery servis kataloğu | kütüphane URL/client/kullanıcı/SID toplar → çıktı **allowlist** (`withheld_fields`) |
 | `sap_doctor` | okuma · all | yerel 9 katman + canlı logon/CSRF, PASS/WARN/FAIL/SKIP + `not_checked` | URL/client/kullanıcı basılmaz; probe objesi katmanı yok |
@@ -644,8 +644,9 @@ Tarama başka bir skill'in `ssl.create_default_context()` çağrısını `create
   M22 CLI `checklist_hint` eklenmiyor → CLI 12d.
 
 ### 16.11 DOĞRULANMADI (canlı SAP yok)
-- `adt_revisions`: kütüphanenin `<link … rel=".../versions">` deseni gerçek objectstructure yanıtında eşleşiyor mu (yanıt `atom:link` önekli dönerse
-  `versions_link_found:false` görünür — araç bunu "kanıt değil" diye işaretler ama sürümleri göstermez); feed `<atom:entry>` önekli mi.
+- ~~`adt_revisions`~~ → ÖLÇÜLDÜ 2026-09-25 (Z132): yanıt `atom:link` önekli, href göreli, obje isteği objectstructure Accept ile 406 döndü;
+  düzeltildi ve düzeltme canlı yeniden ölçüldü (aXet CLI, DEV, salt-okur): sınıf 2 kayıt (`includes/main/versions`), include 2, arayüz 1
+  (`source/main/versions`), var olmayan ad `not_found`. Sınıfın tanım/implementasyon include'larının geçmişi okunmaz (belgelendi).
 - `adt_object_structure`: bileşen öznitelikleri `adtcore:` ad alanında mı; `version=inactive` parametresinin uçta kabulü.
 - `adt_system_info`: discovery `collection` öğeleri; `language` alanı dolu mu.
 - `sap_doctor`: `check_logon` 200 + HTML ayrımı gerçek SSO sayfasında; `fetch_csrf_token(force_refresh=True)` gerçek oturumda.

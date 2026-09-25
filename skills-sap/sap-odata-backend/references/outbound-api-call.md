@@ -118,6 +118,18 @@ Tek bir S/4HANA sisteminde ölçüldü; sürüm/yapılandırmaya göre değişeb
   aynı muhatap fonksiyonunu tekrar eklemeye çalışma.
 - Test verisi (ödeme koşulu, mutabakat hesabı, org birimleri) sistemden okunur (`T052U`, `SKB1` …); hatırdan yazılmaz.
 
+### 3.3 Alanı BOŞ göndermek ≠ HİÇ göndermemek (API ve BAPI, ekip dersi)
+- Boş gönderilen alan hedef belgeye **boş yazılır** (aktif bir "boşalt" emri); hiç gönderilmeyen alanı SAP **kaynak
+  belgeden türetir** (ör. teslimat Incoterms'i siparişten alır). Fark hata vermez, yalnız bir alanın içeriği yanlış çıkar →
+  testte kolay kaçar.
+- Bir alanı çağrıdan kaldırırken payload'da boş bırakma, satırı tamamen çıkar; BAPI'de X-yapısı/alan maskesi varsa orada da
+  işaretleme.
+- Payload'ın nasıl kurulduğunu ölç: alan alan elle mi, `MOVE-CORRESPONDING`/`CORRESPONDING #( )` ile toplu mu? Toplu
+  kopyada istenmeyen alan sessizce sızar; kaldırmak için `CLEAR` değil açık dışlama gerekir.
+- "Bizim kodumuz göndermiyor" ile "hedef belge o alanı taşımıyor" ayrı iddialardır; ikincisini hedef belgede ölç.
+  Türetmeye güveniyorsan bunu koda yorum olarak yaz (sonraki tur "alan eksik" sanıp doldurmasın). Kısıt eklemeden önce
+  standardın zaten türetme/ayrıştırma yapıp yapmadığını sor.
+
 ---
 
 ## 4. SM59 destination yöntemi — LEGACY (yeni kodda kullanma)
@@ -181,3 +193,5 @@ Bağlantıyı handler'a gömmeden önce `IF_OO_ADT_CLASSRUN` uygulayan geçici b
 - `create_by_url` + `authenticate( password )` çalışan-yöntem örneği **alınmadı**: kodda kimlik bilgisi taşıyordu;
   yerine §1 kanonik yol.
 - Güncelleme işleminde UI'da yapılan birim eşleme tablosu (müşteriye özgü) alınmadı.
+- 2026-09-25 eşitleme (ekip dersi): §3.3 "boş gönder ≠ hiç gönderme" eklendi (kaynak taslak `backend-coding.md`'yi
+  öneriyordu; payload dersleri bölümü burası olduğu için buraya kondu). Kaynaktaki paket/sınıf adı ve satır referansı alınmadı.

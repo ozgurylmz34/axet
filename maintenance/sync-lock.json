@@ -2,7 +2,7 @@
  "_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
  "sources": {
   "DEV_CORE": {
-   "commit": "85a1dadbd26290196f669b330bcc103eea93bbe0",
+   "commit": "46cdcaf079ca155cfc165ac92035a5504082041e",
    "files": {
     ".gitattributes": {
      "decision": "uyarla",
@@ -11,28 +11,34 @@
      "status": "tamam"
     },
     ".github/CODEOWNERS": {
-     "decision": "telafi",
+     "decision": "uyarla",
      "rule": ".github/*",
      "sha256": "922b6fb2f2de9782a7acf0614e9f780114db19d8f6060d5761ed271a899258c9",
-     "status": "bekliyor"
+     "status": "tamam"
+    },
+    ".github/ISSUE_TEMPLATE/cekirdek-bulgu.yml": {
+     "decision": "uyarla",
+     "rule": ".github/ISSUE_TEMPLATE/cekirdek-bulgu.yml",
+     "sha256": "92ef415252653a63a5e4a8c235cce488dba6ac121de2a9670d3ba1d83dfefbf0",
+     "status": "tamam"
     },
     ".github/PULL_REQUEST_TEMPLATE.md": {
-     "decision": "telafi",
+     "decision": "uyarla",
      "rule": ".github/*",
      "sha256": "2131154407577d3f6a490f92b216058f6e3d6f3efd2f1606de92f9f7c186f9f5",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     ".github/workflows/core-ci.yml": {
-     "decision": "telafi",
+     "decision": "uyarla",
      "rule": ".github/*",
      "sha256": "9811dc8a8e0eae64452fd67fe3c0d7a1036c8af0a5fff725d205b05120e4585e",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     ".github/workflows/project-guard.yml": {
-     "decision": "telafi",
+     "decision": "uyarla",
      "rule": ".github/*",
      "sha256": "cf55725331aaadfedb64c30620a1dd475a3ddfa7fd946e96e6fec4042b77378a",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     ".gitignore": {
      "decision": "uyarla",
@@ -49,25 +55,25 @@
     "CLAUDE.core.md": {
      "decision": "uyarla",
      "rule": "CLAUDE.core.md",
-     "sha256": "703c7415b14f461c2c8bde0a82447af94108a529a9ba48f63463f8ff7910779e",
+     "sha256": "7ecd070a9b9d38244aac7a9b123f1f847fa4e68200147004e093bf5b3b65c132",
      "status": "kismi"
     },
     "MAINTENANCE.md": {
      "decision": "uyarla",
      "rule": "MAINTENANCE.md",
-     "sha256": "72d2cbe6375746f5b417f5eedb35a9283c0e9ecd4bc2be9399412fb3c6f2b088",
+     "sha256": "5a2c3bda0117e6f9fd4993af9294fa9b75a3dedbea6d3ed9f0cc0b670667ee28",
      "status": "tamam"
     },
     "ONBOARDING.md": {
      "decision": "uyarla",
      "rule": "ONBOARDING.md",
-     "sha256": "a9135844ea4fc414d7f179c0556309feda636c144d9e63de64acd1835df2b752",
+     "sha256": "cc6fd31de39d751509013a43c10eac2031295f53fe138a0224debc3936234dae",
      "status": "tamam"
     },
     "PROJECT_BOOTSTRAP.md": {
      "decision": "uyarla",
      "rule": "PROJECT_BOOTSTRAP.md",
-     "sha256": "a08f3c9ff780ff1f4393e8542b4c285086b846ea89e9b524e7227ba28dc631c5",
+     "sha256": "8ac8e382b8106155d2d335f1efd43ca4c5c3099ad157b38566283bfea7cf8fea",
      "status": "tamam"
     },
     "README.md": {
@@ -179,10 +185,10 @@
      "status": "tamam"
     },
     "claude/CODEOWNERS.template": {
-     "decision": "bekliyor",
+     "decision": "uyarla",
      "rule": "claude/CODEOWNERS.template",
      "sha256": "36e606dc7e362ba8142dec7bc457da86ec54eb624ea1d01fe2594b7cc961a879",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     "claude/README.project.template.md": {
      "decision": "telafi",
@@ -193,49 +199,55 @@
     "claude/agents/adt-gateway.md": {
      "decision": "telafi",
      "rule": "claude/agents/adt-gateway.md",
-     "sha256": "dc1983db5b81f8917d752ff189eeced5952ec25b3808955675e3a156d6ff118e",
+     "sha256": "6a9805a3499f29eac1cfb5dedf361bfee832d7ca05ddd1bcb5b82ab08b735279",
      "status": "kismi"
     },
     "claude/agents/backend-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "49424c31f70322bbf1f67bb88e5419b480c96129963cda935c437f2d177bd532",
+     "sha256": "d3797597dfa8a7e6c903481a9f4944b7744fd914cd9de69200cf2d4b96cb6887",
      "status": "tamam"
     },
     "claude/agents/bug-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/bug-expert.md",
-     "sha256": "c96f842ba43257535b2e3084281a9c4c741c5763b7499ec5b8e8122fbb18a9a3",
+     "sha256": "a4ea60a158a89c8a8e9e32778044c0ea6a5e681a39fb7974018f0bf90c67f84c",
      "status": "tamam"
     },
     "claude/agents/frontend-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "ad0e300589f1093255db5c53fe8a9d0d312ce287fdaa3efb19b2066c2b4f7366",
+     "sha256": "14a7c3a48306823baa35a73739f44d03ba2226abe28bb6dca2d832d78c16db6c",
      "status": "tamam"
     },
     "claude/agents/infra-expert.md": {
      "decision": "alinmaz",
      "rule": "claude/agents/infra-expert.md",
-     "sha256": "8091d5a532b4039e3d3a2001bc973229af3004314ff2d9643b8c25dd13aa0155",
+     "sha256": "cd25b7b1d400d77b206aa66cb8a92b65389859a4116a61f82beaa17519181e8f",
      "status": "-"
     },
     "claude/agents/sap-feature.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "0aa5da5bf42b2394ab55b6124ad9d1feed744c8c79f137670be3b89069a15ed2",
+     "sha256": "86e996bbc94afb658a5be4e37c4490eabb7cefcf24964b37729d4aac966ff994",
      "status": "tamam"
     },
     "claude/agents/sap-research.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "296f451daec7f5439055050126491f34a7bb4dbbb27ba47391bcb4ab43581e6d",
+     "sha256": "7596a7ef82a1bf08e8ab4777335fd1175d9f20c34016b9428191bb406e7256b9",
      "status": "tamam"
+    },
+    "claude/commands/core-guncelle.md": {
+     "decision": "alinmaz",
+     "rule": "claude/commands/core-guncelle.md",
+     "sha256": "da4072a7e2cdb0cceefb00ea59b5b10cd1c323f70471edb56be7e729d4a153a9",
+     "status": "-"
     },
     "claude/commands/onboard.md": {
      "decision": "uyarla",
      "rule": "claude/commands/onboard.md",
-     "sha256": "e3c1489569796509707589ca469ef0cc6bce08819b287e1c54a76bafab8a24d4",
+     "sha256": "2003b5b193804b47bfb2cee10f4280fd0f2b8da13d5c1478d92588f9f74f0a7c",
      "status": "tamam"
     },
     "claude/conn_adt.template": {
@@ -271,7 +283,67 @@
     "claude/memory-seed/MEMORY.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/MEMORY.md",
-     "sha256": "f39e08ff4857d311741c0cc7d4e0f745e2dd86edd2607a7269af62418060d356",
+     "sha256": "0990664661c0a6bfb506b581c957b860ded7a519f68a24a8318ec7ece50b1152",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-ajan-takim.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-ajan-takim.md",
+     "sha256": "c71337b92383b798c4555390109a7c6538ab5dda61c738c0fe83427abdbb24b9",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-arac-kok-fixleri.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-arac-kok-fixleri.md",
+     "sha256": "75d8bd1fd798d959882283bb56b3cfc7cb5b53bcdd7c89042f85c99e2f7f4fe7",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-arac-tuzaklari.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-arac-tuzaklari.md",
+     "sha256": "e574181481e2bd9da0020b98aba1ad0b3f2c277a7cd6ece91902ac848411c8ef",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-dokuman.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-dokuman.md",
+     "sha256": "bf40432fe427bdddf510191954fe741f47725c83bd7eeb0b219182c91ff33076",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-infra-gate.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-infra-gate.md",
+     "sha256": "630f230afbc9ae529483480b20a118dd3b722060fa0b67b166d219fc36258653",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-kanit-olcum.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-kanit-olcum.md",
+     "sha256": "f87e1f3ee2720a335dfbf9799cd3a835f9a9cb619537353f1f3de4eec0e24f6d",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-karar-iletisim.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-karar-iletisim.md",
+     "sha256": "32c87caa23b562cd9fde5560d81bf8666903cf0b47b74e66ef5b8ad272aa3fd7",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-sap-abap-rap.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-sap-abap-rap.md",
+     "sha256": "162eb210adef6a150714f63806649ecf36679814a59538f315d7200fc2e134ae",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-terfi-2026-09-18.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-terfi-2026-09-18.md",
+     "sha256": "cfac18e3ccc1bf518e3bf66be0aa9c5a2c4ad6c2354351ab12a711750a396265",
+     "status": "-"
+    },
+    "claude/memory-seed/_indeks-ui.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/_indeks-ui.md",
+     "sha256": "a91eec1655b9030d0f903dc9bf8cadfc1014c46e7425aca2f1255d9f8dc5b008",
      "status": "-"
     },
     "claude/memory-seed/feedback_abap-decimal-odata-serialize-locale.md": {
@@ -285,6 +357,12 @@
      "rule": "claude/memory-seed/feedback_abaplint-parser-error-gercek-olabilir.md",
      "sha256": "1bc6184a0a96946a2b0103bdabf1253e2f356316ca1a52a41c0869475c90dcdb",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ad-sayan-gate-elenen-adayi-sayar.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ad-sayan-gate-elenen-adayi-sayar.md",
+     "sha256": "738a3f1739ef9a96b3c8474421ad7156e37b0812b21385655882c59064b2fc95",
+     "status": "-"
     },
     "claude/memory-seed/feedback_adt-dtel-create-fixed.md": {
      "decision": "uyarla",
@@ -304,10 +382,34 @@
      "sha256": "3e1de89b1cbc9f557bf3a88fdda1b5bbd65295447a81380150a85306f524e532",
      "status": "-"
     },
+    "claude/memory-seed/feedback_adt-include-objesi-prog-tipiyle-404-sahte-negatif.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-include-objesi-prog-tipiyle-404-sahte-negatif.md",
+     "sha256": "3df9bb942e8ac43b981a05cf7826d762d2579dd34d76b8c05f653198935c5250",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_adt-infra-degisikligi-once-uyar-onay.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_adt-infra-degisikligi-once-uyar-onay.md",
      "sha256": "3c2c57bcb8fb9f0edfe64d63520ec9b980edddfbfa3553353c15008408f11914",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-preview-bos-char-null-render.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-preview-bos-char-null-render.md",
+     "sha256": "45831ec5f3bd9cc62ad2bd1dc64ea77eeb6d8df8d2f221273df4158f407221c6",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-readback-md5-disk-md5-ile-dogrudan-kiyaslanamaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-readback-md5-disk-md5-ile-dogrudan-kiyaslanamaz.md",
+     "sha256": "4a99297ebdeab1b9448d9a018da9617364cd4101b4a38d9c2a667a65b585c7be",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_adt-sql-query-400-sebebi-where-terim-sayisi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_adt-sql-query-400-sebebi-where-terim-sayisi.md",
+     "sha256": "e87455c2ac6c8af2157553dd480acc804fbe7c18d3ea12a018a9b0d12e55948e",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_adt-table-read-pozisyonel-hizalama-tuzagi.md": {
@@ -322,11 +424,59 @@
      "sha256": "6c8a103524fccc7e31ac9df7b525d08dcf3ed86032a907dee8bd82ee7b50134f",
      "status": "-"
     },
+    "claude/memory-seed/feedback_agent-stall-watchdog-mekanizmasi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_agent-stall-watchdog-mekanizmasi.md",
+     "sha256": "a4c48ca14e0740d9f3fbe9d5f5a2ee048e71978add52358e4dcafaf622bc27cf",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md",
+     "sha256": "16ac2a3f22b66d91dfd43d4e0f60e9bec6ddae01210c6ef032726dab87f83670",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ajan-kurali-brifingde-degil-taniminda-yasar.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ajan-kurali-brifingde-degil-taniminda-yasar.md",
+     "sha256": "ec000caee1ccdc5c9e0788076d1c93accc80c22c83aecbf0483e07d093426d72",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ajan-model-secimi-olculdu-ayri-politika-yazilmadi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ajan-model-secimi-olculdu-ayri-politika-yazilmadi.md",
+     "sha256": "4522514aca18ad907178dd73dd13f239a4dc63e4594c5d2bac49874601d3f5e4",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ajan-okuma-disiplini-tazelik.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ajan-okuma-disiplini-tazelik.md",
+     "sha256": "5a0d4ba0d87e0f7e16464b8069ffcb25fdad83031af1b7a981109cbab3ff7934",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_ajan-olumsuz-donusu-kanitla-sorgula.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_ajan-olumsuz-donusu-kanitla-sorgula.md",
      "sha256": "150a587003f17341639d2842bcb70b50362c981eace66fc6030274130e5c40b9",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md",
+     "sha256": "fe49ea2931e544165ae08a44ca5d0cb5003ec79afc4919e906cb5b98ab12adda",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_alan-anlamini-ddic-etiketinden-dogrula-tvak-fkara-fkarv.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_alan-anlamini-ddic-etiketinden-dogrula-tvak-fkara-fkarv.md",
+     "sha256": "e49a2b21550e3eb09db301aff09ddd046938231345c0f5d632fd5bc60646c2d5",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_alinti-onay-turu-acmaz-toren-enflasyonu.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_alinti-onay-turu-acmaz-toren-enflasyonu.md",
+     "sha256": "2a96a2b0c8cb28a053255554980b7b65e34f29a28b8cb98630b121d2032b7f9b",
+     "status": "-"
     },
     "claude/memory-seed/feedback_api-call-ic-gateway-proxy.md": {
      "decision": "uyarla",
@@ -352,6 +502,12 @@
      "sha256": "79c501dc630bd6aad54f3805af0fced096908b6a62827cb920c9065d9c6dc6bd",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_atc-bulgusu-select-i-iceren-sinifa-yazilir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_atc-bulgusu-select-i-iceren-sinifa-yazilir.md",
+     "sha256": "096263d92ed9383206e1a039cd7a112ee0b7822688fa65dc47f566ac5c89be01",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_atc-priority-1-zorunlu.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_atc-priority-1-zorunlu.md",
@@ -364,11 +520,41 @@
      "sha256": "2598a5a4aeb3d838877956f43d44800798baa132e157b8bc37ea1d3c0c556021",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_auto-mode-deny-kararsiz-yeniden-dene.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_auto-mode-deny-kararsiz-yeniden-dene.md",
+     "sha256": "303618c126df074fe417f82d1b6e6efaba239e9deeed7bd8a4348e20e911f45a",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ayni-hash-degil-olu-kod.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ayni-hash-degil-olu-kod.md",
+     "sha256": "5c84b1ffebedfac3cae8ab5cf58ffa47e545fb4f09fabf8f7836dba7287e8288",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ayni-sinif-ayni-duzeltme-degildir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_ayni-sinif-ayni-duzeltme-degildir.md",
+     "sha256": "253929ba879222ee3cdaef9c54edc3bea062110554e3ed948398b670af1872c4",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_baglanti-tutarsizligi-adt-blok.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/feedback_baglanti-tutarsizligi-adt-blok.md",
      "sha256": "d14496ac0eb6b81d59c84573eb15dd448b6ab4052d784fefa28a6db51e7ad0a4",
      "status": "-"
+    },
+    "claude/memory-seed/feedback_bash-find-core-junctionu-gormez-yok-sanirsin.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_bash-find-core-junctionu-gormez-yok-sanirsin.md",
+     "sha256": "183429aa8d91d2654ee901d97ec5d933051212524a342fdf057cc64533ab7ad7",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_bash-heredoc-kacis-ve-utf8-bozulmasi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_bash-heredoc-kacis-ve-utf8-bozulmasi.md",
+     "sha256": "77b1f018314a58bfa16db4c32bb73b90ff8a187e87bfd48a693c34836b42f90e",
+     "status": "tamam"
     },
     "claude/memory-seed/feedback_behavior-pool-main-empty-ccimp-trap.md": {
      "decision": "uyarla",
@@ -382,16 +568,106 @@
      "sha256": "62c488086650cf1b642e22dcc7013106da06750a55d85832b09f88df1684d05e",
      "status": "-"
     },
+    "claude/memory-seed/feedback_bos-gondermek-hic-gondermemek-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_bos-gondermek-hic-gondermemek-degildir.md",
+     "sha256": "3e75e621b16cdd0c83e9a0f6b2461d64c828b0d1029e7ccfc8a6edc73e9436f2",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_brifinge-koydugun-yolu-once-kendin-kos.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_brifinge-koydugun-yolu-once-kendin-kos.md",
+     "sha256": "5e284cc9cda4a3356acc0f95c697527aa5dfd8acda7ec3ae63da5aa2d620ea45",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_bulgu-listesi-ornektir-sinif-duzeltmesi-tarama-ister.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_bulgu-listesi-ornektir-sinif-duzeltmesi-tarama-ister.md",
+     "sha256": "1f7abf93572c52e3ad38c9e21e21e3819677de647bdc27b717b3fe4f87f7fed8",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_calisan-ajanin-dosyasi-ucus-halindedir-iddia-degil-soru.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_calisan-ajanin-dosyasi-ucus-halindedir-iddia-degil-soru.md",
+     "sha256": "aae8bec4d8f4a739c48ea16e21a5843cd546e0c2bcd31391280a17d91f31d852",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_canli-production-obje-degisimi-auto-mode-kapat.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_canli-production-obje-degisimi-auto-mode-kapat.md",
+     "sha256": "62adab7fdf35f68e12fd8753b419a05942ecd104a0ab1e8036cc1c6ccebdffe9",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_capa-liste-degil-KURAL-olmali.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_capa-liste-degil-KURAL-olmali.md",
+     "sha256": "b4efacfbee1e21e20c0f466442ded34ee09c2f96ec77149191c1f973a789d6dd",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_capadaki-acik-madde-devralmadan-once-olculur.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_capadaki-acik-madde-devralmadan-once-olculur.md",
+     "sha256": "ade89655e9433814df0e8c58cbf68229025c973f86a4cb3d7c7bcb29b77cb3ba",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_capayi-ada-cevirmek-de-bir-olcumdur.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_capayi-ada-cevirmek-de-bir-olcumdur.md",
+     "sha256": "5e39883154563b86b85d53af78695858434d6705eb52e19baff3699c947e05a9",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_cds-tekillik-olcumunde-alan-listesi-bulguyu-degistirir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_cds-tekillik-olcumunde-alan-listesi-bulguyu-degistirir.md",
+     "sha256": "82e92bbafe9b2b5831d094f4525537cbb4739d7d83235715b02832128fdefef9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_cekirdek-guncellemesi-proseduru-vardir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_cekirdek-guncellemesi-proseduru-vardir.md",
+     "sha256": "a6e195f8de8854a2b03d1f66e4ce9ffcbffca8ab127cca39310de34610cfbd46",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_check-annotasyonu-fail-yonunu-belirlemez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_check-annotasyonu-fail-yonunu-belirlemez.md",
+     "sha256": "8c401abf048bf4564c4f549f36c42b33aefe6506fae2b4d454f6d02be304fb92",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_classrun-teshis-yanlis-surum-ve-bayat-oturum.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_classrun-teshis-yanlis-surum-ve-bayat-oturum.md",
+     "sha256": "45dd178eff672bebaceabcf586910744b0a5b126f0cb5d44f035d6a779ca443e",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md",
      "sha256": "116ddd0906452dc2396564393bd631c44b13a34dfdd8f7b510fb8d6409a94c06",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_cok-katmanli-degisiklik-yonetimi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_cok-katmanli-degisiklik-yonetimi.md",
+     "sha256": "b318194f307755643811eb4da35e21589b41613b45f2fd9d775c2917f3b1ade2",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_cok-parametreli-shlp-ilk-alan-devralma.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_cok-parametreli-shlp-ilk-alan-devralma.md",
+     "sha256": "0f174fb5c47cdc1f5d48a7f49c16f35c77d18ab1f3695b61b4423dd472e8ac3f",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_context-yonetimi-compact-clear.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/feedback_context-yonetimi-compact-clear.md",
      "sha256": "d80423eba01266ed96e21aef9c2fc75d87baca2fd0f3e79c75fde59449cd4946",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_core-index-dala-bagli.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_core-index-dala-bagli.md",
+     "sha256": "99f9332f9cf2e33e0fde89dc0f340921ed6d2ef9ead52bbbfd19a15fcbbfcab4",
      "status": "-"
     },
     "claude/memory-seed/feedback_create-bdef-script-broken-use-blues-recipe.md": {
@@ -412,10 +688,40 @@
      "sha256": "6b3e67dc82b7b58e8317f985721ccc296d2ccdfd65f95e37321afce942ad23f6",
      "status": "-"
     },
+    "claude/memory-seed/feedback_curutme-de-bir-iddiadir-yerine-yazilan-sayi-olculur.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_curutme-de-bir-iddiadir-yerine-yazilan-sayi-olculur.md",
+     "sha256": "c5bce4f7fe462312578c9b9e88102ce413181a355d8ce283a1e02142c9669638",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_ddls-obje-aciklamasi-annotation-degisiminde-tazelenmez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ddls-obje-aciklamasi-annotation-degisiminde-tazelenmez.md",
+     "sha256": "f81b0091051d28763119e4a10233d86efd45c117c7206a5da666ec03958f0ade",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_debugger-farki-aslinda-kullanici-farki.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_debugger-farki-aslinda-kullanici-farki.md",
+     "sha256": "07de382fa263a6b4cba72f2b3cc35158fff09c4ce118ef6ddf7cbdcb1ad1c026",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_defter-tasariminda-giris-tuketim-duzeltme-uclusu.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_defter-tasariminda-giris-tuketim-duzeltme-uclusu.md",
+     "sha256": "316742cdc8598accf3f7d7771bc97cbd76364861d4d10797c1cb29721a7e51bf",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_deploy-lokal-test-onayi-sart.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_deploy-lokal-test-onayi-sart.md",
      "sha256": "70ab9e188838715077b8cb74f08cae26d0ecb79aa604091777108947fe24fd40",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_deploy-ui-statik-varlik-korlugu.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_deploy-ui-statik-varlik-korlugu.md",
+     "sha256": "882ea2d31790065b82c3eed4e145c45e0f97057f24c03a458f579c383bcd299c",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_detached-leading-abapdoc-class-push-400.md": {
@@ -424,11 +730,35 @@
      "sha256": "ef482a2289d349ff4405894a02943db9aa9f9572ccc4e04899de2c1458177454",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_dev-verisi-yapi-olcer-dagilim-olcmez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_dev-verisi-yapi-olcer-dagilim-olcmez.md",
+     "sha256": "1a927b77ed7793e2beaad7fa1191411d530a4ff7342fab00104c087aa1009b75",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_devreye-alma-once-etki-olc.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_devreye-alma-once-etki-olc.md",
+     "sha256": "966c8aceff9cafe02b09584d7ab0bbec10db8b869e6859860571b3d73021492a",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_dogrula-once-flag-spekulatif-blocker-yasak.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_dogrula-once-flag-spekulatif-blocker-yasak.md",
      "sha256": "192ea4b282767bc54a7eeefdbe8392d94be17e7ffd7a5083e33c96a0b11e2a5c",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_dogrulama-sezgileri-dort-kural.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_dogrulama-sezgileri-dort-kural.md",
+     "sha256": "6fa46163685173c4539a88576f8b743f048a88d5464b93a3374b58a514292b77",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md",
+     "sha256": "c806bca15559f826e8af84e57ef56d94b32ec80926835e24cbbfa7c660013c89",
+     "status": "-"
     },
     "claude/memory-seed/feedback_done-tam-kapsam-dogrula.md": {
      "decision": "uyarla",
@@ -442,6 +772,78 @@
      "sha256": "4b4d5d5c0feb78948a36e8409c7ec039f103ef362baeb52b9f680429125aa1c7",
      "status": "-"
     },
+    "claude/memory-seed/feedback_drift-uyarisinda-once-yonu-olc.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_drift-uyarisinda-once-yonu-olc.md",
+     "sha256": "69c1474556a16c56f7a4b3d3446d41ce7b924e430ea3d8bb44936c3c8b5fb52b",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md",
+     "sha256": "eb55e86d55ef8cfde56eda2d6c6beeb1fe53d7d42d989f4674054822b6faf08e",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_duzeltme-turu-kendi-regresyonunu-uretir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_duzeltme-turu-kendi-regresyonunu-uretir.md",
+     "sha256": "7eb100c521287d79adf32438ff4c384bd91818f4b948cf47e4a5bf64911cfacd",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_e070-as4date-istegin-tarihidir-obje-degisim-tarihi-adt-versions.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_e070-as4date-istegin-tarihidir-obje-degisim-tarihi-adt-versions.md",
+     "sha256": "71035f694de0947128b87ab1de023c93912db4e6a41e8c4952be6c8c9595a075",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ecc-referansi-is-anlayisi-icin-mimari-degil.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ecc-referansi-is-anlayisi-icin-mimari-degil.md",
+     "sha256": "871db81247001dbc1d5c5ee4a401f70f9cb23542026d702569fc8664949269e0",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_edi-tasariminda-otorite-orijinal-mesaj-dosyasi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_edi-tasariminda-otorite-orijinal-mesaj-dosyasi.md",
+     "sha256": "4b48470d7a0f6b6ba851e4b051a4ce5fcd5a3c38e244bd6bae827524c9a916b1",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_edid4-sdata-lchr-dtint2-ile-okunur.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_edid4-sdata-lchr-dtint2-ile-okunur.md",
+     "sha256": "86b54f5f47545ffbe5d39791698ffd4f782fa9f427e556d83ef61181c062afd3",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_empty-key-tabloda-olcutsuz-sort.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_empty-key-tabloda-olcutsuz-sort.md",
+     "sha256": "369118b7818b89548e37e0ca84079a77fe844f1465de784c129c5e7d5152d7fd",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_enduser-doc-no-sa38-se38-program-run.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_enduser-doc-no-sa38-se38-program-run.md",
+     "sha256": "24e70d0d88033fb3dcba6c60a8b7dd83a222999b5db342b50842bd28b883d464",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_exit0-degil-cikti-kaniti.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_exit0-degil-cikti-kaniti.md",
+     "sha256": "1909a7f79140bcaf64195b2d3227f53a6a2dce63abac63f22c3e0239bd36eff1",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_exporting-tablo-parametresi-hedefi-temizler.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_exporting-tablo-parametresi-hedefi-temizler.md",
+     "sha256": "ad051248e247560511eac282891f5754204445fb0ccba32bc0fb4be3abba3b34",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_f4-arama-yardimi-tasarim-asamasinda-kurgulanir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_f4-arama-yardimi-tasarim-asamasinda-kurgulanir.md",
+     "sha256": "cb78c0fe7db5382224a52d7d9f028e4a7e009a95c2004d10c9b0977d333c05a5",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_fe-merge-key-padding-ve-playwright-runtime-tespit.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_fe-merge-key-padding-ve-playwright-runtime-tespit.md",
@@ -454,11 +856,41 @@
      "sha256": "c294e1e881c03e319929c465758cffa6dcbd7f7bccbc896fabde712fbc7db47b",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_flag-degil-icra-bekleyen-is-kapat.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_flag-degil-icra-bekleyen-is-kapat.md",
+     "sha256": "5f13a5e58053e78635932ee97157f7b3ff123f023f14a5cc6a336d2310831e98",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_freestyle-ui-preflight.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_freestyle-ui-preflight.md",
      "sha256": "d1dab0a34c3ab9e32c28fa92ca6af514771c44dc70896c449905edc75c388d74",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_fs-govdesi-analiz-gunlugu-degil-uc-katman.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_fs-govdesi-analiz-gunlugu-degil-uc-katman.md",
+     "sha256": "cf963f26e57525b6c260ee126d9dd4083db48d9e56539cd99af8f912c61b16c2",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_fs-ts-html-uretilmez-teslim-bicimi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_fs-ts-html-uretilmez-teslim-bicimi.md",
+     "sha256": "c76a8d4073195c1a23db7a4897152bc12db8a2fd4fd40a12550d023a3caa9e41",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_fs-ts-iki-zihniyet-disiplini.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_fs-ts-iki-zihniyet-disiplini.md",
+     "sha256": "b434bf326f8cab935760386c802543294f311c46fd0297c481970a3a2f6cf1d9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_gate-moratoryumu-bes-sart.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_gate-moratoryumu-bes-sart.md",
+     "sha256": "d04d028fc411a4644a3f00a4b66bd5c4f7550239983dc98d7519d597d3661bd6",
+     "status": "-"
     },
     "claude/memory-seed/feedback_gateway-git-commit-push-yasak.md": {
      "decision": "alinmaz",
@@ -466,10 +898,46 @@
      "sha256": "7fbbbf76fdeed13352901e22ea6a78cb8df870e3a2e1fbaf8df93d49a538bc48",
      "status": "-"
     },
+    "claude/memory-seed/feedback_gateway-push-before-activate-preaudit.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_gateway-push-before-activate-preaudit.md",
+     "sha256": "03fa09581a7f78b28f7967252f48b0547d849747d5fdefb3c3d8d83d45d06938",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_gecmis-temizligi-refs-pull-tuzagi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_gecmis-temizligi-refs-pull-tuzagi.md",
+     "sha256": "27d48749a9389639869e8d619c9e057705a7d64907bc1a5a5197c9b08521e3b9",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_generic-tool-program-spesifik-isim-verme.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_generic-tool-program-spesifik-isim-verme.md",
      "sha256": "3cf08bc58c92cb6235538356545b14bdd16ff1063b683cd3c5890f47de4db801",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_gfm-tablo-bos-satir-tuzagi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_gfm-tablo-bos-satir-tuzagi.md",
+     "sha256": "84fad2533fdf7b0d4e729fa329632e2b8c1bd33053e8aee92f629e8246f057e0",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_git-bash-sap-uri-yol-donusumu-msys-no-pathconv.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_git-bash-sap-uri-yol-donusumu-msys-no-pathconv.md",
+     "sha256": "b6db6a63bd403ac14e732231cbfb98c4e10a47be37472e911573f3ac50f3353c",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_github-actions-asili-queued-kosu-pr-kapat-ac.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_github-actions-asili-queued-kosu-pr-kapat-ac.md",
+     "sha256": "230a511c6d9bb617a56dd3808d2e8425eede9ce8cbf39e0b870eff70f25220db",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_gocsuz-sema-degisikliginde-kilavuz-bos-diyemez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_gocsuz-sema-degisikliginde-kilavuz-bos-diyemez.md",
+     "sha256": "7d7db26922ecd5ef44ebdd3147337a639afa69d976bb9133cac69c382e0b13f3",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_grid-liste-standardi.md": {
@@ -484,10 +952,40 @@
      "sha256": "858007a2324b0a743612151d019a8c38737d3185ae42b557c93f91dfff1db23c",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_grup-bazli-genisletmede-her-grup-kendi-dali-ve-metodu.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_grup-bazli-genisletmede-her-grup-kendi-dali-ve-metodu.md",
+     "sha256": "1e600d3369d24481d603e7e8f647754deac0ad87257202570c008a730421822c",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_gurultulu-duser-iddiasi-olculmeden-yazilmaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_gurultulu-duser-iddiasi-olculmeden-yazilmaz.md",
+     "sha256": "93cbd554f9f6bcb3c456667c55f9f340a946a1fc947263f08e0454b67630b3a1",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ham-satir-sayisi-is-nesnesi-sayisi-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ham-satir-sayisi-is-nesnesi-sayisi-degildir.md",
+     "sha256": "b726c247ff0e94b7b8a38e16532c83a34845020874e5518811b624ef370af9ba",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_hicbir-yerde-yok-demeden-once-nerelere-baktigini-yaz.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_hicbir-yerde-yok-demeden-once-nerelere-baktigini-yaz.md",
+     "sha256": "e795c09296518a24a6c1af2ebef50a6e90b14f1594b647edc4764c43a60b3d17",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_hook-bakim-protokolu-t11.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/feedback_hook-bakim-protokolu-t11.md",
      "sha256": "6acdb1074b0a22483e5c1c35b00b3ee249493dcd6b8390175fd5a276af477b5e",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_hook-dosya-yolu-windows-bicimi-ister.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_hook-dosya-yolu-windows-bicimi-ister.md",
+     "sha256": "2f34ebe8327a897e47761496d70236bed09ffbdd76efb52d2ce978d2396a60bc",
      "status": "-"
     },
     "claude/memory-seed/feedback_hook-komut-project-dir-execform.md": {
@@ -496,11 +994,41 @@
      "sha256": "21919f91f30fedb1d255205e06715b4ba6b588196170ede1042b612d7a387bac",
      "status": "-"
     },
+    "claude/memory-seed/feedback_hook-negatif-test-exit0-iki-anlamli.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_hook-negatif-test-exit0-iki-anlamli.md",
+     "sha256": "fe0277fc0b1d58267e2b630b263c4ebebb3580f71c114b041e6b20b8d9a86b97",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_i18n-tr-her-iki-dosya.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_i18n-tr-her-iki-dosya.md",
      "sha256": "d626a4d2a812ae00af539633ac25d49ef5e981d4f05aa96d9bc0f3b3260dd464",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_iddia-kac-yerde-yasiyorsa-o-kadar-yerde-kapatilir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_iddia-kac-yerde-yasiyorsa-o-kadar-yerde-kapatilir.md",
+     "sha256": "97b67c00dd6f68ab8a8d3a7bcf6a6727a0acb71528511ef789f5c9e1e2e0a8be",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_iddia-yazma-aninda-kanit-kurallari.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_iddia-yazma-aninda-kanit-kurallari.md",
+     "sha256": "983276277bdc48c0770f60ded6bf019652fe2f2d027f9dc0d3f26f5a06754121",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_idoc-segment-alani-alfabesi-hedef-tablodan-farkli.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_idoc-segment-alani-alfabesi-hedef-tablodan-farkli.md",
+     "sha256": "f5b1b062650b48aa31e3cc58758fcc4670d5f90d31a1498588f3ec2bb6f07c74",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_inactive-objects-tadir-capraz-kontrol-bozuk.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_inactive-objects-tadir-capraz-kontrol-bozuk.md",
+     "sha256": "825e087fc26e32ec75c085ced2fa5b160d358e18c9444dc0a03fe5d6070fe25d",
+     "status": "-"
     },
     "claude/memory-seed/feedback_inactive-worklist-audit-http200-degil.md": {
      "decision": "uyarla",
@@ -508,10 +1036,106 @@
      "sha256": "4b698c8402afc9bab61ffeda96a936cb0e85ea3e27d11d8268e9e0f8627fb715",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_infra-expert-spawn-ad-verme.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_infra-expert-spawn-ad-verme.md",
+     "sha256": "c1b0dbb935db82dfd20c66868813b250ebd766eb28aab751aede8265b6458f50",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_infra-icin-ayri-acik-onay-sart.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_infra-icin-ayri-acik-onay-sart.md",
+     "sha256": "8cd4befeb3166d4eeb291495d519e9a69e0645c2a16b9702c34aedaec5ae34b2",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md",
+     "sha256": "ed5f97b536841cb8aff1108cc2d86d626cf77b1d8ba599ebda98be51c2a46336",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_infra-turunun-maliyeti-testte-degil-kanit-uretiminde.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_infra-turunun-maliyeti-testte-degil-kanit-uretiminde.md",
+     "sha256": "9a4461fcad92ad718e0f78737c4d9306c3b3efbb680d88f226bce58724416cbb",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_inline-post-empty-source-trap.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_inline-post-empty-source-trap.md",
      "sha256": "313d67bcb229f120c3411587b746cb15423406ded54f1632e81ecbcdf58f0f91",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kanit-tazeligi-indeks-ve-zaman-sirasi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kanit-tazeligi-indeks-ve-zaman-sirasi.md",
+     "sha256": "d571c772b41273c4372ab9fc46639fc253915666dab3be98959f7a0677b6ecd9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kanit-yeniden-uretilebilir-bicimde-yazilir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kanit-yeniden-uretilebilir-bicimde-yazilir.md",
+     "sha256": "c5254964b9d7120be3c65887ef258ba5559d5eab3c9e922aba1294a085d409d5",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kapi-kosarken-dosya-donar-md5-teyidi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_kapi-kosarken-dosya-donar-md5-teyidi.md",
+     "sha256": "92e7b9f9b8f967ff5b5565406c80f34834f8d33b9e8d6db28aaa1828377944c4",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_kapi-tek-tarayicidan-ibaret-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kapi-tek-tarayicidan-ibaret-degildir.md",
+     "sha256": "2ca625689fbcb52a63e14cec621f0596ddb82a5da10d71416c36d970b9b4ed27",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kapi-zinciri-derlemeyi-gormez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kapi-zinciri-derlemeyi-gormez.md",
+     "sha256": "8f18f29a740541ef28d98551ecc6e31637a923ba51b2fd24bbe7f212bb6fe018",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kapinin-var-olmasi-her-girdi-yolunda-calistigi-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kapinin-var-olmasi-her-girdi-yolunda-calistigi-degildir.md",
+     "sha256": "f4952f7e144e1c0d3b4b9b6007c9f2944e8da44121669d117b46bf6ca16a858b",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kapsam-disi-bulgu-protokolu.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_kapsam-disi-bulgu-protokolu.md",
+     "sha256": "12536659dee8773b61d116e3de069b5555c784981d572ae50e15f339db45aa66",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_kapsam-niteleyicisini-dusurme.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kapsam-niteleyicisini-dusurme.md",
+     "sha256": "c972c4a80ae86f72221fa347accac63d72239cecc7b5206ab56a5e59758c2653",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_karar-curudugunde-ureticinin-girdisi-de-curur.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_karar-curudugunde-ureticinin-girdisi-de-curur.md",
+     "sha256": "69ea163af380cc7a96dde09afb0368429cea9f6d14bea55a6110cb532098af79",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_karar-degisince-kaydi-ayni-turda-guncelle.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_karar-degisince-kaydi-ayni-turda-guncelle.md",
+     "sha256": "bfbebbb3b0efc689cfde479736efea222429ccc4fa1806670c09366fe4ddc445",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_karar-dosyasi-kapandi-yazmak-icra-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_karar-dosyasi-kapandi-yazmak-icra-degildir.md",
+     "sha256": "ede0c994f123e343addb4452261ad0c03c5a023f82c6adb5ca48ef3aee9c3dce",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_karar-sormadan-once-erisilebilirlik-olc.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_karar-sormadan-once-erisilebilirlik-olc.md",
+     "sha256": "d2c8323623319cb45066e0cb85917b548e93a8ae7c9c4ebb02b76d198a0e46e0",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_karar-verimliligi-asiri-kapi-yok.md": {
@@ -526,6 +1150,36 @@
      "sha256": "ed427eed7775fe7ab27fffce0a1515fb245ea2d326d5ae05015d17ae18fd0198",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_kardes-artefakt-benzerligi-kip-semantigini-kanitlamaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kardes-artefakt-benzerligi-kip-semantigini-kanitlamaz.md",
+     "sha256": "1fac9dfcc1e0178e73e7ff90920549191771809c5995ce9b92a54851b01d0d71",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kardes-taramasi-spawn-oncesi-kapsama-alinir-kuyruga-yazilmaz.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_kardes-taramasi-spawn-oncesi-kapsama-alinir-kuyruga-yazilmaz.md",
+     "sha256": "5035f12ee3822d14b492310898bc5a02a332f463a57e4103a9654a26992d062a",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_kaydin-onerdigi-fix-yonu-de-bir-iddiadir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kaydin-onerdigi-fix-yonu-de-bir-iddiadir.md",
+     "sha256": "c5618d48b7912b527e6f5d86d1e9583b4bbe483baa5012697c65b73ffb740e10",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md",
+     "sha256": "6fc7933f022a9a925577261b4b5f6b40a4e051492ab80691b4985760086d5026",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_klasik-alv-birim-doc-dersleri-2026-07-13.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_klasik-alv-birim-doc-dersleri-2026-07-13.md",
+     "sha256": "682e97ce933c45f739c0cc8592bb1f5d0d99c0f8da8fd9c760a7c6bceb2dabff",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_klasik-alv-template-first.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_klasik-alv-template-first.md",
@@ -536,6 +1190,30 @@
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_klasik-program-include-bol.md",
      "sha256": "731977cbb9fc770de97867907b6a887ac4ecd6a2a10938b150b8104cec255a5e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kod-yolu-vardi-veri-gecmemisti.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kod-yolu-vardi-veri-gecmemisti.md",
+     "sha256": "502ed1e1b52b03c727a0a6976f902db1939061989f46092a89857aac868cb6c4",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kontrolun-kapsami-is-akisinin-seklinE-bagli.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_kontrolun-kapsami-is-akisinin-seklinE-bagli.md",
+     "sha256": "c454a24ead6dd3e40c1ca9d20ee623ac82be3e2992ad02899221a4763c073c31",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_kopya-sayimi-tek-sozdizimi-desenine-dayanma.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kopya-sayimi-tek-sozdizimi-desenine-dayanma.md",
+     "sha256": "74c411a8a06e553a96fd9a8ed0de7b74d12dd0b8459df94ffb0e5ec667030231",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_kullanicinin-bildigi-is-gercegini-olcmek-yerine-sor.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_kullanicinin-bildigi-is-gercegini-olcmek-yerine-sor.md",
+     "sha256": "aab37eb6ebb7a730a035bd1bf3baef1c06fccee7de8c90235e130709fb3aa7d2",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_kural-gate-lenmeli-yoksa-anlamsiz.md": {
@@ -562,6 +1240,12 @@
      "sha256": "5deda484a97a1a8b8a4beb743ea0e952dc342c74a3c6dfce8c16f78ad6546271",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_lider-ajan-paralel-yazim-cakismasi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_lider-ajan-paralel-yazim-cakismasi.md",
+     "sha256": "36f3b392808062dcadbf1409bdb9c7bcd6b70ea540266198cac5fcf32321b009",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_lider-bloke-olmama-background-dispatch.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/feedback_lider-bloke-olmama-background-dispatch.md",
@@ -580,6 +1264,12 @@
      "sha256": "6d075020f448d4c97e50cebd07b43a1562739b8e8000dcf8f615f455ca7259b0",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_literal-filtreli-ab-runtime-hatasini-yeniden-uretemez-pushdown.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_literal-filtreli-ab-runtime-hatasini-yeniden-uretemez-pushdown.md",
+     "sha256": "725f70220f3171de6ca33882736342ed1c8e2140b9cdaa7669fd4fe0ab2bb695",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_mcp-post-shell-en-master-lang.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_mcp-post-shell-en-master-lang.md",
@@ -591,6 +1281,54 @@
      "rule": "claude/memory-seed/feedback_mcp-stdio-subprocess-deadlock.md",
      "sha256": "ab734efd710ced86fb6af4c22b55c1d1e00c404a01542ba25ff3678330fb7c28",
      "status": "-"
+    },
+    "claude/memory-seed/feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md",
+     "sha256": "cf6d7fb4ac7d59f21ad2227e2812f8eb4f3f32f2438d600543f4eecbd09e9bf0",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_merge-yalniz-ci-yesilse-admin-bypass-yasak.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_merge-yalniz-ci-yesilse-admin-bypass-yasak.md",
+     "sha256": "844850a2ccbb3c895a1f457ed1bfee5cea5f4460cf2e8bde7fceaf8137573cbb",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_mesaj-envanteri-tasarim-asamasinda-kurgulanir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_mesaj-envanteri-tasarim-asamasinda-kurgulanir.md",
+     "sha256": "0916fe11556c88e69f4c3b05d0af504c81c05f4c6e7ef7eae557620e3a2f6281",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_metadata-alan-dogrulama-tip-kapsamli-olmali.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_metadata-alan-dogrulama-tip-kapsamli-olmali.md",
+     "sha256": "271815249adae91b52e763fb31a656c7a5bbdb1c3ae6e72b5ba70e2e7be5d38d",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_mojibake-taramasi-ciplak-karakter-aramaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_mojibake-taramasi-ciplak-karakter-aramaz.md",
+     "sha256": "af5b3efb0f3f48963c1183dc1f534164c3996a007868e3c9d0fa6dc2d1a72df4",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_monitor-sessiz-oldu-bash-background-ile-dogrula.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_monitor-sessiz-oldu-bash-background-ile-dogrula.md",
+     "sha256": "a5157c59ae84a9004c246269d99be905083aac837e6c1295bbf548db8cbd4ff1",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_msag-tam-put-govdeden-cikarmak-silmez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_msag-tam-put-govdeden-cikarmak-silmez.md",
+     "sha256": "ffa4718d14740c9820f9f224a3f395bffd5073b643be8b1df4245dd2e69e0f93",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_muafiyetin-gerekcesi-alt-kumeye-aitse-muafiyet-kor-nokta-olur.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_muafiyetin-gerekcesi-alt-kumeye-aitse-muafiyet-kor-nokta-olur.md",
+     "sha256": "edc0f8aff9f7374cfd85c159c69791f9255e5815b46cc1418e85a372b5adede0",
+     "status": "tamam"
     },
     "claude/memory-seed/feedback_namespaced-dtel-ddl-tirnaksiz.md": {
      "decision": "uyarla",
@@ -604,10 +1342,82 @@
      "sha256": "adcd864bcb314ee421621da5a5d3b68796c1cc20606286441341ba876c91150e",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_olcum-duzeyi-kayit-ici-mi-kayitlar-arasi-mi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_olcum-duzeyi-kayit-ici-mi-kayitlar-arasi-mi.md",
+     "sha256": "f051a6261ff8a6cbffd70ee087154c2dd75e1738faa88ba31b3a52ba2f138c19",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_olcumu-artefaktin-kendi-baglaminda-kos.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_olcumu-artefaktin-kendi-baglaminda-kos.md",
+     "sha256": "fa16ed6177d7407f75d7a9380d3125f6d83b713c727b4ba3862557754473e269",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_on-kontrol-adim-kapsamsizsa-basarili-zincir-kendi-yeniden-denemesini-dusurur.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_on-kontrol-adim-kapsamsizsa-basarili-zincir-kendi-yeniden-denemesini-dusurur.md",
+     "sha256": "d2a99f8ebf1f731ad2c6a0da4b3273849b46a0bab02f362c72c440c477129421",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_onay-da-bir-iddiadir-mekanizmayi-olcmeden-net-deme.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_onay-da-bir-iddiadir-mekanizmayi-olcmeden-net-deme.md",
+     "sha256": "8b9fe06e803cc5fdd0ff5c7b086baf2820aa41797ad227192df5ca96b55c0fb4",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_onay-isteme-formati.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_onay-isteme-formati.md",
+     "sha256": "f5c2412b03007aa9ad9e56d027f69f559177afea2d90f63d868e91521ab91538",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_once-sonra-kanitinin-zaman-damgasini-kontrol-et.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_once-sonra-kanitinin-zaman-damgasini-kontrol-et.md",
+     "sha256": "6d869193458b2961109f0a304cd4298da973e6ccd5628ba165bfafda2645e5aa",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_once-yuzey-taramasi-sonra-is-listesi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_once-yuzey-taramasi-sonra-is-listesi.md",
+     "sha256": "e57d816ca2c21f6cecdecd184cfff00b5b60aaa35d7874332f5184e19e45f6b4",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_ortak-value-help-sor.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_ortak-value-help-sor.md",
      "sha256": "d696b82806e87b5b1b305b7437894fb022cc4f4a1142b94dc3ba18227c93a2e8",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_otomatik-olusur-bir-zamanlama-iddiasidir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_otomatik-olusur-bir-zamanlama-iddiasidir.md",
+     "sha256": "af8f00b7e79c3b1e69754d0e5a7e318e84d6e3ba48ef319cdc51e5e553a24e4f",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_paralel-duzenlenen-dosyaya-satir-no-cakma.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_paralel-duzenlenen-dosyaya-satir-no-cakma.md",
+     "sha256": "e68c3a8e6500ea750c982c0f215432fef9d4bcbdb4658b9edd86acb45945fca3",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_paralel-infra-pr-ortak-dosya-rebase-sonrasi-tam-suit.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_paralel-infra-pr-ortak-dosya-rebase-sonrasi-tam-suit.md",
+     "sha256": "feb945d28e038591dc064754a2f52814200328119ff25a4954eec950ecba71d4",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_paylasim-onbellek-sorusu-kaynak-okumasiyla-cevaplanmaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_paylasim-onbellek-sorusu-kaynak-okumasiyla-cevaplanmaz.md",
+     "sha256": "b083498b89d649c90afa29678038f0a6e3ba15e0527a16295251ceef7bb66777",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_performans-onerisi-de-bir-iddiadir-maliyeti-once-olc.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_performans-onerisi-de-bir-iddiadir-maliyeti-once-olc.md",
+     "sha256": "d8cdad602399652647489576daa93662fe043b86d1d0bd5404fbf51f3700900f",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_placeholder-tuzagi-once-mevcut-artefakt.md": {
@@ -622,6 +1432,18 @@
      "sha256": "ad952e53fa08e05a73820207228c0f27fad483d46006cefe1c1ff0a020f365c9",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_playwright-basic-auth-header-not-url.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_playwright-basic-auth-header-not-url.md",
+     "sha256": "e554508d20810a19bfb06c32fc8d38962b749796ae1b6f2aa535bcba906b1640",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_playwright-pdf-page-margin-ve-thead-tekrar-tuzagi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_playwright-pdf-page-margin-ve-thead-tekrar-tuzagi.md",
+     "sha256": "0dbeae2405cd54f7a49bd9a707beacfbd90318784b3e5b02421401393abeda96",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_playwright-ui5-firepress-model-api.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_playwright-ui5-firepress-model-api.md",
@@ -634,17 +1456,47 @@
      "sha256": "e20d75f8aa795fd5287a5cef071b91cdf84febef66719199576d845fcb7eb5b4",
      "status": "-"
     },
+    "claude/memory-seed/feedback_powershell-commandline-filtresi-kendi-kabugunu-yakalar.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_powershell-commandline-filtresi-kendi-kabugunu-yakalar.md",
+     "sha256": "1bf37b67c3ab28e5a88f0b72457b19fb9262209212ba7ce66a80ea80ea08da8e",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_powershell-utf8-bom-trap.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_powershell-utf8-bom-trap.md",
      "sha256": "f3cf14913721718cf094c6946d36c76a90f3ff23a0ad032589980f661af708e4",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_privileged-access-strict-mode-into-sonda.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_privileged-access-strict-mode-into-sonda.md",
+     "sha256": "d981ebc7c05fcfca85f5cc28e5efbe6298dda315ca4c228ce8be5b1b569162d9",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_push-ara-kopyasi-bayatlar-readback-bunu-goremez.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_push-ara-kopyasi-bayatlar-readback-bunu-goremez.md",
+     "sha256": "b2611d1b487a7ef431c5a745269a793d08f23b1df017ea9503cdc119963413ca",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md",
      "sha256": "6a97ac95e1cfe91a57276086251de90043fd69f2826f28e3a2f17ed50ba46412",
      "status": "-"
+    },
+    "claude/memory-seed/feedback_push-ok-mesaji-sahte-readback-esitligi.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_push-ok-mesaji-sahte-readback-esitligi.md",
+     "sha256": "bb9661a7b670db3b09eecbf6f313edf649ceff2687bacb7bd3f4bb25a4e170b6",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_python-yazdigi-liste-crlf-tasir-xargs-sessizce-bosa-koser.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_python-yazdigi-liste-crlf-tasir-xargs-sessizce-bosa-koser.md",
+     "sha256": "db34bd17a804f7aab0feeb9e69f37cbd6f55ff425fc9aabc0b64d57fa0279e88",
+     "status": "tamam"
     },
     "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md": {
      "decision": "uyarla",
@@ -656,6 +1508,18 @@
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_rap-editablefieldfor-key-create.md",
      "sha256": "76146aef21b6ffefeab2887e5d06da929d9a206ebee0610633a0a263118fdbf6",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_rap-validation-operation-trigger.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_rap-validation-operation-trigger.md",
+     "sha256": "0b4dfc7a0e6a32aba0f44e8af4ad6bf36f50a5363137692c50def23ec6aadc46",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_rapor-dokumani-kaynak-uygulamanin-kuralini-anlatmaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_rapor-dokumani-kaynak-uygulamanin-kuralini-anlatmaz.md",
+     "sha256": "a298319b84ca8d37cefca481ccdfbd78587d7dffbc1f7d2faf77eae3bd029d57",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_rapor-filtre-select-options-contains-standardi.md": {
@@ -682,17 +1546,77 @@
      "sha256": "17cb78fa9d28988b20ce52bfc2858ba63e798ce4380d51448d57b532d22a026d",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_run-sql-query-max-rows-sessiz-kirpma.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_run-sql-query-max-rows-sessiz-kirpma.md",
+     "sha256": "5604f7c4d184b2bdbe32cf50150b8f5760b68e7a3a80cf597f357adf610e894d",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sadl-gateway-dats-donusum-hatasi-tum-entity-seti-oldurur.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_sadl-gateway-dats-donusum-hatasi-tum-entity-seti-oldurur.md",
+     "sha256": "5fe2225f9c78fbc8cf05a2f44dd479412f1b46fcaae124b4e8559b116ddbb38d",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sap-sync-pull-repo-ileri-ezme.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_sap-sync-pull-repo-ileri-ezme.md",
+     "sha256": "64c5192574dd125b106d916f53ae8f72a1485c6ec333ac4e28509e5ccdd107eb",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sap-yazma-hatasi-once-known-errors.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_sap-yazma-hatasi-once-known-errors.md",
+     "sha256": "e85311427410f2a2499e852ce7b004fbd5fa437f02adafdaea31c593b97b9746",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_satir-sayisi-artisi-cogaltma-degildir-satir-tekil-farki.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_satir-sayisi-artisi-cogaltma-degildir-satir-tekil-farki.md",
+     "sha256": "a2ba42c7dd8950bc96448b326208257691253943aec4f903f8ac2c1373e762d7",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_scratch-dosyalari-tmp-klasoru.md",
      "sha256": "827987b8a0c0c058edd73a173bae99152fad903629393f9b7ab016fedb060189",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_sendmessage-gorevi-sessizce-islenmemis-olabilir.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_sendmessage-gorevi-sessizce-islenmemis-olabilir.md",
+     "sha256": "290024470c08564a73d78dcfe63aa29cd13217cb90ada645998427a19f84d327",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_senkron-cagri-ardil-belgeyi-senkron-yapmaz.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_senkron-cagri-ardil-belgeyi-senkron-yapmaz.md",
+     "sha256": "e9ade3626b828d17110dc4ba612ffd29e3647f2ee0b4be105c48342ffd4a8263",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sizinti-taramasinin-arama-uzayi-prin-main-deltasidir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_sizinti-taramasinin-arama-uzayi-prin-main-deltasidir.md",
+     "sha256": "8b2d9f31c440320ea1fdea3a42da3d30250feedb742280c11187354abeaab953",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sonucu-olc-uygulamayi-degil.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_sonucu-olc-uygulamayi-degil.md",
+     "sha256": "f25c6be36edc9c80fe8fa42deb95a6e41e5b17eabcc18df03362d0d36c687af9",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_soru-once-tartis-act-etme.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_soru-once-tartis-act-etme.md",
      "sha256": "0414928fac47f7593e7f9c2414f1a8d183ee13a10e0cbd66c2c3b79b45ac8b11",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_sorulari-tek-tek-sor-oneriyle.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_sorulari-tek-tek-sor-oneriyle.md",
+     "sha256": "88151173bcac486672aabf82ac1c02678b126ed61dee88db6c897b92ca463c07",
+     "status": "-"
     },
     "claude/memory-seed/feedback_source-based-class-type-c-trap-ve-vague-scan-bisect.md": {
      "decision": "uyarla",
@@ -712,11 +1636,29 @@
      "sha256": "5673c1ec67ba621176c614e7ce73f989e2016c969c8cfc2615159c9122bb4a56",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_spawn-brifinde-sablonun-kanonik-basliklarini-kullan.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_spawn-brifinde-sablonun-kanonik-basliklarini-kullan.md",
+     "sha256": "6919f0e886dc706f868514afad922645ab3e62bdda940480716bc825c0f0483c",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_spec-mutabakat-gate.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_spec-mutabakat-gate.md",
      "sha256": "e70a107c0f2f84b7dfa73d5edec25823fe97e107ed74afb693947320b1825517",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_st05-trace-okuma-tamponlu-tablo-ve-sahiplik.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_st05-trace-okuma-tamponlu-tablo-ve-sahiplik.md",
+     "sha256": "7f983e507f15609d04fc35db096f1e118de39af4aef5008f9bb31f9117854187",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_standing-ajani-bos-bekletme-tek-tam-brif.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_standing-ajani-bos-bekletme-tek-tam-brif.md",
+     "sha256": "c57ce237d52e66569eb5711ad14dbe46e639bc4ad8efa483033760ec47cea26b",
+     "status": "-"
     },
     "claude/memory-seed/feedback_subagent-karar-kurali.md": {
      "decision": "uyarla",
@@ -736,10 +1678,34 @@
      "sha256": "1a8a883443545e17c5aaf9098b2c488e55b004d39bedee1c4267b2fa95a85d65",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_tarama-ciktisi-hipotezdir-is-listesi-degil.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tarama-ciktisi-hipotezdir-is-listesi-degil.md",
+     "sha256": "19638cf160db4265772121eaadb2296260995cef5b5e8d6edce2f52fd3d83657",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tarayici-araci-secimi-playwright-vs-chrome-eklentisi.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_tarayici-araci-secimi-playwright-vs-chrome-eklentisi.md",
+     "sha256": "393eb9b0109ead7a25706aec7d7e27023f29e7ecf34aaf4341a817df48581418",
+     "status": "-"
+    },
     "claude/memory-seed/feedback_tax-zero-check-master-data-first.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_tax-zero-check-master-data-first.md",
      "sha256": "99a5e3ce04deb15f1d72f70ac75cbea822900dc04dd51d1657dd0b987bfb0344",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tek-gateway-route-spawn-etme.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_tek-gateway-route-spawn-etme.md",
+     "sha256": "200dbbc1b4bb045a1f721c8652715a3f8e4f5ce72b493ed0e877b894bc367776",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_tek-seferlik-script-paylasilan-modulun-desenini-yeniden-turetmez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tek-seferlik-script-paylasilan-modulun-desenini-yeniden-turetmez.md",
+     "sha256": "7a71589de51ebe2d11647faf9747c46eab1bc1d1cfb168c8852e0450a5a9138a",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_tek-soru-ve-bagimsiz-dokuman.md": {
@@ -754,10 +1720,58 @@
      "sha256": "35c89a228c28aefeebf23b516f6d885b695e067106716bc9066f1dfe3cce7c04",
      "status": "tamam"
     },
+    "claude/memory-seed/feedback_ters-yon-kontrolu.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ters-yon-kontrolu.md",
+     "sha256": "01025f9512869591dd71dcab6c75566b1798708826467fe4be3eaa02b9c1080d",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_teslim-paketi-artefakttan-ayri-yasar.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_teslim-paketi-artefakttan-ayri-yasar.md",
+     "sha256": "bf73c3f8e8ddbe52f301e4afcfff15d7524320cec2d32136186051e562e985b0",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_timeout-rg-shim-sessiz-sifir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_timeout-rg-shim-sessiz-sifir.md",
+     "sha256": "083275febdfefb20a0191cf8f9e7f4d438077bb3c714688dd45aa59ae8396844",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tr-karakter-varyantli-arama.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_tr-karakter-varyantli-arama.md",
+     "sha256": "8676ea34c7d51662527a398809b3298dc5366a20cddc950a3c6e856da544cc88",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_transport-numarasi-istek-mi-gorev-mi-rules-md-otoritedir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_transport-numarasi-istek-mi-gorev-mi-rules-md-otoritedir.md",
+     "sha256": "9b150c6157a72f1e7f36020aca5b348419e2bc17da373e4aa99551bb2fecc291",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_tuketici-klonunda-core-degisikligi-prosedur.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_tuketici-klonunda-core-degisikligi-prosedur.md",
+     "sha256": "9cb372c98dd6c961a6264bda9a0ba3dec19d600ed62f49f4885eab2303e93e1c",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_turetilmis-artefakt-sondasi-tablo-hucresini-kirar.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_turetilmis-artefakt-sondasi-tablo-hucresini-kirar.md",
+     "sha256": "2a2f10d2188743039f818fcc6e8e1d0f156580d89e11998dcc7091a6c3c72756",
+     "status": "tamam"
+    },
     "claude/memory-seed/feedback_ui-deploy-noninteractive.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_ui-deploy-noninteractive.md",
      "sha256": "4a1d91ed086f98d5046cd6e5bfdb2aae52570f5ba0a0560d75467df35313015e",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_ui-local-run-paket-workspace-node-modules.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_ui-local-run-paket-workspace-node-modules.md",
+     "sha256": "28403406aebd20d1670cad20f919ffb9e1d27eb459bc1196c2ca647b2794a855",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_ui5-v2-plumbing-reuse-traps.md": {
@@ -765,6 +1779,54 @@
      "rule": "claude/memory-seed/feedback_ui5-v2-plumbing-reuse-traps.md",
      "sha256": "6eace4a97b63dae0c4d4683b9bc1981b54040dc46bb120dd47076be6802d05bf",
      "status": "tamam"
+    },
+    "claude/memory-seed/feedback_uyarlama-verisi-acik-kalem-degil.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_uyarlama-verisi-acik-kalem-degil.md",
+     "sha256": "dc5620233b4cf347c1143675e4faf858ee76862ddde75ae8f290792bf8a51ec6",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_v2-function-import-buyuk-yuk-414-batch.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_v2-function-import-buyuk-yuk-414-batch.md",
+     "sha256": "45df40cd4ad0542e600bfb25a3d8eac6cdaa0d84a2d369beceff86bd6d417bc8",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_worktree-kapatmadan-once-ajanin-nihai-raporunu-al.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_worktree-kapatmadan-once-ajanin-nihai-raporunu-al.md",
+     "sha256": "ca6b0c84ddb89a5d4009a58b2ad1540c8198ad10fa9685d30ccc5f90e86027d7",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_xml-tag-regexi-attribute-icindeki-buyuktur-isaretinde-kesilir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_xml-tag-regexi-attribute-icindeki-buyuktur-isaretinde-kesilir.md",
+     "sha256": "774086b678b1c4e6814c7d07992f64c7a82dfca6e26dc14e1bd4ab7a736d8809",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yabanci-runtime-artefakti-once-tek-vaka-turu.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_yabanci-runtime-artefakti-once-tek-vaka-turu.md",
+     "sha256": "4d30cccde78621903ecfdcacf0efec45e1949bf1bb60fad48b20168f1cd83220",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_yasaklar-fiziksel-her-projede.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_yasaklar-fiziksel-her-projede.md",
+     "sha256": "b68919e5ccda0c90d2cb61b438ba16ea4c693f300aecb33deed0ac188ec07e8d",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_yeni-gate-hook-uretimi-infra-expert.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_yeni-gate-hook-uretimi-infra-expert.md",
+     "sha256": "52c6755eb7c6e80488856efb77c46a43f7ab011420c84fa04a5fe502515a1513",
+     "status": "-"
+    },
+    "claude/memory-seed/feedback_yeni-mcp-tool-agent-allowlist-guncelle.md": {
+     "decision": "alinmaz",
+     "rule": "claude/memory-seed/feedback_yeni-mcp-tool-agent-allowlist-guncelle.md",
+     "sha256": "9665a318ed8ce5b79e968eff90ea2233f36162003ea1e44bf20883b7a84d3ad1",
+     "status": "-"
     },
     "claude/memory-seed/feedback_yeni-teknoloji-once-kural-seti.md": {
      "decision": "uyarla",
@@ -776,6 +1838,30 @@
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_yeni-yetenek-once-arastir.md",
      "sha256": "b716b5d9d40b21697d88c83ec7bfac5b50323355f2f9c9972f5cb87a8d0d75db",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yerel-suit-ci-ikizi-degil.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_yerel-suit-ci-ikizi-degil.md",
+     "sha256": "2986dcb7644bd5eb6da5e616c13737d7f5178bc3a3e3c41af54b10468a8b2a5f",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yesil-regresyon-suiti-duzeltmenin-kaniti-degildir.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_yesil-regresyon-suiti-duzeltmenin-kaniti-degildir.md",
+     "sha256": "d50b6dfd4b18e9b07bf49f05693f62f7281b7d3d649a8cd08c748b588256181f",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_yesil-sinyalin-kapsamini-sor.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_yesil-sinyalin-kapsamini-sor.md",
+     "sha256": "528b5e12659109c08c288bf029c0c55dcc1788fb8cc23fa9ef04e382afc449e1",
+     "status": "tamam"
+    },
+    "claude/memory-seed/feedback_z-sinif-karsilikli-referans-aktivasyonu-engellemez.md": {
+     "decision": "uyarla",
+     "rule": "claude/memory-seed/feedback_z-sinif-karsilikli-referans-aktivasyonu-engellemez.md",
+     "sha256": "308d5c2e40c2b912e0333ec680064b5e56b5ed5d8c80d66b78b288a7e1681691",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md": {
@@ -799,7 +1885,7 @@
     "claude/settings.template.json": {
      "decision": "telafi",
      "rule": "claude/settings.template.json",
-     "sha256": "1362d0289571d5340f00bd278684fc32d67460be05ab18054074ed13b7ff79d7",
+     "sha256": "96fb9891a138c7aae8bf2aebcd4ccbac655042eb608c45c818152a334d6342c4",
      "status": "kismi"
     },
     "claude/skills/intake-triage/SKILL.md": {
@@ -892,11 +1978,17 @@
      "sha256": "cf7fd020a055ba993edab81755526cd70ea99c295d0c3345dadc43d55ab5cb4d",
      "status": "tamam"
     },
+    "claude/user-settings.template.json": {
+     "decision": "alinmaz",
+     "rule": "claude/user-settings.template.json",
+     "sha256": "c1904204f9a2d3f93d59fcbcf315e72306a8bf799c9c92baca5fb6c210db4bc4",
+     "status": "-"
+    },
     "claude/workflows/guard.template.yml": {
-     "decision": "bekliyor",
+     "decision": "telafi",
      "rule": "claude/workflows/*",
      "sha256": "4fa680a6f4351b8e33b8f18b905d71678154dc2d0d88cec482e846c347709884",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     "docs/README.md": {
      "decision": "alinmaz",
@@ -925,13 +2017,13 @@
     "governance/CORE-INDEX.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "63484cc0e54e783e2f672fd8533f9ebfab49f474e04fafd0d5cbcfde3b120356",
+     "sha256": "a60dfb78b4a5f797f57921f935a29f8456e66709fd4c28f5816c7fcfb2870a1b",
      "status": "-"
     },
     "governance/agent-teams-operating-model.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "8e4aad9aff75769f7b1560ae550d34a10c593f2c933e904853cd8af62df144cc",
+     "sha256": "48ca343bd65d6a239d33e6c4861cf42886c0b03a16eed87f6aa4fa99a5a589e9",
      "status": "-"
     },
     "governance/decisions/0001-tek-branch-main.md": {
@@ -1069,13 +2161,13 @@
     "governance/infra-changelog.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "66848dc9601e4b465bc6ae702c32addcefa1380f74c5fe61a0131c48d7248b23",
+     "sha256": "f308624c362bf4b6b893a9ae8d6194d246acda5a35113206853c2b5375e78116",
      "status": "-"
     },
     "governance/infra-test-recipes.md": {
      "decision": "uyarla",
      "rule": "governance/infra-test-recipes.md",
-     "sha256": "c0ad518858edc0795d525c20c997655d0410b19349632508596cb30075de32cd",
+     "sha256": "8fc544291cb4f38dadc936a8ce22790330d5ec3322af1708e588e16bcff3d9f3",
      "status": "tamam"
     },
     "governance/reference/released_successors.json": {
@@ -1087,7 +2179,7 @@
     "governance/removed-controls.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "f3e341f8adf7858963a696761857f88aa59581eb543ead84a64085c6809d239c",
+     "sha256": "a67e9fb377574d121af6de2db1c115adf0fa47daa7e92c7c2e725d8c77174f3c",
      "status": "-"
     },
     "governance/research/q5-is-turu-olcumu-2026-08-22/olcum.py": {
@@ -1183,7 +2275,7 @@
     "mcp_servers/sap_adt/requirements.txt": {
      "decision": "uyarla",
      "rule": "mcp_servers/*",
-     "sha256": "e39b2a351d62ce9f79b7613ba186fc165b4caab70f3ddae6086e44d325c93d81",
+     "sha256": "85ee3f1150b84f3d7765ade7a4b359161ea78ff9990148736500ac98932d0251",
      "status": "kismi"
     },
     "mcp_servers/sap_adt/server.py": {
@@ -1243,19 +2335,19 @@
     "playbook/README.md": {
      "decision": "alinmaz",
      "rule": "playbook/README.md",
-     "sha256": "73219e92dfb08158304d2ae1e6eb9b187195cca6881a7573cd4f8b80d95aaa7c",
+     "sha256": "c5b01e0d91c2a24ed898cf6e73f39642979efad5928152b3237d9cc94f623290",
      "status": "-"
     },
     "playbook/adt-cds.md": {
      "decision": "uyarla",
      "rule": "playbook/adt-cds.md",
-     "sha256": "54b66ee57a05b2454f27eb20eccb58cc32f8feab8e850086f71732767e28ecb7",
+     "sha256": "213258d0f747bfba5b67aab2bd74833e1da48c25e5a318aaa31473def7c6b303",
      "status": "tamam"
     },
     "playbook/adt-classes.md": {
      "decision": "uyarla",
      "rule": "playbook/adt-classes.md",
-     "sha256": "34ca0891ba694a2a21ed78dfc3a665b7b716645f7060c9a3b5c252c088d467ce",
+     "sha256": "a36521e3447d035d05f3178b853f892227cedaf4454dbc8917ddfeb58a57337d",
      "status": "tamam"
     },
     "playbook/adt-domain-dtel.md": {
@@ -1291,7 +2383,7 @@
     "playbook/adt-message-class.md": {
      "decision": "uyarla",
      "rule": "playbook/adt-message-class.md",
-     "sha256": "86bcb4c60eeffa04325ecd1c60a9f93946c6ff1e13a2034be9c57bec8835cca1",
+     "sha256": "522519b9ca66f20a98abcd8a02f06ff2a96468349e07d50f3e4cf20cb66e5bf1",
      "status": "tamam"
     },
     "playbook/adt-programs.md": {
@@ -1320,20 +2412,20 @@
     },
     "playbook/checklists/bug-checklist-backend.md": {
      "decision": "uyarla",
-     "rule": "playbook/checklists/*",
-     "sha256": "7c506928f02eae6f84815f59062a50e35fd5f873a57b965e3b4ebbe4a295fcfb",
+     "rule": "playbook/checklists/bug-checklist-backend.md",
+     "sha256": "9a50b4e0896d1b34f4811820c85322c4d2fc4f869558d155fe2aa5aaab0d715e",
      "status": "tamam"
     },
     "playbook/checklists/bug-checklist-frontend.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/bug-checklist-frontend.md",
-     "sha256": "b2b6f9a1c38c06c18db49ea05a7f9bbfe7f5ff278faa67c8c04d305b4fb2319c",
+     "sha256": "048caf0bd2cf8c2c0cc669b2759d3f97c090e4bc4c55bbf91a52d88ea8a37bf0",
      "status": "tamam"
     },
     "playbook/checklists/cds-creation.md": {
      "decision": "uyarla",
      "rule": "playbook/checklists/cds-creation.md",
-     "sha256": "e08092189e077584cca56b1ff2e5308d0a4d02608ffa35f076568a0621047cc7",
+     "sha256": "5a5d2a82b4dca79824eba8213f6fb691f02062bd727d07e7c16f0895edc6b587",
      "status": "tamam"
     },
     "playbook/checklists/classic-dialog-creation.md": {
@@ -1345,7 +2437,7 @@
     "playbook/checklists/core-script-development.md": {
      "decision": "alinmaz",
      "rule": "playbook/checklists/core-script-development.md",
-     "sha256": "774c6f3db16fde1ddc60c7e80ab00a5fef4550736c49f721b60642c38fdc819d",
+     "sha256": "99c456e819a635f2b7ac5a3d8c024dbaa297a2880aec08567d78b469814740b0",
      "status": "-"
     },
     "playbook/checklists/doc-checklist.md": {
@@ -1426,6 +2518,18 @@
      "sha256": "0df7e8c8083f64213e8aae18b78f24b55f4ef4dcd8eac355a356120d92cc7abf",
      "status": "kismi"
     },
+    "playbook/howto-cekirdek-bulgu-bildirimi.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-cekirdek-bulgu-bildirimi.md",
+     "sha256": "2159d9a12cdff56c5a392cf96111bb8332ccc1696993a82eed6773e636239c0a",
+     "status": "tamam"
+    },
+    "playbook/howto-cekirdek-guncelleme.md": {
+     "decision": "alinmaz",
+     "rule": "playbook/howto-cekirdek-guncelleme.md",
+     "sha256": "4a8ff22dee7c14c3693e60b689c2a8cde77544e80fd3f3066e660ee0cba00d76",
+     "status": "-"
+    },
     "playbook/howto-classic-dynpro-datafield-screens.md": {
      "decision": "uyarla",
      "rule": "playbook/howto-classic-dynpro-datafield-screens.md",
@@ -1459,7 +2563,7 @@
     "playbook/howto-infra-fix-proseduru.md": {
      "decision": "alinmaz",
      "rule": "playbook/howto-infra-fix-proseduru.md",
-     "sha256": "74f78d7b7b220693a22a998898cbac008dee65c34e2444ead3a30a9c8f3c7274",
+     "sha256": "e58e423e48a62694834bdaa3d6c83b4e03bbcacb38936f8f9b980b66f60e2e1f",
      "status": "-"
     },
     "playbook/howto-kullanici-dokumani-pdf-ekran-goruntulu.md": {
@@ -1501,13 +2605,13 @@
     "playbook/known-errors.md": {
      "decision": "uyarla",
      "rule": "playbook/known-errors.md",
-     "sha256": "25dcd6ee81ed80e73582befb843b1f78adae45a91e570d5b86891d9061db46bc",
+     "sha256": "da6a148c61f452aba22a51d14d4ce08f473fd6faf261c8d51f7447f64205d34b",
      "status": "tamam"
     },
     "playbook/lessons-learned.md": {
      "decision": "uyarla",
      "rule": "playbook/lessons-learned.md",
-     "sha256": "fbd9695d797ddb0cd5460e748a788e948602c051fb0830724a1d24c2f7d44c6b",
+     "sha256": "f767befd65e6b604b4f1460144a27f01340358ef9a1ba026afaa755a1de079cb",
      "status": "tamam"
     },
     "playbook/modules/sd.md": {
@@ -1543,7 +2647,7 @@
     "playbook/ui-freestyle-odata-v2.md": {
      "decision": "uyarla",
      "rule": "playbook/ui-freestyle-odata-v2.md",
-     "sha256": "336d7143692f48c5a605a6c03cbfe9977d2a43314b1049d949f5534881dfba1c",
+     "sha256": "ec86166aeec24a6fed9826ef6903c6f0b58d0d6b3adcc832c0332be7a772532f",
      "status": "tamam"
     },
     "profiles/btp_abap.yaml": {
@@ -1592,6 +2696,12 @@
      "decision": "alinmaz",
      "rule": "scripts/*",
      "sha256": "836a26835324962e3f9bf052c8cc257f7d01f12f9434c79a0000c450579b6df8",
+     "status": "-"
+    },
+    "scripts/agent_stall_watch.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "b2d1f31ff96803fbce595fd91249cbac186004bafad70234c84325d48a491882",
      "status": "-"
     },
     "scripts/agent_time_report.py": {
@@ -1663,7 +2773,7 @@
     "scripts/build_core_index.py": {
      "decision": "alinmaz",
      "rule": "scripts/*",
-     "sha256": "f3a5d422e7a48dc0626dd354d4bef85cf45a00a9e156e335f632238f192120bc",
+     "sha256": "750bf3c17476ba5f1d4fcad818138be0afbe9c06644994e7c6f8d541d2b3ff5f",
      "status": "-"
     },
     "scripts/build_doc_pdf.py": {
@@ -1705,7 +2815,7 @@
     "scripts/check_ui_odata_refs.py": {
      "decision": "uyarla",
      "rule": "scripts/check_ui_odata_refs.py",
-     "sha256": "55921d45b0da770969e24a00632ffd8f0769cf3ec888b39ef7e0eb7e4567f53a",
+     "sha256": "202de6465144165f48b117187907a01c0155a8f2511b4ce491c93f88afc8753a",
      "status": "tamam"
     },
     "scripts/cloud/__init__.py": {
@@ -1885,7 +2995,7 @@
     "scripts/genericize_common.py": {
      "decision": "alinmaz",
      "rule": "scripts/genericize_common.py",
-     "sha256": "8d115e3257b4fc27d9a2521f4ad5990a14162b08bd2457c69876d61ec60cd8b6",
+     "sha256": "6decc49126fe2df1116b976d95c8a6c090b4e296b5cc686d33759ee58e49a6ae",
      "status": "-"
     },
     "scripts/get_object_metadata.py": {
@@ -1909,7 +3019,7 @@
     "scripts/git-hooks/core_precommit.py": {
      "decision": "uyarla",
      "rule": "scripts/git-hooks/*",
-     "sha256": "1b9cbc6c3f9e01111f798c4005ada6bb1fac91596bc09636682e41c189ca1987",
+     "sha256": "e957dc3c969f6041df2d31402e0dfd4c8ad1adef416bac397b12fa130d48e647",
      "status": "tamam"
     },
     "scripts/git-hooks/pre-commit": {
@@ -1940,7 +3050,7 @@
      "decision": "telafi",
      "rule": "scripts/hooks/infra_write_guard.py",
      "sha256": "944db2d2b6add460c59e6cb654441c4aeb43187caa6f65307ad054614b864e46",
-     "status": "tamam"
+     "status": "kismi"
     },
     "scripts/hooks/instructions_loaded_log.py": {
      "decision": "alinmaz",
@@ -1981,7 +3091,7 @@
     "scripts/hooks/pre_tool_guard.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/pre_tool_guard.py",
-     "sha256": "908ae27539f619e04081498a758ea7352ae39de35e2c86591556026fce3015be",
+     "sha256": "8fd619486cad4618ae4816e53c44156e75a79476e616e208af7148bbba1c027a",
      "status": "kismi"
     },
     "scripts/hooks/pull_before_edit.py": {
@@ -2005,7 +3115,7 @@
     "scripts/hooks/session_start.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/session_start.py",
-     "sha256": "0beedf49f8317fc33918a77afe25cb1ba5c21ae57c4d02ba63950b3e2c074fed",
+     "sha256": "efe8786429aee84faa832b82e3783e62c7e3a5be77dc981abbadf3bdde517e5f",
      "status": "tamam"
     },
     "scripts/hooks/skill_injector.py": {
@@ -2047,7 +3157,7 @@
     "scripts/ix_doctor.py": {
      "decision": "telafi",
      "rule": "scripts/ix_doctor.py",
-     "sha256": "8316778a7620336cf310e06bf6f896a685af1767c07850e7228b83304d0d10c6",
+     "sha256": "f0de1fa01ff747e3945337181ee4cf025e3c5633fcb443940dd7b30887a36873",
      "status": "tamam"
     },
     "scripts/list_inactive_objects.py": {
@@ -2081,16 +3191,22 @@
      "status": "planli"
     },
     "scripts/merge_pr.py": {
-     "decision": "bekliyor",
+     "decision": "uyarla",
      "rule": "scripts/merge_pr.py",
      "sha256": "7da83c09e78c57aa501140d62309c1e91dee5243ed662bd1346b5bcb1805aec2",
-     "status": "bekliyor"
+     "status": "tamam"
     },
     "scripts/object_types.py": {
      "decision": "uyarla",
      "rule": "scripts/object_types.py",
      "sha256": "fec1aad608a94077eb0e3f6f81ac58e6aceaea9f3d7963b7410752acfa4b0100",
      "status": "kismi"
+    },
+    "scripts/parity_probe.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "a86596ec60b2d724f084c844fde272d4deb2d2e18ed9a38302ca8e7c0c429b91",
+     "status": "-"
     },
     "scripts/populate_cds_views.py": {
      "decision": "uyarla",
@@ -2119,7 +3235,7 @@
     "scripts/populate_message_class.py": {
      "decision": "uyarla",
      "rule": "scripts/populate_*.py",
-     "sha256": "0bab23e65da1c936451b7a5410501b47e7ce0734f6abec274d4331089ecd698d",
+     "sha256": "919fd452743b0a1b930e15c3aad80e5500f073a77b56997739eb1a8007e0e5e2",
      "status": "kismi"
     },
     "scripts/populate_tables.py": {
@@ -2233,7 +3349,7 @@
     "scripts/seed_memory.py": {
      "decision": "telafi",
      "rule": "scripts/seed_memory.py",
-     "sha256": "cf03f072d8f8979d9bbd61b22c8f7df7f0b8df838fe4bb423826f4ceecd7e1a8",
+     "sha256": "e3b393c02c67e69cd563fa65160823a65d8d38fcc82ac1614cfe63dd66bc5cf0",
      "status": "tamam"
     },
     "scripts/session/__init__.py": {
@@ -2311,7 +3427,7 @@
     "scripts/team_setup.py": {
      "decision": "telafi",
      "rule": "scripts/team_setup.py",
-     "sha256": "203da1ae82429812d760ae0454f239020c2f6e022d09a243fb87d687a4cbd72b",
+     "sha256": "fd310951dc0de3fb800c39dd74fd0dba8ed4b45978b315252e50c3d23ef9760d",
      "status": "tamam"
     },
     "scripts/tests/guard_conformance.py": {
@@ -2511,6 +3627,12 @@
      "rule": "scripts/utils/kaynak_tarama.py",
      "sha256": "6562ac2e99b9593c6f6b52ea9c8c983d301e27c0c25dbaac3e26874a12924a68",
      "status": "tamam"
+    },
+    "scripts/utils/mcp_import_denetimi.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/utils/*",
+     "sha256": "1183c095db2ae08ab57305374d7d44176f7897f9252c7eaddbc040586e4ff81b",
+     "status": "-"
     },
     "scripts/utils/project_config.py": {
      "decision": "uyarla",
@@ -2899,13 +4021,13 @@
     "standards/02-coding-backend.md": {
      "decision": "uyarla",
      "rule": "standards/02-coding-backend.md",
-     "sha256": "fb61ce9663a11ff0fee254fda336dd44dabf2aec1aabd074262077b8b9dd6bf4",
+     "sha256": "f80c34c9e72895ddb9a33b822ba94124f0cc3af34340453815b1f710a7644829",
      "status": "tamam"
     },
     "standards/03-coding-ui-fiori.md": {
      "decision": "uyarla",
      "rule": "standards/03-coding-ui-fiori.md",
-     "sha256": "25aa1ac6f976faef4c17dc4167dbf304f2aedf624b43cbad5579b4d7a073d8e2",
+     "sha256": "92711a2e9afcf76cd7b5ed78a4f98eefe660c10543e3483964d71c6234b40878",
      "status": "tamam"
     },
     "standards/04-documentation-fs-ts.md": {
@@ -3013,8 +4135,14 @@
     "tests/fixtures/adtget_yokluk_kaniti/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "4f6d122e1641725202d49bb79e7530d7c47263e524f9d540099030105e81b08c",
+     "sha256": "e12ced85a7d2bde1854b2f81d488b0c355811d03d3eeb64885da711360856ea5",
      "status": "kismi"
+    },
+    "tests/fixtures/agent_stall_watch/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/agent_stall_watch/*",
+     "sha256": "88c8788545684d605ca64e6825deefa2d94330935e1a3eed3ff8c0250898e9d9",
+     "status": "-"
     },
     "tests/fixtures/aktivasyon_baseline_tazeligi/run.py": {
      "decision": "uyarla",
@@ -3403,7 +4531,7 @@
     "tests/fixtures/core_index_kapsam/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "abe82492719710840df3be9698ba308ac650b6ce5b179e16b961e9040c662a7d",
+     "sha256": "72312349ca14b2237fea960f18f52c8cd5b85d297c4b403439bbe221b3dc72a3",
      "status": "kismi"
     },
     "tests/fixtures/core_index_siralama/run.py": {
@@ -3471,6 +4599,12 @@
      "rule": "tests/fixtures/*",
      "sha256": "1b8a61b18ea433e1a0a213ebc617b099b9e3cfad8d1384accb803a9c1756e017",
      "status": "kismi"
+    },
+    "tests/fixtures/genericize_muafiyet_satir_bazli/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/genericize_muafiyet_satir_bazli/*",
+     "sha256": "db027329579c495f23ab8602309b42b992d53ce843c64c368ad6e223f18d800a",
+     "status": "-"
     },
     "tests/fixtures/gevsetme_pozitif_kontrol/run.py": {
      "decision": "uyarla",
@@ -3556,6 +4690,24 @@
      "sha256": "bb51f8031edbac8bc3026ee6b513183b681cd44e2893d974915d363370e6e859",
      "status": "kismi"
     },
+    "tests/fixtures/ix_doctor_ps_politika/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/ix_doctor_ps_politika/*",
+     "sha256": "4c46d3e0c765186c5ab3af8e90078242cf35c52e5f1c762c0129ac1d57d06c8b",
+     "status": "tamam"
+    },
+    "tests/fixtures/ix_doctor_repo_mode/_senaryo.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/ix_doctor_repo_mode/*",
+     "sha256": "9ab8397a71ed7f3349eb0ea044ad1261d9f9f9810120e8138866f2afc243d4ec",
+     "status": "-"
+    },
+    "tests/fixtures/ix_doctor_repo_mode/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/ix_doctor_repo_mode/*",
+     "sha256": "6cb49d97d0078d789b6ea33ba02acaafacf56d32cdc97ba29110411cd81d4177",
+     "status": "-"
+    },
     "tests/fixtures/lock_modification_support/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -3567,6 +4719,18 @@
      "rule": "tests/fixtures/*",
      "sha256": "6657ced38af65f315164f2491c4ea3afb0e841639d00c6f5755202f910968e09",
      "status": "kismi"
+    },
+    "tests/fixtures/mcp_import_denetimi/_kosucu.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/mcp_import_denetimi/*",
+     "sha256": "71f01e4756f2704f0af1d51685229d66003fee1b7a1379522ee3987c776f2278",
+     "status": "-"
+    },
+    "tests/fixtures/mcp_import_denetimi/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/mcp_import_denetimi/*",
+     "sha256": "4ec524260ea4aac2363be7ccc18047ac3a8305143d418ed7b6e7b0af216faea8",
+     "status": "-"
     },
     "tests/fixtures/mcp_profil_aktivasyon_offline/run.py": {
      "decision": "uyarla",
@@ -3585,6 +4749,12 @@
      "rule": "tests/fixtures/*",
      "sha256": "968a8b7fd2681be47dcb5f3e770007fccb018e93dc179c84900b56097de04121",
      "status": "kismi"
+    },
+    "tests/fixtures/msag_mesaj_silme/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/msag_mesaj_silme/*",
+     "sha256": "c808233932c5117f316da117391bbe3c4280233b8e0bf92bd4434712cd792898",
+     "status": "tamam"
     },
     "tests/fixtures/msgtext_uzunluk_guard/run.py": {
      "decision": "uyarla",
@@ -3862,6 +5032,12 @@
      "sha256": "8dd9ba7a39c7540cf9e348d9c6ea320d4f41eda199dc6d27735ec1041214218c",
      "status": "kismi"
     },
+    "tests/fixtures/session_start_origin_geriligi/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/session_start_origin_geriligi/*",
+     "sha256": "ab6fd403f17988a5cb1e79f57c59eb90a1e5d1d0626b1f853d395b3a3a3b0b64",
+     "status": "-"
+    },
     "tests/fixtures/sessiz_olumsuzlama_2026_08_10/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -3927,6 +5103,12 @@
      "rule": "tests/fixtures/*",
      "sha256": "c19a9ff20f110a5ad79b11d622372ddeb0420294fcf3f9968b799d4e1627aef8",
      "status": "kismi"
+    },
+    "tests/fixtures/tohum_terfi_gorunurlugu/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/tohum_terfi_gorunurlugu/*",
+     "sha256": "24e4d025b2b37777263a1a16d4b64e934565ee225d6e54b46145d6078b05c662",
+     "status": "-"
     },
     "tests/fixtures/transport_gorev_istek_cevrimi/run.py": {
      "decision": "uyarla",
@@ -4024,6 +5206,12 @@
      "sha256": "46bfcbe8b4c5f724b7c942546aaebf8263ff271865b59319f87f7cf69055519e",
      "status": "kismi"
     },
+    "tests/fixtures/z_obje_desen_kapsami/run.py": {
+     "decision": "alinmaz",
+     "rule": "tests/fixtures/z_obje_desen_kapsami/*",
+     "sha256": "fdd620a5843e407d73bde73212d0d6ded146627423edec1e5981a11c826f6630",
+     "status": "-"
+    },
     "tests/run_battery.py": {
      "decision": "uyarla",
      "rule": "tests/*",
@@ -4033,7 +5221,7 @@
     "tests/run_fixture_tests.py": {
      "decision": "uyarla",
      "rule": "tests/*",
-     "sha256": "486d56f1302dddd5193ef456cf6bc3b3a2a77c6114b12fa0f0468970e451f2ca",
+     "sha256": "c8429e352234143e9ef88228ba64a1dc3379270b007627cbf4378eaeedefe581",
      "status": "tamam"
     },
     "tests/run_guard_fixture_tests.py": {
@@ -4043,10 +5231,10 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-14T15:27:38"
+   "locked_at": "2026-09-25T16:16:40"
   },
   "PROVA": {
-   "commit": "aa328a7d241ece789f5dfbfa9dc6a2cf1f6c5893",
+   "commit": "c405a9a405d262ce04cff5b2d293c5d09b1cf7f6",
    "files": {
     ".claude/settings.json": {
      "decision": "telafi",
@@ -4075,13 +5263,13 @@
     "CLAUDE.md": {
      "decision": "uyarla",
      "rule": "CLAUDE.md",
-     "sha256": "275273648f3fb318acb0dca94ec4b8e1a7838679b8c85eba324846cadeae66f7",
+     "sha256": "869be1428ca641d968893c5565633ff25d180a029f17a899ba4e7ec71623b344",
      "status": "kismi"
     },
     "README.md": {
      "decision": "uyarla",
      "rule": "*",
-     "sha256": "735efc1c2b28ff50664f8b39e07302f5bbcc83a1c2d17c6e5ac421fc5e1e1f91",
+     "sha256": "6cb8de040c1c7e2cabe9a115aa1eb333f59a98612559044ab894f6a3f9eee262",
      "status": "kismi"
     },
     "SOURCE_CODES/.gitkeep": {
@@ -4105,7 +5293,7 @@
     "SOURCE_CODES/SD/ZSD001_CLC/SESSION_NOTES.md": {
      "decision": "uyarla",
      "rule": "SOURCE_CODES/*",
-     "sha256": "7c195bbde7ca34e57ac6e766b8494fd608b362488d6778ef299a3b7a95010556",
+     "sha256": "76f3b86a981c8b817499fb36045935e7b5271159f8b5cfa1d995b60dd77f2dd0",
      "status": "tamam"
     },
     "SOURCE_CODES/SD/ZSD001_CLC/SPEC.md": {
@@ -4135,13 +5323,49 @@
     "governance/CORE-INDEX.md": {
      "decision": "alinmaz",
      "rule": "governance/CORE-INDEX.md",
-     "sha256": "dcaa86cbc543480076196e555148d516bd24062c78906540e2430f304105bf8c",
+     "sha256": "d20d825514f6882740935d5788fabca1b55eea29518922fe85063426f8e933a4",
+     "status": "-"
+    },
+    "governance/archive/2026-09-20-tasima-RESUME.md": {
+     "decision": "telafi",
+     "rule": "governance/archive/*",
+     "sha256": "d8db74ec0052dafe816338771be0d1bd11b5e5c67a74cd2d40f6a6292d89ca60",
+     "status": "-"
+    },
+    "governance/archive/core-guncelle-RESUME.md": {
+     "decision": "telafi",
+     "rule": "governance/archive/*",
+     "sha256": "66c5fee5dc97e2ec8bd71f200008b13ff272fea14352af6772554402ecfe489f",
+     "status": "-"
+    },
+    "governance/archive/kurulum-araclari-RESUME.md": {
+     "decision": "telafi",
+     "rule": "governance/archive/*",
+     "sha256": "a537e0b3c33717b63e6274bae1597ba65de1125be418f182eed4efd2bcd2ecf5",
+     "status": "-"
+    },
+    "governance/archive/yeni-makine-gecisi-RESUME.md": {
+     "decision": "telafi",
+     "rule": "governance/archive/*",
+     "sha256": "f63b487d54a639ea58e1e352a7b7b01ff7911713d266977dfabf12f4d7a061a7",
+     "status": "-"
+    },
+    "governance/bakimci-iletim-metni.md": {
+     "decision": "telafi",
+     "rule": "governance/bakimci-iletim-metni.md",
+     "sha256": "02b442cdabf7e6371adb630dd82d53af812a155cdd97b6517498f8a66368869d",
      "status": "-"
     },
     "governance/infra-findings.md": {
      "decision": "telafi",
      "rule": "governance/*",
      "sha256": "3aa1e1340e1982936ae3b71f003a252b8ce25b49b7e4f1b94005defba2915f39",
+     "status": "tamam"
+    },
+    "governance/prova-bulgulari.md": {
+     "decision": "telafi",
+     "rule": "governance/prova-bulgulari.md",
+     "sha256": "8cfccdd67353d582feb10f93d806b707cda2d82c255c28c10fea7a293c85b2fd",
      "status": "tamam"
     },
     "playbook-local/.gitkeep": {
@@ -4181,7 +5405,7 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-14T15:27:38"
+   "locked_at": "2026-09-25T16:16:40"
   }
  }
 }

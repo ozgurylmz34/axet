@@ -17,11 +17,12 @@
       "targets": [
         "core/00-temel.md",
         "core/sap/00-sap.md",
+        "skills/gun-sonu/SKILL.md",
         "maintenance/rule-coverage.md"
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (40 madde; eksikler orada listeli)."
+      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (satirlar orada listeli). 2026-09-25 turu: 'Ertelenmiş-iş süpürmesi' PORTLANDI → skills/gun-sonu/SKILL.md adım 4 (:37-39) + rule-coverage.md #19 notu (:38). 'Tohum terfi gözlemi', 'Gelen çekirdek bildirimi gözlemi', 'Spawn brief agent_stall_watch referansı', 'Memory §5 iki-yüzeyli terfi (metadata.seed)' — dördü de ALINMAZ: kaynağın auto-memory/alt-ajan/tohum mimarisine özgü, aXet'te karşılık mekanizma yok."
     },
     {
       "source": "DEV_CORE",
@@ -37,11 +38,12 @@
       "pattern": "MAINTENANCE.md",
       "decision": "uyarla",
       "targets": [
-        "maintenance/UPDATE-PROCEDURE.md"
+        "maintenance/UPDATE-PROCEDURE.md",
+        "maintenance/howto-gelen-bildirim-degerlendirme.md"
       ],
       "party": 8,
       "status": "tamam",
-      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda."
+      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda. 2026-09-25: yeni §6c (gelen bildirim değerlendirme protokolü) → maintenance/howto-gelen-bildirim-degerlendirme.md (iş listesi Z131: ihbar ≠ kanıt, kimlik taraması, iddia başına yeniden ölçüm, etki analizi, açık onay, durum etiketleri). §6b'nin fork/PR topolojisi ve CI secret kısıtı kaynağın kendi deposuna özgü, alınmadı."
     },
     {
       "source": "DEV_CORE",
@@ -53,7 +55,7 @@
       ],
       "party": 5,
       "status": "tamam",
-      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI."
+      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI. 2026-09-25: yeni §0a KURULUM KAPSAMI tablosu + parity_probe + user-settings-template ALINMAZ (katman ayrımı kaynağın junction/hafıza mimarisine özgü; aXet install.py/kur.ps1 tek adımda tüm yüzeyi kurar). PowerShell yürütme politikası: kod karşılığı doctor.py check_ps_politika (Z129); önceki 'ders memory'de var' iddiası yanlıştı."
     },
     {
       "source": "DEV_CORE",
@@ -99,6 +101,18 @@
       "party": 7,
       "status": "tamam",
       "note": ""
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": ".github/ISSUE_TEMPLATE/cekirdek-bulgu.yml",
+      "decision": "uyarla",
+      "targets": [
+        ".github/ISSUE_TEMPLATE/hata-bildirimi.yml",
+        "skills/hata-bildir/SKILL.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "aXet'in kendi kullanıcı bildirim yolu (iş listesi Z131): %hata-bildir sızıntısı temizlenmiş bildirim dosyası hazırlar; GitHub hesabı olan Issue formuna yapıştırır, olmayan dosyayı aXet'i kuran kişiye iletir; model göndermez."
     },
     {
       "source": "DEV_CORE",
@@ -1193,6 +1207,1835 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ad-sayan-gate-elenen-adayi-sayar.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in kendi onay-listesi 'elenen aday' sayac-gate mekanizmasina ozgu; aXet'te boyle bir yakalama-gate yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-include-objesi-prog-tipiyle-404-sahte-negatif.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/known-errors-adt.md",
+        "skills-sap/sap-classic-abap/references/programs-includes.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-adt.md K-23 (:257, belirti indeksi :34) + programs-includes.md §1 (:24) işaret. Kardeş uç denemesi araçta yalnız tablo↔yapı (prog→include yok)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-preview-bos-char-null-render.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/cds.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: cds.md:290 T13 'Veri önizleme boş CHAR'ı null gösterir'."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-readback-md5-disk-md5-ile-dogrudan-kiyaslanamaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "foundation-ops.md §4.1 (:192) 'Readback'i ELLE kıyaslıyorsan'; aracın kendi kıyası strip + boşluksuz karşılaştırma yapıyor (not olarak yazıldı)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-sql-query-400-sebebi-where-terim-sayisi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "foundation-query.md §1.2 (:33) satır 8-11 + NOT EXISTS notu (:55)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_agent-stall-watchdog-mekanizmasi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code subagent/Monitor/SendMessage altyapisi; aXet'te subagent-izleme mekanizmasi yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Subagent rapor-kabul disiplini; aXet'in ajan-raporlama ekseni yok, genel ilke kanit kurallari ailesinde zaten var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-kurali-brifingde-degil-taniminda-yasar.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR (kismen): memory/feedback_kural-yazim-konum-ve-kosul.md. Claude agent-tanim-dosyasi mekanizmasi aXet'te yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-model-secimi-olculdu-ayri-politika-yazilmadi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude subagent model-ekonomisi analizi; aXet tek-model."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-okuma-disiplini-tazelik.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Cok-rollu subagent okuma disiplini; tekil-oturum tazelik kurali zaten core/sap/00-sap.md'de (source-drift-pull-before-edit)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Lider->alt-ajan talimat aktarimi baglamina ozgu; aXet'te talimat dogrudan kullanicidan gelir."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_alan-anlamini-ddic-etiketinden-dogrula-tvak-fkara-fkarv.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:197): alan anlamı data element etiketinden doğrulanır."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_alinti-onay-turu-acmaz-toren-enflasyonu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX i18n metin-onay sureci (SESSION_NOTES/RESUME) olcumune ozgu anlati; genel ilke karar-verimliligi-asiri-kapi-yok ailesinde zaten var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_atc-bulgusu-select-i-iceren-sinifa-yazilir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/checklists.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "checklists.md Faz 4 CLC-ATC2 (:43, WARNING)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_auto-mode-deny-kararsiz-yeniden-dene.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code auto-mode siniflandiricisi/settings.json; aXet mekanizmasi (config/permissions.json) farkli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ayni-hash-degil-olu-kod.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kopya-silmeden-referans-olc.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: memory/feedback_kopya-silmeden-referans-olc.md:3 (aynı ders)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ayni-sinif-ayni-duzeltme-degildir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "CDS-agregasyon vaka anlatisina bagli; genel ilke devredilen-isi-etkiyle-dogrula/kural-yazim-konum-ve-kosul ile ortusuyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_bash-find-core-junctionu-gormez-yok-sanirsin.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE core/ junction mekanizmasina ozgu; aXet template reposunda boyle bir junction yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_bash-heredoc-kacis-ve-utf8-bozulmasi.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_bash-heredoc-turkce-kacis.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_bos-gondermek-hic-gondermemek-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-odata-backend/references/outbound-api-call.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "outbound-api-call.md §3.3 (:121) (hedef backend-coding.md yerine standart API payload dersleri bölümü)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_brifinge-koydugun-yolu-once-kendin-kos.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude subagent brifing mekanizmasina ozgu (spawn brief); aXet'te bu olcekte ajan-brifingi yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_bulgu-listesi-ornektir-sinif-duzeltmesi-tarama-ister.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX kapi/bug-gate review kulturune ozgu; genel ilke kontrol-yazarken-kor-nokta ile ortusuyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_calisan-ajanin-dosyasi-ucus-halindedir-iddia-degil-soru.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Eszamanli calisan subagent'in dosyasini olcme senaryosu; aXet tek-oturumlu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_canli-production-obje-degisimi-auto-mode-kapat.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code auto-mode classifier production-koruma davranisi; aXet mekanizmasi yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_capa-liste-degil-KURAL-olmali.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:202)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_capadaki-acik-madde-devralmadan-once-olculur.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX RESUME/SESSION_NOTES capa sistemine ozgu; aXet'in %gun-sonu mekanizmasi farkli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_capayi-ada-cevirmek-de-bir-olcumdur.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Satir-no->ad capasi cevirme; IX dokuman-versiyonlama kulturune ozgu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cds-tekillik-olcumunde-alan-listesi-bulguyu-degistirir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "checklists.md §1 CDS-DUP (:44, WARNING)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cekirdek-guncellemesi-proseduru-vardir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE team_setup.py/overlay-ezme-kapisi prosedurune ozgu; aXet'in kendi maintenance/UPDATE-PROCEDURE.md'si var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_check-annotasyonu-fail-yonunu-belirlemez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/cds.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "cds.md CDS-DCL-02 (:102) (hedef sap-rap eml.md yerine; DCL kararı cds.md'de yaşıyor)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_classrun-teshis-yanlis-surum-ve-bayat-oturum.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/known-errors-adt.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: known-errors-adt.md K-13 (:185) classrun bayat oturum."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cok-katmanli-degisiklik-yonetimi.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_envanter-once-capraz-is.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: memory/feedback_envanter-once-capraz-is.md:3 (aynı ders)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cok-parametreli-shlp-ilk-alan-devralma.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/dynpro-dialog-fields.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "dynpro-dialog-fields.md §2.2 (:61) çürütülmüş iddia tablosuna satır: F4 eşlemesi ad-bazlı (hedef forms-f1-help.md Adobe Forms/F1, yanlış yer)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_core-index-dala-bagli.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE governance/CORE-INDEX.md/junction-dal mekanizmasina ozgu; aXet'te yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_curutme-de-bir-iddiadir-yerine-yazilan-sayi-olculur.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX kapi/tur review kulturune ozgu anlati; genel ilke kanit-disiplini ailesiyle ortusuyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ddls-obje-aciklamasi-annotation-degisiminde-tazelenmez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/checklists.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "checklists.md §1 CDS-DESC (:43, WARNING; çare adt_set_description)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_debugger-farki-aslinda-kullanici-farki.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "sap-rap troubleshoot.md §2 tablo satırı (:71) (hedef draft-and-locks.md yerine)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_defter-tasariminda-giris-tuketim-duzeltme-uclusu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: fs-authoring.md:93 'Defter / havuz tasarımı' + doc-checklist.md:54 DOC-FS-08."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_deploy-ui-statik-varlik-korlugu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Madde 1-2 zaten vardı (deploy-and-local-run.md §5 :196); madde 3 uyarlandı: 'kıyas tabanını build kirletmesin' (:209) — aXet verify build koşmaz."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_dev-verisi-yapi-olcer-dagilim-olcmez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:207)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_devreye-alma-once-etki-olc.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX gate/tooling devreye-alma ekosistemine ozgu (PATTERN #14, run_all, CI, pre-commit)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_dogrulama-sezgileri-dort-kural.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md",
+        "skills/verify-done/SKILL.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Dört sezgi: bulunamadı ≠ yok core/00-temel.md:24-25; çökme ≠ FAIL dolaylı core/00-temel.md:21 (araç hatasını oku); kod ≠ kablolama ve sayı ≠ biçim skills/verify-done/SKILL.md:15 (gerçek giriş noktası; 'N dosya var' ≠ tüketici biçimi kabul ediyor — 2026-09-25 eklendi)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Coklu-ajan kod-duzeltme+dokuman turu paralel calistirma cakismasi; aXet tek-oturumlu, risk yapisi farkli."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_drift-uyarisinda-once-yonu-olc.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE session_start/D7 denetimi ve hook_shim.py drift'ine ozgu; aXet'te bu kontrol yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX cok-turlu bug-gate review kulturune ozgu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_duzeltme-turu-kendi-regresyonunu-uretir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Ayni aile, IX kapi-kulturu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_e070-as4date-istegin-tarihidir-obje-degisim-tarihi-adt-versions.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/known-errors-adt.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-adt.md K-27 (:287) + belirti indeksi (:39)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ecc-referansi-is-anlayisi-icin-mimari-degil.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/protocol.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "protocol.md §5 (:88)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_edi-tasariminda-otorite-orijinal-mesaj-dosyasi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Musteri-ozel EDI/CPI mapping anlatisi (mmap dosyalari, musteri gruplari); aXet'te EDI/IDoc'a ozel skill yok, hedef yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_edid4-sdata-lchr-dtint2-ile-okunur.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: foundation-query.md §1.3 (:62) LCHR / EDID4.SDATA."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_empty-key-tabloda-olcutsuz-sort.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §5 (:121)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_enduser-doc-no-sa38-se38-program-run.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: forms-f1-help.md:72-73."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_exit0-degil-cikti-kaniti.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Ayrı dosya yerine memory/feedback_yesil-sinyal-kapsamini-sor.md dersine birleşti (exit 0 ≠ çıktı kanıtı)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_exporting-tablo-parametresi-hedefi-temizler.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/checklist-abap.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR (A grubu ile eklendi): checklist-abap.md BE-78 (:45)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_f4-arama-yardimi-tasarim-asamasinda-kurgulanir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/ts-authoring.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ts-authoring.md §5.1 (:103)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_flag-degil-icra-bekleyen-is-kapat.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: core/00-temel.md:53 (ertelenen alt madde açıkça yazılır), :55-56 (yapılmayan/ertelenen raporlanır; madde yazılı yerinde kapanır). Ayrı ders yazılmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_fs-govdesi-analiz-gunlugu-degil-uc-katman.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: fs-authoring.md İlke 2b 'Üç katman, üç yer' (:62-78) + doc-checklist.md:50 DOC-FS-05."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_fs-ts-html-uretilmez-teslim-bicimi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in kendi PDF-uretim zincirine (build_*_pdf_*.py, html_to_pdf.js) ozgu teslim-bicimi karari; aXet'in dokuman uretim hatti DOGRULANAMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_fs-ts-iki-zihniyet-disiplini.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/fs-authoring.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: ts-authoring.md İlke 3/4/5 (:10, :15, :21) + fs-authoring.md İlke 1/2 (:50, :55)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gate-moratoryumu-bes-sart.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX governance-gate ekosistemine (validator/hook/CI/run_review) ozgu; aXet'in gate yuzeyi cok daha dar."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gateway-push-before-activate-preaudit.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX adt-gateway/sap_client.py push_object aracinin ic davranisina ozgu; aXet'in sapadt CLI'si farkli implementasyon (telafi kararli)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gecmis-temizligi-refs-pull-tuzagi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Git gecmis-temizligi/public-acma bakimci prosedurune ozgu; bu grubun hedef kitlesi (SAP-dev oturumu) disinda, bakimci konusu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gfm-tablo-bos-satir-tuzagi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "aXet PDF hattı (scripts/build_doc_pdf.py) python-markdown tables kullanıyor → tuzak geçerli; doc-checklist.md §D DOC-CR-08 (:78). Ölçüm (ayraç satırı ↔ <table>) yalnız belge maddesi; verify_doc_html.py'de yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_git-bash-sap-uri-yol-donusumu-msys-no-pathconv.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+        "skills-sap/sap-ui5-user-guide/references/akis.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Git Bash kullanıcı kabuğu için foundation-ops (ADT URI, :454) + akis.md:70 (curl); aXet bash aracı Go tabanlı, dönüşüm orada ölçülmedi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_github-actions-asili-queued-kosu-pr-kapat-ac.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_github-actions-asili-kosu-pr-kapat-ac.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gocsuz-sema-degisikliginde-kilavuz-bos-diyemez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/kd-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: kd-authoring.md:99 'Veri garantisi yazmadan önce ölç' + doc-checklist.md:75 DOC-CR-05."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_grup-bazli-genisletmede-her-grup-kendi-dali-ve-metodu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Tek musterinin acik anti-DRY tercihine bagli proje-ozel tasarim karari; genellenebilir degil."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gurultulu-duser-iddiasi-olculmeden-yazilmaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:213)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ham-satir-sayisi-is-nesnesi-sayisi-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "foundation-query.md §1.5 (:97)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hicbir-yerde-yok-demeden-once-nerelere-baktigini-yaz.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ECC/S4 cok-sistemli master-data anlatisina bagli; genel ilke 'bulunamadi != yok' ailesiyle ortusuyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hook-dosya-yolu-windows-bicimi-ister.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code hook (Python) + git -F/--body-file argument-yolu sorunu; aXet'te hook mekanizmasi yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hook-negatif-test-exit0-iki-anlamli.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code hook negatif-test metodolojisi; aXet'te hook yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_iddia-kac-yerde-yasiyorsa-o-kadar-yerde-kapatilir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in cok-belgeli iz sistemine (TS/RESUME/kaynak-yorumu) ozgu; genel ilke envanter-once-capraz-is (ZATEN VAR) ile ayni aile."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_iddia-yazma-aninda-kanit-kurallari.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Liderin kendi iddia yazma disiplini; ornekler agirlikla Claude 'compact'/brifing baglamina ozgu, temel ilkeler dagitik halde baska derslerde var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_idoc-segment-alani-alfabesi-hedef-tablodan-farkli.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Musteri-ozel EDI/IDoc mapping anlatisi (PRGRS alani ornegi); aXet'te EDI'ye ozel skill yok, hedef yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_inactive-objects-tadir-capraz-kontrol-bozuk.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in kendi MCP aracinin (mcp_servers/sap_adt) TADIR capraz-kontrol bug'i; aXet farkli CLI implementasyonu (telafi kararli)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_infra-expert-spawn-ad-verme.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code infra_write_guard/subagent kimlik-eslesmesi mekanizmasi; aXet'te yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_infra-icin-ayri-acik-onay-sart.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code infra-expert/hook/validator onay is akisina ozgu; aXet'in yazma-disiplini maintenance/UPDATE-PROCEDURE.md SS8'de zaten var."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in cok-oturumlu infra-kuyruk turu is yonetimine ozgu; aXet tek-oturumlu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-ajan-takim.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-arac-kok-fixleri.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-arac-tuzaklari.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-dokuman.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-infra-gate.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-kanit-olcum.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-karar-iletisim.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-sap-abap-rap.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-terfi-2026-09-18.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-ui.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kanit-tazeligi-indeks-ve-zaman-sirasi.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapsam-niteleyicisini-dusurme.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kopya-sayimi-tek-sozdizimi-desenine-dayanma.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_satir-sayisi-artisi-cogaltma-degildir-satir-tekil-farki.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_olcum-duzeyi-kayit-ici-mi-kayitlar-arasi-mi.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_olcumu-artefaktin-kendi-baglaminda-kos.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_once-sonra-kanitinin-zaman-damgasini-kontrol-et.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_teslim-paketi-artefakttan-ayri-yasar.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_turetilmis-artefakt-sondasi-tablo-hucresini-kirar.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_otomatik-olusur-bir-zamanlama-iddiasidir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_karar-degisince-kaydi-ayni-turda-guncelle.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_karar-curudugunde-ureticinin-girdisi-de-curur.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kanit-kapsam-ve-zaman-korunur.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kanit-kapsam-ve-zaman-korunur.md'ye (12 kaynaklı konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kanit-yeniden-uretilebilir-bicimde-yazilir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_bayat-sayi-referans.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "'İçerik çapası kullan' ilkesi zaten memory/feedback_bayat-sayi-referans.md:16'da; md5-kapı tarifi çok-ajanlı akışa özgü, alınmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tr-karakter-varyantli-arama.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_mojibake-taramasi-ciplak-karakter-aramaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_python-yazdigi-liste-crlf-tasir-xargs-sessizce-bosa-koser.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_timeout-rg-shim-sessiz-sifir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yesil-sinyalin-kapsamini-sor.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yesil-regresyon-suiti-duzeltmenin-kaniti-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kod-yolu-vardi-veri-gecmemisti.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ters-yon-kontrolu.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tarama-ciktisi-hipotezdir-is-listesi-degil.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_onay-da-bir-iddiadir-mekanizmayi-olcmeden-net-deme.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kaydin-onerdigi-fix-yonu-de-bir-iddiadir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapi-tek-tarayicidan-ibaret-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md",
+        "memory/feedback_kontrol-yazarken-kor-nokta.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_kontrol-yazarken-kor-nokta.md:3 aynı aile; eksik alt ilke (kendi giriş noktasından koş + pozitif kontrol) feedback_yesil-sinyal-kapsamini-sor.md:17'ye eklendi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapinin-var-olmasi-her-girdi-yolunda-calistigi-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_paylasim-onbellek-sorusu-kaynak-okumasiyla-cevaplanmaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kardes-artefakt-benzerligi-kip-semantigini-kanitlamaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "memory/feedback_yesil-sinyal-kapsamini-sor.md'ye (konsolide ders) uyarlandı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_onay-isteme-formati.md",
+      "decision": "uyarla",
+      "targets": [
+        "core/00-temel.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: core/00-temel.md:43 'Onay isterken 5 unsur'; ayrı ders yazılmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_karar-sormadan-once-erisilebilirlik-olc.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_karar-sormadan-once-erisilebilirlik-olc.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 1."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sorulari-tek-tek-sor-oneriyle.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "aXet'in 'kararları önce topla' dersiyle (memory/feedback_kararlari-once-topla.md) çelişir: işten önce kullanıcıya ait kararlar tek seferde toplanır, iş ortasında soru trafiği açılmaz."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kullanicinin-bildigi-is-gercegini-olcmek-yerine-sor.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kullanicinin-bildigini-olcme-sor.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 1."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_muafiyetin-gerekcesi-alt-kumeye-aitse-muafiyet-kor-nokta-olur.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_muafiyet-gerekcesinden-genis-olmasin.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_performans-onerisi-de-bir-iddiadir-maliyeti-once-olc.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_performans-onerisi-de-iddiadir.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 1."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sizinti-taramasinin-arama-uzayi-prin-main-deltasidir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_sizinti-taramasi-arama-uzayi-git-deltasidir.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_uyarlama-verisi-acik-kalem-degil.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_uyarlama-verisi-acik-kalem-degil.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 1."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yerel-suit-ci-ikizi-degil.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yerel-suit-ci-ikizi-degil.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_merge-yalniz-ci-yesilse-admin-bypass-yasak.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/commit-pr/SKILL.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: skills/commit-pr/SKILL.md:35 Merge maddesi (kırmızı/bekleyen CI'da merge yok); ayrı ders yazılmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tek-seferlik-script-paylasilan-modulun-desenini-yeniden-turetmez.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_paylasilan-modulun-desenini-yeniden-turetme.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Memory dersi, dalga 2 (Z130)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_privileged-access-strict-mode-into-sonda.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/cds.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "cds.md CDS-DCL-01 (:76) WITH PRIVILEGED ACCESS strict mode INTO sırası (hedef coding-patterns.md yerine; PRIVILEGED sözdizimi orada)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_rap-validation-operation-trigger.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/layering-and-bdef.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: layering-and-bdef.md:122 + troubleshoot.md:56."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sadl-gateway-dats-donusum-hatasi-tum-entity-seti-oldurur.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-odata-backend/references/segw-service.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "segw-service.md §5.1 (:157)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_z-sinif-karsilikli-referans-aktivasyonu-engellemez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §6 (:161)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_st05-trace-okuma-tamponlu-tablo-ve-sahiplik.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §6 (:166)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_klasik-alv-birim-doc-dersleri-2026-07-13.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/checklist-abap.md",
+        "skills-sap/sap-classic-abap/references/alv-report.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: (a) BE-52 (:41) (b) BE-50 (:40) (c) BE-51 (:25) (d) alv-report.md:38 yapıdan birleştirme."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_metadata-alan-dogrulama-tip-kapsamli-olmali.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: foundation-query.md §5.1 (:199) alan doğrulaması tip-kapsamlı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_literal-filtreli-ab-runtime-hatasini-yeniden-uretemez-pushdown.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-rap/references/troubleshoot.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "sap-rap troubleshoot.md §2 tablo satırı (:72)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_mesaj-envanteri-tasarim-asamasinda-kurgulanir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: ts-authoring.md §5.2 (:128) + doc-checklist.md:63 DOC-TS-05."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_rapor-dokumani-kaynak-uygulamanin-kuralini-anlatmaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+        "skills-sap/sap-fs-ts-docs/references/doc-checklist.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: fs-authoring.md:124-128 + doc-checklist.md:74 DOC-CR-04."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_run-sql-query-max-rows-sessiz-kirpma.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-query.md",
+        "skills-sap/sap-adt-foundation/references/tool-catalog.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: foundation-query.md §1.1 (:23-30) + tool-catalog.md:84."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sap-sync-pull-repo-ileri-ezme.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "foundation-ops.md §2 (:61) 'Repo canlıdan İLERİ olabilir' (aXet'te adt_get dosyaya yazmaz, model yazar — çerçeve buna göre)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_push-ok-mesaji-sahte-readback-esitligi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+        "skills-sap/sap-adt-foundation/SKILL.md",
+        "skills-sap/sap-code-review/references/checklist-cds-ddic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Vardı: sap-adt-foundation SKILL.md:172 §6 + checklist-cds-ddic.md:16 BE-61; eklendi: foundation-ops.md §4.1 (:185) 'activated ≠ içerik canlıya indi'."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_transport-numarasi-istek-mi-gorev-mi-rules-md-otoritedir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/known-errors-adt.md",
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Vardı: known-errors-adt.md K-02 (:60-61); eklendi: foundation-ops.md §7 (:361; kurtarma notu :370)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_msag-tam-put-govdeden-cikarmak-silmez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/message-class.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: message-class.md:31, §3.5 (:96), §3.7 (:118)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_senkron-cagri-ardil-belgeyi-senkron-yapmaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:219); kardeşi checklist-abap.md BE-73."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_on-kontrol-adim-kapsamsizsa-basarili-zincir-kendi-yeniden-denemesini-dusurur.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/coding-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "coding-patterns.md §8 (:226)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui-local-run-paket-workspace-node-modules.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/app-skeleton.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: app-skeleton.md:47 'npm install yalnız ui/ kökünde'."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_xml-tag-regexi-attribute-icindeki-buyuktur-isaretinde-kesilir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "runtime-verification.md §2 (:35) + known-errors-ui5.md:36."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapi-zinciri-derlemeyi-gormez.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/reviewer-brief.md",
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Vardı: sap-code-review abaplint.md + SKILL.md; eklendi: reviewer-brief.md:67 (statik PASS ≠ hazır) + runtime-verification.md §3 (:47 her route)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_once-yuzey-taramasi-sonra-is-listesi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: memory/feedback_envanter-once-capraz-is.md aynı ilkeyi taşıyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sonucu-olc-uygulamayi-degil.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: memory/feedback_devredilen-isi-etkiyle-dogrula.md aynı sınıf."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_paralel-duzenlenen-dosyaya-satir-no-cakma.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: memory/feedback_bayat-sayi-referans.md 'içerik çapası' ilkesi bunu kapsıyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yasaklar-fiziksel-her-projede.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: sync-rules.json claude/kesin-yasaklar.canonical.md kuralı status=tamam, ADR 0021 mekanizması aXet'e sap_stamp.py ile tam taşınmış."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sap-yazma-hatasi-once-known-errors.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kısmen ZATEN VAR: memory/feedback_yeni-teknoloji-once-arastir.md 'önce ara' ilkesiyle örtüşüyor; aXet'te known-errors.md eşdeğeri DOĞRULANAMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_infra-turunun-maliyeti-testte-degil-kanit-uretiminde.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "infra-expert ajanının bütçe ayarı (F2/F3/F0b), DEV_CORE bakımcı/altyapı dersi; aXet'te infra-expert rolü yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapi-kosarken-dosya-donar-md5-teyidi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Üretici-ajan ↔ kapı-ajanı dondurma/handshake protokolü; aXet tek-model, SendMessage/ayrı kapı-ajanı yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kapsam-disi-bulgu-protokolu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Zaten CLAUDE.core.md §1.1 sync satırıyla core/00-temel.md'ye kısmen taşınmış (sync-rules tamam); ayrıca çok-ajan brifing odaklı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kardes-taramasi-spawn-oncesi-kapsama-alinir-kuyruga-yazilmaz.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Spawn/kuyruk-madde yönetimi, çoklu-ajan iş akışına özgü."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kontrolun-kapsami-is-akisinin-seklinE-bagli.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "infra_write_guard hook matcher'ı (Edit/Write vs Bash); aXet'te hook yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_lider-ajan-paralel-yazim-cakismasi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Lider+worktree ajanı paralel yazım çakışması; aXet'te worktree/çoklu-ajan yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE'un kendi seed_memory.py satır-enjeksiyon mekanizmasına özgü; aXet dosya-bazlı git dağıtımı kullanıyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_monitor-sessiz-oldu-bash-background-ile-dogrula.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code Monitor aracı + arka plan ajan izleme; aXet'te background agent/Monitor yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_paralel-infra-pr-ortak-dosya-rebase-sonrasi-tam-suit.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Paralel infra-ajanı + worktree + rebase prosedürü, çoklu-ajan mekanizmasına özgü."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_powershell-commandline-filtresi-kendi-kabugunu-yakalar.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "IX'in kendi watchdog_daemon.sh süreç öldürme mekanizmasına özgü; aXet'te daemon/watchdog yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_push-ara-kopyasi-bayatlar-readback-bunu-goremez.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Gateway'in izin-sınıflandırıcısından kaçınmak için scratch-kopya deseni; aXet CLI'de böyle bir ara-kopya mekanizması olduğu DOĞRULANAMADI, muhtemelen yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sendmessage-gorevi-sessizce-islenmemis-olabilir.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "SendMessage mekanizmasına özgü; aXet'te yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_spawn-brifinde-sablonun-kanonik-basliklarini-kullan.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Alt-ajan spawn brifi lint'i (watchdog_launch.py); aXet'te subagent/spawn yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_standing-ajani-bos-bekletme-tek-tam-brif.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Standing alt-ajan bekleme süresi ölçümü; aXet'te subagent yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tarayici-araci-secimi-playwright-vs-chrome-eklentisi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude-in-Chrome eklentisi + Playwright ikili seçim; aXet'te Claude-in-Chrome yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tek-gateway-route-spawn-etme.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Standing gateway ajanı + task owner ataması; aXet'te ayrı gateway ajanı yok (sapadt/gate.py tek yazma kapısı farklı mekanizma)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_tuketici-klonunda-core-degisikligi-prosedur.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DEV_CORE Issue-bildirim prosedürü; aXet'in kendi UPDATE-PROCEDURE.md + README akışı zaten var, farklı mekanizma."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_worktree-kapatmadan-once-ajanin-nihai-raporunu-al.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Git worktree yaşam döngüsü; aXet'te worktree yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yeni-gate-hook-uretimi-infra-expert.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "infra-expert rolü / yeni hook üretim protokolü; aXet'te hook/infra-expert yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yeni-mcp-tool-agent-allowlist-guncelle.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "MCP tool + ajan tools: allowlist mekanizması; aXet'te MCP/subagent yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yabanci-runtime-artefakti-once-tek-vaka-turu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "SAP CPI message mapping'e özgü; aXet skill kapsamında CPI/entegrasyon skill'i görülmedi (ABAP/RAP/UI5/OData odaklı)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_playwright-basic-auth-header-not-url.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "LİDER isterse gözden geçirsin: aXet'in ui-smoke script'i Playwright kullanıyor mu DOĞRULANAMADI; güvenli tarafta kalınarak alınmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_playwright-pdf-page-margin-ve-thead-tekrar-tuzagi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Aynı gerekçe: ui-smoke'un Playwright/PDF üretim mekanizması kullanıp kullanmadığı DOĞRULANAMADI."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_v2-function-import-buyuk-yuk-414-batch.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/checklists.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "A grubu ile uygulandı: checklists.md FE-46/FE-47 (:120-121) + freestyle-odata-v2.md §7.3 (:287)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_karar-dosyasi-kapandi-yazmak-icra-degildir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/gun-sonu/SKILL.md",
+        "core/00-temel.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "ZATEN VAR: skills/gun-sonu/SKILL.md:37-39 kapanan kalem kaynağıyla (commit/PR · karar cümlesi · katıldığı iş) arşive taşınır + core/00-temel.md:53 (%verify-done: çıktı var mı)."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "claude/memory-seed/*",
       "decision": "bekliyor",
       "targets": [],
@@ -1583,7 +3426,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi."
+      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi. 2026-09-25: B62 (MCP import denetimi / ix_doctor K1-K3 / session_start gerilik) tamamen DEV_CORE junction+MCP altyapısına özgü, taşınmadı. B63 (msag mesaj silme reçetesi) ÖZELLİK OLARAK ZATEN VAR — skills-sap/sap-cds-ddic/references/message-class.md §3.5-3.7'de daha ayrıntılı belgeli (delete_gate, TOCTOU, TAB/LF/CR); fixture'ın kendisi (sahte-SAP-sunucu test korpusu) DEV_CORE CLI test altyapısına özgü."
     },
     {
       "source": "DEV_CORE",
@@ -1662,11 +3505,13 @@
         "skills-sap/sap-cds-ddic/references/cds.md",
         "skills-sap/sap-dev/references/coding-patterns.md",
         "skills-sap/sap-classic-abap/references/",
-        "core/sap/00-sap.md"
+        "core/sap/00-sap.md",
+        "memory/feedback_olcum-onkosullu-risk-notu.md",
+        "memory/feedback_yesil-sinyal-kapsamini-sor.md"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel)."
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok)."
     },
     {
       "source": "DEV_CORE",
@@ -1841,11 +3686,12 @@
       "pattern": "playbook/checklists/bug-checklist-frontend.md",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/references/checklists.md"
+        "skills-sap/sap-ui5-fiori/references/checklists.md",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Olusturma 6 faz + FE-01..43; Otomatik sutunu script adi ya da yok."
+      "note": "Oluşturma 6 faz + FE-01..47; Otomatik sütunu script adı ya da yok. 2026-09-25: kaynak FE-45/46/47 aXet'te farklı numarayla zaten vardı (FE-44/FE-43/FE-45). Kaynak FE-42 (büyük yük → HTTP 414) ve FE-43 (ikinci modelde metadataUrlParams) → FE-46/FE-47 (:120-121) + freestyle-odata-v2.md §7.3 (:287)."
     },
     {
       "source": "DEV_CORE",
@@ -1857,6 +3703,18 @@
       "party": 4,
       "status": "tamam",
       "note": "Olusturma 6 faz + FE-01..43; Otomatik sutunu script adi ya da yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/checklists/bug-checklist-backend.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/checklist-abap.md",
+        "skills-sap/sap-cds-ddic/references/table-types.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164)."
     },
     {
       "source": "DEV_CORE",
@@ -1999,11 +3857,12 @@
       "pattern": "playbook/adt-classes.md",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-classic-abap/references/classes.md"
+        "skills-sap/sap-classic-abap/references/classes.md",
+        "skills-sap/sap-adt-foundation/references/tool-catalog.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Python REST sablonlari alinmadi; ccau/ccimp push araci yok."
+      "note": "Python REST şablonları alınmadı; ccau/ccimp push aracı yok. 2026-09-25: run_pretty_printer düzeltmesi (kaynağı değiştirmez) zaten vardı (classes.md §7); ATC 'Incorrect Pretty Print state' mekanizması + kapatma reçetesi classes.md §7.1 (:133); biçimleme alt komutu adt_pretty_print (tool-catalog.md :248, iş listesi Z128)."
     },
     {
       "source": "DEV_CORE",
@@ -2189,6 +4048,26 @@
       "party": null,
       "status": "-",
       "note": "DEV_CORE playbook indeksi; aXet'te skill description'lari."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-cekirdek-guncelleme.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "aXet'te ZATEN VAR ve DAHA GELİŞMİŞ: scripts/guncelle.py (%guncelle) + scripts/guncelle_proje.py (%guncelle-proje). DEV_CORE howto'sunun 9 manuel adımı (durum ölç, pull, team_setup, overlay-onaylı, tohum doğrula, makine-lokal yüzeyler, validator, oturum kapat-aç, ölç) yerine tek motor: otomatik vaka tespiti (V0-V7), 3-yollu git merge-file birleştirme, onay sözleşmesi (Q1: her proje ayrı onaylanır), çakışma eşiği (K6a). Genel disiplin dersleri (kirli ağaçta pull etme, --force yok, junction'a özyinelemeli silme yok) zaten guncelle.py'nin kendi Dur/GECERLI_KARARLAR/K4 kurallarında karşılanıyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-cekirdek-bulgu-bildirimi.md",
+      "decision": "uyarla",
+      "targets": [
+        "maintenance/howto-cekirdek-bulgu-bildirimi.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "aXet bakımcısının kaynak çekirdekte gördüğü kusuru bildirme akışı: kusurun yerini ayır, kontrol grubuyla ölç, kanıt formatında taslak, sızıntı kontrolü, kullanıcı onayı, iş listesinde takip (iş listesi Z131)."
     },
     {
       "source": "DEV_CORE",
@@ -2917,7 +4796,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Hook yerine cekirdek §0: ilk yanittan once session_brief.py (git durum capasi, template guncelligi, doctor, aktif paket, is listesi, devir notlari). Kullanici karari 2026-09-13."
+      "note": "Hook yerine cekirdek §0: ilk yanittan once session_brief.py. Kullanici karari 2026-09-13. 2026-09-25: _origin_kontrol()'un commit-sayısı ölçüm düzeltmesi (Q337, throttle sadece fetch'te) aXet'te ZATEN DAHA İYİ ÇÖZÜLMÜŞ — scripts/guncelle_proje.py::Klon.geride_mi() (satır ~144-189) katalog/yayın-kalemi bazlı ölçüm kullanıyor (Z29, 2026-09-21, 'commit sayısı ölçü DEĞİLDİR' dersi bağımsız olarak öğrenilmiş)."
     },
     {
       "source": "DEV_CORE",
@@ -3019,7 +4898,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Proje pre-commit: kimlik dosyasi, sir deseni, paket adlandirma, validators-local, SAP cevrimdisi reviewer. tests/test_precommit (16)."
+      "note": "Proje pre-commit: kimlik dosyasi, sir deseni, paket adlandirma, validators-local, SAP cevrimdisi reviewer. tests/test_precommit (16). 2026-09-25 farkı alınmadı (core_precommit.py): kaynağın public çekirdek sızıntı kapısında dosya-bazlı muafiyet listesi → satır-bazlı, gerekçesi zorunlu muafiyet + her koşumda KAPSAM satırı. aXet eşdeğeri maintenance/yayin_hazirla.py iz taramasında dosya muafiyeti hiç yok (ikili uzantı dışında her metin satır satır; okunamayan BLOCKER) ve KAPSAM satırı basılıyor; 'muafiyet gerekçesinden geniş' dersi Z17'de (kapsam_dogrula) uygulandı + memory/feedback_muafiyet-gerekcesinden-genis-olmasin.md. Proje pre-commit'inde (project_precommit.py) muafiyet listesi yok."
     },
     {
       "source": "DEV_CORE",
@@ -3595,11 +5474,12 @@
       "pattern": "scripts/ix_doctor.py",
       "decision": "telafi",
       "targets": [
-        "scripts/doctor.py"
+        "scripts/doctor.py",
+        "tests/test_doctor.py"
       ],
       "party": 1,
       "status": "tamam",
-      "note": ""
+      "note": "2026-09-25: 1e PowerShell yürütme politikası × npm .ps1 shim kontrolü → doctor.py check_ps_politika (:1428, iş listesi Z129; testler tests/test_doctor.py). Önceki 'ders memory'de var' iddiası yanlıştı; dersin kendisi doctor kontrolüne gömüldü. repo_mode LITE (K3/K5a) alınmadı: aXet doctor'da repo modu yok."
     },
     {
       "source": "DEV_CORE",
@@ -3651,22 +5531,25 @@
       "targets": [
         "skills-sap/sap-odata-backend/references/backend-coding.md",
         "skills-sap/sap-odata-backend/references/segw-service.md",
-        "skills-sap/sap-odata-backend/references/dpc-crud.md"
+        "skills-sap/sap-odata-backend/references/dpc-crud.md",
+        "skills-sap/sap-cds-ddic/references/table-types.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "FLP/PFCG/UI5 kismi parti 4; rol metni alinmadi."
+      "note": "FLP/PFCG/UI5 kısmı parti 4; rol metni alınmadı. 2026-09-25: 'BAPI sarmalayıcı — TABLES aktüeli yazılabilir olmalı' (BE-71) table-types.md §5.4'e yazıldı (BE-69/BE-72 ile aynı TABLES ailesi)."
     },
     {
       "source": "DEV_CORE",
       "pattern": "standards/03-coding-ui-fiori.md",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/references/"
+        "skills-sap/sap-ui5-fiori/references/",
+        "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
+        "skills-sap/sap-ui5-fiori/references/checklists.md"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Musteri ozel §12.3/§12.4 alinmadi. Kaynaktaki celiskiler referanslarda taviriyla yazili."
+      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Müşteri özel §12.3/§12.4 alınmadı. Kaynaktaki çelişkiler referanslarda tavrıyla yazılı. 2026-09-25: §2.5 bootstrap zaten vardı (app-skeleton.md §7 :136); §18.5a (büyük yük → HTTP 414, ikinci model, $batch) → freestyle-odata-v2.md §7.3 (:287) + checklists.md FE-46/FE-47."
     },
     {
       "source": "DEV_CORE",
@@ -3766,6 +5649,91 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "tests/fixtures/agent_stall_watch/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Genel 'tests/fixtures/*' kuralı (uyarla/kismi) bu vakada YANLIŞ karar verirdi: kaynağı scripts/agent_stall_watch.py zaten alinmaz (subagent mekanizması aXet'te yok). Özel kural — genel desenden ÖNCE dener."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/genericize_muafiyet_satir_bazli/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynağı scripts/genericize_common.py zaten alinmaz (IX public-core sızıntı altyapısı). Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/mcp_import_denetimi/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "MCP aXet'te hiç yok (CLI script'leri kullanılıyor). Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/tohum_terfi_gorunurlugu/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynağı scripts/seed_memory.py --terfi-adaylari zaten alinmaz (tohum/terfi ayrımı aXet memory modelinde yok). Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/z_obje_desen_kapsami/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynağı genericize_common.py Z_OBJ_PAT (public-core kimlik sızıntısı kapısı) zaten alinmaz. Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/msag_mesaj_silme/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/message-class.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Özellik zaten var: message-class.md §3.5 (:96) PUT gövdeden çıkarmak silmez, §3.7 (:118) <mc:deletedmessages> + korumalar. Fixture'ın kendisi (sahte SAP sunucu korpusu) kaynağın CLI test altyapısına özgü, alınmadı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/session_start_origin_geriligi/*",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "DERS ZATEN VAR ve DAHA İYİ ÇÖZÜLMÜŞ: scripts/guncelle_proje.py::Klon.geride_mi() katalog/yayın-kalemi bazlı ölçüm kullanıyor (commit-sayısı ölçü DEĞİLDİR dersi Z29'da bağımsız öğrenilmiş). session_start.py hook'u aXet'te yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/ix_doctor_repo_mode/*",
+      "party": 9,
+      "decision": "alinmaz",
+      "targets": [],
+      "status": "-",
+      "note": "Kaynağın ix_doctor repo_mode LITE (K3 SKIP) korpusu; aXet doctor'da repo modu yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/ix_doctor_ps_politika/*",
+      "party": 9,
+      "decision": "uyarla",
+      "targets": [
+        "tests/test_doctor.py"
+      ],
+      "status": "tamam",
+      "note": "Korpus alınmadı; PowerShell yürütme politikası kontrolünün testleri tests/test_doctor.py'de (check_ps_politika, Z129)."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "tests/fixtures/*",
       "decision": "uyarla",
       "targets": [
@@ -3784,7 +5752,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Stdlib unittest kosucusu (87 test); fixture JSON bicimi alinmadi."
+      "note": "Stdlib unittest kosucusu (87 test); fixture JSON bicimi alinmadi. 2026-09-25 farkı alınmadı (run_fixture_tests.py): yalnız yeni fixture korpuslarının kayıt/harita satırları (MCP import, ix_doctor repo_mode/PS politikası, session_start gerilik, msag silme, tohum terfi, Z-desen, satır-bazlı muafiyet, ajan takılma bekçisi); korpuslar tests/fixtures/<ad>/* kurallarında tek tek kararlı. PS politikası karşılığı tests/test_doctor.py (Z129)."
     },
     {
       "source": "PROVA",
@@ -3866,6 +5834,33 @@
     },
     {
       "source": "PROVA",
+      "pattern": "governance/archive/*",
+      "decision": "telafi",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "PROVA'ya özel iş kayıtları (klasör taşıma, core-guncelle ilk deneme, kurulum-araçları geçişi, yeni-makine geçişi çapaları). aXet'e dönük açık iş/bulgu taranmadı bulunamadı (feedback_makine-tasinmasi-yol-kaymasi.md zaten MEMORY.md'de mevcut). Genel kural (governance/* -> telafi, party 3) zaten aynı kararı veriyordu; bu satır yalnız TEYİTTİR, yeni bilgi eklemez."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "governance/bakimci-iletim-metni.md",
+      "decision": "telafi",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "PROVA'nın kendi lider<->kullanıcı iletişim notu. aXet'e dönük açık iş/bulgu YOK. Genel kural teyidi."
+    },
+    {
+      "source": "PROVA",
+      "pattern": "governance/prova-bulgulari.md",
+      "decision": "telafi",
+      "targets": [],
+      "party": 9,
+      "status": "tamam",
+      "note": "İçerik okundu (2026-09-25): kurulum provası raporu (A1-A18, B1-B10, E1-E24) tamamen kaynak çekirdeğin kendi kurulum/belge/araç maddeleri; aXet'e dönük açık madde yok. Benzer sınıflar aXet'te ayrıca karşılanmış (çekirdek gerilik ölçümü → scripts/guncelle_proje.py Klon.geride_mi; repo_mode → aXet doctor'da repo modu yok)."
+    },
+    {
+      "source": "PROVA",
       "pattern": "governance/*",
       "decision": "telafi",
       "targets": [
@@ -3942,6 +5937,24 @@
       "party": 3,
       "status": "kismi",
       "note": ".gitignore (.conn_adt git'e kapali, doctor FAIL kontrolu) + .gitattributes alindi; proje README sablonu uretilmez; CLAUDE.md/.claude/.mcp.json/hook_shim alinmaz; pre-commit/validators-local parti 7."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/commands/core-guncelle.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "aXet'te ZATEN VAR ve DAHA GELİŞMİŞ: scripts/guncelle.py + %guncelle skill (guncelle/kartlar/sinif-guncelleme-motoru.md) — otomatik 3-yollu birleştirme, vaka sınıflandırması (V0-V7), onay akışı. DEV_CORE'un manuel 'git pull + team_setup + overlay-onaylı' adım listesi karşılığı değil, aşımı."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/user-settings.template.json",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Claude Code kullanıcı-düzeyi global ~/.claude/settings.json kavramı aXet'te yok. config/permissions.json zaten TEK izin katmanı (bkz. claude/settings.template.json kuralı); ayrı bir 'makine-lokal kullanıcı ayarları' şablonuna gerek yok. D32 (SAP-yazma/davranış-yüzeyi araçları izin listesine girmez) zaten permissions.json'da karşılanıyor."
     }
   ],
   "capabilities": [

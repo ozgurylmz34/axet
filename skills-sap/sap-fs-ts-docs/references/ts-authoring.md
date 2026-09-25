@@ -108,6 +108,13 @@ Profil sınırı seviyeyi kısıtlar: `ecc`'de 2. seviye yok; `s4_public`/`btp_a
   (ya da kullanıcının adlandırdığı bir Z DTEL).
 - **(a) Alan tablosu:** teknik ad · ekran etiketi · tip/uzunluk · zorunlu · varsayılan · değer yardımı · düzenlenebilirlik (oluştur/değiştir ayrı) · doğrulama.
   CDS'ten türetilebiliyorsa `gen_field_table.py` ile üretilir, elle yazılmaz.
+- **Değer yardımı (F4) mekanizması TS'te alan alan kurgulanır, build'e bırakılmaz (ekip dersi).** (a) tablosundaki "değer
+  yardımı" hücresi yalnız var/yok değil: mekanizma (DTEL'e bağlı ya da yapı bileşenine `with value help` ile bağlanan DDIC
+  arama yardımı · FM/açılır pencere · POV modülü · ALV alan kataloğu · domain sabit değerleri) × veri kaynağı × filtre/parametre
+  eşlemesi. Mekanizma alan tipine ve veri kaynağına bağlıdır; sonradan seçilirse ekran alanı tipi ve parametre eşlemesi de
+  değişmek zorunda kalır (vakada build'e ertelenen F4 tasarımı bir günlük düzeltme turuna döndü). Her F4 için ortak mı
+  pakete özel mi olacağını kullanıcıya sor. Klasik ekranda mekanizmalar ve sınırları (Z arama yardımı bu araç setiyle
+  yaratılamaz): `%sap-classic-abap` `dynpro-dialog-fields.md` §2.
 - **(b) Buton tablosu:** buton · etiket · olay · etkin olma koşulu · çağırdığı servis (API/BAPI/OData fonksiyonu).
 - **(c) Grid tablosu:** kolon · etiket · tip · düzenlenebilir · sıralama/filtre · hesaplama/biçim. Liste ekranında ALV paritesi (SAP çekirdeği) sağlanır.
 - **(d) Açıklama kolonu kararı (zorunlu):** kod olarak listelenen her alan (müşteri, sipariş tipi, malzeme, birim, üretim yeri,

@@ -40,7 +40,7 @@ python <TEMPLATE>/skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py <tool> --
 - Çıkış kodu: `0` başarı · `2` guard/kapı reddi (SAP'ye gidilmedi) · `1` araç/bağlantı hatası · `3` kullanım hatası.
 - Kaynak kodu gibi uzun ya da tırnaklı argümanlarda `--args-json` yerine `--args-file <json dosyası>` kullan
   (PowerShell gömülü çift tırnak dersi: ekip hafızası "PowerShell BOM ve tırnak"). Geçici JSON dosyası `.tmp/`'ye.
-- Araç kataloğu (37 giriş, argümanlar, uyarılar): `references/tool-catalog.md`.
+- Araç kataloğu (41 giriş, argümanlar, uyarılar): `references/tool-catalog.md`.
 - Yazma sınıfı yanıtlarında engellemeyen `checklist_hint` (bu iş türünün kontrol listesi) ve hatada `known_errors_hint` (bilinen hata maddesi)
   gelebilir → önce onları oku; karar ve çıkış kodu değişmez.
 
@@ -191,7 +191,7 @@ kullanıcıya aktar, ne gerektiğini söyle.
 ## Referanslar
 | Dosya | İçerik |
 |---|---|
-| `references/tool-catalog.md` | 37 araç: sınıf, amaç, argüman, uyarı |
+| `references/tool-catalog.md` | 41 araç: sınıf, amaç, argüman, uyarı |
 | `references/profiles.md` | SAP profil yetenek matrisi (rehber, canlı test gerekir) + CLI profil etiketleri |
 | `references/foundation-ops.md` | Okuma/indirme, yaratma, push, aktivasyon, include+program akışı, FM/CDS/class protokol notları, kilit, transport, paket, arama |
 | `references/foundation-query.md` | SQL ve tablo okuma, where-used/blast-radius (`CROSS`), ATC, OData `$metadata` doğrulama |

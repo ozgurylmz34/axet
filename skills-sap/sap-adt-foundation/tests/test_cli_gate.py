@@ -71,9 +71,9 @@ class Kapi(unittest.TestCase):
         tools = {t["name"]: t for t in data["result"]["tools"]}
         okuma = sorted(n for n, t in tools.items() if t["class"] == "read")
         yazma = sorted(n for n, t in tools.items() if t["class"] == "write")
-        H.kaydet("1a --list okuma sayısı", "24", str(len(okuma)), len(okuma) == 24)
-        self.assertEqual(len(okuma), 24, okuma)
-        for ad in ("adt_revisions", "adt_system_info", "adt_object_structure", "sap_doctor"):
+        H.kaydet("1a --list okuma sayısı", "25", str(len(okuma)), len(okuma) == 25)
+        self.assertEqual(len(okuma), 25, okuma)  # Z128: +adt_pretty_print
+        for ad in ("adt_revisions", "adt_system_info", "adt_object_structure", "sap_doctor", "adt_pretty_print"):
             self.assertEqual((tools[ad]["class"], tools[ad]["available_on"]), ("read", ["all"]), ad)
         sd = tools["adt_set_description"]
         ok_sd = (sd["available_on"] == ["s4_private"] and sd.get("requires_transport") is True

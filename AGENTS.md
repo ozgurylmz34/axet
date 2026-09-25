@@ -20,7 +20,7 @@ PROJECT-ID: axet-template
 - Metin Türkçe; skill, dosya ve frontmatter adları İngilizce.
 - aXet davranışına dair her iddia `_lab/`'da canlı ölçülür (rastgele işaret + negatif kontrol). Upstream Crush belgesi kanıt değildir; sonuç bakımcı notlarındaki ölçüm kaydına yazılır.
 - `axet-code run` betikten çağrılırken stdin kapatılır (bash: `</dev/null`, PowerShell: `$null | axet-code run …`); aksi hâlde askıda kalır.
-- Çekirdekteki kimlik satırlarından (CORE-ID, SAP-CORE-ID) biri değişirse sürümü artır ve README'nin değişiklik notuna yaz.
+- Çekirdekteki kimlik satırlarından (CORE-ID, SAP-CORE-ID) biri değişirse sürümü artır ve sıradaki yayının kataloğunda (`guncelle/yayinlar.json`) beyan et; README değişiklik notu yeni kayıt almaz.
 - Kimlik bilgisi, müşteri verisi, kişisel ad/e-posta repoya girmez.
 - Yapı değişince README ve bu dosya aynı değişiklikte güncellenir.
 - Yeni bir gate / validator / deny kuralı eklemeden önce beş şartın hepsi aranır: hata gerçekten yaşandı · sonucu geri alınamaz ya da sessiz · başka bir katman zaten yakalamıyor · önce doküman/skill hatırlatması denendi ve yetmedi · kullanıcıya gerekçesiyle anlatılıp açık onay alındı.

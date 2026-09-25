@@ -59,9 +59,9 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 1. Template script/şablon testleri: `python tests\run_tests.py` — 0 failure olmadan merge edilmez.
 2. `python scripts\doctor.py` (frontmatter, çekirdek boyutu, damga/kanonik bütünlük, davranış yüzeyi) — 0 FAIL.
 3. Değişen skill'in testleri (ör. `python skills-sap\sap-adt-foundation\tests\run_tests.py`, `skills-sap\sap-fs-ts-docs\tests\run_tests.py`).
-3. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
-4. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
-5. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
+4. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
+5. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
+6. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
    etkilediği kuralı/script'i güncelle.
 
 ## 6. Haritayı kapat
@@ -70,7 +70,10 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
    ```powershell
    python maintenance\sync_check.py --source DEV_CORE=<...> --source PROVA=<...> --update-lock
    ```
-3. README "Değişiklik notu"na sürüm + "IX <kısa commit> ile senkron" + gerekiyorsa "install.py tekrar çalıştırılmalı".
+3. Senkron notu **yayın kataloğuna** gider: aktarılan içerik sıradaki yayının `guncelle/yayinlar.json` kalemlerine
+   (her dosya en az bir kalemde; `neden` kullanıcının diliyle, gerekiyorsa "install.py tekrar çalıştırılmalı").
+   Kaynak repo adı ve commit YAZILMAZ (katalog public yayına girer); kaynak konumu yalnız `sync-lock.json`'da durur.
+   README "Değişiklik notu" yeni kayıt almaz — `CHANGELOG.md` katalogdan üretilir.
 4. Aktarım, `sync-rules.json` ve `sync-lock.json` **aynı commit/PR'da** gider; ayrı giderse harita içerikten kopar.
 
 ## 7. Araç radarı (elle, ~3 haftada bir)

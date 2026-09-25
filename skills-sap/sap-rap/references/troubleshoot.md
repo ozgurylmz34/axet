@@ -68,6 +68,8 @@
 | `403 /IWFND/MED/170 service 'sap' not found` | SM59 Path Prefix dolu | Prefix boş, kod tam yol | behavior-impl §11 |
 | `Client connection to http://…:443xx broken` / sonra 401 | SSL kapalı / logon kimliksiz | Kullanıcı SM59'u düzeltir | behavior-impl §11 |
 | Liste yavaş | Eager join, gereksiz expose | Association (join-on-demand); expose'u daralt | layering §3 |
+| "Geliştiricide (debugger'la) çalışıyor, kullanıcıda boş/çalışmıyor" | Çoğunlukla debugger değil KULLANICI/yetki farkı: CDS DCL reddi sessiz 0 satır üretir, hata vermez (ekip dersi: iki düzeltme turu "Heisenbug" varsayımıyla yandı) | Önce kimin koştuğunu belgedeki kalıcı kullanıcı izinden ölç; kontrol grubunu AYNI kullanıcıyla kur (aynı kişi debugger'lı ve debugger'sız); breakpoint yerine girişimsiz gözlem (ST05, WHERE metnini oku) | `%sap-cds-ddic` cds.md CDS-DCL-01/03 |
+| Runtime SQL hatası (dump) elle SQL'de literal filtreyle tekrarlanmıyor | HANA sabit filtreyi view'ın içine iter (pushdown), bozuk satırı hiç değerlendirmez; `READ ENTITIES … BY \_assoc` iç tablo JOIN'i kurar → pushdown olmaz, tüm view değerlendirilir | Filtreyi runtime'a benzet (alt sorgu / iç tablo JOIN'i) ya da filtresiz koş; literal filtreyle alınan başarıyı "kayıt sağlam" diye yazma; bozuk satırı kapsayan ve dışlayan iki sorguyu birlikte koş (ekip dersi) | §5 · `%sap-adt-foundation` foundation-query §1 |
 
 ## 3. Servis ve `$metadata`
 

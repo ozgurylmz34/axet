@@ -33,6 +33,7 @@
 | Parse hatası (`CX_SXML_PARSE_ERROR`) sayı/tarih alanında | OData tipi yok | `freestyle-odata-v2.md` §5.1 |
 | Miktar "14.000 ADT" | Formatter yok | `freestyle-odata-v2.md` §5.5 |
 | Detay paneli seçim yapılmadan açık / seçince dolmuyor | `setData` eksik şekil | `freestyle-odata-v2.md` §2.2 |
+| Toplu (script/regex) düzenlemeden sonra view/fragment render'da bozuk, git diff küçük görünüyor | "Etiket sonuna kadar" deseni binding'deki `>`'de (`{model>/yol}`) erken kapandı; yeni attribute değerin ortasına yazıldı | `runtime-verification.md` §2 |
 
 ## Save / OData
 
@@ -101,3 +102,4 @@
   fallback) ve playbook semptom tabloları tek indekste birleştirildi; kaynaktaki "syntax check yanlış hata raporu" maddesi
   ADT konusudur, alınmadı.
 - Her satır bu skill'in referanslarına işaret eder; dış bağlantı yok.
+- 2026-09-25 eşitleme (ekip dersi): Render tablosuna toplu XML düzenleme satırı eklendi; kaynaktaki dosya/ekran adları alınmadı.

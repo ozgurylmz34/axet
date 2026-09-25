@@ -7,6 +7,7 @@ import io
 import json
 import os
 import subprocess
+import unittest
 from pathlib import Path
 from unittest import mock
 
@@ -1749,3 +1750,137 @@ class PaketDoctorTest(GeciciTest):
         self.assertEqual(r.returncode, 0, self.cikti(r))
         saglik = r.stdout.split("SAĞLIK:", 1)[1]
         self.assertIn("requests", saglik)
+
+
+class PsPolitikaTest(GeciciTest):
+    """PowerShell yürütme politikası × npm `.ps1` shim'i. Ölçüm (kayıt defteri okuyucusu + `which`) ENJEKTE edilir:
+    gerçek PowerShell'e ve bu makinenin politikasına bağlı değil, Linux CI'da da koşar. Kontrol grubu: RemoteSigned
+    → uyarı yok · Restricted/AllSigned → uyarı · okuma hatası → ÖLÇÜLEMEDİ (uyarı da temiz de değil)."""
+
+    ETIKET = "PowerShell yürütme politikası"
+
+    def setUp(self) -> None:
+        super().setUp()
+        doctor.results.clear()
+        self.env["LOCALAPPDATA"] = str(self.tmp / "_lad")  # uçtan uca koşu gerçek skill manifest'ini okumasın
+        # Sahte PATH klasörü: npm.cmd + npm.ps1 (shim çifti) · mmdc.cmd (shim'siz) — gerçek dosyalar, uzantıdan bağımsız.
+        self.bin = self.tmp / "_npmbin"
+        for ad in ("npm.cmd", "npm.ps1", "mmdc.cmd"):
+            self.yaz(self.bin / ad, "@echo off\n")
+        self.which = lambda ad: str(self.bin / f"{ad}.cmd") if (self.bin / f"{ad}.cmd").is_file() else None
+
+    def tearDown(self) -> None:
+        doctor.results.clear()
+        super().tearDown()
+
+    @staticmethod
+    def okuyucu(kayit: dict):
+        """kayit: {(kok, yol_kisa, ad): değer}; yol_kisa 'GPO' ya da 'SHELL'."""
+        kisa = {doctor.PS_GPO: "GPO", doctor.PS_SHELLID: "SHELL"}
+        return lambda kok, yol, ad: kayit.get((kok, kisa[yol], ad))
+
+    def _satir(self, kayit=None, windows=True, okuyucu=None, which=None):
+        doctor.results.clear()
+        doctor.check_ps_politika(windows=windows, okuyucu=okuyucu or self.okuyucu(kayit or {}),
+                                 which=which or self.which)
+        satirlar = [(s, m) for s, m in doctor.results if self.ETIKET in m]
+        self.assertEqual(1, len(satirlar), doctor.results)  # sessiz atlama yok, çift satır yok
+        return satirlar[0]
+
+    def test_restricted_varsayilan_shim_varsa_warn_ve_oneri(self):
+        durum, mesaj = self._satir({})  # hiçbir kapsamda kayıt yok → Windows istemci varsayılanı Restricted
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("Restricted", mesaj)
+        self.assertIn("npm", mesaj)
+        bulgu = mesaj.split("(KAPSAM", 1)[0]  # KAPSAM tüm aday adlarını listeler; bloklanan adlar ondan önce
+        self.assertIn("bulunan npm PowerShell", bulgu)
+        self.assertNotIn("mmdc", bulgu)  # .ps1 shim'i olmayan CLI bloklanmaz, bulguda adı geçmez
+        self.assertIn("Set-ExecutionPolicy -Scope CurrentUser RemoteSigned", mesaj)
+        self.assertIn("KARAR SENİN", mesaj)
+        self.assertIn("KAPSAM", mesaj)
+
+    def test_kontrol_grubu_remotesigned_uyari_yok(self):
+        durum, mesaj = self._satir({("HKCU", "SHELL", "ExecutionPolicy"): "RemoteSigned"})
+        self.assertEqual("PASS", durum, mesaj)
+        self.assertIn("RemoteSigned", mesaj)
+        self.assertIn("CurrentUser", mesaj)
+        self.assertNotIn("Set-ExecutionPolicy", mesaj)
+
+    def test_allsigned_de_engelleyen(self):
+        durum, mesaj = self._satir({("HKLM", "SHELL", "ExecutionPolicy"): "AllSigned"})
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("AllSigned", mesaj)
+        self.assertIn("LocalMachine", mesaj)
+
+    def test_oncelik_currentuser_localmachine_i_ezer(self):
+        durum, mesaj = self._satir({("HKCU", "SHELL", "ExecutionPolicy"): "RemoteSigned",
+                                    ("HKLM", "SHELL", "ExecutionPolicy"): "Restricted"})
+        self.assertEqual("PASS", durum, mesaj)
+        durum, mesaj = self._satir({("HKCU", "SHELL", "ExecutionPolicy"): "Undefined",
+                                    ("HKLM", "SHELL", "ExecutionPolicy"): "Restricted"})
+        self.assertEqual("WARN", durum, mesaj)  # Undefined tanımsız sayılır, sıra bir alta iner
+
+    def test_gpo_currentuser_i_ezer_ve_oneri_degisir(self):
+        durum, mesaj = self._satir({("HKLM", "GPO", "ExecutionPolicy"): "Restricted",
+                                    ("HKCU", "SHELL", "ExecutionPolicy"): "RemoteSigned"})
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("GPO/MachinePolicy", mesaj)
+        self.assertIn("EZEMEZ", mesaj)  # Set-ExecutionPolicy GPO'yu aşamaz → çözüm olarak sunulmaz
+        self.assertNotIn("KARAR SENİN", mesaj)
+        durum, mesaj = self._satir({("HKCU", "GPO", "ExecutionPolicy"): "RemoteSigned",
+                                    ("HKCU", "SHELL", "ExecutionPolicy"): "Restricted"})
+        self.assertEqual("PASS", durum, mesaj)
+        self.assertIn("GPO/UserPolicy", mesaj)
+
+    def test_gpo_enablescripts_0_restricted(self):
+        durum, mesaj = self._satir({("HKLM", "GPO", "EnableScripts"): 0,
+                                    ("HKCU", "SHELL", "ExecutionPolicy"): "RemoteSigned"})
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("EnableScripts=0", mesaj)
+
+    def test_engelleyen_ama_shim_yok_pass(self):
+        durum, mesaj = self._satir({}, which=lambda ad: None)
+        self.assertEqual("PASS", durum, mesaj)
+        self.assertIn("etkisi yok", mesaj)
+
+    def test_olcum_hatasi_olculemedi_uyari_degil_temiz_degil(self):
+        def bozuk(kok, yol, ad):
+            raise PermissionError(13, "erişim reddedildi")
+        durum, mesaj = self._satir(okuyucu=bozuk)
+        self.assertEqual("INFO", durum, mesaj)
+        self.assertIn("ÖLÇÜLEMEDİ", mesaj)
+        self.assertIn("PermissionError", mesaj)
+        self.assertNotIn("BLOKLANIR", mesaj)
+
+    def test_windows_disi_uygulanmaz_sessiz_degil(self):
+        def patla(*_a):
+            raise AssertionError("Windows dışında ölçüm çağrılmamalı")
+        durum, mesaj = self._satir(windows=False, okuyucu=patla, which=patla)
+        self.assertEqual("INFO", durum, mesaj)
+        self.assertIn("uygulanmaz", mesaj)
+
+    def test_alt_surec_acilmaz(self):
+        """Süreç kapsamını devralan `powershell Get-ExecutionPolicy` çağrısı yanlış PASS üretir → hiç alt süreç yok."""
+        with mock.patch.object(doctor.subprocess, "run", side_effect=AssertionError("alt süreç açıldı")), \
+                mock.patch.object(doctor.subprocess, "Popen", side_effect=AssertionError("alt süreç açıldı")):
+            durum, _ = self._satir({})
+        self.assertEqual("WARN", durum)
+
+    def test_shim_tespiti_yalniz_ps1_kardesi_olan(self):
+        self.assertEqual(["npm"], doctor.ps_shimleri(self.which))
+
+    @unittest.skipUnless(os.name == "nt", "kayıt defteri yalnız Windows'ta")
+    def test_gercek_kayit_okuyucu_calisir(self):
+        """Gerçek okuyucu bu makinede hata vermeden bir politika döndürür (değeri makineye bağlı, sınanmaz)."""
+        pol, kaynak = doctor.ps_etkin_politika()
+        self.assertIn(pol.lower(), ("restricted", "allsigned", "remotesigned", "unrestricted", "bypass", "default"),
+                      (pol, kaynak))
+
+    def test_uctan_uca_doctor_satiri_ve_kapsam(self):
+        """Kablolama: doctor.main satırı basar (kod ≠ kablolama) ve KAPSAM alt satırı bu kontrolü anar."""
+        r = self.calistir("doctor.py", cwd=self.tmp)
+        satirlar = [s for s in r.stdout.splitlines() if self.ETIKET in s and s.startswith("[")]
+        self.assertEqual(1, len(satirlar), r.stdout)
+        if os.name != "nt":
+            self.assertTrue(satirlar[0].startswith("[INFO]") and "uygulanmaz" in satirlar[0], satirlar[0])
+        self.assertIn("PowerShell yürütme politikası", r.stdout.split("\nKAPSAM", 1)[1])
