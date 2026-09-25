@@ -13,7 +13,7 @@
 
 ## 0. PRE-FLIGHT — kod yazmadan karara bağla
 
-1. **İskelet** `app-skeleton.md` §13 listesiyle kuruldu (sabit UI5 sürümü, `language=tr`, manifest modelleri
+1. **İskelet** `app-skeleton.md` §13 listesiyle kuruldu (bootstrap backend'in kendi UI5'inden — `/sap/public/bc/ui5_ui5/resources/sap-ui-core.js`, `language=tr`, manifest modelleri
    `i18n` + `""` (TwoWay, `useBatch:false`, Inline) + `ui` JSON `{busy, filter:{}}`, kanonik host).
 2. **Düzenlenebilir alt grid var mı?** (composition kalemleri ekrandan eklenip/silinip/düzenlenecek mi?) → **varsa en
    baştan JSON edit-buffer** (§1.3). V2 nav-binding + `createEntry` ile düzenlenebilir grid **denenmez** — kaynak
@@ -191,7 +191,7 @@ kullanılır (§5.3).
 | Canlı Edm tipi | Gönderilen |
 |---|---|
 | `Edm.Boolean` | `true`/`false` (`'X'`/`''` değil → `Failed to read property '<X>' at offset N`) |
-| `Edm.DateTime` / `DateTimeOffset` | `Date` nesnesi. `DatePicker value="{…}" valueFormat="yyyy-MM-dd"` modeli **string** tutar → payload'da `new Date(Date.UTC(y, m - 1, d))` (saat dilimi kaymasına karşı UTC parçaları) ya da `DatePicker dateValue="{…}"` |
+| `Edm.DateTime` / `DateTimeOffset` | `Date` nesnesi. `DatePicker value="{…}" valueFormat="yyyy-MM-dd"` modeli **string** tutar → payload'da `new Date(Date.UTC(y, m - 1, d))` (saat dilimi kaymasına karşı UTC parçaları). `DatePicker dateValue="{…}"` **yerel** gece yarısı verir: tarih-yalnız alanda (`sap:display-format="Date"`) payload'dan önce seçilen takvim gününün UTC gece yarısına çevrilir (`checklists.md` FE-44) |
 | `Edm.Decimal` | model değeri ne ise; decimal'in backend'de string'e çevrilmesi `%sap-odata-backend` → `references/serialization.md` §1 |
 | boş tarih | `null` |
 

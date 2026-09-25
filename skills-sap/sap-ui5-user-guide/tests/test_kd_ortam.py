@@ -18,13 +18,61 @@ WIN = os.name == "nt"
 HEDEF = {"browser": {"browserName": "chromium", "launchOptions": {"channel": "chrome"}}}
 
 
-def tam_uygulama(kok, start_mock="fiori run --config ./ui5-mock.yaml --open test/flpSandbox.html"):
+BOOTSTRAP = "/sap/public/bc/ui5_ui5/resources/sap-ui-core.js"
+IYI_MOCK_YAML = """specVersion: "4.0"
+metadata:
+  name: zbc000.demo
+type: application
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ui5:
+          paths:
+            - path: /resources
+              url: https://ui5.sap.com
+            - path: /sap/public/bc/ui5_ui5/resources   # index.html bootstrap yolu
+              url: https://ui5.sap.com
+              pathReplace: /resources
+        # backend: bloğu YOK — mock SAP'ye bağlanmaz
+    - name: sap-fe-mockserver
+      beforeMiddleware: csp
+      configuration:
+        mountPath: /
+"""
+# Üreticinin (mockserver-config-writer) ui5.yaml'dan kopyaladığı biçim: backend bloğu var, bootstrap eşlemesi yok.
+URETICI_MOCK_YAML = IYI_MOCK_YAML.replace(
+    "            - path: /sap/public/bc/ui5_ui5/resources   # index.html bootstrap yolu\n"
+    "              url: https://ui5.sap.com\n              pathReplace: /resources\n"
+    "        # backend: bloğu YOK — mock SAP'ye bağlanmaz\n",
+    "        backend:\n          - path: /sap\n            url: https://example.invalid/\n")
+
+
+def yaz(yol, metin):
+    os.makedirs(os.path.dirname(yol), exist_ok=True)
+    with open(yol, "w", encoding="utf-8") as fh:
+        fh.write(metin)
+
+
+def index_html(src=BOOTSTRAP):
+    return ('<html><head><script\n  id="sap-ui-bootstrap"\n  src="%s"\n  data-sap-ui-theme="sap_horizon"></script>'
+            '</head></html>' % src)
+
+
+def tam_uygulama(kok, start_mock="fiori run --config ./ui5-mock.yaml --open test/flpSandbox.html",
+                 mock_yaml=IYI_MOCK_YAML, dev=None):
     """Tüm bileşenleri olan sahte UI5 uygulaması (paketler yalnız package.json iskeleti)."""
     yaz_json(os.path.join(kok, "package.json"), {
-        "name": "zbc000-demo", "devDependencies": {"@sap-ux/ui5-middleware-fe-mockserver": "2"},
+        "name": "zbc000-demo",
+        "devDependencies": dev if dev is not None else {"@sap-ux/ui5-middleware-fe-mockserver": "2",
+                                                        "@sap/ux-ui5-tooling": "1"},
         "scripts": {"start-mock": start_mock}})
     yaz_json(os.path.join(kok, "node_modules", "@playwright", "cli", "package.json"), {"version": "0.1.21"})
     yaz_json(os.path.join(kok, "node_modules", "playwright-core", "package.json"), {"version": "1.64.0"})
+    if mock_yaml is not None:
+        yaz(os.path.join(kok, "ui5-mock.yaml"), mock_yaml)
+    yaz(os.path.join(kok, "webapp", "index.html"), index_html())
     return kok
 
 
@@ -698,6 +746,109 @@ class KdOrtamSemaKaynakTest(unittest.TestCase):
             r'\} else \{\s*browser\.launchOptions\.chromiumSandbox = true;\s*\}'))
         # Başlatıcı: chromiumSandbox true değilse --no-sandbox eklenir (test runner farkının kaynağı).
         self.assertRegex(kaynak, r'if \(options\.chromiumSandbox !== true\)\s*chromeArguments\.push\("--no-sandbox"\);')
+
+
+class KdOrtamMockYamlTest(unittest.TestCase):
+    """start-mock yaml'ı: backend'siz · bootstrap eşli · middleware paketleri (Z115, ölçüm 2026-09-25)."""
+
+    def _check(self, app, t):
+        return run_py("kd_ortam.py", "check", "--proje", app, env=temiz_env(t))
+
+    def test_iyi_yaml_uc_satir_ok(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            r = self._check(app, t)
+        self.assertRegex(r.stdout, r"OK\s+mock yaml backend'siz\s+ui5-mock.yaml: `backend:` YOK")
+        self.assertRegex(r.stdout, r"OK\s+mock yaml bootstrap yolu\s+/sap/public/bc/ui5_ui5/resources → ui5 path")
+        self.assertRegex(r.stdout, r"OK\s+middleware paketi: fiori-tools-proxy\s+1")
+        self.assertIn("`backend:` satırı", r.stdout)  # KAPSAM beyanı yeni bakılanı söyler
+        self.assertNotIn("ui5-mock.yaml içeriği", r.stdout)  # eski "bakılmayan" maddesi kalkmalı
+
+    def test_uretici_yaml_backend_ve_eslemesiz_eksik_komut_yazar_dokunmaz(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"), mock_yaml=URETICI_MOCK_YAML)
+            once = agac_listesi(app)
+            r = self._check(app, t)
+            sonra = agac_listesi(app)
+        self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+        self.assertEqual(once, sonra, "check yaml'a dokundu")
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml backend'siz\s+ui5-mock.yaml satır \d+: `backend:` VAR")
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml bootstrap yolu\s+/sap/public/bc/ui5_ui5/resources için")
+        self.assertIn("`backend:` bloğunu kaldır", r.stdout)
+        self.assertIn("`- path: /sap/public/bc/ui5_ui5/resources`", r.stdout)
+
+    def test_yorumdaki_backend_sayilmaz(self):
+        """Belgedeki yaml'da `# backend: bloğu YOK` yorumu var — yanlış FAIL vermemeli."""
+        backend, _, _ = kd_ortam.yaml_tara("server:\n  x: 1\n  # backend: bloğu YOK\n    # backend:\n")
+        self.assertEqual([], backend)
+        backend, _, _ = kd_ortam.yaml_tara("server:\n  backend:\n    - path: /sap\n")
+        self.assertEqual([2], backend)
+
+    def test_path_yalniz_ui5_blogundan_ve_akis_listesi(self):
+        _, yollar, _ = kd_ortam.yaml_tara(
+            "c:\n  ui5:\n    path: [ /resources, \"/sap/public/bc/ui5_ui5/resources/\" ]\n    url: u\n"
+            "  backend:\n    - path: /sap\n")
+        self.assertEqual(["/resources", "/sap/public/bc/ui5_ui5/resources"], yollar, "backend path'i sayılmamalı")
+
+    def test_backend_path_bootstrap_eslemesi_sayilmaz(self):
+        """backend `path: /sap` bootstrap'ı önek olarak kapsar ama mock'ta SAP'ye gider → eşleme değildir."""
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"), mock_yaml=URETICI_MOCK_YAML)
+            satirlar, _ = kd_ortam.mock_yaml_denetle(app, kd_ortam.package_json_oku(app)[0])
+        self.assertIn(("mock yaml bootstrap yolu", False), [s[:2] for s in satirlar])
+
+    def test_yaml_yok_ve_config_bayraksiz_varsayilan(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"), mock_yaml=None)
+            r = self._check(app, t)
+            app2 = tam_uygulama(os.path.join(t, "app2"), start_mock="fiori run --open index.html")
+            r2 = self._check(app2, t)
+        self.assertEqual(2, r.returncode)
+        self.assertRegex(r.stdout, r"EKSİK\s+mock yaml\s+YOK: ui5-mock.yaml")
+        self.assertRegex(r2.stdout, r"EKSİK\s+mock yaml\s+YOK: ui5.yaml \(--config yok")
+
+    def test_config_bayrak_bicimleri(self):
+        for scr, beklenen in (('fiori run --config "./m k.yaml" --open x', "m k.yaml"),
+                              ("fiori run --config=ui5-mock.yaml", "ui5-mock.yaml"),
+                              ("fiori run --open x", "ui5.yaml")):
+            yol, _ = kd_ortam.mock_yaml_yolu("app", scr)
+            self.assertEqual(os.path.normpath(os.path.join("app", beklenen)), yol, scr)
+
+    def test_cdn_ve_indexsiz_bootstrap_bilgi_satiri_kosulsuz_gecmez(self):
+        with gecici_dizin() as t:
+            app = tam_uygulama(os.path.join(t, "app"))
+            yaz(os.path.join(app, "webapp", "index.html"), index_html("https://ui5.sap.com/resources/sap-ui-core.js"))
+            r = self._check(app, t)
+            os.remove(os.path.join(app, "webapp", "index.html"))
+            r2 = self._check(app, t)
+        self.assertRegex(r.stdout, r"BİLGİ\s+mock yaml\s+bootstrap göreli ya da CDN")
+        self.assertNotIn("mock yaml bootstrap yolu", r.stdout)
+        self.assertRegex(r2.stdout, r"BİLGİ\s+mock yaml\s+bootstrap eşlemesi ÖLÇÜLEMEDİ: webapp/index.html yok")
+
+    def test_middleware_paketi_yok_workspace_onerisi(self):
+        with gecici_dizin() as t:
+            ui = os.path.join(t, "ui")
+            yaz_json(os.path.join(ui, "package.json"), {"private": True, "workspaces": ["*"]})
+            app = tam_uygulama(os.path.join(ui, "app"), dev={})
+            r = self._check(app, t)
+        self.assertEqual(2, r.returncode)
+        self.assertRegex(r.stdout, r"EKSİK\s+middleware paketi: fiori-tools-proxy\s+YOK \(@sap/ux-ui5-tooling\)")
+        self.assertIn('"@sap/ux-ui5-tooling": "1" adını ekle', r.stdout)
+        self.assertIn('"@sap-ux/ui5-middleware-fe-mockserver": "2" adını ekle', r.stdout)
+        self.assertNotIn("--save-dev", r.stdout, "workspace'te uygulamaya ayrı kurulum önerilmemeli")
+        self.assertIn('npm install --prefix "%s"' % ui, r.stdout)
+
+    def test_belgedeki_yaml_araci_gecer(self):
+        """mock-ortam.md §2'deki yaml ile araç aynı şeyi söylemeli (belge ↔ araç kopmasın)."""
+        from _common import SKILL
+        with open(os.path.join(SKILL, "references", "mock-ortam.md"), encoding="utf-8") as fh:
+            belge = fh.read()
+        m = re.search(r"```yaml\n(.*?)```", belge, re.S)
+        self.assertIsNotNone(m, "mock-ortam.md'de yaml bloğu yok")
+        backend, yollar, adlar = kd_ortam.yaml_tara(m.group(1))
+        self.assertEqual([], backend)
+        self.assertIn("/sap/public/bc/ui5_ui5/resources", yollar)
+        self.assertIn("fiori-tools-proxy", adlar)
 
 
 if __name__ == "__main__":

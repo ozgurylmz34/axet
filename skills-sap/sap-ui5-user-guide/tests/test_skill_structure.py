@@ -216,7 +216,8 @@ class SkillStructureTest(unittest.TestCase):
         forbidden = ["C:" + "\\" + "IX", "C:/" + "IX", "DEV" + "_CORE", "mcp" + "__", "." + "claude",
                      "CLAUDE" + ".md", "ZSD" + "0", "FIT" + "_SE", "ZSD" + "_ONAY", "ADR " + "00", "Claude" + " Code",
                      "PRO" + "VA", "AppData" + "\\" + "Local" + "\\" + "Temp"]
-        url = re.compile(r"https?://(?!localhost[:/]|127\.0\.0\.1[:/]|example\.invalid[/\"])")
+        # ui5.sap.com: SAP'nin herkese açık UI5 CDN'i — mock yaml bootstrap'ı oraya eşler (mock-ortam.md §2); iz değil.
+        url = re.compile(r"https?://(?!localhost[:/]|127\.0\.0\.1[:/]|example\.invalid[/\"]|ui5\.sap\.com\b)")
         email = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}\b")
         hits = []
         for path in _text_files():
