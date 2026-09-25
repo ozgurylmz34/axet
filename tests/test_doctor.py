@@ -963,6 +963,18 @@ class BozukConfigTest(GeciciTest):
         s = self.proje_kos(b'{"permissions": []}')
         self.var(s, "WARN", "'permissions' nesne değil → izin kuralı ezme denetimi ÖLÇÜLEMEDİ")
 
+    def test_acilis_brief_config_denetimi(self):
+        """Z105: brief context_paths'te değilse WARN + %guncelle-proje; şablon config'i PASS verir."""
+        sablon = (doctor.inst.AXET_HOME / "templates" / "project" / ".axet-code.json").read_bytes()
+        s = self.proje_kos(sablon)  # kontrol grubu: yeni proje şablonu
+        self.var(s, "PASS", "proje config'i açılış brief'ini yüklüyor")
+        self.var(s, "PASS", "proje config'i proje hafızasını yüklüyor")
+        s = self.proje_kos(b'{"options": {"context_paths": [".axet-code/memory/MEMORY.md"]}}')  # eski şablon
+        self.var(s, "WARN", "açılış brief'ini yüklemiyor (.axet-code/acilis-brief.md context_paths'te yok) → %guncelle-proje")
+        # bug gate MEDIUM-2: özelleştirilmiş config %guncelle-proje'de ESIK'e düşer → elle yol da yazılı olmalı
+        self.var(s, "WARN", "context_paths'e \".axet-code/acilis-brief.md\" girdisini elle ekle")
+        self.assertFalse(any("brief'ini yüklüyor" in x for x in s), "\n".join(s))
+
 
 def kib(bayt: int) -> str:
     return f"{bayt / 1024:.1f}".replace(".", ",") + " KiB"
@@ -1180,6 +1192,36 @@ class BaglamBoyutuTest(GeciciTest):
         s = self.kos()
         self.assertEqual(self.durum(s), "PASS", s)
         self.assertIn(f"proje-config {kib(10)}/1 dosya", s[0])
+
+    def test_eksik_acilis_brief_olculemedi_sayilmaz_dar_istisna(self):
+        """Z105: proje config'indeki brief diskte YOKSA ÖLÇÜLEMEDİ değil (aXet atlar, ölçüldü). İstisna yalnız bu tam
+        yol + yalnız 'yok' durumu: başka eksik dosya, global config'teki aynı ad ve dizin olan brief yine sayılır."""
+        pcfg = self.bos / ".axet-code.json"
+        self.yaz(pcfg, json.dumps({"options": {"context_paths": [".axet-code/acilis-brief.md"]}}))
+        s = self.kos()
+        self.assertEqual(self.durum(s), "PASS", s)
+        self.assertNotIn("ÖLÇÜLEMEDİ", s[0])
+        self.assertTrue(any("açılış brief'i .axet-code/acilis-brief.md henüz yok" in x for x in self.tum), self.tum)
+        # kontrol grubu 1: başka bir eksik dosya ÖLÇÜLEMEDİ kalır
+        self.yaz(pcfg, json.dumps({"options": {"context_paths": [".axet-code/baska.md"]}}))
+        self.assertIn("ÖLÇÜLEMEDİ (1)", self.kos()[0])
+        # kontrol grubu 2: brief bir DİZİNSE (yok değil) istisna uygulanmaz
+        self.yaz(pcfg, json.dumps({"options": {"context_paths": [".axet-code/acilis-brief.md"]}}))
+        dizin = self.bos / ".axet-code" / "acilis-brief.md"
+        dizin.mkdir(parents=True)
+        (dizin / "x.md").write_text("x", encoding="utf-8")
+        s = self.kos()
+        self.assertFalse(any("henüz yok" in x for x in self.tum), self.tum)
+        self.assertIn("proje-config " + kib(1) + "/1 dosya", s[0])
+        (dizin / "x.md").unlink()
+        dizin.rmdir()
+        # var olan brief sayılır
+        self.dosya("bos/.axet-code/acilis-brief.md", 3000)
+        self.assertIn(f"proje-config {kib(3000)}/1 dosya", self.kos()[0])
+        # kontrol grubu 3: global config'teki göreli aynı ad istisnadan yararlanmaz
+        pcfg.unlink()
+        self.cfg_yaz(".axet-code/acilis-brief.md")
+        self.assertIn("ÖLÇÜLEMEDİ (1)", self.kos()[0])
 
     def test_config_yok_ve_bozuk(self):
         s = self.kos()
