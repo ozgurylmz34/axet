@@ -2015,6 +2015,88 @@
      ]
     }
    ]
+  },
+  {
+   "etiket": "v0.5.10",
+   "tarih": "2026-09-25",
+   "kalemler": [
+    {
+     "id": "0.5.10-01",
+     "baslik": "Açılış özeti her oturumda bağlamda: ilk mesaj ne olursa olsun görünür (AXET-CORE-0.8.0)",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "aXet'te oturum açılışında otomatik çalışan bir adım olmadığı için model açılış özetini bazen atlıyordu (özellikle oturum `%skill` ile açılınca). Artık `session_brief.py` özeti `.axet-code/acilis-brief.md`'ye de yazar ve proje `.axet-code.json` bu dosyayı her oturumda bağlama koyar: model özeti çalıştırmasa da son özeti üretim saatiyle görür, tarihi bugün değilse \"BAYAT\" der ve yenilemeyi önerir. Özette SAP profili ve kesin yasakların özeti de var. Dosya git'e girmez; her özet koşusu, `%gun-sonu` ve `%guncelle-proje` onu yeniler. `doctor.py` brief yüklenmiyorsa uyarır. Çekirdek kimliği `AXET-CORE-0.8.0`: her projede `%guncelle-proje` çalıştır (config'e brief satırı eklenir), sonra yeni aXet oturumu aç.",
+     "dosyalar": [
+      "README.md",
+      "core/00-temel.md",
+      "scripts/doctor.py",
+      "scripts/session_brief.py",
+      "skills/gun-sonu/SKILL.md",
+      "skills/guncelle-proje/SKILL.md",
+      "templates/project/.axet-code.json",
+      "tests/test_doctor.py",
+      "tests/test_session_brief.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k session_brief",
+      "python tests/run_tests.py -k acilis_brief"
+     ]
+    },
+    {
+     "id": "0.5.10-02",
+     "baslik": "UI5 uygulaması UI5'i kendi SAP sisteminden yükler; workspace'te middleware paket adları uygulamada",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Uygulamanın `index.html`'i UI5'i sabit sürümlü CDN'den değil, uygulamanın çalıştığı SAP sisteminin kendi UI5'inden (`/sap/public/bc/ui5_ui5/resources/sap-ui-core.js`) yükler; yerel önizlemede aynı yol proxy üzerinden gelir. Mock (SAP'siz) çalıştırmada bu yol güncel UI5 CDN'ine eşlenir, bağlantı gerekmez. Workspace (tek `node_modules`) kullanan projelerde uygulamanın `package.json`'ı, `ui5*.yaml`'ın kullandığı middleware paketlerinin adlarını taşımalıdır; yoksa yerel sunucu açılmaz (UI5 CLI 4 ölçüldü). Kurulum yine workspace kökünde yapılır.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-fiori/SKILL.md",
+      "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+      "skills-sap/sap-ui5-fiori/references/checklists.md",
+      "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
+      "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-03",
+     "baslik": "Kullanım kılavuzu ekran görüntüleri: mock ortam SAP'siz açılır, `kd_ortam.py check` yaml'ı denetler",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Mock yapılandırma üreticisi `ui5-mock.yaml`'ı canlı `ui5.yaml`'dan kopyaladığı için SAP bağlantısı da mock'a taşınıyor ve sayfa boş kalıyordu (`sap-ui-core.js` 500). Belgedeki mock yaml artık backend'siz; UI5 yolu CDN'e eşleniyor (tarayıcıda ölçüldü: UI5 yüklendi, dışarıya SAP isteği yok). `kd_ortam.py check` mock yaml'da backend satırını, UI5 yolu eşlemesini ve middleware paketini denetler; `--config` verilmemişse yalnız eklemesini söyler, canlı `ui5.yaml`'a dokunmayı önermez. Workspace üyesi uygulama için kurulum önerisi kökte yapılır.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-user-guide/references/akis.md",
+      "skills-sap/sap-ui5-user-guide/references/mock-ortam.md",
+      "skills-sap/sap-ui5-user-guide/scripts/kd_ortam.py",
+      "skills-sap/sap-ui5-user-guide/tests/test_kd_ortam.py",
+      "skills-sap/sap-ui5-user-guide/tests/test_skill_structure.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-user-guide/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-04",
+     "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yayın aracının ürettiği meta veri (değişiklik günlüğü, yayın kataloğu, CI hükmü) ve README'nin sürüm satırı — her yayında beyan edilir.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json",
+      "README.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri"
+     ]
+    }
+   ]
   }
  ]
 }
