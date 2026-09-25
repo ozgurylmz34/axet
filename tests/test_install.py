@@ -316,7 +316,7 @@ class InstallTest(GeciciTest):
         # (b) KULLANICININ kendi kuralı — template bunu düzeltemez, yalnız belgeleyebilir. Buradaki kullanıcı
         # kuralı ('*benim-aracim*'=allow, sabit 12) birkaç template deny'ından uzun; ÖLÇÜLDÜ (2026-09-17) ki
         # uzun bir allow kısa bir deny'ı gerçekten ezer ⇒ bu birleşimde koruma fiilen delinir. Bunu "ihlal yok"
-        # diye örtmek yerine KİLİTLİYORUZ: risk gerçek ve README "Bilinen sınırlar"da yazılı. Denetim
+        # diye örtmek yerine KİLİTLİYORUZ: risk gerçek ve docs/izin-kurallari.md'de yazılı. Denetim
         # izin-verici kararları görmeyi bırakırsa (regresyon) bu assert FAIL verir.
         kullanici_ihlali = [i for i in ask_deny_uzunluk_ihlalleri(kurallar) if "'*benim-aracim*'" in i]
         self.assertTrue(kullanici_ihlali, "kullanıcının uzun 'allow' kuralı template deny'larıyla çakışıyor ama "
@@ -501,7 +501,7 @@ KONTROL_GRUBU_IZINLI = [
 ]
 
 # BİLİNEN SINIR (ölçüldü 2026-09-17): eşleşme büyük/küçük harfe duyarlı → büyük harfli biçim deny'ı ATLAR.
-# Kombinatoryal olduğu için desenle kapatılmadı (bkz. README "Bilinen sınırlar"). Bu satırlar sınırı KİLİTLER:
+# Kombinatoryal olduğu için desenle kapatılmadı (bkz. docs/izin-kurallari.md). Bu satırlar sınırı KİLİTLER:
 # motor bir gün harf-duyarsız olursa ya da biri kombinatoryal varyant eklerse test FAIL verip kararı geri getirir.
 BILINEN_SINIR_HARF_DUYARLI = [
     'echo "RD /S x" > b09.txt',                  # canlı: ÇALIŞTI (kontrol: 'rd /s x' reddedildi)
@@ -535,7 +535,7 @@ GIT_C_SIMULASYONLA_OLCULEN = [
 
 # HÂLÂ AÇIK (ölçüldü 2026-09-17) — bilinçli olarak kapatılMADI, çünkü her yeni desen uzunluk-ezme yüzeyini
 # büyütür ve `-c ayar=değer` kombinatoryaldır. Bu satırlar açıklığı KİLİTLER: biri desen eklerse ya da motor
-# semantiği değişirse test FAIL verir ve README/_aciklama'daki "bilinen sınır" metni güncellenmek zorunda kalır.
+# semantiği değişirse test FAIL verir ve docs/izin-kurallari.md/_aciklama'daki "bilinen sınır" metni güncellenmek zorunda kalır.
 HALA_ACIK_KACIS_BICIMLERI = [
     'git -c core.pager=cat stash drop',          # `-c ayar=değer` biçimi: hiçbir desen tutmuyor
     # (`-c … branch -D` Z75'te `*git *branch* -D*` ile KAPANDI → Z75_ZORLA_DAL_SILME)
@@ -608,7 +608,7 @@ class OlculmusDenyKapsamiTest(unittest.TestCase):
     def test_git_c_disi_kacis_bicimleri_hala_acik(self):
         """`-c ayar=değer` ve ayıraçsız `checkout .`/`restore .` bugün KURALSIZ (ölçüldü) — bilinçli karar.
 
-        Kapanırsa bu test FAIL verir: o an README "Bilinen sınırlar" ve `_aciklama` KAPSAM BEYANI metinleri
+        Kapanırsa bu test FAIL verir: o an docs/izin-kurallari.md ve `_aciklama` KAPSAM BEYANI metinleri
         de güncellenmek zorundadır, yoksa belge kapsamdan sessizce sapar (K11 gate'inin yakaladığı sınıf).
         """
         kapananlar = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}"
@@ -617,10 +617,10 @@ class OlculmusDenyKapsamiTest(unittest.TestCase):
                                          + "\n" + ("\n").join(kapananlar))
 
     def test_bilinen_sinir_harf_duyarliligi_hala_acik(self):
-        """Büyük harfli biçim bugün kuralsız (ölçüldü). Kapanırsa bu test FAIL verir → README/_aciklama güncellenir."""
+        """Büyük harfli biçim bugün kuralsız (ölçüldü). Kapanırsa bu test FAIL verir → docs/izin-kurallari.md/_aciklama güncellenir."""
         kapananlar = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}"
                       for k in BILINEN_SINIR_HARF_DUYARLI if _eslesen_desenler(self.kurallar, k)]
-        self.assertEqual(kapananlar, [], "Bilinen sınır kapanmış görünüyor; belgeyi (README 'Bilinen sınırlar' + "
+        self.assertEqual(kapananlar, [], "Bilinen sınır kapanmış görünüyor; belgeyi (docs/izin-kurallari.md + "
                                          "permissions.json _aciklama) ve bu testi güncelle:\n" + "\n".join(kapananlar))
 
 
@@ -719,7 +719,7 @@ class ZorlaDalSilmeTest(unittest.TestCase):
     def test_bilincli_acik_zorla_tasima(self):
         kapanan = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z75_BILINCLI_ACIK
                    if _eslesen_desenler(self.kurallar, k)]
-        self.assertEqual(kapanan, [], "Bilinçli açık biçim kural alıyor; README/_aciklama güncellenmeli:\n"
+        self.assertEqual(kapanan, [], "Bilinçli açık biçim kural alıyor; docs/izin-kurallari.md/_aciklama güncellenmeli:\n"
                          + "\n".join(kapanan))
 
 
@@ -858,7 +858,7 @@ Z106_KAPILI_YOL = [
 
 # BİLİNEN YANLIŞ POZİTİF (bilinçli, kilitli): deny ALIR ama deploy etmez. 2. alan komutun uyduğu desen kümesinin
 # TAMAMIDIR — küme değişirse (daraltma ya da örtüşen yeni desen, ör. `*yarn * undeploy*` EKLE mutantı) test FAIL →
-# README/_aciklama güncellenir. Kaynakları: (a) bayrak aralığı `run -*` / `--cwd *` zincirde sonraki ` deploy`e uzanır;
+# docs/izin-kurallari.md/_aciklama güncellenir. Kaynakları: (a) bayrak aralığı `run -*` / `--cwd *` zincirde sonraki ` deploy`e uzanır;
 # (b) desen metni argümanda/mesajda/aramada geçer (dosyanın genel yan etkisi); (c) `ui5 build` ile ui5-deploy aynı
 # metinde; (d) `undeploy` ailesi BİTİŞİK DEĞİLDİR (`*npm*undeploy*`, `*yarn*undeploy*`, `*bun *undeploy*` araya `*`
 # alır) → paket yöneticisi adından sonra herhangi bir yerde `undeploy` geçen metin düşer; (e) `*npm*urn deploy*`
@@ -889,7 +889,7 @@ Z106_BILINEN_YANLIS_POZITIF = [
     (f'npm run build && {DEPLOY_UI} deploy app --user-ok "forum deploy onayı"', ['*deploy_ui*', '*npm*rum deploy*']),  # (f)
 ]
 
-# BİLİNEN AÇIK (bilinçli, kilitli): kapanırsa test FAIL → README/_aciklama güncellenir.
+# BİLİNEN AÇIK (bilinçli, kilitli): kapanırsa test FAIL → docs/izin-kurallari.md/_aciklama güncellenir.
 Z106_BILINEN_ACIK = [
     'pnpm deploy',               # pnpm'in YERLEŞİK `deploy` komutu (paketi dizine kopyalar) script'i koşmaz (DOĞRULANMADI)
     'pnpm -C app deploy',
@@ -970,13 +970,13 @@ class PaketYoneticisiDeployTest(unittest.TestCase):
             elif sorted(p for p, _ in eslesen) != sorted(beklenen):
                 degisen.append(f"{k!r} eşleşen desen kümesi değişti: beklenen {sorted(beklenen)}, "
                                f"gerçek {sorted(p for p, _ in eslesen)}")
-        self.assertEqual(degisen, [], "Belgelenmiş yanlış pozitif artık deny almıyor; README/_aciklama "
+        self.assertEqual(degisen, [], "Belgelenmiş yanlış pozitif artık deny almıyor; docs/izin-kurallari.md/_aciklama "
                                       "güncellenmeli:\n" + "\n".join(degisen))
 
     def test_bilinen_acik_hala_acik(self):
         kapanan = [f"{k!r} → {_eslesen_desenler(self.kurallar, k)}" for k in Z106_BILINEN_ACIK
                    if _eslesen_desenler(self.kurallar, k)]
-        self.assertEqual(kapanan, [], "Bilinen açık biçim kural alıyor; README/_aciklama güncellenmeli:\n"
+        self.assertEqual(kapanan, [], "Bilinen açık biçim kural alıyor; docs/izin-kurallari.md/_aciklama güncellenmeli:\n"
                          + "\n".join(kapanan))
 
 
