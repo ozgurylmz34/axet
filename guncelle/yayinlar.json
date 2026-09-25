@@ -2025,7 +2025,7 @@
      "baslik": "Açılış özeti her oturumda bağlamda: ilk mesaj ne olursa olsun görünür (AXET-CORE-0.8.0)",
      "tur": "yetenek",
      "kritik": false,
-     "neden": "aXet'te oturum açılışında otomatik çalışan bir adım olmadığı için model açılış özetini bazen atlıyordu (özellikle oturum `%skill` ile açılınca). Artık `session_brief.py` özeti `.axet-code/acilis-brief.md`'ye de yazar ve proje `.axet-code.json` bu dosyayı her oturumda bağlama koyar: model özeti çalıştırmasa da son özeti üretim saatiyle görür, tarihi bugün değilse \"BAYAT\" der ve yenilemeyi önerir. Özette SAP profili ve kesin yasakların özeti de var. Dosya git'e girmez; her özet koşusu, `%gun-sonu` ve `%guncelle-proje` onu yeniler. `doctor.py` brief yüklenmiyorsa uyarır. Çekirdek kimliği `AXET-CORE-0.8.0`: her projede `%guncelle-proje` çalıştır (config'e brief satırı eklenir), sonra yeni aXet oturumu aç.",
+     "neden": "aXet'te oturum açılışında otomatik çalışan bir adım olmadığı için model açılış özetini bazen atlıyordu (özellikle oturum `%skill` ile açılınca). Artık `session_brief.py` özeti `.axet-code/acilis-brief.md`'ye de yazar ve proje `.axet-code.json` bu dosyayı her oturumda bağlama koyar: model özeti çalıştırmasa da son özeti üretim saatiyle görür, tarihi bugün değilse \"BAYAT\" der ve yenilemeyi önerir. Özette kalıcı hatırlatmalar, SAP projelerinde ayrıca SAP profili ve kesin yasakların özeti var. Dosya git'e girmez; her özet koşusu, `%gun-sonu` ve `%guncelle-proje` onu yeniler. `doctor.py` proje config'i brief'i yüklemiyorsa uyarır. Çekirdek kimliği `AXET-CORE-0.8.0`: her projede `%guncelle-proje` çalıştır (config'e brief satırı eklenir; `.axet-code.json`'ı kendin değiştirdiysen otomatik eklenmez, `%guncelle-proje` satırı elle eklemeyi önerir), sonra yeni aXet oturumu aç.",
      "dosyalar": [
       "README.md",
       "core/00-temel.md",
@@ -2040,33 +2040,16 @@
      "gerektirir": [],
      "test": [
       "python tests/run_tests.py -k session_brief",
-      "python tests/run_tests.py -k acilis_brief"
+      "python tests/run_tests.py -k acilis_brief",
+      "python tests/run_tests.py -k cekirdek_satir_siniri"
      ]
     },
     {
      "id": "0.5.10-02",
-     "baslik": "UI5 uygulaması UI5'i kendi SAP sisteminden yükler; workspace'te middleware paket adları uygulamada",
-     "tur": "duzeltme",
-     "kritik": false,
-     "neden": "Uygulamanın `index.html`'i UI5'i sabit sürümlü CDN'den değil, uygulamanın çalıştığı SAP sisteminin kendi UI5'inden (`/sap/public/bc/ui5_ui5/resources/sap-ui-core.js`) yükler; yerel önizlemede aynı yol proxy üzerinden gelir. Mock (SAP'siz) çalıştırmada bu yol güncel UI5 CDN'ine eşlenir, bağlantı gerekmez. Workspace (tek `node_modules`) kullanan projelerde uygulamanın `package.json`'ı, `ui5*.yaml`'ın kullandığı middleware paketlerinin adlarını taşımalıdır; yoksa yerel sunucu açılmaz (UI5 CLI 4 ölçüldü). Kurulum yine workspace kökünde yapılır.",
-     "dosyalar": [
-      "skills-sap/sap-ui5-fiori/SKILL.md",
-      "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
-      "skills-sap/sap-ui5-fiori/references/checklists.md",
-      "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
-      "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
-     ],
-     "gerektirir": [],
-     "test": [
-      "python skills-sap/sap-ui5-fiori/tests/run_tests.py"
-     ]
-    },
-    {
-     "id": "0.5.10-03",
      "baslik": "Kullanım kılavuzu ekran görüntüleri: mock ortam SAP'siz açılır, `kd_ortam.py check` yaml'ı denetler",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Mock yapılandırma üreticisi `ui5-mock.yaml`'ı canlı `ui5.yaml`'dan kopyaladığı için SAP bağlantısı da mock'a taşınıyor ve sayfa boş kalıyordu (`sap-ui-core.js` 500). Belgedeki mock yaml artık backend'siz; UI5 yolu CDN'e eşleniyor (tarayıcıda ölçüldü: UI5 yüklendi, dışarıya SAP isteği yok). `kd_ortam.py check` mock yaml'da backend satırını, UI5 yolu eşlemesini ve middleware paketini denetler; `--config` verilmemişse yalnız eklemesini söyler, canlı `ui5.yaml`'a dokunmayı önermez. Workspace üyesi uygulama için kurulum önerisi kökte yapılır.",
+     "neden": "Yeni bootstrap yolu (UI5 kalemi 0.5.10-03) mock'ta da SAP'ye gider: mock yapılandırma üreticisi `ui5-mock.yaml`'ı canlı `ui5.yaml`'dan kopyaladığı için SAP bağlantısı mock'a taşınır; backend yokken `sap-ui-core.js` 500 döner ve sayfa boş kalır. Belgedeki mock yaml artık backend'siz; UI5 yolu CDN'e eşleniyor (tarayıcıda ölçüldü: UI5 yüklendi, dışarıya SAP isteği yok). `kd_ortam.py check` mock yaml'da backend satırını, UI5 yolu eşlemesini ve middleware paketini denetler; `--config` verilmemişse yalnız eklemesini söyler, canlı `ui5.yaml`'a dokunmayı önermez. Workspace üyesi uygulama için kurulum önerisi kökte yapılır. Mock sunucuyu kapattıktan sonra portun boşaldığını `netstat -ano` ile doğrula: arka plan görevini durdurmak `node` sürecini kapatmayabilir.",
      "dosyalar": [
       "skills-sap/sap-ui5-user-guide/references/akis.md",
       "skills-sap/sap-ui5-user-guide/references/mock-ortam.md",
@@ -2077,6 +2060,26 @@
      "gerektirir": [],
      "test": [
       "python skills-sap/sap-ui5-user-guide/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-03",
+     "baslik": "UI5 uygulaması UI5'i kendi SAP sisteminden yükler; workspace'te middleware paket adları uygulamada; tarih ve function import için iki yeni inceleme maddesi",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Yeni UI5 uygulaması iskeletinde `index.html` UI5'i sabit sürümlü CDN'den değil, uygulamanın çalıştığı SAP sisteminin kendi UI5'inden (`/sap/public/bc/ui5_ui5/resources/sap-ui-core.js`) yükler; yerel önizlemede aynı yol proxy üzerinden gelir. Neden: CDN'de sabitlenen patch bakım dışı kalınca siliniyor, `cldr/tr.json` 404 verince UI5 hata vermeden İngilizceye düşüyordu. Kontrol listesi buna göre değişti: FE-43 / UI-BOOT-01 artık CDN adresini (sabit sürümlü olsa da) BLOCKER sayar — eski kurala göre kurulmuş uygulamalarda `index.html`'deki bootstrap satırını elle değiştir (`app-skeleton.md` §7). Mock (SAP'siz) çalıştırmada bu yol güncel UI5 CDN'ine eşlenir (0.5.10-02, bu kalemle birlikte seçilir). Workspace (tek `node_modules`) kullanan projelerde uygulamanın `package.json`'ı, `ui5*.yaml`'ın kullandığı middleware paketlerinin adlarını taşımalıdır; yoksa yerel sunucu açılmaz (UI5 CLI 4 ölçüldü). Kurulum yine workspace kökünde yapılır. Kontrol listesine iki yeni HIGH madde: FE-44 (tarih-yalnız alana yerel gece yarısı gidince gateway bir önceki günü alır) ve FE-45 (`callFunction` parametresinde `null` → 400).",
+     "dosyalar": [
+      "skills-sap/sap-ui5-fiori/SKILL.md",
+      "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+      "skills-sap/sap-ui5-fiori/references/checklists.md",
+      "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
+      "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+     ],
+     "gerektirir": [
+      "0.5.10-02"
+     ],
+     "test": [
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py"
      ]
     },
     {
