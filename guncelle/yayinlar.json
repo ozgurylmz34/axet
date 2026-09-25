@@ -2098,6 +2098,152 @@
      "test": [
       "python tests/run_tests.py -k yayin_surumleri"
      ]
+    },
+    {
+     "id": "0.5.10-05",
+     "baslik": "SAP backend inceleme ve kodlama dersleri: yeni ABAP kontrol maddeleri, TABLES/CHANGING tuzağı, CDS ve belge ekleri",
+     "tur": "kural",
+     "kritik": false,
+     "neden": "Ekip derslerinden aktarılan ölçülmüş tuzaklar SAP skill'lerine eklendi. ABAP kontrol listesine BE-71..BE-78 (sıradaki numara BE-79): ör. boş anahtarlı tabloyu tipli CHANGING parametresine vermek. `table-types.md` §5.4: TABLES/CHANGING tuzağında hata içerikten değil ilk bağlamadan gelir, boş tablo da dump eder. CDS'e yetki (DCL) ve açıklama maddeleri, klasik ABAP'a ATC ve dynpro/include notları, `sap-dev` kodlama desenleri, FS/TS belge kontrolü, intake protokolü, OData dış çağrı ve SEGW notları, RAP sorun giderme ekleri. Yeni kuralların hepsi inceleme listelerine yansıdı; mevcut kodu kendiliğinden değiştirmez.",
+     "dosyalar": [
+      "skills-sap/sap-cds-ddic/references/cds.md",
+      "skills-sap/sap-cds-ddic/references/checklists.md",
+      "skills-sap/sap-cds-ddic/references/table-types.md",
+      "skills-sap/sap-classic-abap/references/checklists.md",
+      "skills-sap/sap-classic-abap/references/dynpro-dialog-fields.md",
+      "skills-sap/sap-classic-abap/references/programs-includes.md",
+      "skills-sap/sap-code-review/SKILL.md",
+      "skills-sap/sap-code-review/references/checklist-abap.md",
+      "skills-sap/sap-code-review/references/reviewer-brief.md",
+      "skills-sap/sap-code-review/references/validator-map.md",
+      "skills-sap/sap-dev/references/coding-patterns.md",
+      "skills-sap/sap-fs-ts-docs/references/doc-checklist.md",
+      "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
+      "skills-sap/sap-intake-triage/references/protocol.md",
+      "skills-sap/sap-odata-backend/references/outbound-api-call.md",
+      "skills-sap/sap-odata-backend/references/segw-service.md",
+      "skills-sap/sap-rap/references/troubleshoot.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-code-review/tests/run_tests.py",
+      "python skills-sap/sap-fs-ts-docs/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-06",
+     "baslik": "UI5: büyük istekte HTTP 414 (FE-46), metadataUrlParams devri (FE-47), dosya yükleme sınırı ve çalışma zamanı doğrulama ekleri",
+     "tur": "kural",
+     "kritik": false,
+     "neden": "FE-46: çok satırlı toplu isteğin adresi çok uzayınca gateway 414 döner (bir kurulumda, bir ekranda ölçüldü: satır başına ~437 bayt, ~20 satırda sınır; eşik sisteme göre değişir). FE-47: `metadataUrlParams` servis modeline devredilmezse parametre kaybolur. `freestyle-odata-v2.md` §7.3 ölçülmüş vaka ve çözümü; FileUploader `maximumFileSize` birimi MB'dir ve boş/0 değer sessizce atlanır. Bilinen hatalar, yerel çalıştırma ve çalışma zamanı doğrulama referanslarına ekler.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-fiori/references/checklists.md",
+      "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+      "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
+      "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md",
+      "skills-sap/sap-ui5-fiori/references/runtime-verification.md"
+     ],
+     "gerektirir": [
+      "0.5.10-03"
+     ],
+     "test": [
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-07",
+     "baslik": "ADT: kaynağı SAP'ye dokunmadan biçimleme (`adt_pretty_print`), sürüm geçmişi okuma düzeltmesi (`adt_revisions`), ATC Pretty Print reçetesi",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "ATC 'Incorrect Pretty Print state' bulgusunu kapatmak için kaynağın SAP biçimleyicisinden geçmiş hâli gerekiyordu, ama bunu yalnız ADT editöründe elle yapabiliyordunuz. Yeni `adt_pretty_print` aracı biçimlenmiş metni sistemde hiçbir şeyi değiştirmeden yerel dosyaya alır; hangi bölümlerin sisteme gideceğine siz karar verirsiniz, kayıt her zamanki onaylı yazma adımıyla yapılır (`classes.md` §7.1 reçetesi). Ayrıca bir objenin sürüm geçmişi (ne zaman, kim, hangi transportla değişti) `adt_revisions` ile sınıf, include ve arayüzlerde hiç okunamıyordu: sistem aracın istek biçimini reddediyor, bağlantıyı da bulamıyordu. Artık geçmiş okunuyor; okunamadığında 'sürüm yok' diye boş liste yerine açık hata döner. İkisi de salt-okur araçtır ve canlı sistemde ölçüldü.",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
+      "skills-sap/sap-adt-foundation/SKILL.md",
+      "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+      "skills-sap/sap-adt-foundation/references/foundation-query.md",
+      "skills-sap/sap-adt-foundation/references/known-errors-adt.md",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/diag.py",
+      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
+      "skills-sap/sap-adt-foundation/tests/test_diag_tools.py",
+      "skills-sap/sap-adt-foundation/tests/test_lib_regressions.py",
+      "skills-sap/sap-adt-foundation/tests/test_pretty_print.py",
+      "skills-sap/sap-classic-abap/references/classes.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py"
+     ]
+    },
+    {
+     "id": "0.5.10-08",
+     "baslik": "Çalışma dersleri: 15 yeni/güncel ders, gün sonu ertelenmiş iş süpürmesi, merge'de CI hükmü, 'tamam' demeden biçim kontrolü",
+     "tur": "kural",
+     "kritik": false,
+     "neden": "Ekip hafızasına ölçülmüş çalışma dersleri eklendi (ör. sıfır sonuçla 'yok' demeden önce kontrol grubu, yeşil sinyalin kapsamını sorma, performans önerisinin de bir iddia olması, yerel test takımının CI'ın ikizi olmaması, muafiyetin gerekçesinden geniş yazılmaması). `%gun-sonu` ertelenmiş iş listesindeki kapanan/vazgeçilen kalemleri kaynağıyla arşive taşır. `commit-pr`: merge kararı `--watch` ekranından değil kontrol durum alanından okunur; koşulsuz `checks --watch ; merge` zinciri CI kırmızı bitse de birleştirir. `verify-done`: 'N dosya var' yüklenebilirlik demek değildir, dosyayı okuyan araçla sına. Hafıza dosyaları mevcut makinede ezilmez; yeni dersler eklenir.",
+     "dosyalar": [
+      "AGENTS.md",
+      "memory/MEMORY.md",
+      "memory/feedback_bash-heredoc-turkce-kacis.md",
+      "memory/feedback_github-actions-asili-kosu-pr-kapat-ac.md",
+      "memory/feedback_kanit-kapsam-ve-zaman-korunur.md",
+      "memory/feedback_karar-sormadan-once-erisilebilirlik-olc.md",
+      "memory/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md",
+      "memory/feedback_kullanicinin-bildigini-olcme-sor.md",
+      "memory/feedback_muafiyet-gerekcesinden-genis-olmasin.md",
+      "memory/feedback_olcum-onkosullu-risk-notu.md",
+      "memory/feedback_paylasilan-modulun-desenini-yeniden-turetme.md",
+      "memory/feedback_performans-onerisi-de-iddiadir.md",
+      "memory/feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md",
+      "memory/feedback_sizinti-taramasi-arama-uzayi-git-deltasidir.md",
+      "memory/feedback_uyarlama-verisi-acik-kalem-degil.md",
+      "memory/feedback_yerel-suit-ci-ikizi-degil.md",
+      "memory/feedback_yesil-sinyal-kapsamini-sor.md",
+      "skills/commit-pr/SKILL.md",
+      "skills/gun-sonu/SKILL.md",
+      "skills/verify-done/SKILL.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k skill",
+      "python tests/run_tests.py -k recall"
+     ]
+    },
+    {
+     "id": "0.5.10-09",
+     "baslik": "doctor: PowerShell betik politikası npm komutlarını engelliyorsa önceden uyarır",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "npm ile kurulan komutlar (npm, npx, ui5, fiori…) Windows'ta PATH'te görünse de PowerShell'in betik politikası `Restricted` ise PowerShell'de çalışmaz — 'running scripts is disabled' hatası verir. doctor artık bunu önceden söyler: hangi komutların etkilendiğini, cmd/Git Bash ile nasıl çalışacağını ve kalıcı çözüm olarak `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` ayarını gösterir; bu bir güvenlik ayarı olduğu için kararı sana bırakır, kendisi değiştirmez.",
+     "dosyalar": [
+      "scripts/doctor.py",
+      "tests/test_doctor.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k doctor"
+     ]
+    },
+    {
+     "id": "0.5.10-10",
+     "baslik": "Hata / öneri bildirimi: `%hata-bildir` kanıtlı ve kimliksiz bildirim hazırlar; GitHub hesabı gerekmez",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "aXet'te bir hata ya da önerin olduğunda artık `%hata-bildir` yazman yeterli: model bildirimi seninle birlikte hazırlar — aXet sürümü, klonun güncel olup olmadığı ve konunun yeni bir yayında düzeltilip düzeltilmediği, yeniden üretim adımları, kanıt (çıktı ve dosya:satır), çalıştığı bilinen bir karşılaştırma vakası ve neye bakılmadığı. Müşteri, sistem ve kişi bilgilerini temizler, son metni sana onaylatır ve projene kaydeder. GitHub hesabın varsa hazır formu doldurursun (önce aynı konu açılmış mı bakarsın); hesabın yoksa dosyayı aXet'i sana kuran kişiye iletmen yeterli, Issue'yu o açar. Model hiçbir şeyi kendi başına göndermez.",
+     "dosyalar": [
+      ".github/ISSUE_TEMPLATE/config.yml",
+      ".github/ISSUE_TEMPLATE/hata-bildirimi.yml",
+      "README.md",
+      "docs/onboarding.md",
+      "skills/hata-bildir/SKILL.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k skill",
+      "python tests/run_tests.py -k readme"
+     ]
     }
    ]
   }
