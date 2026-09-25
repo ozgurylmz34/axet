@@ -83,7 +83,7 @@ güncelleme her şeyi taşımaz (kullanıcının proje dosyaları, yerel ayarlar
 6. **Doğrulama** — "bende düzeldi" demek için koşulacak komut + beklenen çıktı ("yayında" ≠ "bende düzeldi").
 7. **Yeniden açma koşulu** — hangi gözlemde aynı Issue'ya yorum yazılır.
 
-Yorum kimliksizdir (3. bölümdeki tarama); yol ve komutlar yer tutucuyla yazılır (`<AXET_HOME>`, `<proje>`).
+Yorum kimliksizdir (§2'deki kimlik taraması); yol ve komutlar yer tutucuyla yazılır (`<AXET_HOME>`, `<proje>`).
 
 ## 7. Durum etiketleri — mükerrer değerlendirmeyi önler, bildirene takip verir
 

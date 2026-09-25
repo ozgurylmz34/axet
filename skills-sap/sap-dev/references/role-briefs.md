@@ -149,7 +149,7 @@ sonra ana oturumun `%sap-adt-foundation` yazma akışına girer. Genel şablon �
 ```
 
 ## (c) Ön yüz (UI5) geliştirme alt görevi — yerel kaynak hazırlama
-UI5 yöntemi `%sap-ui5-fiori` skill'indedir. Alt ajan yalnız brifingi görür (ölçüldü, `docs/axet-davranis-olcumleri.md`;
+UI5 yöntemi `%sap-ui5-fiori` skill'indedir. Alt ajan yalnız brifingi görür (ölçüldü, bakımcı ölçüm kaydı;
 skill'i kendisinin yükleyip yükleyemediği ölçülmedi) → ana oturum işe uyan referans bölümünü (ör. `freestyle-odata-v2.md`
 save/§7, `checklists.md` FE satırları) brifinge metin olarak ekler. Bu ek, yöntemi **varsaymadan** projedeki çalışan
 uygulamadan da doğrulatır. Genel şablon §3 YAZMA ALANI = uygulamanın yerel klasörü. S1-S4 + aşağısı:

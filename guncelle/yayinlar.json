@@ -2292,7 +2292,7 @@
      "baslik": "Yeni: standart belgeye yazan kodda \"EML mi, BAPI mi, OData mı?\" karar ağacı",
      "tur": "yetenek",
      "kritik": false,
-     "neden": "Standart bir belgeye ya da ana veriye (satış siparişi, teslimat, iş ortağı …) yazan kod gerektiğinde model tek bir sıralı ağaç izler: önce kodun hangi bağlamda koştuğu (commit kimde), sonra released RAP BO — EML'i seçmeden önce dört canlı teyit (BDEF var mı, operasyon açık mı, alan yazılabilir mi, metin/numara/muhatap tuzakları) — sonra released BAPI, released OData, release edilmemiş BAPI/FM, BDC, manuel. Her adımda aXet'teki okuma komutu yazılı; aracı olmayan teyitlerde (OData `$metadata`) senden ekran ya da metin ister. Profil (`sap_profile`, `cleancore_policy`) hangi adımların açık olduğunu belirler; alan boşsa sana sorar. FM'in release durumunun ADT metadata'sında döndüğü ve modelin ağacı kendiliğinden bulup izlediği henüz ölçülmedi. Yapman gereken bir şey yok; `%sap-dev` bu işi kendisi yönlendirir.",
+     "neden": "Standart bir belgeye ya da ana veriye (satış siparişi, teslimat, iş ortağı …) yazan kod gerektiğinde model tek bir sıralı ağaç izler: önce kodun hangi bağlamda koştuğu (commit kimde), sonra released RAP BO — EML'i seçmeden önce dört canlı teyit (BDEF var mı, operasyon açık mı, alan yazılabilir mi, metin/numara/muhatap tuzakları) — sonra released BAPI, released OData, release edilmemiş BAPI/FM, BDC, manuel. Her teyit adımında aXet'teki okuma komutu yazılı; aracı olmayan teyitlerde (OData `$metadata`) senden ekran ya da metin ister. Profil (`sap_profile`, `cleancore_policy`) hangi adımların açık olduğunu belirler; alan boşsa sana sorar. FM'in release durumunun ADT metadata'sında döndüğü ve modelin ağacı kendiliğinden bulup izlediği henüz ölçülmedi. Yapman gereken bir şey yok; `%sap-dev` bu işi kendisi yönlendirir.",
      "dosyalar": [
       "skills-sap/sap-dev/references/write-api-selection.md",
       "skills-sap/sap-dev/SKILL.md",
@@ -2313,7 +2313,7 @@
      "baslik": "RAP, klasik OData ve GUI skill'leri yazma karar ağacına bağlandı; released BO \"operation not activated\" satırı",
      "tur": "kural",
      "kritik": false,
-     "neden": "Standart belge üzerinde RAP façade, SEGW DPC_EXT, iç OData çağrısı ya da GUI kaydından geliştirme yaparken ilgili skill artık aynı karar ağacına yönlendirir (0.5.10-13). Released BO'da \"operation … is not activated\" hatası için sorun giderme satırı eklendi: EML'i zorlamak yerine released BAPI, yoksa released OData. Uzun metin kalıcılığı için `SAVE_TEXT … savemode_direct = 'X'` şartı RAP inceleme maddesine de yazıldı.",
+     "neden": "Standart belge üzerinde RAP façade, SEGW DPC_EXT, iç OData çağrısı ya da GUI kaydından geliştirme yaparken ilgili skill artık aynı karar ağacına yönlendirir (0.5.10-13). Released BO'da \"operation … is not activated\" hatası için sorun giderme satırı eklendi: EML'i zorlamak yerine released BAPI, yoksa released OData.",
      "dosyalar": [
       "skills-sap/sap-rap/SKILL.md",
       "skills-sap/sap-rap/references/eml.md",
@@ -2326,7 +2326,8 @@
       "skills-sap/sap-odata-backend/references/outbound-api-call.md",
       "skills-sap/sap-gui-scripting/SKILL.md",
       "skills-sap/sap-gui-scripting/references/handoff.md",
-      "skills-sap/sap-classic-abap/templates/classic-dynpro-dialog.prog.abap"
+      "skills-sap/sap-classic-abap/templates/classic-dynpro-dialog.prog.abap",
+      "skills-sap/sap-odata-backend/references/deep-insert-function-import.md"
      ],
      "gerektirir": [
       "0.5.10-13"
@@ -2340,7 +2341,7 @@
      "baslik": "TS'te \"API seçimi\" bölümü (6.4) ve yeni inceleme maddesi BE-79",
      "tur": "kural",
      "kritik": false,
-     "neden": "Standart nesneye yazan her geliştirmenin TS'inde 6.4 \"API seçimi\" tablosu zorunlu: değerlendirilen her yol (EML, BAPI, OData, FM, BDC), canlı durumu, released mı, commit kuralı, hata yönetimi, seçilen ve reddedilenlerin nedeni. TS yoksa aynı tablo sana sunulur ve paket notuna yazılır. `%sap-code-review` yeni BE-79 satırıyla gerekçesiz seçilmiş yazma yolunu uyarı (WARNING) olarak işaretler; BE-24'te sıra düzeltildi (released BAPI önce, sonra OData).",
+     "neden": "Standart nesneye yazan her geliştirmenin TS'inde 6.4 \"API seçimi\" tablosu zorunlu: değerlendirilen her yol (EML, BAPI, OData, FM, BDC), canlı durumu, released mı, commit kuralı, hata yönetimi, seçilen ve reddedilenlerin nedeni. TS yoksa aynı tablo sana sunulur ve paket notuna yazılır. `%sap-code-review` yeni BE-79 satırıyla gerekçesiz seçilmiş yazma yolunu uyarı (WARNING) olarak işaretler; BE-24'te sıra düzeltildi (released BAPI önce, sonra OData). BE-08: uzun metin kalıcılığı için `SAVE_TEXT … savemode_direct = 'X'` şartı RAP inceleme maddesine de yazıldı.",
      "dosyalar": [
       "skills-sap/sap-fs-ts-docs/templates/TS-template.md",
       "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
@@ -2387,7 +2388,7 @@
      "baslik": "UI5 belge kilidi: sayfadan ayrılırken bırakma `fetch` + `keepalive` ile (FE-49, UI-SAVE-06)",
      "tur": "kural",
      "kritik": false,
-     "neden": "Belge kilidini sayfadan ayrılırken bırakan senkron istek Chromium'da sunucuya hiç gitmiyordu (navigasyonda ölçüldü); kilit ancak zaman aşımıyla düşüyordu. Yeni yöntem `fetch` + `keepalive` + CSRF + client parametresi; kilit bırakıldıktan sonra kilit bayrağı da sıfırlanmalı, yoksa aynı kullanıcının başka sekmedeki kilidi düşebilir. Sekme kapatma ayırt edilemedi; Firefox, Safari ve FLP ölçülmedi. Belge kilidi kullanan ekranlarda bırakma kodunu yeni reçeteye çevir.",
+     "neden": "Belge kilidini sayfadan ayrılırken bırakan senkron istek Chromium'da sunucuya hiç gitmiyordu (navigasyonda ölçüldü); kilit ancak zaman aşımıyla düşüyordu. Yeni yöntem `fetch` + `keepalive` + CSRF + client parametresi; kilit bırakıldıktan sonra kilit bayrağı da sıfırlanmalı, yoksa aynı kullanıcının başka sekmedeki kilidi düşebilir. Sekme kapatma ayırt edilemedi; Firefox, Safari ve FLP ölçülmedi. Belge kilidi kullanan ekranlarda bırakma kodunu yeni reçeteye çevir. Örnek kod ana modelin client parametresini 0.5.10-16'daki yardımcıyla alır (bu kalemle birlikte seçilir).",
      "dosyalar": [
       "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
       "skills-sap/sap-ui5-fiori/references/checklists.md",
@@ -2395,7 +2396,9 @@
       "memory/feedback_ui5-sayfadan-ayrilirken-senkron-xhr.md",
       "memory/MEMORY.md"
      ],
-     "gerektirir": [],
+     "gerektirir": [
+      "0.5.10-16"
+     ],
      "test": [
       "python skills-sap/sap-ui5-fiori/tests/run_tests.py",
       "python tests/run_tests.py -k recall"

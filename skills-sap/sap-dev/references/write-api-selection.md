@@ -76,8 +76,8 @@ Released RAP BO (EML) ve **released** BAPI'nin ardından, **release edilmemiş**
   bu tanıma girmez; ADIM 4'ün asıl konusudur — sınıfı ATC ile ölçülür.
 - **Update modülü** (`IN UPDATE TASK` için yazılmış; FM metadata'sında `processingType="update"`) resmi FM sayılmaz → seçilmez.
 - **RFC-enabled OLMAYAN resmi FM de ADIM 4'tedir.** Ayrı LUW / commit gerekiyorsa (RAP handler — BE-26) **Z RFC-enabled
-  sarmalayıcı** ile çağrılır; `DESTINATION 'NONE'` ile doğrudan çağrılamaz (remote-enabled değil → çalışma zamanı hatası; genel
-  ABAP davranışı, **ölçülmedi**). Örnek `SD_SCDS_CREATE` — kaynakta canlı ölçüm (bir S/4 private DEV): `processingType="normal"`
+  sarmalayıcı** ile çağrılır; `DESTINATION 'NONE'` ile doğrudan çağrılamaz (remote-enabled değil → çalışma zamanında
+  `CALL_FUNCTION_NOT_REMOTE`; ekip kaydı: `%sap-rap` → `references/behavior-impl.md` §10 tuzak (a), bu FM ile ayrıca ölçülmedi). Örnek `SD_SCDS_CREATE` — kaynakta canlı ölçüm (bir S/4 private DEV): `processingType="normal"`
   (RFC değil), `releaseState="notReleased"`; where-used'da üstünde BAPI yok; ATC sınıfı ölçülmedi.
 - FM'in `processingType` / `releaseState` değeri: `cli adt_get '{"name":"<FM>","object_type":"function","include_source":false}'` →
   yanıttaki `metadata` ham XML'inde okunur (aXet'te bu özniteliklerin döndüğü canlı **ÖLÇÜLMEDİ** — yoksa "ölçülemedi" yaz, uydurma).
