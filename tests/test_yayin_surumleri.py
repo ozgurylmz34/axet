@@ -16,7 +16,9 @@ eşlemesiz dosya FAIL'i · kalemde bildirilen dosya değişmemişse FAIL · etik
 yabancı origin reddi · `session_brief.template_bolumu` satır değişimi ve kritik hatırlatması ·
 GERÇEK yayın kolundaki üç koruma (şema sorunu · `yayinlar.json` yok · kalem listesi boş) mesajıyla
 birlikte · dolu hedefe yazılmaması · `tur=guvenlik ⇒ kritik` türetmesinin `guncelle.py` ile ayna
-olması · ÖLÇÜLEMEDİ satırlarının kalem satırıyla birlikte korunması.
+olması · ÖLÇÜLEMEDİ satırlarının kalem satırıyla birlikte korunması · README sürüm satırının
+damgalanması (ilk ve ikinci yayın, satır yok / iki satır ⇒ yayın durur, beyansız README ⇒ FAIL +
+İPUCU, içerik farkında İPUCU yok).
 
 KAPSAM — bakılmayan: gerçek `git push` (araç push etmez, yalnız komutu yazar) · gerçek GitHub ·
 `guncelle.py`'nin plan SONRASI komutları (sec/uygula/kapanis — P2'nin kendi takımı) ·
@@ -543,6 +545,7 @@ class YayinAkisiTest(YayinTemeli):
         self.assertEqual(r.returncode, 1, c)
         self.assertIn("eşlemesiz dosya (hiçbir kaleme ait değil): README.md", c)
         self.assertIn("İPUCU: README.md yalnız sürüm satırında değişti", c)
+        self.assertIn(" · 1 sorun", c, "İPUCU sorun sayısına katılmamalı")
         self.assertEqual(onceki, self.git(yayinevi, "rev-parse", "HEAD").stdout.strip(), "FAIL'e rağmen commit")
 
     def test_KONTROL_ikinci_yayinda_readme_beyanliysa_etiketle_yazilir(self):

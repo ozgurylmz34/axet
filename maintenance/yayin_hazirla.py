@@ -43,16 +43,17 @@ DISLANANLAR = ["maintenance/", "docs/agentic-connectors.md", "docs/axet-davranis
 ZORUNLU_DOSYALAR = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt",
                     "README.md", "AGENTS.md", "kur.cmd", "kur.ps1", "yeni-proje.cmd", "aXet-Kur.cmd"]
 
-# Yayın anında ÜRETİLEN / normalize edilen dosyalar: kalem-dosya eşlemesinden MUAFtırlar, çünkü
-# bakımcının elle dokunduğu bir değişiklik değil, bu aracın çıktısıdırlar. Muafiyet KAPSAM'da basılır.
+# Yayın anında ÜRETİLEN / normalize edilen dosyalar. 2026-09-20'den beri (Z17) kalem-diff kapsamına DAHİLdirler:
+# her yayında bir kaleme beyan edilirler, edilmezlerse yayın durur (bkz. `kapsam_dogrula`).
 URETILEN_DOSYALAR = ("CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json")
 YAYINLAR_YOLU = "guncelle/yayinlar.json"
 CHANGELOG_YOLU = "CHANGELOG.md"
 CI_DURUM_YOLU = "guncelle/ci-durum.json"
 # README'nin sürüm satırı yayın anında katalogdaki son etiketle yazılır (2026-09-25: public README "Sürüm: 0.3.0"
 # satırını v0.4.0'dan v0.5.8'e kadar bayat taşıdı — elle yazılan sayı hiç güncellenmedi). Satır yoksa ya da birden
-# çoksa BLOCKER: sessizce damgasız yayın çıkmaz. Kalem-diff muafiyeti SATIR bazlıdır, dosya bazlı değil
-# (`yalniz_surum_satiri_degisti`): README'nin başka bir satırı değiştiyse README yine bir kaleme ait olmalıdır.
+# çoksa BLOCKER: sessizce damgasız yayın çıkmaz. Kalem-diff MUAFİYETİ YOK: README her yayında bir kaleme beyan
+# edilir, çünkü tüketici `%guncelle` motoru kalemsiz değişen dosyayı uygulamaz. Yalnız sürüm satırı değiştiyse
+# (`yalniz_surum_satiri_degisti`) araç ne yapılacağını söyleyen bir İPUCU basar; yayın yine durur.
 README_YOLU = "README.md"
 SURUM_SATIRI = re.compile(r"^(> Sürüm: )(\S+)( · )", re.M)
 # `%guncelle`nin `once` turunu ikame edebilmesi için gereken ASGARİ takım adları. Bir yayın
@@ -847,15 +848,16 @@ def main() -> int:
         print("KALEM-DİFF KAPSAMI: ÖLÇÜLEMEDİ (hedefte önceki commit yok — ilk yayın)")
     else:
         kapsam_sorunlari = kapsam_dogrula(yayin, degisen)
+        ipucu = None
         if (any(s.endswith(f": {README_YOLU}") for s in kapsam_sorunlari)
                 and yalniz_surum_satiri_degisti(hedef)):
-            kapsam_sorunlari.append(
-                f"İPUCU: {README_YOLU} yalnız sürüm satırında değişti (bu aracın yazdığı) — onu her yayının "
-                "\"Yayın kataloğu ve CI kaydı\" kalemine ekle. Muafiyet YOK: kalemsiz değişen dosyayı tüketici "
-                "`%guncelle` motoru uygulamaz (scripts/guncelle.py 'beyansız EYLEM vakası').")
+            ipucu = (f"İPUCU: {README_YOLU} yalnız sürüm satırında değişti (bu aracın yazdığı) — onu her yayının "
+                     "yayın kaydı kalemine (\"Yayın kataloğu, README sürüm satırı ve CI kaydı\") ekle. Muafiyet YOK: "
+                     "kalemsiz değişen dosyayı tüketici `%guncelle` motoru uygulamaz "
+                     "(scripts/guncelle.py 'beyansız EYLEM vakası').")
         print(f"KALEM-DİFF KAPSAMI: {len(degisen)} değişen yol · {len(kapsam_sorunlari)} sorun")
         if kapsam_sorunlari:
-            for s in kapsam_sorunlari:
+            for s in kapsam_sorunlari + ([ipucu] if ipucu else []):
                 print("  " + s)
             git("reset", "-q", cwd=hedef)
             print("\nGit geçmişi kurulmadı (kalem eşlemesi eksik).")

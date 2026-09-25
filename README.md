@@ -171,7 +171,7 @@ aXet-Kur.cmd     çift tıkla kurulum          kur.cmd · kur.ps1  kurulum ve g�
 yeni-proje.cmd   terminalden proje kurulumu  proje-tamamla.cmd  projedeki KURULUMU-TAMAMLA'nın hedefi
 GUNCELLE.md      %guncelle adımları          guncelle/          güncelleme kataloğu (yayinlar.json), sınıf haritası, kartlar
 CHANGELOG.md     yayın notları               AGENTS.md          template reposunun bakım talimatı (projelere gitmez)
-.axetcode-denylist  aXet'in okumadığı ve yazmadığı yollar (.conn_adt, .env, secrets …)
+.axetcode-denylist  aXet'in okumadığı ve yazmadığı yollar (.conn_adt, .env, secrets; bash'te garanti değil)
 core/            çekirdek kurallar (00-temel.md) · sap/ SAP paketi
 skills/          genel skill'ler            skills-sap/   SAP skill'leri
 memory/          ekip hafızası (indeks + kayıtlar)
