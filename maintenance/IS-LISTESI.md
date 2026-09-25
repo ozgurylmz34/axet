@@ -38,7 +38,42 @@ kanıt sayılmadı. İz aracı kalibre edildi (bilinen kanaryalı `d73db46e` →
 altyapı değişikliği = ayrı açık onay. **Aynı akşam DEV_CORE port turu:** 6 yeni commit → Z113 (MSAG silme büyük
 olasılıkla çalışmıyor) · Z114 (CDS-NSDM-01) · Z115 (UI5 bootstrap + FE-45/46/47) · Z116 (sync-rules/lock) · 1 ALINMAZ.
 
-## ▶ YARIN BURADAN (gün sonu 2026-09-24 gece) — canlı doğrulama turu kalemleri kapandı, v0.5.9 yayını bekliyor
+## ▶ YARIN BURADAN (2026-09-25) — v0.5.9 YAYINDA
+
+**Bugün (ölçüldü):**
+- **v0.5.9 (Z123):** 10 kalem, 4'ü kritik (Yasak A/`AXET-SAP-0.5.1` · Z104 · Z106 · izin kuralları).
+- **Belge turu yayına dahil (kullanıcı kararı):**
+  - README "Bilinen sınırlar" kısa maddelere indi; izin ayrıntıları kelimesi kelimesine `docs/izin-kurallari.md`'ye taşındı.
+  - README "Yapı" bölümü güncel.
+- **README sürüm satırı artık otomatik (kullanıcı kararı "Numara + otomatik"):**
+  - `yayin_hazirla` her yayında satırı etiketle yazar.
+  - Satır yoksa ya da iki kez varsa yayın durur (BLOCKER).
+  - README her yayında yayın kaydı kalemine beyan edilir; muafiyet yok.
+  - Public README `0.3.0`'dan `v0.5.9`'a geçti.
+- **Akış:**
+  1. Yerel `yayin_provasi` iki tabandan TEMİZ: v0.5.8→ 84 sn, v0.1.0→ 133 sn.
+  2. Bug gate 1 (`ddad4ce`) ve bug gate 2 (`01a4e01`, 8/8 mutant) ikisi de WARNING; bulgular `01a4e01` ve `924bd8b`'de kapandı.
+  3. PR #55: CI 5/5 → squash-merge `f8b2b5e` → main CI 5/5.
+  4. `yayin_hazirla` önce public klon kopyasında prova: 0 bulgu, 67 yol / 0 sorun.
+  5. Gerçek klonda `hepsi_yesil=True`.
+  6. Public `axet-template` `1dd9f45` + `v0.5.9`: yazar/committer noreply, `git ls-remote` ikisi de `1dd9f45`.
+  7. Public CI 4/4 yeşil (`prova` bilinçli `skipped`).
+- **Yeni açık kalemler:** Z125 (`_aciklama` bayat README işaretçisi) · Z126 (worktree `.claude/` izlenmiyor, yerel gerçek-ağaç testi kırmızı).
+- **Kabul edilen bedel:** Z123 satırında.
+
+**Sırayla:**
+1. **Kullanıcıda canlı ölçüm:**
+   - Kurulum 3 adım yeni makinede (çift tık → `%guncelle` → `%yeni-proje` → KURULUMU-TAMAMLA; Z121 ⓔ listesi).
+   - Z98/Z101 yeni makine satırları.
+   - Z103 T4 yeniden (v0.5.9 ile, YENİ aXet oturumu).
+   - Z113 silme (test mesaj sınıfı adını ve paketini kullanıcı verir).
+   - Mevcut kurulumda `%guncelle` ile v0.5.9: README sürüm satırı ve 4 kritik kalem.
+2. Z115 mock koşusu → merge · Z116 sync-lock.
+3. Z105 (açılış protokolü) · Z107 (kabuk kuralı) · Z110 · Z111 · Z112 · Z125 · Z126.
+4. Z117–Z122 · Z124 kalanları.
+5. Eski sıra: Z69b · Z88 + Z89/Z92 · Z77/Z78/Z73 · Z95–Z97 · Z91 · Z99 · Z100 · Z94 · Z66④ · Z22-B/C · Z56 · Z7.
+
+## ✅ ARŞİV — YARIN BURADAN (gün sonu 2026-09-24 gece) — v0.5.9 YAYINLANDI (2026-09-25); açık adımlar yukarıya taşındı
 
 **Bugün gece (ölçüldü, hepsi `main`'de; her PR bug gate + CI 5/5):** #45 Z103 · #46 Z109+Z114 · #47 Yasak A (Z DTEL'i AI
 yaratmaz) · #48 Z113 · #49 Z108 · #50 Z106 · #51 izin kuralları (82 bash kuralı: 71 deny / 11 ask) · #52 Z104 · #53 kurulum
@@ -386,7 +421,7 @@ v0.5.2 kalemleri → taze bug gate → tam takımlar → PR → yayın. Sabah ku
 
 **Z125 ⬜ (YENİ 2026-09-25, v0.5.9 bug gate kapsam dışı bulgusu):** `config/permissions.json` `_aciklama` içinde "(bilinen sınır, README)" işaretçisi bayat — README "Bilinen sınırlar" kısaldı, izin ayrıntıları `docs/izin-kurallari.md`'ye taşındı. Aynı paragraftaki BÜYÜK/KÜÇÜK HARF duyarlılığı ölçümü (2026-09-17: `echo "RD /S x"` çalıştı) `docs/izin-kurallari.md`'de yok — README'de tek satır kaldı. Yapılacak: işaretçiyi `docs/izin-kurallari.md` yap + ölçümü belgeye ekle; `_aciklama` metni install'da global config'e taşınıyor mu ÖLÇ (taşınıyorsa kalem ister).
 
-**Z123 🔄 (YENİ 2026-09-24, v0.5.9 yayın hazırlığı; 2026-09-25 dal `rel/v059`: `ddad4ce` katalog + belge turu · `01a4e01` bug gate WARNING düzeltmeleri + README sürüm satırı otomatik):** Kullanıcı kararları (2026-09-25): belge turu v0.5.9'a DAHİL · README başındaki `Sürüm:` satırı (public'te bayat `0.3.0` duruyordu) her yayında `yayin_hazirla.py` tarafından etiketle yazılır (satır yok/2+ ⇒ BLOCKER; testle kilitli). ⚠ **Her yayında README.md "Yayın kataloğu ve CI kaydı" kalemine BEYAN EDİLİR** — muafiyet bilinçli YOK: tüketici `%guncelle` motoru kalemsiz dosyayı uygulamaz (`scripts/guncelle.py:1013-1019`); yalnız sürüm satırı değiştiyse araç İPUCU basar. Eski metin: `yayinlar.json` kalemleri: Z103 + #47 (`AXET-SAP` sürümü) · Z104 · Z106 (**davranış değişikliği**: dil denetimi deploy'a uygulanır, `$TMP` dışı pakette transport zorunlu, hedef eşleşmesi katı) · Z108 · Z109/Z114 · Z113 · izin kuralları (#51) · kurulum 3 adım + Z102 (#53) · "Yayın kataloğu ve CI kaydı" kalemi. Yayın provası PR'dan ÖNCE yerelde. Ardından belge turu (kullanıcı isteği): README "Bilinen sınırlar" kısaltılır (onaylı) · README/onboarding güncel yapıyı tarif eder.
+**Z123 ✅ v0.5.9 YAYINDA 2026-09-25 (PR #55 → private `main` `f8b2b5e` → public `axet-template` `1dd9f45` + etiket `v0.5.9`; ayrıntı en üstteki "YARIN BURADAN (2026-09-25)") (YENİ 2026-09-24, v0.5.9 yayın hazırlığı; dal `rel/v059`: `ddad4ce` katalog + belge turu · `01a4e01` bug gate 1 WARNING düzeltmeleri + README sürüm satırı otomatik · `924bd8b` bug gate 2 WARNING düzeltmeleri):** ⚠ **Kabul edilen bedel (gate 2 ölçümü):** README artık HER yayında değişir ⇒ README'yi yerelde değiştirmiş tüketici her yayında README için yargı vakası görür (ölçüldü: yerel değişiklikli `V4t`, kontrol `V1`; sürüm satırına bitişik değişiklik `V4c`); yargı vakası `_ci_tabani`'yı kapatır ⇒ o tüketicide `once` turu yerelde tam koşar. Veri kaybı yok; `yeni` seçilirse biter, `birlesik`/`yerel` seçilirse her yayında yeniden çıkar. Etkilenen kullanıcı sayısı ÖLÇÜLEMEDİ. Tetik: bir tüketiciden şikâyet ⇒ `sinif-belge-lisans` kartına tek cümle ya da README sınıfına özel kural. Kullanıcı kararları (2026-09-25): belge turu v0.5.9'a DAHİL · README başındaki `Sürüm:` satırı (public'te bayat `0.3.0` duruyordu) her yayında `yayin_hazirla.py` tarafından etiketle yazılır (satır yok/2+ ⇒ BLOCKER; testle kilitli). ⚠ **Her yayında README.md "Yayın kataloğu ve CI kaydı" kalemine BEYAN EDİLİR** — muafiyet bilinçli YOK: tüketici `%guncelle` motoru kalemsiz dosyayı uygulamaz (`scripts/guncelle.py:1013-1019`); yalnız sürüm satırı değiştiyse araç İPUCU basar. Eski metin: `yayinlar.json` kalemleri: Z103 + #47 (`AXET-SAP` sürümü) · Z104 · Z106 (**davranış değişikliği**: dil denetimi deploy'a uygulanır, `$TMP` dışı pakette transport zorunlu, hedef eşleşmesi katı) · Z108 · Z109/Z114 · Z113 · izin kuralları (#51) · kurulum 3 adım + Z102 (#53) · "Yayın kataloğu ve CI kaydı" kalemi. Yayın provası PR'dan ÖNCE yerelde. Ardından belge turu (kullanıcı isteği): README "Bilinen sınırlar" kısaltılır (onaylı) · README/onboarding güncel yapıyı tarif eder.
 
 **Z85 ✅ v0.5.7 YAYINDA ( durum ve ölçüm: en üstteki v0.5.7 planı) (YENİ 2026-09-23, kullanıcı sorusu "FS/TS/KD doküman sürecinin ne kadarı aXet'e adapte edildi" — DEV_CORE sahibi ajanın envanteri [kullanıcının `Downloads\x.txt`'i] ile aXet dosya sistemi karşılaştırıldı; ölçüm = dosya okuma + anahtar kelime araması, aXet'te canlı doküman üretimi YAPILMADI; prior-art: Z49 [skill testleri CI'da], satır ~1414 tablosu [`sap-fs-ts-docs` canlı skill listesinde görülmedi — eski ölçüm]):** Sonuç: İÇERİK büyük ölçüde taşındı (`skills-sap/sap-fs-ts-docs`: `standards/04` 1.558 satır → fs/ts/kd-authoring + traceability ≈550 satır + şablonlar ≈550 · `doc-checklist` 107 satır [kaynak 82] + ikinci kapı + bağımsız inceleme brifingi · canlı teyit turu C-1…C-5 · PDF/ekran görüntüsü script'leri + `gen_field_table`/`program_to_spec` · `check_fs_no_analysis_log` · ham Mermaid `verify_doc_html` içinde · F1 `sap-classic-abap/forms-f1-help.md` + ITF satır genişliği · intake-triage S0/S1/S2 · 112 test). EKSİK olan: **ⓐ tohum dersler** — aXet `memory/`'de doküman dersi yalnız 2 (`bagimsiz-tam-dokuman`, `spec-mutabakat-once-build`); skill içinde anahtar kelimeyle BULUNAMAYANLAR (DEV_CORE `claude/memory-seed/`): `defter-tasariminda-giris-tuketim-duzeltme-uclusu` · `rapor-dokumani-kaynak-uygulamanin-kuralini-anlatmaz` · `gocsuz-sema-degisikliginde-kilavuz-bos-diyemez` · `dokuman-turu-donmus-kod-ister-paralel-kosturma` · `alinti-onay-turu-acmaz-toren-enflasyonu` · `fs-ts-html-uretilmez-teslim-bicimi` (açık kural olarak yok) · ayrıca bakılacak `teslim-paketi-artefakttan-ayri-yasar`. ⚠ "bulunamadı" ≠ "yok": farklı sözcükle yazılmış olabilir → önce ders metni ↔ skill satır satır karşılaştırılır, sonra genericize edilip `doc-checklist.md`/ilgili authoring dosyasına madde olarak girer (+ `test_skill_structure` gerekiyorsa). **ⓑ `check_fm_signature_doc_sync.py`** taşınmadı (karşılığı yalnız TS şablonundaki "FM imzası" satırı + F1 elle doğrulama) → taşı/taşıma kararı (kullanıcı). **ⓒ tetik ölçümü** — DEV_CORE'da `post_validate` doküman kolu + JIT-recall doğru anda hatırlatıyor; aXet'te hook yok, skill yalnız description tetik ifadeleriyle/`%sap-fs-ts-docs` ile yüklenir → doğal cümlelerle ("şu raporun kılavuzunu çıkar", "bu programı dokümante et") skill'in kendiliğinden yüklenip yüklenmediği CANLI ölçülür (lab projesi, motor izi = log/DB araç çağrısı, model beyanı kanıt değil; kontrol grubu: açık tetik ifadesi). Yüklenmiyorsa description genişletme / `core/sap/00-sap.md`'ye tek satır yönlendirme (davranış yüzeyi → onay). Z77 (recall) ile ilişkili ama ayrı. Bilerek taşınmayan (proje özel, doğru): `check_doc_artifact_md5`, `lider-is-kurali-sessizce-gomulmez`, paket emsalleri. **Tahmini süre (tahmin, ölçüm değil):** ⓐ 1,5-2 sa (7 ders karşılaştırma + yazım + test + bug gate) · ⓑ karar 10 dk, taşınırsa +1 sa · ⓒ 45 dk-1 sa · PR/CI + yayın kalemi ~45 dk ⇒ toplam ~3-4,5 sa.
 
