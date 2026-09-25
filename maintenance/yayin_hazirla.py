@@ -235,7 +235,10 @@ def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[
         except UnicodeDecodeError:
             bulgular.append((BLOCKER, f"OKUNAMADI (utf-8 değil, taranmadı): {y}"))
             continue
-        for no, satir in enumerate(metin.splitlines(), 1):
+        # split("\n"), splitlines() DEĞİL: splitlines U+2028/U+0085/\f gibi ayraçlarda da böler, git bölmez ⇒
+        # raporlanan `dosya:satır` git'teki satırdan kayardı (Z133). Tespit etkilenmez, yalnız numara.
+        for no, satir in enumerate(metin.split("\n"), 1):
+            satir = satir.removesuffix("\r")
             for siddet, ad, desen, bayrak in desenler:
                 if re.search(desen, satir, bayrak):
                     bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))

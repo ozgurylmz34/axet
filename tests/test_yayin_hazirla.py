@@ -83,6 +83,20 @@ class YayinHazirlaTest(GeciciTest):
                 # bulgu satırı biçimi: "<sınıf>: <yol>:<no>: <satır>" — KAPSAM listesindeki ada değil buna bakılır
                 self.assertIn(f"{sinif}: docs/ornek.md:1:", c)
 
+    # --- Z133: satır numarası git'in satırıdır (Unicode ayraçlar satır bölmez) -----------------------------
+    def test_unicode_ayrac_satir_numarasini_kaydirmaz(self):
+        sizinti = SIZINTI_ORNEKLERI[1][1]   # "iç repo adı"
+        for ad, ayrac in [("U+2028", " "), ("U+0085", "\x85"), ("form feed", "\x0c")]:
+            with self.subTest(ayrac=ad):
+                rc, c = self.tara(self.depo(**{"docs__a.md": f"bir{ayrac}iki\n{sizinti}\n"}))
+                self.assertEqual(rc, 1, c)
+                self.assertIn("iç repo adı: docs/a.md:2:", c)   # git'te 2. satır; splitlines 3 derdi
+
+    def test_KONTROL_ayracsiz_dosyada_satir_numarasi(self):
+        rc, c = self.tara(self.depo(**{"docs__a.md": f"bir\niki\n{SIZINTI_ORNEKLERI[1][1]}\n"}))
+        self.assertEqual(rc, 1, c)
+        self.assertIn("iç repo adı: docs/a.md:3:", c)
+
     # --- dışlanan dosyaya atıf: WARNING, çıkışı DEĞİŞTİRMEZ -----------------------------------------------
     def test_dislanan_dosyaya_markdown_atifi_warning(self):
         satir = "Ayrıntı: [bakım notu](" + "maintenance/IS-LISTESI.md)\n"

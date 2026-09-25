@@ -2250,11 +2250,12 @@
      "baslik": "Bakımcı yayın taraması: kurum ve müşteri ad listesi koddan çıktı, yerel listeden okunuyor",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Yalnız bakımcıyı ilgilendirir; kullanıcı klonunda davranış değişmez. Yayın aracının sızıntı taraması, public depoya girmemesi gereken adları kendi kodunda yazılı tutuyordu — yani adı yakalayan desen adın kendisini yayınlıyordu. Artık bu adlar git'e girmeyen bir yerel listeden (ya da CI gizli değişkeninden) okunur. Liste yoksa tarama bunu açıkça \"ölçülemedi\" diye yazar ve gerçek yayın başlamaz; liste git'te izleniyorsa ya da geçersiz bir satır içeriyorsa araç durur ve deseni ekrana basmaz. Bu dosyadaki testler kullanıcı klonunda bakımcı klasörü olmadığı için atlanır.",
+     "neden": "Yalnız bakımcıyı ilgilendirir; kullanıcı klonunda davranış değişmez. Yayın aracının sızıntı taraması, public depoya girmemesi gereken adları kendi kodunda yazılı tutuyordu — yani adı yakalayan desen adın kendisini yayınlıyordu. Artık bu adlar git'e girmeyen bir yerel listeden (ya da CI gizli değişkeninden) okunur. Liste yoksa tarama bunu açıkça \"ölçülemedi\" diye yazar ve gerçek yayın başlamaz; liste git'te izleniyorsa ya da geçersiz bir satır içeriyorsa araç durur ve deseni ekrana basmaz. Bu dosyadaki testler kullanıcı klonunda bakımcı klasörü olmadığı için atlanır. CI'daki aynı tarama listeyi depo gizli değişkeninden okur. Ayrıca tarama raporundaki satır numarası artık git'teki satırla aynı: bazı özel Unicode ayraçları içeren dosyalarda numara kayıyordu (tespit etkilenmiyordu).",
      "dosyalar": [
       ".gitignore",
       "tests/test_yayin_hazirla.py",
-      "tests/test_yayin_surumleri.py"
+      "tests/test_yayin_surumleri.py",
+      ".github/workflows/testler.yml"
      ],
      "gerektirir": [],
      "test": [
