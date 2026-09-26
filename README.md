@@ -70,7 +70,8 @@ Sonra **proje klasöründeki `KURULUMU-TAMAMLA`'ya çift tıkla** (aXet bu dosya
    proje ayarlarının onayı sorulur, kontrol (`doctor`) koşar ve aXet'i projede açmayı önerir — ilk satırda
    `proje: <ad>` görünmeli.
 
-Parola dosyada düz metindir; `conn/` git'e girmez ve aXet ajanına kapalıdır. Sistem değiştirmek için aXet'te
+Parola dosyada düz metindir; `conn/` altındaki bağlantı dosyaları git'e girmez (yalnız `conn/README.md` izlenir, onun
+commit'i de sende — aXet `conn/` altına dokunmaz) ve klasör aXet ajanına kapalıdır. Sistem değiştirmek için aXet'te
 `%sistem` (ya da "QA'ya geç"). Var olan projeyi şablona getirmek için `%guncelle-proje`; bitince yine
 `KURULUMU-TAMAMLA`'ya çift tıkla (ayar onayını o sorar).
 
