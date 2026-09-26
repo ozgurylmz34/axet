@@ -131,27 +131,40 @@ def komut_indir(a) -> int:
         return 2
     webapp, atilan, uyarilar = K.kaynak_kur(dist)
     uyg_id = K.uygulama_kimligi(webapp) or bsp.lower()
-    try:
-        # OSError'da klasore_yaz kendini geri alır: `webapp/` hiç yaratılmamış hâle döner → yeniden koşum "zaten var" demez.
-        K.klasore_yaz(app / "webapp", webapp)
-    except K.GuvensizYolHatasi as exc:
-        print(f"[FAIL] {bsp} kaynağı yazılmadı — güvensiz dosya adı: {exc}. Hiçbir dosya yazılmadı. (exit 2)")
-        return 2
-    except OSError as exc:
-        print(f"[FAIL] {bsp} kaynağı yazılamadı ({type(exc).__name__}: {exc}). Yazılanlar geri alındı, "
-              f"{app / 'webapp'} yaratılmadı; sebebi (izin / disk / yol uzunluğu) giderip yeniden koşun. (exit 2)")
-        return 2
+    # Bu koşumun YARATTIĞI her şey kaydedilir; herhangi bir yazım adımı düşerse (webapp · iskelet · .canli) HEPSİ geri
+    # alınır — yarım kalan iskelet "webapp zaten var" / "önce indir" çıkmazı üretmesin. Önceden var olan dokunulmaz.
+    canli = app / K.ANLIK_KLASOR
+    canli_vardi = canli.exists()
+    yaratilan = [app / "webapp"]  # webapp başta yoktu (yukarıda denetlendi)
     olusan = ["webapp/"]
-    for ad, icerik in (("package.json", json.dumps({"name": bsp.lower().replace("_", "-"), **PACKAGE_JSON},
-                                                   ensure_ascii=False, indent=2) + "\n"),
-                       ("ui5.yaml", ui5_yaml(uyg_id)),
-                       ("ui5-deploy.yaml", ui5_deploy_yaml(uyg_id, url, client, {**bilgi, "Name": bilgi.get("Name") or bsp})),
-                       (".gitignore", GITIGNORE)):
-        if not (app / ad).exists():
-            (app / ad).write_text(icerik, encoding="utf-8", newline="\n")
-            olusan.append(ad)
-    K.anlik_yaz(app, dist, {"bsp": bsp, "yol": yol, "paket": bilgi.get("Package", ""),
-                            "aciklama": bilgi.get("Description", "")})
+    try:
+        K.klasore_yaz(app / "webapp", webapp)
+        for ad, icerik in (("package.json", json.dumps({"name": bsp.lower().replace("_", "-"), **PACKAGE_JSON},
+                                                       ensure_ascii=False, indent=2) + "\n"),
+                           ("ui5.yaml", ui5_yaml(uyg_id)),
+                           ("ui5-deploy.yaml", ui5_deploy_yaml(uyg_id, url, client,
+                                                               {**bilgi, "Name": bilgi.get("Name") or bsp})),
+                           (".gitignore", GITIGNORE)):
+            if not (app / ad).exists():
+                yaratilan.append(app / ad)
+                (app / ad).write_text(icerik, encoding="utf-8", newline="\n")
+                olusan.append(ad)
+        if not canli_vardi:
+            yaratilan.append(canli)
+        K.anlik_yaz(app, dist, {"bsp": bsp, "yol": yol, "paket": bilgi.get("Package", ""),
+                                "aciklama": bilgi.get("Description", "")})
+    except (K.GuvensizYolHatasi, OSError) as exc:
+        neden = ("güvensiz dosya adı" if isinstance(exc, K.GuvensizYolHatasi)
+                 else f"yazılamadı ({type(exc).__name__})")
+        kalan = K.yollari_kaldir(yaratilan)  # geri alma ÖLÇÜLÜR — başarı beyan edilmez
+        adlar = ", ".join(p.name + ("/" if p.name in ("webapp", K.ANLIK_KLASOR) else "") for p in yaratilan)
+        if kalan:
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları GERİ ALINAMADI — kalan {len(kalan)} yol: "
+                  f"{kalan[:10]}{' …' if len(kalan) > 10 else ''} — elle silin, sonra yeniden koşun. (exit 2)")
+        else:
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları geri alındı ({adlar}); sebebi (izin / disk / "
+                  "yol uzunluğu) giderip yeniden koşun. (exit 2)")
+        return 2
     print(f"[OK] {bsp} indirildi ({yol}): canlı {len(dist)} dosya → kaynak {len(webapp)} dosya, "
           f"atılan build ürünü {len(atilan)}. Paket={bilgi.get('Package') or '?'}")
     print(f"  yazılan: {', '.join(olusan)} · canlı anlık görüntü: {K.ANLIK_KLASOR}/ (git'e girmez)")
@@ -164,46 +177,79 @@ def komut_indir(a) -> int:
     return 0
 
 
+def _eslik_kapsami(harita: str) -> str:
+    """`eslik` KAPSAM satırı — her çıkışta (EŞLİK anında da) basılır: sıfır bulgu, bakılmayan yüzeyde temizlik DEĞİLDİR."""
+    return ("KAPSAM: bakılan — değiştirilmemiş kaynaktan build (dist/) ↔ " + K.ANLIK_KLASOR + "/ canlı anlık görüntüsü, "
+            "tüm dosyalar (preload modül modül · metin satır sonu normalize · ikili ham bayt) + kaynak haritası sondası "
+            f"({harita}). BAKILMAYANLAR: anlık görüntüden SONRA canlıdaki değişiklik (`drift`) · TS / Fiori Elements "
+            "özgün kaynağı (harita yoksa transpile ayrımı ölçülemez) · `.map` dışında iz bırakmayan dönüşüm · sunucu "
+            "tarafı (OData servisi, FLP kataloğu, rol).")
+
+
 def komut_eslik(a) -> int:
     app = Path(a.app)
     anlik = K.anlik_oku(app)
     if anlik is None:
         print(f"[FAIL] {app}/{K.ANLIK_KLASOR} yok — önce `indir` (canlı anlık görüntü olmadan eşlik ölçülemez) (exit 2)")
+        print(_eslik_kapsami("ÖLÇÜLEMEDİ — anlık görüntü yok"))
         return 2
     canli, _ = anlik
+    # Üçüncü şart — kaynak haritası sondası (build'den bağımsız, canlı anlık görüntü üzerinde): dosyalar eşit olsa bile
+    # `-dbg` bir dönüşüm çıktısıysa geri kurulan kaynak özgün DEĞİLDİR.
+    sapma, bakilan = K.harita_sondasi(canli)
+    harita = f"{bakilan} harita, {len(sapma)} sapma"
+    for s_ in sapma[:10]:
+        print(f"  [KAYNAK HARİTASI SAPMASI] {s_}")
+    if len(sapma) > 10:
+        print(f"  … +{len(sapma) - 10} sapma")
     if not a.no_build:
         import deploy_ui as D
         print(f"  build: {BUILD_KOMUTU} …")
         rc, out = D.run(BUILD_KOMUTU, app, os.environ.copy())
         if rc != 0:
             print(f"[FAIL] build başarısız rc={rc}: {out.strip()[-400:]} (exit 1)")
+            print(_eslik_kapsami(harita + " · build ÖLÇÜLEMEDİ"))
             return 1
     dist_kok = app / "dist"
     if not dist_kok.is_dir():
         print("[FAIL] dist/ yok — build et (exit 2)")
+        print(_eslik_kapsami(harita + " · dist ÖLÇÜLEMEDİ"))
         return 2
     import deploy_ui as D
     k = K.kume_karsilastir(K.klasor_oku(dist_kok), canli, D.preload_karsilastir)
     print(f"  dist ↔ canlı anlık görüntü: {K.ozet(k)}")
-    if K.kume_esit_mi(k):
-        print(f"[OK] EŞLİK: değiştirilmemiş kaynaktan build == canlı ({len(k['esit'])}/{len(k['esit'])}). "
-              "Kaynak düzenlemeye hazır.")
+    if K.kume_esit_mi(k) and not sapma:
+        print(f"[OK] EŞLİK: değiştirilmemiş kaynaktan build == canlı ({len(k['esit'])}/{len(k['esit'])}) ve kaynak "
+              f"haritaları `-dbg` kaynağını gösteriyor ({bakilan}). Kaynak düzenlemeye hazır.")
+        print(_eslik_kapsami(harita))
         return 0
-    if k["satir_sonu"] and not (k["farkli"] or k["yalniz_a"] or k["yalniz_b"]):
+    if K.kume_esit_mi(k):
+        print(f"[FAIL] EŞLİK YOK — build == canlı AMA kaynak haritası sapması var ({len(sapma)}): geri kurulan `-dbg` "
+              "özgün kaynak değil (TypeScript / build öncesi dönüşüm / başka araç). Düzenleme YAPILMAZ; kaynağı "
+              "kullanıcıdan iste. (exit 1)")
+    elif k["satir_sonu"] and not (k["farkli"] or k["yalniz_a"] or k["yalniz_b"]) and not sapma:
         print("[FAIL] fark YALNIZ preload'daki kaçışlı satır sonu — webapp metin dosyaları CRLF mi? LF'e çevir, tekrar "
               "ölç. (exit 1)")
-        return 1
-    print("[FAIL] EŞLİK YOK — geri kurulan kaynak canlıyı üretmiyor. Düzenleme YAPILMAZ; farkları kullanıcıya göster "
-          "(TS / özel build / eksik dosya olabilir). (exit 1)")
+    else:
+        print("[FAIL] EŞLİK YOK — geri kurulan kaynak canlıyı üretmiyor"
+              + (f" ve kaynak haritası sapması var ({len(sapma)})" if sapma else "")
+              + ". Düzenleme YAPILMAZ; farkları kullanıcıya göster (TS / özel build / eksik dosya olabilir). (exit 1)")
+    print(_eslik_kapsami(harita))
     return 1
 
 
 def komut_drift(a) -> int:
+    kapsam = ("KAPSAM: bakılan — şimdiki canlı BSP dosyaları (liste + içerik; metin satır sonu normalize, ikili ham) ↔ "
+              f"{K.ANLIK_KLASOR}/ anlık görüntüsü. BAKILMAYANLAR: yerel kaynak / dist (`eslik`) · kaynak haritası "
+              "sondası (`eslik`) · sunucu tarafı (OData servisi, FLP kataloğu, rol) · canlıya anlık görüntüden önce "
+              "yapılmış değişiklik.")
     kimlik = _kimlik()
     if not kimlik:
+        print(kapsam.replace("KAPSAM:", "KAPSAM (ÖLÇÜLEMEDİ — kimlik yok):", 1))
         return 2
     durum, notu, _ = K.drift_olc(Path(a.app), kimlik, a.ignore_cert)
     print(f"  [{durum}] {notu}")
+    print(kapsam if durum in ("AYNI", "DEGISTI") else kapsam.replace("KAPSAM:", f"KAPSAM ({durum} — ölçüm yok):", 1))
     return {"AYNI": 0, "DEGISTI": 1}.get(durum, 2)
 
 

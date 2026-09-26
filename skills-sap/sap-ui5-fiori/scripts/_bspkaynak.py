@@ -22,6 +22,7 @@ KİMLİK: `_bspnet.env_kimlik()` (FIORI_TOOLS_USER / FIORI_TOOLS_PASSWORD) — d
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
 import json
 import re
@@ -37,7 +38,15 @@ ODATA_REPO = "/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('{bsp}')"
 ADT_FILESTORE = "/sap/bc/adt/filestore/ui5-bsp/objects/{oge}/content"
 ATOM = "{http://www.w3.org/2005/Atom}"
 METIN_UZANTI = {".js", ".xml", ".json", ".properties", ".html", ".htm", ".css", ".txt", ".md", ".yaml", ".yml", ".csv"}
-_DBG = re.compile(r"^(?P<ad>.+)-dbg(?P<ek>\.controller)?\.js$")
+# `@ui5/builder` (4.3.2) `lib/processors/minifier.js`: `debugFileRegex =
+# /((?:\.view|\.fragment|\.controller|\.designtime|\.support)?\.js)$/` ve `resourcePath.replace(debugFileRegex, "-dbg$1")`
+# → `-dbg` bu sonek grubunun ÖNÜNE girer (`Main.view.js` → `Main-dbg.view.js`). `_DBG` onun birebir TERSİ,
+# `_DBG_ILERI` builder'ın kendisi (harita sondasında beklenen `-dbg` adını üretmek için).
+_DBG_SONEKLER = r"\.view|\.fragment|\.controller|\.designtime|\.support"
+_DBG = re.compile(rf"^(?P<ad>.+)-dbg(?P<ek>{_DBG_SONEKLER})?\.js$")
+_DBG_ILERI = re.compile(rf"((?:{_DBG_SONEKLER})?\.js)$")
+# builder `minifier.js` `sourceMappingUrlPattern` ile aynı biçim (dosya sonunda referans satırı).
+_KAYNAK_HARITASI_REF = re.compile(rb"//# sourceMappingURL=\S+\s*$")
 ANLIK_KLASOR = ".canli"          # uygulama klasöründe canlı anlık görüntü (git'e girmez)
 ANLIK_BILGI = "bilgi.json"
 
@@ -52,17 +61,30 @@ class GuvensizYolHatasi(IndirmeHatasi):
 
 
 _R_SURUCU = re.compile(r"^[A-Za-z]:")
+# Windows aygıt adları: uzantılı hâlleri de (`AUX.json`, `nul.txt`) dosya DEĞİL aygıttır — yazım hata vermeden aygıta
+# gider ve dosya kaybolur (ölçüldü: `klasore_yaz(t, {'a/NUL': …})` hata vermedi, dosya yoktu). Üst simge rakamlı
+# COM/LPT de Windows'ta aygıttır.
+_AYGIT_ADLARI = ({"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+                 | {f"{on}{r}" for on in ("COM", "LPT") for r in (*"123456789", "¹", "²", "³")})
+
+
+def _aygit_adi_mi(segment: str) -> bool:
+    """Segmentin ilk noktaya kadarki kökü (boşluk kırpılmış, harfe duyarsız) bir Windows aygıt adı mı?"""
+    return segment.split(".", 1)[0].strip().upper() in _AYGIT_ADLARI
 
 
 def yol_guvenli_mi(rel: str) -> bool:
     """Metin kuralı (diske bakmaz): göreli, `..` segmentsiz, sürücü harfsiz, `:` içermeyen (NTFS akışı) ad mı?
     Sonu boşluk/nokta ile biten segment (`.` hariç) de güvensizdir: Windows bunları kırpar (`.. ` → `..`), yani
     aynı ad Windows'ta kök dışına, POSIX'te kök içine düşer (ölçüldü: `a/.. /.. /x.js` resolve'dan geçti, yazımda
-    `a/f.js` yazıldıktan sonra OSError verdi) — platforma göre anlamı değişen ad fail-closed reddedilir."""
+    `a/f.js` yazıldıktan sonra OSError verdi) — platforma göre anlamı değişen ad fail-closed reddedilir.
+    Windows aygıt adı olan segment (`CON`, `NUL`, `AUX.json`, `lpt1.txt` … harfe duyarsız, her segmentte) de
+    güvensizdir — POSIX'te sıradan dosya, Windows'ta aygıt: yine platforma göre anlamı değişir."""
     if not rel or rel.startswith(("/", "\\")) or _R_SURUCU.match(rel) or ":" in rel:
         return False
     segmentler = rel.replace("\\", "/").split("/")
-    return ".." not in segmentler and all(s == "." or s == s.rstrip(" .") for s in segmentler)
+    return (".." not in segmentler and all(s == "." or s == s.rstrip(" .") for s in segmentler)
+            and not any(_aygit_adi_mi(s) for s in segmentler))
 
 
 def guvenli_hedef(kok: Path, rel: str) -> Path:
@@ -177,6 +199,58 @@ def lf(b: bytes) -> bytes:
     return b.replace(b"\r\n", b"\n")
 
 
+def dbg_adi(rel: str) -> str:
+    """Küçültülmüş `a/Main.view.js` → builder'ın ürettiği `-dbg` ADI (`Main-dbg.view.js`; yalnız dosya adı)."""
+    return _DBG_ILERI.sub(r"-dbg\1", rel.rpartition("/")[2])
+
+
+def harita_sondasi(dosyalar: dict) -> tuple[list[str], int]:
+    """Canlı dosyalardaki kaynak haritaları → (sapmalar, bakılan harita sayısı). Boş sapma = beklenen biçim.
+
+    Neden: eşlik kapısı build çıktısını kıyaslar; `-dbg.js` bir DÖNÜŞÜM çıktısıysa (TypeScript vb.) ondan yeniden
+    build de aynı çıktıyı üretir ⇒ dosyalar EŞİT çıkar ama geri kurulan dosya özgün kaynak değildir. Ayırt edici iz
+    haritadadır (`@ui5/builder` 4.x minifier): düz JS build'inde `X.js.map` `sources` alanı YALNIZ `X-dbg.js`'i
+    gösterir ve `-dbg` dosyasının kendi haritası YOKTUR; girdi build'den önce dönüştürülmüşse builder `-dbg`'e de
+    harita yazar ve `sources` özgün dosyayı (`X.ts` …) gösterir. Sapmalar (hepsi fail-closed):
+      · `X.js.map` okunamıyor (JSON değil / `sources` yok) · `sources` != [`X-dbg.js`]
+      · `-dbg` dosyasının kendi haritası var
+      · küçültülmüş `X.js` + `X-dbg.js` çifti var ama `X.js.map` YOK — 4.x builder her küçültmede harita yazar; canlı
+        başka bir araçla build edilmiş demektir ve transpile ayrımı ölçülemez (zaten bizim build'imiz haritayı
+        üreteceği için tam liste de eşit çıkmaz — iki kural aynı yöne bakar).
+      · `-dbg` içeriği `//# sourceMappingURL=` ile bitiyor — builder girdideki referansı küçültmeden ÖNCE söker;
+        yalnız girdi haritası okunmadığında (`useInputSourceMaps: false`) dış referansı `-dbg`'e GERİ ekler ⇒ girdi
+        bir dönüşüm çıktısıdır. (Sınır: aynı seçenekle SATIR İÇİ `data:` haritası geri eklenmez — iz kalmaz.)
+    `Component-preload.js.map` bundle haritasıdır, burada bakılmaz (preload modül modül kıyaslanır)."""
+    sapma, bakilan = [], 0
+    for rel in sorted(dosyalar):
+        ad = rel.rpartition("/")[2]
+        if not ad.endswith(".js.map") or ad == B.PRELOAD + ".map":
+            continue
+        bakilan += 1
+        js = rel[:-len(".map")]
+        if _DBG.match(js.rpartition("/")[2]):
+            sapma.append(f"{rel}: -dbg dosyasının KENDİ haritası var (girdi build öncesi dönüştürülmüş — TS?)")
+            continue
+        try:
+            kaynaklar = json.loads(dosyalar[rel].decode("utf-8-sig"))["sources"]
+        except (ValueError, UnicodeDecodeError, AttributeError, KeyError, TypeError):
+            sapma.append(f"{rel}: harita okunamadı (JSON değil ya da `sources` yok)")
+            continue
+        if kaynaklar != [dbg_adi(js)]:
+            sapma.append(f"{rel}: sources={kaynaklar!r} — beklenen [{dbg_adi(js)!r}] (TS / başka kaynak)")
+    for rel in sorted(dosyalar):
+        dizin, _, ad = rel.rpartition("/")
+        m = _DBG.match(ad)
+        if not m:
+            continue
+        if _KAYNAK_HARITASI_REF.search(dosyalar[rel][-512:]):
+            sapma.append(f"{rel}: `-dbg` içeriği sourceMappingURL taşıyor (girdi build öncesi dönüştürülmüş — TS?)")
+        kucuk = (dizin + "/" if dizin else "") + f"{m['ad']}{m['ek'] or ''}.js"
+        if kucuk in dosyalar and kucuk + ".map" not in dosyalar:
+            sapma.append(f"{kucuk}.map yok ({ad} çifti var) — başka build aracı; transpile ayrımı ölçülemez")
+    return sapma, bakilan
+
+
 def kaynak_kur(dist: dict) -> tuple[dict, list, list]:
     """Derlenmiş dist → (webapp {rel: bayt}, atılan build ürünleri, uyarılar). Metin dosyaları LF'e indirilir."""
     dbg_karsiligi = set()
@@ -199,16 +273,11 @@ def kaynak_kur(dist: dict) -> tuple[dict, list, list]:
     if kucuk_js:
         uyari.append(f"{len(kucuk_js)} .js dosyasının -dbg karşılığı yok (ör. {kucuk_js[0]}) — küçültülmüş hâli kaynak "
                      "diye alındı; eşlik ölçümü bunu doğrular, düzenleme okunabilir olmayabilir")
-    haritalar = [r for r in dist if r.endswith(".js.map")]
-    for r in haritalar:
-        try:
-            kaynaklar = json.loads(dist[r]).get("sources") or []
-        except ValueError:
-            continue
-        if any(str(k).endswith(".ts") for k in kaynaklar):
-            uyari.append(f"{r} TypeScript kaynağına işaret ediyor — sunucuda TS kaynağı YOK; geri kurulan JS "
-                         "özgün kaynak DEĞİLDİR (düzenlemeden önce kullanıcıya sor)")
-            break
+    sapma, _bakilan = harita_sondasi(dist)
+    if sapma:
+        uyari.append(f"kaynak haritası sapması ({len(sapma)}): {sapma[0]} — geri kurulan JS özgün kaynak "
+                     "OLMAYABİLİR (TypeScript / build öncesi dönüşüm); `eslik` bu durumda EŞLİK YOK der, düzenleme "
+                     "yapılmaz (kullanıcıya sor)")
     if not any(Path(r).name == "manifest.json" for r in dist):
         uyari.append("manifest.json yok — UI5 uygulaması olmayabilir")
     return webapp, atilan, uyari
@@ -225,9 +294,16 @@ def uygulama_kimligi(webapp: dict) -> str:
         return ""
 
 
+def icerik_ozeti(rel: str, b: bytes) -> str:
+    """Kıyas özeti: METİN uzantısında satır sonu normalize (`_bspnet.sha` — BSP metni CRLF saklayabilir), İKİLİ dosyada
+    (png, font …) HAM bayt: ikili içerikteki
+    CR LF baytları veridir, normalize edilirse farklı dosya eşit görünür."""
+    return B.sha(b) if Path(rel).suffix.lower() in METIN_UZANTI else hashlib.sha256(b).hexdigest()
+
+
 def kume_karsilastir(a: dict, b: dict, preload_karsilastir=None) -> dict:
     """İki dosya kümesi → {"esit": [...], "farkli": [...], "yalniz_a": [...], "yalniz_b": [...], "satir_sonu": [...]}.
-    Satır sonu normalize (`_bspnet.sha`). `Component-preload.js` verilen `preload_karsilastir` ile modül modül
+    Metin dosyasında satır sonu normalize, ikili dosyada ham bayt (`icerik_ozeti`). `Component-preload.js` verilen `preload_karsilastir` ile modül modül
     kıyaslanır: yalnız kaçışlı satır sonu farkıysa `satir_sonu` kovasına düşer (eşit SAYILMAZ, ayrı raporlanır)."""
     sonuc = {"esit": [], "farkli": [], "yalniz_a": [], "yalniz_b": [], "satir_sonu": []}
     for rel in sorted(set(a) | set(b)):
@@ -235,7 +311,7 @@ def kume_karsilastir(a: dict, b: dict, preload_karsilastir=None) -> dict:
             sonuc["yalniz_a"].append(rel)
         elif rel not in a:
             sonuc["yalniz_b"].append(rel)
-        elif B.sha(a[rel]) == B.sha(b[rel]):
+        elif icerik_ozeti(rel, a[rel]) == icerik_ozeti(rel, b[rel]):
             sonuc["esit"].append(rel)
         elif preload_karsilastir and Path(rel).name == B.PRELOAD:
             sinif, _ = preload_karsilastir(a[rel], b[rel])
@@ -268,16 +344,44 @@ def klasore_yaz(kok: Path, dosyalar: dict) -> None:
             hedef.parent.mkdir(parents=True, exist_ok=True)
             yazilan.append((hedef, hedef.read_bytes() if hedef.is_file() else None))
             hedef.write_bytes(icerik)
-    except OSError:
-        _yazimi_geri_al(kok, kok_vardi, onceki_klasorler, yazilan)
+    except OSError as exc:
+        # Geri alma başarısı BEYAN edilmez, ÖLÇÜLÜR: kalanlar hataya iliştirilir (boş liste = temiz).
+        exc.kalanlar = _yazimi_geri_al(kok, kok_vardi, onceki_klasorler, yazilan)
         raise
 
 
-def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: list) -> None:
-    """`klasore_yaz` geri alımı — kendi hatası asıl hatayı gölgelemesin diye her adım sessizce denenir."""
+def _agac_sil(p: Path) -> None:
+    """Klasörü siler; hata sessizdir — kalan varsa çağıran ÖLÇER ve raporlar (açık dosya tutamacı `rmtree`'yi yarım
+    bırakabilir: ölçüldü, `webapp/a.js` kaldı). Testte tutamaç benzetimi bu fonksiyon üzerinden yapılır."""
+    shutil.rmtree(p, ignore_errors=True)
+
+
+def yollari_kaldir(yollar) -> list[str]:
+    """Verilen dosya/klasörleri kaldırmayı DENER, sonra KALANLARI ölçer → kalan yolların listesi (boş = temiz).
+    Klasörde kalan dosyalar tek tek listelenir; yalnız boş klasör kaldıysa klasörün kendisi."""
+    yollar = [Path(p) for p in yollar]
+    for p in yollar:
+        try:
+            if p.is_dir() and not p.is_symlink():
+                _agac_sil(p)
+            elif p.exists() or p.is_symlink():
+                p.unlink()
+        except OSError:
+            pass
+    kalan: list[str] = []
+    for p in yollar:
+        if p.is_dir():
+            kalan += [str(q) for q in sorted(p.rglob("*")) if not q.is_dir()] or [str(p)]
+        elif p.exists() or p.is_symlink():
+            kalan.append(str(p))
+    return kalan
+
+
+def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: list) -> list[str]:
+    """`klasore_yaz` geri alımı → geri alınamayan yollar (boş = temiz). Kendi hatası asıl hatayı gölgelemesin diye her
+    adım sessizce denenir; sonuç ÖLÇÜLEREK döner."""
     if not kok_vardi:
-        shutil.rmtree(kok, ignore_errors=True)
-        return
+        return yollari_kaldir([kok])
     for hedef, eski in reversed(yazilan):
         try:
             hedef.unlink(missing_ok=True) if eski is None else hedef.write_bytes(eski)
@@ -290,6 +394,13 @@ def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: 
             p.rmdir()
         except OSError:
             pass
+    def _geri_alinamadi(h: Path, eski: bytes | None) -> bool:
+        try:
+            return h.exists() if eski is None else (not h.is_file() or h.read_bytes() != eski)
+        except OSError:
+            return True
+    kalan = [str(h) for h, eski in yazilan if _geri_alinamadi(h, eski)]
+    return kalan + [str(p) for p in yeni if p.exists()]
 
 
 def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
@@ -304,7 +415,7 @@ def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
             p.unlink() if p.is_file() else p.rmdir()
     klasore_yaz(dist, dosyalar)
     (kok / ANLIK_BILGI).write_text(json.dumps(
-        {**bilgi, "dosyalar": {r: B.sha(v)[:16] for r, v in sorted(dosyalar.items())}},
+        {**bilgi, "dosyalar": {r: icerik_ozeti(r, v)[:16] for r, v in sorted(dosyalar.items())}},
         ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return kok
 
