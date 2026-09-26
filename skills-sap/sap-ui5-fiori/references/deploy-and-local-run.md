@@ -82,6 +82,9 @@ builder:
   `$tmp` dahil değil) "deploy bunu REDDEDER" **UYARI**sı basar — ihlal saymaz, çıkış kodunu değiştirmez.
 - `null`, `~` ve yalnız yorum (`transport: # TODO`) YAML'da **boş** değerdir; script de öyle okur (tırnaklı `'null'` dizedir).
 - Hedef URL alias değil kanonik host (aksi hâlde başka sistemin repository'sine gider).
+- ⚠ `builder.resources.excludes` şablondur, kural değildir: canlıda `localService/**` (ya da başka dışlanan klasör)
+  taşıyan bir uygulamada dışlama dist'i canlı listeden eksik bırakır. Kaynağı SAP'den indirilen uygulamada dışlama
+  konmaz — §7.2.
 - Validation'daki **"application name must be prefixed with [ZZ1_]"** kaynak sistemde **yumuşak uyarıydı**: `Z…` adlı
   uygulamalar deploy oldu. Başka sistemde davranış DOĞRULANMADI.
 
@@ -98,8 +101,8 @@ python $S deploy  <app> --user-ok "<kullanıcının sohbetteki onay cümlesi>" \
 | Alt komut | Ne yapar | Ne yapmaz |
 |---|---|---|
 | `prepare` | `ui5-deploy.yaml` `deploy-to-abap` görevi, BSP adı (`Z`, ≤ 15), yer tutucu kalmış mı, URL/client/paket (yalnız boşluk da boş); `$TMP` dışı pakette boş transport **WARN** ("deploy reddeder"); `webapp/` ve `dist/`'te gizli/stray dosya, `.svg`/`.woff` **ERROR**, `.woff2/.ttf/.otf/.eot` **WARN** (exclude desenleri düşülür); `npm run build` (`--no-build` ile atlanır ve `dist` bayat mı bakılır); dist `Component-preload.js` sha256; koşulmamış deploy komutunu basar | Ağa çıkmaz, deploy etmez, transport'un açık/sahibi olduğunu doğrulamaz |
-| `verify` | Env kimliğiyle canlı `…/sap/bc/ui5_ui5/sap/<bsp>/Component-preload.js?sap-client=…&cb=<ts>` çeker, modül bazında dist ile karşılaştırır: `OK` · `OK~` (yalnız kaçışlı `\r\n` farkı) · `STALE` · `ÖLÇÜLEMEDİ` | Statik dosyaları (`webapp/help/**`) kanıtlamaz → §5 |
-| `deploy` | `--user-ok` metni yoksa ya da yer tutucuysa **çıkış 3 (REDDEDİLDİ)**; env kimliği yoksa çıkış 3; **SAP yazma kapısı** reddederse çıkış 3 (§3.2a — build dahil hiçbir şey koşmaz); sonra build + `npx --no-install fiori deploy --config ui5-deploy.yaml --yes` (çıktıda parola maskelenir) + "Deployment Successful" araması + **katı** canlı kıyas | `--user-ok` bir **beyandır**, onayın kanıtı değildir — kodla zorlanan koruma §3.2a'daki yazma kapısıdır |
+| `verify` | Env kimliğiyle canlı `…/sap/bc/ui5_ui5/sap/<bsp>/Component-preload.js?sap-client=…&cb=<ts>` çeker, modül bazında dist ile karşılaştırır: `OK` · `OK~` (yalnız kaçışlı `\r\n` farkı) · `STALE` · `ÖLÇÜLEMEDİ`. `--tam` ile canlının tüm dosya listesini de kıyaslar (§7.4) | `--tam`'sız statik dosyaları (`webapp/help/**`) kanıtlamaz → §5 |
+| `deploy` | `--user-ok` metni yoksa ya da yer tutucuysa **çıkış 3 (REDDEDİLDİ)**; env kimliği yoksa çıkış 3; **SAP yazma kapısı** reddederse çıkış 3 (§3.2a — build dahil hiçbir şey koşmaz); sonra build + `npx --no-install fiori deploy --config ui5-deploy.yaml --yes` (çıktıda parola maskelenir) + "Deployment Successful" araması + **katı** canlı kıyas + canlı tam liste kıyası; `.canli/` varsa build'den önce **drift** (§7.4) | `--user-ok` bir **beyandır**, onayın kanıtı değildir — kodla zorlanan koruma §3.2a'daki yazma kapısıdır |
 
 Çıkış kodları: `0` tamam · `1` ihlal / fark · `2` ölçüm yok (kimlik, ağ, 404) · `3` deploy reddedildi (onay, kimlik ya da SAP yazma kapısı).
 
@@ -230,6 +233,76 @@ Model tarafında sessiz deploy yolu kalmasın diye (ayrıntı skill raporunda):
 - ⚠ **`ask` ikincil katmandır (Z106, 2026-09-24):** TUI'de oturum izni ("Allow for Session") verilince bash `ask` komutları
   sorulmadan geçer (ölçüldü, log `grant_for_session`). Kodla zorlanan koruma §3.2a'daki yazma kapısıdır; `ask` kuralı
   yerinde kalır (değiştirilmedi).
+
+## 7. Kaynak yerelde yoksa — SAP'den indir, eşliği ölç, sonra düzenle (Z144)
+
+Uygulama yalnız SAP'ye deploy edilmiş, kaynağı repoda/diskte yoksa kullanıcıdan kaynak istemeden önce bu yol denenir.
+Yöntem bir müşteri projesinde tek freestyle BSP'de (41 dosya) uçtan uca ölçüldü: indir → geri kur → değiştirmeden build
+== canlı (41/41) → değişiklik → salt-okur yerel test → kullanıcı OK → deploy → canlı tam liste == dist (41/41).
+
+```bash
+F=<TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/fetch_ui_source.py
+python $F indir <BSP> --out <paket>/ui/<app> --project-dir <proje_kökü> [--ignore-cert]   # salt okuma
+cd <paket>/ui/<app> && npm install                                                       # kullanıcı onayıyla (ağ)
+python $F eslik <paket>/ui/<app>          # DEĞİŞTİRMEDEN build == canlı mı? Değilse DÜZENLEME YOK
+# … düzenle …
+python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/<app> --ignore-cert   # §7.3
+# kullanıcı OK → deploy_ui.py deploy (drift + tam liste kendiliğinden, §7.4)
+```
+
+### 7.1 İndirme (`indir`) — ne yapar
+- **Yol:** OData `GET /sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('<BSP>')?$format=json&CodePage='UTF8'&DownloadFiles='RUNTIME'`
+  → `d.ZipArchive` (tek istek). Yedek: ADT `GET /sap/bc/adt/filestore/ui5-bsp/objects/<BSP>/content` (Atom, klasörler
+  özyinelemeli, `id`'ler URL-kodlu). İkisi ölçüldü: **bayt bayt aynı** (41/41). ICF `/sap/bc/ui5_ui5/sap/<bsp>/…`
+  KULLANILMAZ: dizin listelemez ve HTML'e runtime meta enjekte eder (§5).
+- **BSP'de derlenmiş dist durur; özgün kaynak `*-dbg.js`'tir** (`X.js.map` `sources` → `X-dbg.js`). Geri kurma:
+  `X-dbg.js` → `X.js`, `X-dbg.controller.js` → `X.controller.js`; `Component-preload.js(.map)`, `*.js.map` ve `-dbg`
+  karşılığı olan küçültülmüş `.js` atılır; metin dosyaları **LF**'e çevrilir (SAP CRLF saklar; CRLF bırakılırsa
+  preload yalnız kaçışlı satır sonu farkı verir). İkili dosyaya dokunulmaz.
+- Yazar: `webapp/` + (yoksa) `package.json` · `ui5.yaml` (`metadata.name` = manifest `sap.app.id`) · `ui5-deploy.yaml`
+  (ad/paket/açıklama canlıdan, **transport BOŞ** — kullanıcı verir, `builder.resources.excludes` **YOK**, §7.2) ·
+  `.gitignore` · canlı anlık görüntü `.canli/` (git'e girmez; drift ölçümünün tabanı).
+- Klasörde `webapp/` varsa **üzerine yazmaz** (exit 1). Kimlik env `FIORI_TOOLS_USER`/`FIORI_TOOLS_PASSWORD` (§3.3).
+- Uyarılar: `-dbg` karşılığı olmayan `.js` (küçültülmüş kaynak alındı) · map'in TS kaynağına işaret etmesi (sunucuda
+  TS YOK, geri kurulan JS özgün kaynak değildir → kullanıcıya sor) · `manifest.json` yok.
+
+### 7.2 Eşlik kapısı (`eslik`) — atlanamaz
+- Kaynak **değiştirilmeden** `npm run build` → `dist/` ile `.canli/dist` **tam dosya listesi** kıyaslanır (preload modül
+  modül). Eşit değilse kaynak güvenilir değildir (TS, özel build, farklı ui5-tooling, eksik dosya) → **düzenleme
+  yapılmaz**, farklar kullanıcıya gösterilir.
+- ⚠ **Şablon dışlaması tuzağı:** §2 şablonundaki `builder.resources.excludes: /localService/**`, canlıda `localService/**`
+  taşıyan bir uygulamada dist'i canlı listeden **eksik** bırakır (ölçülen BSP'de 4 dosya). İndirilen uygulamanın
+  `ui5-deploy.yaml`'ına bu yüzden dışlama konmaz; eşlik kapısı bu farkı `yalnız-2` olarak gösterir. Deploy'un canlıdaki
+  fazla dosyayı silip silmediği **DOĞRULANMADI**; deploy sonrası tam liste ölçümü (§7.4) ikisini de yakalar.
+
+### 7.3 Salt-okur yerel test (`ui_local_proxy.py`)
+- İndirilen uygulamada fiori tools proxy yapılandırması yoktur. `ui_local_proxy.py` `dist/`'i sunar ve `/sap/*`
+  isteklerini hedef sisteme **yalnız okuma** olarak iletir: GET/HEAD ve changeset içermeyen `$batch` POST'u geçer;
+  changeset'li `$batch`, diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**, SAP'ye gitmez,
+  konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye istek 0).
+- Hedef `ui5-deploy.yaml`'dan, kimlik env'den. Yalnız 127.0.0.1'e bağlanır. Adres: `http://localhost:<port>/index.html`.
+- Kaydet/sil düğmeleri bu modda 403 alır — beklenen davranış; kullanıcıya söylenir.
+
+### 7.4 Deploy — drift ve tam liste (kendiliğinden)
+- `deploy_ui.py deploy`, uygulamada `.canli/` varsa **kapıdan sonra, build'den önce** canlıyı yeniden indirir ve anlık
+  görüntüyle kıyaslar: canlı değişmişse (başkası deploy etmiş) **DURUR** (exit 1, log `drift`) — deploy o değişikliği
+  ezerdi. Ölçülemezse de DURUR (exit 2, `drift_unmeasured`). `.canli/` yoksa ölçmez ve bunu yazar.
+- Deploy sonrası preload kıyasına ek olarak canlının **tüm dosya listesi** dist ile kıyaslanır (ui5-deploy.yaml
+  `exclude` regex'leriyle dışlananlar hariç): fark → exit 1 (`verify_stale_files`); eşitse `.canli/` yeni canlıyla
+  güncellenir. Repo servisi okunamazsa UYARI basılır, hüküm preload'a kalır.
+- `verify --tam`: aynı tam liste kıyasını salt okuma olarak yapar.
+- Drift'i elle ölçmek: `python $F drift <app>`.
+
+### 7.5 `$metadata` alan kontrolü (`metadata`)
+- `python $F metadata <SERVIS> --alan <Ad> --tip <EntityType> [--app <app> | --project-dir <proje>]` — `$metadata`'yı
+  salt okuma çeker, XML olarak ayrıştırır, alanı **yalnız verilen EntityType'ta** arar (tip-kapsamlı; belge geneli arama
+  `SAP__Signature` gibi altyapı tiplerinden yanlış pozitif verir). `--tip` verilmezse alanın bulunduğu her tipi listeler.
+- Kapsam: yalnız metadata metni; verinin dolu gelmesi ayrıca ölçülür.
+
+### 7.6 Ölçülmeyenler
+- Fiori Elements uygulamaları · TypeScript uygulamalar · `-dbg` üretmeyen/özel build · farklı ui5-tooling sürümüyle
+  build edilmiş uygulama (küçültme çıktısı farklıysa eşlik kapısı durdurur) · `s4_public`/`btp_abap` (repo servisi ve
+  ADT filestore'un varlığı) · deploy'un canlıdaki fazla dosyayı silme davranışı · FLP katalog/rol/hedef eşlemesi.
 
 ---
 
