@@ -121,6 +121,11 @@ Otomatik kurulum yok.
   söyler, **gerçek yayın başlamaz**. Liste dosyası git'te izleniyorsa ya da bir satır geçersiz regex ise araç durur
   (desenin kendisini basmaz). ⚠ CI'da gizli değişken tanımlı değilse CI taraması müşteri/kurum adlarına bakmaz — bu
   yüzden yerel yayın taraması asıl kapıdır. Geçmiş commit'lerdeki adlar bu değişiklikle silinmez.
+- **Geliştirme deposu taraması (Z145, 2026-09-26):** yayın taraması `maintenance/`'ı görmez, ama geliştirme deposu da
+  public'tir. PR açmadan / push etmeden önce: `python maintenance/yayin_hazirla.py --depo-tara` — depoyu yerinde tarar
+  (izlenen + izlenmeyen, `.gitignore`'lular hariç, `maintenance/` dahil). Çıkış 1 = yerel listeden isabet (ya da liste
+  yok: ÖLÇÜLEMEDİ); öbür sızıntı sınıfları yalnız UYARI'dır, "iç repo adı" yalnız sayılır. Geçmiş commit'leri ve commit
+  mesajlarını taramaz.
 
 ## Parti kapanış kuralı
 Bir parti ancak şu üçü sağlanınca "tamam" sayılır: o partinin kurallarında `bekliyor` kalmadı · `sync_check`

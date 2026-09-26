@@ -1294,7 +1294,10 @@ def check_paketler(sap: bool) -> None:
 GIT_KIMLIK_KAPSAM = ("yalnız tanımsızlık ölçülür; tanımlı adresin doğruluğu ya da türetilmiş olup olmadığı "
                      "yargılanmaz · remote yalnız bulunulan repoda ölçülür · GIT_AUTHOR_*/GIT_COMMITTER_* ortam "
                      "değişkenlerine bakılmaz")
-GIT_KIMLIK_DUZELTME = ("git config --global user.name \"Ad Soyad\" · "
+# Z121ⓐ (2026-09-26): kimliği artık kurulum soruyor (kur.ps1 ADIM 2 `Git-Kimligi-Adimi`: tanımlıysa "doğru mu?",
+# değilse sorar ve `git config --global` ile yazar) ⇒ birincil düzeltme o akış; elle komut yalnız "olmazsa" yedeği.
+GIT_KIMLIK_DUZELTME = ("aXet-Kur.cmd'ye tekrar çift tıkla (kurulum Git kimliğini sorar ve kaydeder); olmazsa elle: "
+                       "git config --global user.name \"Ad Soyad\" · "
                        "git config --global user.email \"ad.soyad@sirket.com\"")
 
 
