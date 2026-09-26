@@ -170,7 +170,8 @@ SAP GUI otomasyonu gerekiyorsa model script'i yazar, **sen** çalıştırırsın
 
 ## 4. Günlük kullanım
 
-- **Açılış:** model ilk yanıttan önce oturum özetini çalıştırır; eksik iş ve devir notları oradan gelir.
+- **Açılış:** her oturumu `%basla` ile aç (kendiliğinden tetiklenmez); model oturum özetini taze çalıştırır, eksik iş
+  ve devir notları oradan gelir.
 - **Gün sonu:** `%gun-sonu` · devir notu `%handoff` · iş listesi `.axet-code/memory/project_is-listesi.md`.
 - **Genel skill'ler:** `%yeni-proje` · `%recall` · `%remember` · `%verify-done` · `%explore` · `%code-review` ·
   `%commit-pr` · `%skill-audit` · `%write-skill` · `%hata-bildir` (aXet'e hata/öneri bildirimi; GitHub hesabı gerekmez).

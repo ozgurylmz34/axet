@@ -18,6 +18,7 @@ oturumda son özet bağlamda kalır).
   kimlik satırı ilk satır ✅ · `session_brief.py` koştu, brief 11:45:44'e yenilendi ✅ · 5 satır özet + devam sorusu ✅ (n=1; TUI'de ÖLÇÜLMEDİ).
 - **Testler:** `-k skill` 31/0 · `-k readme` 11/0 · `-k onboard` 4/0 · `-k session_brief` 23/0 · `-k yayin_surumleri` 59/0 · `-k doctor` 132/0 ·
   `yayin_hazirla --yalniz-dogrula` SORUN 0.
+- **Bug gate (taze bug-expert): WARNING, 0 BLOCKER** — M1 onboarding §4 eski açılış iddiası · L2 çıplak "başla" tetiği oturum ortası onayda skill'i çağırabilirdi · L3 §0/§8 ile çift açılış riski · Ö4 `<AXET_HOME>` kalıbı → dördü düzeltildi (`-k skill` 31/0, `-k onboard` 4/0, frontmatter OK). Ö5 (şablon `AGENTS.md` "Oturum" satırına `%basla`) ertelendi: `%guncelle-proje` ile dağıtılır, sonraki şablon turu.
 - **Açılış-tetik kalemleri kapatıldı/iptal:** Z105 · Z73 · Z139 · D7 · E4 · Z136 Ö2 (⏸ tetikli). Açılış dışı kalan parça → **Z140**.
 - **Denetim (salt-okur ajan, 2026-09-26; her hüküm kalemin başında `denetim 2026-09-26` notuyla):** yapılmış ama açık görünen kalemler
   kapatıldı — Z128 · Z129 · Z130 · Z132 (hepsi v0.5.10'da yayında) · v0.5.10 tablosu satır 1/4/5/6/7/8/9b/12/12c ("inceleme 2 bekliyor"
