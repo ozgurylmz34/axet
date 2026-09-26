@@ -57,6 +57,14 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 
 ## 5. Doğrula
 1. Template script/şablon testleri: `python tests\run_tests.py` — 0 failure olmadan merge edilmez.
+   **Tam takımları PR CI koşar, yerelde tekrarlanmaz (kullanıcı kararı 2026-09-26, Z149 aşama 1).** `main` ruleset'i
+   `CI tamam` işi yeşil olmadan merge'e izin vermez (bypass YOK — Z156, ölçüldü) ⇒ kök · kök-public · foundation ·
+   skill takımları ve yayın provası CI'da zorunludur; yerelde tekrarlamak güvence eklemez, yalnız süre yer
+   (ölçüldü: kök ~30 dk + prova ~5,5 dk yerel). Yerelde koşulan: değiştirdiğin alanın hedefli `-k` testleri +
+   yeni/değişen testin kendisi. CI kırmızıysa kırılan testi yerelde `-k` ile koş. İstisna: CI'ya çıkamayan iş
+   (canlı SAP, lab, TUI) yerelde ölçülür. Küme süreleri değişince (yeni ağır test sınıfı) parça dengesi için
+   `python tests\run_tests.py --agirlik-yaz` koşulup `tests/parca-agirlik.json` commit'lenir (bayatlaması kapsam
+   düşürmez, yalnız dengeyi bozar; kümelerin %80'inden azı ölçülüyse test uyarır).
 2. `python scripts\doctor.py` (frontmatter, çekirdek boyutu, damga/kanonik bütünlük, davranış yüzeyi) — 0 FAIL.
 3. Değişen skill'in testleri (ör. `python skills-sap\sap-adt-foundation\tests\run_tests.py`, `skills-sap\sap-fs-ts-docs\tests\run_tests.py`).
 4. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
