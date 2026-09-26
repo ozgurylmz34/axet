@@ -25,6 +25,7 @@ import base64
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import urllib.parse
@@ -40,10 +41,10 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 METIN_UZANTI = {".js", ".xml", ".json", ".properties", ".html", ".htm", ".css", ".txt", ".md", ".yaml", ".yml", ".csv"}
 # `@ui5/builder` (4.3.2) `lib/processors/minifier.js`: `debugFileRegex =
 # /((?:\.view|\.fragment|\.controller|\.designtime|\.support)?\.js)$/` ve `resourcePath.replace(debugFileRegex, "-dbg$1")`
-# → `-dbg` bu sonek grubunun ÖNÜNE girer (`Main.view.js` → `Main-dbg.view.js`). `_DBG` onun birebir TERSİ,
-# `_DBG_ILERI` builder'ın kendisi (harita sondasında beklenen `-dbg` adını üretmek için).
+# → `-dbg` bu sonek grubunun ÖNÜNE girer (`Main.view.js` → `Main-dbg.view.js`). `_DBG_ILERI` builder'ın kendisidir;
+# `-dbg` varyantı ters regex'le DEĞİL bu ileri kuralla eşlenir (`dbg_ciftleri`): adı zaten `-dbg` ile biten gerçek
+# kaynak dosyası (`util-dbg.js`) ters regex'te yanlışlıkla varyant sayılıyordu.
 _DBG_SONEKLER = r"\.view|\.fragment|\.controller|\.designtime|\.support"
-_DBG = re.compile(rf"^(?P<ad>.+)-dbg(?P<ek>{_DBG_SONEKLER})?\.js$")
 _DBG_ILERI = re.compile(rf"((?:{_DBG_SONEKLER})?\.js)$")
 # builder `minifier.js` `sourceMappingUrlPattern` ile aynı biçim (dosya sonunda referans satırı).
 _KAYNAK_HARITASI_REF = re.compile(rb"//# sourceMappingURL=\S+\s*$")
@@ -204,6 +205,22 @@ def dbg_adi(rel: str) -> str:
     return _DBG_ILERI.sub(r"-dbg\1", rel.rpartition("/")[2])
 
 
+def dbg_ciftleri(dosyalar) -> dict:
+    """{`-dbg` varyantı rel: küçültülmüş asıl dosya rel} — builder'ın İLERİ kuralıyla eşlenir: bir dosya ANCAK aynı
+    klasörde `dbg_adi(k) == ad` olan bir `k` dosyası varsa `-dbg` varyantıdır. Kaynakta `util-dbg.js` adlı dosya
+    builder'da `util-dbg.js` (küçük) + `util-dbg-dbg.js` (varyant) + `util-dbg.js.map` olur: varyant `util-dbg-dbg.js`,
+    `util-dbg.js` ise küçültülmüş asıl dosyadır (karşılığı `util.js` YOK ⇒ varyant sayılmaz)."""
+    cift = {}
+    for k in sorted(dosyalar):
+        if not k.endswith(".js"):
+            continue
+        dizin = k.rpartition("/")[0]
+        d = (dizin + "/" if dizin else "") + dbg_adi(k)
+        if d in dosyalar:
+            cift[d] = k
+    return cift
+
+
 def harita_sondasi(dosyalar: dict) -> tuple[list[str], int]:
     """Canlı dosyalardaki kaynak haritaları → (sapmalar, bakılan harita sayısı). Boş sapma = beklenen biçim.
 
@@ -222,13 +239,14 @@ def harita_sondasi(dosyalar: dict) -> tuple[list[str], int]:
         bir dönüşüm çıktısıdır. (Sınır: aynı seçenekle SATIR İÇİ `data:` haritası geri eklenmez — iz kalmaz.)
     `Component-preload.js.map` bundle haritasıdır, burada bakılmaz (preload modül modül kıyaslanır)."""
     sapma, bakilan = [], 0
+    cift = dbg_ciftleri(dosyalar)
     for rel in sorted(dosyalar):
         ad = rel.rpartition("/")[2]
         if not ad.endswith(".js.map") or ad == B.PRELOAD + ".map":
             continue
         bakilan += 1
         js = rel[:-len(".map")]
-        if _DBG.match(js.rpartition("/")[2]):
+        if js in cift:
             sapma.append(f"{rel}: -dbg dosyasının KENDİ haritası var (girdi build öncesi dönüştürülmüş — TS?)")
             continue
         try:
@@ -238,37 +256,28 @@ def harita_sondasi(dosyalar: dict) -> tuple[list[str], int]:
             continue
         if kaynaklar != [dbg_adi(js)]:
             sapma.append(f"{rel}: sources={kaynaklar!r} — beklenen [{dbg_adi(js)!r}] (TS / başka kaynak)")
-    for rel in sorted(dosyalar):
-        dizin, _, ad = rel.rpartition("/")
-        m = _DBG.match(ad)
-        if not m:
-            continue
+    for rel, kucuk in sorted(cift.items()):
         if _KAYNAK_HARITASI_REF.search(dosyalar[rel][-512:]):
             sapma.append(f"{rel}: `-dbg` içeriği sourceMappingURL taşıyor (girdi build öncesi dönüştürülmüş — TS?)")
-        kucuk = (dizin + "/" if dizin else "") + f"{m['ad']}{m['ek'] or ''}.js"
-        if kucuk in dosyalar and kucuk + ".map" not in dosyalar:
-            sapma.append(f"{kucuk}.map yok ({ad} çifti var) — başka build aracı; transpile ayrımı ölçülemez")
+        if kucuk + ".map" not in dosyalar:
+            sapma.append(f"{kucuk}.map yok ({rel.rpartition('/')[2]} çifti var) — başka build aracı; transpile ayrımı "
+                         "ölçülemez")
     return sapma, bakilan
 
 
 def kaynak_kur(dist: dict) -> tuple[dict, list, list]:
     """Derlenmiş dist → (webapp {rel: bayt}, atılan build ürünleri, uyarılar). Metin dosyaları LF'e indirilir."""
-    dbg_karsiligi = set()
-    for rel in dist:
-        yol = Path(rel)
-        m = _DBG.match(yol.name)
-        if m:
-            dbg_karsiligi.add((yol.parent / f"{m['ad']}{m['ek'] or ''}.js").as_posix())
+    cift = dbg_ciftleri(dist)              # {`-dbg` varyantı: küçültülmüş asıl} — builder'ın ileri kuralıyla
+    dbg_karsiligi = set(cift.values())     # varyantı olan küçültülmüş dosyalar → atılır
     webapp, atilan, uyari = {}, [], []
     for rel, icerik in sorted(dist.items()):
         yol = Path(rel)
         if yol.name.startswith("Component-preload.js") or yol.name.endswith(".js.map") or rel in dbg_karsiligi:
             atilan.append(rel)
             continue
-        m = _DBG.match(yol.name)
-        hedef = (yol.parent / f"{m['ad']}{m['ek'] or ''}.js").as_posix() if m else rel
+        hedef = cift.get(rel, rel)
         webapp[hedef] = lf(icerik) if yol.suffix.lower() in METIN_UZANTI else icerik
-    kucuk_js = [r for r in dist if r.endswith(".js") and not _DBG.match(Path(r).name)
+    kucuk_js = [r for r in dist if r.endswith(".js") and r not in cift
                 and not Path(r).name.startswith("Component-preload") and r not in dbg_karsiligi]
     if kucuk_js:
         uyari.append(f"{len(kucuk_js)} .js dosyasının -dbg karşılığı yok (ör. {kucuk_js[0]}) — küçültülmüş hâli kaynak "
@@ -403,21 +412,69 @@ def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: 
     return kalan + [str(p) for p in yeni if p.exists()]
 
 
+def anlik_ham(kok: Path) -> dict | None:
+    """Anlık görüntünün KENDİSİNİN baytları (`bilgi.json` + `dist/**`) — koruma ÖLÇÜMÜ için. Geçici adlar
+    (`dist.yeni`, `dist.eski`, `bilgi.json.yeni`) dahil DEĞİL: onlar çağıranda ayrıca "kalan" olarak ölçülür.
+    Okunamazsa None (ölçüm yok ⇒ çağıran "korundu" DEMEZ)."""
+    try:
+        if not kok.is_dir():
+            return None
+        return {r: b for r, b in klasor_oku(kok).items() if r == ANLIK_BILGI or r.startswith("dist/")}
+    except OSError:
+        return None
+
+
 def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
-    """Canlı anlık görüntüyü `<app>/.canli/dist/` + `bilgi.json`'a yazar (eskisinin yerine)."""
+    """Canlı anlık görüntüyü `<app>/.canli/dist/` + `bilgi.json`'a yazar (eskisinin yerine) — HEPSİ-YA-HİÇ.
+
+    Yeni görüntü önce `dist.yeni/` + `bilgi.json.yeni`'ye yazılır; ANCAK ikisi de tamamsa takas edilir
+    (`dist`→`dist.eski`, `dist.yeni`→`dist`, `bilgi.json.yeni`→`bilgi.json` [`os.replace`], sonra `dist.eski` silinir).
+    Bir adım düşerse eski görüntü (dist + bilgi.json) yerine geri konur, geçici adlar temizlenir ve hata yeniden
+    fırlatılır; temizlenemeyen geçici yollar `exc.kalanlar`'a iliştirilir. Eski görüntünün KORUNDUĞU burada beyan
+    edilmez: çağıran `anlik_ham` ile önce/sonra BAYT BAYT ölçer (`indir`, `deploy`).
+    Eskiden eski `dist` yeni yazımdan ÖNCE siliniyordu → yazım düşünce `anlik_oku` = ({}, eski bilgi) (ölçüldü)."""
     kok = app / ANLIK_KLASOR
-    dist = kok / "dist"
-    # Eski anlık görüntü silinmeden ÖNCE tüm adlar GERÇEK hedef köke göre (metin kuralı + resolve) doğrulanır:
-    # güvensiz ad (`.`, `.. /x.js`, NUL'lu ad …) → GuvensizYolHatasi ve eski anlık görüntü yerinde kalır.
+    dist, yeni, eski = kok / "dist", kok / "dist.yeni", kok / "dist.eski"
+    bilgi_yol, bilgi_yeni = kok / ANLIK_BILGI, kok / (ANLIK_BILGI + ".yeni")
+    # Tüm adlar GERÇEK hedef köke göre (metin kuralı + resolve) doğrulanır: güvensiz ad (`.`, `.. /x.js`, NUL'lu ad …)
+    # → GuvensizYolHatasi ve hiçbir şeye dokunulmaz.
     _adlari_dogrula(dosyalar, dist)
-    if dist.exists():
-        for p in sorted(dist.rglob("*"), reverse=True):
-            p.unlink() if p.is_file() else p.rmdir()
-    klasore_yaz(dist, dosyalar)
-    (kok / ANLIK_BILGI).write_text(json.dumps(
-        {**bilgi, "dosyalar": {r: icerik_ozeti(r, v)[:16] for r, v in sorted(dosyalar.items())}},
-        ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # Önceki bir koşum takasın ORTASINDA kesildiyse (`dist` yok, `dist.eski` var) eski görüntü önce geri konur.
+    if eski.is_dir() and not dist.exists():
+        eski.rename(dist)
+    artik = yollari_kaldir([yeni, eski, bilgi_yeni])  # bayat geçici adlar
+    if artik:
+        hata = OSError(f"önceki koşumdan kalan geçici anlık görüntü silinemedi: {artik[:5]}")
+        hata.kalanlar = artik
+        raise hata
+    dist_vardi = dist.exists()
+    try:
+        kok.mkdir(parents=True, exist_ok=True)
+        klasore_yaz(yeni, dosyalar)
+        bilgi_yeni.write_text(json.dumps(
+            {**bilgi, "dosyalar": {r: icerik_ozeti(r, v)[:16] for r, v in sorted(dosyalar.items())}},
+            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if dist_vardi:
+            dist.rename(eski)
+        try:
+            yeni.rename(dist)
+            _yer_degistir(bilgi_yeni, bilgi_yol)
+        except OSError:
+            if dist.exists() and not yeni.exists():   # yeni görüntü `dist`'e geçmişti → geri çek
+                dist.rename(yeni)
+            if dist_vardi:
+                eski.rename(dist)
+            raise
+    except OSError as exc:
+        exc.kalanlar = list(getattr(exc, "kalanlar", [])) + yollari_kaldir([yeni, bilgi_yeni])
+        raise
+    yollari_kaldir([eski])  # kalırsa zararsız: `anlik_oku` okumaz, sonraki `anlik_yaz` temizler
     return kok
+
+
+def _yer_degistir(kaynak: Path, hedef: Path) -> None:
+    """`os.replace` — testte takasın ikinci adımında hata benzetimi bu fonksiyon üzerinden yapılır."""
+    os.replace(kaynak, hedef)
 
 
 def anlik_oku(app: Path) -> tuple[dict, dict] | None:

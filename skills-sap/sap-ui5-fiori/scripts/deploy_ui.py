@@ -536,8 +536,38 @@ def komut_deploy(a) -> int:
             return 1
         anlik = K.anlik_oku(app)
         if tdurum == "OK" and anlik is not None:
-            K.anlik_yaz(app, canli, {**anlik[1], "guncellendi": "deploy sonrası"})
-            print(f"  {K.ANLIK_KLASOR}/ anlık görüntüsü deploy edilen canlıyla güncellendi (sonraki drift buna karşı).")
+            # Deploy + doğrulama BİTTİ; anlık görüntü yazımı düşerse deploy başarısı geri alınmaz. Çıkış kodu:
+            #  · eski görüntü BAYT BAYT yerinde (ölçüldü) → exit 0 + açık UYARI: sonraki drift eskiye göre ölçer ve
+            #    DEGISTI der → sonraki deploy DURUR (güvenli yön); sıfırdan farklı kod "deploy başarısız" okunup
+            #    doğrulanmış deploy'un gereksiz tekrarına yol açardı.
+            #  · eski görüntü KORUNAMADI / temizlenemeyen geçici yol → exit 2: `.canli/` bozuk ya da eksikse sonraki
+            #    deploy'un drift kapısı sessizce devre dışı kalabilir — operatör müdahalesi şart (deploy yine
+            #    doğrulandı, TEKRAR EDİLMEZ).
+            kok = app / K.ANLIK_KLASOR
+            onceki = K.anlik_ham(kok)
+            try:
+                K.anlik_yaz(app, canli, {**anlik[1], "guncellendi": "deploy sonrası"})
+                print(f"  {K.ANLIK_KLASOR}/ anlık görüntüsü deploy edilen canlıyla güncellendi (sonraki drift buna karşı).")
+            except (K.GuvensizYolHatasi, OSError) as exc:
+                kalan = [str(p) for p in (kok / "dist.yeni", kok / (K.ANLIK_BILGI + ".yeni")) if p.exists()]
+                korundu = onceki is not None and K.anlik_ham(kok) == onceki
+                if korundu and not kalan:
+                    print(f"  [UYARI] {K.ANLIK_KLASOR}/ anlık görüntüsü GÜNCELLENEMEDİ ({type(exc).__name__}: {exc}) — "
+                          "eski görüntü bayt bayt yerinde (ölçüldü); sonraki drift ESKİYE göre ölçer ve DEGISTI der "
+                          f"(sonraki deploy durur). Gidermek için: `fetch_ui_source.py indir` ile yeni klasöre anlık "
+                          "görüntü al.")
+                    print("\n[OK] deploy doğrulandı: canlı Component-preload == yüklenen dist ve canlının tüm dosya "
+                          f"listesi == dist. ({K.ANLIK_KLASOR}/ güncellenemedi — yukarıdaki UYARI.)")
+                    logla("ok_snapshot_not_updated", 0)
+                    return 0
+                print(f"\n[FAIL] deploy DOĞRULANDI (preload + tam liste == dist; TEKRAR DEPLOY ETME) ama "
+                      f"{K.ANLIK_KLASOR}/ anlık görüntüsü güncellenemedi ({type(exc).__name__}: {exc}) ve "
+                      + ("eski görüntü KORUNAMADI (bayt bayt farklı ya da okunamıyor)" if not korundu else
+                         f"geçici yollar kaldı: {kalan}")
+                      + f" — sonraki deploy'un drift kapısı buna güvenemez: {K.ANLIK_KLASOR}/'yi silip "
+                        "`fetch_ui_source.py indir` ile yeniden al. (exit 2)")
+                logla("ok_snapshot_broken", 2)
+                return 2
         if tdurum == "OLCULEMEDI":
             print("  [UYARI] tam liste ÖLÇÜLEMEDİ — yalnız preload kanıtlandı; preload dışı dosyalar için "
                   "`verify --tam` ya da verify_ui_static_assets.py."

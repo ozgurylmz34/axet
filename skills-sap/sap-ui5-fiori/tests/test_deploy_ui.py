@@ -680,6 +680,78 @@ class TestDeployKapiSurecIci(unittest.TestCase):
                  f"rc={rc} istek={len(istekler)} güncel={durum.get('guncellendi')}", ok)
         self.assertTrue(ok, f"rc={rc} run={self.cagrilar} istek={istekler} durum={durum}")
 
+    def _kos_anlik_hatali(self, hata_yaz):
+        """Deploy akışı; `.canli/` yazımının İKİNCİ çağrısında (deploy sonrası güncelleme) `hata_yaz` devreye girer
+        (ilk çağrı `_kos`'un anlık görüntü kurulumudur). → (rc, log, çıktı, .canli durumu)."""
+        import contextlib
+        import io
+        asil = K.anlik_yaz
+        sayac = {"n": 0}
+
+        def sarici(app, dosyalar, bilgi):
+            sayac["n"] += 1
+            return asil(app, dosyalar, bilgi) if sayac["n"] == 1 else hata_yaz(asil, app, dosyalar, bilgi)
+        durum = {}
+
+        def kontrol(app):
+            kok = app / K.ANLIK_KLASOR
+            oku = K.anlik_oku(app)
+            durum["dist"] = oku[0] if oku else None
+            durum["guncellendi"] = bool(oku and oku[1].get("guncellendi"))
+            durum["adlar"] = sorted(p.name for p in kok.iterdir()) if kok.is_dir() else None
+        cikti = io.StringIO()
+        with mock.patch.object(K, "anlik_yaz", sarici), contextlib.redirect_stdout(cikti):
+            rc, istekler, proj = self._kos(optin=True, anlik={"Component-preload.js": H.PRELOAD}, kontrol=kontrol)
+        return rc, (_son_log(proj) or {}), cikti.getvalue(), durum
+
+    def test_anlik_guncellenemez_eski_yerinde_deploy_basarili(self):
+        """Tur 4 / 1: deploy + tam liste OK, `.canli/` güncellemesi takasta düşer (gerçek `anlik_yaz`, hata
+        `_yer_degistir`'de) → eski görüntü BAYT BAYT yerinde (ölçüldü) → exit 0 + açık UYARI, log
+        `ok_snapshot_not_updated`, traceback yok."""
+        def takas_duser(asil, app, dosyalar, bilgi):
+            with mock.patch.object(K, "_yer_degistir", side_effect=OSError(28, "benzetim")):
+                return asil(app, dosyalar, bilgi)
+        rc, log, out, durum = self._kos_anlik_hatali(takas_duser)
+        ok = (rc == 0 and log.get("result") == "ok_snapshot_not_updated" and "GÜNCELLENEMEDİ" in out
+              and "eski görüntü bayt bayt yerinde" in out and "Traceback" not in out
+              and durum.get("dist") == {"Component-preload.js": H.PRELOAD} and not durum.get("guncellendi")
+              and durum.get("adlar") == ["bilgi.json", "dist"])
+        H.kaydet("deploy: .canli güncellemesi düşer, eski yerinde → rc 0 + UYARI (ok_snapshot_not_updated)",
+                 "rc=0 · eski · uyarı", f"rc={rc} · {log.get('result')} · {durum}", ok)
+        self.assertTrue(ok, (rc, log, durum, out))
+
+    def test_anlik_bozulursa_exit2_tekrar_deploy_etme(self):
+        """Negatif: güncelleme eski görüntüyü bozup düşer (benzetim) → ölçüm görür → exit 2, log `ok_snapshot_broken`,
+        mesaj deploy'un DOĞRULANDIĞINI ve tekrar edilmemesini söyler."""
+        def bozan(asil, app, dosyalar, bilgi):
+            (Path(app) / K.ANLIK_KLASOR / "dist" / "Component-preload.js").unlink()
+            raise OSError(28, "benzetim")
+        rc, log, out, durum = self._kos_anlik_hatali(bozan)
+        ok = (rc == 2 and log.get("result") == "ok_snapshot_broken" and "KORUNAMADI" in out
+              and "TEKRAR DEPLOY ETME" in out and "[OK] deploy doğrulandı" not in out)
+        H.kaydet("deploy: .canli güncellemesi eskiyi bozar → rc 2 (ok_snapshot_broken)", "rc=2 KORUNAMADI",
+                 f"rc={rc} · {log.get('result')}", ok)
+        self.assertTrue(ok, (rc, log, out))
+
+    def test_anlik_gecici_yol_kalirsa_exit2_listeler(self):
+        """Görüntü yerinde ama `dist.yeni` silinemedi (tutamaç benzetimi) → ölçülen kalan listelenir, exit 2
+        (`ok_snapshot_broken`); "bayt bayt yerinde" + exit 0 DENMEZ."""
+        asil_sil = K._agac_sil
+
+        def yeni_silinmez(p):
+            return None if Path(p).name == "dist.yeni" else asil_sil(p)
+
+        def takas_duser_artik_kalir(asil, app, dosyalar, bilgi):
+            with mock.patch.object(K, "_yer_degistir", side_effect=OSError(28, "benzetim")), \
+                    mock.patch.object(K, "_agac_sil", yeni_silinmez):
+                return asil(app, dosyalar, bilgi)
+        rc, log, out, durum = self._kos_anlik_hatali(takas_duser_artik_kalir)
+        ok = (rc == 2 and log.get("result") == "ok_snapshot_broken" and "geçici yollar kaldı" in out
+              and "dist.yeni" in out and durum.get("dist") == {"Component-preload.js": H.PRELOAD})
+        H.kaydet("deploy: .canli geçici yol kalır → rc 2, kalan listelenir", "rc=2 dist.yeni",
+                 f"rc={rc} · {log.get('result')}", ok)
+        self.assertTrue(ok, (rc, log, out, durum))
+
     def test_transport_z_paket_transport_yok_run_ve_istek_sifir(self):
         rc, istekler, proj = self._kos(optin=True, paket_tr=("ZXX001", None))
         log = _son_log(proj) or {}
