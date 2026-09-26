@@ -277,22 +277,36 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
 
 ### 7.3 Salt-okur yerel test (`ui_local_proxy.py`)
 - İndirilen uygulamada fiori tools proxy yapılandırması yoktur. `ui_local_proxy.py` `dist/`'i sunar ve `/sap/*`
-  isteklerini hedef sisteme **yalnız okuma** olarak iletir. `$batch` kuralı **parça bazlı beyaz listedir** (emin
-  olunamayan → 403; satır taraması değil, gövde sınırla parçalara bölünüp her parça tek tek doğrulanır):
+  isteklerini hedef sisteme **yalnız okuma** olarak iletir. `$batch` için model **ayrıştır → doğrula → yeniden
+  kur**dur: gövde sınırla parçalara bölünüp her parça tek tek doğrulanır (emin olunamayan → 403), kabul edilen batch
+  SAP'ye **istemcinin baytlarıyla değil, proxy'nin kurduğu kanonik gövdeyle** gider:
   - GET/HEAD geçer.
   - POST yalnız yol `/sap/opu/odata/…/$batch` ya da `/sap/opu/odata4/…/$batch` ise değerlendirilir (başka ICF yolu,
     ör. `/sap/bc/soap/…/$batch`; `%` kodlu, boş, `..` ya da `..;`/`.;` segmentli yol → 403).
   - `Content-Type` başlığı **tam bir kez** gelmeli (0 ya da çift → 403) ve `multipart/mixed; boundary=<sınır>`
-    olmalı (tek parametre; sınır RFC 2046 karakterleri, 1-70). SAP'ye **doğrulanan bu değer** iletilir — istemcinin
-    başka bir `Content-Type` kopyası geçmez (JSON batch → 403).
+    olmalı: tek parametre, adı tam `boundary=` (`BOUNDARY=`, `boundary = B` → 403), tek tırnaklı değer (`'B'`) → 403;
+    sınır RFC 2046 karakterleri, 1-70. JSON batch → 403.
   - Gövde: satır sonu yalnız CRLF (tek `\r` / tek `\n` → 403); BOM, `\t` dışı kontrol baytı ya da `0x7f` → 403.
-    Sınırla ≥1 parçaya bölünür; kapanış sınırı (`--<sınır>--`) şart, sonrasında sınır satırı ve sınıra benzeyen
-    ama tam eşleşmeyen satır → 403. Prolog/epilog serbest metindir, istek sayılmaz (UI5 V4'ün `Group ID: …`
-    epilog'u geçer).
+    `--<sınır>` gövdenin **herhangi bir yerinde** (prolog/epilog dahil, harfe duyarsız, satır ortasında) geçiyorsa o
+    satırın tamamı tam sınır ya da tam kapanış olmalı — `x--<B>`, `--<B BÜYÜK HARF>`, sonunda boşluklu sınır → 403.
+    Sınırla ≥1 parçaya bölünür; kapanış sınırı (`--<sınır>--`) şart, kapanıştan sonra sınır satırı → 403. Bunun
+    dışında prolog/epilog serbest metindir ve istek sayılmaz (UI5 V4'ün `Group ID: …` epilog'u geçer); yeniden
+    kurmada SAP'ye hiç taşınmaz.
   - **Her** parça: `Content-Type: application/http` tam bir kez; `Content-Transfer-Encoding` varsa yalnız `binary`;
     başlıklar katlanmamış, ASCII; `X-HTTP-Method*` ve iç `multipart` (changeset) yok; boş satırdan sonraki ilk satır
-    tam olarak `GET <boşluksuz ASCII hedef> HTTP/1.1` (küçük harf, baştaki boşluk, `HTTP/1.0` → 403); iç istek
-    başlıkları aynı kurallarla; GET'in gövdesi yok.
+    tam olarak `GET <hedef> HTTP/1.1` (küçük harf, baştaki boşluk, `HTTP/1.0` → 403). Hedefte boşluk ve UTF-8
+    olabilir, kontrol baytı olamaz: uygulama yolu elle birleştirince UI5 hedefi kodlamaz (`GET Items('Ö ş') HTTP/1.1`
+    — UI5 1.120.23 gerçek tarayıcıda ölçüldü, V2 ve V4). İç istek başlıkları aynı kurallarla; GET'in gövdesi yok.
+  - **Yeniden kurma:** SAP'ye giden gövde = proxy'nin ürettiği yeni sınır (`batch_axet_<rastgele hex>`), prolog/epilog
+    yok, kabul edilen her GET parçası **aynı sırayla** (`Content-Type: application/http` + `Content-Transfer-Encoding:
+    binary` [+ parça `Content-ID`] + `GET <hedef> HTTP/1.1` + yalnız beyaz liste iç başlıkları: Accept,
+    Accept-Language, DataServiceVersion, MaxDataServiceVersion, OData-Version, OData-MaxVersion, sap-cancel-on-close,
+    sap-contextid-accept, X-Requested-With, Content-ID). Üst `Content-Type` = `multipart/mixed; boundary=<yeni>`.
+    Listede olmayan iç başlık (X-Method-Override, GET'te Content-Length / Content-Type, If-Match, Prefer …) SAP'ye
+    **yapısal olarak ulaşmaz**. Kurulan gövde kendi denetiminden geçmezse → 403.
+  - Yanıt: SAP'nin yanıtı istemciye olduğu gibi döner; UI5 onu **yanıtın** Content-Type sınırıyla ayrıştırır ve
+    parçaları sırayla eşler. Ölçüldü (UI5 1.120.23 gerçek tarayıcı → proxy → sahte SAP, V2 + V4): 4/4 okuma başarılı;
+    negatif kontrolde tekil parçalar 404 dönünce yalnız o okumalar hata aldı (eşleme parça parça çalışıyor).
   - Diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**.
   - Reddedilen istek SAP'ye gitmez, konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye
     istek 0; o ölçüm changeset kuralı dönemindeydi — beyaz liste çevrimdışı testle ölçüldü, canlıda yeniden ölçülmedi).

@@ -131,27 +131,40 @@ def komut_indir(a) -> int:
         return 2
     webapp, atilan, uyarilar = K.kaynak_kur(dist)
     uyg_id = K.uygulama_kimligi(webapp) or bsp.lower()
-    try:
-        # OSError'da klasore_yaz kendini geri alır: `webapp/` hiç yaratılmamış hâle döner → yeniden koşum "zaten var" demez.
-        K.klasore_yaz(app / "webapp", webapp)
-    except K.GuvensizYolHatasi as exc:
-        print(f"[FAIL] {bsp} kaynağı yazılmadı — güvensiz dosya adı: {exc}. Hiçbir dosya yazılmadı. (exit 2)")
-        return 2
-    except OSError as exc:
-        print(f"[FAIL] {bsp} kaynağı yazılamadı ({type(exc).__name__}: {exc}). Yazılanlar geri alındı, "
-              f"{app / 'webapp'} yaratılmadı; sebebi (izin / disk / yol uzunluğu) giderip yeniden koşun. (exit 2)")
-        return 2
+    # Bu koşumun YARATTIĞI her şey kaydedilir; herhangi bir yazım adımı düşerse (webapp · iskelet · .canli) HEPSİ geri
+    # alınır — yarım kalan iskelet "webapp zaten var" / "önce indir" çıkmazı üretmesin. Önceden var olan dokunulmaz.
+    canli = app / K.ANLIK_KLASOR
+    canli_vardi = canli.exists()
+    yaratilan = [app / "webapp"]  # webapp başta yoktu (yukarıda denetlendi)
     olusan = ["webapp/"]
-    for ad, icerik in (("package.json", json.dumps({"name": bsp.lower().replace("_", "-"), **PACKAGE_JSON},
-                                                   ensure_ascii=False, indent=2) + "\n"),
-                       ("ui5.yaml", ui5_yaml(uyg_id)),
-                       ("ui5-deploy.yaml", ui5_deploy_yaml(uyg_id, url, client, {**bilgi, "Name": bilgi.get("Name") or bsp})),
-                       (".gitignore", GITIGNORE)):
-        if not (app / ad).exists():
-            (app / ad).write_text(icerik, encoding="utf-8", newline="\n")
-            olusan.append(ad)
-    K.anlik_yaz(app, dist, {"bsp": bsp, "yol": yol, "paket": bilgi.get("Package", ""),
-                            "aciklama": bilgi.get("Description", "")})
+    try:
+        K.klasore_yaz(app / "webapp", webapp)
+        for ad, icerik in (("package.json", json.dumps({"name": bsp.lower().replace("_", "-"), **PACKAGE_JSON},
+                                                       ensure_ascii=False, indent=2) + "\n"),
+                           ("ui5.yaml", ui5_yaml(uyg_id)),
+                           ("ui5-deploy.yaml", ui5_deploy_yaml(uyg_id, url, client,
+                                                               {**bilgi, "Name": bilgi.get("Name") or bsp})),
+                           (".gitignore", GITIGNORE)):
+            if not (app / ad).exists():
+                yaratilan.append(app / ad)
+                (app / ad).write_text(icerik, encoding="utf-8", newline="\n")
+                olusan.append(ad)
+        if not canli_vardi:
+            yaratilan.append(canli)
+        K.anlik_yaz(app, dist, {"bsp": bsp, "yol": yol, "paket": bilgi.get("Package", ""),
+                                "aciklama": bilgi.get("Description", "")})
+    except (K.GuvensizYolHatasi, OSError) as exc:
+        neden = ("güvensiz dosya adı" if isinstance(exc, K.GuvensizYolHatasi)
+                 else f"yazılamadı ({type(exc).__name__})")
+        kalan = K.yollari_kaldir(yaratilan)  # geri alma ÖLÇÜLÜR — başarı beyan edilmez
+        adlar = ", ".join(p.name + ("/" if p.name in ("webapp", K.ANLIK_KLASOR) else "") for p in yaratilan)
+        if kalan:
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları GERİ ALINAMADI — kalan {len(kalan)} yol: "
+                  f"{kalan[:10]}{' …' if len(kalan) > 10 else ''} — elle silin, sonra yeniden koşun. (exit 2)")
+        else:
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları geri alındı ({adlar}); sebebi (izin / disk / "
+                  "yol uzunluğu) giderip yeniden koşun. (exit 2)")
+        return 2
     print(f"[OK] {bsp} indirildi ({yol}): canlı {len(dist)} dosya → kaynak {len(webapp)} dosya, "
           f"atılan build ürünü {len(atilan)}. Paket={bilgi.get('Package') or '?'}")
     print(f"  yazılan: {', '.join(olusan)} · canlı anlık görüntü: {K.ANLIK_KLASOR}/ (git'e girmez)")

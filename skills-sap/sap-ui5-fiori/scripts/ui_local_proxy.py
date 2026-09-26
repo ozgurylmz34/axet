@@ -4,11 +4,17 @@
 
 Derlenmiş `dist/`'i (ya da `--kok` ile verilen klasörü) sunar; `/sap/*` isteklerini SAP'ye iletir, AMA yalnız okumayı:
   GET / HEAD                          → iletilir
-  POST /sap/opu/odata(4)/…/$batch     → iletilir YALNIZ şu durumda (PARÇA BAZLI beyaz liste; emin olunamayan → 403):
-      TEK `Content-Type: multipart/mixed; boundary=…` başlığı (iletilen de bu değerdir) · gövde sınırla bölünür,
-      ≥1 parça, HER parça `Content-Type: application/http` (+ varsa `binary` aktarım), katlanmamış başlık, ilk satırı
-      tam olarak `GET <hedef> HTTP/1.1`, gövdesiz · satır sonu yalnız CRLF · BOM / kontrol baytı / ASCII dışı istek
-      satırı YOK · prolog/epilog serbest metin (istek sayılmaz) · yolda `..;` / `.;` segmenti YOK
+  POST /sap/opu/odata(4)/…/$batch     → AYRIŞTIR + DOĞRULA + YENİDEN KUR (emin olunamayan → 403):
+      DOĞRULA (parça bazlı beyaz liste): TEK `Content-Type: multipart/mixed; boundary=<B>` başlığı (parametre adı tam
+      `boundary=`, `=` çevresinde boşluk yok, tek tırnaklı değer yok) · satır sonu yalnız CRLF · BOM / kontrol baytı
+      YOK · `--<B>` gövdenin HERHANGİ bir yerinde (harfe duyarsız, satır ortası dahil) geçiyorsa o satır tam sınır ya
+      da tam kapanış olmalı · ≥1 parça, HER parça `Content-Type: application/http` (+ varsa `binary`), katlanmamış
+      başlık, ilk satırı `GET <hedef> HTTP/1.1` (hedefte boşluk / UTF-8 olabilir — UI5 elle birleştirilen yolu
+      kodlamaz), gövdesiz · yolda `..;` / `.;` segmenti YOK
+      YENİDEN KUR: SAP'ye istemcinin baytları DEĞİL proxy'nin kurduğu gövde gider — yeni sınır (`batch_axet_<hex>`),
+      prolog/epilog yok, her GET parçası aynı sırayla, iç başlıklardan yalnız `IC_BASLIK_BEYAZ`; üst Content-Type
+      `multipart/mixed; boundary=<yeni>`. SAP'nin yanıtı istemciye olduğu gibi döner (UI5 yanıtı yanıtın kendi
+      Content-Type sınırıyla ayrıştırır — istek sınırından bağımsız)
   başka yolda $batch (ör. /sap/bc/soap/…), diğer her POST / PUT / MERGE / PATCH / DELETE → 403, SAP'ye GİTMEZ
   Host başlığı localhost:<port> / 127.0.0.1:<port> değilse → 403 (DNS rebinding), SAP'ye GİTMEZ
 Reddedilen her istek konsola `REDDEDİLDİ` satırıyla yazılır. Amaç: değişikliği SAP'ye YAZMADAN, deploy ÖNCESİ,
@@ -27,6 +33,7 @@ import argparse
 import base64
 import http.server
 import re
+import secrets
 import socketserver
 import ssl
 import sys
@@ -42,6 +49,16 @@ GECEN_ISTEK = ("accept", "accept-language", "content-type", "cookie", "x-csrf-to
                "dataserviceversion", "x-requested-with", "sap-contextid-accept")
 ATLANAN_YANIT = {"transfer-encoding", "connection", "content-encoding", "content-length", "strict-transport-security"}
 YAZMA_YONTEMLERI = ("PUT", "MERGE", "PATCH", "DELETE")
+# YENİDEN KURMADA iç istekten SAP'ye taşınan başlıklar — BEYAZ LİSTE (küçük ad → yazım). Listede olmayan her başlık
+# (X-Method-Override, Content-Length, If-Match, Prefer, GET'teki Content-Type …) SAP'ye yapısal olarak ULAŞMAZ.
+# Gerekçe: UI5 1.120.23 gerçek tarayıcı ölçümü (2026-09-26) — V2 okuma parçası tam olarak sap-cancel-on-close,
+# sap-contextid-accept, Accept, Accept-Language, DataServiceVersion, MaxDataServiceVersion, X-Requested-With gönderir;
+# V4 Accept, Accept-Language (+ Content-Type: GET gövdesiz, anlamsız → TAŞINMAZ). OData-Version / OData-MaxVersion:
+# V4 sürüm pazarlığı (istemci gönderirse yanıt sürümü buna göre seçilir). Content-ID: yanıt parçasını isteğe bağlayan
+# kimlik (yalnız eşleme; yan etkisi yok). Hepsi yalnız OKUMA yanıtının biçimini/dilini seçer — yöntemi değiştiremez.
+IC_BASLIK_BEYAZ = {a.lower(): a for a in ("Accept", "Accept-Language", "DataServiceVersion", "MaxDataServiceVersion",
+                                           "OData-Version", "OData-MaxVersion", "sap-cancel-on-close",
+                                           "sap-contextid-accept", "X-Requested-With", "Content-ID")}
 
 
 # $batch yalnız OData servis kökünde kabul edilir (V2 `/sap/opu/odata/…`, V4 `/sap/opu/odata4/…`). Başka bir ICF
@@ -51,8 +68,14 @@ YAZMA_YONTEMLERI = ("PUT", "MERGE", "PATCH", "DELETE")
 _R_BATCH_YOLU = re.compile(r"/sap/opu/odata4?(?:/[A-Za-z0-9_;=,.\-]+)+/\$batch")
 # RFC 2046 sınır karakterleri (boşluk hariç — fail-closed), 1-70 karakter.
 _R_SINIR = re.compile(r"[0-9A-Za-z'()+_,\-./:=?]{1,70}")
-# Parçanın gövdesinin İLK satırı tam olarak bu olmalı: GET + tek boşluk + boşluksuz yazdırılabilir ASCII hedef + HTTP/1.1.
-_R_GET_SATIRI = re.compile(rb"GET [\x21-\x7e]+ HTTP/1\.1")
+# Sınır parametresi: tam `boundary=` (küçük harf, `=` çevresinde boşluk yok) + çift tırnaklı ya da çıplak değer.
+_R_SINIR_PARAM = re.compile(r'boundary=(?:"([^"]*)"|([^"\s]*))')
+# Parçanın gövdesinin İLK satırı tam olarak bu olmalı: `GET ` + hedef + ` HTTP/1.1`. Hedef boşlukla başlamaz; içinde
+# boşluk ve UTF-8 baytı OLABİLİR, kontrol baytı (CR/LF dahil) ve DEL olamaz. Gerekçe (ölçüldü 2026-09-26, UI5 1.120.23
+# gerçek tarayıcı): uygulama yolu elle birleştirdiğinde (`"/Items('" + id + "')"`) UI5 V2 ve V4 hedefi KODLAMAZ —
+# `GET Items('Ö ş') HTTP/1.1` gider; eski ASCII-boşluksuz kural bu meşru okumayı reddediyordu. Yöntem satır başında
+# sabit `GET ` olduğundan hedefteki metin yöntemi değiştiremez.
+_R_GET_SATIRI = re.compile(rb"GET (?! )[^\x00-\x1f\x7f]+ HTTP/1\.1")
 # Başlık satırı (MIME parça başlığı ya da iç istek başlığı): token ad + `:` + yazdırılabilir ASCII değer.
 _R_BASLIK = re.compile(rb"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)[ \t]*:([\x20-\x7e\t]*)")
 # `\t \r \n` dışındaki kontrol baytları ve DEL: satır/parça tanımayı bozabilir (`DELETE\x0b…`, `\x0cDELETE…`).
@@ -67,16 +90,19 @@ def tek_icerik_tipi(degerler) -> str | None:
 
 
 def sinir_al(icerik_tipi: str) -> str | None:
-    """`multipart/mixed; boundary=<sınır>` → sınır; biçim dışı (başka tip, ek parametre, sınırsız, geçersiz) → None."""
+    """`multipart/mixed; boundary=<sınır>` → sınır; biçim dışı → None. Ayrıştırıcıdan ayrıştırıcıya farklı okunabilen
+    biçimler BELİRSİZDİR ve reddedilir (fail-closed): ek parametre, `boundary` dışında yazım (`BOUNDARY=`), `=`
+    çevresinde boşluk (`boundary = B`), tek tırnakla başlayan/biten değer (`'B'` — bazıları tırnağı sınırın parçası
+    sayar, bazıları atar). Çift tırnaklı değer (RFC 2045 quoted-string) kabul edilir, tırnaklar atılır."""
     parcalar = [p.strip() for p in (icerik_tipi or "").split(";")]
     if parcalar[0].lower() != "multipart/mixed" or len(parcalar) != 2:
         return None
-    ad, esit, deger = parcalar[1].partition("=")
-    if not esit or ad.strip().lower() != "boundary":
+    m = _R_SINIR_PARAM.fullmatch(parcalar[1])
+    if not m:
         return None
-    deger = deger.strip()
-    if len(deger) >= 2 and deger[0] == deger[-1] == '"':
-        deger = deger[1:-1]
+    deger = m.group(1) if m.group(1) is not None else m.group(2)
+    if deger.startswith("'") or deger.endswith("'"):
+        return None
     return deger if _R_SINIR.fullmatch(deger) else None
 
 
@@ -100,51 +126,69 @@ def _basliklar(satirlar: list[bytes]) -> tuple[list[tuple[bytes, bytes]] | None,
     return None, len(satirlar), "başlık/gövde ayırıcı boş satır yok"
 
 
-def _parca_denetle(satirlar: list[bytes]) -> str | None:
-    """Tek batch parçası salt-okuma GET mi? → None (uygun) ya da red nedeni."""
+def _parca_coz(satirlar: list[bytes]) -> tuple[tuple | None, str | None]:
+    """Tek batch parçası salt-okuma GET mi? → ((content_id | None, GET satırı, [(kanonik ad, değer)]), None) ya da
+    (None, red nedeni). Dönen başlıklar yalnız `IC_BASLIK_BEYAZ`'dakilerdir — geri kalanı YENİDEN KURMADA düşer."""
     alanlar, bos, hata = _basliklar(satirlar)
     if hata:
-        return f"parça: {hata}"
+        return None, f"parça: {hata}"
     tipler = [d.lower() for a, d in alanlar if a == b"content-type"]
     if tipler != [b"application/http"]:
-        return "parça: Content-Type tam olarak bir kez application/http değil"
+        return None, "parça: Content-Type tam olarak bir kez application/http değil"
     aktarim = [d.lower() for a, d in alanlar if a == b"content-transfer-encoding"]
     if aktarim not in ([], [b"binary"]):
-        return "parça: Content-Transfer-Encoding binary değil"
+        return None, "parça: Content-Transfer-Encoding binary değil"
+    kimlikler = [d for a, d in alanlar if a == b"content-id"]
+    if len(kimlikler) > 1:
+        return None, "parça: Content-ID birden çok"
     istek = satirlar[bos + 1:]
     if not istek or not _R_GET_SATIRI.fullmatch(istek[0]):
-        return "parça: ilk satır tam olarak `GET <hedef> HTTP/1.1` değil"
-    _ic, ic_bos, hata = _basliklar(istek[1:])
+        return None, "parça: ilk satır tam olarak `GET <hedef> HTTP/1.1` değil"
+    ic, ic_bos, hata = _basliklar(istek[1:])
     if hata:
-        return f"parça isteği: {hata}"
+        return None, f"parça isteği: {hata}"
     if any(s.strip() for s in istek[1 + ic_bos + 1:]):
-        return "parça: GET isteğinde gövde var"
-    return None
+        return None, "parça: GET isteğinde gövde var"
+    tasinan = [(IC_BASLIK_BEYAZ[a.decode("ascii")].encode("ascii"), d) for a, d in ic
+               if a.decode("ascii") in IC_BASLIK_BEYAZ]
+    return (kimlikler[0] if kimlikler else None, istek[0], tasinan), None
 
 
-def batch_govde_denetle(govde: bytes, sinir: str) -> str | None:
-    """multipart/mixed `$batch` gövdesi YALNIZ GET parçaları mı? → None (uygun) ya da red nedeni. Saf fonksiyon.
+def batch_coz(govde: bytes, sinir: str, sinir_taramasi: bool = True) -> tuple[list | None, str | None]:
+    """multipart/mixed `$batch` gövdesi → (GET istekleri listesi, None) ya da (None, red nedeni). Saf fonksiyon.
 
-    Satır sonu yalnız CRLF (tek `\\r` ya da tek `\\n` → red: sunucunun satır bölmesiyle ayrışma riski). Prolog/epilog
-    serbest metindir ve istek sayılmaz; ama içlerinde sınıra benzeyen satır olamaz, kapanıştan sonra sınır olamaz."""
+    Katman 1 (bayt): satır sonu yalnız CRLF; BOM, `\\t \\r \\n` dışı kontrol baytı ve DEL yok.
+    Katman 2 (sınır taraması, `sinir_taramasi`): `--<sınır>` gövdenin HERHANGİ bir yerinde, HARFE DUYARSIZ geçiyorsa o
+    geçiş satır başında ve satırın TAMAMI tam sınır / tam kapanış olmalı — satır ortasında (`x--<B>`), harf varyantlı
+    (`--<B BÜYÜK>`), sonunda boşluklu (transport-padding) geçiş → red. Prolog ya da epilog içinde de geçerlidir: bu
+    alanlar serbest metindir ve istek sayılmaz, ama İÇLERİNDE sınır geçişi olamaz. (Kanonik yeniden kurma prolog/epilog'u
+    zaten SAP'ye taşımaz; bu katman ikinci savunmadır.)
+    Katman 3 (yapı): sınırla ≥1 parça, kapanış şart, kapanıştan sonra sınır yok; her parça `_parca_coz` kuralları."""
     if not govde:
-        return "boş gövde"
+        return None, "boş gövde"
     if b"\xef\xbb\xbf" in govde or govde[:2] in (b"\xff\xfe", b"\xfe\xff"):
-        return "gövdede BOM"
+        return None, "gövdede BOM"
     if _R_KONTROL.search(govde):
-        return "gövdede kontrol baytı (\\t \\r \\n dışında < 0x20 ya da 0x7f)"
+        return None, "gövdede kontrol baytı (\\t \\r \\n dışında < 0x20 ya da 0x7f)"
     if re.search(rb"\r(?!\n)", govde) or re.search(rb"(?<!\r)\n", govde):
-        return "satır sonu CRLF değil (tek \\r ya da tek \\n)"
+        return None, "satır sonu CRLF değil (tek \\r ya da tek \\n)"
     ayrac = b"--" + sinir.encode("ascii")
     kapanis = ayrac + b"--"
+    if sinir_taramasi:
+        for m in re.finditer(re.escape(ayrac), govde, re.IGNORECASE):
+            bas = m.start()
+            son = govde.find(b"\r\n", bas)
+            satir = govde[bas:son if son >= 0 else len(govde)]
+            if (bas and govde[bas - 2:bas] != b"\r\n") or satir not in (ayrac, kapanis):
+                return None, "sınırın tam sınır satırı olmayan geçişi (satır ortası / harf varyantı / ek karakter)"
     durum, mevcut, parcalar = "prolog", [], []
     for s in govde.split(b"\r\n"):
         if s.startswith(ayrac):
             if durum == "epilog":
-                return "kapanış sınırından sonra sınır satırı"
+                return None, "kapanış sınırından sonra sınır satırı"
             if s == kapanis:
                 if durum != "parca":
-                    return "parçasız kapanış"
+                    return None, "parçasız kapanış"
                 parcalar.append(mevcut)
                 durum = "epilog"
             elif s == ayrac:
@@ -152,36 +196,49 @@ def batch_govde_denetle(govde: bytes, sinir: str) -> str | None:
                     parcalar.append(mevcut)
                 durum, mevcut = "parca", []
             else:
-                return "sınıra benzeyen ama sınır olmayan satır (doğrulanamaz)"
+                return None, "sınıra benzeyen ama sınır olmayan satır (doğrulanamaz)"
         elif durum == "parca":
             mevcut.append(s)
     if durum != "epilog":
-        return "kapanış sınırı yok"
+        return None, "kapanış sınırı yok"
+    istekler = []
     for p in parcalar:
-        neden = _parca_denetle(p)
+        istek, neden = _parca_coz(p)
         if neden:
-            return neden
-    return None
+            return None, neden
+        istekler.append(istek)
+    return istekler, None
 
 
-def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None = None) -> tuple[bool, str]:
-    """SAP'ye iletilecek istek SALT-OKUMA mı? → (izin, neden). Saf fonksiyon (testlenir).
+def kanonik_batch(istekler: list, sinir: str | None = None) -> tuple[bytes, str]:
+    """Doğrulanmış GET istekleri → (proxy'nin KURDUĞU gövde, `multipart/mixed; boundary=<yeni>`). Saf fonksiyon.
 
-    `$batch` için kural PARÇA BAZLI BEYAZ LİSTEdir (emin olunamayan → red): yol OData servis kökü; istek tipi
-    `multipart/mixed; boundary=…` (tek parametre); gövde sınırla parçalara bölünür, ≥1 parça, HER parça
-    `Content-Type: application/http` + (varsa) `binary` aktarım + katlanmamış başlıklar + ilk satırı tam olarak
-    `GET <hedef> HTTP/1.1` + gövdesiz. `icerik_tipi=None` = çağıran başlığı bilmiyor (yalnız saf kullanım; `do_POST`
-    daima doğrulanmış TEK değeri verir) → sınır gövdenin ilk satırından (`--<sınır>`) alınır, kurallar aynıdır.
-    """
-    yontem = yontem.upper()
-    if yontem in ("GET", "HEAD"):
-        return True, "okuma"
-    if yontem != "POST":
-        return False, f"{yontem} yazmadır"
+    SAP'ye istemcinin baytları DEĞİL bu gövde gider: proxy'nin ürettiği sınır, prolog/epilog YOK, her parça
+    `Content-Type: application/http` + `Content-Transfer-Encoding: binary` (+ varsa Content-ID) + boş satır +
+    `GET <hedef> HTTP/1.1` + yalnız beyaz liste başlıkları + boş satır; parça SIRASI korunur (yanıt eşlemesi sıraya
+    dayanır). Böylece prolog/epilog, gizli / harf varyantlı sınır ve beyaz liste dışı başlık SAP'ye yapısal olarak
+    ulaşamaz — SAP'nin ayrıştırıcısının ne yaptığını ölçmek gerekmez."""
+    hedefler = b"\r\n".join(satir for _k, satir, _b in istekler)
+    while True:
+        s = sinir or "batch_axet_" + secrets.token_hex(16)
+        if (b"--" + s.encode("ascii")).lower() not in hedefler.lower():
+            break
+        if sinir:
+            raise ValueError("verilen sınır hedeflerde geçiyor")
+    ayrac = b"--" + s.encode("ascii")
+    govde = b""
+    for kimlik, satir, basliklar in istekler:
+        govde += (ayrac + b"\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n"
+                  + (b"Content-ID: " + kimlik + b"\r\n" if kimlik is not None else b"") + b"\r\n"
+                  + satir + b"\r\n" + b"".join(a + b": " + d + b"\r\n" for a, d in basliklar) + b"\r\n\r\n")
+    return govde + ayrac + b"--\r\n", f"multipart/mixed; boundary={s}"
+
+
+def _batch_istekleri(yol: str, govde: bytes, icerik_tipi: str | None) -> tuple[list | None, str]:
     yol_kismi = urllib.parse.urlsplit(yol).path
     if (not _R_BATCH_YOLU.fullmatch(yol_kismi)
             or any(s.split(";")[0].strip(".") == "" for s in yol_kismi.split("/")[1:])):
-        return False, "yalnız /sap/opu/odata(4)/…/$batch POST'u iletilir (function import / create = yazma olabilir)"
+        return None, "yalnız /sap/opu/odata(4)/…/$batch POST'u iletilir (function import / create = yazma olabilir)"
     g = govde or b""
     if icerik_tipi is None:
         ilk = g.split(b"\r\n", 1)[0]
@@ -190,12 +247,41 @@ def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None 
     else:
         sinir = sinir_al(icerik_tipi)
     if not sinir:
-        return False, (f"$batch istek tipi `multipart/mixed; boundary=…` değil ({icerik_tipi or 'yok'}) — "
-                       "JSON batch / sınırsız / bilinmeyen biçim")
-    neden = batch_govde_denetle(g, sinir)
+        return None, (f"$batch istek tipi `multipart/mixed; boundary=…` değil ({icerik_tipi or 'yok'}) — "
+                      "JSON batch / sınırsız / bilinmeyen biçim / belirsiz sınır parametresi")
+    istekler, neden = batch_coz(g, sinir)
     if neden:
-        return False, f"$batch: {neden}"
-    return True, "okuma batch'i (yalnız GET parçaları)"
+        return None, f"$batch: {neden}"
+    return istekler, f"okuma batch'i ({len(istekler)} GET parçası)"
+
+
+def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None = None) -> tuple[bool, str]:
+    """SAP'ye iletilecek istek SALT-OKUMA mı? → (izin, neden). Saf fonksiyon (testlenir).
+
+    `$batch` için kural PARÇA BAZLI BEYAZ LİSTEdir (emin olunamayan → red; ayrıntı `batch_coz`). Kabul edilen batch
+    SAP'ye istemcinin baytlarıyla DEĞİL `batch_yeniden_kur` ile gider. `icerik_tipi=None` = çağıran başlığı bilmiyor
+    (yalnız saf kullanım; `do_POST` daima doğrulanmış TEK değeri verir) → sınır gövdenin ilk satırından alınır."""
+    yontem = yontem.upper()
+    if yontem in ("GET", "HEAD"):
+        return True, "okuma"
+    if yontem != "POST":
+        return False, f"{yontem} yazmadır"
+    istekler, neden = _batch_istekleri(yol, govde, icerik_tipi)
+    return istekler is not None, neden
+
+
+def batch_yeniden_kur(yol: str, govde: bytes, icerik_tipi: str | None,
+                      sinir: str | None = None) -> tuple[bytes | None, str | None, str]:
+    """POST `$batch` → (SAP'ye gidecek kanonik gövde, onun Content-Type'ı, neden) ya da (None, None, red nedeni).
+    Son kontrol: kurulan gövde kendi denetiminden geçmeli ve AYNI GET satırlarını AYNI sırada taşımalı (fail-closed)."""
+    istekler, neden = _batch_istekleri(yol, govde, icerik_tipi)
+    if istekler is None:
+        return None, None, neden
+    kanonik, tip = kanonik_batch(istekler, sinir)
+    geri, hata = batch_coz(kanonik, sinir_al(tip) or "")
+    if hata or [i[1] for i in geri] != [i[1] for i in istekler]:
+        return None, None, f"$batch: kanonik gövde kendi denetiminden geçmedi ({hata or 'satır farkı'})"
+    return kanonik, tip, f"{neden} — yeniden kuruldu"
 
 
 def host_gecerli(host: str | None, port: int) -> bool:
@@ -227,8 +313,8 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             if client and not any(k == "sap-client" for k, _ in q):
                 q.append(("sap-client", client))
             url = f"{taban}{ayrik.path}" + ("?" + urllib.parse.urlencode(q, safe="'$,()") if q else "")
-            # Content-Type istemci başlıklarından KOPYALANMAZ: çift başlıkta sözlük SONUNCUYU tutuyordu, kapı İLKİNE
-            # bakıyordu (ölçüldü: multipart/mixed + application/json → SAP'ye json gitti). İletilen = doğrulanan değer.
+            # Content-Type istemci başlıklarından KOPYALANMAZ (çift başlıkta sözlük SONUNCUYU tutuyordu, kapı İLKİNE
+            # bakıyordu — ölçüldü). POST'ta gelen `icerik_tipi` proxy'nin kurduğu kanonik gövdenin tipidir.
             h = {k: v for k, v in self.headers.items() if k.lower() in GECEN_ISTEK and k.lower() != "content-type"}
             if icerik_tipi is not None:
                 h["Content-Type"] = icerik_tipi
@@ -271,18 +357,23 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             if not host_gecerli(self.headers.get("Host"), self.server.server_address[1]):
                 print(f"REDDEDİLDİ {self.command} {self.path[:150]} — yabancı Host başlığı", flush=True)
                 return self._yanit(403, "Salt-okur yerel test sunucusu: Host localhost/127.0.0.1 degil")
-            icerik_tipi = None
             if self.command == "POST":
                 icerik_tipi = tek_icerik_tipi(icerik_tipleri)
                 if icerik_tipi is None:
                     neden = f"Content-Type başlığı tam 1 değil ({len(icerik_tipleri or [])} adet)"
+                    kanonik = kanonik_tip = None
+                else:
+                    kanonik, kanonik_tip, neden = batch_yeniden_kur(self.path, govde, icerik_tipi)
+                if kanonik is None:
                     print(f"REDDEDİLDİ {self.command} {self.path[:150]} — {neden}", flush=True)
                     return self._yanit(403, f"Salt-okur yerel test sunucusu yazma istegini reddetti: {neden}")
-            izin, neden = izin_ver(self.command, self.path, govde, icerik_tipi)
+                # İstemcinin gövdesi ve Content-Type'ı SAP'ye GİTMEZ: proxy'nin kurduğu kanonik gövde + onun tipi gider.
+                return self._ilet(kanonik, kanonik_tip)
+            izin, neden = izin_ver(self.command, self.path)
             if not izin:
                 print(f"REDDEDİLDİ {self.command} {self.path[:150]} — {neden}", flush=True)
                 return self._yanit(403, f"Salt-okur yerel test sunucusu yazma istegini reddetti: {neden}")
-            return self._ilet(govde if self.command == "POST" else None, icerik_tipi)
+            return self._ilet()
 
         def do_GET(self):  # noqa: N802
             self._karar()

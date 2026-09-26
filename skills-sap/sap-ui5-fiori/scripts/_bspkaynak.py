@@ -52,17 +52,30 @@ class GuvensizYolHatasi(IndirmeHatasi):
 
 
 _R_SURUCU = re.compile(r"^[A-Za-z]:")
+# Windows aygıt adları: uzantılı hâlleri de (`AUX.json`, `nul.txt`) dosya DEĞİL aygıttır — yazım hata vermeden aygıta
+# gider ve dosya kaybolur (ölçüldü: `klasore_yaz(t, {'a/NUL': …})` hata vermedi, dosya yoktu). Üst simge rakamlı
+# COM/LPT de Windows'ta aygıttır.
+_AYGIT_ADLARI = ({"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"}
+                 | {f"{on}{r}" for on in ("COM", "LPT") for r in (*"123456789", "¹", "²", "³")})
+
+
+def _aygit_adi_mi(segment: str) -> bool:
+    """Segmentin ilk noktaya kadarki kökü (boşluk kırpılmış, harfe duyarsız) bir Windows aygıt adı mı?"""
+    return segment.split(".", 1)[0].strip().upper() in _AYGIT_ADLARI
 
 
 def yol_guvenli_mi(rel: str) -> bool:
     """Metin kuralı (diske bakmaz): göreli, `..` segmentsiz, sürücü harfsiz, `:` içermeyen (NTFS akışı) ad mı?
     Sonu boşluk/nokta ile biten segment (`.` hariç) de güvensizdir: Windows bunları kırpar (`.. ` → `..`), yani
     aynı ad Windows'ta kök dışına, POSIX'te kök içine düşer (ölçüldü: `a/.. /.. /x.js` resolve'dan geçti, yazımda
-    `a/f.js` yazıldıktan sonra OSError verdi) — platforma göre anlamı değişen ad fail-closed reddedilir."""
+    `a/f.js` yazıldıktan sonra OSError verdi) — platforma göre anlamı değişen ad fail-closed reddedilir.
+    Windows aygıt adı olan segment (`CON`, `NUL`, `AUX.json`, `lpt1.txt` … harfe duyarsız, her segmentte) de
+    güvensizdir — POSIX'te sıradan dosya, Windows'ta aygıt: yine platforma göre anlamı değişir."""
     if not rel or rel.startswith(("/", "\\")) or _R_SURUCU.match(rel) or ":" in rel:
         return False
     segmentler = rel.replace("\\", "/").split("/")
-    return ".." not in segmentler and all(s == "." or s == s.rstrip(" .") for s in segmentler)
+    return (".." not in segmentler and all(s == "." or s == s.rstrip(" .") for s in segmentler)
+            and not any(_aygit_adi_mi(s) for s in segmentler))
 
 
 def guvenli_hedef(kok: Path, rel: str) -> Path:
@@ -268,16 +281,44 @@ def klasore_yaz(kok: Path, dosyalar: dict) -> None:
             hedef.parent.mkdir(parents=True, exist_ok=True)
             yazilan.append((hedef, hedef.read_bytes() if hedef.is_file() else None))
             hedef.write_bytes(icerik)
-    except OSError:
-        _yazimi_geri_al(kok, kok_vardi, onceki_klasorler, yazilan)
+    except OSError as exc:
+        # Geri alma başarısı BEYAN edilmez, ÖLÇÜLÜR: kalanlar hataya iliştirilir (boş liste = temiz).
+        exc.kalanlar = _yazimi_geri_al(kok, kok_vardi, onceki_klasorler, yazilan)
         raise
 
 
-def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: list) -> None:
-    """`klasore_yaz` geri alımı — kendi hatası asıl hatayı gölgelemesin diye her adım sessizce denenir."""
+def _agac_sil(p: Path) -> None:
+    """Klasörü siler; hata sessizdir — kalan varsa çağıran ÖLÇER ve raporlar (açık dosya tutamacı `rmtree`'yi yarım
+    bırakabilir: ölçüldü, `webapp/a.js` kaldı). Testte tutamaç benzetimi bu fonksiyon üzerinden yapılır."""
+    shutil.rmtree(p, ignore_errors=True)
+
+
+def yollari_kaldir(yollar) -> list[str]:
+    """Verilen dosya/klasörleri kaldırmayı DENER, sonra KALANLARI ölçer → kalan yolların listesi (boş = temiz).
+    Klasörde kalan dosyalar tek tek listelenir; yalnız boş klasör kaldıysa klasörün kendisi."""
+    yollar = [Path(p) for p in yollar]
+    for p in yollar:
+        try:
+            if p.is_dir() and not p.is_symlink():
+                _agac_sil(p)
+            elif p.exists() or p.is_symlink():
+                p.unlink()
+        except OSError:
+            pass
+    kalan: list[str] = []
+    for p in yollar:
+        if p.is_dir():
+            kalan += [str(q) for q in sorted(p.rglob("*")) if not q.is_dir()] or [str(p)]
+        elif p.exists() or p.is_symlink():
+            kalan.append(str(p))
+    return kalan
+
+
+def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: list) -> list[str]:
+    """`klasore_yaz` geri alımı → geri alınamayan yollar (boş = temiz). Kendi hatası asıl hatayı gölgelemesin diye her
+    adım sessizce denenir; sonuç ÖLÇÜLEREK döner."""
     if not kok_vardi:
-        shutil.rmtree(kok, ignore_errors=True)
-        return
+        return yollari_kaldir([kok])
     for hedef, eski in reversed(yazilan):
         try:
             hedef.unlink(missing_ok=True) if eski is None else hedef.write_bytes(eski)
@@ -290,6 +331,13 @@ def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: 
             p.rmdir()
         except OSError:
             pass
+    def _geri_alinamadi(h: Path, eski: bytes | None) -> bool:
+        try:
+            return h.exists() if eski is None else (not h.is_file() or h.read_bytes() != eski)
+        except OSError:
+            return True
+    kalan = [str(h) for h, eski in yazilan if _geri_alinamadi(h, eski)]
+    return kalan + [str(p) for p in yeni if p.exists()]
 
 
 def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
