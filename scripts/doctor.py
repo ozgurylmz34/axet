@@ -828,7 +828,7 @@ def template_bulgulari(olc: dict) -> list[tuple[str, str]]:
     out.append(("INFO", "template yüzeyi KAPSAM — bakılanlar: "
                 + " · ".join(bm.TEMPLATE_DOSYALAR + [d + "/**" for d in bm.TEMPLATE_DIZINLER])
                 + " (git status + `@{u}...HEAD` farkı) — bakılmayanlar: değişikliğin İÇERİĞİ (yalnız hangi dosya) · "
-                  "memory/ scripts/ templates/ tests/ · klonun `origin` adresinin doğruluğu · "
+                  "memory/ tests/ · klonun `origin` adresinin doğruluğu · "
                   f"'{bm.GUNCELLE_EPOSTA}' kimliği TAKLİT EDİLEBİLİR (gürültü ayıklaması, güvenlik sınırı DEĞİL) · "
                   "merge commit'iyle gelen dosya atfedilemez, temkinli olarak kullanıcı sayılır · "
                   "upstream tanımsızsa commit dalı hiç ÖLÇÜLMEZ"))

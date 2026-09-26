@@ -21,8 +21,9 @@ description: >
 - **Kullanma:** oturum içinde konu değişimi → `%handoff`; bitmiş işi PR ile yayınlama → `%commit-pr`.
 
 ## How to use this skill
-1. **Durumu gör:** proje `AGENTS.md` "Oturum" bölümündeki komutla `session_brief.py --no-fetch`; ardından
-   `git status` ve `git diff --stat`.
+1. **Durumu gör:** proje kökünde, `AGENTS.md` "Oturum" bölümündeki komutun sonuna yalnız ` --no-fetch` ekleyerek:
+   `python "<AXET_HOME>/scripts/session_brief.py" --no-fetch`. Başka ek, zincir (`&&`, `;`) ya da önüne `cd` koyma —
+   bu birebir biçim izinlidir, başkası onay sorar. Ardından ayrı komutlarla `git status` ve `git diff --stat`.
 2. **Checkpoint:** biten (dosya yolları + doğrulama komutu ve sonucu) · yarım kalan (dosya/adım, neden durdu) ·
    yarın ilk somut adım · açık sorular. Doğrulanmamışı `DOĞRULANMADI` yaz. Sonucu beklenen bir alt görev varsa
    sonucunu al ya da "yarım" yaz.
@@ -55,7 +56,7 @@ description: >
      birleştirme onayı sayılmaz); kullanıcı isterse `%commit-pr` adım 9 (yerel birleştirme), ayrı açık onayla.
    - Template reposunda (ekip `memory/` dersleri) değişiklik varsa o **ayrı depodur**: onayı oraya taşıma, ayrıca sor.
 9. **Doğrula:** `git status` (temiz ya da bilinçli bırakılanlar listeli) · `git log -1 --oneline` · push çıktısı (remote yoksa "push yok") ·
-   `session_brief.py --no-fetch` son hâli. Bu koşu açılış brief'ini (`.axet-code/acilis-brief.md`) de yeniler: yarınki oturum
+   adım 1'deki `session_brief.py" --no-fetch` komutu (aynı biçimle) son hâli. Bu koşu açılış brief'ini (`.axet-code/acilis-brief.md`) de yeniler: yarınki oturum
    özeti çalıştırmasa bile bugünün son hâlini bağlamında görür. Çıktının son satırı "açılış brief'i yazıldı" değilse raporda yaz.
 10. **Rapor:** commit ve dal · push sonucu · güncellenen dosyalar · yarın ilk adım. "Yeni oturumda açılış özeti bunları
     gösterecek; 'devam' demen yeter." de.
