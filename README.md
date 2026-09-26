@@ -88,7 +88,7 @@ python $HOME\axet\scripts\new_package.py --index --check                        
 `sap-project.json`'dadır (yoksa `SOURCE_CODES`). **SAP'de paketi SE21 ile sen yaratırsın** — aXet paket yaratmaz.
 
 ## Yeni projede kabul kontrolü
-1. Projede yeni aXet oturumu aç: ilk satırda `proje: <PROJECT-ID>` görünür ve oturum özeti (`session_brief.py`) aktarılır.
+1. Projede yeni aXet oturumu aç ve `%basla` yaz: ilk satırda `proje: <PROJECT-ID>` görünür ve oturum özeti (`session_brief.py`) aktarılır.
 2. Proje kökünde `python $HOME\axet\scripts\doctor.py` → 0 FAIL (`.conn_adt` git'e kapalı dahil).
 3. SAP projesinde: `sap_adt_cli.py ping` ve bilinen bir objeyle `adt_get include_source=false` → `exists:true`.
 4. `git check-ignore .conn_adt` dosya adını basar.
@@ -129,11 +129,12 @@ paketlerini denetleyip eksikse kurar ve tarayıcı testini hazırlar. Yeni kural
 oturumunda yüklenir. Projelerin için ayrıca `%guncelle-proje`.
 
 ## Günlük kullanım
-- Oturum açılışı: model ilk yanıttan önce `scripts/session_brief.py`'yi çalıştırır (proje `AGENTS.md` "Oturum" bölümü) —
-  dal ve değişiklikler, template güncelliği, doctor uyarıları, SAP profili, aktif paketin son kaydı, iş listesi, devir notları.
-  Özet `.axet-code/acilis-brief.md`'ye de yazılır (git'e girmez) ve proje `.axet-code.json` bu dosyayı her oturumda
-  bağlama koyar: model özeti çalıştırmasa da (ör. oturum `%skill` ile açıldı) son özeti üretim saatiyle görür;
-  tarihi bugün değilse "BAYAT" der ve yenilemeyi önerir. Brief'i her özet koşusu, `%gun-sonu` ve `%guncelle-proje` yeniler
+- **Her yeni aXet oturumunu `%basla` ile aç.** Model oturum özetini (`scripts/session_brief.py`) taze çalıştırır,
+  kimlik satırını ve özeti yazar (dal ve değişiklikler, template güncelliği, doctor uyarıları, SAP profili, aktif
+  paketin son kaydı, iş listesi, devir notları), sonra hangi işle devam edileceğini sorar. Açılış kendiliğinden
+  tetiklenmez: aXet'te hook yok ve model, ilk mesaj bir emir ya da başka bir `%skill` olunca açılışı atlayabiliyor
+  (ölçüldü). Özet `.axet-code/acilis-brief.md`'ye de yazılır (git'e girmez) ve her oturumda bağlama girer; `%basla`
+  ile açmadığın oturumda model en fazla bu son özeti üretim saatiyle görür
 - `%yeni-proje` — yeni projeyi sorarak kur
 - `%gun-sonu` — kaldığın yeri yaz (SESSION_NOTES, iş listesi, devir notu), çalışma dalını commit + push et
   (projenin uzak deposu yoksa push yapılmaz)
