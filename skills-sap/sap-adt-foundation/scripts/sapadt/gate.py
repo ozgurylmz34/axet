@@ -355,6 +355,29 @@ def check_names(tool: str, obje_adi, object_type=None, ek_obje_adlari=(),
 # reviewer girdisidir (ABAP değil); `adt_activate`/`adt_syntax_check`/`adt_classrun` SAP'deki
 # mevcut kodu işler, kaynak metni almaz (bilinen sınır: IMPLEMENTATION.md §12.5).
 SOURCE_ARG_TOOLS = {"adt_push_source": "source"}
+#: Z142ⓒ (2026-09-26): aynı kaynağın YEREL DOSYADAN verildiği argüman. Kapı dosyayı aracın okuyacağı AYNI kuralla
+#: (`sapadt.project.yerel_kaynak_oku`: proje kökü içi · kaynak uzantısı · `.axet-code/` dışı · UTF-8) okuyup tarar ⇒
+#: kapının kaynağı GENİŞLER, gevşemez. Okunamazsa / kural dışıysa / metin argümanıyla birlikte verilirse
+#: FAIL-CLOSED (`*_scan_unavailable`). Araç okuduğu metni kendi ikinci katman taramasından da geçirir.
+SOURCE_PATH_ARG_TOOLS = {"adt_push_source": "source_path"}
+
+
+def _kaynak_arg_metni(tool: str, tool_args: dict | None) -> tuple[str | None, str | None]:
+    """Kaynak taşıyan aracın taranacak metni → (metin, None) | (None, eksik-gerekçesi). `tool` SOURCE_ARG_TOOLS'ta olmalı."""
+    a = tool_args if isinstance(tool_args, dict) else {}
+    anahtar, yol_anahtari = SOURCE_ARG_TOOLS[tool], SOURCE_PATH_ARG_TOOLS.get(tool)
+    kaynak = a.get(anahtar)
+    if yol_anahtari is not None and a.get(yol_anahtari) is not None:
+        if kaynak is not None:
+            return None, f"`{anahtar}` ile `{yol_anahtari}` birlikte verildi (yalnız biri verilir)"
+        from sapadt import project as _proj
+        metin, _yol, hata = _proj.yerel_kaynak_oku(a.get(yol_anahtari), yol_anahtari)
+        if hata:
+            return None, f"`{yol_anahtari}` okunamadı ({hata.get('error')}: {hata.get('message')})"
+        return metin, None
+    if isinstance(kaynak, str):
+        return kaynak, None
+    return None, f"`{anahtar}` metni kapıya verilmedi (tool_args)"
 
 
 def check_std_dml(tool: str, tool_args: dict | None, object_type=None,
@@ -364,14 +387,12 @@ def check_std_dml(tool: str, tool_args: dict | None, object_type=None,
     FAIL-CLOSED: kaynak taşıyan araçta kaynak metni yoksa / metin değilse / tarayıcı koşamazsa
     `std_dml_scan_unavailable` ile reddedilir (sessiz geçiş YOK). Script'ler `check_write`'a
     `tool_args` (kaynak dahil) vermek zorundadır."""
-    anahtar = SOURCE_ARG_TOOLS.get(tool)
-    if anahtar is None:
+    if tool not in SOURCE_ARG_TOOLS:
         return None
-    kaynak = (tool_args or {}).get(anahtar)
-    if not isinstance(kaynak, str):
+    kaynak, eksik = _kaynak_arg_metni(tool, tool_args)
+    if kaynak is None:
         return ("std_dml_scan_unavailable",
-                f"Kesin Yasak B taraması koşamadı: {tool} için `{anahtar}` metni kapıya verilmedi "
-                f"(tool_args). Kaynak taranmadan yazma yapılmaz.")
+                f"Kesin Yasak B taraması koşamadı: {tool} için {eksik}. Kaynak taranmadan yazma yapılmaz.")
     try:
         from sapadt.std_dml_scan import mesaj, tara
         bulgular = tara(kaynak, object_type if isinstance(object_type, str) else None)
@@ -388,14 +409,12 @@ def check_std_dml(tool: str, tool_args: dict | None, object_type=None,
 def _ext_kaynagi(tool: str, tool_args: dict | None) -> tuple[str | None, str | None]:
     """Z104: genişletme taraması için yazılacak kaynak → (metin, None) | (None, eksik-gerekçesi) | (None, None)=denetim yok.
 
-    `adt_push_source`: `source` argümanı. `adt_struct_create`: alan adı DOĞRULANMAZ (composite.py yalnız dolu mu bakar)
+    `adt_push_source`: `source` argümanı ya da `source_path` dosyası (Z142ⓒ). `adt_struct_create`: alan adı DOĞRULANMAZ (composite.py yalnız dolu mu bakar)
     ⇒ yazılacak DDL aynı render'la (`yapi_ddl_kaynagi`) üretilip taranır. Render girdiyi reddederse (satır sonu,
     geçersiz alan listesi) araç da ağa gitmeden reddeder → burada denetim atlanır (None, None)."""
     a = tool_args if isinstance(tool_args, dict) else {}
-    anahtar = SOURCE_ARG_TOOLS.get(tool)
-    if anahtar is not None:
-        kaynak = a.get(anahtar)
-        return (kaynak, None) if isinstance(kaynak, str) else (None, f"`{anahtar}` metni kapıya verilmedi (tool_args)")
+    if tool in SOURCE_ARG_TOOLS:
+        return _kaynak_arg_metni(tool, a)
     if tool == "adt_struct_create":
         alanlar = a.get("fields")
         if not isinstance(alanlar, list) or not all(isinstance(f, dict) for f in alanlar):

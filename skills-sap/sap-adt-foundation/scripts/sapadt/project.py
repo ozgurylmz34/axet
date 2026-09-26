@@ -107,3 +107,83 @@ def effective_conn_value(key: str, default: str | None = None,
         return os.environ[key]
     v = conn_file_last(key, proj)
     return v if v is not None else default
+
+
+# ═════════════════════ Yerel kaynak dosyası yolu (Z128 → Z142, TEK kaynak) ═════════════════════
+# `adt_pretty_print(output_path)` (Z128) kuralları buraya taşındı ve genelleştirildi; `adt_get(output_path)` ve
+# `adt_push_source(source_path)` (+ kapının kaynak taraması, gate.py) AYNI kuralı kullanır:
+#   · yol proje kökünün İÇİNDE (göreli yol köke göre çözülür; `resolve` bağlantıyı izler ⇒ kök dışına çıkan
+#     junction/symlink de reddedilir),
+#   · uzantı çağıranın izin listesinde (yapılandırma dosyaları — `.conn_adt`, `sap-project.json`, `.rules.md` —
+#     bu yollarla yazılamaz/okunamaz),
+#   · `.axet-code/` altında DEĞİL (kapı kayıtlarının dizini; büyük/küçük harf duyarsız).
+# Üzerine yazma kararı (`overwrite`) çağıranındır.
+#: Kaynak dosyası uzantıları — emsal: `scripts/project_precommit.py` "abap_benzeri" listesi (SAP kaynak
+#: incelemesine giren uzantılar) + `object_types` `file_extension` son ekleri (.asddlxs, .asdcls).
+KAYNAK_UZANTILARI = (".abap", ".asddls", ".asddlxs", ".asdcls", ".asbdef", ".bdef", ".cds", ".ddl",
+                     ".srvd", ".srvdsrv", ".xml")
+#: Okunan kaynak dosyası üst sınırı (bayt). SAP kaynak objeleri bunun çok altındadır; sınırsız okuma kapıyı
+#: yavaşlatır ve yanlış dosyanın (döküm, arşiv) kaynak diye gönderilmesini kolaylaştırır.
+KAYNAK_OKUMA_SINIRI = 5 * 1024 * 1024
+
+
+def _gecersiz(mesaj: str) -> dict:
+    return {"ok": False, "error": "invalid_argument", "message": mesaj}
+
+
+def yerel_kaynak_yolu(deger, arg_adi: str = "output_path",
+                      uzantilar: tuple[str, ...] = KAYNAK_UZANTILARI) -> tuple[Path | None, dict | None]:
+    """`deger` → (mutlak yol, None) | (None, invalid_argument sözlüğü). Diske DOKUNMAZ (varlık bakılmaz)."""
+    if not (isinstance(deger, str) and deger.strip()):
+        return None, _gecersiz(f"{arg_adi} boş olamaz (ya da hiç verme).")
+    kok = project_dir()
+    ham = Path(deger.strip())
+    yol = (ham if ham.is_absolute() else kok / ham).resolve()
+    try:
+        goreli = yol.relative_to(kok)
+    except ValueError:
+        return None, _gecersiz(f"{arg_adi} proje kökünün İÇİNDE olmalı (göreli yol proje köküne göre çözülür).")
+    if yol.suffix.lower() not in uzantilar:
+        return None, _gecersiz(f"{arg_adi} uzantısı {', '.join(uzantilar)} olmalı "
+                               "(yapılandırma dosyaları bu araçla yazılamaz/okunamaz).")
+    if goreli.parts and goreli.parts[0].lower() == ".axet-code":
+        return None, _gecersiz(f"{arg_adi} .axet-code/ altında olamaz (kapı kayıtlarının dizini).")
+    return yol, None
+
+
+def yerel_dosyaya_yaz(yol: Path, metin: str) -> str | None:
+    """UTF-8 bayt olarak ATOMİK yaz (geçici dosya + `os.replace`; satır sonu çevrilmez). Hata metni ya da None."""
+    try:
+        yol.parent.mkdir(parents=True, exist_ok=True)
+        gecici = yol.with_name(yol.name + ".tmp")
+        gecici.write_bytes(metin.encode("utf-8"))
+        os.replace(gecici, yol)
+    except OSError as exc:
+        return f"{type(exc).__name__}: {exc}"
+    return None
+
+
+def yerel_kaynak_oku(deger, arg_adi: str = "source_path") -> tuple[str | None, Path | None, dict | None]:
+    """`deger` yolundaki kaynak dosyasını oku → (metin, yol, None) | (None, None, hata sözlüğü).
+
+    Yol kuralı `yerel_kaynak_yolu` ile AYNI. FAIL-CLOSED: dosya yok / dizin / sınırdan büyük / UTF-8 değil / boş
+    → hata (çağıran yazmaz). UTF-8 BOM atılır (editörün eklediği BOM SAP kaynağına girmesin)."""
+    yol, hata = yerel_kaynak_yolu(deger, arg_adi)
+    if hata:
+        return None, None, hata
+    if not yol.is_file():
+        return None, None, {"ok": False, "error": "source_file_missing",
+                            "message": f"{arg_adi} dosyası yok ya da dosya değil: {yol.relative_to(project_dir()).as_posix()}"}
+    try:
+        boy = yol.stat().st_size
+        if boy > KAYNAK_OKUMA_SINIRI:
+            return None, None, _gecersiz(f"{arg_adi} {boy} bayt — sınır {KAYNAK_OKUMA_SINIRI} bayt (kaynak dosyası mı?).")
+        metin = yol.read_bytes().decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None, None, _gecersiz(f"{arg_adi} UTF-8 değil — kaynak dosyasını UTF-8 kaydet.")
+    except OSError as exc:
+        return None, None, {"ok": False, "error": "source_file_unreadable",
+                            "message": f"{arg_adi} okunamadı ({type(exc).__name__}: {exc})."}
+    if not metin.strip():
+        return None, None, _gecersiz(f"{arg_adi} boş — boş kaynak göndermek objeyi siler; yazılmadı.")
+    return metin, yol, None
