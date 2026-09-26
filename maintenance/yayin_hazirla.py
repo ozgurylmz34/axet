@@ -11,6 +11,8 @@ Kullanım (template kökünden):
   python maintenance/yayin_hazirla.py --yalniz-dogrula                                 yalnız guncelle/yayinlar.json şeması
   python maintenance/yayin_hazirla.py --hedef <boş klasör> --ilk                       İLK yayın: git init + commit + etiket
   python maintenance/yayin_hazirla.py --hedef <public klon>                            SONRAKİ yayın: var olan klona yaz
+  python maintenance/yayin_hazirla.py --depo-tara                                      GELİŞTİRME deposunu yerinde tara
+                                                                                       (maintenance/ dahil; PR/push öncesi)
 Çıkış kodu: 0 temiz (ve istenirse commit kuruldu) · 1 BLOCKER bulgu ya da yayın doğrulaması FAIL (git kurulmadı) ·
 2 kullanım/git hatası.
 
@@ -155,10 +157,32 @@ def kopya_hatasi(yol: Path, e: OSError) -> SystemExit:
     return SystemExit(f"HATA: kopyalanamadı: {yol} ({type(e).__name__}: {e}).{ipucu}")
 
 
-def kopyala(hedef: Path, ref: str, calisma_agaci: bool) -> list[str]:
+def listelenen_dosyalar(kok: Path = KOK) -> tuple[list[str], list[str]]:
+    """git'in listelediği yollar (izlenen + gitignore'suz izlenmeyen) → (dosya olarak açılan, AÇILAMAYAN).
+
+    İkinci liste SESSİZCE düşmez (L5 bug gate, 2026-09-26): `is_file()` False dönen yol ya çalışma ağacından
+    silinmiş izlenen dosyadır, ya git'in yazıp Python'un göremediği Windows MAX_PATH yoludur (ölçüldü: 258
+    karakter yazılır, 260 yazılmaz), ya da dizin/bağlantıdır. Çağıran sayıyı KAPSAM satırına ÖLÇÜLEMEDİ diye basar."""
+    ham = {y for y in git("ls-files", "--cached", "--others", "--exclude-standard", "-z",
+                          cwd=kok).decode("utf-8").split("\0") if y}
+    acilan = sorted(y for y in ham if (kok / y).is_file())
+    return acilan, sorted(ham - set(acilan))
+
+
+def olculemedi_satiri(dusen: list[str]) -> str:
+    """KAPSAM satırı — sıfırken de basılır (sıfır-bulgu anı en çok okunan andır)."""
+    ornek = f"; ilk 5: {', '.join(dusen[:5])}" if dusen else ""
+    return (f"KAPSAM — ÖLÇÜLEMEDİ {len(dusen)} yol (git listeliyor ama dosya olarak açılamadı: çalışma ağacından "
+            f"silinmiş · Windows MAX_PATH · dizin/bağlantı — taranmadı/kopyalanmadı, temiz sayılmaz{ornek})")
+
+
+def kopyala(hedef: Path, ref: str, calisma_agaci: bool, dusen: list | None = None) -> list[str]:
+    """`dusen` verilirse çalışma ağacı kipinde açılamayan (dışlanmamış) yollar ona eklenir (arşiv kipinde düşme
+    yoktur: her üye çıkarılır ya da `kopya_hatasi` yükselir)."""
     if calisma_agaci:
-        yollar = git("ls-files", "--cached", "--others", "--exclude-standard", "-z").decode().split("\0")
-        yollar = sorted({y for y in yollar if y and (KOK / y).is_file()})
+        yollar, acilamayan = listelenen_dosyalar(KOK)
+        if dusen is not None:
+            dusen.extend(y for y in acilamayan if not dislanan_mi(y))
         for y in yollar:
             if not dislanan_mi(y):
                 try:
@@ -227,6 +251,12 @@ def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[
             m = re.match(r"\s+- (\S+)", satir)
             if m and not list(hedef.glob(m.group(1).rstrip("/"))):
                 bulgular.append((BLOCKER, f"NOTICE listesindeki yol yok: {m.group(1)}"))
+    return bulgular + desen_tara(hedef, yollar, desenler)
+
+
+def desen_tara(hedef: Path, yollar: list[str], desenler: list[tuple]) -> list[tuple[str, str]]:
+    """Metin dosyalarında satır satır desen araması (yayın ve depo taraması ortak). utf-8 okunamayan = BLOCKER."""
+    bulgular: list[tuple[str, str]] = []
     for y in yollar:
         if Path(y).suffix.lower() in IKILI_UZANTI:
             continue
@@ -243,6 +273,84 @@ def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[
                 if re.search(desen, satir, bayrak):
                     bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))
     return bulgular
+
+
+# =====================================================================================================
+# DEPO TARAMASI — geliştirme deposunun KENDİSİ (Z145ⓑ, 2026-09-26)
+# =====================================================================================================
+# Geliştirme deposu da public'tir, ama yayın taraması yalnız YAYIN kopyasını görür (maintenance/ dışlanır). Ölçülen
+# vaka: yerel listedeki bir müşteri adı maintenance/IS-LISTESI.md üzerinden birçok PR'la main'e girdi. Bu kip depoyu
+# YERİNDE (kopya yok) tarar: izlenen + izlenmeyen dosyalar, `.gitignore`'lular hariç, maintenance/ DAHİL.
+#   BLOCKER (çıkış 1) = yerel liste (müşteri/kurum). Liste yoksa kip fail-closed (çıkış 1, ÖLÇÜLEMEDİ).
+#   UYARI (çıkışı etkilemez) = DESENLER'in BLOCKER sınıfları; "iç repo adı" yalnız SAYILIR: geliştirme deposu
+#   maintenance/ altında iç repo adlarını bilerek taşır (ölçüldü 2026-09-26: 768 satır, 589'u sync-rules.json) —
+#   bu kipte onları BLOCKER yapmak kipi kalıcı kırmızıya çevirir, yani kör eder.
+# Muafiyet YALNIZ listenin kendi TAM yoludur (`YEREL_LISTE_YOLU`; desenlerin kaynağı kendini yakalar). Başka klasördeki
+# aynı adlı dosya taranır. `.gitignore` dışlaması git'in kendi kararıdır (`--exclude-standard`).
+DEPO_YALNIZ_SAYI = ("iç repo adı",)
+
+
+def depo_yollari(kok: Path = KOK) -> tuple[list[str], list[str]]:
+    """İzlenen + izlenmeyen (gitignore'lu olmayan) dosyalar; listenin kendi yolu hariç → (açılan, AÇILAMAYAN)."""
+    acilan, dusen = listelenen_dosyalar(kok)
+    return [y for y in acilan if y != YEREL_LISTE_YOLU], [y for y in dusen if y != YEREL_LISTE_YOLU]
+
+
+def depo_tara(kok: Path = KOK) -> int:
+    ek_desenler, ek_kaynak = yerel_desenler(kok)
+    print(f"Depo taraması (yerinde, kopya yok): {kok}")
+    if not ek_desenler:
+        print(f"HATA: müşteri/kurum ad listesi yok ({YEREL_LISTE_YOLU} ya da ${YEREL_LISTE_ORTAM}) — depo taraması "
+              "müşteri adlarına bakamadı: ÖLÇÜLEMEDİ, temiz DEĞİL. Listeyi kur, sonra tekrar çalıştır "
+              "(biçim: maintenance/UPDATE-PROCEDURE.md).", file=sys.stderr)
+        return 1
+    yollar, dusen = depo_yollari(kok)
+    bulgular = desen_tara(kok, yollar, ek_desenler)
+    uyari_desenleri = [d for d in DESENLER if d[0] == BLOCKER]
+    uyarilar = [b for _, b in desen_tara(kok, yollar, uyari_desenleri)]
+    liste_var = (kok / YEREL_LISTE_YOLU).is_file()
+    liste_ignore = git_sessiz("check-ignore", "-q", YEREL_LISTE_YOLU, cwd=kok)[0] == 0
+
+    print(f"Taranan dosya: {len(yollar)} (izlenen + izlenmeyen; .gitignore'lular hariç; maintenance/ DAHİL)")
+    print(f"KAPSAM — BLOCKER (çıkış 1): {YEREL_LISTE_ADI}: {len(ek_desenler)} desen ({ek_kaynak}; içerik basılmaz) · "
+          "utf-8 okunamayan metin dosyası (taranmadı = temiz sayılmaz)")
+    print("KAPSAM — UYARI (çıkışı etkilemez): " + ", ".join(d[1] for d in uyari_desenleri)
+          + f" — {', '.join(DEPO_YALNIZ_SAYI)} yalnız SAYILIR (geliştirme deposu maintenance/ altında bunları bilerek taşır)")
+    print(f"KAPSAM — dışlanan: {YEREL_LISTE_YOLU} (listenin kendisi — yalnız bu TAM yol) · .gitignore'lu yollar · "
+          "ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + ")")
+    print(olculemedi_satiri(dusen))
+    print("KAPSAM — bakılmayan: git geçmişi (eski commit içerikleri ve commit mesajları) · PR başlığı/gövdesi · "
+          "yayın taramasının WARNING sınıfları (dışlanan dosyaya atıf: yalnız yayın kopyasında anlamlı) · kişi adları "
+          "sözlüğü · SAP host/SID/client serbest metni.")
+    if liste_var and not liste_ignore:
+        print(f"UYARI: {YEREL_LISTE_YOLU} .gitignore'da DEĞİL — `git add -A` listeyi (adları) depoya sokar.")
+    sayilan: dict[str, dict[str, int]] = {}
+    listelenen = []
+    for u in uyarilar:
+        sinif, _, kalan = u.partition(": ")
+        if sinif in DEPO_YALNIZ_SAYI:
+            dosya = kalan.split(":", 1)[0]
+            sayilan.setdefault(sinif, {})
+            sayilan[sinif][dosya] = sayilan[sinif].get(dosya, 0) + 1
+        else:
+            listelenen.append(u)
+    if sayilan or listelenen:
+        print(f"\nUYARI: {len(listelenen) + sum(sum(v.values()) for v in sayilan.values())} (çıkış kodunu etkilemez)")
+        for sinif, dosyalar in sayilan.items():
+            sirali = sorted(dosyalar.items(), key=lambda x: (-x[1], x[0]))
+            print(f"  {sinif}: {sum(dosyalar.values())} satır (yalnız sayı — dosya başına: "
+                  + " · ".join(f"{d} {n}" for d, n in sirali[:10]) + (" · …" if len(sirali) > 10 else "") + ")")
+        for u in listelenen:
+            print("  " + u)
+    engelleyen = [b for s, b in bulgular if s == BLOCKER]
+    if engelleyen:
+        print(f"\nBULGU: {len(engelleyen)} (BLOCKER)")
+        for b in engelleyen:
+            print("  " + b)
+        print("\nBu içerik public geliştirme deposuna girmemeli: satırı nötrleştir (placeholder), sonra tekrar tara.")
+        return 1
+    print("BULGU: 0 (BLOCKER yok · yalnız yukarıdaki kapsamda)")
+    return 0
 
 
 # =====================================================================================================
@@ -712,7 +820,17 @@ def main() -> int:
     ap.add_argument("--ci-durum-yok", action="store_true",
                     help="CI hükmünü `gh` ile SORMA (çevrimdışı/otomatik testler). "
                          "Kayıt yine yazılır ama `hepsi_yesil: false` olur ⇒ tüketici normal ölçer.")
+    ap.add_argument("--depo-tara", action="store_true",
+                    help="GELİŞTİRME deposunu yerinde tara (maintenance/ dahil; yayın kopyası yok) — Z145")
     a = ap.parse_args()
+
+    # --- geliştirme deposu taraması: kopya/hedef yok, başka kiple birleşmez -------------------------
+    if a.depo_tara:
+        if a.hedef is not None or a.ilk or a.yalniz_tara or a.calisma_agaci or a.yalniz_dogrula:
+            print("HATA: --depo-tara tek başına kullanılır (--hedef/--ilk/--yalniz-tara/--calisma-agaci/"
+                  "--yalniz-dogrula ile birlikte kullanılmaz).", file=sys.stderr)
+            return 2
+        return depo_tara()
 
     # --- yalnız şema doğrulama: hedef gerekmez ---------------------------------------------------
     if a.yalniz_dogrula:
@@ -781,7 +899,8 @@ def main() -> int:
             return 1
 
     kaynak = "çalışma ağacı" if a.calisma_agaci else f"{a.ref} ({git('rev-parse', '--short', a.ref).decode().strip()})"
-    yollar = kopyala(hedef, a.ref, a.calisma_agaci)
+    dusen: list[str] = []
+    yollar = kopyala(hedef, a.ref, a.calisma_agaci, dusen)
 
     # --- yayın kalemleri: şema + CHANGELOG ---------------------------------------------------------
     veri, okuma_hatasi = yayinlar_oku(hedef / YAYINLAR_YOLU)
@@ -866,6 +985,7 @@ def main() -> int:
     print("KAPSAM — bakılan (yayın kalemleri): guncelle/yayinlar.json şeması" +
           (" + kalem-diff kapsamı (eşlemesiz dosya = FAIL)" if sonraki_yayin
            else " (kalem-diff kapsamı bu kipte ÖLÇÜLMEZ: karşılaştırılacak önceki yayın yok)"))
+    print(olculemedi_satiri(dusen))
     print("KAPSAM — bakılmayan: ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + "), kişi adları sözlüğü, "
           "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu. "
           "Bu tarama tam sızıntı denetiminin yerine geçmez.")

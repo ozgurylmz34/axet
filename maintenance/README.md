@@ -16,3 +16,4 @@ bağlantısı yoktur.
 - [`howto-cekirdek-bulgu-bildirimi.md`](howto-cekirdek-bulgu-bildirimi.md) — kaynak çekirdekte görülen kusuru bildirme (ölç → taslak → onay → gönder → iş listesi)
 - [`howto-gelen-bildirim-degerlendirme.md`](howto-gelen-bildirim-degerlendirme.md) — aXet kullanıcısından gelen bildirimi değerlendirme (kimlik taraması → iddia başına yeniden ölçüm → etki analizi → sahip onayı → düzeltme + yayın → kapanış; durum etiketleri)
 - [`canli-test-plani.md`](canli-test-plani.md) — "DOĞRULANMADI" kalemlerinin aXet üzerinden canlı ölçüm planı
+- `axet_iz.py` — aXet oturum izi (motorun kaydı, model beyanı değil): oturum DB'si + log'dan kök/alt oturum zaman çizelgesi, §0 sırası hükmü (session_brief + kanarya), okunan/yazılan dosyalar, izin/ret satırları. `python maintenance/axet_iz.py --proje <proje> [--oturum 1]`; kalibrasyonu `tests/test_axet_iz.py`
