@@ -450,7 +450,9 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   `delete_numbers=["005"]` · `allow_overwrite=false` · `package` (yalnız canlı okumada paket yoksa; farklıysa red).
 - **Semantik:** araç önce canlı listeyi okur ve tam gövdeyi **birleştirerek** kurar: yeni numara eklenir, verilmeyen mevcut mesajlar
   **korunur** (`documented` bayrağı dahil). Mevcut numaraya farklı metin/bayrak → `allow_overwrite=true` yoksa `msgclass_overwrite_not_allowed` (çıkış 2,
-  `plan.overwritten` önce/sonra). Değişiklik yoksa kilit alınmaz (`changed:false`).
+  `plan.overwritten` önce/sonra). Değişiklik yoksa kilit alınmaz (`changed:false`). **Her yazımda** (Z118ⓒ, silmesiz dahil) LOCK'tan sonra canlı
+  **kilit altında yeniden okunur** (TOCTOU): farklı → `source_changed_since_pull`, okunamadı → `pull_live_read_failed` (`phase:"under_lock"`, PUT YOK,
+  kilit bırakılır) — aksi hâlde tam gövde, okuma ile kilit arasında başkasının yaptığı değişikliği sessizce geri alırdı.
 - **Silme (Z113):** ⛔ SAP tam PUT'tan **çıkarılan mesajı SİLMEZ** (kaynak ölçümü 229→229 no-op). Silme yalnız `delete_numbers` ile ve **ayrı çağrıda**
   (`messages` ile birlikte → `invalid_argument`): gövdeye kalanlar canlı öznitelikleriyle + `<mc:deletedmessages mc:msgno="NNN"/>` yazılır, gövde öz-denetimi
   (bozuksa `delete_body_selfcheck_failed`, kilit yok), LOCK → **kilit altında canlı yeniden okunur** (farklı → `source_changed_since_pull`, okunamadı →

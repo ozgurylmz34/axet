@@ -3,7 +3,8 @@
 > Kaynak: ekip ADT playbook'unun "foundation" bölümü (logon · download · push/activate · lock · paket ·
 > transport · search) + araç semantiği notları; aXet CLI'ye uyarlandı.
 > Sorgu/where-used/ATC/OData: `foundation-query.md` · hata indeksi: `known-errors-adt.md` ·
-> araç argümanları: `tool-catalog.md` · CLI'nin gerçek argümanları için otorite: `sap_adt_cli.py --list`.
+> araç argümanları: `tool-catalog.md` · CLI'nin gerçek argümanları için otorite: `sap_adt_cli.py --list`
+> (tek araç/konu için `--list --grep <desen>` — çıktıyı dosyaya yazıp süzme).
 >
 > **Okuma kuralı:** "ÇALIŞAN YÖNTEM" ve "DENENEN — BAŞARISIZ" satırları ölçülmüş deneyimdir; kısaltılmadı.
 > Bölümlerdeki ham ADT REST akışları (endpoint, header, XML) **araç bakımı ve teşhis** içindir:

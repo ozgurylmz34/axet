@@ -153,13 +153,20 @@ def check_connection(proj) -> tuple[str, str] | None:
     ÖLÇÜLDÜ: istemci `.conn_adt`'yi `load_dotenv(override=False)` ile yükler ⇒ ortamda
     `ADT_SAP_URL`/`ADT_SAP_CLIENT` varsa bağlantı ONA gider, tier ise dosyadan okunur.
     İkisi ayrışırsa "DEV" diye doğrulanan kapı başka bir sisteme yazdırır → red.
+    Z118ⓐ (2026-09-26): taraflardan biri ayrıştırılamıyorsa (ör. şablonda kalmış `<PORT>` → `urlparse(...).port`
+    ValueError) eşitlik ölçülemez ⇒ FAIL-CLOSED ayrışan sayılır (traceback yerine red; `check_target_system` ile
+    aynı sınır). Hangi tarafın bozuk olduğu ve değer mesaja BASILMAZ.
     """
     ayrisan = []
     for key, norm in (("ADT_SAP_URL", _norm_url), ("ADT_SAP_CLIENT", lambda s: (s or "").strip())):
         if key not in os.environ:
             continue
         dosya = _project.conn_file_last(key, proj)
-        if norm(os.environ.get(key)) != norm(dosya):
+        try:
+            ayni = norm(os.environ.get(key)) == norm(dosya)
+        except ValueError:  # geçersiz port / bozuk IPv6 — ölçülemeyen eşitlik geçiş değildir
+            ayni = False
+        if not ayni:
             ayrisan.append(key)
     if ayrisan:
         return ("conn_env_mismatch",
@@ -178,9 +185,9 @@ def check_target_system(proj, url: str | None, client: str | None) -> tuple[str,
     SONRA çağrılır. FAIL-CLOSED: iki taraftan biri boş/okunamıyorsa da red. Değerler mesaja BASILMAZ.
     Ayrıştırılamayan HEDEF URL (`ui5-deploy.yaml`; ör. şablonda kalmış `<PORT>` → `urlparse(...).port`
     ValueError) da red: traceback (rc=1, logsuz) yerine `write_target_mismatch` döner ki çağıran loglayıp 3 ile
-    çıkabilsin. Bilinen sınır (açık kalem): `.conn_adt` ADT_SAP_URL'nin KENDİSİ ayrıştırılamıyorsa bu fonksiyon
-    yine red döner ama çağıranın log yolu (`log_write_attempt` → `redact.host_sirlari` `u.port`) ValueError ile
-    traceback verir (rc=1, log yok, yazma da yok).
+    çıkabilsin. `.conn_adt` ADT_SAP_URL'nin KENDİSİ ayrıştırılamıyorsa da bu fonksiyon red döner; çağıranın log
+    yolundaki (`log_write_attempt` → `redact.host_sirlari`) eski ValueError traceback'i Z118ⓐ'da kapandı (port
+    okunamazsa host yine maskelenir, log satırı yazılır).
     """
     conn_url = _project.effective_conn_value("ADT_SAP_URL", None, proj)
     conn_client = _project.effective_conn_value("ADT_SAP_CLIENT", None, proj)
