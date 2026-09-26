@@ -71,10 +71,16 @@ class Kapi(unittest.TestCase):
         tools = {t["name"]: t for t in data["result"]["tools"]}
         okuma = sorted(n for n, t in tools.items() if t["class"] == "read")
         yazma = sorted(n for n, t in tools.items() if t["class"] == "write")
-        H.kaydet("1a --list okuma sayısı", "25", str(len(okuma)), len(okuma) == 25)
-        self.assertEqual(len(okuma), 25, okuma)  # Z128: +adt_pretty_print
+        H.kaydet("1a --list okuma sayısı", "26", str(len(okuma)), len(okuma) == 26)
+        self.assertEqual(len(okuma), 26, okuma)  # Z128: +adt_pretty_print · Z39 kalanı: +adt_textpool_read
         for ad in ("adt_revisions", "adt_system_info", "adt_object_structure", "sap_doctor", "adt_pretty_print"):
             self.assertEqual((tools[ad]["class"], tools[ad]["available_on"]), ("read", ["all"]), ad)
+        tr = tools["adt_textpool_read"]
+        ok_tr = ((tr["class"], tr["available_on"]) == ("read", ["s4_private"]) and not tr.get("requires_transport")
+                 and {a["name"] for a in tr["args"]} == {"name", "version", "parts"})
+        H.kaydet("1f adt_textpool_read: read · s4_private · transport yok · argümanlar", "hepsi doğru",
+                 json.dumps({k: tr.get(k) for k in ("class", "available_on", "requires_transport")}), ok_tr)
+        self.assertTrue(ok_tr, tr)
         sd = tools["adt_set_description"]
         ok_sd = (sd["available_on"] == ["s4_private"] and sd.get("requires_transport") is True
                  and {a["name"] for a in sd["args"]} == {"name", "object_type", "description", "transport"})

@@ -8,11 +8,12 @@
 **Sınıf özeti (`--list` ile ölçüldü, 2026-09-13):** okuma 24 (`ping` + `sap_doctor` + 22 `adt_*`, `adt_unit_run` dahil) · yazma 13 · toplam 37.
 **2026-09-21 eki (DDIC şeridi, Z38/Z39/Z40):** yazma +3 (`adt_table_create`, `adt_ttyp_create`, `adt_textpool_write`) → yazma 16 · toplam 40 (`--list`, çevrimdışı ölçüldü).
 **2026-09-25 eki (Z128):** okuma +1 (`adt_pretty_print`) → okuma 25 · yazma 16 · toplam 41 (`--list`, çevrimdışı ölçüldü).
+**2026-09-26 eki (Z39 kalanı):** okuma +1 (`adt_textpool_read`) → okuma 26 · yazma 16 · toplam 42 (`--list`, çevrimdışı ölçüldü).
 Profil etiketlerinin tamamı ve yetenek matrisi: `references/profiles.md` (rehber; etiket tablosu kodla test edilir).
 `adt_set_description` yalnız `s4_private`'ta açıktır ve transport ister.
 `adt_unit_run` `allow_risky_tests=true` verilirse yazma sınıfına geçer (`--list`: `write_when`).
 `adt_transport_list` yalnız `ecc`, `s4_private`, `s4_public` profillerinde açıktır (`available_on`); `btp_abap`'ta yoktur.
-`adt_screen_generate` yalnız `ecc`, `s4_private` profillerinde açıktır. `adt_msgclass_write`, `adt_table_create`, `adt_ttyp_create`, `adt_textpool_write` yalnız `s4_private`'ta açıktır
+`adt_screen_generate` yalnız `ecc`, `s4_private` profillerinde açıktır. `adt_msgclass_write`, `adt_table_create`, `adt_ttyp_create`, `adt_textpool_write`, `adt_textpool_read` yalnız `s4_private`'ta açıktır
 (kaynak reçetenin kanıtı yalnız bu profil; diğer profilde `tool_not_available_for_profile`, çıkış 2).
 `adt_post_shell` / `adt_push_source` içinde `fugr` ve `func` tipleri yalnız `ecc`, `s4_private`'ta (`--list`: `object_type_available_on`;
 diğer profilde `type_not_available_for_profile`, çıkış 2).
@@ -549,6 +550,22 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
   metinler aktif görünse de `ok:false`, mesaj program hatasını taşır) · `unlock_warning`.
 - **Kapsam:** liste başlıkları (headings) yazılmaz (biçim belgelenmedi). Canlı 2026-09-21 (DEV): yazma + PX terfisi + aktif readback `ok:true`, `would_remove_entries` yazmadan döndü;
   `activation_final` ve `generation_only` sınıflaması bu turda eklendi — canlıda henüz ÖLÇÜLMEDİ.
+- **Bağımsız doğrulama:** yazmadan sonra aktif içeriği `adt_textpool_read` ile oku (yazma aracının readback'i yalnız kendi girdisini kıyaslar).
+
+### `adt_textpool_read` (klasik program metin havuzu — OKUMA, 2026-09-26, Z39 kalanı)
+- **Amaç:** programın metin sembollerini ve seçim metinlerini OKUMAK — yazmadan önce ne var, yazdıktan sonra ekranda (aktif sürümde) ne görünüyor.
+  Okuma sınıfı (`--sap-write` gerekmez; `gate.READ_TOOLS`), transport istemez, kilit almaz; yalnız GET. Profil: yalnız `s4_private` (yazma aracıyla aynı uç).
+- **Argümanlar:** `name` (Z/Y ya da standart program; ≤ 40 karakter, `/ad-alanı/` önekli olabilir) · `version="active"` (`active` = ekranda görünen ·
+  `working` = sürüm parametresiz GET, inaktif sürüm varsa onu gösterir) · `parts=["symbols","selections"]` (alt küme seçilebilir).
+- **Uç:** `/sap/bc/adt/textelements/programs/<prog>/source/<symbols|selections>`; her alt kaynak KENDİ Accept tipiyle
+  (`application/vnd.sap.adt.textelements.symbols.v1` · `…selections.v1`; `text/plain` → 406, çekirdek okuma reçetesi).
+- **Dönüş:** `{ok, name, type:"prog", version, parts:{<alt>:{ok, http_status, count, entries}}, checked, not_checked}` ·
+  `symbols.entries=[{key, text, max_length}]` · `selections.entries=[{name, text, ddic_reference, placeholder}]` — `placeholder:true` = metin `?`
+  (aktif sürümde terfi etmemiş seçim metni; ekranda görünmez). Tanınmayan `@…` satırı girişte `annotations` olarak kalır.
+- **Hatalar:** `invalid_argument` (ad / sürüm / parça geçersiz, `headings` dahil — SAP'ye gidilmez) · `not_found` (uç 404) ·
+  `read_failed` (HTTP ≠ 200 ya da istisna; okunabilen alt kaynak `parts` içinde korunur).
+- **Kapsam (`not_checked`):** liste başlıkları (headings; okuma Accept tipi belgelenmedi — ÖLÇÜLEMEDİ) · sembolün/seçimin programda kullanılıp kullanılmadığı ·
+  programın varlığı/aktifliği (404 yalnız metin öğeleri ucu için).
 
 ### `adt_syntax_check` (adına rağmen YAZMA)
 - **Amaç:** sözdizimi kontrolü — gerçek semantik "temizse aktive et".

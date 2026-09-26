@@ -1446,3 +1446,22 @@ Canlı SAP'de ölçülmedi.
   P5 pencere; P6 bozuk dosya fail-open; P7 kapı reddi sayılmaz). Kırmızı-önce: kablolamasız P1 FAIL + P6 ERROR. Mutasyonlar
   (ESIK=99 → P1 · kod kıyası yok → P2 · başarı sıfırlamıyor → P3 · pencere yok → P5 · okuma hatasında engel → P6) hepsi ölü.
   Canlı SAP'de ölçülmedi (gerek yok: kesici ağa gitmez).
+
+## 24. Z117 tarayıcı kalanları + Z39 metin havuzu okuma aracı (2026-09-26)
+
+- **`sapadt/std_ext_scan.py` (Z117):** ⓐ ilk sözcük `EXTENSION` ama çapalı başlık eşleşmiyor (çift BOM / ZWSP / NUL / WJ öneki)
+  → `?` (önce `[]`) · ⓑ tip bilinmezken BDEF algılanınca yalnız `_R_EXTEND_BDEF_ICI` biçimindeki DDL `?`'i düşer (önce TÜM DDL
+  `?`'leri düşüyordu; `{ extend }` `[]` veriyordu) · ⓒ `--` içindeki `;` + Z→Z BDEF `?` → düzeltilmedi, modül notunda ve testte
+  sınır ((c) modelinde başlık gerçekten arayüzsüz) · ⓓ satır numarası `_SatirDizini` (`bisect`) — 100k satır + 2000 EXTEND:
+  taban 14,2 sn (3 görünüm) → 1,5 sn (6 görünüm) · ⓔ iki dize modeli (`''` · ters bölü; 3 → 6 görünüm) + `--extend` bitişik
+  yazılış `_ANAHTAR`'da `--` sonrası kabul edilir (tek `-` hâlâ bağlar).
+- **`utils/ddic_dtel.py` (Z117ⓔ):** `dtel_adaylari` iki dize modelinin aday birleşimi (üst küme).
+- **`sap-abapgit-delivery/scripts/abapgit_zip.py` (Z117ⓔ):** Yasak B `tara` çağrısı try içinde; istisna → `std_dml_scan_unavailable` FAIL
+  (önce traceback + rc=1).
+- **`tools/textpool.py::adt_textpool_read` (Z39 kalanı):** okuma sınıfı (`gate.READ_TOOLS`), `s4_private`, yalnız GET
+  (`_request_with_csrf_retry` + `_get_headers`, alt kaynağın KENDİ Accept tipi); `version` `active` | `working`; `parts` alt kümesi;
+  `headings` `invalid_argument`. Ayrıştırma `utils/textpool.girisler` (`@MaxLength` · `@DDICReference` · `=?` yer tutucu · tanınmayan `@…`
+  → `annotations`).
+- **Testler:** `test_std_ext_gate.py` `Z117Tarayici` (5) + `Kapi.test_std_ext_gate_z117` · `test_verdict_reviewer_k1_d1.py` B4b ·
+  `test_ddic_textpool.py` R1-R5 · `test_cli_gate.py` test_01 (okuma 26, `adt_textpool_read` satırı) · abapGit
+  `test_dml_scanner_runtime_error_is_structured_fail`. Kırmızı-önce ve mutasyonlar: iş listesinde Z117 / Z39 kapanış notu.
