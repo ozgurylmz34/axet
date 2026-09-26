@@ -154,7 +154,8 @@ python $HOME\axet\scripts\new_package.py --index --check
 Bu komutlar yerel paket klasörünü kurar. **Paketi SAP'de SE21 ile sen yaratırsın**; aXet paket ya da transport yaratmaz.
 
 ### 3.4 Kabul kontrolü
-1. Projede yeni aXet oturumu aç (`axet-code -c <klasör>`) → ilk satırda `proje: <ad>` görünmeli.
+1. Projede yeni aXet oturumu aç (`axet-code -c <klasör>`) ve `%basla` yaz → ilk satırda `proje: <ad>` görünmeli.
+   Her oturumu `%basla` ile aç: açılış özeti kendiliğinden tetiklenmez.
 2. Proje kökünde `python $HOME\axet\scripts\doctor.py` → 0 FAIL.
 3. Proje klasöründe `python $HOME\axet\scripts\session_brief.py --no-fetch` hatasız çalışmalı.
 4. SAP projesinde 3.2'deki `ping` ve `adt_get` testleri başarılı olmalı.
