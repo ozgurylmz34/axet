@@ -21,17 +21,26 @@ import io
 import os
 import shutil
 import sys
+import unittest
 from pathlib import Path
 from unittest import mock
 
 from _helpers import AXET_HOME, GeciciTest
 
+BETIK = AXET_HOME / "maintenance" / "yayin_provasi.py"
 sys.path.insert(0, str(AXET_HOME / "maintenance"))
-import yayin_provasi as yp  # noqa: E402
+# public sürümde maintenance/ dışlanır ⇒ modül yok; import hatası tüm keşfi (`-k` filtreleri dahil) bozar.
+try:
+    import yayin_provasi as yp  # noqa: E402
+except ModuleNotFoundError:
+    if BETIK.is_file():
+        raise
+    yp = None
 
 SKILL = AXET_HOME / "skills" / "guncelle" / "SKILL.md"
 
 
+@unittest.skipUnless(BETIK.is_file(), "maintenance/yayin_provasi.py yok (public sürümde maintenance/ dışlanır)")
 class Z100TmpOlusturTest(GeciciTest):
     def sahte_public(self, skill_metni: str | None = None) -> Path:
         """Asgari aday: kurulum betiği (0 döner), motor + talimat, skill. `new_project.py` YOK ⇒

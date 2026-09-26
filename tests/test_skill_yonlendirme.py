@@ -156,6 +156,8 @@ if __name__ == "__main__":
     unittest.main()
 
 
+@unittest.skipUnless((AXET_HOME / "maintenance" / "canli-test-plani.md").is_file(),
+                     "maintenance/canli-test-plani.md yok (public sürümde maintenance/ dışlanır)")
 class RapYenidenKosumPlaniTest(unittest.TestCase):
     """Z37ⓐ: yeniden koşum planındaki istem senaryo dosyasıyla BİREBİR aynı (kıyas bozulmasın) ve gerçek transport
     numarası yok (public repo)."""
