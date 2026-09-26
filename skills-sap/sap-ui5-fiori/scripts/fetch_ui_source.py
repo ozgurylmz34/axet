@@ -131,7 +131,16 @@ def komut_indir(a) -> int:
         return 2
     webapp, atilan, uyarilar = K.kaynak_kur(dist)
     uyg_id = K.uygulama_kimligi(webapp) or bsp.lower()
-    K.klasore_yaz(app / "webapp", webapp)
+    try:
+        # OSError'da klasore_yaz kendini geri alır: `webapp/` hiç yaratılmamış hâle döner → yeniden koşum "zaten var" demez.
+        K.klasore_yaz(app / "webapp", webapp)
+    except K.GuvensizYolHatasi as exc:
+        print(f"[FAIL] {bsp} kaynağı yazılmadı — güvensiz dosya adı: {exc}. Hiçbir dosya yazılmadı. (exit 2)")
+        return 2
+    except OSError as exc:
+        print(f"[FAIL] {bsp} kaynağı yazılamadı ({type(exc).__name__}: {exc}). Yazılanlar geri alındı, "
+              f"{app / 'webapp'} yaratılmadı; sebebi (izin / disk / yol uzunluğu) giderip yeniden koşun. (exit 2)")
+        return 2
     olusan = ["webapp/"]
     for ad, icerik in (("package.json", json.dumps({"name": bsp.lower().replace("_", "-"), **PACKAGE_JSON},
                                                    ensure_ascii=False, indent=2) + "\n"),

@@ -25,6 +25,7 @@ import base64
 import io
 import json
 import re
+import shutil
 import urllib.parse
 import xml.etree.ElementTree as ET
 import zipfile
@@ -54,26 +55,45 @@ _R_SURUCU = re.compile(r"^[A-Za-z]:")
 
 
 def yol_guvenli_mi(rel: str) -> bool:
-    """Metin kuralı (diske bakmaz): göreli, `..` segmentsiz, sürücü harfsiz, `:` içermeyen (NTFS akışı) ad mı?"""
+    """Metin kuralı (diske bakmaz): göreli, `..` segmentsiz, sürücü harfsiz, `:` içermeyen (NTFS akışı) ad mı?
+    Sonu boşluk/nokta ile biten segment (`.` hariç) de güvensizdir: Windows bunları kırpar (`.. ` → `..`), yani
+    aynı ad Windows'ta kök dışına, POSIX'te kök içine düşer (ölçüldü: `a/.. /.. /x.js` resolve'dan geçti, yazımda
+    `a/f.js` yazıldıktan sonra OSError verdi) — platforma göre anlamı değişen ad fail-closed reddedilir."""
     if not rel or rel.startswith(("/", "\\")) or _R_SURUCU.match(rel) or ":" in rel:
         return False
-    return ".." not in rel.replace("\\", "/").split("/")
+    segmentler = rel.replace("\\", "/").split("/")
+    return ".." not in segmentler and all(s == "." or s == s.rstrip(" .") for s in segmentler)
 
 
 def guvenli_hedef(kok: Path, rel: str) -> Path:
     """`kok / rel` → hedef yol; metin kuralı + `resolve()` ile kökün İÇİNDE olduğu doğrulanır, değilse
-    GuvensizYolHatasi."""
+    GuvensizYolHatasi (çözülemeyen ad — ör. NUL baytı → ValueError, OSError — dahil)."""
     if not yol_guvenli_mi(rel):
-        raise GuvensizYolHatasi(f"güvensiz dosya adı (kök dışı / mutlak / sürücülü): {rel!r}")
-    kok_r = Path(kok).resolve()
-    hedef = (kok_r / rel).resolve()
+        raise GuvensizYolHatasi(f"güvensiz dosya adı (kök dışı / mutlak / sürücülü / sonu boşluk-nokta): {rel!r}")
+    try:
+        kok_r = Path(kok).resolve()
+        hedef = (kok_r / rel).resolve()
+    except (ValueError, OSError) as exc:
+        raise GuvensizYolHatasi(f"dosya adı çözülemedi ({type(exc).__name__}: {exc}): {rel!r}") from exc
     if hedef == kok_r or kok_r not in hedef.parents:
         raise GuvensizYolHatasi(f"dosya adı kök dışına çözülüyor: {rel!r}")
     return hedef
 
 
-def _adlari_dogrula(dosyalar: dict) -> None:
-    kotu = sorted(r for r in dosyalar if not yol_guvenli_mi(r))
+# Hedef kök bilinmediğinde (indirme anı) `resolve()` denetimi için var olmayan nötr kök: yalnız ad çözümlemesi
+# ölçülür, diske yazılmaz.
+_NOTR_KOK = Path(__file__).resolve().parent / "_ad_dogrulama_koku_yok"
+
+
+def _adlari_dogrula(dosyalar: dict, kok: Path | None = None) -> None:
+    """Tüm adlar `guvenli_hedef` ile (metin kuralı + resolve) doğrulanır; biri bile güvensizse GuvensizYolHatasi.
+    `kok` verilirse gerçek hedef köke göre çözülür (ör. `.` → kökün kendisi → red)."""
+    kotu = []
+    for r in sorted(dosyalar):
+        try:
+            guvenli_hedef(kok if kok is not None else _NOTR_KOK, r)
+        except GuvensizYolHatasi:
+            kotu.append(r)
     if kotu:
         raise GuvensizYolHatasi(f"sunucu {len(kotu)} güvensiz dosya adı döndürdü (zip-slip): {kotu[:3]}")
 
@@ -234,18 +254,51 @@ def klasor_oku(kok: Path) -> dict:
 
 
 def klasore_yaz(kok: Path, dosyalar: dict) -> None:
-    """`rel` sunucudan gelir: ÖNCE tüm hedefler doğrulanır (hepsi-ya-hiç), biri kök dışıysa hiçbir dosya yazılmaz."""
+    """`rel` sunucudan gelir: ÖNCE tüm hedefler doğrulanır (hepsi-ya-hiç), biri kök dışıysa hiçbir dosya yazılmaz.
+    Yazım sırasında OSError olursa GERİ ALINIR, sonra hata yeniden fırlatılır: kök bu çağrıdan önce yoksa kök
+    tümüyle silinir (hiç yaratılmamış hâl — yeniden koşum "zaten var" demez); varsa bu çağrının yazdığı dosyalar
+    silinir / üzerine yazılanın eski içeriği geri konur ve bu çağrının yarattığı boş klasörler kaldırılır."""
     hedefler = [(guvenli_hedef(kok, rel), icerik) for rel, icerik in dosyalar.items()]
-    for hedef, icerik in hedefler:
-        hedef.parent.mkdir(parents=True, exist_ok=True)
-        hedef.write_bytes(icerik)
+    kok = Path(kok)
+    kok_vardi = kok.exists()
+    onceki_klasorler = {p for p in kok.rglob("*") if p.is_dir()} if kok_vardi else set()
+    yazilan: list[tuple[Path, bytes | None]] = []
+    try:
+        for hedef, icerik in hedefler:
+            hedef.parent.mkdir(parents=True, exist_ok=True)
+            yazilan.append((hedef, hedef.read_bytes() if hedef.is_file() else None))
+            hedef.write_bytes(icerik)
+    except OSError:
+        _yazimi_geri_al(kok, kok_vardi, onceki_klasorler, yazilan)
+        raise
+
+
+def _yazimi_geri_al(kok: Path, kok_vardi: bool, onceki_klasorler: set, yazilan: list) -> None:
+    """`klasore_yaz` geri alımı — kendi hatası asıl hatayı gölgelemesin diye her adım sessizce denenir."""
+    if not kok_vardi:
+        shutil.rmtree(kok, ignore_errors=True)
+        return
+    for hedef, eski in reversed(yazilan):
+        try:
+            hedef.unlink(missing_ok=True) if eski is None else hedef.write_bytes(eski)
+        except OSError:
+            pass
+    yeni = sorted((p for p in kok.rglob("*") if p.is_dir() and p not in onceki_klasorler),
+                  key=lambda p: len(p.parts), reverse=True)
+    for p in yeni:
+        try:
+            p.rmdir()
+        except OSError:
+            pass
 
 
 def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
     """Canlı anlık görüntüyü `<app>/.canli/dist/` + `bilgi.json`'a yazar (eskisinin yerine)."""
     kok = app / ANLIK_KLASOR
     dist = kok / "dist"
-    _adlari_dogrula(dosyalar)  # eski anlık görüntü silinmeden ÖNCE (güvensiz ad → eskisi yerinde kalır)
+    # Eski anlık görüntü silinmeden ÖNCE tüm adlar GERÇEK hedef köke göre (metin kuralı + resolve) doğrulanır:
+    # güvensiz ad (`.`, `.. /x.js`, NUL'lu ad …) → GuvensizYolHatasi ve eski anlık görüntü yerinde kalır.
+    _adlari_dogrula(dosyalar, dist)
     if dist.exists():
         for p in sorted(dist.rglob("*"), reverse=True):
             p.unlink() if p.is_file() else p.rmdir()

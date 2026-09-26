@@ -207,6 +207,73 @@ class TestZipSlip(unittest.TestCase):
         H.kaydet("anlik_yaz: güvensiz ad → eski anlık görüntü yerinde", "eski", eski.decode(), ok)
         self.assertTrue(ok)
 
+    def test_bosluklu_ust_segment_hic_dosya_birakmaz(self):
+        """Windows `.. ` segmentini `..`'ya kırpar: eskiden `a/f.js` yazılıp sonra OSError alınıyordu (ölçüldü)."""
+        with self.assertRaises(K.GuvensizYolHatasi):
+            K.klasore_yaz(self.kok, {"a/f.js": b"1", "a/.. /.. /x.js": b"2"})
+        kalan = sorted(p.relative_to(self.ust).as_posix() for p in self.ust.rglob("*"))
+        # Aynı aileden: sonu boşluk/nokta ile biten segment platforma göre farklı yola düşer → metin kuralı reddeder.
+        aile = [".. /x.js", "a/.. /.. /x.js", "x.js.", "a. /b.js", "a /b.js"]
+        metin_red = [r for r in aile if not K.yol_guvenli_mi(r)]
+        ok = kalan == [] and metin_red == aile
+        H.kaydet("klasore_yaz: `a/.. /.. /x.js` → hata, hiç dosya/klasör kalmaz · 5 sondan-boşluk/nokta adı red",
+                 "[] · 5/5", f"{kalan} · {len(metin_red)}/5", ok)
+        self.assertTrue(ok, (kalan, metin_red))
+
+    def test_anlik_yaz_nokta_ve_bosluklu_ad_eskisi_kalir(self):
+        app = self.ust / "app"
+        K.anlik_yaz(app, {"a.js": b"eski"}, {"bsp": BSP})
+        sonuc = {}
+        for kotu in (".", ".. /x.js", "a\x00b.js"):
+            try:
+                K.anlik_yaz(app, {"a.js": b"yeni", kotu: b"k"}, {"bsp": BSP})
+                sonuc[kotu] = "yazıldı"
+            except K.GuvensizYolHatasi:
+                sonuc[kotu] = "red"
+            sonuc[kotu] += "/" + (app / K.ANLIK_KLASOR / "dist" / "a.js").read_bytes().decode()
+        ok = set(sonuc.values()) == {"red/eski"} and not (app / "x.js").exists() and not (self.ust / "x.js").exists()
+        H.kaydet("anlik_yaz: `.` / `.. /x.js` / NUL'lu ad → silmeden ÖNCE red, eski anlık görüntü yerinde",
+                 "3× red/eski", str(sonuc), ok)
+        self.assertTrue(ok, sonuc)
+
+    def test_nul_adi_guvensiz_yol_hatasi(self):
+        """`resolve()` NUL'da ValueError fırlatır — IndirmeHatasi yakalayan dallar bunu görmüyordu."""
+        sonuc = []
+        for cagri in (lambda: K.guvenli_hedef(self.kok, "a\x00b"),
+                      lambda: K.klasore_yaz(self.kok, {"a\x00b": b"x"}),
+                      lambda: K._adlari_dogrula({"a\x00b": b"x"})):
+            try:
+                cagri()
+                sonuc.append("geçti")
+            except K.GuvensizYolHatasi:
+                sonuc.append("GuvensizYolHatasi")
+            except Exception as exc:  # noqa: BLE001 — ölçülen şey tam olarak bu
+                sonuc.append(type(exc).__name__)
+        ok = sonuc == ["GuvensizYolHatasi"] * 3 and not self.kok.exists()
+        H.kaydet("NUL'lu ad → GuvensizYolHatasi (ValueError sızmaz)", "3× GuvensizYolHatasi", str(sonuc), ok)
+        self.assertTrue(ok, sonuc)
+
+    def test_klasore_yaz_os_hatasinda_geri_alir(self):
+        """Yazım ortasında OSError (dosya olan `b`'nin altına yazma): kök yoksa kök hiç yaratılmamış hâle döner;
+        kök varsa bu çağrının yazdığı dosyalar/klasörler kaldırılır, üzerine yazılanın eski içeriği geri gelir."""
+        bozuk = {"a/f.js": b"1", "b": b"dosya", "b/c.js": b"2"}
+        with self.assertRaises(OSError) as c1:
+            K.klasore_yaz(self.kok, bozuk)
+        kok_yok = not self.kok.exists()
+        self.kok.mkdir(parents=True)
+        (self.kok / "eski.txt").write_bytes(b"E")
+        (self.kok / "ust.js").write_bytes(b"ESKI")
+        (self.kok / "var").mkdir()
+        with self.assertRaises(OSError) as c2:
+            K.klasore_yaz(self.kok, {"ust.js": b"YENI", "y/z.js": b"1", **bozuk})
+        kalan = sorted(p.relative_to(self.kok).as_posix() for p in self.kok.rglob("*"))
+        ok = (kok_yok and not isinstance(c1.exception, K.GuvensizYolHatasi)
+              and not isinstance(c2.exception, K.GuvensizYolHatasi)
+              and kalan == ["eski.txt", "ust.js", "var"] and (self.kok / "ust.js").read_bytes() == b"ESKI")
+        H.kaydet("klasore_yaz: OSError → geri alma (kök yoksa kök yok · varsa önceki hâl)",
+                 "kök yok · ['eski.txt', 'ust.js', 'var'] · ESKI", f"kök yok={kok_yok} · {kalan}", ok)
+        self.assertTrue(ok, kalan)
+
 
 class TestMetadataTipKapsamli(unittest.TestCase):
     META = (b'<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"><edmx:DataServices>'
@@ -255,6 +322,22 @@ class TestCliIndirEslik(unittest.TestCase):
         H.kaydet("fetch indir: env kimlik yok → ölçüm yok, klasör yok", "rc=2", f"rc={rc}", ok)
         self.assertTrue(ok, out)
 
+    def test_indir_yazim_hatasi_temiz_hata_ve_yeniden_kosulur(self):
+        """klasore_yaz OSError'ı traceback değil `[FAIL]` + exit 2; webapp/ geri alınır → düzgün ikinci koşum 0."""
+        app = self.kok / "order_app"
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip({**CANLI, "b": b"dosya", "b/c.js": b"2"})}) as srv:
+            rc, out = H.kos("fetch_ui_source.py", "indir", BSP, "--out", app, "--url", srv.url, "--client", "100",
+                            kimlik=True)
+        webapp_yok = not (app / "webapp").exists()
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip(CANLI)}) as srv:
+            rc2, out2 = H.kos("fetch_ui_source.py", "indir", BSP, "--out", app, "--url", srv.url, "--client", "100",
+                              kimlik=True)
+        ok = (rc == 2 and "[FAIL]" in out and "geri alındı" in out and "Traceback" not in out and webapp_yok
+              and rc2 == 0 and (app / "webapp" / "Component.js").is_file())
+        H.kaydet("fetch indir: yazım OSError → [FAIL] exit 2, webapp yok · yeniden koşum rc=0",
+                 "rc=2 · webapp yok · rc=0", f"rc={rc} · webapp yok={webapp_yok} · rc={rc2}", ok)
+        self.assertTrue(ok, out + out2)
+
     def test_eslik_esit_farkli_anliksiz(self):
         app = self.kok / "app"
         K.anlik_yaz(app, CANLI, {"bsp": BSP})
@@ -273,7 +356,7 @@ class TestSaltOkurProxy(unittest.TestCase):
         vakalar = [
             (("GET", "/sap/opu/odata/sap/X/Set"), True),
             (("HEAD", "/sap/opu/odata/sap/X/"), True),
-            (("POST", "/sap/opu/odata/sap/X/$batch", b"--batch\r\nGET Set HTTP/1.1\r\n"), True),
+            (("POST", "/sap/opu/odata/sap/X/$batch", self.V2_OKUMA, self.MP), True),
             (("POST", "/sap/opu/odata/sap/X/$batch", b"--batch\r\nContent-Type: multipart/mixed; boundary=ChangeSet_1"), False),
             (("POST", "/sap/opu/odata/sap/X/Set", b"{}"), False),
             (("POST", "/sap/opu/odata/sap/X/Onayla?Id='1'", b""), False),
@@ -294,6 +377,25 @@ class TestSaltOkurProxy(unittest.TestCase):
                 b"--batch_a1b2-c3d4\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
                 b"GET Orders/$count HTTP/1.1\r\nAccept: text/plain\r\n\r\n\r\n--batch_a1b2-c3d4--\r\n")
     MP = "multipart/mixed; boundary=batch_a1b2-c3d4"
+    # UI5 V4 biçiminde okuma batch'i: boşluksuz `Ad:değer` başlıkları + kapanıştan sonra epilog (`Group ID: …`).
+    # Bayt bayt canlı UI5 çıktısı DEĞİL (DOĞRULANMADI) — biçim kontrol grubudur.
+    V4_OKUMA = (b"--batch_id-1719387000000-12\r\nContent-Type:application/http\r\nContent-Transfer-Encoding:binary\r\n\r\n"
+                b"GET Products?$select=ID,Name&$skip=0&$top=20 HTTP/1.1\r\n"
+                b"Accept:application/json;odata.metadata=minimal;IEEE754Compatible=true\r\nAccept-Language:tr\r\n"
+                b"Content-Type:application/json;charset=UTF-8;IEEE754Compatible=true\r\n\r\n\r\n"
+                b"--batch_id-1719387000000-12--\r\nGroup ID: $auto\r\n")
+    MP4 = "multipart/mixed;boundary=batch_id-1719387000000-12"
+    # Negatif vakalar için GEÇERLİ zarf: her vaka yalnız bir noktada bozulur (red, zarfın kendisinden gelmesin).
+    MP1 = "multipart/mixed; boundary=batch_1"
+    PB = b"Content-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+    GET_P = PB + b"GET Orders HTTP/1.1\r\nAccept: application/json\r\n\r\n"
+
+    @staticmethod
+    def zarf(*parcalar: bytes, prolog: bytes = b"", epilog: bytes = b"") -> bytes:
+        g = prolog
+        for p in parcalar:
+            g += b"--batch_1\r\n" + p + b"\r\n"
+        return g + b"--batch_1--\r\n" + epilog
 
     def test_batch_okuma_kontrol_grubu_gecer(self):
         vakalar = [
@@ -301,49 +403,166 @@ class TestSaltOkurProxy(unittest.TestCase):
             ("POST", "/sap/opu/odata/sap/ZXX001_SRV/$batch", self.V2_OKUMA, None),
             ("POST", "/sap/opu/odata/sap/ZXX001_SRV;o=LOCAL/$batch?sap-client=000", self.V2_OKUMA, self.MP),
             ("POST", "/sap/opu/odata4/sap/zxx001_ui/srvd/sap/zxx001_ui/0001/$batch", self.V2_OKUMA, self.MP),
+            ("POST", "/sap/opu/odata4/sap/zxx001_ui/srvd/sap/zxx001_ui/0001/$batch", self.V4_OKUMA, self.MP4),
+            ("POST", "/sap/opu/odata/sap/X/$batch", self.zarf(self.GET_P, self.GET_P, prolog=b"serbest prolog\r\n",
+                                                              epilog=b"serbest epilog\r\n"), self.MP1),
+            ("POST", "/sap/opu/odata/sap/X/$batch", self.zarf(self.GET_P), 'multipart/mixed; boundary="batch_1"'),
         ]
         yanlis = [v[1] for v in vakalar if not P.izin_ver(*v)[0]]
+        n = len(vakalar)
         ok = not yanlis
-        H.kaydet("proxy $batch kontrol grubu: V2/V4 GET-yalnız batch geçer", "4/4", f"{4 - len(yanlis)}/4", ok)
+        H.kaydet("proxy $batch kontrol grubu: V2/V4(+epilog)/zarf GET-yalnız batch geçer", f"{n}/{n}",
+                 f"{n - len(yanlis)}/{n}", ok)
         self.assertTrue(ok, yanlis)
 
     def test_batch_yazma_atlatmalari_reddedilir(self):
-        b = b"--batch_1\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+        z, PB, GET_P, MP1 = self.zarf, self.PB, self.GET_P, self.MP1
         v2 = "/sap/opu/odata/sap/X/$batch"
-        vakalar = {
-            "a iç multipart/mixed (changeset kelimesiz)": (
-                v2, b + b"Content-Type: multipart/mixed; boundary=abc\r\n\r\n"
-                        b"--abc\r\n\r\nPOST Orders HTTP/1.1\r\n\r\n{}\r\n--abc--\r\n"),
-            "b changeset'siz DELETE parçası": (v2, b + b"DELETE Orders(1) HTTP/1.1\r\n\r\n--batch_1--\r\n"),
-            "c SOAP RFC yolu": ("/sap/bc/soap/rfc/$batch", b"<SOAP-ENV:Envelope/>"),
-            "c' SOAP yolu GET gövdeli": ("/sap/bc/soap/rfc/$batch", self.V2_OKUMA),
-            "küçük harf delete": (v2, b + b"delete Orders(1) HTTP/1.1\r\n\r\n"),
-            "baştaki boşluklu POST": (v2, b + b"   POST Orders HTTP/1.1\r\n\r\n{}\r\n"),
-            "sürümsüz MERGE satırı": (v2, b + b"MERGE Orders(1)\r\n\r\n"),
-            "GET + DELETE karışık": (v2, self.V2_OKUMA + b + b"DELETE Orders(1) HTTP/1.1\r\n\r\n"),
-            "iç multipart/mixed tek başına": (v2, b + b"GET X HTTP/1.1\r\ncontent-type:multipart/mixed;boundary=q\r\n"),
-            "JSON batch gövdesi": (v2, b'{"requests":[{"method":"GET","url":"Orders"}]}'),
-            "JSON dizi gövdesi (boşluklu)": (v2, b'  [{"method":"DELETE"}]'),
-            "X-HTTP-Method ezmesi": (v2, b + b"GET Orders(1) HTTP/1.1\r\nX-HTTP-Method: DELETE\r\n\r\n"),
-            "base64 parça": (v2, b.replace(b"binary", b"base64") + b"R0VUIA==\r\n"),
-            "istek satırı yok": (v2, b"--batch_1\r\n\r\n--batch_1--"),
-            "boş gövde": (v2, b""),
-            "yol .. ile kaçış": ("/sap/opu/odata/../../bc/soap/rfc/$batch", self.V2_OKUMA),
-            "yol % kodlu": ("/sap/opu/odata/sap/X%2F..%2F/$batch", self.V2_OKUMA),
-            "odata dışı ICF yolu": ("/sap/bc/ui2/$batch", self.V2_OKUMA),
-            "bilinmeyen yöntem (PURGE) satırı": (v2, b + b"PURGE Orders(1) HTTP/1.1\r\n\r\n"),
-            "JSON içinde GET satırı": (v2, b'{"a":1,\n GET Orders HTTP/1.1\n"requests":[]}'),
+        gecerli = z(GET_P)
+        vakalar = {   # ad: (yol, gövde, istek Content-Type)
+            "a iç multipart parça": (v2, z(b"Content-Type: multipart/mixed; boundary=abc\r\n\r\n--abc\r\n" + PB
+                                          + b"POST Orders HTTP/1.1\r\n\r\n{}\r\n--abc--\r\n"), MP1),
+            "b changeset'siz DELETE parçası": (v2, z(GET_P, PB + b"DELETE Orders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "c SOAP RFC yolu": ("/sap/bc/soap/rfc/$batch", gecerli, MP1),
+            "küçük harf delete": (v2, z(PB + b"delete Orders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "küçük harf get": (v2, z(PB + b"get Orders HTTP/1.1\r\n\r\n"), MP1),
+            "baştaki boşluklu GET": (v2, z(PB + b" GET Orders HTTP/1.1\r\n\r\n"), MP1),
+            "sürümsüz MERGE": (v2, z(PB + b"MERGE Orders(1)\r\n\r\n"), MP1),
+            "PURGE": (v2, z(PB + b"PURGE Orders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "HTTP/1.0": (v2, z(PB + b"GET Orders HTTP/1.0\r\n\r\n"), MP1),
+            "hedefte boşluk": (v2, z(PB + b"GET Orders x HTTP/1.1\r\n\r\n"), MP1),
+            "GET parçası gövdesinde DELETE": (v2, z(PB + b"GET Orders HTTP/1.1\r\n\r\nDELETE Orders(1) HTTP/1.1\r\n"), MP1),
+            "iç istek başlığında multipart": (v2, z(PB + b"GET X HTTP/1.1\r\ncontent-type:multipart/mixed;boundary=q\r\n\r\n"), MP1),
+            "parça Content-Type yok": (v2, z(b"Content-Transfer-Encoding: binary\r\n\r\nGET Orders HTTP/1.1\r\n\r\n"), MP1),
+            "parça Content-Type çift": (v2, z(b"Content-Type: application/http\r\n" + GET_P), MP1),
+            "parça Content-Type application/json": (v2, z(GET_P.replace(b"application/http", b"application/json", 1)), MP1),
+            "X-HTTP-Method (iç istek)": (v2, z(PB + b"GET Orders(1) HTTP/1.1\r\nX-HTTP-Method: DELETE\r\n\r\n"), MP1),
+            "X-HTTP-Method-Override (parça)": (v2, z(b"X-HTTP-Method-Override: DELETE\r\n" + GET_P), MP1),
+            "base64 aktarım": (v2, z(GET_P.replace(b"binary", b"base64")), MP1),
+            "F2 katlanmış CTE": (v2, z(b"Content-Type: application/http\r\nContent-Transfer-Encoding:\r\n base64\r\n\r\n"
+                                       b"GET Orders HTTP/1.1\r\n\r\n"), MP1),
+            "F2 yalnız \\r ile ayrılmış DELETE parçası": (v2, z(GET_P, b"Content-Type: application/http\r\r"
+                                                              b"DELETE Orders(1) HTTP/1.1\r\r"), MP1),
+            "F2 DELETE\\x0b": (v2, z(PB + b"DELETE\x0bOrders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "F2 \\x0cDELETE": (v2, z(PB + b"\x0cDELETE Orders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "F2 DELETE\\xa0": (v2, z(PB + b"DELETE\xa0Orders(1) HTTP/1.1\r\n\r\n"), MP1),
+            "istek satırında ASCII dışı bayt": (v2, z(PB + b"GET Ord\xc3\xbcrs HTTP/1.1\r\n\r\n"), MP1),
+            "parça başlığında ASCII dışı bayt": (v2, z(b"X-Not: \xc3\xbc\r\n" + GET_P), MP1),
+            "F1 BOM'lu JSON (tip yok)": (v2, b'\xef\xbb\xbf{"requests":[{"method":"DELETE","url":"Orders(1)"}]}\n'
+                                             b"GET x HTTP/1.1\n", None),
+            "F1 BOM'lu JSON (tip MP)": (v2, b'\xef\xbb\xbf{"requests":[{"method":"DELETE","url":"Orders(1)"}]}\n'
+                                            b"GET x HTTP/1.1\n", MP1),
+            "BOM'lu zarf": (v2, b"\xef\xbb\xbf" + gecerli, MP1),
+            "JSON gövde (tip MP)": (v2, b'{"requests":[{"method":"GET","url":"Orders"}]}', MP1),
+            "JSON dizi (tip yok)": (v2, b'  [{"method":"DELETE"}]', None),
+            "NUL baytı": (v2, gecerli.replace(b"Orders", b"Ord\x00ers", 1), MP1),
+            "yalnız LF satır sonu": (v2, gecerli.replace(b"\r\n", b"\n"), MP1),
+            # Genel bayt kuralları prolog/epilog'da da geçerli (tek başına yakalayan katman bunlar — başka kural görmez):
+            "prolog'da kontrol baytı \\x0b": (v2, z(GET_P, prolog=b"a\x0bDELETE b\r\n"), MP1),
+            "epilog'da DEL \\x7f": (v2, z(GET_P, epilog=b"a\x7f\r\n"), MP1),
+            "prolog'da tek \\r": (v2, z(GET_P, prolog=b"a\rDELETE b\r\n"), MP1),
+            "prolog'da tek \\n": (v2, z(GET_P, prolog=b"a\nDELETE b\r\n"), MP1),
+            "epilog'da UTF-8 BOM": (v2, z(GET_P, epilog=b"\xef\xbb\xbf\r\n"), MP1),
+            "kapanış sınırı yok": (v2, gecerli[:-len(b"--batch_1--\r\n")], MP1),
+            "sınıra benzeyen satır (sonda boşluk)": (v2, z(GET_P, prolog=b"--batch_1 \r\n"), MP1),
+            "kapanıştan sonra DELETE parçası": (v2, z(GET_P, epilog=b"--batch_1\r\n" + PB
+                                                      + b"DELETE Orders(1) HTTP/1.1\r\n\r\n--batch_1--\r\n"), MP1),
+            "parçasız zarf": (v2, b"--batch_1--\r\n", MP1),
+            "boş parça": (v2, z(b""), MP1),
+            "boş gövde": (v2, b"", MP1),
+            "tip application/json": (v2, gecerli, "application/json"),
+            "tip yok (boş dize)": (v2, gecerli, ""),
+            "tip text/plain": (v2, gecerli, "text/plain"),
+            "tip multipart/mixed sınırsız": (v2, gecerli, "multipart/mixed"),
+            "tip ek parametreli": (v2, gecerli, "multipart/mixed; boundary=batch_1; charset=utf-8"),
+            "tip multipart/related": (v2, gecerli, "multipart/related; boundary=batch_1"),
+            "tip geçersiz sınır": (v2, gecerli, 'multipart/mixed; boundary="batch 1"'),
+            "tip 71 karakter sınır": (v2, gecerli, "multipart/mixed; boundary=" + "b" * 71),
+            "tip sınır gövdeyle uyuşmuyor": (v2, gecerli, "multipart/mixed; boundary=batch_2"),
+            # Gövde de AYNI geçersiz sınırla kurulur — red, sınır biçim kuralından gelmeli (gövde uyuşmazlığından değil):
+            "sınır 71 karakter (gövde uyumlu)": (v2, gecerli.replace(b"batch_1", b"b" * 71),
+                                                  "multipart/mixed; boundary=" + "b" * 71),
+            "sınırda izinsiz karakter (gövde uyumlu)": (v2, gecerli.replace(b"batch_1", b"batch*1"),
+                                                         "multipart/mixed; boundary=batch*1"),
+            "yol .. ile kaçış": ("/sap/opu/odata/../../bc/soap/rfc/$batch", gecerli, MP1),
+            "yol % kodlu": ("/sap/opu/odata/sap/X%2F..%2F/$batch", gecerli, MP1),
+            "odata dışı ICF yolu": ("/sap/bc/ui2/$batch", gecerli, MP1),
+            "F3 yol ..; segmenti": ("/sap/opu/odata/..;/..;/bc/soap/rfc/$batch", gecerli, MP1),
+            "F3 yol .; segmenti": ("/sap/opu/odata/sap/X/.;/$batch", gecerli, MP1),
+            "yol boş matris segmenti": ("/sap/opu/odata/sap/;x=1/$batch", gecerli, MP1),
         }
-        yanlis = [ad for ad, (yol, g) in vakalar.items() if P.izin_ver("POST", yol, g)[0]]
-        # İstek tipi JSON ya da multipart dışı → gövde okuma bile olsa red (do_POST Content-Type'ı iletir).
-        for ad, tip in (("istek tipi application/json", "application/json"), ("istek tipi yok", ""),
-                        ("istek tipi text/plain", "text/plain")):
-            if P.izin_ver("POST", v2, self.V2_OKUMA, tip)[0]:
-                yanlis.append(ad)
-        n = len(vakalar) + 3
+        yanlis = [ad for ad, (yol, g, tip) in vakalar.items() if P.izin_ver("POST", yol, g, tip)[0]]
+        # Başka bir kural da aynı sonuca vardığı için bool'un ölçemediği katmanlar: red NEDENİ de ölçülür
+        # (mutasyonda katlanma / kapanış-sonrası sınır / parçasız kapanış kuralı silinince sonuç değişmiyordu).
+        nedenler = {"F2 katlanmış CTE": "katlanmış", "kapanıştan sonra DELETE parçası": "kapanış sınırından sonra",
+                    "parçasız zarf": "parçasız", "sınır 71 karakter (gövde uyumlu)": "multipart/mixed; boundary",
+                    "sınırda izinsiz karakter (gövde uyumlu)": "multipart/mixed; boundary"}
+        for ad, parca in nedenler.items():
+            yol, g, tip = vakalar[ad]
+            if parca not in P.izin_ver("POST", yol, g, tip)[1]:
+                yanlis.append(f"NEDEN: {ad}")
+        # Zarfın kendisi geçerli olmalı — yoksa negatif vakalar YANLIŞ sebeple geçer (kontrol ikizi).
+        if not P.izin_ver("POST", v2, gecerli, MP1)[0]:
+            yanlis.append("KONTROL: geçerli zarf reddedildi")
+        n = len(vakalar)
         ok = not yanlis
-        H.kaydet("proxy $batch: yazma atlatmaları (a/b/c+JSON+…) 403", f"{n}/{n}", f"{n - len(yanlis)}/{n}", ok)
+        H.kaydet("proxy $batch: parça bazlı beyaz liste — atlatmalar 403", f"{n}/{n} · zarf geçer",
+                 f"{n - len(yanlis)}/{n}", ok)
         self.assertTrue(ok, yanlis)
+
+    def test_uctan_uca_cift_content_type_403(self):
+        """F1: çift Content-Type (hangi sırada olursa) → 403 + SAP'ye 0 POST; tek başlıkta SAP'ye giden
+        Content-Type doğrulanan değerin AYNISI (tek kaynak)."""
+        import http.client
+        import ssl
+        H.proxy_bypass_surec_ici()
+        kok = Path(tempfile.mkdtemp(prefix="ui5proxy_"))
+        (kok / "index.html").write_bytes(b"<html/>")
+        giden = []
+        try:
+            with H.SahteSunucu({}) as sap:
+                def _post(h):
+                    h.rfile.read(int(h.headers.get("Content-Length") or 0))
+                    sap.istekler.append("POST " + h.path.split("?", 1)[0])
+                    giden.append(h.headers.get_all("Content-Type"))
+                    h.send_response(202)
+                    h.send_header("Content-Length", "0")
+                    h.end_headers()
+                sap.httpd.RequestHandlerClass.do_POST = _post
+                srv = P.Sunucu(("127.0.0.1", 0), P.isleyici_sinifi(kok, sap.url, "100", (H.KULLANICI, H.PAROLA),
+                                                                     ssl.create_default_context()))
+                threading.Thread(target=srv.serve_forever, daemon=True).start()
+                port = srv.server_address[1]
+
+                def gonder(tipler):
+                    c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+                    try:
+                        c.putrequest("POST", "/sap/opu/odata/sap/X/$batch")
+                        for t in tipler:
+                            c.putheader("Content-Type", t)
+                        c.putheader("Content-Length", str(len(self.V2_OKUMA)))
+                        c.endheaders(self.V2_OKUMA)
+                        r = c.getresponse()
+                        r.read()
+                        return r.status
+                    finally:
+                        c.close()
+                try:
+                    cift1 = gonder([self.MP, "application/json"])
+                    cift2 = gonder(["application/json", self.MP])
+                    cift3 = gonder([self.MP, self.MP])
+                    sonra = len(sap.istekler)
+                    tek = gonder([self.MP])
+                finally:
+                    srv.shutdown()
+                    srv.server_close()
+        finally:
+            shutil.rmtree(kok, ignore_errors=True)
+        gercek = (cift1, cift2, cift3, sonra, tek, giden)
+        ok = gercek == (403, 403, 403, 0, 202, [[self.MP]])
+        H.kaydet("proxy uçtan uca F1: çift Content-Type 403 · SAP'ye 0 · tek başlık aynen iletilir",
+                 "403/403/403 · 0 · 202 · [MP]", str(gercek), ok)
+        self.assertTrue(ok, gercek)
 
     def test_host_basligi(self):
         vakalar = [
