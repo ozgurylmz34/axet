@@ -36,6 +36,8 @@ taşınan validator'lar `lib/validators/check_{rap_readonly_consumption,reuse_ga
 
 - Çıktı daima tek JSON nesnesi: `ok, tool, class, result, error{code,message}, gate{project_dir,tier,sap_write_optin,scope,reason,intake,review}`.
   `--list`te `tool/class/gate` null, `result = {tools:[{name,class,description,args,available_on[,write_when][,requires_transport]}], counts}`.
+  `--list --grep <desen>` (Z111ⓕ, 2026-09-26): aynı şema, yalnız adı ya da açıklaması desenini içeren araçlar (büyük/küçük harf duyarsız
+  alt dize, regex değil); `counts` süzülen kümeden. `--list`siz ya da boş desen → `usage_error` (3). Çıktıyı dosyaya yazıp süzmek gerekmez.
 - Sınıflandırma kod seviyesinde **salt-okur allowlist**tir (`gate.READ_TOOLS`, 20 araç, `ping` dahil); listede olmayan HER araç yazma kapısından geçer.
   `adt_unit_run`: `allow_risky_tests` truthy ise yazma (araç `if allow_risky_tests:` ile okur — `"false"` dizesi de truthy'dir; sınıflandırma araçla aynı kuralı kullanır).
 - Çıkış kodu: `0` başarı · `2` kapı/guard reddi (SAP'ye gidilmedi) · `1` araç/bağlantı hatası · `3` kullanım hatası.
@@ -480,6 +482,9 @@ Yeni zincir icat edilmedi (görev sınırı). İki araçta da create hatası dö
   tüm-sınıf / oturum dili ≠ master korumaları, KİLİT ALTINDA yeniden okuma (TOCTOU; `phase:"under_lock"`), ÖNCE/SONRA kapısı `delete_gate` + kapsam beyanı;
   öznitelik kaçışına TAB/LF/CR eklendi. Sahte istemci ölçülmüş davranışa çevrildi (`test_msgclass_domain._sap_put_uygula`); testler MS1-MS7.
   **aXet ile canlı ÖLÇÜLMEDİ.**
+- **Z118ⓒ (2026-09-26):** kilit altı yeniden okuma SİLMESİZ yazıma da genişletildi (kaynakta yalnız silme kipindeydi). Gerekçe sahte SAP'de
+  ölçüldü: kilitsiz okuma ile LOCK arasında değişen mesaj tam gövdeyle eski metne döndü ve geri okuma kıyası (`beklenen = gönderilen`) bunu
+  görmedi (`ok:true`). Sıra artık GET → LOCK → GET → PUT → UNLOCK → GET (test MS8; MS5/M1 sıra beklentisi güncellendi). **Canlı ÖLÇÜLMEDİ.**
 - **Bilinçli farklar:** (1) `clear_enqueue_lock` güvenlik ağı (`adt-message-class.md:136,193-197`, `populate_message_class.py:305-310`) **alınmadı** —
   Kesin Yasak C; yalnız aracın kendi LOCK handle'ı UNLOCK edilir. Kilit alınamazsa DUR: HTTP 403/409/423 ya da gövdede `EU 510|locked|gesperrt|
   currently being edited|enqueue` → `lock_conflict`, aksi `lock_failed` (ikisi çıkış 1) + SM12 yönlendirmesi; PUT ve UNLOCK gönderilmez.
