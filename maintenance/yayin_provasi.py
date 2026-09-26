@@ -11,7 +11,8 @@ Ne yapar (sırayla):
   1. public depoyu geçici dizine klonlar, o klonda PUSH'u kapatır (push URL'si geçersiz yapılır);
   2. `yayin_hazirla` ile aday yayın commit'ini + etiketini YALNIZ o geçici klona kurar;
   3. her eski etiket için temiz bir tüketici klonu açar (`origin` = geçici public klon);
-  4. motoru adayın `skills/guncelle/SKILL.md` MOTOR-CIKAR komutlarını AYNEN koşarak çıkarır ve
+  4. `<TMP>`'yi adayın `skills/guncelle/SKILL.md` TMP-OLUSTUR komutuyla yaratır (Z100), motoru aynı
+     belgenin MOTOR-CIKAR komutlarını AYNEN koşarak oraya çıkarır ve
      GUNCELLE.md adım 2-14'ü
      etkileşimsiz koşar: onkontrol · hazirla · plan · sec --hepsi · olc once · uygula --otomatik ·
      ozel-adim · olc sonra · butunluk · kapanis;
@@ -114,6 +115,10 @@ def korumali_ortam(kum: Path) -> dict:
         d = kum / ad.lower()
         d.mkdir(parents=True, exist_ok=True)
         env[ad] = str(d)
+    # Z100: gerçek Windows düzeni — skill'in TMP-OLUSTUR komutu `<TMP>` tabanını `%LOCALAPPDATA%\Temp`'ten
+    # alır (aXet `%TEMP%`'i proje içine çektiği için). Bu dizin yoksa komut `%TEMP%`'e geri düşer ve
+    # prova kullanıcının koştuğu dalı değil, geri düşüş dalını ölçerdi.
+    (kum / "localappdata" / "Temp").mkdir(exist_ok=True)
     env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1", "PYTHONDONTWRITEBYTECODE": "1",
                 "GIT_TERMINAL_PROMPT": "0"})
     env.update(PROVA_KIMLIGI)
@@ -121,6 +126,7 @@ def korumali_ortam(kum: Path) -> dict:
 
 
 MOTOR_CIKAR = ("<!-- MOTOR-CIKAR:BASLA -->", "<!-- MOTOR-CIKAR:BITIR -->")
+TMP_OLUSTUR = ("<!-- TMP-OLUSTUR:BASLA -->", "<!-- TMP-OLUSTUR:BITIR -->")
 
 # Güncellenmiş klonun KENDİ `sap_stamp.denetle`si ile proje AGENTS.md damgası (doctor'ın check_stamp'ı
 # da bunu çağırır, scripts/doctor.py). 0 = guncel · 1 = başka her durum (durum + ayrıntı basılır).
@@ -129,19 +135,60 @@ DAMGA_OLC = ("import sys; sys.path.insert(0, sys.argv[1]); import sap_stamp; "
              "print('damga:', st, ay); sys.exit(0 if st == 'guncel' else 1)")
 
 
+def _skill_blogu(pub: Path, isaretler: tuple[str, str], ad: str) -> list[str]:
+    """ADAYIN (commit'lenmiş) `skills/guncelle/SKILL.md`'sindeki iki işaret arası komut satırları."""
+    r = subprocess.run(["git", "show", "HEAD:skills/guncelle/SKILL.md"], cwd=pub,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if r.returncode != 0 or isaretler[0] not in r.stdout or isaretler[1] not in r.stdout:
+        raise ProvaHatasi(f"adayda skills/guncelle/SKILL.md {ad} bloğu okunamadı")
+    blok = r.stdout.split(isaretler[0], 1)[1].split(isaretler[1], 1)[0]
+    return [x.strip() for x in blok.splitlines()
+            if x.strip() and not x.strip().startswith("```")]
+
+
 def motor_komutlari(pub: Path) -> list[str]:
     """ADAYIN `skills/guncelle/SKILL.md` MOTOR-CIKAR bloğu — aXet'in çalıştırdığı komutların ta kendisi.
 
     Prova motoru kendi yöntemiyle çıkarmaz: belgedeki komutlar bozulursa (yanlış yol, eksik
     klasör) kullanıcının `%guncelle`si ilk adımda düşer ⇒ prova da aynı yerde düşmelidir.
     """
-    r = subprocess.run(["git", "show", "HEAD:skills/guncelle/SKILL.md"], cwd=pub,
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
-    if r.returncode != 0 or MOTOR_CIKAR[0] not in r.stdout or MOTOR_CIKAR[1] not in r.stdout:
-        raise ProvaHatasi("adayda skills/guncelle/SKILL.md MOTOR-CIKAR bloğu okunamadı")
-    blok = r.stdout.split(MOTOR_CIKAR[0], 1)[1].split(MOTOR_CIKAR[1], 1)[0]
-    return [x.strip() for x in blok.splitlines()
-            if x.strip() and not x.strip().startswith("```")]
+    return _skill_blogu(pub, MOTOR_CIKAR, "MOTOR-CIKAR")
+
+
+def _argv(satir: str, kon: Path, tmp: Path | None = None) -> list[str]:
+    """Belgedeki komut satırı → `sys.executable`'a verilecek argv (kabuk yok: shlex)."""
+    satir = satir.replace("<KLON>", kon.as_posix())
+    if tmp is not None:
+        satir = satir.replace("<TMP>", tmp.as_posix())
+    argv = shlex.split(satir)
+    if argv[0] == "python":
+        return argv[1:]
+    return ["-c", "import subprocess,sys; sys.exit(subprocess.call(sys.argv[1:]))", *argv]
+
+
+def tmp_komutu(pub: Path, kon: Path) -> list[str]:
+    """Z100: ADAYIN TMP-OLUSTUR bloğu (Z67) — kullanıcının `%guncelle`de koştuğu İLK komut.
+
+    Eskiden prova `<TMP>`'yi kendi `mkdir`'iyle yaratıyordu ⇒ bu blok provada hiç koşmuyordu
+    (v0.5.8 bug gate). Blok TEK komut olmalıdır (skill "bu tek komutu AYNEN çalıştır" der).
+    """
+    satirlar = _skill_blogu(pub, TMP_OLUSTUR, "TMP-OLUSTUR")
+    if len(satirlar) != 1:
+        raise ProvaHatasi(f"adayda TMP-OLUSTUR bloğu TEK komut değil ({len(satirlar)} satır)")
+    return _argv(satirlar[0], kon)
+
+
+def gecici_dizin(cikti: str, kon: Path) -> Path | None:
+    """TMP-OLUSTUR çıktısının son satırı `<TMP>` olarak kabul edilebilir mi: var olan, BOŞ, klon DIŞI
+    bir dizin. Değilse None (prova FAIL — sessiz `mkdir` geri düşüşü yok)."""
+    satirlar = [s.strip() for s in (cikti or "").splitlines() if s.strip()]
+    if not satirlar:
+        return None
+    d = Path(satirlar[-1]).resolve()
+    k = kon.resolve()
+    if not d.is_dir() or d == k or k in d.parents or any(d.iterdir()):
+        return None
+    return d
 
 
 def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
@@ -163,7 +210,7 @@ def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
         sure = time.monotonic() - bas
         cikti = (r.stdout or "") + (r.stderr or "")
         adimlar.append({"ad": ad, "rc": r.returncode, "sure": round(sure, 1),
-                        "tamam": r.returncode in beklenen, "cikti": cikti})
+                        "tamam": r.returncode in beklenen, "cikti": cikti, "stdout": r.stdout or ""})
         isaret = "OK  " if r.returncode in beklenen else "FAIL"
         print(f"  [{isaret}] {ad:<22} rc={r.returncode}  {sure:6.1f} sn")
         for satir in cikti.splitlines():
@@ -188,16 +235,17 @@ def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
     if kos("kurulum (eski sürüm)", [str(kon / "scripts" / "install.py")]) != 0:
         return {"eski": eski, "adimlar": adimlar, "hukum": "FAIL",
                 "neden": "eski sürüm kurulamadı (install.py)"}
-    # Motor, skill'in MOTOR-CIKAR komutlarıyla AYNEN çıkarılır (Z32).
-    tmp = is_dizini / f"motor-{eski}"
-    tmp.mkdir()
+    # `<TMP>` skill'in TMP-OLUSTUR komutuyla yaratılır (Z100; eskiden kendi `mkdir`'imizdi ⇒ Z67 bloğu
+    # provada hiç koşmuyordu), motor da MOTOR-CIKAR komutlarıyla AYNEN çıkarılır (Z32).
+    rc = kos("tmp-olustur", tmp_komutu(pub, kon))
+    tmp = gecici_dizin(adimlar[-1]["stdout"], kon) if rc == 0 else None
+    if tmp is None:
+        adimlar[-1]["tamam"] = False
+        return {"eski": eski, "adimlar": adimlar, "hukum": "FAIL",
+                "neden": f"skill TMP-OLUSTUR komutu `<TMP>` yaratmadı (rc={rc}; çıktının son satırı "
+                         "var olan, boş, klon dışı bir dizin olmalı)"}
     for i, satir in enumerate(motor_komutlari(pub), 1):
-        argv = shlex.split(satir.replace("<KLON>", kon.as_posix()).replace("<TMP>", tmp.as_posix()))
-        if argv[0] == "python":
-            argv = argv[1:]
-        else:
-            argv = ["-c", "import subprocess,sys; sys.exit(subprocess.call(sys.argv[1:]))", *argv]
-        if kos(f"motor-cikar {i}", argv) != 0:
+        if kos(f"motor-cikar {i}", _argv(satir, kon, tmp)) != 0:
             return {"eski": eski, "adimlar": adimlar, "hukum": "FAIL",
                     "neden": f"skill MOTOR-CIKAR komutu {i} başarısız: {satir}"}
     motor = tmp / "scripts" / "guncelle.py"
@@ -307,7 +355,8 @@ def main() -> int:
                     print(f"\n--- {s['eski']} · {adm['ad']} çıktısı (son 60 satır) ---")
                     print("\n".join(adm["cikti"].splitlines()[-60:]))
     print("KAPSAM — bakılan: aday yayının public geçmişe kurulabilmesi (yayin_hazirla: tarama + "
-          "kalem-diff kapsamı), her tabandan TEMİZ bir tüketici klonunda motorun adım 2-14'ü, "
+          "kalem-diff kapsamı), skill'in TMP-OLUSTUR ve MOTOR-CIKAR komutları (Z100/Z32), "
+          "her tabandan TEMİZ bir tüketici klonunda motorun adım 2-14'ü, "
           "kapanış hükmü = 0, temiz klonda yargı vakası çıkmaması; ardından eski sürümle açılmış "
           "bir SAP projesinde `guncelle_proje` onkontrol + onay + plan (+ plan 0 ise uygula --otomatik "
           "+ kapanış) ve SONRA proje AGENTS.md damgasının güncel klonun kanonik metniyle eşleşmesi "

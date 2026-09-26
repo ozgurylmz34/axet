@@ -320,6 +320,44 @@ class MotorSurumTest(GeciciTest):
             self.assertNotIn(yasak, metin, f"blokta yasaklı komut: {yasak}")
 
 
+class Z95AkisDisiTestYasagiTest(GeciciTest):
+    """Z95ⓐ (2026-09-26) — `%guncelle`de model akış DIŞI test takımı koşmaz (kural İKİ yerde yazılı).
+
+    Vaka (ölçüldü 2026-09-24): motor adımları ~2 dk sürdü; sonra model sıradaki `olc --asama sonra`
+    yerine kendi kararıyla `tests/run_tests.py -k …`, proje testleri ve filtresiz takımı koştu, kırmızıları
+    teşhise girdi ve klon dışında kendi dizinini açtı. Neden İKİ yer: GUNCELLE.md her koşuda
+    `origin/main`'den okunur ⇒ yayından sonraki İLK `%guncelle`de etkindir; SKILL.md ise klondan yüklenir
+    (`install.py` `skills_paths`) ⇒ ancak klon dosyası güncellendikten SONRAKİ turda etkindir.
+    KAPSAM — bakılmayan: modelin kurala fiilen uyması (canlı `%guncelle` DB izi, Z95ⓑ — lider).
+    """
+
+    PARCALAR = ("tests/run_tests.py", "olc --asama sonra", "<TMP>")
+
+    def bolum(self, metin: str, baslik: str) -> str:
+        i = metin.find(baslik)
+        self.assertGreaterEqual(i, 0, f"bölüm yok: {baslik}")
+        j = metin.find("\n## ", i + 1)
+        return metin[i:j if j > 0 else len(metin)]
+
+    def madde(self, bolum: str) -> str:
+        """Bölümde 'DIŞINDA test' diyen madde (alt satırlarıyla) — kural BAŞKA bir maddede sayılmasın."""
+        maddeler = re.split(r"\n(?=- )", bolum)
+        adaylar = [m for m in maddeler if re.search(r"DIŞINDA test", m)]
+        self.assertEqual(len(adaylar), 1, f"akış dışı test maddesi tam 1 olmalı: {len(adaylar)}")
+        return adaylar[0]
+
+    def test_guncelle_md_yapmayacaklar_listesinde(self):
+        metin = (AXET_HOME / "GUNCELLE.md").read_text(encoding="utf-8")
+        m = self.madde(self.bolum(metin, "## Ajanın YAPMAYACAKLARI"))
+        for parca in self.PARCALAR:
+            self.assertIn(parca, m, f"GUNCELLE.md maddesinde eksik: {parca}")
+
+    def test_skill_rules_bolumunde(self):
+        m = self.madde(self.bolum(SKILL.read_text(encoding="utf-8"), "## Rules"))
+        for parca in self.PARCALAR:
+            self.assertIn(parca, m, f"SKILL.md maddesinde eksik: {parca}")
+
+
 class ReadmeSkillListesiTest(GeciciTest):
     """B3 — `skills/write-skill/SKILL.md:43`: template seviyesindeki skill README listesine girer."""
 
