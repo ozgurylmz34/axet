@@ -209,8 +209,9 @@ class TmpOlusturTest(GeciciTest):
 
     def test_cekirdek_kabuk_ortami_satiri_c_yolunu_anar(self):
         cekirdek = (AXET_HOME / "core" / "00-temel.md").read_text(encoding="utf-8")
-        satir = next((s for s in cekirdek.splitlines() if s.startswith("- **Kabuk ortamı:**")), "")
-        self.assertTrue(satir, "core/00-temel.md 'Kabuk ortamı' satırı yok")
+        self.assertIn("- **Kabuk ortamı:**", cekirdek, "core/00-temel.md 'Kabuk ortamı' satırı yok")
+        from test_sap_skill_bilgi import _kabuk_blogu
+        satir = _kabuk_blogu(cekirdek)
         self.assertIn("/c/", satir, "Kabuk ortamı satırı `/c/...` tuzağını anmıyor")
 
 
