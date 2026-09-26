@@ -257,7 +257,9 @@ class TestZipSlip(unittest.TestCase):
             "C:surucu.txt", "d:\\surucu.txt", "a/b:akis", ".."]
 
     def setUp(self):
-        self.ust = Path(tempfile.mkdtemp(prefix="zipslip_"))
+        # `.resolve()`: TEMP 8.3 kısa adla gelebilir (CI Windows: `RUNNER~1`); kod kalan yolları çözülmüş uzun adla
+        # döndürür ⇒ çözülmemiş kökle `relative_to` ValueError verir (ölçüldü: kısa adlı TEMP ile yerelde de).
+        self.ust = Path(tempfile.mkdtemp(prefix="zipslip_")).resolve()
         self.kok = self.ust / "hedef"
 
     def tearDown(self):
