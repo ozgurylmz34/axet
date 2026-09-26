@@ -73,11 +73,13 @@ Her şeyi değil, ilgili olanı oku.
 **Araç sınırı (otorite `--list` + `%sap-adt-foundation` → `tool-catalog.md`):** 2026-09-13'te eklenen yollar — kabuk
 `ddls`/`srvd`/`bdef`/`fugr`/`func`/`msag`/`enqu`/`ttyp`, push `bdef`/`ccimp`/`ccau`/`func`, klasik ekran
 `adt_screen_generate`, mesaj yazma `adt_msgclass_write` ve açıklama değiştirme `adt_set_description` (ikisi yalnız `s4_private`),
-okuma `adt_revisions`/`adt_object_structure`/`adt_system_info`, bağlantı teşhisi `sap_doctor`, domain ön kontrolü — çevrimdışı test edildi, canlı
-DOĞRULANMADI (`fugr`/`func`/ekran yalnız `ecc`/`s4_private`). 2026-09-21 eki (yalnız `s4_private`, çevrimdışı test edildi, canlı
-DOĞRULANMADI): Z tablo `adt_table_create`, tablo tipi `adt_ttyp_create` (satır tipi düzeltmesi dahil), metin havuzu `adt_textpool_write`,
-push `ccdef`/`ccmac`. Hâlâ yok: DDLX/DCL/SRVB, FM RFC-enable, metin havuzu başlıkları,
-`$metadata` okuma. İlgili skill'in araç tablosu yolu söyler; araç yoksa işi kullanıcı SAP GUI/ADT'de yapar,
+okuma `adt_revisions`/`adt_object_structure`/`adt_system_info`, bağlantı teşhisi `sap_doctor`, domain ön kontrolü — çevrimdışı test edildi
+(`fugr`/`func`/ekran yalnız `ecc`/`s4_private`); sonradan canlı ölçülenler: kabuk `ddls`/`bdef` (2026-09-22, DEV `$TMP`), `adt_revisions`
+(2026-09-25); gerisi canlı DOĞRULANMADI. 2026-09-21 eki (yalnız `s4_private`), canlı ölçüldü 2026-09-21 (DEV): Z tablo `adt_table_create`,
+tablo tipi `adt_ttyp_create` (yapı satırlı; ilkel satır tipinde onarım canlı ÖLÇÜLMEDİ), metin havuzu `adt_textpool_write`, push
+`ccdef`/`ccmac`. v0.5.2: metadata extension ve erişim kontrolü kabuğu `adt_post_shell` `ddlx`/`dcls` → `adt_push_source` → `adt_activate`
+(canlı ölçüldü 2026-09-22) — RAP/Fiori elements UI anotasyonları (DDLX) ve rol (DCL) için kullanıcıyı Eclipse'e YÖNLENDİRME, bu araçları kullan. Hâlâ yok: SRVB yaratma
+(REST'te bloke), FM RFC-enable, metin havuzu başlıkları, `$metadata` okuma. İlgili skill'in araç tablosu yolu söyler; araç yoksa işi kullanıcı SAP GUI/ADT'de yapar,
 okuma/doğrulama CLI ile yapılır.
 
 **Obje tipine özgü skill** (ör. Adobe Forms, IDoc) bu template'te henüz yoksa:
