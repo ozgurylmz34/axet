@@ -2555,7 +2555,8 @@
       "skills-sap/sap-ui5-fiori/tests/_helpers.py",
       "skills-sap/sap-ui5-fiori/tests/test_deploy_ui.py",
       "skills-sap/sap-ui5-fiori/tests/test_fetch_ui_source.py",
-      "skills-sap/sap-adt-foundation/references/foundation-query.md"
+      "skills-sap/sap-adt-foundation/references/foundation-query.md",
+      "skills-sap/README.md"
      ],
      "gerektirir": [],
      "test": [
@@ -2652,7 +2653,8 @@
       "skills-sap/sap-adt-foundation/references/tool-catalog.md",
       "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
       "skills-sap/sap-adt-foundation/tests/test_ddic_textpool.py",
-      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py"
+      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
+      "docs/sap-api-policy.md"
      ],
      "gerektirir": [],
      "test": [
