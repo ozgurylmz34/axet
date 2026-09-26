@@ -78,6 +78,8 @@ READ_TOOLS = frozenset({
     "adt_revisions", "adt_system_info", "adt_object_structure", "sap_doctor",
     # Z128 (2026-09-25, kullanıcı onayı): biçimlenmiş kaynağı döndürür/YEREL dosyaya yazar; SAP'ye yalnız GET + prettyprinter POST'u
     "adt_pretty_print",
+    # Z39 kalanı (2026-09-26, lider onayı): metin havuzu OKUMA — yalnız GET (kilit/PUT/POST yok; tools/textpool.py)
+    "adt_textpool_read",
 })
 # Okuma kapısını (`check_read`) ve profil kontrolünü CLI'de ATLAYAN araçlar. `ping` SAP'ye gitmez;
 # `sap_doctor` sap-project.json/.conn_adt eksikliğini TEŞHİS etmek için var — aynı ön koşulları
