@@ -247,7 +247,8 @@ Geri alınınca 3/3 OK. Araç katmanı süreç-içi testle (`test_inprocess_guar
   1. kayıt dosyası bozuk → exit 2 `pull_state_unreadable` · kayıt yok → exit 2 `pull_before_edit_missing` (ağa gidilmez);
   2. canlı kaynak `_adt_get_oku` ile okunur (kapının TEK ağ çağrısı) — okunamazsa exit 1 `pull_live_read_failed` (sessiz geçiş yok);
   3. canlı özet ≠ kayıt → exit 2 `source_changed_since_pull` (push yapılmaz; mesaj: yeniden çek, değişikliği yeni kaynağa uygula);
-  3b. (Z87 ⓑ+, 2026-09-24) aynı canlı metin ile yeni kaynak `difflib` ile kıyaslanır (iki taraf `normalize_source`'tan geçer, ek ağ çağrısı
+  3b. (Z87 ⓑ+, 2026-09-24; Z99 2026-09-26: `difflib.SequenceMatcher` yerine `Counter` çoklu-küme farkı — süre doğrusal, yeri değişen
+     satır silinmiş sayılmaz) aynı canlı metin ile yeni kaynak kıyaslanır (iki taraf `normalize_source`'tan geçer, ek ağ çağrısı
      YOK); canlıda olup yeni kaynakta olmayan satır varsa yanıta `removed_lines_warning: {removed, added, sample[≤5, 120 karakter]}` +
      `warning` konur — **uyarı, red değil**, push sürer (kullanıcı kararı: sert red / onay argümanı yok). Yazmadan ÖNCE hesaplanır;
      push istisnayla düşerse hata yanıtına da eklenir. Kıyas noktası dört push yolundan (düz, sınıf alt-include'u, BDEF, FM) önce
