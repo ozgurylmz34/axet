@@ -156,6 +156,58 @@ class TestIndirmeYollari(unittest.TestCase):
         self.assertTrue(ok)
 
 
+class TestZipSlip(unittest.TestCase):
+    """Sunucudan gelen ad (zip adı / ADT id) hedef klasörün dışına yazdıramaz."""
+    KOTU = ["../kacis.txt", "a/../../kacis.txt", "..\\kacis.txt", "/mutlak.txt", "\\mutlak.txt", "C:/surucu.txt",
+            "C:surucu.txt", "d:\\surucu.txt", "a/b:akis", ".."]
+
+    def setUp(self):
+        self.ust = Path(tempfile.mkdtemp(prefix="zipslip_"))
+        self.kok = self.ust / "hedef"
+
+    def tearDown(self):
+        shutil.rmtree(self.ust, ignore_errors=True)
+
+    def test_klasore_yaz_kok_disi_ad_yazmaz(self):
+        yakalanan = 0
+        for kotu in self.KOTU:
+            with self.assertRaises(K.GuvensizYolHatasi, msg=kotu):
+                K.klasore_yaz(self.kok, {"iyi.txt": b"1", kotu: b"x"})
+            yakalanan += 1
+        yazilan = sorted(p.relative_to(self.ust).as_posix() for p in self.ust.rglob("*") if p.is_file())
+        # Kontrol grubu: iç içe klasör ve adında nokta olan (segment değil) dosya yazılır.
+        K.klasore_yaz(self.kok, {"a/b/c.txt": b"1", "x..y.js": b"2", "./nokta.txt": b"3"})
+        iyi = sorted(p.relative_to(self.kok).as_posix() for p in self.kok.rglob("*") if p.is_file())
+        ok = yakalanan == len(self.KOTU) and yazilan == [] and iyi == ["a/b/c.txt", "nokta.txt", "x..y.js"]
+        H.kaydet("klasore_yaz: kök dışı ad → hata, hiç dosya yok · iç ad yazılır",
+                 f"{len(self.KOTU)} red · 0 · 3", f"{yakalanan} red · {len(yazilan)} · {len(iyi)}", ok)
+        self.assertTrue(ok, (yazilan, iyi))
+
+    def test_canli_indir_guvensiz_ad_yedege_gecmez(self):
+        cagri = []
+
+        def get(url, kimlik, s):
+            cagri.append(url)
+            return H.odata_zip({"manifest.json": b"{}", "../../kacis.js": b"x"})
+
+        with self.assertRaises(K.GuvensizYolHatasi) as c:
+            K.canli_indir("https://h.invalid", "", BSP, ("u", "p"), get=get)
+        ok = len(cagri) == 1 and isinstance(c.exception, K.IndirmeHatasi) and "kacis.js" in str(c.exception)
+        H.kaydet("canli_indir: zip'te ../ adı → GuvensizYolHatasi, ADT'ye geçmez", "hata · 1 istek",
+                 f"{type(c.exception).__name__} · {len(cagri)} istek", ok)
+        self.assertTrue(ok, (cagri, str(c.exception)))
+
+    def test_anlik_yaz_guvensiz_adda_eskisi_silinmez(self):
+        app = self.ust / "app"
+        K.anlik_yaz(app, {"a.js": b"eski"}, {"bsp": BSP})
+        with self.assertRaises(K.GuvensizYolHatasi):
+            K.anlik_yaz(app, {"a.js": b"yeni", "../../x.js": b"k"}, {"bsp": BSP})
+        eski = (app / K.ANLIK_KLASOR / "dist" / "a.js").read_bytes()
+        ok = eski == b"eski" and not (app / "x.js").exists() and not (self.ust / "x.js").exists()
+        H.kaydet("anlik_yaz: güvensiz ad → eski anlık görüntü yerinde", "eski", eski.decode(), ok)
+        self.assertTrue(ok)
+
+
 class TestMetadataTipKapsamli(unittest.TestCase):
     META = (b'<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"><edmx:DataServices>'
             b'<Schema xmlns="http://schemas.microsoft.com/ado/2008/09/edm" xmlns:sap="http://www.sap.com/Protocols/SAPData">'
@@ -234,6 +286,131 @@ class TestSaltOkurProxy(unittest.TestCase):
         ok = not yanlis
         H.kaydet("proxy izin_ver: okuma geçer, 7 yazma biçimi 403", "10/10", f"{len(vakalar) - len(yanlis)}/10", ok)
         self.assertTrue(ok, yanlis)
+
+    # Standart UI5 V2 ODataModel okuma batch'i (yalnız GET parçaları, boundary `batch_…`) — kontrol grubu.
+    V2_OKUMA = (b"--batch_a1b2-c3d4\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+                b"GET Orders?$skip=0&$top=20 HTTP/1.1\r\nsap-cancel-on-close: true\r\nAccept: application/json\r\n"
+                b"DataServiceVersion: 2.0\r\nMaxDataServiceVersion: 2.0\r\n\r\n\r\n"
+                b"--batch_a1b2-c3d4\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+                b"GET Orders/$count HTTP/1.1\r\nAccept: text/plain\r\n\r\n\r\n--batch_a1b2-c3d4--\r\n")
+    MP = "multipart/mixed; boundary=batch_a1b2-c3d4"
+
+    def test_batch_okuma_kontrol_grubu_gecer(self):
+        vakalar = [
+            ("POST", "/sap/opu/odata/sap/ZXX001_SRV/$batch", self.V2_OKUMA, self.MP),
+            ("POST", "/sap/opu/odata/sap/ZXX001_SRV/$batch", self.V2_OKUMA, None),
+            ("POST", "/sap/opu/odata/sap/ZXX001_SRV;o=LOCAL/$batch?sap-client=000", self.V2_OKUMA, self.MP),
+            ("POST", "/sap/opu/odata4/sap/zxx001_ui/srvd/sap/zxx001_ui/0001/$batch", self.V2_OKUMA, self.MP),
+        ]
+        yanlis = [v[1] for v in vakalar if not P.izin_ver(*v)[0]]
+        ok = not yanlis
+        H.kaydet("proxy $batch kontrol grubu: V2/V4 GET-yalnız batch geçer", "4/4", f"{4 - len(yanlis)}/4", ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_batch_yazma_atlatmalari_reddedilir(self):
+        b = b"--batch_1\r\nContent-Type: application/http\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+        v2 = "/sap/opu/odata/sap/X/$batch"
+        vakalar = {
+            "a iç multipart/mixed (changeset kelimesiz)": (
+                v2, b + b"Content-Type: multipart/mixed; boundary=abc\r\n\r\n"
+                        b"--abc\r\n\r\nPOST Orders HTTP/1.1\r\n\r\n{}\r\n--abc--\r\n"),
+            "b changeset'siz DELETE parçası": (v2, b + b"DELETE Orders(1) HTTP/1.1\r\n\r\n--batch_1--\r\n"),
+            "c SOAP RFC yolu": ("/sap/bc/soap/rfc/$batch", b"<SOAP-ENV:Envelope/>"),
+            "c' SOAP yolu GET gövdeli": ("/sap/bc/soap/rfc/$batch", self.V2_OKUMA),
+            "küçük harf delete": (v2, b + b"delete Orders(1) HTTP/1.1\r\n\r\n"),
+            "baştaki boşluklu POST": (v2, b + b"   POST Orders HTTP/1.1\r\n\r\n{}\r\n"),
+            "sürümsüz MERGE satırı": (v2, b + b"MERGE Orders(1)\r\n\r\n"),
+            "GET + DELETE karışık": (v2, self.V2_OKUMA + b + b"DELETE Orders(1) HTTP/1.1\r\n\r\n"),
+            "iç multipart/mixed tek başına": (v2, b + b"GET X HTTP/1.1\r\ncontent-type:multipart/mixed;boundary=q\r\n"),
+            "JSON batch gövdesi": (v2, b'{"requests":[{"method":"GET","url":"Orders"}]}'),
+            "JSON dizi gövdesi (boşluklu)": (v2, b'  [{"method":"DELETE"}]'),
+            "X-HTTP-Method ezmesi": (v2, b + b"GET Orders(1) HTTP/1.1\r\nX-HTTP-Method: DELETE\r\n\r\n"),
+            "base64 parça": (v2, b.replace(b"binary", b"base64") + b"R0VUIA==\r\n"),
+            "istek satırı yok": (v2, b"--batch_1\r\n\r\n--batch_1--"),
+            "boş gövde": (v2, b""),
+            "yol .. ile kaçış": ("/sap/opu/odata/../../bc/soap/rfc/$batch", self.V2_OKUMA),
+            "yol % kodlu": ("/sap/opu/odata/sap/X%2F..%2F/$batch", self.V2_OKUMA),
+            "odata dışı ICF yolu": ("/sap/bc/ui2/$batch", self.V2_OKUMA),
+            "bilinmeyen yöntem (PURGE) satırı": (v2, b + b"PURGE Orders(1) HTTP/1.1\r\n\r\n"),
+            "JSON içinde GET satırı": (v2, b'{"a":1,\n GET Orders HTTP/1.1\n"requests":[]}'),
+        }
+        yanlis = [ad for ad, (yol, g) in vakalar.items() if P.izin_ver("POST", yol, g)[0]]
+        # İstek tipi JSON ya da multipart dışı → gövde okuma bile olsa red (do_POST Content-Type'ı iletir).
+        for ad, tip in (("istek tipi application/json", "application/json"), ("istek tipi yok", ""),
+                        ("istek tipi text/plain", "text/plain")):
+            if P.izin_ver("POST", v2, self.V2_OKUMA, tip)[0]:
+                yanlis.append(ad)
+        n = len(vakalar) + 3
+        ok = not yanlis
+        H.kaydet("proxy $batch: yazma atlatmaları (a/b/c+JSON+…) 403", f"{n}/{n}", f"{n - len(yanlis)}/{n}", ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_host_basligi(self):
+        vakalar = [
+            (("localhost:8484", 8484), True), (("127.0.0.1:8484", 8484), True), (("LOCALHOST:8484", 8484), True),
+            (("saldirgan.example:8484", 8484), False), (("localhost:9999", 8484), False), (("localhost", 8484), False),
+            ((None, 8484), False), (("", 8484), False), (("127.0.0.1.saldirgan.example:8484", 8484), False),
+            (("localhost", 80), True),
+        ]
+        yanlis = [(g, b) for g, b in vakalar if P.host_gecerli(*g) != b]
+        ok = not yanlis
+        H.kaydet("proxy host_gecerli: yalnız localhost/127.0.0.1:<port>", "10/10", f"{10 - len(yanlis)}/10", ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_uctan_uca_host_ve_icerik_tipi(self):
+        """Kablolama: yabancı Host → 403 + SAP'ye 0 istek; do_POST istek Content-Type'ını izin_ver'e iletir."""
+        H.proxy_bypass_surec_ici()
+        kok = Path(tempfile.mkdtemp(prefix="ui5proxy_"))
+        (kok / "index.html").write_bytes(b"<html/>")
+        try:
+            with H.SahteSunucu({"/sap/opu/odata/sap/X/Set": b'{"d":[]}'}) as sap:
+                import ssl
+                srv = P.Sunucu(("127.0.0.1", 0), P.isleyici_sinifi(kok, sap.url, "100", (H.KULLANICI, H.PAROLA),
+                                                                     ssl.create_default_context()))
+                threading.Thread(target=srv.serve_forever, daemon=True).start()
+                port = srv.server_address[1]
+                taban = f"http://127.0.0.1:{port}"
+
+                # SahteSunucu POST işlemez (501 + gövde okunmadan kapanış → proxy'de ara sıra 502: ölçüldü 1/8).
+                # Deterministik olsun: gövdeyi okuyan, isteği kaydeden 202 yanıtçısı.
+                def _post(h):
+                    h.rfile.read(int(h.headers.get("Content-Length") or 0))
+                    sap.istekler.append("POST " + h.path.split("?", 1)[0])
+                    h.send_response(202)
+                    h.send_header("Content-Length", "0")
+                    h.end_headers()
+                sap.httpd.RequestHandlerClass.do_POST = _post
+
+                def kod(yol, host=None, yontem="GET", govde=None, tip=None):
+                    h = {}
+                    if host:
+                        h["Host"] = host
+                    if tip:
+                        h["Content-Type"] = tip
+                    req = urllib.request.Request(taban + yol, method=yontem, data=govde, headers=h)
+                    try:
+                        return urllib.request.urlopen(req, timeout=10).status
+                    except urllib.error.HTTPError as e:
+                        return e.code
+                try:
+                    yabanci = kod("/sap/opu/odata/sap/X/Set", host=f"saldirgan.example:{port}")
+                    sonra_sap = len(sap.istekler)
+                    dogru = kod("/sap/opu/odata/sap/X/Set", host=f"localhost:{port}")
+                    # İletilen batch 202 döner (= SAP'ye GİTTİ); reddedilen 403 ve SAP'de iz bırakmaz.
+                    json_tip = kod("/sap/opu/odata/sap/X/$batch", yontem="POST", govde=self.V2_OKUMA,
+                                   tip="application/json")
+                    mp_tip = kod("/sap/opu/odata/sap/X/$batch", yontem="POST", govde=self.V2_OKUMA, tip=self.MP)
+                finally:
+                    srv.shutdown()
+                    srv.server_close()
+                post_iz = [i for i in sap.istekler if i.startswith("POST ")]
+        finally:
+            shutil.rmtree(kok, ignore_errors=True)
+        gercek = (yabanci, sonra_sap, dogru, json_tip, mp_tip, post_iz)
+        ok = gercek == (403, 0, 200, 403, 202, ["POST /sap/opu/odata/sap/X/$batch"])
+        H.kaydet("proxy uçtan uca: yabancı Host 403/0 istek · JSON tip 403", "403/0/200/403/202 · 1 POST",
+                 str(gercek[:5]) + f" · {len(post_iz)} POST", ok)
+        self.assertTrue(ok, gercek)
 
     def test_uctan_uca_yazma_sapye_gitmez(self):
         H.proxy_bypass_surec_ici()

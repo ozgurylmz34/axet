@@ -393,6 +393,55 @@ class PullBeforeEdit(unittest.TestCase):
                     f"ok={r.get('ok')} alan={'inactive_count' in r} çağrı={s.cagri}",
                     r.get("ok") is False and "inactive_count" not in r and "worklist" not in s.cagri)
 
+    # ── L5 bug gate (2026-09-26): `.axetcode-denylist` dizinleri output_path/source_path ile delinemez (iki yön).
+    def test_21_denylist_okuma_yazma_reddi_ag_yok(self):
+        s = self.istemci(Sahte(KAYNAK))
+        (self.p / ".axetcode-denylist").write_text("# yorum\n.conn_adt\nsecrets\nconn/\nhenuz_yok\n", encoding="utf-8")
+        for d in ("conn", "secrets/alt", "src"):
+            (self.p / d).mkdir(parents=True)
+        (self.p / "conn" / "gizli.prog.abap").write_text(KAYNAK, encoding="utf-8")
+        (self.p / "secrets" / "alt" / "k.prog.abap").write_text(KAYNAK, encoding="utf-8")
+        self.atom.adt_get(AD, TIP)                                          # push için pull kaydı
+        red = {}
+        for yol in ("conn/yeni.prog.abap", "secrets/alt/y.prog.abap", "conn/alt/derin.prog.abap",
+                    "./conn/../conn/z.prog.abap"):
+            s.cagri.clear()
+            r = self.atom.adt_get(AD, TIP, output_path=yol)
+            red[f"get {yol}"] = (r.get("error"), len(s.cagri), (self.p / yol).is_file())
+        for yol in ("conn/gizli.prog.abap", "secrets/alt/k.prog.abap"):
+            s.cagri.clear()
+            r = self.atom.adt_push_source(AD, TIP, source_path=yol)
+            red[f"push {yol}"] = (r.get("error"), len(s.cagri), False)
+        if os.name == "nt":   # Windows dosya sistemi harf duyarsız → `CONN/` aynı klasör
+            s.cagri.clear()
+            r = self.atom.adt_get(AD, TIP, output_path="CONN/b.prog.abap")
+            red["get CONN/ (nt)"] = (r.get("error"), len(s.cagri), (self.p / "conn" / "b.prog.abap").is_file())
+            # Var olmayan klasörde `resolve()` harfi düzeltmez → karşılaştırma `normcase` ister.
+            s.cagri.clear()
+            r = self.atom.adt_get(AD, TIP, output_path="HENUZ_YOK/c.prog.abap")
+            red["get HENUZ_YOK/ (nt)"] = (r.get("error"), len(s.cagri),
+                                          (self.p / "henuz_yok" / "c.prog.abap").is_file())
+        # Kontrol grubu: önek sınırı (`connx` ≠ `conn`), sıradan klasör; denylist dosyası yokken bugünkü davranış.
+        g1 = self.atom.adt_get(AD, TIP, output_path="connx/a.prog.abap")
+        g2 = self.atom.adt_get(AD, TIP, output_path="src/b.prog.abap")
+        (self.p / ".axetcode-denylist").unlink()
+        g3 = self.atom.adt_get(AD, TIP, output_path="conn/yok_iken.prog.abap")
+        ok = (all(v == ("invalid_argument", 0, False) for v in red.values())
+              and g1.get("written") is True and g2.get("written") is True and g3.get("written") is True)
+        self.kaydet("L5 denylist: conn/ secrets altı get(output_path)+push(source_path) red, SAP'ye 0 istek · "
+                    "connx/src yazılır · denylist yoksa conn/ yazılır",
+                    f"{len(red)} red · 3 yazıldı",
+                    f"{red} · yazıldı={[g.get('written') for g in (g1, g2, g3)]}", ok)
+
+    def test_22_denylist_okunamazsa_fail_closed(self):
+        self.istemci(Sahte(KAYNAK))
+        (self.p / ".axetcode-denylist").write_bytes(b"\xff\xfe\x00conn\n")      # UTF-8 değil
+        r = self.atom.adt_get(AD, TIP, output_path="src/c.prog.abap")
+        self.kaydet("L5 denylist okunamıyorsa yol reddedilir (okunamadı ≠ boş liste)", "invalid_argument · dosya yok",
+                    f"{r.get('error')} · {(self.p / 'src' / 'c.prog.abap').is_file()}",
+                    r.get("error") == "invalid_argument" and "denylist" in (r.get("message") or "")
+                    and not (self.p / "src" / "c.prog.abap").is_file())
+
     def test_6_post_shell_etkilenmez(self):
         s = self.istemci(Sahte(None))
         r = self.atom.adt_post_shell("program", "ZAXET_YENI", "$TMP", "TESTK900001", "Test programı")
