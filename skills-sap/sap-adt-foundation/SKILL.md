@@ -192,7 +192,7 @@ kullanıcıya aktar, ne gerektiğini söyle.
 ## Referanslar
 | Dosya | İçerik |
 |---|---|
-| `references/tool-catalog.md` | 41 araç: sınıf, amaç, argüman, uyarı |
+| `references/tool-catalog.md` | 42 araç: sınıf, amaç, argüman, uyarı |
 | `references/profiles.md` | SAP profil yetenek matrisi (rehber, canlı test gerekir) + CLI profil etiketleri |
 | `references/foundation-ops.md` | Okuma/indirme, yaratma, push, aktivasyon, include+program akışı, FM/CDS/class protokol notları, kilit, transport, paket, arama |
 | `references/foundation-query.md` | SQL ve tablo okuma, where-used/blast-radius (`CROSS`), ATC, OData `$metadata` doğrulama |

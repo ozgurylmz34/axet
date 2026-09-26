@@ -154,6 +154,8 @@ python $HOME\axet\scripts\new_package.py <PAKET> --title "<başlık>"
 python $HOME\axet\scripts\new_package.py --index --check
 ```
 Bu komutlar yerel paket klasörünü kurar. **Paketi SAP'de SE21 ile sen yaratırsın**; aXet paket ya da transport yaratmaz.
+SAP'de zaten var olan bir paket için `new_package.py <PAKET> --mevcut` kullan: sorumlu, başlangıç tarihi ve üst paket
+canlı sistemden salt-okur okunur. Paket okunamaz ya da bulunamazsa klasör yazılmaz (çıkış 3).
 
 ### 3.4 Kabul kontrolü
 1. Projede yeni aXet oturumu aç (`axet-code -c <klasör>`) ve `%basla` yaz → ilk satırda `proje: <ad>` görünmeli.
