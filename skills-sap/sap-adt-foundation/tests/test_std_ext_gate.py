@@ -300,6 +300,29 @@ class Z117Tarayici(unittest.TestCase):
                  f"(bilgi: 20k satır + 400 EXTEND {time.perf_counter() - t0:.2f} sn)", ok)
         self.assertTrue(ok, (len(b), kurulum))
 
+    def test_std_ext_z117f_tire_dizisi_ustel_geri_izleme_yok(self):
+        # `_R_ILK_SOZCUK` eski deseni sözcüksüz tire dizisinde üsteldi (ölçüldü: 38 tire 32 sn; 60 tire dönmez).
+        # AYRI SÜREÇ + zaman aşımı: bozuk desende takım asılı kalmaz, test ADIYLA kırılır. Süre çocuk süreç İÇİNDE
+        # ölçülür (süreç açılışı sayılmaz); düzgün desende vaka başına milisaniye mertebesi.
+        import json
+        import subprocess
+        kod = ("import json, sys, time\nsys.path.insert(0, sys.argv[1])\nfrom sapadt.std_ext_scan import tara\n"
+               "u = '\\n'.join(['-' * 20] * 3)\n"
+               "v = [('-' * 60, 'bdef'), ('-' * 60, None), (u, None), (u, 'bdef'), ('-' * 38, 'bdef'),"
+               " (' --' * 40, None)]\n"
+               "o = []\nfor k, t in v:\n    t0 = time.perf_counter(); b = tara(k, t)\n"
+               "    o.append([round(time.perf_counter() - t0, 4), len(b)])\nprint(json.dumps(o))\n")
+        try:
+            p = subprocess.run([sys.executable, "-c", kod, str(H.SCRIPTS)], capture_output=True, text=True, timeout=30)
+            sonuc = (json.loads(p.stdout.strip().splitlines()[-1]) if p.returncode == 0
+                     else f"rc={p.returncode} {p.stderr[-300:]}")
+        except subprocess.TimeoutExpired:
+            sonuc = "zaman aşımı 30 sn (üstel geri izleme)"
+        ok = isinstance(sonuc, list) and len(sonuc) == 6 and all(s < 1.0 and n == 0 for s, n in sonuc)
+        H.kaydet("Z117 tarayıcı zf tire dizisi (60 · 3×20 · None): üstel geri izleme yok", "6 vaka < 1 sn · 0 bulgu",
+                 str(sonuc), ok)
+        self.assertTrue(ok, sonuc)
+
     def test_std_ext_z117e_kacis_ve_bitisik_tire(self):
         for ad, tip, kaynak, hedef, satir in Z117E_KACIS:
             with self.subTest(ad):

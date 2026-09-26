@@ -137,7 +137,7 @@ python $S/check_ui_odata_refs.py --app <app> --metadata <kaydedilen $metadata> [
 | `scripts/check_ui5_freestyle_traps.py` | T1 `_X` nav + T4 `f:fields` içi container = ERROR; T2 `type=Number` + T3 `core:Title` = WARN |
 | `scripts/check_list_view_grid.py` | liste/rapor adlı view'da `sap.m.Table` |
 | `scripts/fetch_ui_source.py` | kaynağı yerelde olmayan uygulama: `indir` (OData zip / ADT filestore → `webapp` geri kurma + iskelet + `.canli/`) · `eslik` (değiştirmeden build == canlı) · `drift` · `metadata` (tip-kapsamlı alan kontrolü) — deploy-and-local-run §7 |
-| `scripts/ui_local_proxy.py` | salt-okur yerel test sunucusu: dist'i sunar, `/sap/*` okumalarını iletir, yazma istekleri 403 |
+| `scripts/ui_local_proxy.py` | salt-okur yerel test sunucusu: dist'i sunar, `/sap/*` okumalarını iletir (GET/HEAD + yalnız GET parçalı `/sap/opu/odata(4)/…/$batch`; beyaz liste, emin olunamayan 403), yazma istekleri ve yabancı Host 403 |
 | `scripts/check_filter_search_pattern.py` | `caseSensitive:false` BLOCKER; filtre VH'si MultiInput değil WARNING |
 | `scripts/check_i18n_keys.py` | kullanılan anahtar iki dosyada mı, yer tutucu kümesi, tek kesme |
 | `scripts/check_ui_odata_refs.py` | kaydedilmiş `$metadata`'ya karşı entity set / function import / property (çok servisli), çevrimdışı |

@@ -499,7 +499,8 @@ def _pp_hedef(name: str, object_type: str) -> tuple[str | None, str | None, dict
 
 
 def _pp_cikti_yolu(output_path) -> tuple[Path | None, dict | None]:
-    """`output_path` → mutlak yol. Proje kökü dışı, `.abap` dışı uzantı, `.axet-code/` altı → invalid_argument.
+    """`output_path` → mutlak yol. Proje kökü dışı, `.abap` dışı uzantı, `.axet-code/` altı, `.axetcode-denylist`
+    yolu altı → invalid_argument.
     Kural TEK kaynakta (`sapadt.project.yerel_kaynak_yolu`, Z142); bu araç uzantıyı `.abap` ile daraltır."""
     from sapadt import project as _project
     return _project.yerel_kaynak_yolu(output_path, "output_path", (_PP_UZANTI,))

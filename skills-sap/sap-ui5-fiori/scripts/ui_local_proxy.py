@@ -4,9 +4,11 @@
 
 Derlenmiş `dist/`'i (ya da `--kok` ile verilen klasörü) sunar; `/sap/*` isteklerini SAP'ye iletir, AMA yalnız okumayı:
   GET / HEAD                          → iletilir
-  POST …/$batch  (changeset YOK)      → iletilir (UI5 V2 model okumaları batch'ler)
-  POST …/$batch  (changeset VAR)      → 403, SAP'ye GİTMEZ (changeset = yazma)
-  diğer her POST / PUT / MERGE / PATCH / DELETE → 403, SAP'ye GİTMEZ
+  POST /sap/opu/odata(4)/…/$batch     → iletilir YALNIZ şu durumda (beyaz liste; emin olunamayan → 403):
+      istek tipi multipart/mixed · gövdedeki HER HTTP istek satırı GET (büyük/küçük harf, baştaki boşluk dahil
+      bakılır) ve en az bir GET var · changeset / iç multipart / JSON / X-HTTP-Method / binary dışı aktarım YOK
+  başka yolda $batch (ör. /sap/bc/soap/…), diğer her POST / PUT / MERGE / PATCH / DELETE → 403, SAP'ye GİTMEZ
+  Host başlığı localhost:<port> / 127.0.0.1:<port> değilse → 403 (DNS rebinding), SAP'ye GİTMEZ
 Reddedilen her istek konsola `REDDEDİLDİ` satırıyla yazılır. Amaç: değişikliği SAP'ye YAZMADAN, deploy ÖNCESİ,
 gerçek veriyle kullanıcıya göstermek (kaydet/sil düğmeleri bu modda 403 alır — beklenen davranıştır).
 
@@ -22,6 +24,7 @@ from __future__ import annotations
 import argparse
 import base64
 import http.server
+import re
 import socketserver
 import ssl
 import sys
@@ -39,18 +42,73 @@ ATLANAN_YANIT = {"transfer-encoding", "connection", "content-encoding", "content
 YAZMA_YONTEMLERI = ("PUT", "MERGE", "PATCH", "DELETE")
 
 
-def izin_ver(yontem: str, yol: str, govde: bytes = b"") -> tuple[bool, str]:
-    """SAP'ye iletilecek istek SALT-OKUMA mı? → (izin, neden). Saf fonksiyon (testlenir)."""
+# $batch yalnız OData servis kökünde kabul edilir (V2 `/sap/opu/odata/…`, V4 `/sap/opu/odata4/…`). Başka bir ICF
+# servisinin `…/$batch` adlı yolu (ör. SOAP RFC) okuma DEĞİLDİR. Segment karakterleri dar tutulur: `%` kodlaması,
+# `..`/`.` segmenti ve boş segment reddedilir (fail-closed — hedef sistemin yol normalleştirmesine güvenilmez).
+_R_BATCH_YOLU = re.compile(r"/sap/opu/odata4?(?:/[A-Za-z0-9_;=,.\-]+)+/\$batch")
+# Batch parçasındaki HTTP istek satırı: satır başı (baştaki boşluk dahil) `<YÖNTEM> <hedef> HTTP/x`.
+_R_ISTEK_SATIRI = re.compile(rb"^[ \t]*([A-Za-z]+)[ \t]+\S+[ \t]+HTTP/\d", re.I | re.M)
+# Sürüm eki olmasa da yazma yöntemiyle başlayan satır — hedef sistemin gevşek ayrıştırmasına güvenilmez.
+_R_YAZMA_SATIRI = re.compile(rb"^[ \t]*(?:POST|PUT|PATCH|MERGE|DELETE)[ \t]", re.I | re.M)
+# Parça içinde yöntem geçersiz kılma başlığı (GET satırını yazmaya çevirebilir).
+_R_YONTEM_EZME = re.compile(rb"^[ \t]*x-http-method(?:-override)?[ \t]*:", re.I | re.M)
+# Parça aktarım kodlaması yalnız `binary` olabilir (base64 parça içinde yazma gizlenebilir).
+_R_AKTARIM = re.compile(rb"^[ \t]*content-transfer-encoding[ \t]*:[ \t]*(\S+)", re.I | re.M)
+
+
+def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None = None) -> tuple[bool, str]:
+    """SAP'ye iletilecek istek SALT-OKUMA mı? → (izin, neden). Saf fonksiyon (testlenir).
+
+    `$batch` için kural BEYAZ LİSTEdir (emin olunamayan → red): yol OData servis kökü; istek tipi (verildiyse)
+    `multipart/mixed`; gövdede changeset / iç `multipart` / JSON / yöntem ezme / binary dışı aktarım YOK; gövdedeki her
+    HTTP istek satırı GET ve en az bir GET var. `icerik_tipi=None` = çağıran bilmiyor → yalnız gövde kuralları.
+    """
     yontem = yontem.upper()
     if yontem in ("GET", "HEAD"):
         return True, "okuma"
-    if yontem == "POST":
-        if not urllib.parse.urlsplit(yol).path.endswith("/$batch"):
-            return False, "yalnız $batch POST'u iletilir (function import / create = yazma olabilir)"
-        if b"changeset" in (govde or b"").lower():
-            return False, "$batch içinde changeset (yazma) var"
-        return True, "okuma batch'i"
-    return False, f"{yontem} yazmadır"
+    if yontem != "POST":
+        return False, f"{yontem} yazmadır"
+    yol_kismi = urllib.parse.urlsplit(yol).path
+    if not _R_BATCH_YOLU.fullmatch(yol_kismi) or any(s.strip(".") == "" for s in yol_kismi.split("/")[1:]):
+        return False, "yalnız /sap/opu/odata(4)/…/$batch POST'u iletilir (function import / create = yazma olabilir)"
+    tip = (icerik_tipi or "").split(";")[0].strip().lower()
+    if icerik_tipi is not None and tip != "multipart/mixed":
+        return False, f"$batch istek tipi multipart/mixed değil ({tip or 'yok'}) — JSON batch / bilinmeyen biçim"
+    g = govde or b""
+    kucuk = g.lower()
+    if g.lstrip()[:1] in (b"{", b"["):
+        return False, "JSON batch (okuma olduğu doğrulanamaz)"
+    if b"\x00" in g:
+        return False, "gövdede NUL baytı (metin dışı kodlama — doğrulanamaz)"
+    if b"changeset" in kucuk:
+        return False, "$batch içinde changeset (yazma) var"
+    if b"multipart" in kucuk:
+        return False, "$batch içinde iç multipart gövde (changeset biçimi) var"
+    if _R_YONTEM_EZME.search(g):
+        return False, "$batch parçasında X-HTTP-Method başlığı (yöntem ezme)"
+    for m in _R_AKTARIM.finditer(g):
+        if m.group(1).lower() != b"binary":
+            return False, f"$batch parçası binary dışı aktarım kodlaması ({m.group(1).decode('latin-1')})"
+    if _R_YAZMA_SATIRI.search(g):
+        return False, "$batch içinde yazma yöntemli istek satırı var"
+    yontemler = [m.group(1).upper() for m in _R_ISTEK_SATIRI.finditer(g)]
+    if not yontemler:
+        return False, "$batch içinde GET istek satırı bulunamadı (doğrulanamaz)"
+    if any(y != b"GET" for y in yontemler):
+        return False, "$batch içinde GET dışı istek satırı var"
+    return True, "okuma batch'i (yalnız GET parçaları)"
+
+
+def host_gecerli(host: str | None, port: int) -> bool:
+    """Host başlığı bu yerel sunucunun kendisi mi? (DNS rebinding: yabancı adla gelen tarayıcı isteği SAP'ye gitmez.)
+
+    Kabul: `localhost:<port>` / `127.0.0.1:<port>` (port 80 ise portsuz biçim de). Başlık yoksa → hayır. Saf fonksiyon.
+    """
+    h = (host or "").strip().lower()
+    kabul = {f"localhost:{port}", f"127.0.0.1:{port}"}
+    if port == 80:
+        kabul |= {"localhost", "127.0.0.1"}
+    return h in kabul
 
 
 def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str], ctx):
@@ -102,12 +160,15 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             self.end_headers()
             self.wfile.write(veri)
 
-        def _karar(self, govde: bytes = b""):
+        def _karar(self, govde: bytes = b"", icerik_tipi: str | None = None):
             if not self.path.startswith("/sap/"):
                 if self.command in ("GET", "HEAD"):
                     return super().do_GET() if self.command == "GET" else super().do_HEAD()
                 return self._yanit(405, "yerel dosya sunucusu yalniz GET/HEAD")
-            izin, neden = izin_ver(self.command, self.path, govde)
+            if not host_gecerli(self.headers.get("Host"), self.server.server_address[1]):
+                print(f"REDDEDİLDİ {self.command} {self.path[:150]} — yabancı Host başlığı", flush=True)
+                return self._yanit(403, "Salt-okur yerel test sunucusu: Host localhost/127.0.0.1 degil")
+            izin, neden = izin_ver(self.command, self.path, govde, icerik_tipi)
             if not izin:
                 print(f"REDDEDİLDİ {self.command} {self.path[:150]} — {neden}", flush=True)
                 return self._yanit(403, f"Salt-okur yerel test sunucusu yazma istegini reddetti: {neden}")
@@ -121,7 +182,7 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
 
         def do_POST(self):  # noqa: N802
             n = int(self.headers.get("Content-Length") or 0)
-            self._karar(self.rfile.read(n) if n else b"")
+            self._karar(self.rfile.read(n) if n else b"", self.headers.get("Content-Type", ""))
 
         def do_PUT(self):  # noqa: N802
             self._karar()

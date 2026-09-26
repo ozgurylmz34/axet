@@ -163,8 +163,13 @@ _R_BDEF_BASLIK = re.compile(r"^(?:[ \t\n]*--[^\n]*\n)*\s*(?P<bas>EXTENSION\b(?P<
 _R_BDEF_ARAYUZ = re.compile(rf"\bUSING\s+INTERFACE\s+(?P<tgt>{_AD})(?![\w/])", _F)
 _R_EXTEND_BEHAVIOR = re.compile(rf"(?<![\w/])EXTEND\s+BEHAVIOR\s+FOR\s+(?P<tgt>{_AD})", _F)
 # Z117ⓐ: kaynağın İLK SÖZCÜĞÜ. Atlanan: sözcük olmayan karakterler (ZWSP, NUL, ikinci BOM, noktalama…), tek `-`,
-# `--` satırı. Seçenekler birbirini dışlar ve her biri en az bir karakter tüketir ⇒ doğrusal (geri izleme yok).
-_R_ILK_SOZCUK = re.compile(r"(?:[^\w\-]|-(?!-)|--[^\n]*)*(?P<soz>\w+)")
+# `--` satırı. Seçenekler birbirini DIŞLAMAZ: `--[^\n]*` satırın ortasında durup kalan `--…`'yı yeni bir tekrara
+# bırakabilir ⇒ sözcüksüz tire dizisinde geri izleme ÜSTELDİ (ölçüldü 2026-09-26: `tara('-'*38, 'bdef')` 32 sn;
+# 24/28/30 tire → 0,017/0,105/0,276 sn). Çare: sahiplenici niceleyiciler (`*+`, Python ≥ 3.11; CI tabanı 3.12) — her
+# `--` satırın sonuna kadar yer ve tekrar dizisi geri verilmez ⇒ doğrusal. Sonuç değişmez: açgözlü geçiş bir sözcükte
+# duruyorsa iki sürüm aynı eşleşmeyi verir; durmuyorsa (yalnız `--` içinde sözcük var) eski sürüm yorumun SON
+# sözcüğünün son harf(ler)ini bulurdu — `EXTENSION` olamaz ⇒ `_capasiz_extension` iki sürümde de None.
+_R_ILK_SOZCUK = re.compile(r"(?:[^\w\-]|-(?!-)|--[^\n]*+)*+(?P<soz>\w+)")
 
 
 def _capasiz_extension(temiz: str) -> int | None:

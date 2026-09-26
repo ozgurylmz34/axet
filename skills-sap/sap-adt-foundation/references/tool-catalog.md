@@ -56,7 +56,7 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
 - **Dönüş:** `{ok, name, type, exists, source?, metadata?, client_log}`; yoksa `{ok:true, exists:false}`.
   `output_path` verilince (Z142ⓐ, 2026-09-26) kaynak YEREL dosyaya yazılır (UTF-8, satır sonu çevrilmez) ve `source` yanıttan düşer:
   `{…, output_path (proje-göreli), written, line_count}`. Yol kuralı `adt_pretty_print` ile tek kaynaktan (`sapadt/project.py`):
-  proje kökü içi · kaynak uzantısı (`.abap .asddls .asddlxs .asdcls .asbdef .bdef .cds .ddl .srvd .srvdsrv .xml`) · `.axet-code/` dışı;
+  proje kökü içi · kaynak uzantısı (`.abap .asddls .asddlxs .asdcls .asbdef .bdef .cds .ddl .srvd .srvdsrv .xml`) · `.axet-code/` dışı · `.axetcode-denylist` yolları dışı (varsa; ör. `conn/`, `secrets` altı okunmaz/yazılmaz);
   var olan dosya `overwrite=true` olmadan ezilmez (`output_exists`). Geçersiz yol, `include_source=false` ya da metin taşımayan tip
   (msag, enqu) → `invalid_argument`, SAP'ye gidilmez. Obje yoksa dosya yazılmaz (`written:false`). Pull kaydı aynen yazılır ⇒
   indir (`output_path`) → dosyada düzenle → `adt_push_source(source_path=…)` zinciri.
@@ -265,7 +265,7 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
   diff_preview, output_path, written, notice}`; `output_path` verilmezse biçimli metin `source` alanında döner.
 - **Çağrı:** SAP'ye iki istek gider — `GET <kaynak ucu>` (`adt_get` ile aynı uç, sürüm verilmez = son sürüm) ve
   `POST /sap/bc/adt/abapsource/prettyprinter` (gövde = kaynak, parametre yok). Satır sonları LF'e çevrilir.
-- **Yerel dosya kuralları:** `output_path` proje kökü içinde (göreli yol köke göre), `.abap` uzantılı ve `.axet-code/` dışında olmalı; aksi
+- **Yerel dosya kuralları:** `output_path` proje kökü içinde (göreli yol köke göre), `.abap` uzantılı, `.axet-code/` ve `.axetcode-denylist` yolları dışında olmalı; aksi
   `invalid_argument` (çıkış 3). Böylece `.conn_adt`, `sap-project.json`, `.rules.md` ya da kapı kayıtları bu araçla ezilemez. Var olan dosya
   `overwrite=false` iken `output_exists` (çıkış 1). Yol ve tip denetimleri SAP'ye gitmeden yapılır.
 - **Uyarılar:** pull kaydı (`sap-pull-state.json`) YAZMAZ, push'tan önce taban için `adt_get` şart · hata kodları ayrı: `not_found` (404),
@@ -351,9 +351,12 @@ Hepsi: `install.py --sap-write` (kullanıcı çalıştırır) · tier DEV · `--
 ### `adt_activate`
 - **Amaç:** tek obje ya da `also` ile atomik çoklu aktivasyon.
 - **Argümanlar:** `name` · `object_type="class"` · `also=[{"name":"…","object_type":"…"}]`.
-- **Dönüş:** `{ok, activated, errors?, warnings?, refs?, activation_verified?, still_inactive?, inactive_count, inactive_probe, inactive_warning?}`.
+- **Dönüş:** `{ok, activated, errors?, warnings?, refs?, activation_verified?, still_inactive?, inactive_count?, inactive_probe?, inactive_warning?}`.
 - **Uyarılar:** tek-obje yolunda `activation_verified` (`false` = sahte-OK, `ok:false`, `error:"activation_not_executed"`; `null` = kanıtlanmadı) ·
-  `inactive_count` (Z147, 2026-09-26) tüm yollarda (tek obje · `also` · `srvb` · `enqu`): hedef obje(ler)in worklist'te kalan kayıt sayısı;
+  `inactive_count` (Z147, 2026-09-26) dört yolda da (tek obje · `also` · `srvb` · `enqu`) sonda koştuğunda gelir: hedef obje(ler)in worklist'te kalan kayıt sayısı;
+  **alan opsiyoneldir** — şu dönüşlerde YOK: guardrail ihlali · `also` içinde `unsupported_type` · `enqu` `activation_failed` ·
+  klasik yolda `error:"unreachable"` · her yolun istisna dalı (`auth_failed`/`connection_failed`/…; `also`/`srvb`'de
+  `activationExecuted≠true` ya da `type=E` de istisnadır) → alan yokluğu "0 inaktif" DEĞİLDİR;
   `also`/`srvb` yolunda `activationExecuted=true` iken > 0 → `ok:false` + `activation_not_executed` (önceden bu yollarda sonda yoktu);
   ölçülemezse `null` + `inactive_warning` ·
   bağımlı zincirlerde (CDS + BDEF + behavior class, include + program) `also` kullan · standart bağlam programını aktive

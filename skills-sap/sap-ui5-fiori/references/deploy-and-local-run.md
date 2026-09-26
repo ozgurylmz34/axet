@@ -277,10 +277,18 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
 
 ### 7.3 Salt-okur yerel test (`ui_local_proxy.py`)
 - İndirilen uygulamada fiori tools proxy yapılandırması yoktur. `ui_local_proxy.py` `dist/`'i sunar ve `/sap/*`
-  isteklerini hedef sisteme **yalnız okuma** olarak iletir: GET/HEAD ve changeset içermeyen `$batch` POST'u geçer;
-  changeset'li `$batch`, diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**, SAP'ye gitmez,
-  konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye istek 0).
-- Hedef `ui5-deploy.yaml`'dan, kimlik env'den. Yalnız 127.0.0.1'e bağlanır. Adres: `http://localhost:<port>/index.html`.
+  isteklerini hedef sisteme **yalnız okuma** olarak iletir. `$batch` kuralı **beyaz listedir** (emin olunamayan → 403):
+  - GET/HEAD geçer.
+  - POST yalnız yol `/sap/opu/odata/…/$batch` ya da `/sap/opu/odata4/…/$batch` ise değerlendirilir (başka ICF yolu,
+    ör. `/sap/bc/soap/…/$batch`, `%` kodlu ya da `..` segmentli yol → 403); istek tipi `multipart/mixed` olmalı
+    (JSON batch → 403); gövdedeki **her** HTTP istek satırı GET olmalı ve en az bir GET bulunmalı (satır başı boşluk
+    ve büyük/küçük harf fark etmez; sürümsüz `DELETE X` satırı da yakalanır); gövdede changeset, iç `multipart`,
+    `X-HTTP-Method` ya da `binary` dışı aktarım kodlaması → 403.
+  - Diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**.
+  - Reddedilen istek SAP'ye gitmez, konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye
+    istek 0; o ölçüm changeset kuralı dönemindeydi — beyaz liste çevrimdışı testle ölçüldü, canlıda yeniden ölçülmedi).
+- Hedef `ui5-deploy.yaml`'dan, kimlik env'den. Yalnız 127.0.0.1'e bağlanır; `/sap/*` isteğinde Host başlığı
+  `localhost:<port>` / `127.0.0.1:<port>` değilse 403 (DNS rebinding). Adres: `http://localhost:<port>/index.html`.
 - Kaydet/sil düğmeleri bu modda 403 alır — beklenen davranış; kullanıcıya söylenir.
 
 ### 7.4 Deploy — drift ve tam liste (kendiliğinden)

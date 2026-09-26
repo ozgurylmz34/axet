@@ -786,7 +786,8 @@ def adt_get(name: str, object_type: str = "class", include_source: bool = True,
     Z142ⓐ `output_path`: kaynak YEREL dosyaya yazılır (UTF-8, satır sonu çevrilmez) ve yanıttan `source` düşer
     (`output_path`, `written`, `line_count` gelir). Yol kuralı `adt_pretty_print` ile TEK kaynaktan
     (`sapadt.project.yerel_kaynak_yolu`): proje kökü içi · kaynak uzantısı (`KAYNAK_UZANTILARI`) · `.axet-code/`
-    dışı; var olan dosya `overwrite=true` olmadan EZİLMEZ (`output_exists`). Yol geçersizse SAP'ye gidilmez.
+    dışı · `.axetcode-denylist` yolları dışı; var olan dosya `overwrite=true` olmadan EZİLMEZ (`output_exists`).
+    Yol geçersizse SAP'ye gidilmez.
     `include_source=false` ya da metin taşımayan tip (msag, enqu) → `invalid_argument`. Pull kaydı aynen yazılır:
     dosyadan düzenleyip `adt_push_source(source_path=…)` ile geri yazma yolunun ilk adımıdır.
     """
@@ -1824,7 +1825,8 @@ def adt_push_source(
         source: Source body text (full content; partial diffs not supported). `source_path` ile BİRLİKTE verilmez.
         source_path (Z142ⓒ): kaynağın okunacağı YEREL dosya — `adt_get(output_path=…)` ile indirilip düzenlenen paket
             klasörü dosyası. Yol kuralı `adt_get`/`adt_pretty_print` ile aynı (proje kökü içi · kaynak uzantısı ·
-            `.axet-code/` dışı); UTF-8 (BOM atılır), boş dosya reddedilir. Kapı (gate.py) aynı dosyayı aynı kuralla
+            `.axet-code/` dışı · `.axetcode-denylist` yolları dışı); UTF-8 (BOM atılır), boş dosya reddedilir.
+            Kapı (gate.py) aynı dosyayı aynı kuralla
             okuyup tarar. Yanıtta `source_path` (proje-göreli) döner.
         transport: Modifiable transport (optional if object already has assignment).
         skip_reviewer: Bypass reviewer pre-flight (NOT recommended).
@@ -2532,8 +2534,16 @@ def adt_activate(name: str, object_type: str = "class", also: list | None = None
         `activation_probe`); `ok` false KALIR. Liste temizse `probe_note`: obje aktivasyondan
         ONCE listede degilse "temiz" ayirt edici DEGILDIR. SAP'ye ulasilamadiysa (`unreachable`)
         sonda kosmaz.
-    ⚠ `also=` (atomik cok-obje) ve `srvb` yollari zaten `activate_and_verify` ile
-    `activationExecuted` + `type=E` parse eder; readback onlarda TEKRARLANMAZ.
+    ⚠ `also=` (atomik cok-obje) ve `srvb` yollari `activate_and_verify` ile
+    `activationExecuted` + `type=E` parse eder (degilse istisna → `_err_from_exc`) VE basari
+    iddiasindan sonra worklist sondasini da kosar (Z147, `_inaktif_hukmu`): tum refs listede
+    kalirsa `ok=false` + `activation_not_executed` + `still_inactive`; `activation_verified`
+    alani bu yollarda YOKTUR (hukum `inactive_count` + `ok`'tadir).
+
+    `inactive_count` (Z147) OPSIYONELDIR — su donuslerde alan YOK: guardrail ihlali ·
+    `also` icinde `unsupported_type` · `enqu` `activation_failed` erken donusu · klasik yolda
+    `unreachable` erken donusu · her yolun `except` → `_err_from_exc` dali. Sonda olcemediyse
+    alan VAR ama `null` (+ `inactive_warning`).
     """
     try:
         require_writable_tier(get_active_tier(), what=f"{object_type} activate")

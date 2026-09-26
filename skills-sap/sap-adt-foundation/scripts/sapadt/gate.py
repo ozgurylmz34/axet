@@ -358,7 +358,8 @@ def check_names(tool: str, obje_adi, object_type=None, ek_obje_adlari=(),
 # mevcut kodu işler, kaynak metni almaz (bilinen sınır: IMPLEMENTATION.md §12.5).
 SOURCE_ARG_TOOLS = {"adt_push_source": "source"}
 #: Z142ⓒ (2026-09-26): aynı kaynağın YEREL DOSYADAN verildiği argüman. Kapı dosyayı aracın okuyacağı AYNI kuralla
-#: (`sapadt.project.yerel_kaynak_oku`: proje kökü içi · kaynak uzantısı · `.axet-code/` dışı · UTF-8) okuyup tarar ⇒
+#: (`sapadt.project.yerel_kaynak_oku`: proje kökü içi · kaynak uzantısı · `.axet-code/` dışı · denylist dışı ·
+#: UTF-8) okuyup tarar ⇒
 #: kapının kaynağı GENİŞLER, gevşemez. Okunamazsa / kural dışıysa / metin argümanıyla birlikte verilirse
 #: FAIL-CLOSED (`*_scan_unavailable`). Araç okuduğu metni kendi ikinci katman taramasından da geçirir.
 SOURCE_PATH_ARG_TOOLS = {"adt_push_source": "source_path"}

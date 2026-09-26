@@ -304,6 +304,32 @@ class YayinHazirlaTest(GeciciTest):
         self.assertIn("--depo-tara tek başına kullanılır", c)
         self.assertFalse((self.tmp / "cikti").exists())
 
+    # --- L5 bug gate (2026-09-26): git'in listelediği ama `is_file()` False dönen yol SESSİZCE düşmez ------------
+    # Gerçek MAX_PATH makinenin LongPathsEnabled ayarına bağlı (KopyaHatasiTest notu) ⇒ aynı sınıf deterministik
+    # üretilir: izlenen dosya çalışma ağacından silinir → `ls-files --cached` listeler, `is_file()` False döner.
+    def test_acilamayan_yol_kapsamda_olculemedi_sayilir(self):
+        d = self.depo(**{"notlar__silinen.md": "nötr\n", "notlar__kalan.md": "nötr\n"})
+        self.liste(d)
+        self.git(d, "add", "notlar/silinen.md")
+        (d / "notlar" / "silinen.md").unlink()
+        rc, c = self.depo_tara(d)
+        self.assertEqual(rc, 0, c)                       # çıkış kodu değişmez; görünürlük KAPSAM satırındadır
+        self.assertIn("KAPSAM — ÖLÇÜLEMEDİ 1 yol", c)
+        self.assertIn("ilk 5: notlar/silinen.md", c)
+        rc2, c2 = self.tara(d)                           # yayın kipi (--calisma-agaci) aynı sınıfı aynı biçimde söyler
+        self.assertIn("KAPSAM — ÖLÇÜLEMEDİ 1 yol", c2)
+        self.assertIn("ilk 5: notlar/silinen.md", c2)
+
+    def test_KONTROL_acilamayan_yol_yoksa_olculemedi_sifir(self):
+        d = self.depo(**{"notlar__kalan.md": "nötr\n"})
+        self.liste(d)
+        self.git(d, "add", "notlar/kalan.md")
+        rc, c = self.depo_tara(d)
+        self.assertIn("KAPSAM — ÖLÇÜLEMEDİ 0 yol", c)   # sıfırken de basılır
+        self.assertNotIn("ilk 5:", c)
+        rc2, c2 = self.tara(d)
+        self.assertIn("KAPSAM — ÖLÇÜLEMEDİ 0 yol", c2)
+
     def test_depo_tara_kapsam_beyani(self):
         d = self.depo()
         self.liste(d)

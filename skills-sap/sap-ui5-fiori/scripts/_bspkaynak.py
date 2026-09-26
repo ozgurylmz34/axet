@@ -45,6 +45,39 @@ class IndirmeHatasi(Exception):
     pass
 
 
+class GuvensizYolHatasi(IndirmeHatasi):
+    """Sunucudan gelen dosya adı (zip adı / ADT id) hedef klasörün DIŞINI gösteriyor (zip-slip) — hiçbir dosya yazılmaz.
+    `IndirmeHatasi` alt sınıfıdır: indirmeyi saran mevcut `except` dalları bunu "ölçüm yok" olarak yakalar."""
+
+
+_R_SURUCU = re.compile(r"^[A-Za-z]:")
+
+
+def yol_guvenli_mi(rel: str) -> bool:
+    """Metin kuralı (diske bakmaz): göreli, `..` segmentsiz, sürücü harfsiz, `:` içermeyen (NTFS akışı) ad mı?"""
+    if not rel or rel.startswith(("/", "\\")) or _R_SURUCU.match(rel) or ":" in rel:
+        return False
+    return ".." not in rel.replace("\\", "/").split("/")
+
+
+def guvenli_hedef(kok: Path, rel: str) -> Path:
+    """`kok / rel` → hedef yol; metin kuralı + `resolve()` ile kökün İÇİNDE olduğu doğrulanır, değilse
+    GuvensizYolHatasi."""
+    if not yol_guvenli_mi(rel):
+        raise GuvensizYolHatasi(f"güvensiz dosya adı (kök dışı / mutlak / sürücülü): {rel!r}")
+    kok_r = Path(kok).resolve()
+    hedef = (kok_r / rel).resolve()
+    if hedef == kok_r or kok_r not in hedef.parents:
+        raise GuvensizYolHatasi(f"dosya adı kök dışına çözülüyor: {rel!r}")
+    return hedef
+
+
+def _adlari_dogrula(dosyalar: dict) -> None:
+    kotu = sorted(r for r in dosyalar if not yol_guvenli_mi(r))
+    if kotu:
+        raise GuvensizYolHatasi(f"sunucu {len(kotu)} güvensiz dosya adı döndürdü (zip-slip): {kotu[:3]}")
+
+
 def _url(taban: str, yol: str, client: str, ek: dict | None = None) -> str:
     q = dict(ek or {})
     if client:
@@ -102,10 +135,11 @@ def adt_indir(taban: str, client: str, bsp: str, kimlik, sertifika_yok_say: bool
 
 def canli_indir(taban: str, client: str, bsp: str, kimlik, sertifika_yok_say: bool = False,
                 get=None) -> tuple[dict, dict, str]:
-    """OData birincil, ADT yedek → (dosyalar, bilgi, kullanılan yol). İkisi de düşerse IndirmeHatasi."""
+    """OData birincil, ADT yedek → (dosyalar, bilgi, kullanılan yol). İkisi de düşerse IndirmeHatasi.
+    Dosya adlarından biri güvensizse (zip-slip) GuvensizYolHatasi — yedek yola SESSİZCE geçilmez."""
     try:
         d, bilgi = odata_indir(taban, client, bsp, kimlik, sertifika_yok_say, get)
-        return d, bilgi, "odata"
+        yol = "odata"
     except Exception as exc1:  # noqa: BLE001 — yedek yola geç, sebebi taşı
         try:
             d = adt_indir(taban, client, bsp, kimlik, sertifika_yok_say, get)
@@ -114,7 +148,9 @@ def canli_indir(taban: str, client: str, bsp: str, kimlik, sertifika_yok_say: bo
                                 f"({type(exc2).__name__}: {getattr(exc2, 'code', '') or exc2}) yolları okunamadı") from exc2
         if not d:
             raise IndirmeHatasi(f"OData okunamadı ({type(exc1).__name__}); ADT filestore boş liste döndü") from exc1
-        return d, {"Name": bsp, "Package": "", "Description": "", "Info": ""}, "adt"
+        bilgi, yol = {"Name": bsp, "Package": "", "Description": "", "Info": ""}, "adt"
+    _adlari_dogrula(d)
+    return d, bilgi, yol
 
 
 def lf(b: bytes) -> bytes:
@@ -198,8 +234,9 @@ def klasor_oku(kok: Path) -> dict:
 
 
 def klasore_yaz(kok: Path, dosyalar: dict) -> None:
-    for rel, icerik in dosyalar.items():
-        hedef = kok / rel
+    """`rel` sunucudan gelir: ÖNCE tüm hedefler doğrulanır (hepsi-ya-hiç), biri kök dışıysa hiçbir dosya yazılmaz."""
+    hedefler = [(guvenli_hedef(kok, rel), icerik) for rel, icerik in dosyalar.items()]
+    for hedef, icerik in hedefler:
         hedef.parent.mkdir(parents=True, exist_ok=True)
         hedef.write_bytes(icerik)
 
@@ -208,6 +245,7 @@ def anlik_yaz(app: Path, dosyalar: dict, bilgi: dict) -> Path:
     """Canlı anlık görüntüyü `<app>/.canli/dist/` + `bilgi.json`'a yazar (eskisinin yerine)."""
     kok = app / ANLIK_KLASOR
     dist = kok / "dist"
+    _adlari_dogrula(dosyalar)  # eski anlık görüntü silinmeden ÖNCE (güvensiz ad → eskisi yerinde kalır)
     if dist.exists():
         for p in sorted(dist.rglob("*"), reverse=True):
             p.unlink() if p.is_file() else p.rmdir()
