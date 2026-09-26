@@ -269,7 +269,8 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
 ### 7.2 Eşlik kapısı (`eslik`) — atlanamaz
 - Kaynak **değiştirilmeden** `npm run build` → `dist/` ile `.canli/dist` **tam dosya listesi** kıyaslanır (preload modül
   modül). Eşit değilse kaynak güvenilir değildir (TS, özel build, farklı ui5-tooling, eksik dosya) → **düzenleme
-  yapılmaz**, farklar kullanıcıya gösterilir.
+  yapılmaz**, farklar kullanıcıya gösterilir. Çıkış: 0 eşlik · 1 fark (dosya ya da kaynak haritası sapması) · 2 ölçüm
+  yok (anlık görüntü yok, build başarısız, `dist/` yok) — 1 ve 2'de düzenleme kapısı kapalıdır.
 - ⚠ **Şablon dışlaması tuzağı:** §2 şablonundaki `builder.resources.excludes: /localService/**`, canlıda `localService/**`
   taşıyan bir uygulamada dist'i canlı listeden **eksik** bırakır (ölçülen BSP'de 4 dosya). İndirilen uygulamanın
   `ui5-deploy.yaml`'ına bu yüzden dışlama konmaz; eşlik kapısı bu farkı `yalnız-2` olarak gösterir. Deploy'un canlıdaki
@@ -296,14 +297,17 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
     başlıklar katlanmamış, ASCII; `X-HTTP-Method*` ve iç `multipart` (changeset) yok; boş satırdan sonraki ilk satır
     tam olarak `GET <hedef> HTTP/1.1` (küçük harf, baştaki boşluk, `HTTP/1.0` → 403). Hedefte boşluk ve UTF-8
     olabilir, kontrol baytı olamaz: uygulama yolu elle birleştirince UI5 hedefi kodlamaz (`GET Items('Ö ş') HTTP/1.1`
-    — UI5 1.120.23 gerçek tarayıcıda ölçüldü, V2 ve V4). İç istek başlıkları aynı kurallarla; GET'in gövdesi yok.
+    — UI5 1.120.23 gerçek tarayıcıda ölçüldü, V2 ve V4). Hedef katı UTF-8 çözülmeli ve Unicode kontrol / satır
+    karakteri içermemeli: NEL (U+0085), C1 (U+0080-009F), U+2028/2029, geçersiz ya da yarım UTF-8 → 403. İç istek başlıkları aynı kurallarla; GET'in gövdesi yok.
   - **Yeniden kurma:** SAP'ye giden gövde = proxy'nin ürettiği yeni sınır (`batch_axet_<rastgele hex>`), prolog/epilog
     yok, kabul edilen her GET parçası **aynı sırayla** (`Content-Type: application/http` + `Content-Transfer-Encoding:
     binary` [+ parça `Content-ID`] + `GET <hedef> HTTP/1.1` + yalnız beyaz liste iç başlıkları: Accept,
     Accept-Language, DataServiceVersion, MaxDataServiceVersion, OData-Version, OData-MaxVersion, sap-cancel-on-close,
     sap-contextid-accept, X-Requested-With, Content-ID). Üst `Content-Type` = `multipart/mixed; boundary=<yeni>`.
     Listede olmayan iç başlık (X-Method-Override, GET'te Content-Length / Content-Type, If-Match, Prefer …) SAP'ye
-    **yapısal olarak ulaşmaz**. Kurulan gövde kendi denetiminden geçmezse → 403.
+    **yapısal olarak ulaşmaz**. Bu, uygulamanın kendi özel başlıklarını da kapsar (V2 `setHeaders` /
+    `read({headers})`): `$batch` içinde artık SAP'ye iletilmez, üst düzey istekte zaten iletilmiyordu — arka ucu özel
+    başlığa göre dallanan bir uygulamada yerel önizleme canlıdan farklı veri gösterebilir. Kurulan gövde kendi denetiminden geçmezse → 403.
   - Yanıt: SAP'nin yanıtı istemciye olduğu gibi döner; UI5 onu **yanıtın** Content-Type sınırıyla ayrıştırır ve
     parçaları sırayla eşler. Ölçüldü (UI5 1.120.23 gerçek tarayıcı → proxy → sahte SAP, V2 + V4): 4/4 okuma başarılı;
     negatif kontrolde tekil parçalar 404 dönünce yalnız o okumalar hata aldı (eşleme parça parça çalışıyor).
@@ -324,6 +328,10 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
 - Deploy sonrası preload kıyasına ek olarak canlının **tüm dosya listesi** dist ile kıyaslanır (ui5-deploy.yaml
   `exclude` regex'leriyle dışlananlar hariç): fark → exit 1 (`verify_stale_files`); eşitse `.canli/` yeni canlıyla
   güncellenir. Repo servisi okunamazsa UYARI basılır, hüküm preload'a kalır.
+- `.canli/` hepsi-ya-hiç yazılır (`dist.yeni` + `bilgi.json.yeni`, tamamsa takas). Deploy sonrası güncelleme düşerse
+  eski görüntünün BAYT BAYT yerinde olduğu ölçülür: yerindeyse exit 0 + UYARI (`ok_snapshot_not_updated`; sonraki
+  drift eskiye göre ölçer, DEGISTI der ve sonraki deploy durur); korunamadıysa exit 2 (`ok_snapshot_broken`) — deploy
+  doğrulanmıştır, **tekrar edilmez**; `.canli/` silinip `indir` ile yeniden alınır.
 - `verify --tam`: aynı tam liste kıyasını salt okuma olarak yapar.
 - Drift'i elle ölçmek: `python $F drift <app>`.
 

@@ -24,7 +24,8 @@ Alt komutlar:
       tipi, etiketi). `sap-adt-foundation` CLI'de `$metadata` aracı yoktu (foundation-query.md §5).
 
 Kimlik: env FIORI_TOOLS_USER / FIORI_TOOLS_PASSWORD (script basmaz, dosyadan okumaz).
-Çıkış: 0 tamam/eşit · 1 fark/ihlal · 2 ölçüm yok (kimlik yok, canlı okunamadı, anlık görüntü yok)
+Çıkış: 0 tamam/eşit · 1 fark/ihlal · 2 ölçüm yok (kimlik yok, canlı okunamadı, anlık görüntü yok, `eslik`te
+build başarısız / dist yok)
 """
 from __future__ import annotations
 
@@ -135,6 +136,8 @@ def komut_indir(a) -> int:
     # alınır — yarım kalan iskelet "webapp zaten var" / "önce indir" çıkmazı üretmesin. Önceden var olan dokunulmaz.
     canli = app / K.ANLIK_KLASOR
     canli_vardi = canli.exists()
+    # `.canli/` önceden varsa bu koşum onu YARATMADI ⇒ geri alma onu silmez; korunduğu BAYT BAYT ölçülür (beyan değil).
+    onceki_canli = K.anlik_ham(canli) if canli_vardi else None
     yaratilan = [app / "webapp"]  # webapp başta yoktu (yukarıda denetlendi)
     olusan = ["webapp/"]
     try:
@@ -157,13 +160,22 @@ def komut_indir(a) -> int:
         neden = ("güvensiz dosya adı" if isinstance(exc, K.GuvensizYolHatasi)
                  else f"yazılamadı ({type(exc).__name__})")
         kalan = K.yollari_kaldir(yaratilan)  # geri alma ÖLÇÜLÜR — başarı beyan edilmez
+        korundu = None
+        if canli_vardi:
+            kalan += [str(p) for p in (canli / "dist.yeni", canli / (K.ANLIK_BILGI + ".yeni")) if p.exists()]
+            korundu = onceki_canli is not None and K.anlik_ham(canli) == onceki_canli
         adlar = ", ".join(p.name + ("/" if p.name in ("webapp", K.ANLIK_KLASOR) else "") for p in yaratilan)
-        if kalan:
-            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları GERİ ALINAMADI — kalan {len(kalan)} yol: "
-                  f"{kalan[:10]}{' …' if len(kalan) > 10 else ''} — elle silin, sonra yeniden koşun. (exit 2)")
+        if kalan or korundu is False:
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları GERİ ALINAMADI"
+                  + (f" — kalan {len(kalan)} yol: {kalan[:10]}{' …' if len(kalan) > 10 else ''}" if kalan else "")
+                  + (f" — önceki {K.ANLIK_KLASOR}/ anlık görüntüsü KORUNAMADI (bayt bayt farklı ya da okunamıyor; "
+                     f"`drift`/`eslik` ona güvenemez: {K.ANLIK_KLASOR}/'yi silip yeniden `indir`)"
+                     if korundu is False else "")
+                  + " — elle düzeltin, sonra yeniden koşun. (exit 2)")
         else:
-            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları geri alındı ({adlar}); sebebi (izin / disk / "
-                  "yol uzunluğu) giderip yeniden koşun. (exit 2)")
+            print(f"[FAIL] {bsp} {neden}: {exc}. Bu koşumun yazdıkları geri alındı ({adlar})"
+                  + (f"; önceki {K.ANLIK_KLASOR}/ anlık görüntüsü bayt bayt aynı (ölçüldü)" if canli_vardi else "")
+                  + "; sebebi (izin / disk / yol uzunluğu) giderip yeniden koşun. (exit 2)")
         return 2
     print(f"[OK] {bsp} indirildi ({yol}): canlı {len(dist)} dosya → kaynak {len(webapp)} dosya, "
           f"atılan build ürünü {len(atilan)}. Paket={bilgi.get('Package') or '?'}")
@@ -207,9 +219,11 @@ def komut_eslik(a) -> int:
         print(f"  build: {BUILD_KOMUTU} …")
         rc, out = D.run(BUILD_KOMUTU, app, os.environ.copy())
         if rc != 0:
-            print(f"[FAIL] build başarısız rc={rc}: {out.strip()[-400:]} (exit 1)")
+            # exit 2 (ölçüm yok): build düşünce dist ↔ canlı kıyası HİÇ yapılmadı — "fark bulundu" (1) değil. İkisi de
+            # sıfırdan farklı ⇒ düzenleme kapısı kapalı kalır; ayrım, sebebin kaynak farkı değil build olduğunu söyler.
+            print(f"[FAIL] build başarısız rc={rc}: {out.strip()[-400:]} — eşlik ÖLÇÜLMEDİ (exit 2)")
             print(_eslik_kapsami(harita + " · build ÖLÇÜLEMEDİ"))
-            return 1
+            return 2
     dist_kok = app / "dist"
     if not dist_kok.is_dir():
         print("[FAIL] dist/ yok — build et (exit 2)")

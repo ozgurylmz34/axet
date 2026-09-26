@@ -37,6 +37,7 @@ import secrets
 import socketserver
 import ssl
 import sys
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -71,11 +72,26 @@ _R_SINIR = re.compile(r"[0-9A-Za-z'()+_,\-./:=?]{1,70}")
 # Sınır parametresi: tam `boundary=` (küçük harf, `=` çevresinde boşluk yok) + çift tırnaklı ya da çıplak değer.
 _R_SINIR_PARAM = re.compile(r'boundary=(?:"([^"]*)"|([^"\s]*))')
 # Parçanın gövdesinin İLK satırı tam olarak bu olmalı: `GET ` + hedef + ` HTTP/1.1`. Hedef boşlukla başlamaz; içinde
-# boşluk ve UTF-8 baytı OLABİLİR, kontrol baytı (CR/LF dahil) ve DEL olamaz. Gerekçe (ölçüldü 2026-09-26, UI5 1.120.23
+# boşluk ve UTF-8 karakteri OLABİLİR, kontrol baytı (CR/LF dahil), DEL ve Unicode satır/kontrol karakteri olamaz. Gerekçe (ölçüldü 2026-09-26, UI5 1.120.23
 # gerçek tarayıcı): uygulama yolu elle birleştirdiğinde (`"/Items('" + id + "')"`) UI5 V2 ve V4 hedefi KODLAMAZ —
 # `GET Items('Ö ş') HTTP/1.1` gider; eski ASCII-boşluksuz kural bu meşru okumayı reddediyordu. Yöntem satır başında
 # sabit `GET ` olduğundan hedefteki metin yöntemi değiştiremez.
 _R_GET_SATIRI = re.compile(rb"GET (?! )[^\x00-\x1f\x7f]+ HTTP/1\.1")
+# Bayt kuralı ASCII kontrolünü yakalar; Unicode satır/kontrol karakterlerini yakalamaz. Hedef ayrıca KATI UTF-8
+# çözülmeli (ham `\x85`/`\xff`, yarım dizi → red) ve Unicode kategorisi Cc (NEL U+0085, C1 U+0080-009F), Zl (U+2028),
+# Zp (U+2029) olan karakter içermemeli: bazı ayrıştırıcılar bunları satır sonu sayar.
+_YASAK_KATEGORI = {"Cc", "Zl", "Zp"}
+
+
+def get_satiri_gecerli(satir: bytes) -> bool:
+    """`GET <hedef> HTTP/1.1` — bayt kuralı + hedef katı UTF-8 + Cc/Zl/Zp karakteri yok."""
+    if not _R_GET_SATIRI.fullmatch(satir):
+        return False
+    try:
+        hedef = satir[len(b"GET "):-len(b" HTTP/1.1")].decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    return not any(unicodedata.category(c) in _YASAK_KATEGORI for c in hedef)
 # Başlık satırı (MIME parça başlığı ya da iç istek başlığı): token ad + `:` + yazdırılabilir ASCII değer.
 _R_BASLIK = re.compile(rb"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)[ \t]*:([\x20-\x7e\t]*)")
 # `\t \r \n` dışındaki kontrol baytları ve DEL: satır/parça tanımayı bozabilir (`DELETE\x0b…`, `\x0cDELETE…`).
@@ -142,7 +158,7 @@ def _parca_coz(satirlar: list[bytes]) -> tuple[tuple | None, str | None]:
     if len(kimlikler) > 1:
         return None, "parça: Content-ID birden çok"
     istek = satirlar[bos + 1:]
-    if not istek or not _R_GET_SATIRI.fullmatch(istek[0]):
+    if not istek or not get_satiri_gecerli(istek[0]):
         return None, "parça: ilk satır tam olarak `GET <hedef> HTTP/1.1` değil"
     ic, ic_bos, hata = _basliklar(istek[1:])
     if hata:

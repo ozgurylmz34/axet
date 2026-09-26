@@ -114,6 +114,33 @@ class TestKaynakKur(unittest.TestCase):
                  str(yanlis or "6/6"), ok)
         self.assertTrue(ok, yanlis)
 
+    def test_adi_dbg_ile_biten_gercek_kaynak(self):
+        """Tur 4 / 2: kaynakta adı `-dbg` ile biten dosya (`lib/util-dbg.js`, `view/Kart-dbg.view.js`) builder'da
+        `util-dbg.js` + `util-dbg-dbg.js` + `util-dbg.js.map` olur → sonda 0 sapma, geri kurma asıl adı -dbg-dbg
+        içeriğiyle yazar, küçük hâl atılır, 0 uyarı. Kontrol: aynı dosyanın TS izi (`util-dbg-dbg.js.map`) → sapma."""
+        dist = {"manifest.json": b"{}",
+                "lib/util-dbg.js": b"k", "lib/util-dbg-dbg.js": b"// util\n",
+                "lib/util-dbg.js.map": b'{"sources":["util-dbg-dbg.js"]}',
+                "view/Kart-dbg.view.js": b"k2", "view/Kart-dbg-dbg.view.js": b"// kart\n",
+                "view/Kart-dbg.view.js.map": b'{"sources":["Kart-dbg-dbg.view.js"]}'}
+        sapma, bakilan = K.harita_sondasi(dist)
+        webapp, atilan, uyari = K.kaynak_kur(dist)
+        ts = {**dist, "lib/util-dbg-dbg.js.map": b'{"sources":["util-dbg.ts"]}'}
+        ts_sapma, _ = K.harita_sondasi(ts)
+        sonuc = {
+            "sonda 0 sapma / 2 harita": (sapma, bakilan) == ([], 2),
+            "webapp asıl adlar": webapp == {"manifest.json": b"{}", "lib/util-dbg.js": b"// util\n",
+                                            "view/Kart-dbg.view.js": b"// kart\n"},
+            "küçükler atıldı": {"lib/util-dbg.js", "view/Kart-dbg.view.js"} <= set(atilan),
+            "0 uyarı": uyari == [],
+            "kontrol: TS izi sapma": len(ts_sapma) == 1 and "KENDİ haritası" in ts_sapma[0],
+        }
+        yanlis = [ad for ad, v in sonuc.items() if not v]
+        ok = not yanlis
+        H.kaydet("adı -dbg ile biten gerçek kaynak: varyant SAYILMAZ (ileri kural) · TS izi yine sapma", "5/5",
+                 str(yanlis or "5/5"), ok)
+        self.assertTrue(ok, (sapma, webapp, atilan, uyari, ts_sapma))
+
     def test_harita_sondasi_birim(self):
         """F birim: doğru → 0 sapma · `sources` dizge / null / fazla öğe / yol önekli → sapma · preload haritasına
         bakılmaz · hiç `-dbg` çifti ve harita yoksa ölçülecek iz yok (0/0 — KAPSAM bunu ayrıca söyler)."""
@@ -264,6 +291,62 @@ class TestZipSlip(unittest.TestCase):
         H.kaydet("canli_indir: zip'te ../ adı → GuvensizYolHatasi, ADT'ye geçmez", "hata · 1 istek",
                  f"{type(c.exception).__name__} · {len(cagri)} istek", ok)
         self.assertTrue(ok, (cagri, str(c.exception)))
+
+    def test_anlik_yaz_hepsi_ya_hic_eski_bayt_bayt_kalir(self):
+        """Tur 4 / 1: yazım ya da takas düşerse eski `.canli/` (dist + bilgi.json) BAYT BAYT yerinde, geçici ad kalmaz.
+        Eskiden eski dist yeni yazımdan ÖNCE siliniyordu → `anlik_oku` = ({}, eski bilgi). Kontrol: başarılı yazım
+        yeni içeriği koyar, `dist.eski`/`dist.yeni` bırakmaz; kesilmiş takas (`dist` yok, `dist.eski` var) kurtarılır."""
+        from unittest import mock
+        sonuc = {}
+        app = self.ust / "app"
+        K.anlik_yaz(app, {"eski.js": b"ESKI", "i/x.png": b"\x89\r\n"}, {"bsp": BSP})
+        kok = app / K.ANLIK_KLASOR
+        taban = K.anlik_ham(kok)
+        # ① dist.yeni yazımı ortada düşer (`m` dosyasının altına yazma)
+        with self.assertRaises(OSError):
+            K.anlik_yaz(app, {"a.js": b"1", "m": b"dosya", "m/x.js": b"2"}, {"bsp": BSP})
+        adlar = lambda: sorted(q.name for q in kok.iterdir())  # noqa: E731
+        sonuc["yazım düşer"] = K.anlik_ham(kok) == taban and adlar() == ["bilgi.json", "dist"]
+        # ② takasın ikinci adımı (bilgi.json değişimi) düşer → yeni dist geri çekilir, eski dist yerine konur
+        with mock.patch.object(K, "_yer_degistir", side_effect=OSError(28, "benzetim")), self.assertRaises(OSError):
+            K.anlik_yaz(app, {"a.js": b"YENI"}, {"bsp": BSP})
+        sonuc["takas düşer"] = K.anlik_ham(kok) == taban and adlar() == ["bilgi.json", "dist"]
+        # ③ takasın birinci adımı (dist.yeni → dist) düşer
+        asil = Path.rename
+
+        def yeni_tasinamaz(self_, hedef):
+            if self_.name == "dist.yeni":
+                raise OSError(13, "benzetim")
+            return asil(self_, hedef)
+        with mock.patch.object(Path, "rename", yeni_tasinamaz), self.assertRaises(OSError):
+            K.anlik_yaz(app, {"a.js": b"YENI"}, {"bsp": BSP})
+        sonuc["dist.yeni taşınamaz"] = K.anlik_ham(kok) == taban and adlar() == ["bilgi.json", "dist"]
+        # Kontrol: başarılı yazım
+        K.anlik_yaz(app, {"a.js": b"YENI"}, {"bsp": BSP, "k": 1})
+        oku = K.anlik_oku(app)
+        sonuc["kontrol: yeni yazılır, geçici ad yok"] = (
+            oku is not None and oku[0] == {"a.js": b"YENI"} and oku[1].get("k") == 1
+            and sorted(p.name for p in kok.iterdir()) == ["bilgi.json", "dist"])
+        # Kesilmiş takas (dist yok + dist.eski var) ARDINDAN yazım düşer → eski görüntü `dist`'e geri konmuş olmalı
+        # (kurtarma olmasa `dist.eski` bayat artık sayılıp SİLİNİRDİ — tek kopya kaybolurdu).
+        taban2 = K.anlik_ham(kok)
+        (kok / "dist").rename(kok / "dist.eski")
+        with self.assertRaises(OSError):
+            K.anlik_yaz(app, {"a.js": b"1", "m": b"dosya", "m/x.js": b"2"}, {"bsp": BSP})
+        sonuc["kesilmiş takas + düşen yazım → eski geri"] = (K.anlik_ham(kok) == taban2
+                                                             and adlar() == ["bilgi.json", "dist"])
+        # Kesilmiş takas + bayat dist.yeni → kurtarılır, artık temizlenir, yeni yazılır
+        (kok / "dist").rename(kok / "dist.eski")
+        (kok / "dist.yeni").mkdir()
+        (kok / "dist.yeni" / "artik.js").write_bytes(b"x")
+        K.anlik_yaz(app, {"b.js": b"2"}, {"bsp": BSP})
+        sonuc["kesilmiş takas kurtarılır"] = (K.anlik_oku(app)[0] == {"b.js": b"2"}
+                                             and adlar() == ["bilgi.json", "dist"])
+        yanlis = [ad for ad, v in sonuc.items() if not v]
+        ok = not yanlis
+        H.kaydet("anlik_yaz hepsi-ya-hiç: 3 hata noktası → eski bayt bayt · kontrol + kurtarma", "6/6",
+                 str(yanlis or "6/6"), ok)
+        self.assertTrue(ok, sonuc)
 
     def test_anlik_yaz_guvensiz_adda_eskisi_silinmez(self):
         app = self.ust / "app"
@@ -477,6 +560,60 @@ class TestCliIndirEslik(unittest.TestCase):
                  "rc=2 · kalan [] · rc=0", f"rc={rc} · kalan {kalan} · rc={rc2}", ok)
         self.assertTrue(ok, out + out2)
 
+    def test_indir_canli_onceden_varken_duserse_eski_bayt_bayt_kalir(self):
+        """Tur 4 / 1: `.canli/` ÖNCEDEN varken `indir`'in `.canli` yazımı düşer → eski anlık görüntü + kullanıcının
+        package.json'u BAYT BAYT aynı, webapp yok, mesaj "geri alındı … bayt bayt aynı (ölçüldü)" · exit 2.
+        Negatif: eski görüntüyü bozan bir hata (benzetim) → mesaj "KORUNAMADI" + "GERİ ALINAMADI", "geri alındı (" YOK."""
+        import argparse
+        import contextlib
+        import io
+        import os
+        from unittest import mock
+        app = self.kok / "order_app"
+        K.anlik_yaz(app, {"eski.js": b"ESKI"}, {"bsp": BSP})
+        (app / "package.json").write_bytes(b"KULLANICI")
+        once = K.klasor_oku(app)
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip(self.CANLI_HATALI)}) as srv:
+            rc, out = H.kos("fetch_ui_source.py", "indir", BSP, "--out", app, "--url", srv.url, "--client", "100",
+                            kimlik=True)
+        sonra = K.klasor_oku(app)
+        ok1 = (rc == 2 and sonra == once and "bayt bayt aynı (ölçüldü)" in out and "geri alındı (" in out
+               and not (app / "webapp").exists())
+        # Negatif: anlık görüntü yazımı eski dosyayı silip düşer → ölçüm bunu görmeli
+        F = _modul("fetch_ui_source_t4", "fetch_ui_source.py")
+
+        def bozan(app_, dosyalar, bilgi):
+            (Path(app_) / K.ANLIK_KLASOR / "dist" / "eski.js").unlink()
+            raise OSError(28, "benzetim")
+        H.proxy_bypass_surec_ici()
+        cikti = io.StringIO()
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip(CANLI)}) as srv, \
+                mock.patch.dict(os.environ, {"FIORI_TOOLS_USER": H.KULLANICI, "FIORI_TOOLS_PASSWORD": H.PAROLA}), \
+                mock.patch.object(F.K, "anlik_yaz", bozan), contextlib.redirect_stdout(cikti):
+            rc2 = F.komut_indir(argparse.Namespace(bsp=BSP, out=str(app), url=srv.url, client="100",
+                                                   ignore_cert=False))
+        out2 = cikti.getvalue()
+        ok2 = rc2 == 2 and "KORUNAMADI" in out2 and "GERİ ALINAMADI" in out2 and "geri alındı (" not in out2
+        # Kalan: `dist.yeni` silinemez (tutamaç benzetimi) → görüntü yerinde ama geçici yol kaldı → listelenir
+        asil_sil = F.K._agac_sil
+
+        def yeni_silinmez(p):
+            return None if Path(p).name == "dist.yeni" else asil_sil(p)
+        once3 = K.anlik_ham(app / K.ANLIK_KLASOR)
+        cikti = io.StringIO()
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip(self.CANLI_HATALI)}) as srv, \
+                mock.patch.dict(os.environ, {"FIORI_TOOLS_USER": H.KULLANICI, "FIORI_TOOLS_PASSWORD": H.PAROLA}), \
+                mock.patch.object(F.K, "_agac_sil", yeni_silinmez), contextlib.redirect_stdout(cikti):
+            rc3 = F.komut_indir(argparse.Namespace(bsp=BSP, out=str(app), url=srv.url, client="100",
+                                                   ignore_cert=False))
+        out3 = cikti.getvalue()
+        ok3 = (rc3 == 2 and "GERİ ALINAMADI" in out3 and "dist.yeni" in out3 and "KORUNAMADI" not in out3
+               and K.anlik_ham(app / K.ANLIK_KLASOR) == once3)
+        ok = ok1 and ok2 and ok3
+        H.kaydet("fetch indir: .canli önceden VARKEN düşer → eski bayt bayt · bozulursa KORUNAMADI · artık listelenir",
+                 "rc=2 aynı · KORUNAMADI · dist.yeni", f"rc={rc} aynı={sonra == once} · rc={rc2} · rc={rc3}", ok)
+        self.assertTrue(ok, out + out2 + out3)
+
     def test_indir_geri_alma_yarim_kalirsa_kalanlari_soyler(self):
         """Bulgu 3: geri alma yarım kalırsa (açık dosya tutamacı — Windows'ta GERÇEK tutamaç açılır, POSIX'te
         tutamaç silmeyi engellemediği için aynı sonuç benzetilir) mesaj "geri alındı" DEMEZ: kalan yolları listeler
@@ -567,6 +704,27 @@ class TestCliIndirEslik(unittest.TestCase):
         H.kaydet("fetch eslik: kaynak haritası sondası (TS / bozuk / -dbg haritası / haritasız / yorum farkı → YOK)",
                  f"{n}/{n}", str(yanlis or f"{n}/{n}"), ok)
         self.assertTrue(ok, yanlis)
+
+    def test_eslik_build_basarisiz_exit2(self):
+        """Tur 4 / 4: build düşerse kıyas HİÇ yapılmadı → exit 2 (ölçüm yok; docstring ve KAPSAM 'build ÖLÇÜLEMEDİ'
+        ile tutarlı), 1 DEĞİL. Build benzetimi: `deploy_ui.run` → rc 1 (npm koşmaz)."""
+        import argparse
+        import contextlib
+        import io
+        import types
+        from unittest import mock
+        F = _modul("fetch_ui_source_t4b", "fetch_ui_source.py")
+        app = self.kok / "b_app"
+        K.anlik_yaz(app, CANLI, {"bsp": BSP})
+        sahte = types.SimpleNamespace(run=lambda cmd, cwd, env: (1, "npm ERR! benzetim"))
+        cikti = io.StringIO()
+        with mock.patch.dict(sys.modules, {"deploy_ui": sahte}), contextlib.redirect_stdout(cikti):
+            rc = F.komut_eslik(argparse.Namespace(app=str(app), no_build=False))
+        out = cikti.getvalue()
+        ok = rc == 2 and "build başarısız" in out and "(exit 2)" in out and "build ÖLÇÜLEMEDİ" in out
+        H.kaydet("fetch eslik: build başarısız → exit 2 (ölçüm yok) + KAPSAM 'build ÖLÇÜLEMEDİ'", "rc=2",
+                 f"rc={rc}", ok)
+        self.assertTrue(ok, out)
 
     def test_eslik_ve_drift_kapsam_beyani_her_kosumda(self):
         """H: `eslik` ve `drift` her çıkışta (EŞLİK / AYNI anında da) KAPSAM + BAKILMAYANLAR satırı basar."""
@@ -698,6 +856,36 @@ class TestSaltOkurProxy(unittest.TestCase):
         ok = not yanlis
         H.kaydet("proxy $batch gerçek UI5 1.120 gövdesi geçer; hedef gevşemesi yeni kapı açmaz", f"{n}/{n}",
                  f"{n - len(yanlis)}/{n}", ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_hedefte_unicode_satir_kontrol_ve_gecersiz_utf8_red(self):
+        """Tur 4 / 3: hedef KATI UTF-8 çözülmeli, Cc/Zl/Zp karakteri içermemeli. Bayt kuralı ASCII kontrolünü yakalar;
+        NEL (U+0085, `\\xc2\\x85`), C1 (`\\xc2\\x9b`), LS/PS (U+2028/2029), ham `\\x85` / `\\xff`, yarım UTF-8 dizisi eskiden
+        geçiyordu. Kontrol: gerçek UI5 gövdeleri (`Ö ş`, `Ğİ`) ve NBSP'li hedef (Zs — satır karakteri değil) geçer."""
+        v2 = ("/sap/opu/odata/sap/ZTEST_SRV/$batch", "multipart/mixed;boundary=batch_de13-ec17-b0e3")
+        asil = "GET Items('A 1') HTTP/1.1".encode("utf-8")
+        bozuk = {"NEL U+0085": b"GET Items('A\xc2\x85DELETE Items') HTTP/1.1",
+                 "C1 U+009B": b"GET Items('A\xc2\x9bx') HTTP/1.1",
+                 "LS U+2028": b"GET Items('A\xe2\x80\xa8x') HTTP/1.1",
+                 "PS U+2029": b"GET Items('A\xe2\x80\xa9x') HTTP/1.1",
+                 "ham 0x85": b"GET Items('A\x85x') HTTP/1.1",
+                 "ham 0xff": b"GET Items('A\xffx') HTTP/1.1",
+                 "yarım UTF-8 (\\xc3 sonu)": b"GET Items('A\xc3') HTTP/1.1"}
+        yanlis = []
+        for ad, satir in bozuk.items():
+            govde = self.GERCEK_V2.replace(asil, satir)
+            if govde == self.GERCEK_V2 or P.izin_ver("POST", v2[0], govde, v2[1])[0]:
+                yanlis.append(ad)
+        kontrol = {"gerçek V2 (Ğİ)": self.GERCEK_V2,
+                   "NBSP (Zs)": self.GERCEK_V2.replace(asil, "GET Items('A 1') HTTP/1.1".encode("utf-8"))}
+        yanlis += [f"kontrol {ad}" for ad, g in kontrol.items() if not P.izin_ver("POST", v2[0], g, v2[1])[0]]
+        if not P.izin_ver("POST", "/sap/opu/odata4/sap/ztest/srvd/sap/ztest/0001/$batch", self.GERCEK_V4,
+                          "multipart/mixed; boundary=batch_id-1790435372243-11")[0]:
+            yanlis.append("kontrol gerçek V4 (Ö ş)")
+        n = len(bozuk) + len(kontrol) + 1
+        ok = not yanlis
+        H.kaydet("proxy $batch hedef: NEL/C1/LS/PS/geçersiz UTF-8 → 403 · gerçek UI5 + NBSP geçer", f"{n}/{n}",
+                 str(yanlis or f"{n}/{n}"), ok)
         self.assertTrue(ok, yanlis)
 
     def test_batch_yazma_atlatmalari_reddedilir(self):
