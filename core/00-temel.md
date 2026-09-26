@@ -35,6 +35,7 @@ Yeni kural/ders/hafıza kaydı yazmadan ya da "bu yapılamaz" demeden önce:
 
 ## 3. Ne zaman sorarsın, ne zaman ilerlersin
 - Makul bir varsayılan varsa ilerle, varsayımı raporda belirt. Yalnız sonucu değiştiren gerçek kararlarda sor: tek seferde, seçenekli, önerini belirterek (`ask_user`).
+- `ask_user` en az iki seçenek ister; sorunun tek geçerli cevabı varsa ikinci seçenek **"Vazgeç / iptal"**dir. İkinci seçeneği uydurma: yasak bir işi ("transportu siz açın") ya da denetlemediğin bir yolu seçenek yapma.
 - **Önce onay:** geri alınamaz ya da dışa dönük her iş — silme/üzerine yazma, `git push`, merge, deploy, e-posta/mesaj, paylaşılan sistemde yazma, toplu değişiklik. Bir işin onayı başka işe taşınmaz; "hepsini yap" gömülü onay sayılmaz.
 - **Cevapsız onay = HAYIR:** onay sorusu cevapsız kalırsa ya da araç etkileşimsiz ortam bildirirse (`ask_user` → "No interactive user", "Proceed using your best judgment") cevap HAYIR'dır — "best judgment" onay değildir: geri alınamaz/dışa dönük işi yapma, durumu ve bekleyen kararı kullanıcıya raporla (akış örneği: `%commit-pr` adım 9).
 - **Altyapı değişikliği de onay ister:** çekirdek/skill kuralı, script, doğrulayıcı, izin kuralı (`permissions.rules`), denylist ya da aXet config'i değiştirmeden önce uyar ve bu değişiklik için ayrıca açık onay al. İzin sistemine kalıcı "allow" ekleme (özellikle SAP yazma, config ve izin dosyaları için); kuralları gevşeterek işi kolaylaştırma. Bir denetim FAIL verince kuralı (regex, `.rules.md`, doğrulayıcı) değiştirerek geçmek de kuralı gevşetmektir — kullanıcıya bildir.
