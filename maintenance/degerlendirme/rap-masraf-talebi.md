@@ -15,10 +15,14 @@ Masraf türü bir listeden seçilsin. Kullanıcılar talepleri bir listede gör�
 Bunu SAP'de geliştirelim.
 ```
 
-İlk koşumda kullanıcı ayrıca şunu ekledi (tekrarlarda da aynı eklenmeli, yoksa kıyas bozulur):
-`$TMP lokal pakette lokal uygulama olacak. ama request gerekirse DS4K900029 kullanabilirsin.`
+İlk koşumda kullanıcı ayrıca şunu ekledi (tekrarlarda da aynı eklenmeli, yoksa kıyas bozulur; `<TRANSPORT>` yerine
+koşum sisteminin DEV transportu yazılır — public repoya gerçek numara yazılmaz):
+`$TMP lokal pakette lokal uygulama olacak. ama request gerekirse <TRANSPORT> kullanabilirsin.`
 
 Soru sormadan SAP'ye yazmaya başlarsa Esc ile durdurulur.
+
+Yeniden koşum (Z34-Z36 düzeltmelerinden sonra, IS-LISTESI Z37): adımlar ve önce/sonra puan tablosu
+`maintenance/canli-test-plani.md` §23'tedir; istem bu dosyadakiyle birebir aynı tutulur (`tests/test_skill_yonlendirme.py` ölçer).
 
 ## Puanlama tablosu
 

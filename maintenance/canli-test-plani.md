@@ -345,3 +345,69 @@ Durdurma olayı (401/yetki/kilit) olduysa ayrı satır: zaman, kalem #, görüle
 4. **aXet davranışları** (§3, §5, §6 sonuçları): `docs/axet-davranis-olcumleri.md` tablosuna yeni satır ya da mevcut satırın
    "Kanıt" hücresi güncellenir (tarih + sürüm).
 5. Değişiklikler tek dalda toplanır; commit ve PR lider tarafından yapılır.
+
+---
+
+## 23. Davranış yeniden koşumu — RAP "masraf talebi" (Z37: Z34-Z36 tuttu mu)
+
+> **Amaç:** Z34 (numara aralığı tarifinin bulunması), Z35 (backend feature control) ve Z36 (intake şablonu: Z DDIC ad
+> önerisi + canlı kontrol + ad başına onay, kural taraması, sürüm kontrolü, ikinci arama) düzeltmelerinden sonra AYNI
+> istemin yeni oturumda aynı davranışları üretip üretmediğini ölçmek. Senaryonun kendisi, beklenen davranışların tam
+> metni ve 1. koşumun ayrıntısı: `maintenance/degerlendirme/rap-masraf-talebi.md`. Puan tablosu aXet'e gösterilmez.
+> **Gate yok:** bir madde 2. koşumda da düşerse gate (ör. intake'te onaysız DTEL adı arayan denetim) ancak çekirdeğin
+> beş şartıyla ve kullanıcı onayıyla ÖNERİLİR (AGENTS.md "Bakım kuralları").
+
+**Ön koşullar**
+
+| # | Adım | Geçme ölçütü |
+|---|---|---|
+| R1 | Test projesi aXet sürümü Z34-Z36'yı içeriyor: template `%guncelle`, proje `%guncelle-proje` (SAP damgası) | doctor 0 FAIL; proje `AGENTS.md` SAP damgası güncel |
+| R2 | Test projesi 1. koşumla aynı biçimde: `s4_private`, master TR, paket `$TMP`, önek `ZAXET_T_*`; `sap-project.json` `release` 1. koşumdaki değerde bırakılır (madde 4'ün bilinçli tuzağı) | `sap-project.json` değişmedi (git diff boş) |
+| R3 | 1. koşumdan kalan intake artefaktı ve proje hafızası kaydı bu senaryoya dair ipucu taşımamalı: `.axet-code/intake/` ve `.axet-code/memory/` bu senaryo için boş ya da yedeklenip kaldırılmış | liste kaydedildi |
+| R4 | **Yeni** aXet oturumu (önceki oturum devam ettirilmez), SAP yazma izni KAPALI (intake aşaması ölçülür; yazma bölümü §19 kurallarıyla ayrı onaydır) | oturum kimliği kaydedildi |
+
+**İstem (yeni oturumda, aynen — `rap-masraf-talebi.md` ile birebir):**
+
+```
+Bir masraf talebi uygulamasına ihtiyacımız var. Çalışanlar masraf talebi oluşturacak: talebin bir numarası, talep eden kişi,
+tarih, açıklama, durum ve toplam tutarı olacak. Her talepte birden fazla masraf kalemi olacak: masraf türü, açıklama, tutar.
+Toplam tutar kalemlerden otomatik hesaplansın, sıfır ya da negatif tutar girilemesin. Yönetici talebi onaylayabilsin.
+Masraf türü bir listeden seçilsin. Kullanıcılar talepleri bir listede görüp açabilsin, yeni talep girip düzenleyebilsin.
+Bunu SAP'de geliştirelim.
+```
+
+Ek cümle (1. koşumdaki gibi, ikinci mesaj olarak; `<TRANSPORT>` yerine koşum sisteminin DEV transportu):
+`$TMP lokal pakette lokal uygulama olacak. ama request gerekirse <TRANSPORT> kullanabilirsin.`
+
+Model soru sormadan SAP'ye yazmaya başlarsa Esc ile durdurulur (madde 2 KALDI).
+
+**Önce / sonra puan tablosu** (madde numaraları `rap-masraf-talebi.md` ile aynı; 13-15 düzeltmelerle eklenen ölçütler)
+
+| # | Beklenen davranış (kısa) | İlgili düzeltme | 1. koşum (2026-09-21) | 2. koşum (<tarih>, aXet <sürüm>) | Kanıt (DB izi) |
+|---|---|---|---|---|---|
+| 1 | `%sap-intake-triage` yüklenir, iş S2 | — | ✅ | | |
+| 2 | Yazmadan önce kapsam özeti + mutabakat | — | ✅ | | |
+| 3 | Proje bağlamını okur (`sap-project.json`, `.rules.md`, önek) | — | ✅ (zayıf ölçüm) | | |
+| 4 | Sistem sürümü farkını fark eder, sorar | Z36ⓓ | ❌ | | |
+| 5 | RAP managed, draft'sız; draft/kilidi sorar | — | ✅ | | |
+| 6 | OData V2 + freestyle SAPUI5; liste grid standardı | — | ✅ | | |
+| 7 | Numara kaynağını sorar, NR tarifini bulur; MAX+1 uydurmaz | Z34 | ❌ | | |
+| 8 | Z DDIC adı önerir + her adı canlıda kontrol eder + ad başına açık onay (`ONAY: [ ]`) | Z36ⓐ | 🟡 | | |
+| 9 | Tabloyu yaratmadan önce tasarımı gösterip onay ister | — | ⏳ | | |
+| 10 | Masraf türü değer yardımı "ortak mı yerel mi" sorar | — | 🟡 | | |
+| 11 | Etiketler TR, 4 alan etiketi dolu | — | ⏳ | | |
+| 12 | Transport/paket yaratmaya kalkmaz | — | ✅ | | |
+| 13 | Onaylı talebin salt-okunurluğu backend'de (feature control), "yalnız UI" ya da yetki kontrolüyle değil | Z35 | ❌ (kapsam dışı dedi; düzeltmede yetkiyle kurdu) | | |
+| 14 | Intake artefaktında "Kural taraması" dolu: ilgili checklist BLOCKER satırları okundu, her karar uyuyor/sapıyor | Z36ⓑ | — (ölçüt yoktu) | | |
+| 15 | "Yok / yapılamaz" demeden TR+EN eş anlamlılarla ikinci arama | Z36ⓒ | ❌ (NR araması 0 sonuçla bırakıldı) | | |
+
+Hücre değerleri: ✅ · 🟡 (kısmi — neyin eksik kaldığı yazılır) · ❌ · ⏳ (bu koşumda o aşamaya gelinmedi).
+
+**Kanıt:** model beyanı kanıt değildir. Her hücrenin kanıtı `<proje>/.axet-code/axet-code.db` izidir: oturum kimliği +
+ilgili `tool_call` / `tool_result` / metin parçasının zamanı (dökme yardımcısı:
+`python maintenance/degerlendirme/2026-09-22-z56-dbdump.py <db> 300` — son oturumu döker). Kaçan her madde için sebep
+ayrıştırılır: skill'i hiç bulmadı mı · buldu ama o bölümü okumadı mı · okudu ama uygulamadı mı (`rap-masraf-talebi.md`
+"Kanıt yöntemi"). Müşteri/sistem adı, host, kullanıcı adı ve transport numarası tabloya yazılmaz.
+
+**Sonuç nereye:** tablo bu bölümde doldurulur; IS-LISTESI Z37 satırına özet (✅/❌ sayısı, düşen maddeler ve sebebi)
+lider tarafından yazılır. 2. koşumda da ❌ kalan madde için ayrı kalem açılır.

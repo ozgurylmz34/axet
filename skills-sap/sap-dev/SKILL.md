@@ -43,8 +43,20 @@ Yeni geliştirme, revizyon, rapor, alan ya da ekran talebiyse ve kapsam sınıf�
 2. `<source_root>/<MODÜL>/<PAKET>/` altında oku: `.rules.md` (ad önekleri, bağımlılık, bilinen istisnalar,
    transport) → `SESSION_NOTES.md` son kayıt → `SPEC.md` açık kararlar. `ref_docs/` spesifikasyon kaynağıdır,
    canlı teslimat değildir.
-3. Yerel paket klasörü yoksa: `python <TEMPLATE>/scripts/new_package.py <PAKET> --title "<başlık>"`. **SAP'de
-   paketi kullanıcı yaratır**; transport numarasını kullanıcı verir.
+3. Yerel paket klasörü yoksa:
+   - SAP'de paket henüz yok: `python <TEMPLATE>/scripts/new_package.py <PAKET> --title "<başlık>"`. **SAP'de
+     paketi kullanıcı yaratır**; transport numarasını kullanıcı verir.
+   - SAP'de paket **zaten var** (klasör sonradan kuruluyor): aynı komuta `--mevcut` ekle. Owner (`TADIR.AUTHOR`),
+     başlangıç tarihi (`TADIR.CREATED_ON`) ve üst paket (`TDEVC.PARENTCL`) canlıdan salt-okur okunur. Owner'ı kendin
+     yazma (oturum kullanıcısı Owner değildir). Betik "Owner canlıda yok" ya da "Owner çelişkisi" derse kullanıcıya
+     sor, cevabı `--owner` ile ver. Çıkış 3 = canlı okunamadı, klasör yazılmadı. `.rules.md`'deki `DOĞRULANMADI`
+     satırlarını paketteki objelerle doğrula ya da kullanıcıya sor.
+4. **Değiştirmeden önce indir — build'den ÖNCE.** Değiştirilecek her objenin güncel kaynağını
+   `<source_root>/<MODÜL>/<PAKET>/<tip>/` altına indir (`adt_get` `output_path`; tip klasörü `.rules.md` "Klasör
+   düzeni"nde, yerleşim kuralı `%sap-adt-foundation` §2). Değişikliği o yerel dosyada yap, kullanıcıya diff'i göster,
+   onaydan sonra yerel dosyadan push et (`adt_push_source` `source_path`). Kaynağı paket dışına (`.tmp/` gibi)
+   yazma, bellekte düzenleyip gönderme: yerel iz kalmaz, git'te görünmez.
+   Build planını bu sırayla yaz: ① paket klasörü var mı (yoksa 3. madde) ② değiştirilecek objeleri indir ③ build.
 
 ### 4. İş türüne göre önce oku
 Her şeyi değil, ilgili olanı oku.
@@ -94,7 +106,7 @@ kapsam beyanıyla yaz, sistemden tekrar okuyarak doğrula, inaktif obje kalmadı
 ### 6. Kullanıcıdan gelmesi gerekenler
 | Konu | Kural |
 |---|---|
-| Transport | Yaratılmaz, uydurulmaz; kullanıcıdan istenir. İş bir transporta bağlıysa aynısıyla devam edilir. |
+| Transport | Yaratılmaz, uydurulmaz; kullanıcıdan istenir. İş bir transporta bağlıysa aynısıyla devam edilir. `ask_user` ile sorarken ikinci seçenek `İptal`; "siz açın" gibi yasak bir eylem (kesin yasak C) seçenek yapılmaz. |
 | Paket | Yaratılmaz; hangisinin kullanılacağı sorulur. |
 | Yeni program / include | Yaratmadan önce TITLE istenir; include TITLE'ına tip soneki eklenir (`references/naming.md` §6). |
 | Yeni DDIC tablo | Alanlar, her alanın data element'i, anahtar ve uzunluklar gösterilir; açık onay alınır. İstemci alanı `mandt : mandt`. Yönetim alanları (oluşturan/zaman, son değiştiren/zaman, RAP'ta ETag için yerel son değişiklik zamanı) tasarımda listelenir. |

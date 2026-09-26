@@ -81,6 +81,7 @@ Terminal yolu, elle kurulum ve bağlantı teşhisi: [`docs/onboarding.md`](docs/
 ## Yeni paket (SAP projesi)
 ```powershell
 python $HOME\axet\scripts\new_package.py ZSD001_CLC --title "Sevkiyat raporu"   # modül addan çıkar (SD)
+python $HOME\axet\scripts\new_package.py ZSD001_CLC --title "…" --mevcut       # SAP'de VAR olan paket: Owner/tarih canlıdan
 python $HOME\axet\scripts\new_package.py --index --check                        # paket listesi güncel mi
 ```
 `<source_root>/<MODÜL>/<PAKET>/` altına obje tipi klasörlerini, `.rules.md` (ad önekleri, bağımlılık, transport),
