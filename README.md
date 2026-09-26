@@ -178,7 +178,7 @@ aXet.code 1.3.0'da ölçüldü. Bilmen gerekenler:
 - **Hook yok:** kurallar talimat, izin kuralı ve betikle uygulanır; mekanik zorlama sınırlıdır.
 - **Özel ajan tanımı çalışmaz** (`.axet-code/agents`, `agent create`): iş devri yerleşik `agent` aracıyla yapılır.
 - **Merkezi klon yazmaya kapalı değildir.** Sapmayı `doctor.py` git'e karşı raporlar: klonun davranış yüzeyindeki
-  (`core/`, `skills/`, `skills-sap/`, `AGENTS.md`, `config/permissions.json`, `.axetcode-denylist`) senden gelen
+  (`core/`, `skills/`, `skills-sap/`, `scripts/`, `templates/`, `AGENTS.md`, `config/permissions.json`, `.axetcode-denylist`) senden gelen
   değişiklik WARN olur, `%guncelle`'nin kendi commit'leri bilgi satırı olur. Eski yazma koruması (config'e yazılan
   `edit` yasakları) 2026-09-18'de kaldırıldı: `%guncelle` klonun içine yazdığı için kendi akışını engelliyordu, bash
   ve farklı harf karışımıyla da atlatılabiliyordu. Yeniden kurulum eski sürümlerin yazdığı bu yasakları config'ten siler.
