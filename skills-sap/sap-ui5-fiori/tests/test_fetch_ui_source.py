@@ -52,6 +52,11 @@ CANLI = {
 }
 
 
+def _build_lf(d: dict) -> dict:
+    """Build çıktısı taklidi: metin dosyası LF'ye iner, ikili (png) HAM kalır — gerçek build de ikiliyi kopyalar."""
+    return {r: v.replace(b"\r\n", b"\n") if Path(r).suffix.lower() in K.METIN_UZANTI else v for r, v in d.items()}
+
+
 def _atom(girdiler: list[tuple[str, bool]]) -> bytes:
     """ADT filestore Atom listesi: (id, klasör mü). id'ler canlıdaki gibi URL-kodlu."""
     parca = ['<feed xmlns="http://www.w3.org/2005/Atom">']
@@ -79,6 +84,60 @@ class TestKaynakKur(unittest.TestCase):
                  f"{len(webapp)} kaynak, {len(atilan)} atılan, {len(uyari)} uyarı", ok)
         self.assertTrue(ok, (sorted(webapp), atilan, uyari))
 
+    def test_dbg_sonekleri_builder_kuralinin_tersi(self):
+        """E: `@ui5/builder` minifier `-dbg`'i `.view/.fragment/.controller/.designtime/.support` sonekinin ÖNÜNE koyar.
+        Her sonek için: `-dbg`'li dosya asıl adla yazılır, küçültülmüş karşılığı webapp'e GİRMEZ (atılır)."""
+        sonekler = [".view", ".fragment", ".controller", ".designtime", ".support", ""]
+        dist = {"manifest.json": b"{}"}
+        for i, ek in enumerate(sonekler):
+            dist[f"x/A{i}-dbg{ek}.js"] = f"// okunur {i}\n".encode()
+            dist[f"x/A{i}{ek}.js"] = f"k{i}".encode()
+            dist[f"x/A{i}{ek}.js.map"] = json.dumps({"sources": [f"A{i}-dbg{ek}.js"]}).encode()
+        webapp, atilan, uyari = K.kaynak_kur(dist)
+        yanlis = []
+        for i, ek in enumerate(sonekler):
+            asil = f"x/A{i}{ek}.js"
+            if webapp.get(asil) != f"// okunur {i}\n".encode():
+                yanlis.append(f"{ek or '(yalın)'}: asıl ad -dbg içeriğini taşımıyor")
+            if f"x/A{i}-dbg{ek}.js" in webapp:
+                yanlis.append(f"{ek or '(yalın)'}: -dbg adı webapp'e yazıldı")
+            if asil not in atilan:
+                yanlis.append(f"{ek or '(yalın)'}: küçültülmüş hâl atılmadı")
+        if uyari:
+            yanlis.append(f"uyarı: {uyari}")
+        # Kontrol: ileri yön (builder'ın kendisi) aynı adları üretir.
+        ileri = [K.dbg_adi(f"x/A{i}{ek}.js") for i, ek in enumerate(sonekler)]
+        if ileri != [f"A{i}-dbg{ek}.js" for i, ek in enumerate(sonekler)]:
+            yanlis.append(f"ileri yön: {ileri}")
+        ok = not yanlis
+        H.kaydet("kaynak_kur: 5 -dbg soneki (+yalın) builder kuralının tersiyle geri kurulur", "6/6 · 0 uyarı",
+                 str(yanlis or "6/6"), ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_harita_sondasi_birim(self):
+        """F birim: doğru → 0 sapma · `sources` dizge / null / fazla öğe / yol önekli → sapma · preload haritasına
+        bakılmaz · hiç `-dbg` çifti ve harita yoksa ölçülecek iz yok (0/0 — KAPSAM bunu ayrıca söyler)."""
+        dogru = {"a/B.view.js": b"k", "a/B-dbg.view.js": b"s", "a/B.view.js.map": b'{"sources":["B-dbg.view.js"]}',
+                 "Component-preload.js.map": b"bozuk"}
+        vakalar = {
+            "doğru (+bozuk preload haritası yok sayılır)": (dogru, 0, 1),
+            "sources dizge": ({**dogru, "a/B.view.js.map": b'{"sources":"B-dbg.view.js"}'}, 1, 1),
+            "harita null": ({**dogru, "a/B.view.js.map": b"null"}, 1, 1),
+            "fazla kaynak": ({**dogru, "a/B.view.js.map": b'{"sources":["B-dbg.view.js","x.ts"]}'}, 1, 1),
+            "yol önekli kaynak": ({**dogru, "a/B.view.js.map": b'{"sources":["a/B-dbg.view.js"]}'}, 1, 1),
+            "harita ve -dbg çifti yok": ({"a.js": b"x", "manifest.json": b"{}"}, 0, 0),
+            "-dbg sonunda sourceMappingURL": ({**dogru, "a/B-dbg.view.js": b"s\n//# sourceMappingURL=B.view.ts.map\n"}, 1, 1),
+            "-dbg ortada referans metni (kontrol)": ({**dogru, "a/B-dbg.view.js": b'var u="//# sourceMappingURL=x";\nf();\n'}, 0, 1),
+        }
+        yanlis = {}
+        for ad, (d, beklenen_sapma, beklenen_bakilan) in vakalar.items():
+            sapma, bakilan = K.harita_sondasi(d)
+            if (len(sapma), bakilan) != (beklenen_sapma, beklenen_bakilan):
+                yanlis[ad] = (sapma, bakilan)
+        ok = not yanlis
+        H.kaydet("harita_sondasi: 8 vaka (doğru/dizge/null/fazla/önekli/izsiz/-dbg ref/kontrol)", "8/8", str(yanlis or "8/8"), ok)
+        self.assertTrue(ok, yanlis)
+
     def test_ts_ve_dbgsiz_uyari(self):
         dist = {"manifest.json": b"{}", "a.js": b"x", "b.js": b"y", "b-dbg.js": b"yy",
                 "b.js.map": b'{"sources":["b.ts"]}'}
@@ -90,12 +149,21 @@ class TestKaynakKur(unittest.TestCase):
 
 class TestKiyas(unittest.TestCase):
     def test_kovalar(self):
-        a = {"x": b"1\r\n", "y": b"2", "z": b"3"}
-        b = {"x": b"1\n", "y": b"22", "w": b"4"}
+        a = {"x.js": b"1\r\n", "y": b"2", "z": b"3"}
+        b = {"x.js": b"1\n", "y": b"22", "w": b"4"}
         k = K.kume_karsilastir(a, b)
-        ok = (k["esit"] == ["x"] and k["farkli"] == ["y"] and k["yalniz_a"] == ["z"] and k["yalniz_b"] == ["w"]
+        ok = (k["esit"] == ["x.js"] and k["farkli"] == ["y"] and k["yalniz_a"] == ["z"] and k["yalniz_b"] == ["w"]
               and not K.kume_esit_mi(k))
         H.kaydet("kume_karsilastir: eşit (CRLF≡LF)/farklı/yalnız-1/yalnız-2", "1/1/1/1", K.ozet(k), ok)
+        self.assertTrue(ok, k)
+
+    def test_ikili_dosya_ham_bayt(self):
+        """G: satır sonu normalizasyonu YALNIZ metin uzantısında; ikili dosya ham baytla karşılaştırılır."""
+        k = K.kume_karsilastir({"i/x.png": b"a\r\nb", "a.js": b"x\r\n", "i18n/i.properties": b"k=v\r\n"},
+                               {"i/x.png": b"a\nb", "a.js": b"x\n", "i18n/i.properties": b"k=v\n"})
+        ok = k["farkli"] == ["i/x.png"] and k["esit"] == ["a.js", "i18n/i.properties"]
+        H.kaydet("kume_karsilastir: png CRLF≠LF (ham bayt) · .js/.properties CRLF≡LF (kontrol)",
+                 "farkli png · esit 2", K.ozet(k), ok)
         self.assertTrue(ok, k)
 
     def test_preload_satir_sonu_ayri_kova(self):
@@ -454,7 +522,7 @@ class TestCliIndirEslik(unittest.TestCase):
     def test_eslik_esit_farkli_anliksiz(self):
         app = self.kok / "app"
         K.anlik_yaz(app, CANLI, {"bsp": BSP})
-        K.klasore_yaz(app / "dist", {r: v.replace(b"\r\n", b"\n") for r, v in CANLI.items()})
+        K.klasore_yaz(app / "dist", _build_lf(CANLI))
         rc1, out1 = H.kos("fetch_ui_source.py", "eslik", app, "--no-build")
         (app / "dist" / "i18n" / "i18n.properties").write_bytes(b"a=c\n")
         rc2, out2 = H.kos("fetch_ui_source.py", "eslik", app, "--no-build")
@@ -462,6 +530,65 @@ class TestCliIndirEslik(unittest.TestCase):
         ok = rc1 == 0 and "EŞLİK:" in out1 and rc2 == 1 and "i18n/i18n.properties" in out2 and rc3 == 2
         H.kaydet("fetch eslik: eşit=0 · farklı=1 · anlık görüntü yok=2", "0/1/2", f"{rc1}/{rc2}/{rc3}", ok)
         self.assertTrue(ok, out1 + out2 + out3)
+
+    def _eslik(self, ad: str, canli: dict, dist: dict | None = None) -> tuple[int, str]:
+        app = self.kok / ad
+        K.anlik_yaz(app, canli, {"bsp": BSP})
+        K.klasore_yaz(app / "dist", _build_lf(dist or canli))
+        return H.kos("fetch_ui_source.py", "eslik", app, "--no-build")
+
+    def test_eslik_kaynak_haritasi_sondasi(self):
+        """F: eşlik ÜÇÜNCÜ şartı — canlı haritanın `sources`'u beklenen `-dbg` dosyasını göstermeli. Vakaların çoğunda
+        dist == canlı (dosyalar EŞİT): red YALNIZ harita sondasından gelir."""
+        ts = {**CANLI, "Component.js.map": b'{"version":3,"sources":["Component.ts"]}'}
+        bozuk = {**CANLI, "Component.js.map": b'{"version":3,"sources":'}
+        kendi = {**CANLI, "Component-dbg.js.map": b'{"version":3,"sources":["Component.ts"]}'}
+        haritasiz = {r: v for r, v in CANLI.items() if r != "Component.js.map"}
+        # Yorum-yalnız fark: `-dbg`'deki yorum küçültmede kaybolur → preload EŞİT; iz yalnız haritada (canlının
+        # haritası başka bir kaynağı gösterir, bizim build'imizinki `-dbg`'i).
+        yorum_canli = {**CANLI, "Component.js.map": b'{"version":3,"sources":["Component-dbg.js","yorum.js"]}'}
+        vakalar = {   # ad: (canlı, dist, beklenen rc, çıktıda aranan)
+            "doğru harita (kontrol)": (CANLI, None, 0, "EŞLİK:"),
+            "TS kaynaklı harita": (ts, None, 1, "sources=['Component.ts']"),
+            "bozuk JSON harita": (bozuk, None, 1, "harita okunamadı"),
+            "-dbg'in kendi haritası": (kendi, None, 1, "KENDİ haritası"),
+            "harita yok (çift var)": (haritasiz, None, 1, "Component.js.map yok"),
+            "yorum-yalnız fark (preload eşit, harita farklı)": (yorum_canli, CANLI, 1, "yorum.js"),
+        }
+        yanlis = []
+        for i, (ad, (canli, dist, beklenen, aranan)) in enumerate(vakalar.items()):
+            rc, out = self._eslik(f"h{i}", canli, dist)
+            if rc != beklenen or aranan not in out or "KAPSAM:" not in out:
+                yanlis.append(f"{ad}: rc={rc} (beklenen {beklenen}) · '{aranan}' {'var' if aranan in out else 'YOK'}")
+            if beklenen == 1 and dist is None and "build == canlı AMA kaynak haritası sapması" not in out:
+                yanlis.append(f"{ad}: red harita sondasından gelmedi")
+        n = len(vakalar)
+        ok = not yanlis
+        H.kaydet("fetch eslik: kaynak haritası sondası (TS / bozuk / -dbg haritası / haritasız / yorum farkı → YOK)",
+                 f"{n}/{n}", str(yanlis or f"{n}/{n}"), ok)
+        self.assertTrue(ok, yanlis)
+
+    def test_eslik_ve_drift_kapsam_beyani_her_kosumda(self):
+        """H: `eslik` ve `drift` her çıkışta (EŞLİK / AYNI anında da) KAPSAM + BAKILMAYANLAR satırı basar."""
+        rc_e, out_e = self._eslik("k0", CANLI)
+        rc_y, out_y = H.kos("fetch_ui_source.py", "eslik", self.kok / "yok", "--no-build")
+        app = self.kok / "order_app"
+        with H.SahteSunucu({H.odata_yol(BSP): H.odata_zip(CANLI)}) as srv:
+            rc_i, out_i = H.kos("fetch_ui_source.py", "indir", BSP, "--out", app, "--url", srv.url, "--client", "100",
+                                kimlik=True)
+            rc_d, out_d = H.kos("fetch_ui_source.py", "drift", app, kimlik=True)
+        rc_k, out_k = H.kos("fetch_ui_source.py", "drift", app)
+        kosumlar = {"eslik EŞLİK": (rc_e, 0, out_e), "eslik anlık yok": (rc_y, 2, out_y),
+                    "drift AYNI": (rc_d, 0, out_d), "drift kimliksiz": (rc_k, 2, out_k)}
+        yanlis = [f"{ad}: rc={rc}" + ("" if "KAPSAM" in out and "BAKILMAYANLAR:" in out else " · KAPSAM yok")
+                  for ad, (rc, beklenen, out) in kosumlar.items()
+                  if rc != beklenen or "KAPSAM" not in out or "BAKILMAYANLAR:" not in out]
+        if rc_i != 0:
+            yanlis.append(f"indir rc={rc_i}")
+        ok = not yanlis
+        H.kaydet("fetch eslik/drift: KAPSAM + BAKILMAYANLAR her çıkışta (EŞLİK/AYNI dahil)", "4/4",
+                 str(yanlis or "4/4"), ok)
+        self.assertTrue(ok, (yanlis, out_e, out_d))
 
 
 class TestSaltOkurProxy(unittest.TestCase):

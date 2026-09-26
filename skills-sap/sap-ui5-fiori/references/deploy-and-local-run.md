@@ -307,9 +307,12 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
   - Yanıt: SAP'nin yanıtı istemciye olduğu gibi döner; UI5 onu **yanıtın** Content-Type sınırıyla ayrıştırır ve
     parçaları sırayla eşler. Ölçüldü (UI5 1.120.23 gerçek tarayıcı → proxy → sahte SAP, V2 + V4): 4/4 okuma başarılı;
     negatif kontrolde tekil parçalar 404 dönünce yalnız o okumalar hata aldı (eşleme parça parça çalışıyor).
+    **Canlı SAP'de de ölçüldü (2026-09-26, DEV, salt-okur):** UI5 V2 `useBatch:true` okuma (değer yardımı listesi
+    `$top=3` + `$count`) proxy'nin kanonik gövdesiyle gitti → `$batch` 202, 3 satır + sayım döndü, `REDDEDİLDİ` 0.
+    V4 kanonik gövde canlı SAP'de ölçülmedi (DOĞRULANMADI).
   - Diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**.
   - Reddedilen istek SAP'ye gitmez, konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye
-    istek 0; o ölçüm changeset kuralı dönemindeydi — beyaz liste çevrimdışı testle ölçüldü, canlıda yeniden ölçülmedi).
+    istek 0; o ölçüm changeset kuralı dönemindeydi — yazma reddinin yeni kuralla canlı ölçümü yapılmadı, çevrimdışı testle ölçüldü).
 - Hedef `ui5-deploy.yaml`'dan, kimlik env'den. Yalnız 127.0.0.1'e bağlanır; `/sap/*` isteğinde Host başlığı
   `localhost:<port>` / `127.0.0.1:<port>` değilse 403 (DNS rebinding). Adres: `http://localhost:<port>/index.html`.
 - Kaydet/sil düğmeleri bu modda 403 alır — beklenen davranış; kullanıcıya söylenir.

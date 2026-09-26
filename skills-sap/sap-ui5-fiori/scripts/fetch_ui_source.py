@@ -177,46 +177,79 @@ def komut_indir(a) -> int:
     return 0
 
 
+def _eslik_kapsami(harita: str) -> str:
+    """`eslik` KAPSAM satırı — her çıkışta (EŞLİK anında da) basılır: sıfır bulgu, bakılmayan yüzeyde temizlik DEĞİLDİR."""
+    return ("KAPSAM: bakılan — değiştirilmemiş kaynaktan build (dist/) ↔ " + K.ANLIK_KLASOR + "/ canlı anlık görüntüsü, "
+            "tüm dosyalar (preload modül modül · metin satır sonu normalize · ikili ham bayt) + kaynak haritası sondası "
+            f"({harita}). BAKILMAYANLAR: anlık görüntüden SONRA canlıdaki değişiklik (`drift`) · TS / Fiori Elements "
+            "özgün kaynağı (harita yoksa transpile ayrımı ölçülemez) · `.map` dışında iz bırakmayan dönüşüm · sunucu "
+            "tarafı (OData servisi, FLP kataloğu, rol).")
+
+
 def komut_eslik(a) -> int:
     app = Path(a.app)
     anlik = K.anlik_oku(app)
     if anlik is None:
         print(f"[FAIL] {app}/{K.ANLIK_KLASOR} yok — önce `indir` (canlı anlık görüntü olmadan eşlik ölçülemez) (exit 2)")
+        print(_eslik_kapsami("ÖLÇÜLEMEDİ — anlık görüntü yok"))
         return 2
     canli, _ = anlik
+    # Üçüncü şart — kaynak haritası sondası (build'den bağımsız, canlı anlık görüntü üzerinde): dosyalar eşit olsa bile
+    # `-dbg` bir dönüşüm çıktısıysa geri kurulan kaynak özgün DEĞİLDİR.
+    sapma, bakilan = K.harita_sondasi(canli)
+    harita = f"{bakilan} harita, {len(sapma)} sapma"
+    for s_ in sapma[:10]:
+        print(f"  [KAYNAK HARİTASI SAPMASI] {s_}")
+    if len(sapma) > 10:
+        print(f"  … +{len(sapma) - 10} sapma")
     if not a.no_build:
         import deploy_ui as D
         print(f"  build: {BUILD_KOMUTU} …")
         rc, out = D.run(BUILD_KOMUTU, app, os.environ.copy())
         if rc != 0:
             print(f"[FAIL] build başarısız rc={rc}: {out.strip()[-400:]} (exit 1)")
+            print(_eslik_kapsami(harita + " · build ÖLÇÜLEMEDİ"))
             return 1
     dist_kok = app / "dist"
     if not dist_kok.is_dir():
         print("[FAIL] dist/ yok — build et (exit 2)")
+        print(_eslik_kapsami(harita + " · dist ÖLÇÜLEMEDİ"))
         return 2
     import deploy_ui as D
     k = K.kume_karsilastir(K.klasor_oku(dist_kok), canli, D.preload_karsilastir)
     print(f"  dist ↔ canlı anlık görüntü: {K.ozet(k)}")
-    if K.kume_esit_mi(k):
-        print(f"[OK] EŞLİK: değiştirilmemiş kaynaktan build == canlı ({len(k['esit'])}/{len(k['esit'])}). "
-              "Kaynak düzenlemeye hazır.")
+    if K.kume_esit_mi(k) and not sapma:
+        print(f"[OK] EŞLİK: değiştirilmemiş kaynaktan build == canlı ({len(k['esit'])}/{len(k['esit'])}) ve kaynak "
+              f"haritaları `-dbg` kaynağını gösteriyor ({bakilan}). Kaynak düzenlemeye hazır.")
+        print(_eslik_kapsami(harita))
         return 0
-    if k["satir_sonu"] and not (k["farkli"] or k["yalniz_a"] or k["yalniz_b"]):
+    if K.kume_esit_mi(k):
+        print(f"[FAIL] EŞLİK YOK — build == canlı AMA kaynak haritası sapması var ({len(sapma)}): geri kurulan `-dbg` "
+              "özgün kaynak değil (TypeScript / build öncesi dönüşüm / başka araç). Düzenleme YAPILMAZ; kaynağı "
+              "kullanıcıdan iste. (exit 1)")
+    elif k["satir_sonu"] and not (k["farkli"] or k["yalniz_a"] or k["yalniz_b"]) and not sapma:
         print("[FAIL] fark YALNIZ preload'daki kaçışlı satır sonu — webapp metin dosyaları CRLF mi? LF'e çevir, tekrar "
               "ölç. (exit 1)")
-        return 1
-    print("[FAIL] EŞLİK YOK — geri kurulan kaynak canlıyı üretmiyor. Düzenleme YAPILMAZ; farkları kullanıcıya göster "
-          "(TS / özel build / eksik dosya olabilir). (exit 1)")
+    else:
+        print("[FAIL] EŞLİK YOK — geri kurulan kaynak canlıyı üretmiyor"
+              + (f" ve kaynak haritası sapması var ({len(sapma)})" if sapma else "")
+              + ". Düzenleme YAPILMAZ; farkları kullanıcıya göster (TS / özel build / eksik dosya olabilir). (exit 1)")
+    print(_eslik_kapsami(harita))
     return 1
 
 
 def komut_drift(a) -> int:
+    kapsam = ("KAPSAM: bakılan — şimdiki canlı BSP dosyaları (liste + içerik; metin satır sonu normalize, ikili ham) ↔ "
+              f"{K.ANLIK_KLASOR}/ anlık görüntüsü. BAKILMAYANLAR: yerel kaynak / dist (`eslik`) · kaynak haritası "
+              "sondası (`eslik`) · sunucu tarafı (OData servisi, FLP kataloğu, rol) · canlıya anlık görüntüden önce "
+              "yapılmış değişiklik.")
     kimlik = _kimlik()
     if not kimlik:
+        print(kapsam.replace("KAPSAM:", "KAPSAM (ÖLÇÜLEMEDİ — kimlik yok):", 1))
         return 2
     durum, notu, _ = K.drift_olc(Path(a.app), kimlik, a.ignore_cert)
     print(f"  [{durum}] {notu}")
+    print(kapsam if durum in ("AYNI", "DEGISTI") else kapsam.replace("KAPSAM:", f"KAPSAM ({durum} — ölçüm yok):", 1))
     return {"AYNI": 0, "DEGISTI": 1}.get(durum, 2)
 
 
