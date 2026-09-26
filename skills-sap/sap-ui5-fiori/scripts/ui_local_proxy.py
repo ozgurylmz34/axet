@@ -4,9 +4,11 @@
 
 Derlenmiş `dist/`'i (ya da `--kok` ile verilen klasörü) sunar; `/sap/*` isteklerini SAP'ye iletir, AMA yalnız okumayı:
   GET / HEAD                          → iletilir
-  POST /sap/opu/odata(4)/…/$batch     → iletilir YALNIZ şu durumda (beyaz liste; emin olunamayan → 403):
-      istek tipi multipart/mixed · gövdedeki HER HTTP istek satırı GET (büyük/küçük harf, baştaki boşluk dahil
-      bakılır) ve en az bir GET var · changeset / iç multipart / JSON / X-HTTP-Method / binary dışı aktarım YOK
+  POST /sap/opu/odata(4)/…/$batch     → iletilir YALNIZ şu durumda (PARÇA BAZLI beyaz liste; emin olunamayan → 403):
+      TEK `Content-Type: multipart/mixed; boundary=…` başlığı (iletilen de bu değerdir) · gövde sınırla bölünür,
+      ≥1 parça, HER parça `Content-Type: application/http` (+ varsa `binary` aktarım), katlanmamış başlık, ilk satırı
+      tam olarak `GET <hedef> HTTP/1.1`, gövdesiz · satır sonu yalnız CRLF · BOM / kontrol baytı / ASCII dışı istek
+      satırı YOK · prolog/epilog serbest metin (istek sayılmaz) · yolda `..;` / `.;` segmenti YOK
   başka yolda $batch (ör. /sap/bc/soap/…), diğer her POST / PUT / MERGE / PATCH / DELETE → 403, SAP'ye GİTMEZ
   Host başlığı localhost:<port> / 127.0.0.1:<port> değilse → 403 (DNS rebinding), SAP'ye GİTMEZ
 Reddedilen her istek konsola `REDDEDİLDİ` satırıyla yazılır. Amaç: değişikliği SAP'ye YAZMADAN, deploy ÖNCESİ,
@@ -44,24 +46,132 @@ YAZMA_YONTEMLERI = ("PUT", "MERGE", "PATCH", "DELETE")
 
 # $batch yalnız OData servis kökünde kabul edilir (V2 `/sap/opu/odata/…`, V4 `/sap/opu/odata4/…`). Başka bir ICF
 # servisinin `…/$batch` adlı yolu (ör. SOAP RFC) okuma DEĞİLDİR. Segment karakterleri dar tutulur: `%` kodlaması,
-# `..`/`.` segmenti ve boş segment reddedilir (fail-closed — hedef sistemin yol normalleştirmesine güvenilmez).
+# boş segment ve `;` öncesi `..`/`.` olan segment (`..;`, `.;` — matris parametresiyle gizlenmiş üst dizin) reddedilir
+# (fail-closed — hedef sistemin yol normalleştirmesine güvenilmez).
 _R_BATCH_YOLU = re.compile(r"/sap/opu/odata4?(?:/[A-Za-z0-9_;=,.\-]+)+/\$batch")
-# Batch parçasındaki HTTP istek satırı: satır başı (baştaki boşluk dahil) `<YÖNTEM> <hedef> HTTP/x`.
-_R_ISTEK_SATIRI = re.compile(rb"^[ \t]*([A-Za-z]+)[ \t]+\S+[ \t]+HTTP/\d", re.I | re.M)
-# Sürüm eki olmasa da yazma yöntemiyle başlayan satır — hedef sistemin gevşek ayrıştırmasına güvenilmez.
-_R_YAZMA_SATIRI = re.compile(rb"^[ \t]*(?:POST|PUT|PATCH|MERGE|DELETE)[ \t]", re.I | re.M)
-# Parça içinde yöntem geçersiz kılma başlığı (GET satırını yazmaya çevirebilir).
-_R_YONTEM_EZME = re.compile(rb"^[ \t]*x-http-method(?:-override)?[ \t]*:", re.I | re.M)
-# Parça aktarım kodlaması yalnız `binary` olabilir (base64 parça içinde yazma gizlenebilir).
-_R_AKTARIM = re.compile(rb"^[ \t]*content-transfer-encoding[ \t]*:[ \t]*(\S+)", re.I | re.M)
+# RFC 2046 sınır karakterleri (boşluk hariç — fail-closed), 1-70 karakter.
+_R_SINIR = re.compile(r"[0-9A-Za-z'()+_,\-./:=?]{1,70}")
+# Parçanın gövdesinin İLK satırı tam olarak bu olmalı: GET + tek boşluk + boşluksuz yazdırılabilir ASCII hedef + HTTP/1.1.
+_R_GET_SATIRI = re.compile(rb"GET [\x21-\x7e]+ HTTP/1\.1")
+# Başlık satırı (MIME parça başlığı ya da iç istek başlığı): token ad + `:` + yazdırılabilir ASCII değer.
+_R_BASLIK = re.compile(rb"([!#$%&'*+\-.^_`|~0-9A-Za-z]+)[ \t]*:([\x20-\x7e\t]*)")
+# `\t \r \n` dışındaki kontrol baytları ve DEL: satır/parça tanımayı bozabilir (`DELETE\x0b…`, `\x0cDELETE…`).
+_R_KONTROL = re.compile(rb"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+def tek_icerik_tipi(degerler) -> str | None:
+    """`Content-Type` başlığının TÜM değerleri → tam 1 değer varsa o, yoksa None (0 ya da çift başlık = red).
+    Doğrulanan değer SAP'ye İLETİLEN değerin kendisidir (tek kaynak — çift başlıkta ilk/son farkı kapanır)."""
+    degerler = list(degerler or [])
+    return degerler[0] if len(degerler) == 1 else None
+
+
+def sinir_al(icerik_tipi: str) -> str | None:
+    """`multipart/mixed; boundary=<sınır>` → sınır; biçim dışı (başka tip, ek parametre, sınırsız, geçersiz) → None."""
+    parcalar = [p.strip() for p in (icerik_tipi or "").split(";")]
+    if parcalar[0].lower() != "multipart/mixed" or len(parcalar) != 2:
+        return None
+    ad, esit, deger = parcalar[1].partition("=")
+    if not esit or ad.strip().lower() != "boundary":
+        return None
+    deger = deger.strip()
+    if len(deger) >= 2 and deger[0] == deger[-1] == '"':
+        deger = deger[1:-1]
+    return deger if _R_SINIR.fullmatch(deger) else None
+
+
+def _basliklar(satirlar: list[bytes]) -> tuple[list[tuple[bytes, bytes]] | None, int, str | None]:
+    """Boş satıra kadar başlıklar → ([(küçük ad, değer)], boş satırın indeksi, hata). Devam satırı / biçim dışı → hata."""
+    alanlar = []
+    for i, s in enumerate(satirlar):
+        if s == b"":
+            return alanlar, i, None
+        if s[:1] in (b" ", b"\t"):
+            return None, i, "başlıkta devam (katlanmış) satırı"
+        m = _R_BASLIK.fullmatch(s)
+        if not m:
+            return None, i, "geçersiz başlık satırı (biçim dışı ya da ASCII dışı)"
+        ad, deger = m.group(1).lower(), m.group(2).strip()
+        if ad.startswith(b"x-http-method"):
+            return None, i, "X-HTTP-Method başlığı (yöntem ezme)"
+        if b"multipart" in deger.lower():
+            return None, i, "iç multipart (changeset biçimi)"
+        alanlar.append((ad, deger))
+    return None, len(satirlar), "başlık/gövde ayırıcı boş satır yok"
+
+
+def _parca_denetle(satirlar: list[bytes]) -> str | None:
+    """Tek batch parçası salt-okuma GET mi? → None (uygun) ya da red nedeni."""
+    alanlar, bos, hata = _basliklar(satirlar)
+    if hata:
+        return f"parça: {hata}"
+    tipler = [d.lower() for a, d in alanlar if a == b"content-type"]
+    if tipler != [b"application/http"]:
+        return "parça: Content-Type tam olarak bir kez application/http değil"
+    aktarim = [d.lower() for a, d in alanlar if a == b"content-transfer-encoding"]
+    if aktarim not in ([], [b"binary"]):
+        return "parça: Content-Transfer-Encoding binary değil"
+    istek = satirlar[bos + 1:]
+    if not istek or not _R_GET_SATIRI.fullmatch(istek[0]):
+        return "parça: ilk satır tam olarak `GET <hedef> HTTP/1.1` değil"
+    _ic, ic_bos, hata = _basliklar(istek[1:])
+    if hata:
+        return f"parça isteği: {hata}"
+    if any(s.strip() for s in istek[1 + ic_bos + 1:]):
+        return "parça: GET isteğinde gövde var"
+    return None
+
+
+def batch_govde_denetle(govde: bytes, sinir: str) -> str | None:
+    """multipart/mixed `$batch` gövdesi YALNIZ GET parçaları mı? → None (uygun) ya da red nedeni. Saf fonksiyon.
+
+    Satır sonu yalnız CRLF (tek `\\r` ya da tek `\\n` → red: sunucunun satır bölmesiyle ayrışma riski). Prolog/epilog
+    serbest metindir ve istek sayılmaz; ama içlerinde sınıra benzeyen satır olamaz, kapanıştan sonra sınır olamaz."""
+    if not govde:
+        return "boş gövde"
+    if b"\xef\xbb\xbf" in govde or govde[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return "gövdede BOM"
+    if _R_KONTROL.search(govde):
+        return "gövdede kontrol baytı (\\t \\r \\n dışında < 0x20 ya da 0x7f)"
+    if re.search(rb"\r(?!\n)", govde) or re.search(rb"(?<!\r)\n", govde):
+        return "satır sonu CRLF değil (tek \\r ya da tek \\n)"
+    ayrac = b"--" + sinir.encode("ascii")
+    kapanis = ayrac + b"--"
+    durum, mevcut, parcalar = "prolog", [], []
+    for s in govde.split(b"\r\n"):
+        if s.startswith(ayrac):
+            if durum == "epilog":
+                return "kapanış sınırından sonra sınır satırı"
+            if s == kapanis:
+                if durum != "parca":
+                    return "parçasız kapanış"
+                parcalar.append(mevcut)
+                durum = "epilog"
+            elif s == ayrac:
+                if durum == "parca":
+                    parcalar.append(mevcut)
+                durum, mevcut = "parca", []
+            else:
+                return "sınıra benzeyen ama sınır olmayan satır (doğrulanamaz)"
+        elif durum == "parca":
+            mevcut.append(s)
+    if durum != "epilog":
+        return "kapanış sınırı yok"
+    for p in parcalar:
+        neden = _parca_denetle(p)
+        if neden:
+            return neden
+    return None
 
 
 def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None = None) -> tuple[bool, str]:
     """SAP'ye iletilecek istek SALT-OKUMA mı? → (izin, neden). Saf fonksiyon (testlenir).
 
-    `$batch` için kural BEYAZ LİSTEdir (emin olunamayan → red): yol OData servis kökü; istek tipi (verildiyse)
-    `multipart/mixed`; gövdede changeset / iç `multipart` / JSON / yöntem ezme / binary dışı aktarım YOK; gövdedeki her
-    HTTP istek satırı GET ve en az bir GET var. `icerik_tipi=None` = çağıran bilmiyor → yalnız gövde kuralları.
+    `$batch` için kural PARÇA BAZLI BEYAZ LİSTEdir (emin olunamayan → red): yol OData servis kökü; istek tipi
+    `multipart/mixed; boundary=…` (tek parametre); gövde sınırla parçalara bölünür, ≥1 parça, HER parça
+    `Content-Type: application/http` + (varsa) `binary` aktarım + katlanmamış başlıklar + ilk satırı tam olarak
+    `GET <hedef> HTTP/1.1` + gövdesiz. `icerik_tipi=None` = çağıran başlığı bilmiyor (yalnız saf kullanım; `do_POST`
+    daima doğrulanmış TEK değeri verir) → sınır gövdenin ilk satırından (`--<sınır>`) alınır, kurallar aynıdır.
     """
     yontem = yontem.upper()
     if yontem in ("GET", "HEAD"):
@@ -69,33 +179,22 @@ def izin_ver(yontem: str, yol: str, govde: bytes = b"", icerik_tipi: str | None 
     if yontem != "POST":
         return False, f"{yontem} yazmadır"
     yol_kismi = urllib.parse.urlsplit(yol).path
-    if not _R_BATCH_YOLU.fullmatch(yol_kismi) or any(s.strip(".") == "" for s in yol_kismi.split("/")[1:]):
+    if (not _R_BATCH_YOLU.fullmatch(yol_kismi)
+            or any(s.split(";")[0].strip(".") == "" for s in yol_kismi.split("/")[1:])):
         return False, "yalnız /sap/opu/odata(4)/…/$batch POST'u iletilir (function import / create = yazma olabilir)"
-    tip = (icerik_tipi or "").split(";")[0].strip().lower()
-    if icerik_tipi is not None and tip != "multipart/mixed":
-        return False, f"$batch istek tipi multipart/mixed değil ({tip or 'yok'}) — JSON batch / bilinmeyen biçim"
     g = govde or b""
-    kucuk = g.lower()
-    if g.lstrip()[:1] in (b"{", b"["):
-        return False, "JSON batch (okuma olduğu doğrulanamaz)"
-    if b"\x00" in g:
-        return False, "gövdede NUL baytı (metin dışı kodlama — doğrulanamaz)"
-    if b"changeset" in kucuk:
-        return False, "$batch içinde changeset (yazma) var"
-    if b"multipart" in kucuk:
-        return False, "$batch içinde iç multipart gövde (changeset biçimi) var"
-    if _R_YONTEM_EZME.search(g):
-        return False, "$batch parçasında X-HTTP-Method başlığı (yöntem ezme)"
-    for m in _R_AKTARIM.finditer(g):
-        if m.group(1).lower() != b"binary":
-            return False, f"$batch parçası binary dışı aktarım kodlaması ({m.group(1).decode('latin-1')})"
-    if _R_YAZMA_SATIRI.search(g):
-        return False, "$batch içinde yazma yöntemli istek satırı var"
-    yontemler = [m.group(1).upper() for m in _R_ISTEK_SATIRI.finditer(g)]
-    if not yontemler:
-        return False, "$batch içinde GET istek satırı bulunamadı (doğrulanamaz)"
-    if any(y != b"GET" for y in yontemler):
-        return False, "$batch içinde GET dışı istek satırı var"
+    if icerik_tipi is None:
+        ilk = g.split(b"\r\n", 1)[0]
+        sinir = ilk[2:].decode("ascii", "replace") if ilk.startswith(b"--") else ""
+        sinir = sinir if _R_SINIR.fullmatch(sinir) else None
+    else:
+        sinir = sinir_al(icerik_tipi)
+    if not sinir:
+        return False, (f"$batch istek tipi `multipart/mixed; boundary=…` değil ({icerik_tipi or 'yok'}) — "
+                       "JSON batch / sınırsız / bilinmeyen biçim")
+    neden = batch_govde_denetle(g, sinir)
+    if neden:
+        return False, f"$batch: {neden}"
     return True, "okuma batch'i (yalnız GET parçaları)"
 
 
@@ -122,13 +221,17 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             if self.path.startswith("/sap/"):
                 print(f"{self.command} {self.path[:150]} → {args[1] if len(args) > 1 else ''}", flush=True)
 
-        def _ilet(self, govde: bytes | None = None):
+        def _ilet(self, govde: bytes | None = None, icerik_tipi: str | None = None):
             ayrik = urllib.parse.urlsplit(self.path)
             q = urllib.parse.parse_qsl(ayrik.query, keep_blank_values=True)
             if client and not any(k == "sap-client" for k, _ in q):
                 q.append(("sap-client", client))
             url = f"{taban}{ayrik.path}" + ("?" + urllib.parse.urlencode(q, safe="'$,()") if q else "")
-            h = {k: v for k, v in self.headers.items() if k.lower() in GECEN_ISTEK}
+            # Content-Type istemci başlıklarından KOPYALANMAZ: çift başlıkta sözlük SONUNCUYU tutuyordu, kapı İLKİNE
+            # bakıyordu (ölçüldü: multipart/mixed + application/json → SAP'ye json gitti). İletilen = doğrulanan değer.
+            h = {k: v for k, v in self.headers.items() if k.lower() in GECEN_ISTEK and k.lower() != "content-type"}
+            if icerik_tipi is not None:
+                h["Content-Type"] = icerik_tipi
             h["Authorization"] = auth
             h["Accept-Encoding"] = "identity"
             req = urllib.request.Request(url, data=govde, headers=h, method=self.command)
@@ -160,7 +263,7 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             self.end_headers()
             self.wfile.write(veri)
 
-        def _karar(self, govde: bytes = b"", icerik_tipi: str | None = None):
+        def _karar(self, govde: bytes = b"", icerik_tipleri: list | None = None):
             if not self.path.startswith("/sap/"):
                 if self.command in ("GET", "HEAD"):
                     return super().do_GET() if self.command == "GET" else super().do_HEAD()
@@ -168,11 +271,18 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
             if not host_gecerli(self.headers.get("Host"), self.server.server_address[1]):
                 print(f"REDDEDİLDİ {self.command} {self.path[:150]} — yabancı Host başlığı", flush=True)
                 return self._yanit(403, "Salt-okur yerel test sunucusu: Host localhost/127.0.0.1 degil")
+            icerik_tipi = None
+            if self.command == "POST":
+                icerik_tipi = tek_icerik_tipi(icerik_tipleri)
+                if icerik_tipi is None:
+                    neden = f"Content-Type başlığı tam 1 değil ({len(icerik_tipleri or [])} adet)"
+                    print(f"REDDEDİLDİ {self.command} {self.path[:150]} — {neden}", flush=True)
+                    return self._yanit(403, f"Salt-okur yerel test sunucusu yazma istegini reddetti: {neden}")
             izin, neden = izin_ver(self.command, self.path, govde, icerik_tipi)
             if not izin:
                 print(f"REDDEDİLDİ {self.command} {self.path[:150]} — {neden}", flush=True)
                 return self._yanit(403, f"Salt-okur yerel test sunucusu yazma istegini reddetti: {neden}")
-            return self._ilet(govde if self.command == "POST" else None)
+            return self._ilet(govde if self.command == "POST" else None, icerik_tipi)
 
         def do_GET(self):  # noqa: N802
             self._karar()
@@ -182,7 +292,7 @@ def isleyici_sinifi(kok: Path, taban: str, client: str, kimlik: tuple[str, str],
 
         def do_POST(self):  # noqa: N802
             n = int(self.headers.get("Content-Length") or 0)
-            self._karar(self.rfile.read(n) if n else b"", self.headers.get("Content-Type", ""))
+            self._karar(self.rfile.read(n) if n else b"", self.headers.get_all("Content-Type") or [])
 
         def do_PUT(self):  # noqa: N802
             self._karar()

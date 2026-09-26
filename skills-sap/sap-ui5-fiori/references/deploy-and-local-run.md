@@ -277,13 +277,22 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
 
 ### 7.3 Salt-okur yerel test (`ui_local_proxy.py`)
 - İndirilen uygulamada fiori tools proxy yapılandırması yoktur. `ui_local_proxy.py` `dist/`'i sunar ve `/sap/*`
-  isteklerini hedef sisteme **yalnız okuma** olarak iletir. `$batch` kuralı **beyaz listedir** (emin olunamayan → 403):
+  isteklerini hedef sisteme **yalnız okuma** olarak iletir. `$batch` kuralı **parça bazlı beyaz listedir** (emin
+  olunamayan → 403; satır taraması değil, gövde sınırla parçalara bölünüp her parça tek tek doğrulanır):
   - GET/HEAD geçer.
   - POST yalnız yol `/sap/opu/odata/…/$batch` ya da `/sap/opu/odata4/…/$batch` ise değerlendirilir (başka ICF yolu,
-    ör. `/sap/bc/soap/…/$batch`, `%` kodlu ya da `..` segmentli yol → 403); istek tipi `multipart/mixed` olmalı
-    (JSON batch → 403); gövdedeki **her** HTTP istek satırı GET olmalı ve en az bir GET bulunmalı (satır başı boşluk
-    ve büyük/küçük harf fark etmez; sürümsüz `DELETE X` satırı da yakalanır); gövdede changeset, iç `multipart`,
-    `X-HTTP-Method` ya da `binary` dışı aktarım kodlaması → 403.
+    ör. `/sap/bc/soap/…/$batch`; `%` kodlu, boş, `..` ya da `..;`/`.;` segmentli yol → 403).
+  - `Content-Type` başlığı **tam bir kez** gelmeli (0 ya da çift → 403) ve `multipart/mixed; boundary=<sınır>`
+    olmalı (tek parametre; sınır RFC 2046 karakterleri, 1-70). SAP'ye **doğrulanan bu değer** iletilir — istemcinin
+    başka bir `Content-Type` kopyası geçmez (JSON batch → 403).
+  - Gövde: satır sonu yalnız CRLF (tek `\r` / tek `\n` → 403); BOM, `\t` dışı kontrol baytı ya da `0x7f` → 403.
+    Sınırla ≥1 parçaya bölünür; kapanış sınırı (`--<sınır>--`) şart, sonrasında sınır satırı ve sınıra benzeyen
+    ama tam eşleşmeyen satır → 403. Prolog/epilog serbest metindir, istek sayılmaz (UI5 V4'ün `Group ID: …`
+    epilog'u geçer).
+  - **Her** parça: `Content-Type: application/http` tam bir kez; `Content-Transfer-Encoding` varsa yalnız `binary`;
+    başlıklar katlanmamış, ASCII; `X-HTTP-Method*` ve iç `multipart` (changeset) yok; boş satırdan sonraki ilk satır
+    tam olarak `GET <boşluksuz ASCII hedef> HTTP/1.1` (küçük harf, baştaki boşluk, `HTTP/1.0` → 403); iç istek
+    başlıkları aynı kurallarla; GET'in gövdesi yok.
   - Diğer her POST (create, function import), PUT/MERGE/PATCH/DELETE → **403**.
   - Reddedilen istek SAP'ye gitmez, konsola `REDDEDİLDİ` yazılır. Negatif test canlıda ölçüldü (3/3 yazma 403, SAP'ye
     istek 0; o ölçüm changeset kuralı dönemindeydi — beyaz liste çevrimdışı testle ölçüldü, canlıda yeniden ölçülmedi).
