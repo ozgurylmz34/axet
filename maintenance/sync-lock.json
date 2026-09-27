@@ -2,7 +2,7 @@
  "_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
  "sources": {
   "DEV_CORE": {
-   "commit": "635ad3ee6855518fc2867f050e2eab705523ea06",
+   "commit": "bfb3f60fb1b23b5b8a05165cb38c42b38d57458a",
    "files": {
     ".gitattributes": {
      "decision": "uyarla",
@@ -2125,7 +2125,7 @@
     "governance/decisions/0016-source-drift-onleme-repo-canli-senkron.md": {
      "decision": "uyarla",
      "rule": "governance/decisions/0016-*",
-     "sha256": "f4b5d01e6383730a7745af1b876abb9bf7c70b0ef5b33f6486f8629abe090e6b",
+     "sha256": "8bda0349e6882295c25a042e4eadf516ee3a0625fdfef7da170dd295dfbc29f7",
      "status": "tamam"
     },
     "governance/decisions/0017-ui-build-dogrulama-kanonik-desen-tuzak-gate.md": {
@@ -2173,13 +2173,13 @@
     "governance/infra-changelog.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "69fb74373777a9ef77ee41d434589bab298fe93c0583a579fb023eed5f800b9c",
+     "sha256": "48d790d8f2e80e129db20110c74294d38ffb791e76f7e03e76019031c98696d2",
      "status": "-"
     },
     "governance/infra-test-recipes.md": {
      "decision": "uyarla",
      "rule": "governance/infra-test-recipes.md",
-     "sha256": "8fc544291cb4f38dadc936a8ce22790330d5ec3322af1708e588e16bcff3d9f3",
+     "sha256": "3264b69b167a32f7ebc8d84379e78d5d04fde11360df96f689d84c1a7bd5f557",
      "status": "tamam"
     },
     "governance/reference/released_successors.json": {
@@ -2608,6 +2608,12 @@
      "sha256": "06ae7b34f961ad23ea58f89db661b29754671c569240ffdc0690bcae1025a8f9",
      "status": "-"
     },
+    "playbook/howto-ui-kaynagi-geri-kurma.md": {
+     "decision": "uyarla",
+     "rule": "playbook/howto-ui-kaynagi-geri-kurma.md",
+     "sha256": "f248a1b1c65068d0169154c23efeb0cfe0a725567e20c5ae4ef8f2f36de4d22f",
+     "status": "tamam"
+    },
     "playbook/intake-triage.md": {
      "decision": "uyarla",
      "rule": "playbook/intake-triage.md",
@@ -2659,7 +2665,7 @@
     "playbook/ui-freestyle-odata-v2.md": {
      "decision": "uyarla",
      "rule": "playbook/ui-freestyle-odata-v2.md",
-     "sha256": "d47630891a94182c299619268dc6e1c85b38c88b529f9ee4240053360432a10c",
+     "sha256": "1d1ecda39d0498dad1e9a167b44d465d14453a188f9bb7958163c2cd36aa4cb4",
      "status": "tamam"
     },
     "profiles/btp_abap.yaml": {
@@ -2992,6 +2998,12 @@
      "sha256": "60e58640ad1f8a76bb3bc49177f9f1e728d85266b3de91ab56cfa7592603a9da",
      "status": "tamam"
     },
+    "scripts/fetch_ui_source.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "03e0e71a30a2dbf34240894c23c35e6a966958359bc29abc77c2c077ceca9d75",
+     "status": "-"
+    },
     "scripts/foreign_project_audit.py": {
      "decision": "telafi",
      "rule": "scripts/foreign_project_audit.py",
@@ -3049,7 +3061,19 @@
     "scripts/hooks/README.md": {
      "decision": "alinmaz",
      "rule": "scripts/hooks/*",
-     "sha256": "451256cfc4ff5a6eb6c8e73dd0a8493945bf7743b9215da4ecc2f42939df974e",
+     "sha256": "d0b0e6a7952ce1521732bfca564efb135d75c152d02bbd30e651626732ed9d72",
+     "status": "-"
+    },
+    "scripts/hooks/_pbe_msag_textpool.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/hooks/*",
+     "sha256": "4adafc43bb48bd3f59b11f8c5284d70f7dfa0bb1466853aeffe1181bb7ddd639",
+     "status": "-"
+    },
+    "scripts/hooks/_pbe_ui.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/hooks/*",
+     "sha256": "0cd015488f094da0ed7cfffaf5b2fce257551984024d5249d22c8b77c8961321",
      "status": "-"
     },
     "scripts/hooks/config_change_guard.py": {
@@ -3109,7 +3133,7 @@
     "scripts/hooks/pull_before_edit.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/pull_before_edit.py",
-     "sha256": "820f9e907ec25342ff05179d79ce74f4f07156d7e0f427b8d02b46b4a9ad41ef",
+     "sha256": "daaf81101b393ee8cc81bd9a020606ea433cdb5fe844eea24ef725d9db8572d5",
      "status": "tamam"
     },
     "scripts/hooks/recall_inject.py": {
@@ -3187,7 +3211,7 @@
     "scripts/list_revisions.py": {
      "decision": "uyarla",
      "rule": "scripts/list_*.py",
-     "sha256": "a84a82a07eabab8043b6a365f2c00944ab0dd1ba9c092327d2197153a1091997",
+     "sha256": "f6c96560141fffb26737362f115d382162413446face2587666d20e9581816c7",
      "status": "tamam"
     },
     "scripts/list_transports.py": {
@@ -3211,7 +3235,7 @@
     "scripts/object_types.py": {
      "decision": "uyarla",
      "rule": "scripts/object_types.py",
-     "sha256": "fec1aad608a94077eb0e3f6f81ac58e6aceaea9f3d7963b7410752acfa4b0100",
+     "sha256": "0da801cbd992e8ed5ccf6d417cfce49914f3594e4ed33bfc4de10b668a887d6c",
      "status": "kismi"
     },
     "scripts/parity_probe.py": {
@@ -3261,6 +3285,12 @@
      "rule": "scripts/program_to_spec.py",
      "sha256": "453b09f4d0b2228fe6333ba76406b1744af917d46b793fe78fc8916f5d519cbe",
      "status": "tamam"
+    },
+    "scripts/pull_msag_textpool.py": {
+     "decision": "alinmaz",
+     "rule": "scripts/*",
+     "sha256": "1cf3463cf61d530979cad4830f0f35f6e1fbdb595b1089fe718fc4e4ffd2ef3c",
+     "status": "-"
     },
     "scripts/push_bo_atomic.py": {
      "decision": "uyarla",
@@ -3319,7 +3349,7 @@
     "scripts/sap_adt_lib.py": {
      "decision": "uyarla",
      "rule": "scripts/sap_adt_lib.py",
-     "sha256": "13b6a923dd0013e0468f62a7e6946e6d93d760eed7f7a1da54f307e46e072398",
+     "sha256": "0a3edbbf117ce83ab083f16660b4a3fe5f5b431c313c9d89860f22d5ff358af1",
      "status": "kismi"
     },
     "scripts/sap_client.py": {
@@ -3343,7 +3373,7 @@
     "scripts/sap_sync_pull.py": {
      "decision": "telafi",
      "rule": "scripts/sap_sync_pull.py",
-     "sha256": "806c398ebedc41fbaf21066141dafa05399d7f7073648a9c117a396db118ed64",
+     "sha256": "3959df592ad25e9276f079a6c2a48f325a82d26b738e10ecd08cdb83f73a63a9",
      "status": "tamam"
     },
     "scripts/scaffold_classic_program.py": {
@@ -3397,7 +3427,7 @@
     "scripts/source_drift.py": {
      "decision": "telafi",
      "rule": "scripts/source_drift.py",
-     "sha256": "bf2f16f5e110b1b1dbc0838f0fe8507ad6a46705cfa8e8edf7a7adcaebcd43ae",
+     "sha256": "8e8cd4c6e2685fbd4fe98b3e6134a901e52c959fa443105a7779b138366095c0",
      "status": "tamam"
     },
     "scripts/sprint_gate_check.py": {
@@ -3943,7 +3973,7 @@
     "scripts/validators/check_source_drift.py": {
      "decision": "bekliyor",
      "rule": "scripts/validators/*",
-     "sha256": "016bb4af8edd8751ad66603b92922b268c5a76affdc3415694d1ffcd6556199c",
+     "sha256": "51363ba0de525bd49ebd1eaaef3c3d0f1157fb65f64bcf07c23d7543a7dafb7e",
      "status": "-"
     },
     "scripts/validators/check_standard_table_fields.py": {
@@ -4039,7 +4069,7 @@
     "standards/03-coding-ui-fiori.md": {
      "decision": "uyarla",
      "rule": "standards/03-coding-ui-fiori.md",
-     "sha256": "fd3772b39351352169c0efd7048b967883e66be99faf44ee56b8cc75a87ad20e",
+     "sha256": "1db54b7fc471eea49a54c63dd8b7f6c04709617ae135afe6ffa2f0da29622d74",
      "status": "tamam"
     },
     "standards/04-documentation-fs-ts.md": {
@@ -4297,13 +4327,13 @@
     "tests/fixtures/b0_secim/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "365787a78902aa7d474a2075a55569a80912e593bc3a2f3b837ad5f69b28c3ae",
+     "sha256": "45446d3c00e07f82f1f5656bf0b584e209f72370b180e5df5f7bbd92b6dfee51",
      "status": "kismi"
     },
     "tests/fixtures/bos_seans_markeri/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "4a29046e38c5bcbeac65a7533e599900c722c7ceb3415f6038a478e198991bbf",
+     "sha256": "e124819e8f8a68024e361003560009fe3ec3eca5a47796b6a44447df1029c207",
      "status": "kismi"
     },
     "tests/fixtures/byassoc_advisory/run.py": {
@@ -4501,7 +4531,7 @@
     "tests/fixtures/cikti_iddiasi_durustlugu/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "8d067775485fc75f5c4b7be6f63125ccf6d93687178839c3c72ce6a9952f4944",
+     "sha256": "a4c663351ea12367e49c405bf19bf77211e8dee93163ba064768611659a383b8",
      "status": "kismi"
     },
     "tests/fixtures/class_include_push/run.py": {
@@ -4567,7 +4597,7 @@
     "tests/fixtures/damga_yarisi/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "3a373656727fca1734d15a66e1ed902e847c6dcbd8585cdb2bba879c4c6d21a2",
+     "sha256": "82fd5c581161d00888911144306f2e3c7b135dd7eff0c94b9f62596a9e21f5d3",
      "status": "kismi"
     },
     "tests/fixtures/ddic_aktivasyon_notu/run.py": {
@@ -4579,7 +4609,7 @@
     "tests/fixtures/ddic_okuma_yolu/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "2850cfa801e9462f8813e53ece08c80a0b4707781be80ce3f17ab8e9ebf8b8ad",
+     "sha256": "d237d1a0e6be5dfcf093275185feb98c996731a850aaa77a5fc5a7aa85716487",
      "status": "kismi"
     },
     "tests/fixtures/doctor_baglanti_kaniti/run.py": {
@@ -4592,6 +4622,12 @@
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
      "sha256": "7453c656f640bcd962058675c24e552fa5f115c1805bd68275fec76f543ecc5b",
+     "status": "kismi"
+    },
+    "tests/fixtures/fetch_ui_source/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "d22b802246d46139af9c77c7fa703dd54234fbbf24b95238abf991751ef8a41a",
      "status": "kismi"
     },
     "tests/fixtures/filtre_yorum_ve_tirnak/run.py": {
@@ -4828,6 +4864,24 @@
      "sha256": "a243461c4ccd4eca83c13615844602373b4761b8a04860fbc97afb1d62865a41",
      "status": "kismi"
     },
+    "tests/fixtures/pbe_kapsam/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "df9d1a0afe47e7a826862bc90b66b61148dc21263a0f9d8fd9ed2b544ffc0661",
+     "status": "kismi"
+    },
+    "tests/fixtures/pbe_msag_textpool/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "9af205580ddbaf7159a0798d218522b9d0e8749ca5acf63fbd8c4ac00037d2ca",
+     "status": "kismi"
+    },
+    "tests/fixtures/pbe_ui/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "ba438737de40428510884bf3a1aabad5251669ee2b9490ce398696a0d3bd2674",
+     "status": "kismi"
+    },
     "tests/fixtures/populate_ddic_fail_closed/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -5019,6 +5073,12 @@
      "rule": "tests/fixtures/reviewer_uzun_yol_ipucu/*",
      "sha256": "9164f5906e83f9c0945466276d5779ad4710540a9b3fea1da71c236e4c7082e4",
      "status": "tamam"
+    },
+    "tests/fixtures/revizyon_okuma/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "2f453ca073f59fb582cad4f47b413568441f789a5ff5be9e784cd496ba339dc2",
+     "status": "kismi"
     },
     "tests/fixtures/run_all_ozet_kipi/run.py": {
      "decision": "uyarla",
@@ -5245,7 +5305,7 @@
     "tests/run_fixture_tests.py": {
      "decision": "uyarla",
      "rule": "tests/*",
-     "sha256": "0dc400bf16db01728f20c73f8ddfff465f51653e829f3fdadf0ca7c724861f78",
+     "sha256": "c2af94dd8aca6dc7ac3fa57472bbbc760f53540f4be3dc2fc6e4a35c9374675a",
      "status": "tamam"
     },
     "tests/run_guard_fixture_tests.py": {
@@ -5255,10 +5315,10 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-25T18:49:12"
+   "locked_at": "2026-09-27T00:17:03"
   },
   "PROVA": {
-   "commit": "d738a11c6bb389153aa92b7c7a226f057d801f69",
+   "commit": "d330a3f83c0f9bba55e5c66322c5b92e00ac2fb5",
    "files": {
     ".claude/settings.json": {
      "decision": "telafi",
@@ -5317,7 +5377,7 @@
     "SOURCE_CODES/SD/ZSD001_CLC/SESSION_NOTES.md": {
      "decision": "uyarla",
      "rule": "SOURCE_CODES/*",
-     "sha256": "76f3b86a981c8b817499fb36045935e7b5271159f8b5cfa1d995b60dd77f2dd0",
+     "sha256": "c08116b1b2af91e61b470b016d4d3844b6c679cff6ae8e0dd3e8d7a30a51655a",
      "status": "tamam"
     },
     "SOURCE_CODES/SD/ZSD001_CLC/SPEC.md": {
@@ -5347,7 +5407,7 @@
     "governance/CORE-INDEX.md": {
      "decision": "alinmaz",
      "rule": "governance/CORE-INDEX.md",
-     "sha256": "3b49898271957541ea8a198664420c398406c54752f944392fc74c73e2b92db2",
+     "sha256": "da3f7facb588c2c2f3772ed0488ec6d5f04b564705d6004b2ce70b29b4715faa",
      "status": "-"
     },
     "governance/archive/2026-09-20-tasima-RESUME.md": {
@@ -5429,7 +5489,7 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-25T18:49:12"
+   "locked_at": "2026-09-27T00:17:04"
   }
  }
 }

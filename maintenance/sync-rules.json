@@ -3556,6 +3556,18 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "playbook/howto-ui-kaynagi-geri-kurma.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+        "skills-sap/sap-ui5-fiori/scripts/fetch_ui_source.py"
+      ],
+      "party": 2,
+      "status": "tamam",
+      "note": "2026-09-27 uyum turu 3: aXet karşılığı v0.5.13 Z144 (indir/eslik/drift/salt-okur proxy) + v0.5.14 Z160 (anlik-kur). Kaynak kural 'localService dışlaması etkisiz' deploy-and-local-run.md'de aynı."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "playbook/modules/*",
       "decision": "uyarla",
       "targets": [
