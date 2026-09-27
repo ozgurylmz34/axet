@@ -62,10 +62,11 @@ SURUM_SATIRI = re.compile(r"^(> Sürüm: )(\S+)( · )", re.M)
 # bunlardan birini taşımıyorsa `hepsi_yesil` YAZILMAZ ⇒ tüketici normal ölçer (fail-safe).
 # Z149 aşama 1 (2026-09-26): kök ve kök-public 3 runner'a bölündü (`--parca k/3`) + `skill` kolu +
 # `CI tamam` toplayıcı işi. Adlar `.github/workflows/testler.yml` matrisinden gelir; ikisi ayrılırsa
-# `test_yayin_hazirla.CiAsgariTakimlarWorkflowIleAyni` kırmızıya döner.
-CI_ASGARI_TAKIMLAR = tuple(f"Testler (kok {k}/3 · Python 3.12)" for k in (1, 2, 3)) + (
+# `test_yayin_hazirla.CiAsgariTakimlarWorkflowIleAyni` kırmızıya döner. Z158 (2026-09-27): 3 → 5 parça.
+KOK_PARCA = 5
+CI_ASGARI_TAKIMLAR = tuple(f"Testler (kok {k}/{KOK_PARCA} · Python 3.12)" for k in range(1, KOK_PARCA + 1)) + (
     # Z27: tüketicinin testleri PUBLIC ağaçta koşar; CI hükmü o ağacı da kapsamalı.
-    *(f"Testler (kok-public {k}/3 · Python 3.12)" for k in (1, 2, 3)),
+    *(f"Testler (kok-public {k}/{KOK_PARCA} · Python 3.12)" for k in range(1, KOK_PARCA + 1)),
     "Testler (foundation · Python 3.12)", "Testler (skill · Python 3.12)", "CI tamam")
 # Z23 — bu sürenin altında biten `failure` iş hiç başlamamış sayılır (ölçüldü 2026-09-20:
 # kota duvarında işler 2-4 sn'de `steps: 0` ile döndü; en kısa gerçek iş ~25 sn ön koşul koşar).

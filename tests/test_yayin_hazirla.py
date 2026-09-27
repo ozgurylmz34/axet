@@ -397,9 +397,9 @@ class CiDurumUretTest(unittest.TestCase):
     """
 
     ETIKET = "v9.9.9"
-    # CI adları (Z149 aşama 1): kök ve kök-public 3 parça + foundation + skill + CI tamam — 9 iş.
-    ADLAR = ([f"Testler (kok {k}/3 · Python 3.12)" for k in (1, 2, 3)]
-             + [f"Testler (kok-public {k}/3 · Python 3.12)" for k in (1, 2, 3)]
+    # CI adları (Z149 aşama 1, Z158 3 → 5 parça): kök ve kök-public 5 parça + foundation + skill + CI tamam — 13 iş.
+    ADLAR = ([f"Testler (kok {k}/5 · Python 3.12)" for k in range(1, 6)]
+             + [f"Testler (kok-public {k}/5 · Python 3.12)" for k in range(1, 6)]
              + ["Testler (foundation · Python 3.12)", "Testler (skill · Python 3.12)", "CI tamam"])
     YESIL = "".join(f"{a}\tsuccess\n" for a in ADLAR)
 
@@ -427,7 +427,7 @@ class CiDurumUretTest(unittest.TestCase):
         m = self.modul()
         y = self._uret(m, self.YESIL.replace("success", "failure", 1))
         self.assertFalse(y["hepsi_yesil"])
-        self.assertIn("Testler (kok 1/3 · Python 3.12)", y["not"])
+        self.assertIn("Testler (kok 1/5 · Python 3.12)", y["not"])
 
     def test_3_KONTROL_ci_hala_kosuyorsa_FALSE_ve_BEKLE_der(self):
         m = self.modul()
@@ -479,7 +479,7 @@ class CiDurumUretTest(unittest.TestCase):
                                   for i, a in enumerate(self.ADLAR)))
         self.assertFalse(y["hepsi_yesil"])
         self.assertIn("yesil olmayan", y["not"])
-        self.assertIn("Testler (kok 1/3 · Python 3.12)", y["not"])
+        self.assertIn("Testler (kok 1/5 · Python 3.12)", y["not"])
 
     def test_11_KONTROL_sure_alani_yesil_hukmu_BOZMAZ(self):
         m = self.modul()
