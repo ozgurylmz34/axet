@@ -68,6 +68,11 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 2. `python scripts\doctor.py` (frontmatter, çekirdek boyutu, damga/kanonik bütünlük, davranış yüzeyi) — 0 FAIL.
 3. Değişen skill'in testleri (ör. `python skills-sap\sap-adt-foundation\tests\run_tests.py`, `skills-sap\sap-fs-ts-docs\tests\run_tests.py`).
 4. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
+   **Lab kapanışı (Z162 ⓔ②):** lab bir tüketici klonuna (merkezi `%USERPROFILE%xet` dahil) dokunduysa
+   `git -C <klon> status --short` ve `git -C <klon> diff --stat <son-etiket>` **BOŞ** ölçülmeden lab kapanmaz.
+   *Vaka (2026-09-27):* klonda kalan tek bir lab artığı (`skills-sap/sap-dev/SKILL.md`) güncellemede yargı vakası
+   sayıldı, CI ikamesini kapattı ve tam takımlar yerelde koşmaya başladı (11 dk sonra hâlâ sürüyordu); artık
+   atılınca aynı güncelleme ~4 dk sürdü.
 5. Çekirdek içeriği değiştiyse kimlik satırını artır (`CORE-ID` / `SAP-CORE-ID`) ve `doctor.py --live` ile gör.
 6. **aXet.code sürümü değiştiyse:** ölçüm tablosundaki davranışları yeniden ölç; farklı çıkan satırı düzelt,
    etkilediği kuralı/script'i güncelle.

@@ -264,7 +264,7 @@ def prova_kos(pub: Path, eski: str, is_dizini: Path) -> dict:
 
     plan = json.loads((kon / ".axet-guncelleme" / "plan.json").read_text(encoding="utf-8"))
     yargi = sorted({f["yol"] for k in plan.get("kalemler", []) for f in k.get("dosyalar", [])
-                    if f.get("vaka") not in ("V1", "V2", "V5", "V6", "V1R")
+                    if f.get("vaka") not in ("V1", "V2", "V5", "V6", "V1R", "V4i")
                     and f.get("vaka") not in ("V0", "V3", "V2e", "V4e", "V5s", "V6x", "VKD")})
     if yargi:
         # Temiz (yerel değişikliksiz) tüketicide yargı vakası BEKLENMEZ: çıktıysa sınıflandırma kusuru.
