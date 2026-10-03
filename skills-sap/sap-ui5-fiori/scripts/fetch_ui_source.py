@@ -42,6 +42,10 @@ Alt komutlar:
         gönderilmez) ③ Windows giriş penceresi (Windows PowerShell 5.1 `Get-Credential`; parola süreç içi borudan
         base64 gelir — komut satırına, çıktıya, log'a, hata mesajına GİRMEZ). Kullanılan kaynak `kimlik: env|.conn_adt|
         pencere` satırıyla basılır (değer basılmaz). Windows kimlik deposunda saklama YOK.
+      Sertifika (yalnız ② `.conn_adt` kolu): ADT kanalıyla aynı kural — `ADT_SAP_SSL_VERIFY` (env > `.conn_adt`)
+        true/1/yes değilse doğrulama KAPALI (`sertifika doğrulaması: kapalı …` satırı basılır); açmak için
+        `.conn_adt`'ye `ADT_SAP_SSL_VERIFY=true`. Yönlendirme host/şema/port değiştirirse `Authorization` düşürülür
+        (kimlik başka sisteme gitmez).
 
 Kimlik (indir/drift/anlik-kur): env FIORI_TOOLS_USER / FIORI_TOOLS_PASSWORD (script basmaz, dosyadan okumaz).
 Çıkış: 0 tamam/eşit · 1 fark/ihlal · 2 ölçüm yok (kimlik yok, canlı okunamadı, anlık görüntü yok, `eslik`te
@@ -374,9 +378,12 @@ PENCERE_ZAMAN_ASIMI = 300  # kullanıcının pencereyi doldurma süresi (sn)
 # Windows PowerShell 5.1 betiği: Get-Credential GUI penceresi (pwsh 7 konsolda sorar — o yüzden powershell.exe).
 # Kullanıcı adı + parola UTF-8 → base64 olarak YALNIZ stdout borusuna yazılır (konsol kod sayfası ASCII dışı parolayı
 # bozmasın); stderr'e / komut satırına sır girmez. Betik `-EncodedCommand` ile geçer (tırnak/boş değişken tuzağı yok).
+# Pencere mesajı betiğe GÖMÜLMEZ, ortam değişkeniyle geçer: servis/URL argv'den ya da uygulamanın `ui5-deploy.yaml`'ından
+# gelir ve PowerShell tipografik tırnakları (U+2018…U+201B) da dizge sonu sayar — gömülürse kod enjeksiyonu (bug-gate 2026-10-03).
+_PS_MESAJ_ENV = "AXET_PENCERE_MESAJ"
 _PS_BETIK = """$ErrorActionPreference = 'Stop'
-$c = Get-Credential -Message '{mesaj}'
-if ($null -eq $c) {{ exit 3 }}
+$c = Get-Credential -Message $env:AXET_PENCERE_MESAJ
+if ($null -eq $c) { exit 3 }
 $n = $c.GetNetworkCredential()
 $e = [System.Text.Encoding]::UTF8
 [Console]::Out.Write([Convert]::ToBase64String($e.GetBytes($n.UserName)) + ' ' + [Convert]::ToBase64String($e.GetBytes($n.Password)))
@@ -387,7 +394,10 @@ def _sistem_anahtari(url: str, client: str) -> tuple:
     """URL + client → karşılaştırma anahtarı (şema/host küçük harf, varsayılan port, sondaki `/` yok)."""
     u = urllib.parse.urlsplit((url or "").strip())
     sema = u.scheme.lower()
-    port = u.port or {"http": 80, "https": 443}.get(sema)
+    try:
+        port = u.port or {"http": 80, "https": 443}.get(sema)
+    except ValueError:  # geçersiz port: traceback yerine eşleşmeyen anahtar (güvenli yön)
+        port = "geçersiz:" + u.netloc
     return sema, (u.hostname or "").lower(), port, u.path.rstrip("/"), (client or "").strip()
 
 
@@ -438,15 +448,21 @@ def _conn_ssl_dogrula(proj) -> bool:
     """`.conn_adt` kolunda sertifika doğrulaması: sap-adt-foundation ADT kütüphanesiyle AYNI kural — env
     `ADT_SAP_SSL_VERIFY` (varsa) > `.conn_adt` değeri > varsayılan KAPALI (`sap_adt_lib.py`: verify yalnız true/1/yes).
     Aynı sisteme ADT kanalı bağlanırken bu komutun sertifika yüzünden düşmemesi için (ölçüldü 2026-10-03: ADT çalışıyor,
-    metadata `CERTIFICATE_VERIFY_FAILED` hostname mismatch)."""
+    metadata `CERTIFICATE_VERIFY_FAILED` hostname mismatch).
+    Değer ADT kütüphanesiyle AYNI ayrıştırıcıdan okunur (python-dotenv: satır sonu yorumu, `export`, tekrar eden
+    anahtarda son kazanır); ham satır okuması bu üç durumda doğrulamayı yanlışlıkla KAPATIYORDU (bug-gate 2026-10-03)."""
     deger = os.environ.get("ADT_SAP_SSL_VERIFY")
     if deger is None:
         try:
             if str(FOUNDATION_SCRIPTS) not in sys.path:
                 sys.path.insert(0, str(FOUNDATION_SCRIPTS))
-            from sapadt.project import conn_file_values
-            degerler = conn_file_values("ADT_SAP_SSL_VERIFY", proj)
-            deger = degerler[0] if len(degerler) == 1 else "false"
+            from sapadt.project import conn_file_values, conn_path
+            try:
+                from dotenv import dotenv_values
+                deger = dotenv_values(conn_path(proj)).get("ADT_SAP_SSL_VERIFY") or "false"
+            except ImportError:
+                degerler = conn_file_values("ADT_SAP_SSL_VERIFY", proj)
+                deger = degerler[-1] if degerler else "false"
         except Exception:  # noqa: BLE001
             deger = "false"
     return deger.strip().strip("'\"").lower() in _DOGRU
@@ -472,11 +488,10 @@ def _pencere_kimlik(servis: str, url: str, client: str, calistir=None):
     if not ps:
         return None, neden
     mesaj = f"SAP kullanıcı adı ve parolası — {servis} $metadata salt-okuma ({url} client {client or '-'})"
-    betik = _PS_BETIK.format(mesaj=mesaj.replace("'", "''"))
-    komut = [ps, "-NoProfile", "-NoLogo", "-EncodedCommand", base64.b64encode(betik.encode("utf-16-le")).decode()]
+    komut = [ps, "-NoProfile", "-NoLogo", "-EncodedCommand", base64.b64encode(_PS_BETIK.encode("utf-16-le")).decode()]
     try:
         p = (calistir or subprocess.run)(komut, capture_output=True, stdin=subprocess.DEVNULL,
-                                         timeout=PENCERE_ZAMAN_ASIMI)
+                                         timeout=PENCERE_ZAMAN_ASIMI, env={**os.environ, _PS_MESAJ_ENV: mesaj})
     except subprocess.TimeoutExpired:
         return None, f"giriş penceresi {PENCERE_ZAMAN_ASIMI} sn içinde doldurulmadı"
     except OSError as exc:

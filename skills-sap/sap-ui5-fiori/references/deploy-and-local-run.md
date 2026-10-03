@@ -364,6 +364,9 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
   (`Get-Credential`; parola çıktıya, log'a, komut satırına girmez). Çıktıda yalnız kaynak adı yazılır
   (`kimlik: env|.conn_adt|pencere`). Kullanıcıdan tarayıcıda kaydetmesi ya da parolası **istenmez** (`ask_user`
   cevapları log'a düz metin düşer). `indir`/`drift`/`anlik-kur` ve deploy kimliği değişmedi (yalnız env).
+- **Sertifika (`.conn_adt` kolu):** ADT kanalıyla aynı kural — `ADT_SAP_SSL_VERIFY` (env > `.conn_adt`) true/1/yes değilse
+  doğrulama **kapalı**dır ve çıktıda `sertifika doğrulaması: kapalı …` satırı basılır; açmak için `.conn_adt`'ye
+  `ADT_SAP_SSL_VERIFY=true`. Yönlendirme host/şema/port değiştirirse `Authorization` düşürülür (kimlik başka sisteme gitmez).
 - `metadata.xml`'e elle satır eklenmez; zorunlu kalırsa kullanıcıya "elle yamandı, SAP çıktısı değil" denir ve commit'ten
   önce `--kaydet` çıktısıyla değiştirilir.
 

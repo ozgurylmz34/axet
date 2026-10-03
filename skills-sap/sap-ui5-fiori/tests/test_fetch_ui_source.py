@@ -1639,6 +1639,53 @@ class TestMetadataKimlikSirasi(unittest.TestCase):
         self.assertNotIn("sertifika doğrulaması: kapalı", out)
         rc, out, g = self._kos_sertifika(conn_ssl="true", env_ssl="false")
         self.assertEqual((0, [True]), (rc, g), out)
+        # dotenv biçimleri: satır sonu yorumu · export · tekrar eden anahtarda son kazanır → doğrulama AÇIK kalır
+        for bicim in ("true  # yorum", "false\nexport ADT_SAP_SSL_VERIFY=true", "false\nADT_SAP_SSL_VERIFY=true"):
+            rc, out, g = self._kos_sertifika(conn_ssl=bicim)
+            self.assertEqual((0, [False]), (rc, g), (bicim, out))
+
+    def test_yonlendirme_baska_hosta_kimlik_tasimaz(self):
+        """302 başka hosta (127.0.0.1 → 127.0.0.2) → Authorization düşer; aynı köken yönlendirmesinde korunur."""
+        import http.server
+        import threading
+        gorulen = []
+
+        class H2(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                gorulen.append((self.server.server_address[0], self.path, "Authorization" in self.headers))
+                if self.path == "/baska":
+                    self.send_response(302)
+                    self.send_header("Location", f"http://127.0.0.2:{hedef.server_address[1]}/son")
+                elif self.path == "/ayni":
+                    self.send_response(302)
+                    self.send_header("Location", "/son")
+                else:
+                    self.send_response(200)
+                self.send_header("Content-Length", "2")
+                self.end_headers()
+                self.wfile.write(b"ok")
+
+            def log_message(self, *a):
+                pass
+        try:
+            hedef = http.server.HTTPServer(("127.0.0.2", 0), H2)
+        except OSError as exc:
+            self.skipTest(f"127.0.0.2 bağlanamadı: {exc}")
+        kaynak = http.server.HTTPServer(("127.0.0.1", 0), H2)
+        for s in (hedef, kaynak):
+            threading.Thread(target=s.serve_forever, daemon=True).start()
+        try:
+            F.B.http_get(f"http://127.0.0.1:{kaynak.server_address[1]}/baska", ("u", "p"))
+            F.B.http_get(f"http://127.0.0.1:{kaynak.server_address[1]}/ayni", ("u", "p"))
+        finally:
+            for s in (hedef, kaynak):
+                s.shutdown()
+                s.server_close()
+        self.assertEqual([("127.0.0.1", "/baska", True), ("127.0.0.2", "/son", False),
+                          ("127.0.0.1", "/ayni", True), ("127.0.0.1", "/son", True)], gorulen)
+
+    def test_sistem_anahtari_gecersiz_port_traceback_vermez(self):
+        self.assertNotEqual(F._sistem_anahtari("https://h:abc", "100"), F._sistem_anahtari("https://h", "100"))
 
     def test_md_ag_hatasi_host_maskelenir(self):
         import urllib.error
@@ -1715,6 +1762,7 @@ class TestPencereKimlik(unittest.TestCase):
         komut, kw = cagri[0]
         betik = base64.b64decode(komut[komut.index("-EncodedCommand") + 1]).decode("utf-16-le")
         ok = (k == ("demo", self.SIR) and neden is None and "Get-Credential" in betik
+              and MD_SERVIS not in betik and MD_SERVIS in kw.get("env", {}).get(F._PS_MESAJ_ENV, "")
               and all(self.SIR not in x for x in komut) and kw.get("stdin") == subprocess.DEVNULL
               and kw.get("capture_output") is True and "-NoProfile" in komut)
         H.kaydet("pencere: base64 boru → kimlik; parola komut satırında yok", "ok", str(ok), ok)

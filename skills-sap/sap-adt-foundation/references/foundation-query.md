@@ -197,7 +197,8 @@ cli adt_atc_check '{"name":"ZCL_DEMO_CLASS","object_type":"class"}'
   salt okuma okur ve §5.1'deki tip-kapsamlı kontrolü yapar; `--kaydet` ile tam dosyayı uygulamanın
   `metadata.xml`'ine yazar (Z168). Kimlik: env `FIORI_TOOLS_USER`/`FIORI_TOOLS_PASSWORD` → proje `.conn_adt` (yalnız
   aynı URL + client) → Windows giriş penceresi — kullanıcıdan tarayıcıda açmasını ya da parolasını isteme
-  (`%sap-ui5-fiori` → `references/deploy-and-local-run.md` §7.5). Kimlik bilgisi içeren bir script yazma/çalıştırma (aXet çekirdeği §11).
+  (`%sap-ui5-fiori` → `references/deploy-and-local-run.md` §7.5). `.conn_adt` kolunda sertifika doğrulaması ADT
+  kanalıyla aynı kuraldır: `ADT_SAP_SSL_VERIFY` true değilse kapalı (çıktıda yazılır). Kimlik bilgisi içeren bir script yazma/çalıştırma (aXet çekirdeği §11).
 
 ### 5.1 Alan doğrulaması TİP-KAPSAMLI olmalı
 - Belge geneli düz metin araması sahte-pozitif verir: metadata iş entity'lerinin yanında altyapı tiplerini
