@@ -6,9 +6,10 @@ description: >
   (shell, domain, data element, structure), where-used or blast-radius analysis,
   transport or lock questions, package contents, table read or SQL query on SAP,
   ATC or syntax check, inactive-object worklist, ABAP Unit, classrun, OData service
-  publish. Triggers: "SAP'den çek", "kaynağı indir", "SAP'ye push et", "aktive et",
-  "where-used", "nerede kullanılıyor (SAP)", "transport", "kilit", "SE11 tablosunu oku",
-  "SQL at", "ATC", "paket içeriği", "inaktif obje". Do not use for triaging a NEW
+  publish, ST22 short dump list or read. Triggers: "SAP'den çek", "kaynağı indir",
+  "SAP'ye push et", "aktive et", "where-used", "nerede kullanılıyor (SAP)", "transport",
+  "kilit", "SE11 tablosunu oku", "SQL at", "ATC", "paket içeriği", "inaktif obje",
+  "ST22", "dump'a bak". Do not use for triaging a NEW
   development request (use sap-intake-triage first) or for non-SAP code.
 ---
 
