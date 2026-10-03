@@ -1609,6 +1609,51 @@ class TestMetadataKimlikSirasi(unittest.TestCase):
         H.kaydet("metadata kimlik ②: .conn_adt", "rc=0 .conn_adt pencere=0", f"rc={rc} pencere={len(cagri)}", ok)
         self.assertTrue(ok, out)
 
+    def _kos_sertifika(self, conn_ssl=None, env_ssl=None):
+        """http_get'i yakalar: hangi ignore_cert değeriyle çağrıldı (sahte sunucu HTTP; SSL'i gerçekten ölçmez)."""
+        import os
+        from unittest import mock
+        gorulen = []
+
+        def sahte_get(url, kimlik, ignore_cert):
+            gorulen.append(ignore_cert)
+            return MD1.encode("utf-8") if isinstance(MD1, str) else MD1
+        _conn_yaz(self.kok, "https://sap.ornek.invalid:44300/")
+        if conn_ssl is not None:
+            with open(self.kok / ".conn_adt", "a", encoding="utf-8") as fh:
+                fh.write(f"\nADT_SAP_SSL_VERIFY={conn_ssl}\n")
+        ek = {"ADT_SAP_SSL_VERIFY": env_ssl} if env_ssl is not None else {}
+        with mock.patch.object(F.B, "http_get", sahte_get), mock.patch.dict(os.environ, ek):
+            if env_ssl is None:
+                os.environ.pop("ADT_SAP_SSL_VERIFY", None)
+            rc, out, _ = self._kos(["--project-dir", self.kok])
+        return rc, out, gorulen
+
+    def test_md_conn_adt_sertifika_adt_kurali(self):
+        """.conn_adt kolu ADT kütüphanesinin kuralını izler: ayar yok/false → doğrulama kapalı; true → açık; env > dosya."""
+        rc, out, g = self._kos_sertifika()
+        self.assertEqual((0, [True]), (rc, g), out)
+        self.assertIn("sertifika doğrulaması: kapalı", out)
+        rc, out, g = self._kos_sertifika(conn_ssl="true")
+        self.assertEqual((0, [False]), (rc, g), out)
+        self.assertNotIn("sertifika doğrulaması: kapalı", out)
+        rc, out, g = self._kos_sertifika(conn_ssl="true", env_ssl="false")
+        self.assertEqual((0, [True]), (rc, g), out)
+
+    def test_md_ag_hatasi_host_maskelenir(self):
+        import urllib.error
+        from unittest import mock
+
+        def hata(url, kimlik, ignore_cert):
+            raise urllib.error.URLError("certificate is not valid for 'SAPHOST01.SAP.ORNEK.COM.TR'. (_ssl.c:1010)")
+        _conn_yaz(self.kok, "https://sap.ornek.invalid:44300/", )
+        with mock.patch.object(F.B, "http_get", hata):
+            rc, out, _ = self._kos(["--project-dir", self.kok])
+        self.assertEqual(2, rc, out)
+        self.assertNotIn("SAPHOST01", out)
+        self.assertIn("<host>", out)
+        self.assertIn("_ssl.c", out)
+
     def test_md_kimlik_baska_host(self):
         """--url .conn_adt'den BAŞKA bir sistem → .conn_adt parolası oraya GÖNDERİLMEZ, pencereye geçilir."""
         with H.SahteSunucu({MD_YOL: MD1}) as srv:

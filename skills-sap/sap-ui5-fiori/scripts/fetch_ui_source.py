@@ -430,6 +430,33 @@ def _conn_kimlik(proj, url: str, client: str):
     return (kullanici, parola), None
 
 
+_DOGRU = ("true", "1", "yes")
+_HOST_DESENI = re.compile(r"(?i)\b(?:[a-z0-9-]+\.){2,}[a-z0-9-]+\b")  # en az 3 parçalı ad / IPv4
+
+
+def _conn_ssl_dogrula(proj) -> bool:
+    """`.conn_adt` kolunda sertifika doğrulaması: sap-adt-foundation ADT kütüphanesiyle AYNI kural — env
+    `ADT_SAP_SSL_VERIFY` (varsa) > `.conn_adt` değeri > varsayılan KAPALI (`sap_adt_lib.py`: verify yalnız true/1/yes).
+    Aynı sisteme ADT kanalı bağlanırken bu komutun sertifika yüzünden düşmemesi için (ölçüldü 2026-10-03: ADT çalışıyor,
+    metadata `CERTIFICATE_VERIFY_FAILED` hostname mismatch)."""
+    deger = os.environ.get("ADT_SAP_SSL_VERIFY")
+    if deger is None:
+        try:
+            if str(FOUNDATION_SCRIPTS) not in sys.path:
+                sys.path.insert(0, str(FOUNDATION_SCRIPTS))
+            from sapadt.project import conn_file_values
+            degerler = conn_file_values("ADT_SAP_SSL_VERIFY", proj)
+            deger = degerler[0] if len(degerler) == 1 else "false"
+        except Exception:  # noqa: BLE001
+            deger = "false"
+    return deger.strip().strip("'\"").lower() in _DOGRU
+
+
+def _host_maskele(metin: str) -> str:
+    """Ağ hatası metnindeki host adı / IP'yi gizler (SSL hata metni host adını içerir — ölçüldü)."""
+    return _HOST_DESENI.sub("<host>", metin)
+
+
 def _powershell_yolu() -> tuple[str | None, str | None]:
     """Windows PowerShell 5.1 (`powershell.exe`) yolu — Get-Credential GUI penceresi yalnız onda (pwsh 7 konsolda sorar)."""
     if os.name != "nt":
@@ -632,10 +659,16 @@ def komut_metadata(a) -> int:
     if not kimlik:
         return 2
     print(f"  kimlik: {kaynak}")
+    sertifika_yok = a.ignore_cert
+    if kaynak == ".conn_adt" and not sertifika_yok and not _conn_ssl_dogrula(getattr(a, "project_dir", None)):
+        sertifika_yok = True
+        print("  sertifika doğrulaması: kapalı (.conn_adt ADT_SAP_SSL_VERIFY ≠ true — ADT kanalıyla aynı kural)")
     try:
-        ham = B.http_get(K._url(url, f"/sap/opu/odata/sap/{servis}/$metadata", client), kimlik, a.ignore_cert)
+        ham = B.http_get(K._url(url, f"/sap/opu/odata/sap/{servis}/$metadata", client), kimlik, sertifika_yok)
     except Exception as exc:  # noqa: BLE001
-        print(f"[FAIL] $metadata okunamadı ({type(exc).__name__} {getattr(exc, 'code', '')}) — ölçüm yok (exit 2)")
+        neden = getattr(exc, "reason", "")  # URLError: ağ sebebi (DNS/SSL); host adı maskelenir, kimlik içermez
+        print(f"[FAIL] $metadata okunamadı ({type(exc).__name__} {getattr(exc, 'code', '')}"
+              f"{(' · ' + _host_maskele(str(neden))) if neden else ''}) — ölçüm yok (exit 2)")
         return 2
     try:
         tipler = _edmx_tipleri(ham)

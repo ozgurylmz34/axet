@@ -354,6 +354,18 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py <paket>/ui/
   salt okuma çeker, XML olarak ayrıştırır, alanı **yalnız verilen EntityType'ta** arar (tip-kapsamlı; belge geneli arama
   `SAP__Signature` gibi altyapı tiplerinden yanlış pozitif verir). `--tip` verilmezse alanın bulunduğu her tipi listeler.
 - Kapsam: yalnız metadata metni; verinin dolu gelmesi ayrıca ölçülür.
+- **Bayat `metadata.xml` (Z168):** `python $F metadata <SERVIS> --kaydet --app <app>` tam `$metadata`'yı SAP yanıtı
+  olarak bayt bayt yazar; önce/sonra boyutu, EntityType/Property sayısını ve eklenen/kalkan alanları basar. Yol sırası:
+  `ui5-mock.yaml` `metadataPath` → manifest `settings.localUri` → (yalnız `mainService` ise)
+  `webapp/localService/mainService/metadata.xml`; hiçbiri yoksa yazmaz, `--kaydet <yol>` verilir. Yanıt EDMX değilse
+  (giriş sayfası) exit 2 — "ölçüm yok", "alan yok" değil. Annotation dosyaları ve mock verisi bu komutla güncellenmez.
+- **Kimlik (yalnız bu salt-okur `metadata` komutu):** env `FIORI_TOOLS_USER/PASSWORD` → proje `.conn_adt` (yalnız hedef
+  URL + client `.conn_adt`'ninkiyle aynıysa; başka sisteme o kimlik gönderilmez) → Windows giriş penceresi
+  (`Get-Credential`; parola çıktıya, log'a, komut satırına girmez). Çıktıda yalnız kaynak adı yazılır
+  (`kimlik: env|.conn_adt|pencere`). Kullanıcıdan tarayıcıda kaydetmesi ya da parolası **istenmez** (`ask_user`
+  cevapları log'a düz metin düşer). `indir`/`drift`/`anlik-kur` ve deploy kimliği değişmedi (yalnız env).
+- `metadata.xml`'e elle satır eklenmez; zorunlu kalırsa kullanıcıya "elle yamandı, SAP çıktısı değil" denir ve commit'ten
+  önce `--kaydet` çıktısıyla değiştirilir.
 
 ### 7.6 Ölçülmeyenler
 - Fiori Elements uygulamaları · TypeScript uygulamalar · `-dbg` üretmeyen/özel build · farklı ui5-tooling sürümüyle
