@@ -28,7 +28,7 @@ testini kurulum kendisi hazırlar. GitHub hesabı gerekmez.
 | Paket | Kullanan |
 |---|---|
 | `python-docx`, `python-pptx`, `openpyxl` (`pip install --user …`) | `%office-docs`, `%office-slides`, `%office-excel` |
-| `markdown`, `Pillow` + Edge/Chrome (PDF baskısı) | `%sap-fs-ts-docs` (PDF, ekran görüntüsü) |
+| `markdown`, `Pillow` + Edge/Chrome (PDF baskısı) | `%sap-fs-ts-docs` (FS/TS/KD — kullanıcı kılavuzu dahil; PDF, ekran görüntüsü) |
 | Chrome ya da Edge + `@playwright/cli` — **kendiliğinden kurulur**: kurulum aracı ve `%guncelle`, Node.js varsa `@playwright/cli`'yi klonun `.araclar/` klasörüne kurar ve `~/.playwright/cli.config.json`'u yazar (`scripts/tarayici_hazirla.py`; tarayıcı indirilmez, ayrı komut gerekmez) | aXet içinde tarayıcı testi (`%sap-ui5-fiori`), `%sap-ui5-user-guide` |
 | `@sap-ux/ui5-middleware-fe-mockserver` (proje `ui/` workspace'inde) | `%sap-ui5-user-guide` (ekran görüntülü kullanıcı kılavuzu) |
 | Node.js + `playwright-core` (proje içinde), `@abaplint/cli` (npx önbelleği) | `%sap-ui5-fiori` ui-smoke, `%sap-code-review` abaplint |
@@ -166,7 +166,7 @@ kapanış `KAPANDI — test borcu var: %testler` der ve `doctor` borç sürdük�
 - `%hata-bildir` — aXet hatası ya da önerisi için kimlik taşımayan bildirim hazırla (GitHub hesabı gerekmez)
 - `%office-excel` · `%office-docs` · `%office-slides` — Excel, Word/PDF, sunum üretimi ve okuma
 - `%sistem` — projenin `conn/` altında tanımlı SAP sistemlerini listele, aktif olanı değiştir ("QA'ya geç")
-- SAP işi: giriş `%sap-dev` (yeni talepte önce `%sap-intake-triage`); SAP skill listesi [`skills-sap/README.md`](skills-sap/README.md)
+- SAP işi: giriş `%sap-dev` (yeni talepte önce `%sap-intake-triage`); SAP skill listesi [`skills-sap/README.md`](skills-sap/README.md) · KD (kullanıcı kılavuzu): `%sap-fs-ts-docs`; freestyle UI5 ekran çekimiyle `%sap-ui5-user-guide`
 - `ctrl+p` → **User** sekmesi — projeye özel komutlar (`.axet-code/commands/`)
 - Kimlik bilgilerini (kullanıcı adı, şifre, token) sohbete **yazma**: prompt'lar kurumsal denetime gider.
 
