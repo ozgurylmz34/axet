@@ -2,7 +2,7 @@
  "_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
  "sources": {
   "DEV_CORE": {
-   "commit": "bfb3f60fb1b23b5b8a05165cb38c42b38d57458a",
+   "commit": "fadf0914a95b4cbed44bcb02a7050b3a20660f51",
    "files": {
     ".gitattributes": {
      "decision": "uyarla",
@@ -31,7 +31,7 @@
     ".github/workflows/core-ci.yml": {
      "decision": "uyarla",
      "rule": ".github/*",
-     "sha256": "9811dc8a8e0eae64452fd67fe3c0d7a1036c8af0a5fff725d205b05120e4585e",
+     "sha256": "9cf9e96818498bbbfbf00fedbbedc031ecb172ab3c4c6f90152099c17db41017",
      "status": "tamam"
     },
     ".github/workflows/project-guard.yml": {
@@ -67,19 +67,19 @@
     "ONBOARDING.md": {
      "decision": "uyarla",
      "rule": "ONBOARDING.md",
-     "sha256": "cc6fd31de39d751509013a43c10eac2031295f53fe138a0224debc3936234dae",
+     "sha256": "bd9128b528ebf4c04e254b508112cee786eda77d1db8821e569c269a17a0ab5a",
      "status": "tamam"
     },
     "PROJECT_BOOTSTRAP.md": {
      "decision": "uyarla",
      "rule": "PROJECT_BOOTSTRAP.md",
-     "sha256": "8ac8e382b8106155d2d335f1efd43ca4c5c3099ad157b38566283bfea7cf8fea",
+     "sha256": "d6d9a4d124c38111f897139b9c587f0a6423ce65ee2c76f7d600e600b3cabc4e",
      "status": "tamam"
     },
     "README.md": {
      "decision": "alinmaz",
      "rule": "README.md",
-     "sha256": "2ff1cb2890fe0b731bdeda32e36538de8432813eab1b276f17d6ecf40e958485",
+     "sha256": "ad200ca69d43f159c041207a1390d33a3d34ffa0394bf243df269100e571631e",
      "status": "-"
     },
     "attic/adhoc-fosil/README.md": {
@@ -193,31 +193,31 @@
     "claude/README.project.template.md": {
      "decision": "telafi",
      "rule": "claude/README.project.template.md",
-     "sha256": "06428759baf6b1da951773c177fb6de0d28cdfe257c01c121bdc5bb23e9ae21d",
+     "sha256": "a2ee268eec1a843785e9f469b163d297a36cf1f2695cff49d9d2c52e2f8bd4b2",
      "status": "tamam"
     },
     "claude/agents/adt-gateway.md": {
      "decision": "telafi",
      "rule": "claude/agents/adt-gateway.md",
-     "sha256": "8aa57b1e67b5cc466bd0a85ec974a447230dab8ca07097b46fe0397cba03e5a8",
+     "sha256": "8da55c4a52d057f5fcc924404b3a5b0e202983bb73a3dbbd06c4f7a58bf446ff",
      "status": "kismi"
     },
     "claude/agents/backend-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "d3797597dfa8a7e6c903481a9f4944b7744fd914cd9de69200cf2d4b96cb6887",
+     "sha256": "bdd9ff4a650a4e70fb6da391ad18fdf5e3b856745243d7349ca05f859ea4145e",
      "status": "tamam"
     },
     "claude/agents/bug-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/bug-expert.md",
-     "sha256": "a4ea60a158a89c8a8e9e32778044c0ea6a5e681a39fb7974018f0bf90c67f84c",
+     "sha256": "b7f6c7e43aeafd602a545731f487f51ec67dabbe6e8e6da0e4f6cbb11765a2ec",
      "status": "tamam"
     },
     "claude/agents/frontend-expert.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "0c2e3276953985c574e382a21bfbf42d9d5a00863f23ffe236b5364256dab24a",
+     "sha256": "f531701ee519f64f265da7b0abec526b13f1a6a8cb4e6c5a939a2a0b40771f23",
      "status": "tamam"
     },
     "claude/agents/infra-expert.md": {
@@ -229,13 +229,13 @@
     "claude/agents/sap-feature.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "86e996bbc94afb658a5be4e37c4490eabb7cefcf24964b37729d4aac966ff994",
+     "sha256": "9a618773758486a40143bf88f901f2f67f03a70b8d74ee35d56e323a8a3858e8",
      "status": "tamam"
     },
     "claude/agents/sap-research.md": {
      "decision": "uyarla",
      "rule": "claude/agents/*",
-     "sha256": "7596a7ef82a1bf08e8ab4777335fd1175d9f20c34016b9428191bb406e7256b9",
+     "sha256": "3d933689924c2108a5f42e3c632877bc0d27fa5c1b7e93244f39bd5dcdb6a981",
      "status": "tamam"
     },
     "claude/commands/core-guncelle.md": {
@@ -247,7 +247,7 @@
     "claude/commands/onboard.md": {
      "decision": "uyarla",
      "rule": "claude/commands/onboard.md",
-     "sha256": "2003b5b193804b47bfb2cee10f4280fd0f2b8da13d5c1478d92588f9f74f0a7c",
+     "sha256": "72b479d1b8f1021a09af70daad01e6c6186ecba4b0b32730d99dd11461615076",
      "status": "tamam"
     },
     "claude/conn_adt.template": {
@@ -337,7 +337,7 @@
     "claude/memory-seed/_indeks-terfi-2026-09-18.md": {
      "decision": "alinmaz",
      "rule": "claude/memory-seed/_indeks-terfi-2026-09-18.md",
-     "sha256": "cfac18e3ccc1bf518e3bf66be0aa9c5a2c4ad6c2354351ab12a711750a396265",
+     "sha256": "61156e0a5c81dcff8b027a6a4ce2e72137309e0003da32aff4557a613eb468a6",
      "status": "-"
     },
     "claude/memory-seed/_indeks-ui.md": {
@@ -409,7 +409,7 @@
     "claude/memory-seed/feedback_adt-sql-query-400-sebebi-where-terim-sayisi.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_adt-sql-query-400-sebebi-where-terim-sayisi.md",
-     "sha256": "e87455c2ac6c8af2157553dd480acc804fbe7c18d3ea12a018a9b0d12e55948e",
+     "sha256": "3a6b133a8295e7000a0873f44c0782429980ce4834850a3537b3d6b7ea0cb24b",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_adt-table-read-pozisyonel-hizalama-tuzagi.md": {
@@ -1675,7 +1675,7 @@
     "claude/memory-seed/feedback_subagent-karar-kurali.md": {
      "decision": "uyarla",
      "rule": "claude/memory-seed/feedback_subagent-karar-kurali.md",
-     "sha256": "f19c891a62bceb6d904b9fa71e956ff41b12d94a0fb0a70181b0f84520098f24",
+     "sha256": "9906303a524b1a99c2cade868cc0ee6882197d2e3d3817e9a4b61e3cc3b7fd27",
      "status": "tamam"
     },
     "claude/memory-seed/feedback_tablo-yaratma-onay-gate.md": {
@@ -1897,7 +1897,7 @@
     "claude/settings.template.json": {
      "decision": "telafi",
      "rule": "claude/settings.template.json",
-     "sha256": "ab3529bbc0e17114ca0ea2402eb0ccdce24bf374a6bf2ae33ab6e801cb6a2a02",
+     "sha256": "7428b7ad89d82d2a268b834d004d55a39a94a75a4cca77a8be6f420fa6164e5e",
      "status": "kismi"
     },
     "claude/skills/intake-triage/SKILL.md": {
@@ -1909,7 +1909,7 @@
     "claude/skills/playwright-cli/SKILL.md": {
      "decision": "telafi",
      "rule": "claude/skills/playwright-cli/*",
-     "sha256": "29c0b669a524d42b51934d7db9144c1c07a566d0549ae6fb6ccd810e5a3cf61b",
+     "sha256": "6b0b2e697f7c8a7d0cafc9c0847d4de8ba3500aab64f61bbc07a0cece3627b04",
      "status": "tamam"
     },
     "claude/skills/playwright-cli/references/element-attributes.md": {
@@ -1933,7 +1933,7 @@
     "claude/skills/playwright-cli/references/running-code.md": {
      "decision": "telafi",
      "rule": "claude/skills/playwright-cli/*",
-     "sha256": "d95c539a5990b71d02d8bdf1d9414df16191eb6cff95b0063820518b7a13dcb2",
+     "sha256": "92cb1bb5f986f719377e5d0f62a3487c55db285c452862e82dfdaa2528b318b2",
      "status": "tamam"
     },
     "claude/skills/playwright-cli/references/session-management.md": {
@@ -1969,7 +1969,7 @@
     "claude/skills/sap-abap-dev/SKILL.md": {
      "decision": "uyarla",
      "rule": "claude/skills/sap-abap-dev/*",
-     "sha256": "fc5dd46dedf74b1c3d3f81b623d5b9a5763c861a8169abc1b7b23829efb91181",
+     "sha256": "b5e23691f51f4c20d9f92006401065c70eb622a74105940890c535fbff7d9a66",
      "status": "kismi"
     },
     "claude/skills/sap-abap-dev/references/clean-core-replacements.md": {
@@ -2017,7 +2017,7 @@
     "docs/ix-works-mimari-kilavuzu.md": {
      "decision": "alinmaz",
      "rule": "docs/*",
-     "sha256": "9f40c2e6d8f81ac1912be93396df9d7495613e42a37352bf1f1076bedf4ab10e",
+     "sha256": "5e0031b115d1f7fe26f2c0457ec0b2357aca9031e50ac19d075093bba86400c2",
      "status": "-"
     },
     "docs/ix-works-yonetici-sunum.md": {
@@ -2035,7 +2035,7 @@
     "governance/agent-teams-operating-model.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "48ca343bd65d6a239d33e6c4861cf42886c0b03a16eed87f6aa4fa99a5a589e9",
+     "sha256": "16d43d072347d3fecacb785ad6f0ac66d2f7f2e158d56e27110944d2a429bedd",
      "status": "-"
     },
     "governance/decisions/0001-tek-branch-main.md": {
@@ -2173,25 +2173,25 @@
     "governance/infra-changelog.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "48d790d8f2e80e129db20110c74294d38ffb791e76f7e03e76019031c98696d2",
+     "sha256": "e27089a9fcdf827a39ffe7adc71417666a128ac798c70bec62a9e5d376d03877",
      "status": "-"
     },
     "governance/infra-test-recipes.md": {
      "decision": "uyarla",
      "rule": "governance/infra-test-recipes.md",
-     "sha256": "3264b69b167a32f7ebc8d84379e78d5d04fde11360df96f689d84c1a7bd5f557",
+     "sha256": "1809769386cc632ad66ce77a88aa526358cac0a9cc003e92c4afaff172ac4600",
      "status": "tamam"
     },
     "governance/reference/released_successors.json": {
      "decision": "al",
      "rule": "governance/reference/released_successors.json",
-     "sha256": "27df1cd2096155ff10eaf0a6761c121c5ee070520f5c65ec4444712789cd9f7b",
+     "sha256": "afe05142896bc73b52569f8e28d3967eddbac036223cf57fc3fdd39d45ac1617",
      "status": "tamam"
     },
     "governance/removed-controls.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "a67e9fb377574d121af6de2db1c115adf0fa47daa7e92c7c2e725d8c77174f3c",
+     "sha256": "2c17f4444ad4b6730fd038c3291a7fe24d92a3edf3cf023d7d0438dc4209996f",
      "status": "-"
     },
     "governance/research/q5-is-turu-olcumu-2026-08-22/olcum.py": {
@@ -2203,13 +2203,13 @@
     "governance/tooling-plugins.md": {
      "decision": "alinmaz",
      "rule": "governance/*",
-     "sha256": "f6a867a01f98c5daa279f20d62a894e31a23591a5b920e7814ad89cc1615d82b",
+     "sha256": "3efdcc24e0ecce7131de4f12db9ccbe4e66985df2332f47f685070c4c9951691",
      "status": "-"
     },
     "governance/tooling-radar.md": {
      "decision": "telafi",
      "rule": "governance/tooling-radar.md",
-     "sha256": "1de1e004de0b21f6c4db031d99adffe14f6f19162a1d8c1fa75fcee1bd491dde",
+     "sha256": "33a84bfbbc6a66ea774f878ced18c42007ad220fbe91704d1976174b60ef1f46",
      "status": "tamam"
     },
     "governance/vscode-setup.md": {
@@ -2233,7 +2233,7 @@
     "mcp_servers/sap_adt/README.md": {
      "decision": "uyarla",
      "rule": "mcp_servers/*",
-     "sha256": "693ff5f369be216e8db91df575888c0058344e08607d52f5f851e1824270fe48",
+     "sha256": "2043075524e46bc40991326939b03c7e638dc3548fcb9ef8db92d53ddaff7b7f",
      "status": "kismi"
     },
     "mcp_servers/sap_adt/__init__.py": {
@@ -2323,7 +2323,7 @@
     "mcp_servers/sap_adt/tools/atom.py": {
      "decision": "uyarla",
      "rule": "mcp_servers/*",
-     "sha256": "a862a169bec0b2ddc856471a98edc45a927b2f5d16dcf4b7c4437d045051e534",
+     "sha256": "4fe7926223e1a27d7ccb2f62a58c51f39400c52ff488db28ee6bd3d4523586f8",
      "status": "kismi"
     },
     "mcp_servers/sap_adt/tools/composite.py": {
@@ -2335,7 +2335,7 @@
     "mcp_servers/sap_adt/tools/query.py": {
      "decision": "uyarla",
      "rule": "mcp_servers/*",
-     "sha256": "17f1399106a05c14b4efba1e47c7585f6bbd57353a50a619d7238692efbe0054",
+     "sha256": "e54b5f836433ad4a3f23d3b28641d08f70174146863fd5095ded8c7599045e54",
      "status": "kismi"
     },
     "playbook/00-discipline-and-principles.md": {
@@ -2353,7 +2353,7 @@
     "playbook/adt-cds.md": {
      "decision": "uyarla",
      "rule": "playbook/adt-cds.md",
-     "sha256": "213258d0f747bfba5b67aab2bd74833e1da48c25e5a318aaa31473def7c6b303",
+     "sha256": "c9c49d10907e5bbc04dfc2a1e7d58dd15fe95bb6eea16aee8042f691b4f6c3a9",
      "status": "tamam"
     },
     "playbook/adt-classes.md": {
@@ -2389,7 +2389,7 @@
     "playbook/adt-mcp.md": {
      "decision": "uyarla",
      "rule": "playbook/adt-mcp.md",
-     "sha256": "579295b2a3eca0d682a12ec64eb8228815898a7b38a6222f0691226c66bb4529",
+     "sha256": "ec2565d84690a87ac45023cbc8304ac156cb82dece04b5090ca53b445685c02c",
      "status": "tamam"
     },
     "playbook/adt-message-class.md": {
@@ -2449,7 +2449,7 @@
     "playbook/checklists/core-script-development.md": {
      "decision": "alinmaz",
      "rule": "playbook/checklists/core-script-development.md",
-     "sha256": "99c456e819a635f2b7ac5a3d8c024dbaa297a2880aec08567d78b469814740b0",
+     "sha256": "757dc0598c57b05578fd74a39ff70e37bbd2a71281da89429bdaaca7cd54273a",
      "status": "-"
     },
     "playbook/checklists/doc-checklist.md": {
@@ -2539,7 +2539,7 @@
     "playbook/howto-cekirdek-guncelleme.md": {
      "decision": "alinmaz",
      "rule": "playbook/howto-cekirdek-guncelleme.md",
-     "sha256": "a88b264d942ec4470990d99e5ad128a197210ba6c8c1a9686d7300d06973a917",
+     "sha256": "49d18e9cf7fcac48d04a0d6b419e621722575fb3a8da02ba7856038e8087f806",
      "status": "-"
     },
     "playbook/howto-classic-dynpro-datafield-screens.md": {
@@ -2629,7 +2629,7 @@
     "playbook/lessons-learned.md": {
      "decision": "uyarla",
      "rule": "playbook/lessons-learned.md",
-     "sha256": "cdf8bbcd5712105e146fd41d4b234a75cf1f0e4d12dfb656b138f7a2b68d1a6c",
+     "sha256": "4d6081ca9bc8d98cf33699a9f5797a639066c221c8fdd15004e8aa26729ac8ef",
      "status": "tamam"
     },
     "playbook/modules/sd.md": {
@@ -2719,7 +2719,7 @@
     "scripts/agent_stall_watch.py": {
      "decision": "alinmaz",
      "rule": "scripts/*",
-     "sha256": "b2d1f31ff96803fbce595fd91249cbac186004bafad70234c84325d48a491882",
+     "sha256": "837c0839168b5fcb5375d7a4134c2d827702dc4e7ab560f4232e1dd5cfa34025",
      "status": "-"
     },
     "scripts/agent_time_report.py": {
@@ -2983,7 +2983,7 @@
     "scripts/doc_tools.py": {
      "decision": "al",
      "rule": "scripts/doc_tools.py",
-     "sha256": "2e2325c775ff14a839a1b8af1f962fc92d1de53f679763ae6050c2d7fa3c81af",
+     "sha256": "cf10f4b9ea3986c7f48e0097d6a461d15b48e6dc8ac719dacab73a8a145d49a0",
      "status": "tamam"
     },
     "scripts/download_ddic_objects.py": {
@@ -3061,7 +3061,7 @@
     "scripts/hooks/README.md": {
      "decision": "alinmaz",
      "rule": "scripts/hooks/*",
-     "sha256": "d0b0e6a7952ce1521732bfca564efb135d75c152d02bbd30e651626732ed9d72",
+     "sha256": "feb309ae56e760a3527cdaf0445d7daa48e854aef74e42b89482b6ba5026883c",
      "status": "-"
     },
     "scripts/hooks/_pbe_msag_textpool.py": {
@@ -3097,7 +3097,7 @@
     "scripts/hooks/intake_triage.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/intake_triage.py",
-     "sha256": "a3015fe4defa04e1bef3a1895a187c874c84066d077fb952192100e7e3f826cd",
+     "sha256": "9828cdc02f4744f5d37b6aacecbc540892a27da4104c81934ff882aae923f27d",
      "status": "tamam"
     },
     "scripts/hooks/itg_backstop.py": {
@@ -3139,7 +3139,7 @@
     "scripts/hooks/recall_inject.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/recall_inject.py",
-     "sha256": "de7ecc9008280c511f77b76f68c505d7cb3497fd546944b2739090e20d130e43",
+     "sha256": "1e28207729e31e773bf23c746ace3383ad9652bc3ade9d6cd597d139b17e0c38",
      "status": "tamam"
     },
     "scripts/hooks/sap_worktype_hint.py": {
@@ -3157,7 +3157,7 @@
     "scripts/hooks/skill_injector.py": {
      "decision": "telafi",
      "rule": "scripts/hooks/skill_injector.py",
-     "sha256": "83bd01d5c44a5a984bc08d18faf02be3dc741bc4085f844d4398c55828743c42",
+     "sha256": "9c0938c27b1092270f7913632539d8b46b5578bee8ace1f1e496740a2decf19f",
      "status": "tamam"
     },
     "scripts/hooks/tooling_radar_check.py": {
@@ -3193,7 +3193,7 @@
     "scripts/ix_doctor.py": {
      "decision": "telafi",
      "rule": "scripts/ix_doctor.py",
-     "sha256": "f0de1fa01ff747e3945337181ee4cf025e3c5633fcb443940dd7b30887a36873",
+     "sha256": "1d31a3a01bd5c49eda210c0abbbd68e3186643b592fb202e2ecc785031677ece",
      "status": "tamam"
     },
     "scripts/list_inactive_objects.py": {
@@ -3313,7 +3313,7 @@
     "scripts/refresh_released_successors.py": {
      "decision": "uyarla",
      "rule": "scripts/refresh_released_successors.py",
-     "sha256": "2f2c0fec8925e7eb429bc9374884d7fdb2270bc3cbed5b3228aab6919980118e",
+     "sha256": "10c982e5cf4ec0ba998abd62f2fb72f7334df7ffe4d5c6e9a54cd7259ff16d5a",
      "status": "tamam"
     },
     "scripts/run_atc_check.py": {
@@ -3349,7 +3349,7 @@
     "scripts/sap_adt_lib.py": {
      "decision": "uyarla",
      "rule": "scripts/sap_adt_lib.py",
-     "sha256": "0a3edbbf117ce83ab083f16660b4a3fe5f5b431c313c9d89860f22d5ff358af1",
+     "sha256": "4eedf0bcf2201755f71dfdc6afaed2c18c53c6cd4210f8f759e4d7278bf7e63c",
      "status": "kismi"
     },
     "scripts/sap_client.py": {
@@ -3391,7 +3391,7 @@
     "scripts/seed_memory.py": {
      "decision": "telafi",
      "rule": "scripts/seed_memory.py",
-     "sha256": "5004482bafef0cfaa23825d219299ded8f5367968e6b97c4ce83910bbb9dfe2f",
+     "sha256": "0f3bf8842c8a4a9430d0cb2a7bb5bc70e257f68d4379dfe0986862d60e8e4bf4",
      "status": "tamam"
     },
     "scripts/session/__init__.py": {
@@ -3433,7 +3433,7 @@
     "scripts/sprint_gate_check.py": {
      "decision": "alinmaz",
      "rule": "scripts/sprint_gate_check.py",
-     "sha256": "984e3a81ad7b148a117e8ddd5330a829d5f2be7cdc0357750062fd33e11b6071",
+     "sha256": "62c6a784ac213527cf3bbd313a41577f60e1b6aacea50b875dcba75d0955e11f",
      "status": "-"
     },
     "scripts/statusline.py": {
@@ -3469,7 +3469,7 @@
     "scripts/team_setup.py": {
      "decision": "telafi",
      "rule": "scripts/team_setup.py",
-     "sha256": "7b6e24b26b396023c7b390892d0bab0139f6885d461dacaf04f5027d3410625f",
+     "sha256": "eafbb7cee1491ea06bbfb80c5a7ed6d348d6529dfa5e3b690396e35eb5427977",
      "status": "tamam"
     },
     "scripts/tests/guard_conformance.py": {
@@ -3517,7 +3517,7 @@
     "scripts/ui-smoke/README.md": {
      "decision": "uyarla",
      "rule": "scripts/ui-smoke/*",
-     "sha256": "8166b805ccee57ee34d8e2e25618c3d31bf7db768ebb600690461c085dd1f7c6",
+     "sha256": "bc3f63dc85d604ccc90d36ea542b41d32cf1b08c78c7f8c60475836a86c413db",
      "status": "kismi"
     },
     "scripts/ui-smoke/helpers.selftest.spec.ts": {
@@ -3709,7 +3709,7 @@
     "scripts/validators/check_abaplint.py": {
      "decision": "uyarla",
      "rule": "scripts/validators/check_abaplint.py",
-     "sha256": "28c232159c88398845a9599942e7413526929e4dfc85c9dccad7b8ff1069edab",
+     "sha256": "507b3bd808437377b5cf52acc2cf1084228266ee9816862da8b7153a1488435a",
      "status": "kismi"
     },
     "scripts/validators/check_amdp_comment_apostrophe.py": {
@@ -3818,6 +3818,12 @@
      "decision": "alinmaz",
      "rule": "scripts/validators/check_hook_injected_paths.py",
      "sha256": "3ae52985632ab5b70a873f0143d10a58fc2cac2a5540ce7d345a9af5c1d42ce5",
+     "status": "-"
+    },
+    "scripts/validators/check_id_uniqueness.py": {
+     "decision": "bekliyor",
+     "rule": "scripts/validators/*",
+     "sha256": "25f7c2b6b4876f1f4a1a495f3d11a79a656916b616bc7dc96bd9fc6f2ffc2f9e",
      "status": "-"
     },
     "scripts/validators/check_instruction_budget.py": {
@@ -4009,7 +4015,7 @@
     "scripts/validators/run_all_validators.py": {
      "decision": "bekliyor",
      "rule": "scripts/validators/*",
-     "sha256": "9a1fbb4a66d3e5bba5020fd4900c93678d17a35d7b6a7b1b0b1cc17658fa31b1",
+     "sha256": "a1e9fbd96512b0a57af53979d4f89245517179b9d122e659f8b0ea8fe35a86a0",
      "status": "-"
     },
     "scripts/validators/run_review.py": {
@@ -4117,7 +4123,7 @@
     "standards/README.md": {
      "decision": "telafi",
      "rule": "standards/*",
-     "sha256": "32da83a8b710b3462863347e1b3b2f4c4abebb73b03a41129820e8aff16a126e",
+     "sha256": "3077c012ac762c9af00743c58abe88ce0119d5da0c4332784f9300bac490a060",
      "status": "tamam"
     },
     "templates/README.md": {
@@ -4162,6 +4168,12 @@
      "sha256": "f8d9b28d483470941df32072b93e205a2eb549327c60938717e7eec158881495",
      "status": "tamam"
     },
+    "tests/fixture_sure_agirlik.json": {
+     "decision": "uyarla",
+     "rule": "tests/*",
+     "sha256": "af860f79bb426815766af738fe3ced2bb09b020e4512ef75a2d1a675ad35b8e5",
+     "status": "tamam"
+    },
     "tests/fixtures/abaplint_failopen/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -4189,8 +4201,14 @@
     "tests/fixtures/agent_stall_watch/run.py": {
      "decision": "alinmaz",
      "rule": "tests/fixtures/agent_stall_watch/*",
-     "sha256": "88c8788545684d605ca64e6825deefa2d94330935e1a3eed3ff8c0250898e9d9",
+     "sha256": "2a80971f13dfc774816844fc8b5986c9f7e210c8923707929f476ed163b819ef",
      "status": "-"
+    },
+    "tests/fixtures/ajan_mesaji_onek/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "eb4d5c5f233988adde538720efb970a5551f3f33a1101f5331c319a13947b4d4",
+     "status": "kismi"
     },
     "tests/fixtures/aktivasyon_baseline_tazeligi/run.py": {
      "decision": "uyarla",
@@ -4327,7 +4345,7 @@
     "tests/fixtures/b0_secim/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "45446d3c00e07f82f1f5656bf0b584e209f72370b180e5df5f7bbd92b6dfee51",
+     "sha256": "5536f6aa6821b728b0c067c0f8905c3e5687c69beb6744f9919e3dcec8e9e69f",
      "status": "kismi"
     },
     "tests/fixtures/bos_seans_markeri/run.py": {
@@ -4624,6 +4642,12 @@
      "sha256": "7453c656f640bcd962058675c24e552fa5f115c1805bd68275fec76f543ecc5b",
      "status": "kismi"
     },
+    "tests/fixtures/dump_okuma/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "89f186139e16e318b332f1fbfe37e08c6c3f8a128507ca222c0c6cf555c40553",
+     "status": "kismi"
+    },
     "tests/fixtures/fetch_ui_source/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -4700,6 +4724,12 @@
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
      "sha256": "f1a80ff7dc64cf97842ef2e94ebae3fdb7a765109589402e63f915f2ee6e8a23",
+     "status": "kismi"
+    },
+    "tests/fixtures/id_tekilligi/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "6650efecab10d6fc0eda264eea2b7720916252ffecfed99f99b29f8c88ea9ae8",
      "status": "kismi"
     },
     "tests/fixtures/imza_cok_satirli_type_c/run.py": {
@@ -4862,6 +4892,12 @@
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
      "sha256": "a243461c4ccd4eca83c13615844602373b4761b8a04860fbc97afb1d62865a41",
+     "status": "kismi"
+    },
+    "tests/fixtures/parca_tamlik/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "424997b9dd56374ae3a71f6633b87fdfb371452c10aa1a54c5e1958ed6cbc5c8",
      "status": "kismi"
     },
     "tests/fixtures/pbe_kapsam/run.py": {
@@ -5050,6 +5086,12 @@
      "sha256": "0e2d7bae16e3e19f945999197edfa389b68d1bcaea208454b4805faae109278f",
      "status": "kismi"
     },
+    "tests/fixtures/recall_tekrar_bastirma/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "398bab1771ee5219dd289a27b1b56a972ec55107a68f8e49c82015c6991a7493",
+     "status": "kismi"
+    },
     "tests/fixtures/retry_500_govde/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
@@ -5149,7 +5191,13 @@
     "tests/fixtures/sorgu_basarisizligi_gorunur/run.py": {
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
-     "sha256": "f24f76849bd1b74c964156bae9cafa998f5e0d5be0b7834cff25a92ff2d34125",
+     "sha256": "00fe4fab015131173235347415ec2f66975ea2c58cdc6aac7c270232705de1f4",
+     "status": "kismi"
+    },
+    "tests/fixtures/sql_satir_kirma/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "3848a2e2b9adb946059acabdffa892c36f316cf41f1a04072333aa088cadd521",
      "status": "kismi"
     },
     "tests/fixtures/statusline_token_esikleri/run.py": {
@@ -5186,6 +5234,12 @@
      "decision": "uyarla",
      "rule": "tests/fixtures/*",
      "sha256": "c19a9ff20f110a5ad79b11d622372ddeb0420294fcf3f9968b799d4e1627aef8",
+     "status": "kismi"
+    },
+    "tests/fixtures/tohum_govde_guncelleme/run.py": {
+     "decision": "uyarla",
+     "rule": "tests/fixtures/*",
+     "sha256": "952e02ab15952de275261dbd2a40721e936d419a27148c6f4b5048b3f7924f15",
      "status": "kismi"
     },
     "tests/fixtures/tohum_terfi_gorunurlugu/run.py": {
@@ -5305,7 +5359,7 @@
     "tests/run_fixture_tests.py": {
      "decision": "uyarla",
      "rule": "tests/*",
-     "sha256": "c2af94dd8aca6dc7ac3fa57472bbbc760f53540f4be3dc2fc6e4a35c9374675a",
+     "sha256": "a8f892f60f7b7c2762bda8781652c2f50d6c2f969f6edf35ba717a694ea4f0ea",
      "status": "tamam"
     },
     "tests/run_guard_fixture_tests.py": {
@@ -5315,15 +5369,15 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-27T00:17:03"
+   "locked_at": "2026-10-03T17:19:44"
   },
   "PROVA": {
-   "commit": "d330a3f83c0f9bba55e5c66322c5b92e00ac2fb5",
+   "commit": "413754d9bfcf608c8e1d209138dac7d0a36ac547",
    "files": {
     ".claude/settings.json": {
      "decision": "telafi",
      "rule": ".claude/settings.json",
-     "sha256": "ab3529bbc0e17114ca0ea2402eb0ccdce24bf374a6bf2ae33ab6e801cb6a2a02",
+     "sha256": "7428b7ad89d82d2a268b834d004d55a39a94a75a4cca77a8be6f420fa6164e5e",
      "status": "kismi"
     },
     ".gitattributes": {
@@ -5377,7 +5431,7 @@
     "SOURCE_CODES/SD/ZSD001_CLC/SESSION_NOTES.md": {
      "decision": "uyarla",
      "rule": "SOURCE_CODES/*",
-     "sha256": "c08116b1b2af91e61b470b016d4d3844b6c679cff6ae8e0dd3e8d7a30a51655a",
+     "sha256": "19745f3cefb60e2b00027842d74c91285cb5a60826a687871fc160a466cacb19",
      "status": "tamam"
     },
     "SOURCE_CODES/SD/ZSD001_CLC/SPEC.md": {
@@ -5407,7 +5461,7 @@
     "governance/CORE-INDEX.md": {
      "decision": "alinmaz",
      "rule": "governance/CORE-INDEX.md",
-     "sha256": "da3f7facb588c2c2f3772ed0488ec6d5f04b564705d6004b2ce70b29b4715faa",
+     "sha256": "60dc337c1f1cd3287d7fd33407b093ddaae4a7688aa0b25743f8690218232aa7",
      "status": "-"
     },
     "governance/archive/2026-09-20-tasima-RESUME.md": {
@@ -5489,7 +5543,7 @@
      "status": "tamam"
     }
    },
-   "locked_at": "2026-09-27T00:17:04"
+   "locked_at": "2026-10-03T17:19:44"
   }
  }
 }

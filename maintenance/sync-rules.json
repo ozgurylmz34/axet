@@ -125,7 +125,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS."
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #309 CI parca bolme: aXet'te zaten 5 parca (Z158) — gerekmedi."
     },
     {
       "source": "DEV_CORE",
@@ -180,7 +180,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Hook kayitlari tasinamaz; izin kurallari permissions.json'da. 2026-09-25 tur 2: 4 allow kalıbı (tasklist · git merge-base · git cherry · git check-ignore) ALINMAZ — aXet permissions.json'da allow kuralı yok (ölçüldü: 71 deny + 11 ask + 0 allow). git grep (-O program çalıştırır) / git rev-list (--output= dosyayı boşaltır) dersi: aXet'e allow eklenirse bu ikisi girmez."
+      "note": "Hook kayitlari tasinamaz; izin kurallari permissions.json'da. 2026-09-25 tur 2: 4 allow kalıbı (tasklist · git merge-base · git cherry · git check-ignore) ALINMAZ — aXet permissions.json'da allow kuralı yok (ölçüldü: 71 deny + 11 ask + 0 allow). git grep (-O program çalıştırır) / git rev-list (--output= dosyayı boşaltır) dersi: aXet'e allow eklenirse bu ikisi girmez. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): mcp__sap-adt__adt_dump_read allow satiri: aXet karsiligi permissions.json DEGIL, gate.READ_TOOLS (salt-okur allowlist; Z166). permissions.json'da allow kurali yok, degismedi."
     },
     {
       "source": "DEV_CORE",
@@ -1259,7 +1259,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "foundation-query.md §1.2 (:33) satır 8-11 + NOT EXISTS notu (:55)."
+      "note": "foundation-query.md §1.2 (:33) satır 8-11 + NOT EXISTS notu (:55). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): tohum dersi '5'ten fazla OR -> 400' teshisi curudu (cekirdek: 252 kr tek satirda 13 OR -> 200; gercek sebep 255 kr satir siniri) -> foundation-query.md §1.2 madde 1 + query.py docstring duzeltildi (Z165; BelgeTest D1 eski teshisin geri gelmesini yakalar)."
     },
     {
       "source": "DEV_CORE",
@@ -3126,7 +3126,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Global npm -g ve Claude'a ozgu allowed-tools; yerine proje ici ui-smoke. Genel skill ihtiyaci dogarsa ayri yazilir."
+      "note": "Global npm -g ve Claude'a ozgu allowed-tools; yerine proje ici ui-smoke. Genel skill ihtiyaci dogarsa ayri yazilir. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #317 run-code sir kurali (kod/--filename aynen geri basilir, run-code icinde process yok; sir open aninda gecici config httpCredentials + PLAYWRIGHT_MCP_SECRETS_FILE ile) -> runtime-verification.md §4.6 'Sirlar' (Z167). Cekirdek 0.1.17'de olctu; aXet 0.1.21'de OLCULMEDI olarak beyan edildi. Test: test_sap_skill_bilgi PlaywrightSirKuraliTest."
     },
     {
       "source": "DEV_CORE",
@@ -3432,7 +3432,7 @@
       ],
       "party": 6,
       "status": "tamam",
-      "note": "Tek kaynak foundation lib/data; kopya yok."
+      "note": "Tek kaynak foundation lib/data; kopya yok. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #311: aXet verisi cekirdekle birebir (yalniz _meta.generated farkli) — aktarim GEREKMEDI."
     },
     {
       "source": "DEV_CORE",
@@ -3485,7 +3485,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "MCP'siz shim + CLI. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14 tasima: aktivasyon hukmu uc degerli + worklist sondasi, push on-kontrol olculemedi isareti, sorgu araclari (SAP hata govdesi, kesin truncated, TADIR 5'li parca, FM takma adi, where-used paket ayrimi, kanonik worklist), reviewer fugr/func pin (IMPLEMENTATION.md §17)."
+      "note": "MCP'siz shim + CLI. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14 tasima: aktivasyon hukmu uc degerli + worklist sondasi, push on-kontrol olculemedi isareti, sorgu araclari (SAP hata govdesi, kesin truncated, TADIR 5'li parca, FM takma adi, where-used paket ayrimi, kanonik worklist), reviewer fugr/func pin (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): query.py #314 dump okuma -> Z166 (adt_dump_read + adt_dump_list baska-client gizleme/sayac + arac gurultusu etiketi; skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py, gate.READ_TOOLS). query.py #312 SQL 255 -> Z165 (asagida sap_adt_lib). MCP arac aciklamasi < 2000 karakter butcesi ALINMAZ: aXet MCP sunmuyor (CLI); aciklamanin modele ulasma yolu OLCULMEDI. Canli SAP dogrulamasi (Z165/Z166) bekliyor."
     },
     {
       "source": "DEV_CORE",
@@ -3508,7 +3508,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "MCP semantigi -> CLI arac katalogu."
+      "note": "MCP semantigi -> CLI arac katalogu. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): adt-mcp.md dump okuma bolumu -> tool-catalog.md 'adt_dump_read' + foundation-query.md §6 (Z166)."
     },
     {
       "source": "DEV_CORE",
@@ -3541,7 +3541,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63)."
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): lessons-learned tur 4 eklemeleri (SQL 255 · dump client) -> Z165/Z166 belge karsiliklari (foundation-query.md)."
     },
     {
       "source": "DEV_CORE",
@@ -4142,7 +4142,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: aktivasyon govde hukmu True/False/None + ayirt edici worklist sondasi (olcemeyen sonda basari degil), syntax_check valid uc degerli (IMPLEMENTATION.md §17)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: aktivasyon govde hukmu True/False/None + ayirt edici worklist sondasi (olcemeyen sonda basari degil), syntax_check valid uc degerli (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #312/#317 freestyle 255 karakter SATIR siniri -> Z165: sql_satirlarini_kir + SQLSatirKirilamadi, freestyle'a POST eden 3 nokta (hayalet transport sondasi, list_transports, run_query) kirar; run_query 400 govdesini kirpmadan tasir. Test: tests/test_sql_satir_kirma.py (K1-K13, R1-R3, S1, D1). Canli dogrulama bekliyor."
     },
     {
       "source": "DEV_CORE",
@@ -4425,7 +4425,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): abaplint pin 2.120.38 -> 2.120.64 (cekirdek 160 dosyalik korpusla olctu) — isteğe bağlı, karar kullanicida; aXet pini degismedi."
     },
     {
       "source": "DEV_CORE",
@@ -4757,7 +4757,7 @@
       ],
       "party": 7,
       "status": "-",
-      "note": "Yakalama kurali: dosya bazinda satirlar var (run_review zinciri, pre-commit, skill script'leri); yeni validator buraya duser, dosya bazinda karar ver."
+      "note": "Yakalama kurali: dosya bazinda satirlar var (run_review zinciri, pre-commit, skill script'leri); yeni validator buraya duser, dosya bazinda karar ver. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #315 check_id_uniqueness ALINMADI: aXet skills-sap 278 tablo kimligi tarandi, gercek cift 0 (tek 'cift' FS/TS sablon ornek kimlikleri FR-001 vb.)."
     },
     {
       "source": "DEV_CORE",
@@ -4875,7 +4875,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Skill description tetigi + cekirdek §8."
+      "note": "Skill description tetigi + cekirdek §8. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #313/#316 hook tabanli (skill_injector, agent_stall_watch) — aXet'te hook yok, alinmadi."
     },
     {
       "source": "DEV_CORE",
@@ -5402,7 +5402,7 @@
       ],
       "party": 6,
       "status": "tamam",
-      "note": "Ag erisimi yok: refresh --source <yerel json>; bos/kuculen harita yazilmaz (lessons PATTERN #14). SAP JSON guncel alan adlari DOGRULANMADI."
+      "note": "Ag erisimi yok: refresh --source <yerel json>; bos/kuculen harita yazilmaz (lessons PATTERN #14). SAP JSON guncel alan adlari DOGRULANMADI. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #311 bolum ici anahtar siralama (kaynak kayit sirasi degisince sahte diff) aXet released_successors.py'de YOK — isteğe bağlı, karar kullanicida (IS-LISTESI tur 4 paragrafi)."
     },
     {
       "source": "DEV_CORE",
@@ -5534,7 +5534,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Hafiza repoda, context_paths ile yuklenir. 2026-09-25 tur 2: --terfi-adaylari KAPSAM satırına bildirim kanalı yönlendirmesi ALINMAZ (terfi aracı aXet'te yok; kullanıcı dersini %hata-bildir önerisiyle iletir)."
+      "note": "Hafiza repoda, context_paths ile yuklenir. 2026-09-25 tur 2: --terfi-adaylari KAPSAM satırına bildirim kanalı yönlendirmesi ALINMAZ (terfi aracı aXet'te yok; kullanıcı dersini %hata-bildir önerisiyle iletir). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #318 tohum govde guncellemesi ALINMAZ: aXet ekip hafizasini klondan okur, kopyalamaz (scripts/install.py context_paths)."
     },
     {
       "source": "DEV_CORE",
