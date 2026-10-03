@@ -140,8 +140,9 @@ Biçim `capture_kd_screens.js` yapılandırmasıdır (alan listesi `%sap-fs-ts-d
 - `out_dir` uygulama klasörünün içinde göreli yazılır (`screenshots-ham`, senaryo dosyasına göre); template klonuna kare
   yazılmaz.
 - Liste/tablo karesinden önce `{"do": "scroll_reset"}`: tanıtım karesi tablonun **başını** (ilk kolonlar) gösterir.
-  Seçim alanına değer `fill` ile yazılır; değer yardımından seçilecekse senaryoda F4 açılıp kayıt tıklanır (düz metin
-  değil). Tuş için `press` (`key`, isteğe bağlı `selector`).
+  Seçim alanına `fill` ile düz metin yazmak **seçim değildir**: değer yardımı ya da öneri listesinden `press`
+  (Enter/ArrowDown) veya öneri satırına `click` ile seçilir, sonra `assert_text` ile seçili değer doğrulanır. Adım biçimleri:
+  `%sap-fs-ts-docs` → `references/pdf-with-screenshots.md` §A.
 - Aç/kapa alanları iki durumda çekilir (kapalı + açık); her alt ekran ayrı `shot`.
 - ⚠ Bu üç adımın `capture_kd_screens.js`'teki uygulaması ayrı bir iş kalemidir; yoksa `--dry-run` "bilinmeyen do=…"
   der. O durumda DUR, adımı silerek geçme — araç sürümünü kullanıcıya bildir.
@@ -155,8 +156,9 @@ node $D/capture_kd_screens.js $APP/docs/ekranlar.json
 - Tam komutu `kd_ortam.py check` `KOMUT çekim (tek koşu)` satırında verir. **Tüm kareler bu tek koşuda** çekilir;
   playwright-cli ile kare kare çekim yapılmaz (ölçüldü 2026-10-03: elle çekimde kare başına ~10 araç çağrısı, ~1 dk;
   hedef 11 kare ≤ 3 dk). Elle çekim yalnız araç çalışmıyorsa, gerekçesi kullanıcıya yazılarak.
-- `playwright-core` bulunamazsa `PLAYWRIGHT_CORE_PATH=<yol>` ile göster: merkezi kurulumda
-  `<TEMPLATE>/.araclar/playwright-cli/node_modules/playwright-core` (yolu `kd_ortam.py check` yazar).
+- `capture_kd_screens.js` merkezi kurulumu (`<TEMPLATE>/.araclar/playwright-cli`) kendisi bulur; hangisini kullandığını
+  `playwright-core: … (kaynak: …)` satırı söyler. `KOMUT` satırındaki `PLAYWRIGHT_CORE_PATH`, çekimin `check`'in
+  raporladığı kurulumu (projede yerel kurulum varsa o) kullanmasını sabitler.
 - Mock veri değiştiyse önce mock'u yeniden başlat (veri açılışta okunur).
 - **Çıkış ölçütü:** son satır `ÖZET: M OK, 0 FAIL`, çıkış 0, `out_dir`'de M adet PNG.
 
