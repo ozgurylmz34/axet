@@ -29,7 +29,7 @@ testini kurulum kendisi hazırlar. GitHub hesabı gerekmez.
 |---|---|
 | `python-docx`, `python-pptx`, `openpyxl` (`pip install --user …`) | `%office-docs`, `%office-slides`, `%office-excel` |
 | `markdown`, `Pillow` + Edge/Chrome (PDF baskısı) | `%sap-fs-ts-docs` (FS/TS/KD — kullanıcı kılavuzu dahil; PDF, ekran görüntüsü) |
-| Chrome ya da Edge + `@playwright/cli` — **kendiliğinden kurulur**: kurulum aracı ve `%guncelle`, Node.js varsa `@playwright/cli`'yi klonun `.araclar/` klasörüne kurar ve `~/.playwright/cli.config.json`'u yazar (`scripts/tarayici_hazirla.py`; tarayıcı indirilmez, ayrı komut gerekmez) | aXet içinde tarayıcı testi (`%sap-ui5-fiori`), `%sap-ui5-user-guide` |
+| Chrome ya da Edge + `@playwright/cli` — **kendiliğinden kurulur**: kurulum aracı ve `%guncelle`, Node.js varsa `@playwright/cli`'yi klonun `.araclar/` klasörüne kurar ve `~/.playwright/cli.config.json`'u yazar (`scripts/tarayici_hazirla.py`; tarayıcı indirilmez, ayrı komut gerekmez) | aXet içinde tarayıcı testi (`%sap-ui5-fiori`), `%sap-ui5-user-guide` (keşif ve kare çekimi; çekim betiği bu merkezi kurulumu kendisi bulur, projede ayrı `playwright-core` gerekmez) |
 | `@sap-ux/ui5-middleware-fe-mockserver` (proje `ui/` workspace'inde) | `%sap-ui5-user-guide` (ekran görüntülü kullanıcı kılavuzu) |
 | Node.js + `playwright-core` (proje içinde), `@abaplint/cli` (npx önbelleği) | `%sap-ui5-fiori` ui-smoke, `%sap-code-review` abaplint |
 
