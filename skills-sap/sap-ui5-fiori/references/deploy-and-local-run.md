@@ -190,7 +190,7 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/deploy_ui.py verify <app_mutl
 
 | Belirti | Sebep | Çözüm |
 |---|---|---|
-| `400 "Type of file X is unknown"` (Application Index) | `dist`'e BSP repository'nin tanımadığı dosya karışmış: araç/editör önbelleği gibi **gizli stray dosya**, ya da `.svg`/`.woff` | Stray'i sil + `builder.resources.excludes: /<klasör>/**` + görev `exclude: /<klasör>/`. Logo/ikon inline SVG ya da base64. `prepare` ikisini de listeler. Gerçek hatayı ayrıntılı çıktıda ara: `… --yes --verbose 2>&1 \| grep -i unknown` |
+| `400 "Type of file X is unknown"` (Application Index) | `dist`'e BSP repository'nin tanımadığı dosya karışmış: araç/editör önbelleği gibi **gizli stray dosya**, ya da `.svg`/`.woff` | Stray'i sil + `builder.resources.excludes: /<klasör>/**` + görev `exclude: /<klasör>/`. Logo/ikon inline SVG ya da base64. `prepare` ikisini de listeler. Gerçek hatayı ayrıntılı çıktıda ara: `… --yes --verbose 2>&1 \| rg -i unknown` |
 | Lokal çalışıyor, deploy 400 | Lokal sunucu her uzantıyı sunar; BSP yükleme sınıflandırır | aynı |
 | "Deployment Successful" ama canlıda eski | `dist` bayat | `deploy_ui.py` akışı; `verify` → `STALE` |
 | 401 | CLI argümanıyla kimlik / `\r` / kilitli kullanıcı | §3.3 / §1.1 (b) — tekrar tekrar deneme yapma |
