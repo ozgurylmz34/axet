@@ -108,8 +108,11 @@ def surec_tablosu() -> dict[int, dict]:
     """{pid: {"ebeveyn": ppid, "zaman": oluşturma, "komut": komut satırı}} — ölçülemezse {}."""
     try:
         if PENCERE:
-            betik = ("Get-CimInstance Win32_Process | ForEach-Object { [pscustomobject]@{p=$_.ProcessId;"
-                     "e=$_.ParentProcessId;z=[string]$_.CreationDate.Ticks;k=$_.CommandLine} } | ConvertTo-Json -Compress")
+            # OutputEncoding: PowerShell 5.1 boruya OEM kod sayfasıyla yazar; ASCII dışı komut satırları bozulurdu.
+            betik = ("[Console]::OutputEncoding=[Text.Encoding]::UTF8; "
+                     "Get-CimInstance Win32_Process | ForEach-Object { [pscustomobject]@{p=$_.ProcessId;"
+                     "e=$_.ParentProcessId;z=$(if($_.CreationDate){[string]$_.CreationDate.ToUniversalTime().Ticks}"
+                     "else{''});k=$_.CommandLine} } | ConvertTo-Json -Compress")
             o = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", betik],
                                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60,
                                stdin=subprocess.DEVNULL).stdout
@@ -117,39 +120,75 @@ def surec_tablosu() -> dict[int, dict]:
             veri = veri if isinstance(veri, list) else [veri]
             return {int(x["p"]): {"ebeveyn": int(x["e"] or 0), "zaman": x.get("z") or "", "komut": x.get("k") or ""}
                     for x in veri}
-        o = subprocess.run(["ps", "-eo", "pid=,ppid=,lstart=,args="], capture_output=True, text=True, timeout=30).stdout
+        o = subprocess.run(["ps", "-eo", "pid=,ppid=,lstart=,args="], capture_output=True, text=True, timeout=30,
+                           env=dict(os.environ, LC_ALL="C")).stdout
         tablo = {}
         for satir in o.splitlines():
             parca = satir.split(None, 7)
             if len(parca) >= 7:
-                tablo[int(parca[0])] = {"ebeveyn": int(parca[1]), "zaman": " ".join(parca[2:7]),
+                try:  # lstart (C yerel ayarı) → epoch saniyesi: zamanlar sayı olarak karşılaştırılabilsin
+                    z = str(int(time.mktime(time.strptime(" ".join(parca[2:7]), "%a %b %d %H:%M:%S %Y"))))
+                except ValueError:
+                    z = ""
+                tablo[int(parca[0])] = {"ebeveyn": int(parca[1]), "zaman": z,
                                         "komut": parca[7] if len(parca) > 7 else ""}
         return tablo
     except Exception:  # noqa: BLE001
         return {}
 
 
+_BOS_UZAK = ("0.0.0.0:0", "[::]:0", "*:*")
+
+
+def netstat_dinleyen(cikti: str, port: int) -> int | None:
+    """`netstat -ano` çıktısında `port`'u DİNLEYEN sürecin PID'i. Durum sütunu (LISTENING) Windows görüntüleme diline
+    göre çevrilir ⇒ dinleme, uzak adresin boş olmasından (`0.0.0.0:0` / `[::]:0`) tanınır."""
+    for satir in cikti.splitlines():
+        parca = satir.split()
+        if (len(parca) >= 5 and parca[0].upper() == "TCP" and parca[1].endswith(f":{port}")
+                and parca[2] in _BOS_UZAK):
+            try:
+                return int(parca[-1])
+            except ValueError:
+                return None
+    return None
+
+
 def port_sahibi(port: int) -> int | None:
     """Portu DİNLEYEN sürecin PID'i (Windows `netstat -ano`; POSIX'te ölçülmez → None). Ağaç kopuksa (ara süreç
     kapanmış, sunucu yetim kalmış) kök ağacından bulunamayan sunucuyu bu yakalar."""
-    if not PENCERE:
+    if not PENCERE or not port:
         return None
     try:
         o = subprocess.run(["netstat", "-ano", "-p", "TCP"], capture_output=True, text=True, errors="replace",
                            timeout=30, stdin=subprocess.DEVNULL).stdout
     except Exception:  # noqa: BLE001
         return None
-    for satir in o.splitlines():
-        parca = satir.split()
-        if len(parca) >= 5 and parca[0].upper() == "TCP" and parca[1].endswith(f":{port}") and parca[3].upper() == "LISTENING":
-            try:
-                return int(parca[4])
-            except ValueError:
-                return None
-    return None
+    return netstat_dinleyen(o, port)
 
 
-def torunlar(kok: int, tablo: dict[int, dict]) -> list[int]:
+def duvar_zamani(t: float) -> str:
+    """time.time() → süreç tablosunun zaman biçimi (Windows: UTC .NET tick · POSIX: epoch saniyesi)."""
+    return str(int(t * 10**7) + 621355968000000000) if PENCERE else str(int(t))
+
+
+def _sayi(z: str):
+    try:
+        return int(z)
+    except (TypeError, ValueError):
+        return None
+
+
+def sonra_dogmus(pid: int, kok_zaman: str, tablo: dict[int, dict]) -> bool:
+    """`pid` kökten SONRA mı doğdu. Ölçülemiyorsa False (kimliği kanıtlanmayan süreç kapatılmaz)."""
+    a, b = _sayi(kok_zaman), _sayi((tablo.get(pid) or {}).get("zaman"))
+    return a is not None and b is not None and b >= a
+
+
+def torunlar(kok: int, tablo: dict[int, dict], kok_zaman: str | None = None) -> list[int]:
+    """Kökün alt süreçleri. Windows'ta ParentProcessId ebeveyn öldükten sonra YENİDEN KULLANILMIŞ bir PID'i gösterebilir
+    ⇒ çocuk yalnız ebeveyninden sonra doğduysa (oluşturma zamanı) kabul edilir; zaman ölçülemiyorsa alınmaz.
+    `kok_zaman`: kök tabloda yoksa (kapanmışsa) onun yerine kullanılan başlatma anı (`duvar_zamani`)."""
     cocuklar: dict[int, list[int]] = {}
     for pid, b in tablo.items():
         cocuklar.setdefault(b["ebeveyn"], []).append(pid)
@@ -157,16 +196,18 @@ def torunlar(kok: int, tablo: dict[int, dict]) -> list[int]:
     while yigin:
         p = yigin.pop()
         for c in cocuklar.get(p, []):
-            if c not in sonuc and c != kok:
+            ebeveyn_zaman = (tablo.get(p) or {}).get("zaman") or (kok_zaman if p == kok else None)
+            if c not in sonuc and c != kok and sonra_dogmus(c, ebeveyn_zaman, tablo):
                 sonuc.append(c)
                 yigin.append(c)
     return sonuc
 
 
 def canli(kayit_pid: int, zaman: str, tablo: dict[int, dict]) -> bool:
-    """PID hâlâ AYNI süreç mi (PID yeniden kullanılmış olabilir → oluşturma zamanı da eşleşmeli)."""
+    """PID hâlâ AYNI süreç mi (PID yeniden kullanılmış olabilir → oluşturma zamanı eşleşmeli; zaman kaydı yoksa kimlik
+    kanıtlanamaz ⇒ False)."""
     b = tablo.get(kayit_pid)
-    return bool(b) and (not zaman or b["zaman"] == zaman)
+    return bool(b) and bool(zaman) and b["zaman"] == zaman
 
 
 # ───────────────────────── komutlar ─────────────────────────
@@ -192,11 +233,19 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
     onceki = kayit_oku(app)
     if onceki:
         tablo = surec_tablosu()
-        if canli(onceki["pid"], onceki.get("zaman", ""), tablo) and port_dinleniyor(onceki["port"]):
+        if not tablo:
+            print("[FAIL] süreç tablosu okunamadı — önceki kaydın süreçleri ÖLÇÜLEMEDİ; başlatılmadı")
+            return 2
+        kok_canli = canli(onceki["pid"], onceki.get("zaman", ""), tablo)
+        if kok_canli and onceki.get("port") and port_dinleniyor(onceki["port"]):
             print(f"MOCK SUNUCU: ZATEN ÇALIŞIYOR · http://127.0.0.1:{onceki['port']}/index.html?sap-ui-language=tr "
                   f"· PID {onceki['pid']} · log {onceki['log']}")
             print(KAPSAM)
             return 0
+        if kok_canli or any(canli(a["pid"], a.get("zaman", ""), tablo) for a in onceki.get("alt", [])):
+            # Kaydı silmek yaşayan süreçleri araçla kapatılamaz hâle getirirdi (bug gate 2026-10-03).
+            print("[FAIL] önceki başlatmanın süreçleri hâlâ yaşıyor ama sunucu hazır değil — önce `durdur`; başlatılmadı")
+            return 2
         kayit_sil(app)
     if port and port_dinleniyor(port):
         print(f"[FAIL] port {port} zaten dolu (başka bir sunucu) — başka --port ver ya da onu kapat; başlatılmadı")
@@ -207,6 +256,7 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
     if PENCERE:
         bayrak = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
     t0 = time.monotonic()
+    baslama = duvar_zamani(time.time() - 1)  # kök kapanırsa çocuklarının kimliği buna göre (1 sn pay)
     with open(log, "w", encoding="utf-8") as fh:
         try:
             p = subprocess.Popen(argv, cwd=app, stdin=subprocess.DEVNULL, stdout=fh, stderr=subprocess.STDOUT,
@@ -219,8 +269,10 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
         if p.poll() is not None:
             # Kök kapandı ama başlattığı alt süreçler yaşıyor olabilir (Windows'ta ebeveyn PID'i kayıtlı kalır) —
             # yetim bırakılmaz; bu PID'ler kökten doğduğu için başkasının süreci değildir.
-            artik = torunlar(p.pid, surec_tablosu())
+            artik = torunlar(p.pid, surec_tablosu(), baslama)
             _oldur(artik, None)
+            if not PENCERE:  # POSIX: yetimler init'e devredilir (ppid 1) ⇒ ağaçtan değil süreç grubundan kapatılır
+                _grubu_oldur(p.pid)
             print(f"[FAIL] sunucu süreci kapandı (çıkış {p.returncode}; kapatılan alt süreç {len(artik)}) — log "
                   f"kuyruğu:\n{_log_kuyrugu(log)}")
             return 2
@@ -233,16 +285,11 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
     else:
         print(f"[FAIL] {int(zaman_asimi)} sn içinde hazır olmadı (port {'bulunamadı' if not bulunan else bulunan}) "
               f"— süreç ayakta bırakıldı, `durdur` ile kapat. Log kuyruğu:\n{_log_kuyrugu(log)}")
-        kayit_yaz(app, {"pid": p.pid, "zaman": surec_tablosu().get(p.pid, {}).get("zaman", ""), "port": bulunan or 0,
-                        "app": app, "log": log, "alt": []})
+        # Zaman aşımında da kayıt TAM yazılır (alt süreçler + port): `durdur` onları kapatabilsin (bug gate 2026-10-03).
+        kayit = _kayit_kur(app, p.pid, bulunan or log_portu(log), log, argv)
+        print(f"        kayıtlı alt süreç {len(kayit['alt'])} · port {kayit['port'] or 'bulunamadı'}")
         return 2
-    tablo = surec_tablosu()
-    alt = [{"pid": c, "zaman": tablo[c]["zaman"]} for c in torunlar(p.pid, tablo)]
-    sahip = port_sahibi(bulunan)
-    if sahip and sahip != p.pid and sahip in tablo and all(a["pid"] != sahip for a in alt):
-        alt.append({"pid": sahip, "zaman": tablo[sahip]["zaman"]})  # kopuk ağaç: portu tutan yetim sunucu
-    kayit_yaz(app, {"pid": p.pid, "zaman": tablo.get(p.pid, {}).get("zaman", ""), "port": bulunan, "app": app,
-                    "log": log, "alt": alt, "komut": argv})
+    alt = _kayit_kur(app, p.pid, bulunan, log, argv)["alt"]
     durum = http_durum(bulunan)
     print(f"MOCK SUNUCU: HAZIR · http://127.0.0.1:{bulunan}/index.html?sap-ui-language=tr · PID {p.pid} "
           f"(+{len(alt)} alt süreç) · {time.monotonic() - t0:.1f} sn · log {log}")
@@ -250,6 +297,34 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
         print(f"UYARI: /index.html → {durum} (200 bekleniyordu) — log'a bak")
     print(KAPSAM)
     return 0
+
+
+def log_portu(log: str) -> int | None:
+    m = URL_DESENI.search(_log_kuyrugu(log, 200))
+    return int(m.group(1)) if m else None
+
+
+def _kayit_kur(app: str, kok: int, port: int | None, log: str, argv: list[str]) -> dict:
+    """Kök + kökten sonra doğmuş alt süreçler + (kopuk ağaçta) portu tutan, kökten sonra doğmuş süreç → kayıt."""
+    tablo = surec_tablosu()
+    kok_zaman = (tablo.get(kok) or {}).get("zaman", "")
+    if not kok_zaman:
+        print("UYARI: süreç kimliği (oluşturma zamanı) ÖLÇÜLEMEDİ — `durdur` süreçleri PID ile kapatmaz; port "
+              "boşalmazsa elle kapat")
+    alt = [{"pid": c, "zaman": tablo[c]["zaman"]} for c in torunlar(kok, tablo)]
+    sahip = port_sahibi(port)
+    if sahip and sahip != kok and all(a["pid"] != sahip for a in alt) and sonra_dogmus(sahip, kok_zaman, tablo):
+        alt.append({"pid": sahip, "zaman": tablo[sahip]["zaman"]})  # kopuk ağaç: portu tutan yetim sunucu
+    kayit = {"pid": kok, "zaman": kok_zaman, "port": port or 0, "app": app, "log": log, "alt": alt, "komut": argv}
+    kayit_yaz(app, kayit)
+    return kayit
+
+
+def _grubu_oldur(pgid: int) -> None:
+    try:
+        os.killpg(pgid, signal.SIGKILL)
+    except OSError:
+        pass
 
 
 def _oldur(pidler: list[int], kok: int | None) -> None:
@@ -288,16 +363,27 @@ def durdur(app: str, bekle: float = 15) -> int:
     alt = [a["pid"] for a in k.get("alt", []) if canli(a["pid"], a.get("zaman", ""), tablo)]
     if kok:
         alt += [c for c in torunlar(kok, tablo) if c not in alt]
+    # Zaman aşımı kaydında port 0 olabilir: sunucu adresi o arada log'a yazılmış olabilir.
+    port = k.get("port") or log_portu(k.get("log") or "")
+    sahip = port_sahibi(port) if port and port_dinleniyor(port) else None
+    if sahip and sahip != kok and sahip not in alt and sonra_dogmus(sahip, k.get("zaman", ""), tablo):
+        alt.append(sahip)  # kayıttan SONRA dinlemeye başlamış, kökten sonra doğmuş sunucu (kopuk ağaç)
     _oldur(alt, kok)
     t0 = time.monotonic()
-    while time.monotonic() - t0 < bekle and k.get("port") and port_dinleniyor(k["port"]):
+    while time.monotonic() - t0 < bekle and port and port_dinleniyor(port):
         time.sleep(0.5)
-    if k.get("port") and port_dinleniyor(k["port"]):
-        print(f"[FAIL] port {k['port']} hâlâ dinleniyor — kayıtlı süreçler kapatıldı ama portu başka bir süreç tutuyor "
+    kapatilan = len(alt) + (1 if kok else 0)
+    if not port:
+        kayit_sil(app)
+        print(f"[FAIL] kapatılan süreç {kapatilan}, ama sunucunun portu ÖLÇÜLEMEDİ (kayıtta da log'da da yok) — "
+              f"boşaldığı doğrulanamadı; `netstat -ano` ile bak")
+        return 1
+    if port_dinleniyor(port):
+        print(f"[FAIL] port {port} hâlâ dinleniyor — kayıtlı süreçler kapatıldı ama portu başka bir süreç tutuyor "
               f"(`netstat -ano` ile PID'e bak; komut satırında bu uygulama yoksa o süreç senin değil)")
         return 1
     kayit_sil(app)
-    print(f"MOCK SUNUCU: DURDU · kapatılan süreç {len(alt) + (1 if kok else 0)} · port {k.get('port')} boş")
+    print(f"MOCK SUNUCU: DURDU · kapatılan süreç {kapatilan} · port {port} boş")
     print(KAPSAM)
     return 0
 

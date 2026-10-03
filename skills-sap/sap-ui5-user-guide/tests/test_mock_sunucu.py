@@ -34,6 +34,9 @@ elif rol == "ara":
         sys.exit(0)          # ara süreç kapanır: sunucu YETİM kalır (kopuk ağaç)
     while True: time.sleep(1)
 else:
+    if os.environ.get("SAHTE_DINLEMEZ"):
+        while True: time.sleep(1)  # hiç dinlemeyen sunucu
+    time.sleep(float(os.environ.get("SAHTE_GEC") or 0))
     s = http.server.ThreadingHTTPServer(("127.0.0.1", 0), http.server.SimpleHTTPRequestHandler)
     print("Server started - URL: http://localhost:%d" % s.server_address[1], flush=True)
     s.serve_forever()
@@ -67,8 +70,8 @@ class MockSunucuTest(unittest.TestCase):
 
     def _kos(self, *arg, env=None, zaman=120):
         e = dict(os.environ, PYTHONIOENCODING="utf-8")
-        e.pop("SAHTE_KOPUK", None)
-        e.pop("SAHTE_KOK_OLSUN", None)
+        for ad in ("SAHTE_KOPUK", "SAHTE_KOK_OLSUN", "SAHTE_GEC", "SAHTE_DINLEMEZ"):
+            e.pop(ad, None)
         e.update(env or {})
         t0 = time.monotonic()
         p = subprocess.run([sys.executable, BETIK, *arg, "--app", self.app], capture_output=True, text=True,
@@ -85,6 +88,7 @@ class MockSunucuTest(unittest.TestCase):
         self.assertTrue(M.port_dinleniyor(port), "araç döndükten sonra sunucu yaşamalı")
         self.assertEqual(200, M.http_durum(port))
         self.assertGreaterEqual(len(k["alt"]), 2, k)  # ara + sunucu kayıtlı
+        self.assertGreaterEqual(len(self._artiklar()), 3, "pozitif kontrol: artık ölçümü süreçleri görebilmeli")
         rc2, out2, _ = self._kos("durum")
         self.assertIn("ÇALIŞIYOR", out2)
         rc3, out3, _ = self._kos("baslat", "--komut-json", self.komut)
@@ -102,7 +106,9 @@ class MockSunucuTest(unittest.TestCase):
     def test_kopuk_agac_yetim_sunucu_da_kapanir(self):
         rc, out, _ = self._kos("baslat", "--komut-json", self.komut, env={"SAHTE_KOPUK": "1"})
         self.assertEqual(0, rc, out)
-        port = M.kayit_oku(self.app)["port"]
+        k = M.kayit_oku(self.app)
+        port = k["port"]
+        self.assertIn(M.port_sahibi(port), [a["pid"] for a in k["alt"]], "yetim sunucu başlatırken kayda girmeli")
         rc2, out2, _ = self._kos("durdur")
         self.assertEqual(0, rc2, out2)
         self.assertFalse(M.port_dinleniyor(port), "ara süreç kapalıyken de portu tutan yetim kapanmalı")
@@ -115,6 +121,41 @@ class MockSunucuTest(unittest.TestCase):
         self.assertIn("log kuyruğu", out)
         time.sleep(1)
         self.assertEqual([], self._artiklar(), "kök kapanınca başlattığı alt süreçler yetim kalmamalı")
+
+    @unittest.skipUnless(os.name == "nt", "kopuk ağaçta port sahibi yalnız Windows'ta (netstat) ölçülür")
+    def test_zaman_asimi_sonrasi_durdur_gec_acilan_yetimi_kapatir(self):
+        """Bug gate 2026-10-03 HIGH: zaman aşımı kaydı port 0 / alt [] idi, `durdur` sunucu yaşarken DURDU diyordu."""
+        env = {"SAHTE_KOPUK": "1", "SAHTE_GEC": "5"}
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env=env)
+        self.assertEqual(2, rc, out)
+        self.assertIn("hazır olmadı", out)
+        bitis = time.monotonic() + 30
+        while time.monotonic() < bitis and not M.log_portu(M.kayit_oku(self.app)["log"]):
+            time.sleep(0.5)
+        port = M.log_portu(M.kayit_oku(self.app)["log"])
+        self.assertTrue(port and M.port_dinleniyor(port), "ön koşul: geç açılan sunucu dinliyor")
+        rc2, out2, _ = self._kos("durdur")
+        self.assertEqual(0, rc2, out2)
+        self.assertIn(f"port {port} boş", out2)
+        self.assertFalse(M.port_dinleniyor(port))
+        self.assertEqual([], self._artiklar())
+
+    def test_hazir_olmayan_kayit_ikinci_baslatta_silinmez(self):
+        """Bug gate 2026-10-03 MEDIUM: ikinci `baslat` yaşayan süreçlerin kaydını silip onları sahipsiz bırakıyordu."""
+        env = {"SAHTE_DINLEMEZ": "1"}
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env=env)
+        self.assertEqual(2, rc, out)
+        ilk = M.kayit_oku(self.app)["pid"]
+        rc2, out2, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env=env)
+        self.assertEqual(2, rc2, out2)
+        self.assertIn("önce `durdur`", out2)
+        self.assertEqual(ilk, M.kayit_oku(self.app)["pid"])
+        rc3, out3, _ = self._kos("durdur")
+        self.assertEqual(1, rc3, out3)  # port hiç bilinmedi: DURDU denmez
+        self.assertIn("ÖLÇÜLEMEDİ", out3)
+        self.assertNotIn("DURDU", out3)
+        time.sleep(1)
+        self.assertEqual([], self._artiklar())
 
     def test_kayitsiz_durdur_hicbir_seyi_kapatmaz(self):
         rc, out, _ = self._kos("durdur")
@@ -141,10 +182,24 @@ class MockSunucuTest(unittest.TestCase):
         self.assertTrue(M.canli(100, "A", tablo))
         self.assertFalse(M.canli(100, "B", tablo), "aynı PID başka süreçse kapatılmamalı")
         self.assertFalse(M.canli(200, "A", tablo))
+        self.assertFalse(M.canli(100, "", tablo), "zaman kaydı yoksa kimlik kanıtlanamaz")
 
     def test_torunlar_agaci(self):
-        tablo = {1: {"ebeveyn": 0}, 2: {"ebeveyn": 1}, 3: {"ebeveyn": 2}, 4: {"ebeveyn": 9}}
+        tablo = {1: {"ebeveyn": 0, "zaman": "10"}, 2: {"ebeveyn": 1, "zaman": "11"}, 3: {"ebeveyn": 2, "zaman": "12"},
+                 4: {"ebeveyn": 9, "zaman": "13"},
+                 5: {"ebeveyn": 1, "zaman": "5"},   # PID 1'in ESKİ sahibinin çocuğu: kökten önce doğmuş
+                 6: {"ebeveyn": 1, "zaman": ""}}    # zamanı ölçülemeyen: alınmaz
         self.assertEqual({2, 3}, set(M.torunlar(1, tablo)))
+
+    def test_netstat_dinleyen_dilden_bagimsiz(self):
+        cikti = ("  Proto  Yerel Adres  Yabancı Adres  Durum  PID\n"
+                 "  TCP    0.0.0.0:8080   0.0.0.0:0      DİNLİYOR   111\n"
+                 "  TCP    127.0.0.1:80   127.0.0.1:5000 KURULDU    222\n"
+                 "  TCP    127.0.0.1:5000 127.0.0.1:80   ESTABLISHED 333\n"
+                 "  TCP    [::]:8091      [::]:0         LISTENING  444\n")
+        self.assertEqual(111, M.netstat_dinleyen(cikti, 8080))
+        self.assertIsNone(M.netstat_dinleyen(cikti, 80), "kurulu bağlantı dinleme değildir; :80 ≠ :8080")
+        self.assertEqual(444, M.netstat_dinleyen(cikti, 8091))
 
     def test_durum_dosyasi_uygulamaya_yazilmaz(self):
         for yol in M.kayit_yollari(self.app):
