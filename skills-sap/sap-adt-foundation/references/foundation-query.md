@@ -212,6 +212,13 @@ cli adt_atc_check '{"name":"ZCL_DEMO_CLASS","object_type":"class"}'
 
 ## 6. Kısa dump ve inaktif obje listesi
 - `adt_dump_list` (ST22 muadili): çalışma zamanı 500/dump kök nedeni. Dump kaydı kullanıcı adı taşır → DEV dışında `acknowledge_risk`.
+  Feed aynı sistemin TÜM client'larını taşır: bağlantının client'ından farklı ya da client'ı tespit edilemeyen girdi
+  varsayılan GİZLENİR, sayısı `gizlenen_baska_client` / `gizlenen_client_bilinmeyen` + `notice` ile döner ("dump yok" DEĞİL).
+  `arac_gurultusu: true` = bilinen araç gürültüsü (`GENERATE_SUBPOOL_DIR_FULL` ∧ `CL_ADT_DP_OPEN_SQL_HANDLER`, madde 11) —
+  listede kalır, yalnız etiketlenir.
+- `adt_dump_read` (tek dump'ın içeriği): `dump=<dump_uri>` → hata tipi, istisna, program, kesilen satır; `summary=true` ile
+  "ne oldu / hata analizi / kaynak kesiti / aktif çağrılar"; `formatted=true` tam metin (120-560 KB — `max_bytes` ile kesilir).
+  Önce `adt_dump_list`, sonra `adt_dump_read` — dump kök nedenini SAP GUI'siz okumanın yolu budur.
 - `adt_inactive_objects`: aktive-bekleyen obje listesi. Silinmiş objeler de listede kalabilir (`ioc:deleted` bunu
   söylemez) → araç TADIR `DELFLAG` ile çapraz kontrol eder. `ok:false, error:"tadir_kontrolu_belirsiz"` dalında `count`
   hiç basılmaz; gerçek sayı `confirmed_live_count` ile `confirmed_live_count + unverified_count` arasındadır.
