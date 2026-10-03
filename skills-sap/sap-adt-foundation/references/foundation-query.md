@@ -40,7 +40,7 @@ aşağıdaki ölçülmüş biçimlerle **tek değişken** değiştirerek daralt:
 
 | # | Belirti | Sebep (ölçülmüş) | Çare |
 |---|---|---|---|
-| 1 | Uzun `IN (...)` ya da 5'ten fazla `OR` → 400 | uzun WHERE | 5'erli parçalara böl, sonuçları birleştir |
+| 1 | Tek satırı 255 karakteri aşan sorgu → 400 **ya da SESSİZ yanlış sonuç** (`ok:true`) | SAP her satırı 255. karakterde keser (token ortası = 400; geçerli sınır = kırpılmış sorgu koşar). Eski "uzun `IN` / çok `OR` → 400" teşhisi bundandı (252 kr tek satırda 13 `OR` → 200) | araç gönderimden önce kendisi kırar (2026-10-03); tek başına 255'i aşan literal/yorum kırılamaz → `SQLSatirKirilamadi`, sorgu gitmez: literali kısalt/böl |
 | 2 | Tahmin edilen kolon adı → 400 | kolon yok | önce küçük `row_limit` ile `SELECT *` → kolonları keşfet, sonra daralt |
 | 3 | `tadir.object`, `seoclass.state` → 400 | bağlama göre anahtar kelime çakışması (aynı turda `e071.object` çalıştı; kapsamı ÖLÇÜLMEDİ) | şüpheli kolonu çıkarıp tekrar ölç |
 | 4 | `SELECT lgnum, COUNT(*) … GROUP BY lgnum` → 400 | başka kolonla aggregate'te alias şart | `COUNT(*) AS cnt` → 200 |

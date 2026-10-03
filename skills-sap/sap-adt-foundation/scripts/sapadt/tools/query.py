@@ -788,10 +788,13 @@ def adt_sql_query(
     iki ajan bağımsız yaşadı). "400 ⇒ tabloya bakamıyorum" teşhisi bu araçta YANLIŞTIR ve
     doğrudan *"bulunamadı ≠ yok"* ihlaline götürür. Ölçülmüş üç 400 sebebi:
 
-      1. **UZUN `WHERE`.** Uzun `IN (...)` listesi ya da **5'ten fazla `OR`** → 400.
-         Çözüm (iki ajan da böyle tamamladı): WHERE'i **5'erli parçalara böl**, sonuçları
-         çağıran tarafta birleştir. (Kardeş ölçüm, `adt_transport_list:138`: `E070×E071`
-         JOIN + `E07T` tek sorguda 400; `IN ('a','b')` listesi de 400 verebilir.)
+      1. **255 KARAKTERLİK SATIR SINIRI.** SAP sorgunun her satırını 255. karakterde KESER:
+         token ortasında kesilirse 400, geçerli bir sınırda kesilirse kırpılmış sorgu
+         SESSİZCE koşar (yanlış sonuç). Araç uzun satırı gönderimden önce boşluktan kendisi
+         kırar (`sql_satirlarini_kir`; literal/yorum bölünmez — tek başına 255'i aşan literal
+         `SQLSatirKirilamadi` verir, sorgu gitmez). Eski "uzun `IN (...)` / çok `OR` → 400"
+         teşhisi ÇÜRÜDÜ (252 kr tek satırda 13 `OR` → 200); eski vakalar büyük olasılıkla bu
+         sınırdandı. Her 400 bu değildir — aşağıdaki maddelere bak.
       2. **VAR OLMAYAN KOLON ADI TAHMİNİ.** `DD30L` sorgusu 400 döndü; sebep erişim değil,
          **tahmin edilen kolon adıydı**. ⇒ Kolon adını TAHMİN ETME: önce `SELECT *` ile
          (küçük `row_limit`) kolonları KEŞFET, sonra daralt.
@@ -1023,9 +1026,12 @@ def adt_dump_list(limit: int = 20, from_ts: str | None = None, to_ts: str | None
 # =============================================================================
 # adt_inactive_objects  (aktive-bekleyen worklist — worklist_audit MCP-native)
 # =============================================================================
-# TADIR `IN` listesi parça boyutu. Ölçülmüş sınır SABİT DEĞİL (bir ölçümde 15 ad → 200,
-# 25 ad → 400; daha önceki bir ölçümde 15 ad → 400). Bu yüzden `adt_sql_query` docstring
-# madde 1'in ölçülmüş çözümü (5'erli parçalar) kullanılır — sınıra yakın durulmaz.
+# TADIR `IN` listesi parça boyutu. Eski ölçüm (bir ölçümde 15 ad → 200, 25 ad → 400; daha
+# önce 15 ad → 400) "sınır sabit değil" diye okunmuştu; 2026-10-03'te kök sebep SATIR
+# UZUNLUĞU çıktı (255 kr — `adt_sql_query` docstring madde 1; ad uzunluğuna göre aynı ad
+# sayısı sınırın iki yanına düşer). Artık `run_query` uzun satırı kendisi kırıyor; 5'li
+# parça yine de korunur (davranış değişikliği ayrı ölçüm ister — daha büyük parça canlıda
+# ÖLÇÜLMEDİ).
 _TADIR_PARCA = 5
 
 
