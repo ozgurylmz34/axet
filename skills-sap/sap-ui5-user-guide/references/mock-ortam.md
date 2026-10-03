@@ -70,8 +70,12 @@ Servis kontrolleri (sırayla):
 1. `urlPath` = `manifest.json` → `sap.app.dataSources.mainService.uri` (sondaki `/` dahil birebir). Kopyalanmış
    uygulamalarda eski servise bakması sık görülür → hiçbir istek mock'a düşmez ya da yanlış veri gelir.
 2. `metadata.xml` **güncel** servisin metadata'sı mı: uygulamanın bağladığı entity set adları dosyada var mı
-   (`grep 'EntitySet Name=' metadata.xml`). Dosya bayatlar (`%sap-ui5-fiori` → `references/app-skeleton.md` §11);
-   güncel metadata'yı geliştirici tarayıcıdan kaydeder — bu akış SAP'ye bağlanmaz.
+   (`rg 'EntitySet Name=' metadata.xml`). Dosya bayatlar (`%sap-ui5-fiori` → `references/app-skeleton.md` §11);
+   güncel metadata'yı **sen indirirsin** (salt-okur, tek komut):
+   `python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/fetch_ui_source.py metadata <SERVIS> --app <APP> --kaydet`.
+   Kimlik env → `.conn_adt` (aynı sunucu + client) → Windows giriş penceresi; kullanıcıdan tarayıcıda kaydetmesi ya da
+   parola **istenmez**. Dosyaya elle `<Property>` satırı eklenmez (SAP çıktısı gibi git'e girer). Mock sunucusunun
+   kendisi SAP'ye bağlanmaz.
 3. `mockdataPath` klasörü var mı. Yoksa `mock_veri.py --cikti` o klasörü hedefler.
 4. `generateMockData: true` elle/`mock_veri.py` ile doldurulmayan varlıklar için genel veri üretir ("Sample Text",
    "Item 1" türü — core-concepts). Bu değerler **kareye girmemeli** (`gorsel-kontrol.md` G5): kareye giren her
@@ -89,7 +93,10 @@ Servis kontrolleri (sırayla):
   her EntitySet için kurgusal Türkçe veri üretir: anahtarlar tekil, `ReferentialConstraint` varsa yabancı anahtarlar
   tutarlı, aynı `--tohum` aynı veriyi verir, var olan dosya `--zorla` olmadan ezilmez (elle düzeltilmiş dosya korunur).
   Üretilen veri **gözden geçirilir**: iş anlamı taşıyan alanlar (durum kodu, birim, para birimi) uygulamanın beklediği
-  değerlerle eşleşmeli; eşleşmeyen değer ekranda boş metin ya da hata olarak görünür.
+  değerlerle eşleşmeli; eşleşmeyen değer ekranda boş metin ya da hata olarak görünür. Kod alanlarına değer
+  `--sabit-degerler <EntitySet>.<Alan>=<A,B,C>` ile verilir; değerler domain sabit değerlerinden (`adt_get` domain) ya
+  da değer yardımı varlığının kodlarından alınır, uydurulmaz (ölçüldü 2026-10-03: domain'de olmayan kod KD karesine
+  girdi). Araç sabit değer verilmemiş kod alanı adaylarını `UYARI: kod alanı adayı` satırıyla listeler.
 - Üretilen biçim: V2 tarihleri `/Date(<ms>)/`; `Edm.Decimal` JSON'a **sayı** olarak yazılır (V2 sunucusu string
   döndürür — ekranda biçim farkı görülürse değeri string'e çevir). Araç, `MaxLength`'e sığmadığı için kestiği
   değer yardımı / yabancı anahtar değerlerini raporda **KESİLEN** satırında `Set.Alan` olarak listeler — o alanları
