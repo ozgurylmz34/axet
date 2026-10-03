@@ -68,8 +68,8 @@ Ayrıntı `mock-ortam.md`'de. Kısa sıra:
    `KOMUT mock (başlat, ön planda)` satırı). Araç `npm run start-mock`'u ayrı süreç grubunda, çıktısı dosyaya yönlenmiş
    başlatır, hazır olunca adresi (`http://127.0.0.1:<port>/index.html?sap-ui-language=tr`) basıp döner; sunucu yaşamaya
    devam eder. ⛔ `npm run start-mock`'u aXet'in **arka plan işi** olarak başlatma: durdurulunca aXet sonsuza dek bekler
-   (`tuzaklar.md` T26). Kapatma: `mock_sunucu.py durdur --app $APP` (yalnız bu aracın başlattığı süreç ağacı + portu
-   tutan süreç kapanır; port boşalmazsa çıkış 1). Portu araç çıktısından al; varsayma. İskeletteki script `fiori run ... --open ...` biçimindedir; `--open` kullanıcının
+   (`tuzaklar.md` T26). Kapatma: `mock_sunucu.py durdur --app $APP` (yalnız bu aracın başlattığı, soyu kanıtlanan süreçler
+   kapanır — portu dinlemek kimlik sayılmaz; port boşalmazsa ya da ölçülemezse çıkış 1, "DURDU" denmez). Portu araç çıktısından al; varsayma. İskeletteki script `fiori run ... --open ...` biçimindedir; `--open` kullanıcının
    varsayılan tarayıcısında pencere açması beklenir (bu turda ölçülmedi) — çekim buna bağlı değildir, script kullanıcı onayı olmadan değiştirilmez.
    ⛔ **Her yerel sunucu yalnız 127.0.0.1'e bağlanır.** Bind adresi verilmeyen sunucu tüm arabirimlere açılır ve
    Windows Güvenlik Duvarı izin penceresi çıkarır; yönetici olmayan kullanıcı izin veremez, iş orada durur

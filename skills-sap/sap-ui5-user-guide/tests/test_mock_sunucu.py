@@ -29,6 +29,7 @@ if rol == "kok":
         sys.exit(int(os.environ["SAHTE_KOK_OLSUN"]))
     while True: time.sleep(1)
 elif rol == "ara":
+    time.sleep(float(os.environ.get("SAHTE_ARA_GEC") or 0))  # sunucuyu geç doğur (npx → ui5 serve gibi)
     subprocess.Popen([sys.executable, __file__, "sunucu"])
     if os.environ.get("SAHTE_KOPUK"):
         sys.exit(0)          # ara süreç kapanır: sunucu YETİM kalır (kopuk ağaç)
@@ -70,7 +71,7 @@ class MockSunucuTest(unittest.TestCase):
 
     def _kos(self, *arg, env=None, zaman=120):
         e = dict(os.environ, PYTHONIOENCODING="utf-8")
-        for ad in ("SAHTE_KOPUK", "SAHTE_KOK_OLSUN", "SAHTE_GEC", "SAHTE_DINLEMEZ"):
+        for ad in ("SAHTE_KOPUK", "SAHTE_KOK_OLSUN", "SAHTE_GEC", "SAHTE_DINLEMEZ", "SAHTE_ARA_GEC"):
             e.pop(ad, None)
         e.update(env or {})
         t0 = time.monotonic()
@@ -122,23 +123,69 @@ class MockSunucuTest(unittest.TestCase):
         time.sleep(1)
         self.assertEqual([], self._artiklar(), "kök kapanınca başlattığı alt süreçler yetim kalmamalı")
 
-    @unittest.skipUnless(os.name == "nt", "kopuk ağaçta port sahibi yalnız Windows'ta (netstat) ölçülür")
-    def test_zaman_asimi_sonrasi_durdur_gec_acilan_yetimi_kapatir(self):
-        """Bug gate 2026-10-03 HIGH: zaman aşımı kaydı port 0 / alt [] idi, `durdur` sunucu yaşarken DURDU diyordu."""
-        env = {"SAHTE_KOPUK": "1", "SAHTE_GEC": "5"}
-        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env=env)
-        self.assertEqual(2, rc, out)
-        self.assertIn("hazır olmadı", out)
+    def _gec_port(self):
+        """Zaman aşımından sonra geç açılan sunucunun log'a yazdığı port (30 sn bekler)."""
         bitis = time.monotonic() + 30
         while time.monotonic() < bitis and not M.log_portu(M.kayit_oku(self.app)["log"]):
             time.sleep(0.5)
         port = M.log_portu(M.kayit_oku(self.app)["log"])
         self.assertTrue(port and M.port_dinleniyor(port), "ön koşul: geç açılan sunucu dinliyor")
+        return port
+
+    def test_zaman_asimi_sonrasi_durdur_gec_acilan_sunucuyu_kapatir(self):
+        """Bug gate 2026-10-03 HIGH: zaman aşımı kaydı port 0 / alt [] idi, `durdur` sunucu yaşarken DURDU diyordu.
+        Ara süreç kayıtlı, sunucu KAYITTAN SONRA doğuyor ve kök kapanıyor ⇒ sunucu yalnız kayıtlı ara sürecin soyundan
+        kanıtlanır ve kapatılır."""
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env={"SAHTE_ARA_GEC": "4"})
+        self.assertEqual(2, rc, out)
+        self.assertIn("hazır olmadı", out)
+        k = M.kayit_oku(self.app)
+        tablo = M.surec_tablosu()
+        roller = [tablo.get(a["pid"], {}).get("komut", "").rsplit(" ", 1)[-1] for a in k["alt"]]
+        self.assertIn("ara", roller)
+        self.assertNotIn("sunucu", roller, "ön koşul: sunucu kayıttan SONRA doğmalı")
+        M._oldur([], k["pid"])  # kök (npm) kendiliğinden çıktı
+        port = self._gec_port()
         rc2, out2, _ = self._kos("durdur")
         self.assertEqual(0, rc2, out2)
         self.assertIn(f"port {port} boş", out2)
         self.assertFalse(M.port_dinleniyor(port))
         self.assertEqual([], self._artiklar())
+
+    def test_zaman_asimi_kopuk_yetim_durdurda_durust_fail(self):
+        """Soyu kanıtlanamayan (ara süreci kayıttan önce kapanmış) geç sunucu kapatılMAZ; araç DURDU demez."""
+        env = {"SAHTE_KOPUK": "1", "SAHTE_GEC": "5"}
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env=env)
+        self.assertEqual(2, rc, out)
+        port = self._gec_port()
+        rc2, out2, _ = self._kos("durdur")
+        self.assertEqual(1, rc2, out2)
+        self.assertIn(f"port {port} hâlâ dinleniyor", out2)
+        self.assertNotIn("DURDU", out2)
+
+    def test_bayat_kayitta_baskasinin_sunucusu_kapatilmaz(self):
+        """Bug gate 2026-10-03 (2. tur) HIGH: kayıt bayatken aynı portu dinleyen ilgisiz süreç `durdur`la ölüyordu."""
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut)
+        self.assertEqual(0, rc, out)
+        k = M.kayit_oku(self.app)
+        M._oldur([a["pid"] for a in k["alt"]], k["pid"])  # zincir araç DIŞINDA kapandı (çökme / yeniden başlatma)
+        bitis = time.monotonic() + 15
+        while time.monotonic() < bitis and M.port_dinleniyor(k["port"]):
+            time.sleep(0.5)
+        ilgisiz = subprocess.Popen([sys.executable, "-m", "http.server", str(k["port"]), "--bind", "127.0.0.1"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        try:
+            bitis = time.monotonic() + 15
+            while time.monotonic() < bitis and not M.port_dinleniyor(k["port"]):
+                time.sleep(0.3)
+            self.assertTrue(M.port_dinleniyor(k["port"]), "ön koşul: ilgisiz süreç portu dinliyor")
+            rc2, out2, _ = self._kos("durdur")
+            self.assertEqual(1, rc2, out2)
+            self.assertIn("hâlâ dinleniyor", out2)
+            self.assertIsNone(ilgisiz.poll(), "ilgisiz süreç kapatılmamalı")
+        finally:
+            ilgisiz.kill()
+            ilgisiz.wait()
 
     def test_hazir_olmayan_kayit_ikinci_baslatta_silinmez(self):
         """Bug gate 2026-10-03 MEDIUM: ikinci `baslat` yaşayan süreçlerin kaydını silip onları sahipsiz bırakıyordu."""
@@ -200,6 +247,10 @@ class MockSunucuTest(unittest.TestCase):
         self.assertEqual(111, M.netstat_dinleyen(cikti, 8080))
         self.assertIsNone(M.netstat_dinleyen(cikti, 80), "kurulu bağlantı dinleme değildir; :80 ≠ :8080")
         self.assertEqual(444, M.netstat_dinleyen(cikti, 8091))
+        iki = cikti + "  TCP    127.0.0.1:8080   0.0.0.0:0      LISTENING  555\n"
+        self.assertIsNone(M.netstat_dinleyen(iki, 8080), "iki süreç aynı portu dinliyorsa sahip bilinemez")
+        ayni = cikti + "  TCP    [::]:8080        [::]:0         LISTENING  111\n"
+        self.assertEqual(111, M.netstat_dinleyen(ayni, 8080), "aynı sürecin IPv4 + IPv6 satırı tek sahiptir")
 
     def test_durum_dosyasi_uygulamaya_yazilmaz(self):
         for yol in M.kayit_yollari(self.app):

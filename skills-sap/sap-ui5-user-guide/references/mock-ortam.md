@@ -142,9 +142,12 @@ curl -s -o NUL -w "%{http_code}\n" "http://127.0.0.1:<port>/sap/public/bc/ui5_ui
 - ⛔ Sunucu yalnız `127.0.0.1`'e bağlanmalı (`akis.md` §2 madde 4, `tuzaklar.md` T5).
 - Arayüz Türkçe: giriş adresinde `?sap-ui-language=tr`.
 - Port logdan alınır; aynı anda başka bir mock açıksa port artar ve tarayıcı yanlış uygulamaya gidebilir (`tuzaklar.md` T4).
-- Kapatma: `python $S/mock_sunucu.py durdur --app $APP`. Araç yalnız kendi kaydettiği süreçleri (PID + oluşturma
-  zamanı) ve portu tutan alt süreci kapatır, portun boşaldığını ölçer; başka birinin sunucusuna dokunmaz. Kayıt
-  `<TEMP>/axet-mock/` altındadır, uygulama klasörüne yazılmaz.
+- Kapatma: `python $S/mock_sunucu.py durdur --app $APP`. Araç yalnız soyu kanıtlanan süreçleri kapatır: kendi
+  kaydettiği süreçler (PID + oluşturma zamanı eşleşmeli) ve onlardan SONRA doğmuş alt süreçleri. Portu dinlemek kimlik
+  sayılmaz (kayıt bayatsa ya da port paylaşılıyorsa başkasının sunucusu olabilir) ⇒ başka birinin sunucusuna dokunmaz.
+  Portun boşaldığını ölçer; boşalmazsa ya da port ölçülemezse çıkış 1 ve "DURDU" yazmaz — o durumda `netstat -ano` ile
+  portu tutan PID'ye bak, komut satırında kendi uygulama klasörün geçiyorsa kapat. Kayıt `<TEMP>/axet-mock/`
+  altındadır, uygulama klasörüne yazılmaz.
 - ⛔ `npm run start-mock`'u arka plan işi olarak başlatma. Windows'ta `npm → cmd → fiori → npx → ui5 serve` zinciri
   oluşur; arka plan işini durdurmak yalnız en üst süreci kapatır, alttaki `node` süreçleri yaşar ve çıktı borusunu
   açık tutar. Ölçüldü 2026-09-25: port LISTENING kaldı, sonraki mock `EADDRINUSE` verdi, ölçüm ESKİ sunucuya gitti.
