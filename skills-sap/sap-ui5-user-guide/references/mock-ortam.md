@@ -96,7 +96,14 @@ Servis kontrolleri (sırayla):
   değerlerle eşleşmeli; eşleşmeyen değer ekranda boş metin ya da hata olarak görünür. Kod alanlarına değer
   `--sabit-degerler <EntitySet>.<Alan>=<A,B,C>` ile verilir; değerler domain sabit değerlerinden (`adt_get` domain) ya
   da değer yardımı varlığının kodlarından alınır, uydurulmaz (ölçüldü 2026-10-03: domain'de olmayan kod KD karesine
-  girdi). Araç sabit değer verilmemiş kod alanı adaylarını `UYARI: kod alanı adayı` satırıyla listeler.
+  girdi). Biçim: `=K1,K2` ya da `=@kodlar.json` (JSON dizisi; öğe string ya da `{"value": ...}`). Araç MaxLength'i aşan
+  değeri reddeder (çıkış 2, kırpmaz) ama değerin **sistemde var olduğunu doğrulamaz** — kaynağı sen okursun. Değer bir
+  değer yardımı setinden geliyorsa sabit değer **VH setinin anahtarına** verilir (`<VHSet>.<Anahtar>=...`): ana alan
+  değerini oradan alır; yalnız ana alana verilirse değer yine listeden yazılır ama raporda NOT düşer ve VH ile tutarsız
+  kalır. Kod metni (`KOD=Metin`) henüz desteklenmez: VH'nin metin alanı aracın kendi sözlüğünden gelir — karede
+  görünüyorsa elle düzelt (Z180). Sabit değer verilmemiş kod alanı adayları (fixed-values işareti · `Code`/`Status`/
+  `Kod`… soneki + kısa MaxLength · UpperCase + MaxLength ≤ 4) raporun sonunda `UYARI: kod alanı adayı` satırıyla
+  listelenir; her biri ya beslenir ya da neden kod olmadığı yazılır. Uyarı çıkış kodunu değiştirmez.
 - Üretilen biçim: V2 tarihleri `/Date(<ms>)/`; `Edm.Decimal` JSON'a **sayı** olarak yazılır (V2 sunucusu string
   döndürür — ekranda biçim farkı görülürse değeri string'e çevir). Araç, `MaxLength`'e sığmadığı için kestiği
   değer yardımı / yabancı anahtar değerlerini raporda **KESİLEN** satırında `Set.Alan` olarak listeler — o alanları
