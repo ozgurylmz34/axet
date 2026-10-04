@@ -58,8 +58,9 @@ static action içinden (✅) — ⚠ strict/managed saver bağlamında ölçülm
 ## 5. Deneme koşusunda mail — tek istek, tekrar YOK
 - Deneme sınıfında mail **varsayılan kapalı** (`gc_mail_acik = abap_false`). Açmak için: alıcı yalnız kullanıcının kendi
   adresi, gönderen politikası soruldu, içerik kullanıcı onaylı.
-- ⛔ **Bilinen risk:** aXet `adt_classrun` 200 dışı yanıtta isteği bir kez daha gönderiyordu
-  (`%sap-adt-foundation` → `scripts/sapadt/lib/sap_client.py`, `run_classrun`) ⇒ mail gönderen koşu **iki mail** atabilir.
-  Mail açıkken zaman aşımı/500 alınırsa **TEKRAR KOŞMA**; önce SOST/SOOD'a bak, gönderimin olup olmadığını oradan oku.
+- ⛔ **Tekrar koşma:** `adt_classrun` 200 dışı yanıtta ve zaman aşımında isteği artık yeniden GÖNDERMEZ; sonuç
+  `islenmis_olabilir: true` taşır (`%sap-adt-foundation` → `known-errors-adt.md` K-28; önceki sürümler 500'de 2, 502/503/504
+  ve okuma zaman aşımında 4 istek gönderiyordu — yerel sahte sunucuda ölçüldü, SAP'ye karşı DOĞRULANMADI). Bu işaret
+  "koşmadı" DEMEK DEĞİLDİR: mail açıkken görürsen **TEKRAR KOŞMA**; önce SOST/SOOD'a bak, gönderimin olup olmadığını oradan oku.
 - Deneme sınıfında `COMMIT WORK` RAP bağlamı değildir (classrun) — sınıfta gerekçesi yorumla yazılıdır (`%sap-code-review`
   BE-26 "gerçek RAP dışı sınıf istisnası gerekçesiyle yazılır").

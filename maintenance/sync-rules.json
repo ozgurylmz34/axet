@@ -56,7 +56,7 @@
       ],
       "party": 5,
       "status": "tamam",
-      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI. 2026-09-25: yeni §0a KURULUM KAPSAMI tablosu + parity_probe + user-settings-template ALINMAZ (katman ayrımı kaynağın junction/hafıza mimarisine özgü; aXet install.py/kur.ps1 tek adımda tüm yüzeyi kurar). PowerShell yürütme politikası: kod karşılığı doctor.py check_ps_politika (Z129); önceki 'ders memory'de var' iddiası yanlıştı."
+      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI. 2026-09-25: yeni §0a KURULUM KAPSAMI tablosu + parity_probe + user-settings-template ALINMAZ (katman ayrımı kaynağın junction/hafıza mimarisine özgü; aXet install.py/kur.ps1 tek adımda tüm yüzeyi kurar). PowerShell yürütme politikası: kod karşılığı doctor.py check_ps_politika (Z129); önceki 'ders memory'de var' iddiası yanlıştı. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
@@ -69,7 +69,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Proje iskeleti new_project.py (--sap: profil + yasak damgasi); paket katmani new_package.py."
+      "note": "Proje iskeleti new_project.py (--sap: profil + yasak damgasi); paket katmani new_package.py. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F2/F4/F12d uygulanmaz; F4 proje hafizasi proje reposunda (.axet-code/.gitignore !memory/**) — test_new_project.test_proje_hafizasi_git_e_acik eklendi."
     },
     {
       "source": "DEV_CORE",
@@ -169,7 +169,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Proje README sablonu uretilmez (projenin kendi icerigi); aXet README'ye kabul kontrolu + sorun giderme eklendi."
+      "note": "Proje README sablonu uretilmez (projenin kendi icerigi); aXet README'ye kabul kontrolu + sorun giderme eklendi. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
@@ -209,7 +209,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Sablon yerine aXet reposunda dogrudan .github/CODEOWNERS."
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. Sablon yerine aXet reposunda dogrudan .github/CODEOWNERS. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
@@ -275,7 +275,7 @@
       ],
       "party": 5,
       "status": "tamam",
-      "note": "%onboard her adimi calistirarak dogrular; .conn_adt okumaz; install once --dry-run."
+      "note": "%onboard her adimi calistirarak dogrular; .conn_adt okumaz; install once --dry-run. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
@@ -3454,7 +3454,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi. 2026-09-25: B62 (MCP import denetimi / ix_doctor K1-K3 / session_start gerilik) tamamen DEV_CORE junction+MCP altyapısına özgü, taşınmadı. B63 (msag mesaj silme reçetesi) ÖZELLİK OLARAK ZATEN VAR — skills-sap/sap-cds-ddic/references/message-class.md §3.5-3.7'de daha ayrıntılı belgeli (delete_gate, TOCTOU, TAB/LF/CR); fixture'ın kendisi (sahte-SAP-sunucu test korpusu) DEV_CORE CLI test altyapısına özgü."
+      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi. 2026-09-25: B62 (MCP import denetimi / ix_doctor K1-K3 / session_start gerilik) tamamen DEV_CORE junction+MCP altyapısına özgü, taşınmadı. B63 (msag mesaj silme reçetesi) ÖZELLİK OLARAK ZATEN VAR — skills-sap/sap-cds-ddic/references/message-class.md §3.5-3.7'de daha ayrıntılı belgeli (delete_gate, TOCTOU, TAB/LF/CR); fixture'ın kendisi (sahte-SAP-sunucu test korpusu) DEV_CORE CLI test altyapısına özgü. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
@@ -3541,7 +3541,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): lessons-learned tur 4 eklemeleri (SQL 255 · dump client) -> Z165/Z166 belge karsiliklari (foundation-query.md)."
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-43 (:117) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): lessons-learned tur 4 eklemeleri (SQL 255 · dump client) -> Z165/Z166 belge karsiliklari (foundation-query.md). Tur 5 (2026-10-04): PATTERN #41 -> memory/feedback_ortam-normal-hukmu-hata-metnini-oku.md (prior-art yok)."
     },
     {
       "source": "DEV_CORE",
@@ -3718,10 +3718,11 @@
       "pattern": "playbook/checklists/adobe-forms-creation.md",
       "targets": [
         "skills-sap/sap-classic-abap/references/checklists.md",
-        "skills-sap/sap-classic-abap/references/forms-f1-help.md"
+        "skills-sap/sap-classic-abap/references/forms-f1-help.md",
+        "skills-sap/sap-pdf-output/references/kontrol-listesi.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "Tur 5 (2026-10-04): AF-DIV-01 Yol D istisnasi -> forms-f1-help; AF-005 + AF-XDP-01..07 tek yeri sap-pdf-output/references/kontrol-listesi.md (testle kilitli). checklists.md Adobe icerigi tasimiyor, yalniz atif."
     },
     {
       "source": "DEV_CORE",
@@ -3757,7 +3758,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164). Tur 2 (2026-09-25): BE-79 (WARNING, kaynak MEDIUM) checklist-abap §E; BE-24 sirasi (released BAPI -> OData) + BE-08 savemode_direct checklist-rap; SKILL §6 siradaki BE-80; validator-map 73."
+      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164). Tur 2 (2026-09-25): BE-79 (WARNING, kaynak MEDIUM) checklist-abap §E; BE-24 sirasi (released BAPI -> OData) + BE-08 savemode_direct checklist-rap; SKILL §6 siradaki BE-80; validator-map 73. Tur 5 (2026-10-04): BE-80 (NUMC karakter literali) -> checklist-abap §B BLOCKER, BE-81 (ABAP PCRE ciplak bosluk) -> §C WARNING; SKILL siradaki BE-82; validator-map dosyadan yeniden sayildi 92/elle 75 (eski 89 bayatti)."
     },
     {
       "source": "DEV_CORE",
@@ -3955,6 +3956,21 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "playbook/howto-pdf-ads-xdp.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-pdf-output/SKILL.md",
+        "skills-sap/sap-pdf-output/references/recete.md",
+        "skills-sap/sap-pdf-output/references/mail-eki.md",
+        "skills-sap/sap-pdf-output/templates/",
+        "skills-sap/sap-pdf-output/scripts/"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Tur 5 (2026-10-04, #323/#324, Z189): yeni skill sap-pdf-output — recete + tuzaklar + cok belge, XDP denetcisi (AF-XDP-03/04/05, layout:ready, sabit h), baglama simulasyonlu XDP->ABAP ureticisi (--check), base64 PDF cozucu, sablonlar (derlenmedi/render edilmedi). Classrun tek POST kurali Z190 ile aracta (K-28)."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "playbook/howto-abap-email.md",
       "decision": "uyarla",
       "targets": [
@@ -3962,7 +3978,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": ""
+      "note": "Tur 5 (2026-10-04): #323 -> email.md §1 gonderen politikasi kutusu, §1.1 SOST/SOES teshis, §4 set_message_subject, §5 PDF eki atfi, §6 CL_BCS kismen canli (olculenler listesi), §6.1 RAP ayri LUW (sap-rap behavior-impl §10), §7 kontrol listesi (Z191). PDF eki deseni ayrica sap-pdf-output/references/mail-eki.md."
     },
     {
       "source": "DEV_CORE",
@@ -5413,7 +5429,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Farklar: modul addan cikarilir; soneksiz (cloud) paket desteklenir; Y onekli pakette sinif YCL_<govde> (DEV_CORE yalniz Z atar); SAP'de paket yaratilmaz; bos klasorlere .gitkeep; owner varsayilani yer tutucu."
+      "note": "Farklar: modul addan cikarilir; soneksiz (cloud) paket desteklenir; Y onekli pakette sinif YCL_<govde> (DEV_CORE yalniz Z atar); SAP'de paket yaratilmaz; bos klasorlere .gitkeep; owner varsayilani yer tutucu. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F1 modul klasoru new_package.py zaten yaratiyor (mkdir parents); sabit modul listesi alinmadi (aXet modulu addan cikarir)."
     },
     {
       "source": "DEV_CORE",
@@ -5511,7 +5527,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": ""
+      "note": "Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F2 ruleset/guard check adlari uygulanmaz (new_project ruleset uretmez; aXet ruleset tek kontrol \"CI tamam\")."
     },
     {
       "source": "DEV_CORE",
@@ -5523,7 +5539,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "2026-09-25: 1e PowerShell yürütme politikası × npm .ps1 shim kontrolü → doctor.py check_ps_politika (:1428, iş listesi Z129; testler tests/test_doctor.py). Önceki 'ders memory'de var' iddiası yanlıştı; dersin kendisi doctor kontrolüne gömüldü. repo_mode LITE (K3/K5a) alınmadı: aXet doctor'da repo modu yok."
+      "note": "2026-09-25: 1e PowerShell yürütme politikası × npm .ps1 shim kontrolü → doctor.py check_ps_politika (:1428, iş listesi Z129; testler tests/test_doctor.py). Önceki 'ders memory'de var' iddiası yanlıştı; dersin kendisi doctor kontrolüne gömüldü. repo_mode LITE (K3/K5a) alınmadı: aXet doctor'da repo modu yok. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F3 doctor remote FAIL dali yok (GitKimlikTest kilitli); F4 K7a karsiligi proje reposu."
     },
     {
       "source": "DEV_CORE",
@@ -5545,7 +5561,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "2026-09-25 tur 2: --wt-denetim içerik karşılaştırması + ReadOnly silme onarıcısı ALINMAZ — aXet install.py worktree yönetmez."
+      "note": "2026-09-25 tur 2: --wt-denetim içerik karşılaştırması + ReadOnly silme onarıcısı ALINMAZ — aXet install.py worktree yönetmez. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F12a sapma gorunurlugu new_project [VAR, dokunulmadi] + install.py UYARI ile var; F12b %guncelle-proje 3-yollu + geri-al; F5 install makine kapsamli, CLI proje kokunu kendi sabitler."
     },
     {
       "source": "DEV_CORE",
@@ -5644,7 +5660,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": ""
+      "note": "Tur 5 (2026-10-04): §1b Yol D -> forms-f1-help §A.4 (yalniz kullanicinin acik secimi, yasal cikti degil) + ayrinti sap-pdf-output."
     },
     {
       "source": "DEV_CORE",
@@ -5819,7 +5835,7 @@
       ],
       "party": 7,
       "status": "kismi",
-      "note": "sir_gate, gitignore, manifest, precommit failclosed, paket uzanti, git sorgu, reviewer skip -> tests/. Validator bad/good ciftleri skills-sap testlerine bekliyor. Claude hook/MCP/overlay/worktree/statusline alinmaz. 2026-09-14: aktivasyon/push on-kontrol/sorgu araclari/reviewer fugr fixture'lari foundation unittest'lerine uyarlandi (test_verdict_*). Salt-okur kum temizligi (_sil) alinmadi: kok tests/_helpers.py zaten chmod'lu rmtree; foundation suite izole TMP'de 0 test kumu birakti (tek artik node-compile-cache)."
+      "note": "sir_gate, gitignore, manifest, precommit failclosed, paket uzanti, git sorgu, reviewer skip -> tests/. Validator bad/good ciftleri skills-sap testlerine bekliyor. Claude hook/MCP/overlay/worktree/statusline alinmaz. 2026-09-14: aktivasyon/push on-kontrol/sorgu araclari/reviewer fugr fixture'lari foundation unittest'lerine uyarlandi (test_verdict_*). Salt-okur kum temizligi (_sil) alinmadi: kok tests/_helpers.py zaten chmod'lu rmtree; foundation suite izole TMP'de 0 test kumu birakti (tek artik node-compile-cache). Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir)."
     },
     {
       "source": "DEV_CORE",
