@@ -162,7 +162,8 @@ class MockSunucuTest(unittest.TestCase):
         """Bug gate 2026-10-03 HIGH: zaman aşımı kaydı port 0 / alt [] idi, `durdur` sunucu yaşarken DURDU diyordu.
         Ara süreç kayıtlı, sunucu KAYITTAN SONRA doğuyor ve kök kapanıyor ⇒ sunucu yalnız kayıtlı ara sürecin soyundan
         kanıtlanır ve kapatılır."""
-        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env={"SAHTE_ARA_GEC": "4"})
+        # 15 sn: CI runner'ında süreç tablosu okuması birkaç sn sürer; 4 sn'de sunucu kayıttan ÖNCE doğdu (2026-10-04)
+        rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "2", env={"SAHTE_ARA_GEC": "15"})
         self.assertEqual(2, rc, out)
         self.assertIn("hazır olmadı", out)
         k = M.kayit_oku(self.app)
