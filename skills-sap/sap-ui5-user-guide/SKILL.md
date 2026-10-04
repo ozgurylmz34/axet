@@ -99,7 +99,7 @@ Dokuz adım sırayla yürür; bir adımın çıkış ölçütü tutmadan sonraki
 | `references/tuzaklar.md` | takılınca | belirti → sebep → çözüm (ölçülmüş) |
 | `scripts/kd_ortam.py` | adım 1 | `check` (bağımlılık tablosu, eksikte kurulum komutu, çıkış 2) · `config` (Chrome'a sabit yapılandırma; `--kanal msedge`, `--no-sandbox`) |
 | `scripts/mock_veri.py` | adım 2 | metadata'dan her EntitySet için kurgusal Türkçe `<EntitySet>.json` (tohumlu, var olanı ezmez) |
-| `scripts/mock_sunucu.py` | adım 2, 5 | mock sunucuyu ön planda `baslat` (hazır olunca döner) · `durum` · `durdur` (kendi süreç ağacı + port) · `yenile` |
+| `scripts/mock_sunucu.py` | adım 2, 5 | mock sunucuyu ön planda `baslat` (hazır olunca döner) · `durum` · `durdur` (yalnız kendi süreç soyu; portun boşaldığını ölçer) · `yenile` |
 | `%sap-fs-ts-docs` → `references/pdf-with-screenshots.md` | adım 5, 8, 9 | `capture_kd_screens.js` yapılandırması, HTML/PDF kurma, doğrulama tablosu |
 | `%sap-fs-ts-docs` → `references/kd-authoring.md` · `templates/KD-template.md` | adım 7 | KD bölümleri, alt ekran kuralı, içindekiler kuralı |
 | `%sap-fs-ts-docs` → `references/doc-checklist.md` | adım 7, 9 | DOC-KD maddeleri, bağımsız inceleme brifingi (§E) |

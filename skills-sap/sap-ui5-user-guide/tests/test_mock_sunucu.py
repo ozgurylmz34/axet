@@ -24,6 +24,8 @@ SAHTE = r'''
 import http.server, os, subprocess, sys, time
 rol = sys.argv[1]
 if rol == "kok":
+    if os.environ.get("SAHTE_YABANCI_URL"):  # fiori-tools backend satırı gibi: başka bir localhost adresi ÖNCE basılır
+        print('backend: [{"path":"/sap","url":"http://localhost:%s"}]' % os.environ["SAHTE_YABANCI_URL"], flush=True)
     subprocess.Popen([sys.executable, __file__, "ara"])
     if os.environ.get("SAHTE_KOK_OLSUN"):
         sys.exit(int(os.environ["SAHTE_KOK_OLSUN"]))
@@ -71,7 +73,7 @@ class MockSunucuTest(unittest.TestCase):
 
     def _kos(self, *arg, env=None, zaman=120):
         e = dict(os.environ, PYTHONIOENCODING="utf-8")
-        for ad in ("SAHTE_KOPUK", "SAHTE_KOK_OLSUN", "SAHTE_GEC", "SAHTE_DINLEMEZ", "SAHTE_ARA_GEC"):
+        for ad in ("SAHTE_KOPUK", "SAHTE_KOK_OLSUN", "SAHTE_GEC", "SAHTE_DINLEMEZ", "SAHTE_ARA_GEC", "SAHTE_YABANCI_URL"):
             e.pop(ad, None)
         e.update(env or {})
         t0 = time.monotonic()
@@ -136,6 +138,33 @@ class MockSunucuTest(unittest.TestCase):
             self.assertNotIn(ilgisiz.pid, [a["pid"] for a in M.kayit_oku(self.app)["alt"]])
             rc2, out2, _ = self._kos("durdur")
             self.assertEqual(1, rc2, out2)
+            self.assertIsNone(ilgisiz.poll(), "ilgisiz süreç kapatılmamalı")
+        finally:
+            ilgisiz.kill()
+            ilgisiz.wait()
+
+    def test_logda_once_gecen_yabanci_adres_hazir_sayilmaz(self):
+        """Bug gate 2026-10-04 (4. tur) MEDIUM: log'daki İLK localhost adresi alınıyordu; kendi sunucumuz dinlemeden
+        önce basılan başka bir adres (backend satırı) "HAZIR" sayılıyordu. Port yalnız `URL:` satırından alınır."""
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            u_port = s.getsockname()[1]
+        ilgisiz = subprocess.Popen([sys.executable, "-m", "http.server", str(u_port), "--bind", "127.0.0.1"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        try:
+            bitis = time.monotonic() + 15
+            while time.monotonic() < bitis and not M.port_dinleniyor(u_port):
+                time.sleep(0.2)
+            self.assertTrue(M.port_dinleniyor(u_port), "ön koşul: ilgisiz sunucu dinliyor")
+            rc, out, _ = self._kos("baslat", "--komut-json", self.komut, "--zaman-asimi", "60",
+                                   env={"SAHTE_YABANCI_URL": str(u_port), "SAHTE_GEC": "3"})
+            self.assertEqual(0, rc, out)
+            port = M.kayit_oku(self.app)["port"]
+            self.assertNotEqual(u_port, port, out)
+            self.assertNotIn(f":{u_port}/", out)
+            rc2, out2, _ = self._kos("durdur")
+            self.assertEqual(0, rc2, out2)
+            self.assertIn(f"port {port} boş", out2)
             self.assertIsNone(ilgisiz.poll(), "ilgisiz süreç kapatılmamalı")
         finally:
             ilgisiz.kill()

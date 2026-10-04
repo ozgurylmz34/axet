@@ -145,7 +145,7 @@ curl -s -o NUL -w "%{http_code}\n" "http://127.0.0.1:<port>/sap/public/bc/ui5_ui
 - Kapatma: `python $S/mock_sunucu.py durdur --app $APP`. Araç yalnız soyu kanıtlanan süreçleri kapatır: kendi
   kaydettiği süreçler (PID + oluşturma zamanı eşleşmeli) ve onlardan SONRA doğmuş alt süreçleri. Portu dinlemek kimlik
   sayılmaz (kayıt bayatsa ya da port paylaşılıyorsa başkasının sunucusu olabilir) ⇒ başka birinin sunucusuna dokunmaz.
-  Portun boşaldığını ölçer; boşalmazsa ya da port ölçülemezse çıkış 1 ve "DURDU" yazmaz — o durumda `netstat -ano` ile
+  Portun boşaldığını ölçer; boşalmazsa ya da port ölçülemezse çıkış 1 ve "DURDU" yazmaz — o durumda kendi terminalinde `netstat -ano` (aXet bash'inde netstat engelli) ile
   portu tutan PID'ye bak, komut satırında kendi uygulama klasörün geçiyorsa kapat. Kayıt `<TEMP>/axet-mock/`
   altındadır, uygulama klasörüne yazılmaz.
 - ⛔ `npm run start-mock`'u arka plan işi olarak başlatma. Windows'ta `npm → cmd → fiori → npx → ui5 serve` zinciri

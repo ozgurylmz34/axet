@@ -37,11 +37,14 @@ import urllib.error
 import urllib.request
 
 PENCERE = os.name == "nt"
-URL_DESENI = re.compile(r"https?://(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(\d{2,5})")
+# Yalnız sunucunun kendi `URL:` satırı (ui5 serve: "URL: http://localhost:<port>", ölçüldü 3/3). Log'da başka localhost
+# adresleri de geçebilir (backend satırı) — ilk adresi almak yabancı bir sunucuyu "hazır" saydırıyordu (bug gate 4. tur).
+URL_DESENI = re.compile(r"\bURL:\s*https?://(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(\d{2,5})")
 KAPSAM = ("KAPSAM (SCOPE): mock_sunucu — bakılanlar: süreç canlılığı (PID + oluşturma zamanı), portun dinlenmesi, "
           "`/index.html` HTTP durumu, durdurmada portun boşalması. Bakılmayanlar: UI5 bootstrap ve `tr.json` (mock-ortam "
-          "§6 ölçümü ayrıca yapılır), OData yanıtlarının doğruluğu, başkasının başlattığı sunucular (yalnız bu aracın "
-          "kayıtlı süreçleri ve onların soyu kapatılır; portu dinleyen ama soyu kanıtlanmayan süreç kapatılmaz).")
+          "§6 ölçümü ayrıca yapılır), OData yanıtlarının doğruluğu, HAZIR portunu dinleyen sürecin soyu (port yalnız "
+          "sunucunun log'daki `URL:` satırından alınır), başkasının başlattığı sunucular (yalnız bu aracın kayıtlı "
+          "süreçleri ve onların soyu kapatılır; portu dinleyen ama soyu kanıtlanmayan süreç kapatılmaz).")
 
 
 def _cikti_utf8():
@@ -353,11 +356,12 @@ def durdur(app: str, bekle: float = 15) -> int:
     if not port:
         kayit_sil(app)
         print(f"[FAIL] kapatılan süreç {kapatilan}, ama sunucunun portu ÖLÇÜLEMEDİ (kayıtta da log'da da yok) — "
-              f"boşaldığı doğrulanamadı; `netstat -ano` ile bak")
+              f"boşaldığı doğrulanamadı; kendi terminalinde `netstat -ano` (aXet bash'inde netstat engelli) ile bak")
         return 1
     if port_dinleniyor(port):
         print(f"[FAIL] port {port} hâlâ dinleniyor — kayıtlı süreçler kapatıldı ama portu başka bir süreç tutuyor "
-              f"(`netstat -ano` ile PID'e bak; komut satırında bu uygulama yoksa o süreç senin değil)")
+              f"(kendi terminalinde `netstat -ano` (aXet bash'inde netstat engelli) ile PID'e bak; komut satırında "
+              f"bu uygulama yoksa o süreç senin değil)")
         return 1
     kayit_sil(app)
     print(f"MOCK SUNUCU: DURDU · kapatılan süreç {kapatilan} · port {port} boş")
