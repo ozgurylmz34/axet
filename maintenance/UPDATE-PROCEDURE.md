@@ -118,7 +118,9 @@ Otomatik kurulum yok.
 - **Geri dönüş:** template bir oturumu bozuyorsa kullanıcı merkezi klonu bilinen-iyiye çeker: `git -C <klon> fetch --tags`
   → `git -C <klon> checkout stable`. Tüm projeler aynı klonu okuduğu için hepsi birlikte döner; onarımdan sonra
   `git -C <klon> switch main`. Global config yolları değişmediği sürece `install.py` tekrar gerekmez.
-- **Güncelleme tek yerden iner:** `git -C <klon> pull`; projelerde template kopyası yoktur. `session_brief.py` açılışta
+- **Güncelleme tek yerden iner:** `git -C <klon> pull` (kullanıcı akışı `%guncelle`); kurallar ve skill'ler klondan okunur. Projelerde
+  yalnız şablondan üretilmiş kopyalar vardır (`AGENTS.md`, `.githooks`, denylist, `scripts/validators-local/` …) — onları
+  `%guncelle-proje` klondaki şablona getirir; doctor ya da oturum özeti "proje şablonu eski" der. `session_brief.py` açılışta
   "template origin'in gerisinde" uyarısını saatte bir kontrolle verir → önce klonu güncelle, sonra işe devam.
 - **Kurulum onarımı:** `python scripts/install.py [--sap]` idempotenttir (eksik olanı tamamlar, değişiklik yoksa
   "değişiklik yok") · `python scripts/doctor.py [--live]` kurulum + proje sağlığı · proje tarafında damga yenileme
