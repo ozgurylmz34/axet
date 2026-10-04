@@ -40,7 +40,7 @@ PENCERE = os.name == "nt"
 URL_DESENI = re.compile(r"https?://(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(\d{2,5})")
 KAPSAM = ("KAPSAM (SCOPE): mock_sunucu — bakılanlar: süreç canlılığı (PID + oluşturma zamanı), portun dinlenmesi, "
           "`/index.html` HTTP durumu, durdurmada portun boşalması. Bakılmayanlar: UI5 bootstrap ve `tr.json` (mock-ortam "
-          "§5 ölçümü ayrıca yapılır), OData yanıtlarının doğruluğu, başkasının başlattığı sunucular (yalnız bu aracın "
+          "§6 ölçümü ayrıca yapılır), OData yanıtlarının doğruluğu, başkasının başlattığı sunucular (yalnız bu aracın "
           "kayıtlı süreçleri ve onların soyu kapatılır; portu dinleyen ama soyu kanıtlanmayan süreç kapatılmaz).")
 
 
@@ -139,40 +139,6 @@ def surec_tablosu() -> dict[int, dict]:
         return tablo
     except Exception:  # noqa: BLE001
         return {}
-
-
-_BOS_UZAK = ("0.0.0.0:0", "[::]:0", "*:*")
-
-
-def netstat_dinleyen(cikti: str, port: int) -> int | None:
-    """`netstat -ano` çıktısında `port`'u dinleyen TEK sürecin PID'i; dinleyen yoksa ya da birden çok süreç dinliyorsa
-    None (Windows aynı portu `127.0.0.1` ve `0.0.0.0` için iki ayrı sürece bağlatabilir — hangisinin bizim olduğu
-    bilinemez, bug gate 2026-10-03). Durum sütunu (LISTENING) Windows görüntüleme diline göre çevrilir ⇒ dinleme,
-    uzak adresin boş olmasından (`0.0.0.0:0` / `[::]:0`) tanınır."""
-    pidler = set()
-    for satir in cikti.splitlines():
-        parca = satir.split()
-        if (len(parca) >= 5 and parca[0].upper() == "TCP" and parca[1].endswith(f":{port}")
-                and parca[2] in _BOS_UZAK):
-            try:
-                pidler.add(int(parca[-1]))
-            except ValueError:
-                return None
-    return pidler.pop() if len(pidler) == 1 else None
-
-
-def port_sahibi(port: int) -> int | None:
-    """Portu dinleyen TEK sürecin PID'i (Windows `netstat -ano`, IPv4 + IPv6; POSIX'te ölçülmez → None). Yalnız
-    `baslat` kullanır: ağaç kopuksa (ara süreç kapanmış) kök ağacından bulunamayan sunucuyu, HAZIR anında ve kökten
-    sonra doğmuşsa kayda alır. `durdur` port sahibine bakarak süreç KAPATMAZ (kimlik kanıtı değildir)."""
-    if not PENCERE or not port:
-        return None
-    try:
-        o = subprocess.run(["netstat", "-ano"], capture_output=True, text=True, errors="replace",
-                           timeout=30, stdin=subprocess.DEVNULL).stdout
-    except Exception:  # noqa: BLE001
-        return None
-    return netstat_dinleyen(o, port)
 
 
 def duvar_zamani(t: float) -> str:
@@ -277,16 +243,21 @@ def baslat(app: str, port: int | None, zaman_asimi: float, komut: list[str] | No
         if p.poll() is not None:
             # Kök kapandı ama başlattığı alt süreçler yaşıyor olabilir (Windows'ta ebeveyn PID'i kayıtlı kalır) —
             # yetim bırakılmaz; bu PID'ler kökten doğduğu için başkasının süreci değildir.
-            artik = torunlar(p.pid, surec_tablosu(), baslama)
+            # Windows: Popen kökün süreç tutamacını açık tuttuğu için PID'i yeniden dağıtılmaz (bug gate 2026-10-03).
+            tablo = surec_tablosu()
+            artik = torunlar(p.pid, tablo, baslama)
             _oldur(artik, None)
             if not PENCERE:  # POSIX: yetimler init'e devredilir (ppid 1) ⇒ ağaçtan değil süreç grubundan kapatılır
                 _grubu_oldur(p.pid)
-            print(f"[FAIL] sunucu süreci kapandı (çıkış {p.returncode}; kapatılan alt süreç {len(artik)}) — log "
+            sayi = len(artik) if tablo else "ÖLÇÜLEMEDİ (süreç tablosu okunamadı)"
+            print(f"[FAIL] sunucu süreci kapandı (çıkış {p.returncode}; kapatılan alt süreç {sayi}) — log "
                   f"kuyruğu:\n{_log_kuyrugu(log)}")
             return 2
         if bulunan is None:
-            m = URL_DESENI.search(_log_kuyrugu(log, 200))
-            bulunan = int(m.group(1)) if m else (port if port and port_dinleniyor(port) else None)
+            # Port YALNIZ sunucunun kendi log'undaki adresten alınır: `--port` "dinleniyor" diye benimsenmez — o portu o
+            # anda başka bir süreç dinliyor olabilir (bug gate 2026-10-03, 3. tur). fe-mockserver adresi basar
+            # (`URL: http://localhost:<port>`, ölçüldü 3/3).
+            bulunan = log_portu(log)
         if bulunan and port_dinleniyor(bulunan) and http_durum(bulunan) is not None:
             break
         time.sleep(0.5)
@@ -312,16 +283,15 @@ def log_portu(log: str) -> int | None:
 
 
 def _kayit_kur(app: str, kok: int, port: int | None, log: str, argv: list[str]) -> dict:
-    """Kök + kökten sonra doğmuş alt süreçler + (kopuk ağaçta) portu tutan, kökten sonra doğmuş süreç → kayıt."""
+    """Kök + kökten sonra doğmuş alt süreçleri (yalnız SOY) → kayıt. Portu dinleyen süreç kayda eklenmez: dinlemek
+    kimlik değildir (bug gate 2026-10-03, 3 tur). Gerçek zincirde sunucu kökün soyundadır (ölçüldü 2026-10-04, 3/3:
+    `npm → cmd → fiori → npx → ui5 serve`, 7 halka, köke ulaştı)."""
     tablo = surec_tablosu()
     kok_zaman = (tablo.get(kok) or {}).get("zaman", "")
     if not kok_zaman:
         print("UYARI: süreç kimliği (oluşturma zamanı) ÖLÇÜLEMEDİ — `durdur` süreçleri PID ile kapatmaz; port "
               "boşalmazsa elle kapat")
     alt = [{"pid": c, "zaman": tablo[c]["zaman"]} for c in torunlar(kok, tablo)]
-    sahip = port_sahibi(port)
-    if sahip and sahip != kok and all(a["pid"] != sahip for a in alt) and sonra_dogmus(sahip, kok_zaman, tablo):
-        alt.append({"pid": sahip, "zaman": tablo[sahip]["zaman"]})  # kopuk ağaç: portu tutan yetim sunucu
     kayit = {"pid": kok, "zaman": kok_zaman, "port": port or 0, "app": app, "log": log, "alt": alt, "komut": argv}
     kayit_yaz(app, kayit)
     return kayit
@@ -367,8 +337,8 @@ def durdur(app: str, bekle: float = 15) -> int:
     # KİMLİK MODELİ (bug gate 2026-10-03, 2 tur): yalnız SOYU kanıtlanan süreç kapatılır — kayıtlı ve hâlâ AYNI olan
     # süreçler (PID + oluşturma zamanı) ve onlardan SONRA doğmuş torunları. Portu dinlemek kimlik DEĞİLDİR (bayat
     # kayıtta ya da paylaşılan portta başkasının sunucusu olabilir) ⇒ port sahibine bakarak süreç kapatılmaz.
-    # Ağaç kopmuşsa (ara `cmd` kapanmış) kayıtlı alt süreçler ayrıca kapatılır — 2026-10-03 ölçümünde `ui5 serve`in
-    # ebeveyni kökün torunu DEĞİLDİ.
+    # Ağaç sonradan kopmuşsa (ara `cmd` kapanmış) kayıtlı alt süreçler ayrıca kapatılır. Soyu hiç kanıtlanamayan bir
+    # sunucu kalırsa port boşalmaz ⇒ çıkış 1 (dürüst; kapatma kullanıcıya bırakılır).
     kok = k["pid"] if canli(k["pid"], k.get("zaman", ""), tablo) else None
     alt = [a["pid"] for a in k.get("alt", []) if canli(a["pid"], a.get("zaman", ""), tablo)]
     for dogrulanmis in ([kok] if kok else []) + list(alt):

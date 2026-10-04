@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""mock_sunucu.py (Z181): sunucu aXet'in arka plan işinden bağımsız başlar, hazır olunca döner, durdurma süreç
-ağacını + kopuk ağaçta portu tutan yetimi kapatır, başkasının sürecine dokunmaz.
+"""mock_sunucu.py (Z181): sunucu aXet'in arka plan işinden bağımsız başlar, hazır olunca döner, durdurma yalnız
+SOYU kanıtlanan süreçleri kapatır (portu dinlemek kimlik değildir), başkasının sürecine dokunmaz.
 
 Gerçek npm yerine SAHTE zincir: kök → ara → sunucu (python http.server, URL'yi stdout'a basar). Ağ: yalnız
 127.0.0.1. SAP'ye, tarayıcıya bağlanmaz. Tek başına: python tests/test_mock_sunucu.py
@@ -103,17 +103,43 @@ class MockSunucuTest(unittest.TestCase):
         self.assertEqual([], self._artiklar(), "zincirin hepsi kapanmalı")
         self.assertIsNone(M.kayit_oku(self.app))
 
-    @unittest.skipUnless(os.name == "nt", "kopuk ağaçta port sahibi yalnız Windows'ta (netstat) ölçülür")
-    def test_kopuk_agac_yetim_sunucu_da_kapanir(self):
+    def test_kopuk_agac_yetim_kapatilmaz_durust_fail(self):
+        """Soyu kanıtlanamayan sunucu (ara süreci kayıttan önce kapanmış) kapatılMAZ; araç DURDU demez (bug gate
+        2026-10-03, 3 tur: portu dinlemek kimlik değildir). Gerçek zincirde sunucu kökün soyundadır (ölçüldü 3/3)."""
         rc, out, _ = self._kos("baslat", "--komut-json", self.komut, env={"SAHTE_KOPUK": "1"})
         self.assertEqual(0, rc, out)
-        k = M.kayit_oku(self.app)
-        port = k["port"]
-        self.assertIn(M.port_sahibi(port), [a["pid"] for a in k["alt"]], "yetim sunucu başlatırken kayda girmeli")
+        port = M.kayit_oku(self.app)["port"]
         rc2, out2, _ = self._kos("durdur")
-        self.assertEqual(0, rc2, out2)
-        self.assertFalse(M.port_dinleniyor(port), "ara süreç kapalıyken de portu tutan yetim kapanmalı")
-        self.assertEqual([], self._artiklar())
+        self.assertEqual(1, rc2, out2)
+        self.assertIn(f"port {port} hâlâ dinleniyor", out2)
+        self.assertNotIn("DURDU", out2)
+        self.assertTrue(M.port_dinleniyor(port), "soyu kanıtlanmayan dinleyiciye dokunulmamalı")
+
+    def test_port_bayragi_baskasinin_dinleyicisini_benimsemez(self):
+        """Bug gate 2026-10-03 (3. tur) HIGH: `--port P` ile başlatılırken P'yi ilgisiz bir süreç dinlemeye başlarsa
+        araç onu "hazır" sayıp kaydediyor, `durdur` onu kapatıyordu. Port yalnız kendi log'undaki adresten alınır."""
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            p_port = s.getsockname()[1]
+        e = dict(os.environ, PYTHONIOENCODING="utf-8", SAHTE_GEC="30")
+        baslat = subprocess.Popen([sys.executable, BETIK, "baslat", "--app", self.app, "--komut-json", self.komut,
+                                   "--port", str(p_port), "--zaman-asimi", "6"], stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=e, text=True,
+                                  encoding="utf-8", errors="replace")
+        time.sleep(1.5)
+        ilgisiz = subprocess.Popen([sys.executable, "-m", "http.server", str(p_port), "--bind", "127.0.0.1"],
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+        try:
+            out, _ = baslat.communicate(timeout=120)
+            self.assertEqual(2, baslat.returncode, out)
+            self.assertNotIn("HAZIR", out)
+            self.assertNotIn(ilgisiz.pid, [a["pid"] for a in M.kayit_oku(self.app)["alt"]])
+            rc2, out2, _ = self._kos("durdur")
+            self.assertEqual(1, rc2, out2)
+            self.assertIsNone(ilgisiz.poll(), "ilgisiz süreç kapatılmamalı")
+        finally:
+            ilgisiz.kill()
+            ilgisiz.wait()
 
     def test_baslamayan_sunucu_fail_log_kuyrugu(self):
         rc, out, _ = self._kos("baslat", "--komut-json", self.komut, env={"SAHTE_KOK_OLSUN": "3"})
@@ -237,20 +263,6 @@ class MockSunucuTest(unittest.TestCase):
                  5: {"ebeveyn": 1, "zaman": "5"},   # PID 1'in ESKİ sahibinin çocuğu: kökten önce doğmuş
                  6: {"ebeveyn": 1, "zaman": ""}}    # zamanı ölçülemeyen: alınmaz
         self.assertEqual({2, 3}, set(M.torunlar(1, tablo)))
-
-    def test_netstat_dinleyen_dilden_bagimsiz(self):
-        cikti = ("  Proto  Yerel Adres  Yabancı Adres  Durum  PID\n"
-                 "  TCP    0.0.0.0:8080   0.0.0.0:0      DİNLİYOR   111\n"
-                 "  TCP    127.0.0.1:80   127.0.0.1:5000 KURULDU    222\n"
-                 "  TCP    127.0.0.1:5000 127.0.0.1:80   ESTABLISHED 333\n"
-                 "  TCP    [::]:8091      [::]:0         LISTENING  444\n")
-        self.assertEqual(111, M.netstat_dinleyen(cikti, 8080))
-        self.assertIsNone(M.netstat_dinleyen(cikti, 80), "kurulu bağlantı dinleme değildir; :80 ≠ :8080")
-        self.assertEqual(444, M.netstat_dinleyen(cikti, 8091))
-        iki = cikti + "  TCP    127.0.0.1:8080   0.0.0.0:0      LISTENING  555\n"
-        self.assertIsNone(M.netstat_dinleyen(iki, 8080), "iki süreç aynı portu dinliyorsa sahip bilinemez")
-        ayni = cikti + "  TCP    [::]:8080        [::]:0         LISTENING  111\n"
-        self.assertEqual(111, M.netstat_dinleyen(ayni, 8080), "aynı sürecin IPv4 + IPv6 satırı tek sahiptir")
 
     def test_durum_dosyasi_uygulamaya_yazilmaz(self):
         for yol in M.kayit_yollari(self.app):
