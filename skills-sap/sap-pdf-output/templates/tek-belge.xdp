@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- aXet sap-pdf-output ŞABLONU — tek belge. SAP'de render EDİLMEDİ (aXet'te ölçülmedi). Öğe ve öznitelikler
-     çekirdekte canlı render edilen şablonun (S/4 private 2025) kısaltılmış iskeletinden; tek belgelik sayfa no
+<!-- aXet sap-pdf-output ŞABLONU — tek belge. SAP'de render EDİLMEDİ (aXet'te ölçülmedi). subform/field/bind/occur/
+     barcode öğeleri çekirdekte canlı render edilen şablonun (S/4 private 2025) kısaltılmış iskeletinden; sabit metin
+     `draw`/`value`/`text` yazımı aXet'in XFA 3.3 yazımıdır (çekirdekte örneği yok); tek belgelik sayfa no
      betiği o şablonun çok belgelik betiğinden sadeleştirildi (bu hâli ölçülmedi). Veri: tek-belge-veri.xml -->
 <xdp:xdp xmlns:xdp="http://ns.adobe.com/xdp/">
 <template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">

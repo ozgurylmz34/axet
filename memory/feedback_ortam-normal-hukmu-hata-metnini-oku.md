@@ -13,7 +13,7 @@ kendisi sebebi söyler; kimse okumadığı için kök sebep aylarca saklanır.
 kaydedilmişti. Hata satırı sebebi söylüyordu: `554 5.2.252 SendAsDenied; <teknik-adres> not allowed to send as
 <SAP-kullanıcısının-adresi>` — kurumsal relay yalnız yetkili bir teknik adresten gönderime izin veriyordu, mail ise SAP
 kullanıcısının adıyla gidiyordu. Gönderen değişince aynı sistemden mail dış posta kutusuna ulaştı (SOES `718 I`
-"Recipient OK"). Yan etki: "çıkmaz" varsayımı yüzünden test maili gerçek alıcıya gidebilir hâldeydi.
+"Recipient OK"). Yan etki: "çıkmaz" varsayımı yüzünden test maili gerçek alıcıya gidebilir hâle geldi (gönderen düzelince relay artık reddetmiyor).
 **Nasıl uygulanır:**
 1. Hükmü vermeden önce hata kaydının **tam metnini** oku: kod + serbest metin (MSGV alanları, SMTP yanıtı, dump'ın
    "Hata analizi" bölümü). Durum kodu ya da sayaç (`812 × 300`) kanıt değildir; **metin** kanıttır.

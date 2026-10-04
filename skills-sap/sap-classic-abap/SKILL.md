@@ -99,7 +99,7 @@ description: >
 - **Kullanıcıdan:** **gönderen politikası** (relay teknik adres istiyor mu — email §1), alıcı bakım tablosu, konu/gövde
   metni, ek biçimi. Test gönderimi dışa dönük iştir → onay; "test sisteminden çıkmaz" varsayılmaz.
 - **Yap:** gönderen `sy-uname`/`'B'` ya da zorunlu teknik adres, satır içi stil, 255 parça, `commit_work`. PDF eki: SFP formu
-  varsa §7, form objesi yoksa `%sap-pdf-output`. **Doğrula:** SOST/SOES'te çıkış (718/812) kullanıcıya kontrol ettirilir.
+  varsa `forms-f1-help.md` §A.2, form objesi yoksa `%sap-pdf-output`. **Doğrula:** SOST/SOES'te çıkış (718/812) kullanıcıya kontrol ettirilir.
 
 ### 7. Adobe Forms / F1 yardımı
 - **Önce oku:** `references/forms-f1-help.md`.

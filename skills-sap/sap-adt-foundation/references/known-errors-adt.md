@@ -326,7 +326,8 @@
      gönderiyordu (yerel sahte sunucuda ölçüldü: 4 POST) → classrun öneki için okuma/durum tekrarı kapalı; yalnız
      bağlantı kurma tekrarı açık (istek henüz gitmemiştir).
   Bu durumda dönüş `islenmis_olabilir: true`, `yeniden_denenmedi: true`, `code: classrun_islenmis_olabilir` ve bir
-  `uyari` taşır. Bağlantı hiç kurulamadıysa (`ConnectTimeout`) işaret konmaz.
+  `uyari` taşır. İşaret yalnız bağlantı kurma zaman aşımında (`ConnectTimeout`) konmaz; bağlantı reddi ve DNS hatası (ör. VPN kapalıyken
+  `getaddrinfo failed`) ile CSRF token alımındaki hata da işaretlenir — istek gitmemiş olsa bile (fazla uyarı yönünde güvenli).
 - **Sınır:** davranış yerel sahte HTTP sunucusuyla ölçüldü (`tests/test_classrun_tek_post.py`); SAP'ye karşı
   DOĞRULANMADI. Diğer POST'lar (push/activate/yaratma) aynı HTTP katmanından geçer ve `502/503/504`/zaman aşımında
   hâlâ tekrarlanır — bu madde onları kapsamaz.

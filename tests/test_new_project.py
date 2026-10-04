@@ -103,7 +103,7 @@ class NewProjectTest(GeciciTest):
     def test_proje_hafizasi_git_e_acik(self):
         """Proje hafızası (.axet-code/memory) PROJE reposunda izlenir; ayrı bir hafıza git'i gerekmez.
 
-        Çekirdek karşılığı (DEV_CORE #320 F4): orada hafıza proje dışında git'siz doğuyordu ve gün sonu
+        Çekirdek karşılığı (kaynak çekirdek, F4): orada hafıza proje dışında git'siz doğuyordu ve gün sonu
         push'u yedeksiz tek kopyaya düşüyordu. aXet'te bu sınıfı kapatan tek şey `.axet-code/.gitignore`'daki
         `!memory/**` istisnasıdır: kalkarsa hafıza sessizce git dışına düşer (`*` her şeyi saklar)."""
         d = self.proje()

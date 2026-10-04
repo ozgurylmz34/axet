@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- aXet sap-pdf-output ŞABLONU — çok belge → tek PDF. SAP'de render EDİLMEDİ (aXet'te ölçülmedi). DOC sarmalayıcı,
      kırılım öğeleri ve sayfa no olayı/betiği çekirdekte canlı render edilen şablonla (S/4 private 2025, 5 belge) aynı
-     biçimde; belge içeriği tek-belge.xdp'den. Belge içi "Sayfa n / N"de N > 1 dalı çekirdekte de ÖLÇÜLMEDİ.
+     biçimde; belge içeriği tek-belge.xdp'den (sabit metin `draw`/`value`/`text` yazımı aXet'in, çekirdekte örneği yok). Belge içi "Sayfa n / N"de N > 1 dalı çekirdekte de ÖLÇÜLMEDİ.
      Veri: cok-belge-veri.xml -->
 <xdp:xdp xmlns:xdp="http://ns.adobe.com/xdp/">
 <template xmlns="http://www.xfa.org/schema/xfa-template/3.3/">

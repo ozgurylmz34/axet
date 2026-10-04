@@ -48,7 +48,8 @@ ENDTRY.
 
 Tam iskeletler: `templates/tek-belge.xdp` (başlık, barkod, kalem tablosu, toplam, altbilgi) ve `templates/cok-belge.xdp`;
 eşleşen örnek veri `templates/tek-belge-veri.xml`, `templates/cok-belge-veri.xml`. Şablonlar SAP'de render **edilmedi** —
-öğe ve öznitelikler çekirdekte render edilen şablonun kısaltılmış iskeletinden.
+subform/field/bind/occur/barcode öğeleri çekirdekte render edilen şablonun kısaltılmış iskeletinden; sabit metin
+`draw`/`value`/`text` yazımı aXet'in XFA 3.3 yazımıdır (çekirdekte örneği yok).
 
 - XFA 3.3 düz XML'dir: `xdp:xdp` → `template` → kök `subform` (`layout="tb"`, `locale`) → `pageSet/pageArea`
   (`contentArea` + `medium`) → akışlı içerik. `tb` = yukarıdan aşağı, `lr-tb` = soldan sağa, sonra alt satır.
