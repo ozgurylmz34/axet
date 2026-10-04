@@ -165,6 +165,40 @@ class DosyaVeCheck(unittest.TestCase):
         rc, _, err = self._kos("--check")
         self.assertEqual(2, rc)
 
+    def test_check_veri_gomsuz_uretilmis_veri_blogu_denetlenmedi(self):
+        # --veri-gom ile üretilmiş dosyada --veri-gom'suz --check: get_veri sessizce "güncel" sayılmaz
+        rc, out, _ = self._kos("--veri-gom")
+        self.assertEqual(0, rc, out)
+        c.yaz(self.veri, "<!-- degisti -->\n" + VERI)  # get_veri artık bayat
+        rc, out, _ = self._kos("--check")
+        self.assertEqual(1, rc, out)
+        self.assertIn("GÜNCEL: get_xdp", out)
+        self.assertIn("DENETLENMEDİ: get_veri", out)
+        # kontrol grubu: veri bloğu hiç yoksa (--veri-gom'suz üretim) aynı komut temiz
+        os.remove(self.abap)
+        self.assertEqual(0, self._kos()[0])
+        rc, out, _ = self._kos("--check")
+        self.assertEqual(0, rc, out)
+        self.assertNotIn("DENETLENMEDİ", out)
+
+    def test_utf8_olmayan_abap_cikis_2(self):
+        with open(self.abap, "wb") as fh:
+            fh.write(b'" >>> URETILDI: get_xdp\n\xff\xfe\x80 bozuk\n')
+        rc, _, err = self._kos("--check")
+        self.assertEqual(2, rc)
+        self.assertIn("UTF-8", err)
+        with open(self.abap, "wb") as fh:
+            fh.write(b'\xff\xfe\x80 bozuk\n')
+        rc, _, err = self._kos()
+        self.assertEqual(2, rc)
+        self.assertIn("UTF-8", err)
+
+    def test_255_asan_metot_adi_cikis_2(self):
+        rc, _, err = self._kos("--xdp-metot", "m" * 300)
+        self.assertEqual(2, rc)
+        self.assertIn("ABAP üretilemedi", err)
+        self.assertFalse(os.path.exists(self.abap))
+
     def test_var_olan_dosyada_yalniz_blok_degisir(self):
         shutil.copy(os.path.join(c.TEMPLATES, "deneme-classrun.clas.abap"), self.abap)
         once = c.oku(self.abap)

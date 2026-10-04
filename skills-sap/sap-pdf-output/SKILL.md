@@ -55,7 +55,7 @@ Bir adımın çıkış ölçütü tutmadan sonrakine geçilmez.
    kıyası (`pypdf` yoksa sayfa "ÖLÇÜLEMEDİ"; ham `/Type /Page` sayımı hüküm değildir). **PDF'i aç ve gözle oku:** sayfa
    sayısı, kolon kayması, kesik metin, glifler, barkod, büyük harf `İ`. Bulgu listesini kullanıcıya göster.
 6. **Düzeltme turları (v2, v3 …)** aynı sınıfla: `.xdp`'yi düzelt → 3 → `xdp_abap_uret.py` (yeniden üret) → push → 5.
-   Her turda `--check` güncel. Kullanıcı PDF'i onaylar.
+   Her turda `--check` güncel (üretimdeki bayraklarla — veri gömülüyse `--veri-gom --check`; atlanan blok DENETLENMEDİ = çıkış 1). Kullanıcı PDF'i onaylar.
 7. **Mail (varsa).** `references/mail-eki.md`: gönderen politikasını **sor**, alıcı/içerik onayı al, deneme yalnız
    kullanıcının kendi adresine (`gc_mail_acik`, `gc_test_alici`). Koşu zaman aşımı/500 verirse **TEKRAR KOŞMA** → SOST/SOOD.
 8. **Ürünleştirme tasarımı (kullanıcıyla).** XDP'nin yeri (sınıf metodu ölçüldü; MIME / Z tablo ölçülmedi), gerçek veri →

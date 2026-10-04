@@ -323,16 +323,24 @@ def main(argv=None):
         print("UYARI: XDP'de sekme karakteri var — ABAP literalindeki davranışı DOĞRULANMADI; boşluğa çevir")
     print("BAĞLAMA: hata %d · uyarı %d" % (len(b.hata), len(b.uyari)))
 
-    bloklar = {a.xdp_metot: abap_blok(xdp_metin, a.xdp_metot, os.path.basename(a.xdp))}
-    if a.veri_gom:
-        bloklar[a.veri_metot] = abap_blok(veri_metin, a.veri_metot, os.path.basename(a.veri))
+    try:
+        bloklar = {a.xdp_metot: abap_blok(xdp_metin, a.xdp_metot, os.path.basename(a.xdp))}
+        if a.veri_gom:
+            bloklar[a.veri_metot] = abap_blok(veri_metin, a.veri_metot, os.path.basename(a.veri))
+    except ValueError as exc:  # ör. 255'i aşan başlık/metot adı — girdi hatası, bayat değil
+        print("HATA: ABAP üretilemedi: %s" % exc, file=sys.stderr)
+        return 2
 
     if a.check:
         if not os.path.isfile(a.abap):
             print("HATA: %s yok" % a.abap, file=sys.stderr)
             return 2
-        with open(a.abap, encoding="utf-8") as fh:
-            mevcut = fh.read().split("\n")
+        try:
+            with open(a.abap, encoding="utf-8") as fh:
+                mevcut = fh.read().split("\n")
+        except (OSError, UnicodeDecodeError) as exc:
+            print("HATA: %s okunamadı (UTF-8 bekleniyor): %s" % (a.abap, exc), file=sys.stderr)
+            return 2
         try:
             yerler = bloklari_bul(mevcut)
         except ValueError as exc:
@@ -350,6 +358,12 @@ def main(argv=None):
             else:
                 print("BAYAT: %s — kaynak dosyadan farklı; yeniden üret" % metot)
                 bayat += 1
+        for metot in sorted(set(yerler) - set(bloklar)):
+            # Dosyada üretilmiş bir blok var ama bu koşu onu üretmedi (ör. --veri-gom verilmedi) ⇒
+            # denetlenmeyen blok "güncel" sayılmaz (gate bulgusu: get_veri sessizce atlanıyordu).
+            print("DENETLENMEDİ: %s — dosyada üretilmiş blok var ama bu koşu üretmedi "
+                  "(veri bloğuysa --veri-gom ile koş)" % metot)
+            bayat += 1
         print("NOT: karşılaştırma satır başı/sonu boşluklarını yok sayar; SAP pretty printer'ın harf değişikliği BAYAT görünür.")
         return 1 if (bayat or b.hata) else 0
 
@@ -357,8 +371,12 @@ def main(argv=None):
         print("YAZILMADI: bağlama hatası var — önce şablonu ya da örnek veriyi düzelt.", file=sys.stderr)
         return 1
     if os.path.isfile(a.abap):
-        with open(a.abap, encoding="utf-8") as fh:
-            mevcut = fh.read().split("\n")
+        try:
+            with open(a.abap, encoding="utf-8") as fh:
+                mevcut = fh.read().split("\n")
+        except (OSError, UnicodeDecodeError) as exc:
+            print("HATA: %s okunamadı (UTF-8 bekleniyor): %s" % (a.abap, exc), file=sys.stderr)
+            return 2
         try:
             yerler = bloklari_bul(mevcut)
         except ValueError as exc:

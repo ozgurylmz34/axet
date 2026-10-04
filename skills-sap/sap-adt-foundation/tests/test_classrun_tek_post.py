@@ -180,6 +180,21 @@ class ClassrunTekPost(unittest.TestCase):
         ok = n == 1 and res.get("ok") is True and "islenmis_olabilir" not in res
         self.kaydet("200 normal → 1 POST · işaretsiz", "1 POST", [n, res], ok)
 
+    # (c2) sınıfın KENDİ çıktısında "does not implement" geçmesi bayat oturum DEĞİLDİR ---------
+    def test_classrun_cikti_icindeki_does_not_implement_tekrar_etmez(self):
+        govde = "Mail gonderildi. Kontrol: ZCL_Y does not implement ZIF_Z"
+        res, n = self._kos([(200, govde), (200, "IKINCI KOSU")])
+        ok = (n == 1 and self.adt.new_session_sayisi == 0 and res.get("ok") is True
+              and res.get("output") == govde and "islenmis_olabilir" not in res)
+        self.kaydet("çıktıdaki gevşek alt metin → 1 POST · oturum sıfırlanmadı", "1 POST · ok", [n, res], ok)
+
+    # (c3) 200-dışı yanıtta bayat-oturum imzası olsa bile işaret düşmez -----------------------
+    def test_classrun_500_bayat_imza_isaret_dusmez(self):
+        res, n = self._kos([(500, DNI), (200, "IKINCI KOSU")])
+        ok = (n == 1 and self.adt.new_session_sayisi == 0 and res.get("ok") is False
+              and res.get("islenmis_olabilir") is True and res.get("code") == "classrun_islenmis_olabilir")
+        self.kaydet("500 + imza → 1 POST + işaret (teşhis dalına girmez)", "1 POST · işaret", [n, res], ok)
+
     # (d) okuma zaman aşımı → tek POST, anlamlı sonuç ----------------------------------------
     def test_classrun_zaman_asimi_tek_post(self):
         res, _ = self._kos([("yavas", "")])

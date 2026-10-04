@@ -5,6 +5,7 @@ SAP ABAP Development Client
 Unified OOP interface for all SAP ADT operations
 """
 import os
+import re
 import sys
 import io
 import xml.etree.ElementTree as ET
@@ -62,6 +63,11 @@ _CLASSRUN_KOSMUS_OLABILIR = {
         "Arac bu yaniti yeniden denemedi."
     ),
 }
+
+# Bayat-oturum imzası (2026-07-31 ölçümü): "Class X does not implement if_oo_adt_classrun~main!".
+# Gevşek alt metin ('does not implement') sınıfın KENDİ çıktısında geçebilir ⇒ koşmuş sınıf ikinci
+# kez koşardı (Z190 gate bulgusu). Oturum sıfırlama, ok ve teşhis yalnız bu tam imzaya bakar.
+_CLASSRUN_BAYAT_IMZA = re.compile(r"does not implement\s+if_oo_adt_classrun~main", re.IGNORECASE)
 
 
 def sap_hata_govdesi(exc) -> Optional[Dict[str, Any]]:
@@ -1876,7 +1882,7 @@ class SAPClient:
             #    Bayat-oturum imzası 200 gövdesidir (yukarıdaki 2026-07-31 ölçümü);
             #    200-dışı yanıtın bayat oturumdan geldiğine dair kanıt yok.
             #    Kilit: tests/test_classrun_tek_post.py.
-            if r.status_code == 200 and 'does not implement' in body.lower():
+            if r.status_code == 200 and _CLASSRUN_BAYAT_IMZA.search(body):
                 self.adt_client.new_session()
                 # Header'lar eski session'dan türetilmişti (auth + CSRF) → yeniden al.
                 base_headers = self.adt_client._get_headers(accept_type='text/plain')
@@ -1887,7 +1893,7 @@ class SAPClient:
                 body = r.content.decode('utf-8')
             except Exception:
                 body = r.text or ''
-            ok = r.status_code == 200 and 'does not implement' not in body.lower()
+            ok = r.status_code == 200 and not _CLASSRUN_BAYAT_IMZA.search(body)
 
             # TEŞHİS (2026-07-31 kök-fix ile YENİDEN YAZILDI).
             # Buraya yalnız session-RESET'li retry de başarısız olunca gelinir.
@@ -1901,7 +1907,8 @@ class SAPClient:
             #   1. Sınıf AKTİVE EDİLMEMİŞ → aktif sürüm boş kabuk → mesaj DOĞRU.
             #   2. Bayat oturum (başka süreçte aktive edildi) → yukarıdaki reset çözer.
             #   3. Sınıf gerçekten arayüzü implemente etmiyor.
-            if not ok and 'does not implement' in body.lower():
+            # Teşhis yalnız 200 gövdesinde: 200-dışı yanıt aşağıda 'koşmuş olabilir' işaretini alır.
+            if r.status_code == 200 and _CLASSRUN_BAYAT_IMZA.search(body):
                 diag = self._diagnose_classrun_binding(class_name)
                 if not diag.get('structurally_valid'):
                     # AKTİF sürümde arayüz yok → mesaj DOĞRU, tooling sorunu DEĞİL.
