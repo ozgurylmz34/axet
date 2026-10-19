@@ -6,7 +6,7 @@
 >
 > **Profil kapsamı:** `ecc` → released CDS/API kavramı yok, bu dosya uygulanmaz · `s4_public`, `btp_abap` → released API
 > zorunlu ve platform reddeder (satırlar erken yakalama içindir) · `s4_private` → `cleancore_policy`'ye göre.
-> **Önem sütunu** `WARNING · strict: BLOCKER` ise `cleancore_policy: strict` projede BLOCKER'dır. Politika boşsa önem DOĞRULANMADI yazılır ve kullanıcıya sorulur.
+> **Önem sütunu** `WARNING · strict: BLOCKER` ise `cleancore_policy: strict` projede BLOCKER'dır. Politika boşsa bulgu WARNING yazılır, "cleancore_policy sorulacak (strict ise BLOCKER)" sistemde kalan doğrulamalara girer ve kullanıcıya sorulur.
 
 | ID | Ne kontrol edilir | Nasıl | Önem | Otomasyon | Kaynak ders |
 |---|---|---|---|---|---|
