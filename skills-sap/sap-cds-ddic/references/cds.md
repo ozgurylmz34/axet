@@ -156,7 +156,7 @@ kabuğu** açar, kaynak gövdeye konmaz (§1.3 tuzağıyla uyumlu) → kaynak ay
   `row_limit`'i açık ver ve her dilimde `row_count < row_limit` olduğunu göster (`%sap-adt-foundation` → `foundation-query.md` §1.1).
 - Kaynak vaka: 2026-08-03.
 
-### CDS-DCL-03 · Bilinen tuzak: DCL boşluğunu ölçerken ve düzeltirken gözden kaçanlar (S/4)
+### AX-CDS-DCL-01 · Bilinen tuzak: DCL boşluğunu ölçerken ve düzeltirken gözden kaçanlar (S/4)
 - **Belirti:** okuma hatasız; yetkili kullanıcıda dolu, dar yetkilide eksik. Üstelik bir kaydetmeden sonra dolu olan alan boşalmış.
 - **Kök neden 1 — yazma yoluna bulaşma:** "oku → kullanıcı başka alanı değiştirir → hepsini geri yaz" deseninde okuma DCL yüzünden
   sessizce boş döndüyse geri yazma gerçek verinin üstüne boş yazar = geri alınamaz veri kaybı. Aynı sonucu frontend'deki bir

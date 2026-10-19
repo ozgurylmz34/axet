@@ -191,7 +191,7 @@ kullanılır (§5.3).
 | Canlı Edm tipi | Gönderilen |
 |---|---|
 | `Edm.Boolean` | `true`/`false` (`'X'`/`''` değil → `Failed to read property '<X>' at offset N`) |
-| `Edm.DateTime` / `DateTimeOffset` | `Date` nesnesi. `DatePicker value="{…}" valueFormat="yyyy-MM-dd"` modeli **string** tutar → payload'da `new Date(Date.UTC(y, m - 1, d))` (saat dilimi kaymasına karşı UTC parçaları). `DatePicker dateValue="{…}"` **yerel** gece yarısı verir: tarih-yalnız alanda (`sap:display-format="Date"`) payload'dan önce seçilen takvim gününün UTC gece yarısına çevrilir (`checklists.md` FE-44) |
+| `Edm.DateTime` / `DateTimeOffset` | `Date` nesnesi. `DatePicker value="{…}" valueFormat="yyyy-MM-dd"` modeli **string** tutar → payload'da `new Date(Date.UTC(y, m - 1, d))` (saat dilimi kaymasına karşı UTC parçaları). `DatePicker dateValue="{…}"` **yerel** gece yarısı verir: tarih-yalnız alanda (`sap:display-format="Date"`) payload'dan önce seçilen takvim gününün UTC gece yarısına çevrilir (`checklists.md` FE-45) |
 | `Edm.Decimal` | model değeri ne ise; decimal'in backend'de string'e çevrilmesi `%sap-odata-backend` → `references/serialization.md` §1 |
 | boş tarih | `null` |
 
@@ -329,7 +329,7 @@ havuzu paylaşılır ama metadata havuzu paylaşılmaz; kanıt AĞ İZİNDEN (ik
 (bayt değil — bayt sabitini doğrudan vermek sınırı 1024² kat gevşetir) ve değer **falsy** ise (çözülmeyen binding,
 `null`, `0`) kontrol **sessizce atlanır**; sınırı birim dönüşümüyle ver ve değerin dolu geldiğini ölç.
 
-Denetim: `checklists.md` **FE-46** (414) / **FE-47** (`metadataUrlParams`).
+Denetim: `checklists.md` **FE-42** (414) / **FE-43** (`metadataUrlParams`).
 
 ### 7.4 Elle kurulan istek `sap-client` TAŞIMAZ — ana modelin istemci parametrelerini devret
 
@@ -370,7 +370,7 @@ _secondModelUrl: function (sBaseUrl, oMain) {
 - `aUrlParams` UI5'in iç alanıdır (lint `sap-no-ui5base-prop` uyarır) — bilinçli istisna: public karşılığı yok;
   `Array.isArray` koruması alan kaybolursa eski davranışa (çereze) düşer, patlamaz.
 - Ham istek URL'i: `oMain.sServiceUrl + "/<Yol>?" + <kendi sorgun> + "&" + params.join("&")`.
-- `metadataUrlParams` devri (§7.3, FE-47) **ayrıca** gerekir — biri öbürünün yerine geçmez.
+- `metadataUrlParams` devri (§7.3, FE-43) **ayrıca** gerekir — biri öbürünün yerine geçmez.
 
 **Doğrulama (kaynak okuması YETMEZ — ağ izi + ayırıcı veri):** aynı tarayıcıda iki client'lı iki sekme aç: önce A,
 sonra B, sonra A'da elle kurulan modeli/isteği tetikle. İstek URL'inde `sap-client=<A>` ve dönen veri A'nın verisi
@@ -380,7 +380,7 @@ yerel `webapp/` dosyaları servis edilerek aynı ölçüm koşulabilir (Playwrig
 
 **Kardeş taraması ZORUNLU:** `new ODataModel(`, `new XMLHttpRequest`, `fetch(` ve `sServiceUrl +` geçen **her**
 satır — tek util çoğu kez birebir kopyalarla birden çok uygulamada yaşar (ölçülen vakada 14 kopya). Denetim:
-`checklists.md` **FE-48** · UI-BOOT-06. Sayfadan ayrılırken gönderilen istek (belge kilidi bırakma) ayrıca §7.5 /
+`checklists.md` **FE-48** · UI-BOOT-05. Sayfadan ayrılırken gönderilen istek (belge kilidi bırakma) ayrıca §7.5 /
 **FE-49**'a tabidir.
 
 ### 7.5 Sayfadan ayrılırken senkron XHR GİTMEZ — `fetch` + `keepalive`
@@ -406,7 +406,7 @@ fetch(oModel.sServiceUrl + "/ReleaseLock?<KeyParam>=" + encodeURIComponent("'" +
   belgeye tekrar bırakma gider ve kullanıcının **başka sekmede** tuttuğu kilidi düşürür (backend bırakma
   `locked_by = sy-uname` kaydını siler). Kilit sözleşmesinin tamamı: `%sap-rap` → `draft-and-locks.md` §6.
 
-Denetim: `checklists.md` **FE-49** · UI-SAVE-06.
+Denetim: `checklists.md` **FE-49** · UI-SAVE-05.
 
 ## 8. Canlı `$metadata` ile statik çapraz kontrol
 
@@ -461,7 +461,7 @@ python <TEMPLATE>/skills-sap/sap-ui5-fiori/scripts/check_ui_odata_refs.py --app 
 Varsayılan `useBatch:false`: her işlem anında gider, **changeset yoktur → kısmi başarı mümkündür** (S10). `useBatch:true`
 seçilen akışta deferred group + tek `submitChanges`, sonuç `oData.__batchResponses` içinde her işlem için ayrı kontrol
 edilir (≥ 400 olan var mı). İki mod aynı ekranda karıştırılmaz. **Tek istisna:** dosya/base64/uzun metin taşıyan
-function import — `manifest.json` değişmez, o çağrı için ayrı bir `useBatch:true` model açılır (§7.3, FE-46).
+function import — `manifest.json` değişmez, o çağrı için ayrı bir `useBatch:true` model açılır (§7.3, FE-42).
 
 ---
 

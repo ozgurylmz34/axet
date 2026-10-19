@@ -17,8 +17,8 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-BOOT-02 | Manifest modelleri `i18n` + `""` (TwoWay, `useBatch:false`, Inline) + `ui` JSON; `settings.data` çift sarmalama yok; Component bağımlılıkları tam | BLOCKER | yok | §8, §9 |
 | UI-BOOT-03 | Etiket/buton/mesaj metinleri spesifikasyondan, TR; tahmin değil | BLOCKER | yok | — |
 | UI-BOOT-04 | `ui/` npm workspace kökü; uygulama `package.json` sade + `ui5*.yaml`'ın kullandığı middleware paket adları `devDependencies`'te (yoksa `start-*` açılmaz); kurulum kökte; uygulama başına lock yok | WARNING | yok | §2 |
-| UI-BOOT-05 | Tüm `ui5*.yaml` aynı kanonik host | BLOCKER | yok (`grep url: ui5*.yaml`) | §6 |
-| UI-BOOT-06 | Manifest DIŞI her istek (`new ODataModel(...)` — varyant/`$batch`/ikinci model; ham `fetch`/XHR; `sServiceUrl +` URL) ana modelin `sap-client`'ını (`aUrlParams`) taşır; literal client yazılmaz. Yoksa iki client aynı tarayıcıda açıkken çapraz-client okuma/yazma — hatasız | BLOCKER | yok | `freestyle-odata-v2.md` §7.4 · FE-48 |
+| UI-BOOT-05 | Manifest DIŞI her istek (`new ODataModel(...)` — varyant/`$batch`/ikinci model; ham `fetch`/XHR; `sServiceUrl +` URL) ana modelin `sap-client`'ını (`aUrlParams`) taşır; literal client yazılmaz. Yoksa iki client aynı tarayıcıda açıkken çapraz-client okuma/yazma — hatasız | BLOCKER | yok | `freestyle-odata-v2.md` §7.4 · FE-48 |
+| AX-UI-BOOT-01 | Tüm `ui5*.yaml` aynı kanonik host | BLOCKER | yok (`grep url: ui5*.yaml`) | §6 |
 
 ### Faz 2 — Mimari karar
 | ID | Kontrol | Önem | Otomatik | Ref |
@@ -27,7 +27,7 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-ARCH-02 | Düzenlenebilir grid V2 nav-binding + `createEntry` ile yapılmadı | BLOCKER | yok | §1 S3 |
 | UI-ARCH-03 | Save şablonu: `isNew ? deepCreate : başlık MERGE + kalem C/U/D` → `_runSeq` sıralı → tek `_ok/_err` | BLOCKER | yok | §1 |
 | UI-ARCH-04 | `hasPendingChanges()` ön kontrolü yok | WARNING | yok | §1 S9 |
-| UI-ARCH-05 | Liste ekranı = grid + ALV paritesi | BLOCKER | `check_list_view_grid.py` (yalnız adı liste/rapor olan view) | `list-grid-alv.md` |
+| AX-UI-ARCH-01 | Liste ekranı = grid + ALV paritesi | BLOCKER | `check_list_view_grid.py` (yalnız adı liste/rapor olan view) | `list-grid-alv.md` |
 
 ### Faz 3 — Save davranışı
 | ID | Kontrol | Önem | Otomatik | Ref |
@@ -36,8 +36,8 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-SAVE-02 | Değişmiş mevcut kalem de UPDATE; anahtar gövdede yok | BLOCKER | yok | §1 S4–S5 |
 | UI-SAVE-03 | İşlemler sıralı | BLOCKER | yok | §1 S2 |
 | UI-SAVE-04 | Başarı `MessageBox.success` (+ `onClose` navigasyon); hata `_parseError` | WARNING | yok | §6 |
-| UI-SAVE-05 | Commit bariyeri (`blur` + `setTimeout 0`) | HIGH | yok | §1.2 |
-| UI-SAVE-06 | Belge kilidi varsa: sayfadan ayrılırken bırakma = `fetch` + `keepalive` + CSRF + client parametresi (senkron XHR gitmez — Chromium, navigasyonda ölçüldü); kilit bırakılan her çıkış yolunda (geri/kayıt/silme) kilit bayrağı sıfırlanır ve unload dinleyicisi bayrağa bakar | BLOCKER | yok | §7.5 · FE-49 · `%sap-rap` `draft-and-locks.md` §6 |
+| UI-SAVE-05 | Belge kilidi varsa: sayfadan ayrılırken bırakma = `fetch` + `keepalive` + CSRF + client parametresi (senkron XHR gitmez — Chromium, navigasyonda ölçüldü); kilit bırakılan her çıkış yolunda (geri/kayıt/silme) kilit bayrağı sıfırlanır ve unload dinleyicisi bayrağa bakar | BLOCKER | yok | §7.5 · FE-49 · `%sap-rap` `draft-and-locks.md` §6 |
+| AX-UI-SAVE-01 | Commit bariyeri (`blur` + `setTimeout 0`) | HIGH | yok | §1.2 |
 
 ### Faz 4 — Binding / kontrol tipleri
 | ID | Kontrol | Önem | Otomatik | Ref |
@@ -45,14 +45,14 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-BIND-01 | Sayısal/tarih binding'lerde OData tipi | BLOCKER | yok | §5.1 |
 | UI-BIND-02 | CHAR1 bayrak CheckBox deseni (Edm.Boolean değilse) | WARNING | yok | §5.2 |
 | UI-BIND-03 | Navigation `to_X` | BLOCKER | `check_ui5_freestyle_traps.py` T1 | §2.1 |
-| UI-BIND-04 | Düzenlenebilir sayısal Input `type="Text"` + `onNumericLiveChange` | WARNING | `check_ui5_freestyle_traps.py` T2 | §5.4 |
+| AX-UI-BIND-01 | Düzenlenebilir sayısal Input `type="Text"` + `onNumericLiveChange` | WARNING | `check_ui5_freestyle_traps.py` T2 | §5.4 |
 
 ### Faz 5 — Value-help ve kişiselleştirme
 | ID | Kontrol | Önem | Otomatik | Ref |
 |---|---|---|---|---|
 | UI-VH-01 | VH onayı değeri kontrole doğrudan + modele yazıyor | BLOCKER | yok | §3 C1 |
 | UI-VH-02 | Kod + ad: `<X>Name` expose + `description` | WARNING | yok | §3 C2 |
-| UI-VH-03 | Filtre ekranı MultiInput + ValueHelpDialog; `caseSensitive:false` yok | BLOCKER | `check_filter_search_pattern.py` | `list-grid-alv.md` §6 |
+| AX-UI-VH-01 | Filtre ekranı MultiInput + ValueHelpDialog; `caseSensitive:false` yok | BLOCKER | `check_filter_search_pattern.py` | `list-grid-alv.md` §6 |
 | UI-PERSO-01 | Kolon göster/gizle + varyant + Excel; `P13nDialog`/`TablePersoController` yok; sıfırdan sort/filtre/export yazılmadı | BLOCKER | yok | `list-grid-alv.md` §3 |
 
 ### Faz 6 — Kapanış
@@ -62,9 +62,9 @@ Kullanım: Faz 1–2 **kod yazmadan**, 3–5 geliştirme sırasında, 6 kapanı�
 | UI-FIN-02 | Başlıktaki anahtar form alanı olarak tekrarlanmadı | INFO | yok | `fiori-elements-ux.md` §8 |
 | UI-FIN-03 | Yeni bir UI tuzağı yaşandıysa `%remember` | WARNING | yok | — |
 | UI-FIN-04 | BSP'nin tanımadığı dosya tipi (`.svg`/`.woff`) ve stray dosya yok | BLOCKER | `deploy_ui.py prepare` | `deploy-and-local-run.md` §4 |
-| UI-FIN-05 | i18n anahtarları iki dosyada | WARNING | `check_i18n_keys.py` | `freestyle-odata-v2.md` §9 |
-| UI-FIN-06 | Canlı `$metadata` çapraz kontrolü | BLOCKER | `check_ui_odata_refs.py` (çevrimdışı dosya) | §8 |
-| UI-FIN-07 | Runtime smoke + tam kapsam | BLOCKER | `ui-smoke/run_ui_smoke.py` (Playwright proje içi kurulu ise) | `runtime-verification.md` §3 |
+| AX-UI-FIN-01 | i18n anahtarları iki dosyada | WARNING | `check_i18n_keys.py` | `freestyle-odata-v2.md` §9 |
+| AX-UI-FIN-02 | Canlı `$metadata` çapraz kontrolü | BLOCKER | `check_ui_odata_refs.py` (çevrimdışı dosya) | §8 |
+| AX-UI-FIN-03 | Runtime smoke + tam kapsam | BLOCKER | `ui-smoke/run_ui_smoke.py` (Playwright proje içi kurulu ise) | `runtime-verification.md` §3 |
 
 ## B. İnceleme — FE kontrolleri (diff + etki alanı)
 
@@ -115,16 +115,16 @@ Genel inceleme akışı `%code-review`; kanıt kuralı: her bulgu dosya:satır y
 | FE-39 | Görev diff'inde kapsam dışı paylaşılan altyapı değişikliği (script, kural, ortak util) | HIGH | yok | kapsam dışı bulgu: kullanıcıya bildir |
 | FE-40 | Rapordaki sayılar içerik çapalı değil (çıplak sayı) | MEDIUM | yok | `%verify-done` |
 | FE-41 | "0 sonuç" iddiası kontrol grupsuz | MEDIUM | yok | `%verify-done` |
-| FE-42 | İki koleksiyon anahtar birleşiminde sıfır dolgusu normalize değil | HIGH | yok | §5.6 |
-| FE-43 | `index.html` bootstrap backend UI5'i değil: dış CDN (`ui5.sap.com/<sürüm>/…` — sabitlenmiş patch silinince `cldr/<dil>.json` 404, UI5 sessizce İngilizceye düşer) ya da göreli `resources/sap-ui-core.js` (BSP altında çözülmez); ya da `minUI5Version` ≠ backend sürümü. Runtime kanıtı: `sap.ui.version` = backend · `cldr/<dil>.json` 200 · tarih proje dilinde | BLOCKER | yok (`grep`: `index.html` içinde `ui5.sap.com/` ya da `src="resources/`) | `app-skeleton.md` §7 |
-| FE-44 | Tarih-yalnız alan/parametreye (`Edm.DateTime` + `sap:display-format="Date"`) **yerel gece yarısı** gidiyor → UTC'nin doğusunda gateway bir önceki günü alır: `$filter` yanlış küme, function import / create / update'te yanlış gün **kalıcı yazılır**. "Üst sınır 23:59:59" reçetesi alt sınırı kaydırır. Doğrusu: seçilen takvim günü UTC gece yarısı (`new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))`), iki sınır + her tarih parametresi, tek yardımcıdan. Kardeş taraması `new Filter` ile sınırlı değil, `urlParameters` ve payload'u da kapsar. Kanıt: kaydı olan gün ve ertesi gün seçilir, ertesi gün 0 dönmeli. FE-27'den farkı: tip doğru, an yanlış | HIGH | yok | §5.3 |
-| FE-45 | `callFunction` `urlParameters` içinde `null` / `undefined` değer → URL'ye `Param=null` yazılır, gateway 400 "Invalid key predicate" döner (anahtar hatası gibi görünür). Değeri olmayan parametre nesneye hiç konmaz (koşullu ekle); backend'de parametrenin opsiyonel olduğu ve boş gelince doğru dalın işlendiği okunur. Kanıt: aynı function import `=null` ile ve parametresiz çağrılır → 400 ↔ 200. JSON gövdedeki `null` bu sınıfa girmez (FE-04) | HIGH | yok (`grep`: `urlParameters` bloğunda `: null`) | §7 |
-| FE-46 | `callFunction` BÜYÜK yük taşıyor (dosya/base64/uzun metin) → OData V2 `urlParameters` **URL'e** serileşir, ters proxy (SAP Web Dispatcher) sınırını aşınca **HTTP 414** (Request-URI Too Long); `icm/HTTP/max_request_size_KB` gövde sınırıdır, İLGİSİZ. Satır sayısıyla doğrusal büyür (tek kurulumda, bir ekranda ölçülen: ~437 B/satır ⇒ ~20 satırda patladı; eşik sistemden sisteme değişir). Çözüm: o TEK çağrı için `useBatch:true` ikinci model, `manifest.json` DEĞİŞMEZ | HIGH | yok (aday: `callFunction` parametrelerinde sınırsız-uzunluk kaynağı — `JSON.stringify`/base64 — taraması) | `freestyle-odata-v2.md` §7.3 |
-| FE-47 | İkinci `ODataModel` kurulurken `metadataUrlParams` ana modelden DEVRALINMADI → metadata isteği hata alırsa `loaded()` hiç settle olmayan promise döner, her istek ona asılır (`.catch`/`timeout` yok) ⇒ **kalıcı busy**, hata görünmez. Kontrol: `new ODataModel(` her çağrı yerinde `metadataUrlParams: <anaModel>.mMetadataUrlParams` devri var mı. Devralmıyorsan busy'yi zaman aşımıyla kurtar + kullanıcıya söyle. Kanıt AĞ İZİNDEN gelir (kaynak okuması "paylaşılıyor" derse bile) | MEDIUM | yok (aday: `new ODataModel(` → `metadataUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.3 |
-| FE-48 | Elle kurulan istek `sap-client` taşımıyor → iki client aynı tarayıcıda açıkken **çapraz-client okuma/yazma, hatasız**. Manifest modeline Component `sap-client`/`sap-server` ekler; `new ODataModel(...)`, ham `fetch`/`XMLHttpRequest` ve `sServiceUrl +` URL'i bunu almaz (`sServiceUrl` sorgusuz saklanır, parametreler `aUrlParams`'ta). `sap-client`'sız istek tarayıcının tek `sap-usercontext` çerezine göre yönlenir; çerezi en son açılan client yazar ⇒ tek client açıkken görünmez. Doğrusu: ana modelin `aUrlParams`'ını (`sap-statistics` hariç) URL sorgusuna devret; util'de ana modeli `Component.getOwnerComponentFor(ctrl).getModel()` ile al. Kontrol: (a) `new ODataModel(` / `new XMLHttpRequest` / `fetch(` / `sServiceUrl +` her satır — kardeş taraması tüm uygulamaları kapsar (b) kanıt = iki client'lı iki sekme + **ayırıcı veri** (sayısı iki client'ta farklı entity) + ağ izinde `sap-client=<beklenen>`; kaynak okuması tek başına kanıt değil. FE-47'nin yerine geçmez, ikisi birlikte | HIGH | yok (aday: `new ODataModel(`/ham istek → `aUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.4 |
+| FE-42 | `callFunction` BÜYÜK yük taşıyor (dosya/base64/uzun metin) → OData V2 `urlParameters` **URL'e** serileşir, ters proxy (SAP Web Dispatcher) sınırını aşınca **HTTP 414** (Request-URI Too Long); `icm/HTTP/max_request_size_KB` gövde sınırıdır, İLGİSİZ. Satır sayısıyla doğrusal büyür (tek kurulumda, bir ekranda ölçülen: ~437 B/satır ⇒ ~20 satırda patladı; eşik sistemden sisteme değişir). Çözüm: o TEK çağrı için `useBatch:true` ikinci model, `manifest.json` DEĞİŞMEZ | HIGH | yok (aday: `callFunction` parametrelerinde sınırsız-uzunluk kaynağı — `JSON.stringify`/base64 — taraması) | `freestyle-odata-v2.md` §7.3 |
+| FE-43 | İkinci `ODataModel` kurulurken `metadataUrlParams` ana modelden DEVRALINMADI → metadata isteği hata alırsa `loaded()` hiç settle olmayan promise döner, her istek ona asılır (`.catch`/`timeout` yok) ⇒ **kalıcı busy**, hata görünmez. Kontrol: `new ODataModel(` her çağrı yerinde `metadataUrlParams: <anaModel>.mMetadataUrlParams` devri var mı. Devralmıyorsan busy'yi zaman aşımıyla kurtar + kullanıcıya söyle. Kanıt AĞ İZİNDEN gelir (kaynak okuması "paylaşılıyor" derse bile) | MEDIUM | yok (aday: `new ODataModel(` → `metadataUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.3 |
+| FE-45 | Tarih-yalnız alan/parametreye (`Edm.DateTime` + `sap:display-format="Date"`) **yerel gece yarısı** gidiyor → UTC'nin doğusunda gateway bir önceki günü alır: `$filter` yanlış küme, function import / create / update'te yanlış gün **kalıcı yazılır**. "Üst sınır 23:59:59" reçetesi alt sınırı kaydırır. Doğrusu: seçilen takvim günü UTC gece yarısı (`new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))`), iki sınır + her tarih parametresi, tek yardımcıdan. Kardeş taraması `new Filter` ile sınırlı değil, `urlParameters` ve payload'u da kapsar. Kanıt: kaydı olan gün ve ertesi gün seçilir, ertesi gün 0 dönmeli. FE-27'den farkı: tip doğru, an yanlış | HIGH | yok | §5.3 |
+| FE-46 | `index.html` bootstrap backend UI5'i değil: dış CDN (`ui5.sap.com/<sürüm>/…` — sabitlenmiş patch silinince `cldr/<dil>.json` 404, UI5 sessizce İngilizceye düşer) ya da göreli `resources/sap-ui-core.js` (BSP altında çözülmez); ya da `minUI5Version` ≠ backend sürümü. Runtime kanıtı: `sap.ui.version` = backend · `cldr/<dil>.json` 200 · tarih proje dilinde | BLOCKER | yok (`grep`: `index.html` içinde `ui5.sap.com/` ya da `src="resources/`) | `app-skeleton.md` §7 |
+| FE-47 | `callFunction` `urlParameters` içinde `null` / `undefined` değer → URL'ye `Param=null` yazılır, gateway 400 "Invalid key predicate" döner (anahtar hatası gibi görünür). Değeri olmayan parametre nesneye hiç konmaz (koşullu ekle); backend'de parametrenin opsiyonel olduğu ve boş gelince doğru dalın işlendiği okunur. Kanıt: aynı function import `=null` ile ve parametresiz çağrılır → 400 ↔ 200. JSON gövdedeki `null` bu sınıfa girmez (FE-04) | HIGH | yok (`grep`: `urlParameters` bloğunda `: null`) | §7 |
+| FE-48 | Elle kurulan istek `sap-client` taşımıyor → iki client aynı tarayıcıda açıkken **çapraz-client okuma/yazma, hatasız**. Manifest modeline Component `sap-client`/`sap-server` ekler; `new ODataModel(...)`, ham `fetch`/`XMLHttpRequest` ve `sServiceUrl +` URL'i bunu almaz (`sServiceUrl` sorgusuz saklanır, parametreler `aUrlParams`'ta). `sap-client`'sız istek tarayıcının tek `sap-usercontext` çerezine göre yönlenir; çerezi en son açılan client yazar ⇒ tek client açıkken görünmez. Doğrusu: ana modelin `aUrlParams`'ını (`sap-statistics` hariç) URL sorgusuna devret; util'de ana modeli `Component.getOwnerComponentFor(ctrl).getModel()` ile al. Kontrol: (a) `new ODataModel(` / `new XMLHttpRequest` / `fetch(` / `sServiceUrl +` her satır — kardeş taraması tüm uygulamaları kapsar (b) kanıt = iki client'lı iki sekme + **ayırıcı veri** (sayısı iki client'ta farklı entity) + ağ izinde `sap-client=<beklenen>`; kaynak okuması tek başına kanıt değil. FE-43'ün yerine geçmez, ikisi birlikte | HIGH | yok (aday: `new ODataModel(`/ham istek → `aUrlParams` devri taraması) | `freestyle-odata-v2.md` §7.4 |
 | FE-49 | Sayfadan ayrılırken gönderilen istek **senkron XHR** → Chromium göndermez (navigasyonda ölçüldü: 0/3; `fetch`+`keepalive` 3/3); `try/catch` yutar ⇒ belge kilidi zaman aşımına kadar kalır. Sekme kapatma ayırt edilemedi; Firefox/Safari/FLP ölçülmedi. `sendBeacon` CSRF başlığı taşıyamaz. Doğrusu: `fetch` + `keepalive:true` + `x-csrf-token` (`getSecurityToken()`) + URL'de `/` ve ana modelin client parametreleri (FE-48) + `.catch`. **İkinci ayak:** bırakılan her çıkış yolunda kilit bayrağı sıfırlanır, unload dinleyicisi bayrağa bakar (`if (!readOnly && id)`) — yoksa listedeyken sayfadan ayrılınca tekrar bırakma gider ve kullanıcının başka sekmedeki kilidi düşer. Kontrol: unload dinleyicisinde senkron XHR / `sendBeacon`+CSRF; bırakma URL'inde `/` + client parametresi; `_releaseLock` çağıranlarından sonra bayrak | HIGH | yok (`grep`: `.open(` + `, false)` → çağrıyı unload dinleyicisine kadar izle; XHR çoğu kez ayrı yardımcıdadır) | `freestyle-odata-v2.md` §7.5 |
+| AX-FE-01 | İki koleksiyon anahtar birleşiminde sıfır dolgusu normalize değil | HIGH | yok | §5.6 |
 
-Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–49 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
+Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42, 43, 45–49, AX-FE-01 çoğunlukla **HATA**; FE-13, 14, 15, 18, 19, 21, 23 **EKSİK**.
 
 ---
 
@@ -135,15 +135,16 @@ Ağırlıklar: FE-01..09, 20, 22, 25–29, 31, 33, 34, 42–49 çoğunlukla **HA
   olarak listelenen i18n tamlık kontrolü aXet'te `check_i18n_keys.py` olarak var; FE-33 (T4) aXet trap script'inde ERROR.
 - Kaynaktaki FE-36/37 kimlik çakışması (iki farklı tanım) giderildi: sayı içerik çapası ve sıfır sonuç kontrolleri
   FE-40/41'de.
-- Yeni satırlar: UI-BOOT-05 (kanonik host, kaynakta playbook ön kontrol maddesiydi), UI-ARCH-05, UI-SAVE-05, UI-BIND-04,
-  UI-VH-03, UI-FIN-05..07, FE-42 (sıfır dolgusu, kaynakta hafıza dersiydi), FE-43 (sürüm sabitleme, kaynakta playbook
-  satırıydı).
-- FE-43 kaynakta "sürüm sabit" kuralıydı; kaynak standart bootstrap'ı backend'in kendi UI5'ine çevirince (sabitlenen CDN
+- aXet'e özgü satırlar (`AX-` ailesi — çekirdekte karşılığı yok): AX-UI-BOOT-01 (kanonik host, kaynakta playbook ön kontrol
+  maddesiydi), AX-UI-ARCH-01, AX-UI-SAVE-01, AX-UI-BIND-01, AX-UI-VH-01, AX-UI-FIN-01..03, AX-FE-01 (sıfır dolgusu, kaynakta
+  hafıza dersiydi).
+- FE-46 (bootstrap kaynağı) kaynakta "sürüm sabit" kuralıydı; kaynak standart bootstrap'ı backend'in kendi UI5'ine çevirince (sabitlenen CDN
   patch'i silinip `tr` locale verisi 404 verdi) madde bootstrap kaynağı kontrolüne çevrildi; UI-BOOT-01 hizalandı.
-- Yeni satırlar: FE-44 (tarih-yalnız alanda yerel gece yarısı → gün kayması), FE-45 (`callFunction` `urlParameters`'ta
-  `null` → 400). Kaynakta bu iki madde ve bootstrap maddesi farklı numaralarla duruyor; aXet sırası korundu.
+- FE-45 (tarih-yalnız alanda yerel gece yarısı → gün kayması), FE-47 (`callFunction` `urlParameters`'ta `null` → 400),
+  FE-42 (büyük yük → 414), FE-43 (ikinci modelde `metadataUrlParams`).
 - UI-SAVE-04 kaynakta `MessageToast` diyordu; kaynak standart ve FE-24 ile hizalandı.
-- Yeni satırlar: FE-48 (elle kurulan istek `sap-client` taşımıyor), FE-49 (sayfadan ayrılırken senkron XHR), UI-BOOT-06,
-  UI-SAVE-06. Kaynakta oluşturma satırları UI-BOOT-05 / UI-SAVE-05 numarasıyla duruyor; aXet'te bu numaralar başka
-  maddelerde olduğu için 06 verildi.
+- FE-48 (elle kurulan istek `sap-client` taşımıyor), FE-49 (sayfadan ayrılırken senkron XHR), UI-BOOT-05, UI-SAVE-05.
+- Kimlik hizası (2026-10-19): FE-42..47, UI-BOOT-05/06 ve UI-SAVE-05/06 eskiden aXet'in kendi sırasıyla numaralanmıştı ve
+  kaynakla aynı numara başka kurala gidiyordu; çekirdek numaraları alındı, aXet'e özgü satırlar `AX-` ailesine taşındı.
+  Eski numaralar yalnız bu tarihten önceki kayıtlarda geçer. Kaynaktaki FE-44 (istemci boyut kapısı) aXet'te henüz yok.
 - Müşteri uygulama adları, tarihli vaka referansları ve belge uygulamalarının müşteriye özgü şablon adı çıkarıldı.
