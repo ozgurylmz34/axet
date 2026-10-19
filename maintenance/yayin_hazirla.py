@@ -259,17 +259,53 @@ def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[
     return bulgular + desen_tara(hedef, yollar, desenler)
 
 
+_COZULEMEDI = object()
+
+
+def json_coz(metin: str):
+    """JSON metnini ayrıştırır; başta UTF-8 BOM varsa atlar (`utf-8-sig` eşdeğeri — metin `utf-8` ile okunduğunda BOM
+    U+FEFF olarak kalır ve `json.loads` onu reddeder: BOM'lu JSON'un çözülmüş değerleri sessizce taranmıyordu, bug gate
+    2026-10-19). Ayrıştırılamazsa `_COZULEMEDI`."""
+    try:
+        return json.loads(metin.removeprefix("﻿"))
+    except ValueError:
+        return _COZULEMEDI
+
+
+def json_ayristirilamayan(kok: Path, yollar: list[str]) -> list[str]:
+    """`.json` olup ayrıştırılamayan yollar — çözülmüş değerleri TARANMADI (yalnız ham satır). Sessiz düşmez."""
+    sonuc = []
+    for y in yollar:
+        if Path(y).suffix.lower() != ".json":
+            continue
+        try:
+            metin = (kok / y).read_text(encoding="utf-8")
+        except UnicodeDecodeError:   # desen_tara bunu ayrıca BLOCKER yapar; burada da ölçülemeyen sayılır
+            sonuc.append(y)
+            continue
+        if json_coz(metin) is _COZULEMEDI:
+            sonuc.append(y)
+    return sonuc
+
+
+def json_kapsam_satiri(bozuk: list[str]) -> str:
+    """KAPSAM satırı — sıfırken de basılır."""
+    ornek = f"; ilk 5: {', '.join(bozuk[:5])}" if bozuk else ""
+    return ("KAPSAM — JSON: .json dosyalarında ham satır + çözülmüş dize değerleri/anahtarları (UTF-8 BOM kabul) · "
+            f"ÖLÇÜLEMEDİ {len(bozuk)} .json (ayrıştırılamadı — çözülmüş değerleri taranmadı, yalnız ham satır{ornek})")
+
+
 def json_cozulmus_satirlar(y: str, metin: str) -> list[tuple[str, str]]:
     """`.json` metnindeki her dize değerinin (ve anahtarın) ÇÖZÜLMÜŞ hâli → (`json$.yol`, satır) çiftleri.
 
     Neden (Z193 bug gate, 2026-10-19, ölçüldü): JSON metninde ters bölü çift (`\\\\`), ASCII dışı harf `\\uXXXX` olarak
     durur ⇒ `C:\\Users\\<ad>` deseni HAM satırda tutmaz; aynı değer yayında üretilen CHANGELOG.md'ye çözülmüş yazılınca
-    tutar (depo taraması 0, CI kırmızı). Ayrıştırılamayan JSON için boş liste — ham satırlar yine taranır."""
+    tutar (depo taraması 0, CI kırmızı). Ayrıştırılamayan JSON için boş liste — ham satırlar yine taranır; sayısı
+    KAPSAM'da ÖLÇÜLEMEDİ diye basılır (`json_ayristirilamayan`)."""
     if Path(y).suffix.lower() != ".json":
         return []
-    try:
-        veri = json.loads(metin)
-    except ValueError:
+    veri = json_coz(metin)
+    if veri is _COZULEMEDI:
         return []
     cikti: list[tuple[str, str]] = []
 
@@ -385,16 +421,20 @@ def yapisal_iz_turleri(satir: str) -> list[str]:
 
 def yapisal_iz_metin(y: str, metin: str) -> list[str]:
     """Tek metin için `konum (tür)` listesi; satır içeriği BASILMAZ. `.json`'da çözülmüş dize değerleri de taranır
-    (ham satırda zaten uyarı veren değer yinelenmez — tür bazında)."""
+    (ham satırda zaten uyarı veren değer yinelenmez — tür bazında).
+
+    JSON konumu `json#N` = çözülmüş dize parçasının (anahtar ya da değer; çok satırlı dizede satır başına bir parça)
+    belgedeki SIRA numarası. `json$.anahtar.yolu` DEĞİL: anahtarın kendisi host/transport olabilir ve "token basılmaz"
+    değişmezi konum üzerinden delinirdi (bug gate 2026-10-19)."""
     sonuc, ham_tur = [], set()
     for no, satir in enumerate(metin.split("\n"), 1):
         for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
             sonuc.append(f"{y}:{no} ({tur})")
             ham_tur.add(tur)
-    for konum, satir in json_cozulmus_satirlar(y, metin):
+    for sira, (_, satir) in enumerate(json_cozulmus_satirlar(y, metin), 1):
         for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
             if tur not in ham_tur:
-                sonuc.append(f"{y}:{konum} ({tur})")
+                sonuc.append(f"{y}:json#{sira} ({tur})")
     return sonuc
 
 
@@ -467,8 +507,8 @@ def depo_tara(kok: Path = KOK) -> int:
           "(tenant host, transport no; warn-first, her yolda, token basılmaz)")
     print(f"KAPSAM — dışlanan: {YEREL_LISTE_YOLU} (listenin kendisi — yalnız bu TAM yol) · .gitignore'lu yollar · "
           "ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + ")")
-    print(f"KAPSAM — ek yüzey: {uretilen_beyan} · .json dosyalarında ham satır + çözülmüş dize değerleri "
-          "(ayrıştırılamayan JSON yalnız ham)")
+    print(f"KAPSAM — ek yüzey: {uretilen_beyan}")
+    print(json_kapsam_satiri(json_ayristirilamayan(kok, yollar)))
     print(olculemedi_satiri(dusen))
     print("KAPSAM — bakılmayan: git geçmişi (eski commit içerikleri ve commit mesajları) · PR başlığı/gövdesi · "
           "yayın taramasının WARNING sınıfları (dışlanan dosyaya atıf: yalnız yayın kopyasında anlamlı) · kişi adları "
@@ -1140,6 +1180,7 @@ def main() -> int:
     print("KAPSAM — bakılan (yayın kalemleri): guncelle/yayinlar.json şeması" +
           (" + kalem-diff kapsamı (eşlemesiz dosya = FAIL)" if sonraki_yayin
            else " (kalem-diff kapsamı bu kipte ÖLÇÜLMEZ: karşılaştırılacak önceki yayın yok)"))
+    print(json_kapsam_satiri(json_ayristirilamayan(hedef, yollar)))
     print(olculemedi_satiri(dusen))
     print("KAPSAM — bakılmayan: ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + "), kişi adları sözlüğü, "
           "SAP host/SID/client serbest metni, anlamsal iç bilgi (ör. aXet iç davranış anlatımı), lisans uyumu. "

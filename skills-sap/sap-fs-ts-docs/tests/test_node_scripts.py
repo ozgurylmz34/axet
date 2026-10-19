@@ -157,7 +157,7 @@ class SayfaNoYerImiTest(unittest.TestCase):
             fh.write("<html><head><style>@page { margin: 10mm 10mm 3mm 10mm; }</style></head><body><h1>X</h1></body></html>")
         r = run_node("html_to_pdf.js", dar, os.path.join(d, "dar.pdf"), "--sayfa-no")
         self.assertEqual(2, r.returncode, r.stdout + r.stderr)
-        self.assertIn("[DURDU] --sayfa-no: etkin alt bosluk 3.0mm", r.stderr)
+        self.assertIn("[DURDU] --sayfa-no: etkin alt bosluk 3.00mm", r.stderr)
         self.assertFalse(os.path.exists(os.path.join(d, "dar.pdf")))
         # kontrol: aynı belge bayraksız üretilir (DURDU yalnız bayrağın kendi koşulu)
         self.assertEqual(0, run_node("html_to_pdf.js", dar, os.path.join(d, "dar2.pdf")).returncode)
@@ -315,6 +315,15 @@ class SahteTarayiciTest(unittest.TestCase):
         secenek = {k: v for k, v in kayit2["pdf"].items()
                    if k not in ("path", "displayHeaderFooter", "headerTemplate", "footerTemplate")}
         self.assertEqual(self.TABAN_SECENEK, secenek, "--sayfa-no gövde margin'ini değiştirmemeli")
+
+    def test_sayfa_no_esik_siniri_iki_ondalik(self):
+        """Sınır vakası: eşiğin 0.1 mm altı DURDU (eşiğe tolerans eklenmemeli); mesaj iki ondalıkla çelişkisiz okunur."""
+        r, _ = self._kos("--sayfa-no", olcum=self._olcum(30.0))
+        gerek = float(re.search(r"gereken ([\d.]+)mm", r.stdout).group(1))
+        r, kayit = self._kos("--sayfa-no", olcum=self._olcum(round(gerek - 0.1, 2)))
+        self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+        self.assertIsNone(kayit["pdf"])
+        self.assertIn("[DURDU] --sayfa-no: etkin alt bosluk %.2fmm < gereken %.2fmm" % (gerek - 0.1, gerek), r.stderr)
 
     def test_durdu_onceki_pdf_silinmez_uyari_basar(self):
         """Ö3: DURDU'da (dar margin · okunamayan stil sayfası) hedefteki eski PDF silinmez, sessiz de kalmaz."""

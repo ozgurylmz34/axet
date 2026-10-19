@@ -145,10 +145,11 @@ Otomatik kurulum yok.
   Aynı sınıflar `DISLANANLAR` yollarında (`maintenance/`, `_lab/` …) yalnız UYARI'dır, "iç repo adı" orada yalnız
   sayılır: o yollar yayın kopyasına girmez ve geliştirme deposu iç adları orada bilerek taşır — ⚠ yine de public'tir.
   Yapısal kimlik izi (bulut tenant host'u, `<SID>K` + 6 rakam transport numarası; Z204) her yolda **UYARI**'dır ve
-  çıkış kodunu değiştirmez; **yalnız bu uyarı listesinde** satır içeriği basılmaz (`dosya:satır (tür)`) — BLOCKER
+  çıkış kodunu değiştirmez; **yalnız bu uyarı listesinde** satır içeriği basılmaz (`dosya:satır (tür)`; JSON'un
+  çözülmüş değerinde `dosya:json#N (tür)` — anahtar yolu da basılmaz) — BLOCKER
   ve öbür UYARI satırları içeriği (140 karaktere kadar) basar. Bugün test fixture'larındaki yer tutucular
   (`ZXX`/`DEV` SID'li) da uyarı verir. `.json` dosyaları ham satır + çözülmüş dize değerleriyle taranır (yayın
-  taramasında da), `guncelle/yayinlar.json`'dan üretilecek CHANGELOG.md de taranır (yayına giren yol kuralıyla).
+  taramasında da; UTF-8 BOM kabul; ayrıştırılamayan `.json` yalnız ham taranır ve KAPSAM'da ÖLÇÜLEMEDİ sayılır), `guncelle/yayinlar.json`'dan üretilecek CHANGELOG.md de taranır (yayına giren yol kuralıyla).
   Geçmiş commit'leri ve commit mesajlarını taramaz.
 
 ## Parti kapanış kuralı

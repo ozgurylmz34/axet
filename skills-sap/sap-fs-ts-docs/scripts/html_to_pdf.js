@@ -53,7 +53,10 @@ const ALTBILGI_PAY_MM = 2;
 // 1.64, `chrome` ve `msedge` kanalı, A4): şablona 1px üst/alt kenarlık konup PDF'teki çizgiler okundu (PyMuPDF
 // get_drawings) — kutu alt kenarı 5.25 mm'de; `@page` margin-bottom 12 / 40 mm, JS margin 30 mm ve şablon yazı boyutu
 // 8 / 16 pt'de DEĞİŞMEDİ; üst kenar = 5.25 + sayfa içinde ölçülen şablon yüksekliği (4.50 → 9.75 mm, 7.94 → 13.19 mm).
-// 0.05 mm yukarı yuvarlandı. Tarayıcı sürümü değişirse SayfaNoYerImiTest'in üst üste binme ölçümü kırmızıya döner.
+// 0.05 mm yukarı yuvarlandı. Tarayıcı sürümü bu yerleşimi değiştirirse onu yakalayan tek ölçüm
+// SayfaNoYerImiTest.test_sayfa_no_altbilgi_govdeye_binmez'dir ve YALNIZ `SAP_FS_TS_DOCS_BROWSER_TESTS=1` + PyMuPDF
+// kuruluyken koşar (CI'da koşmaz). O da yalnız gövdeye BİNMEYE dönüşen kaymayı görür: eşiğin 0.3 mm üstünde ölçer,
+// ALTBILGI_PAY_MM (2 mm) içinde kalan kayma yakalanmaz.
 const ALTBILGI_ALT_IC_MM = 5.3;
 // JS margin'i (bayraksız yolla AYNI değerler; @page yoksa etkin boşluk budur).
 const JS_MARGIN = { top: "14mm", bottom: "16mm", left: "12mm", right: "12mm" };
@@ -313,7 +316,8 @@ async function main(argv) {
       if (!(o.etkinMm >= gerek)) {
         const vp = o.kaynak.includes("~(") ? " Kaynak VIEWPORT'A BAGLI medya sorgusu (muhafazakar): baskida uygulanip " +
                    "uygulanmadigi ekran viewport'undan bilinemez, en kucuk deger alindi." : "";
-        console.error("[DURDU] --sayfa-no: etkin alt bosluk " + o.etkinMm.toFixed(1) + "mm < gereken " + gerek.toFixed(1) +
+        // İki ondalık: tek ondalıkta 11.26 < 11.30 "11.3mm < 11.3mm" diye çelişkili okunurdu.
+        console.error("[DURDU] --sayfa-no: etkin alt bosluk " + o.etkinMm.toFixed(2) + "mm < gereken " + gerek.toFixed(2) +
                       "mm (" + o.kaynak + ")." + vp + " Altbilgi govdenin ustune basilirdi; govdeyi daraltmamak icin margin " +
                       "degistirilmez. Belgenin @page margin-bottom degerini buyut ya da bayraksiz uret.");
         oncekiPdf();

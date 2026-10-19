@@ -39,8 +39,8 @@ SENTETIK_IC_AD = "Uydurma" + "_IcDepo"
 SAHTE_TENANT = "qz7" + "firma.s4hana.cloud" + ".sap"
 SAHTE_TRANSPORT = "QZ7" + "K912345"
 
-TB, IB = "\\", "/"
-KULLANICI_YOLU = "C:" + TB + "Users" + TB + "Orn" + "ekkisi" + TB + "proje"   # uydurma ad  # ters/ileri bölü — `C:\Users\...` örneklerini kaynak dosyada yan yana getirmemek için
+TB, IB = "\\", "/"   # ters/ileri bölü — `C:\Users\...` örneklerini kaynak dosyada yan yana getirmemek için
+KULLANICI_YOLU = "C:" + TB + "Users" + TB + "Orn" + "ekkisi" + TB + "proje"   # uydurma kullanıcı adı
 
 # (sınıf adı, sentetik sızıntı satırı) — BLOCKER kalması gereken gerçek sızıntı sınıfları.
 SIZINTI_ORNEKLERI = [
@@ -462,6 +462,35 @@ class YayinHazirlaTest(GeciciTest):
         self.assertEqual(rc, 1, c)
         self.assertEqual(1, c.count("docs/musteri.json:"), c)
         self.assertIn("docs/musteri.json:1:", c)                    # ham satır numarasıyla, json$ yoluyla değil
+
+    def test_json_anahtari_host_olan_yapisal_iz_tokeni_basmaz(self):
+        """Bug gate 3. tur: JSON yapısal iz konumu anahtar yolunu basmaz (anahtarın kendisi host olabilir) — `json#N`."""
+        kacisli = SAHTE_TENANT.replace(".", TB + "u002e")             # ham satırda desen tutmaz, çözülmüş anahtarda tutar
+        d = self.depo(**{"docs__k.json": '{"' + kacisli + '": 1}\n'})
+        self.liste(d)
+        rc, c = self.depo_tara(d)
+        self.assertEqual(rc, 0, c)
+        self.assertIn("yapısal kimlik izi: docs/k.json:json#1 (tenant host)", c)
+        self.assertNotIn(SAHTE_TENANT.split(".")[0], c)              # host etiketi hiçbir yerde basılmaz
+
+    def test_bom_lu_json_cozulur_ve_bozuk_json_olculemedi_sayilir(self):
+        """Bug gate 3. tur: BOM'lu JSON'un çözülmüş değerleri taranır; ayrıştırılamayan .json sessiz düşmez (KAPSAM)."""
+        d = self.depo(**{"docs__bom.json": "﻿" + json.dumps({"yol": KULLANICI_YOLU}) + "\n",
+                         "docs__bozuk.json": '{"yol": 1\n'})
+        self.liste(d)
+        self.assertEqual(b"\xef\xbb\xbf", (d / "docs" / "bom.json").read_bytes()[:3])
+        for kip, (rc, c) in (("depo", self.depo_tara(d)), ("yayın", self.tara(d))):
+            self.assertEqual(rc, 1, kip + c)
+            self.assertIn("iç kullanıcı/dizin: docs/bom.json:json$.yol:", c, kip)
+            self.assertIn("ÖLÇÜLEMEDİ 1 .json (ayrıştırılamadı", c, kip)
+            self.assertIn("ilk 5: docs/bozuk.json)", c, kip)
+
+    def test_KONTROL_gecerli_json_olculemedi_sifir(self):
+        d = self.depo(**{"docs__ayar.json": json.dumps({"a": 1}) + "\n"})
+        self.liste(d)
+        for kip, (rc, c) in (("depo", self.depo_tara(d)), ("yayın", self.tara(d))):
+            self.assertEqual(rc, 0, kip + c)
+            self.assertIn("ÖLÇÜLEMEDİ 0 .json (ayrıştırılamadı", c, kip)
 
     def _yayinlar(self, baslik: str) -> str:
         return json.dumps({"surum": 1, "yayinlar": [{"etiket": "v0.0.1", "tarih": "2026-10-19", "kalemler": [
