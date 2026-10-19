@@ -102,6 +102,9 @@ def target_missing(target: str) -> bool:
 # Kök neden (ölçüldü 2026-10-19): aXet aynı ailelere (BE, FE, DOC-*, UI-*) çekirdekten habersiz "sıradaki boş
 # numara" veriyordu ⇒ aynı numara iki depoda farklı kurala gitti (FE-42..47 kayması, DOC-TS-06..08 …).
 KIMLIK_KAYDI = HERE / "kimlik-kaydi.json"
+# Çekirdek kaynağının sync-rules.json / --source adı TEK yerde: public depoya giden dosyalar (tests/) bu adı düz
+# yazmaz, buradan okur (iç repo adı maintenance/ dışında yayın taramasında BLOCKER).
+CEKIRDEK_KAYNAK = "DEV_CORE"
 AX_ONEK = "AX-"
 # Tanım biçimleri — KAPSAM BEYANI bu sabitlerden basılır (elle tutulan ikinci liste yok).
 TABLO_BASLIKLARI = ("ID", "#", "Kimlik")          # tablonun BAŞLIK satırındaki ilk hücre bunlardan biri olmalı
@@ -269,7 +272,7 @@ def kimlik_kaydi_uret(cekirdek: Path, commit: str, kirli: bool = False) -> dict:
                           "tanımlayabilir (tests/test_kimlik_hizasi.py zorlar). Eski → yeni eşleme: kimlik-eslemesi.md. "
                           "Çekirdek kural METNİ (başlık) bilerek YAZILMAZ: serbest metin public depoya taşınmaz; uyum "
                           "raporu başlığı çekirdekten canlı okur."),
-            "kaynak": "DEV_CORE", "commit": commit, "kirli": kirli,
+            "kaynak": CEKIRDEK_KAYNAK, "commit": commit, "kirli": kirli,
             "taranan": [f"{d}/**/*.md" for d in CEKIRDEK_KAYIT_DIZINLERI] + list(CEKIRDEK_EK_DOSYALAR),
             "tanim_bicimleri": list(TANIM_BICIMLERI),
             "sablon_haric": {"kural": sorted({f"{d} [{a}-]: {g}" for (d, a), g in CEKIRDEK_ORNEK_HARIC.items()}),
@@ -400,6 +403,11 @@ def _kimlik_kaydi_yaz_ve_bildir(kayit: dict, cekirdek_rapor: dict, sessiz: bool)
                                              "temiz ağaçta yeniden üret" if cekirdek_rapor["dirty"] else ""))
 
 
+def _yazilmadi(mesaj: str, json_kipi: bool) -> None:
+    """Yazılmadı/üretilemedi mesajı: --json kipinde stdout yalnız JSON taşır ⇒ mesaj stderr'e."""
+    print(("" if json_kipi else "\n") + mesaj, file=sys.stderr if json_kipi else sys.stdout)
+
+
 def kimlik_denetle_cli(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="aXet kimlik hizası denetimi (kayıt dosyasına karşı; çekirdeğe erişmez)")
     ap.add_argument("--kimlik-denetle", action="store_true")
@@ -447,8 +455,8 @@ def main() -> int:
     if not args.source:
         print("HATA: en az bir --source AD=YOL ver (ör. --source DEV_CORE=D:/repos/DEV_CORE).")
         return 3
-    if args.kimlik_kaydi and not any(s.partition("=")[0] == "DEV_CORE" for s in args.source):
-        print("HATA: --kimlik-kaydi için --source DEV_CORE=<yol> gerekir.")
+    if args.kimlik_kaydi and not any(s.partition("=")[0] == CEKIRDEK_KAYNAK for s in args.source):
+        print(f"HATA: --kimlik-kaydi için --source {CEKIRDEK_KAYNAK}=<yol> gerekir.")
         return 3
 
     data = json.loads(RULES_FILE.read_text(encoding="utf-8"))
@@ -532,7 +540,7 @@ def main() -> int:
 
     # Z206: çekirdek kimlik kaydı canlı üretilir (yazma yalnız --kimlik-kaydi / --update-lock), uyum raporu her koşumda.
     kimlik_kaydi_canli = None
-    cekirdek_rapor = report["sources"].get("DEV_CORE")
+    cekirdek_rapor = report["sources"].get(CEKIRDEK_KAYNAK)
     if cekirdek_rapor:
         try:
             kimlik_kaydi_canli = kimlik_kaydi_uret(Path(cekirdek_rapor["path"]), cekirdek_rapor["commit"],
@@ -541,7 +549,7 @@ def main() -> int:
         except ValueError as exc:
             report["kimlik_uyumu"] = {"olculemedi": str(exc)}
     if args.kimlik_kaydi and kimlik_kaydi_canli is None:
-        print(f"HATA: kimlik kaydı üretilemedi — {report['kimlik_uyumu']['olculemedi']}")
+        _yazilmadi(f"HATA: kimlik kaydı üretilemedi — {report['kimlik_uyumu']['olculemedi']}", args.json)
         return 3
 
     if args.json:
@@ -596,23 +604,31 @@ def main() -> int:
         else:
             print("\n=== KİMLİK UYUMU ÖLÇÜLMEDİ: DEV_CORE kaynağı verilmedi.")
 
+    # Yazma ilkesi: kilit ve kimlik kaydı aynı çekirdek commit'ini anlatır ⇒ İKİSİ BİRLİKTE yazılır ya da hiçbiri.
+    # (Önce: yalnız --update-lock'ta kayıt üretilemezse kilit yeni commit'e geçip kayıt eski kalıyordu, rc 0; KURALSIZ
+    # varken --update-lock --kimlik-kaydi kaydı yazıp kilidi yazmıyordu.)
     if problems:   # kural dosyası hatalıyken HİÇBİR çıktı dosyası yazılmaz (kilit de kayıt da)
-        if args.kimlik_kaydi:
-            print("\nKimlik kaydı YAZILMADI: kural dosyası hatalı (yukarıdaki KURAL DOSYASI HATALARI).")
+        if args.kimlik_kaydi or args.update_lock:
+            _yazilmadi("Kilit / kimlik kaydı YAZILMADI: kural dosyası hatalı (KURAL DOSYASI HATALARI).", args.json)
         return 2
-    if args.kimlik_kaydi:
-        _kimlik_kaydi_yaz_ve_bildir(kimlik_kaydi_canli, cekirdek_rapor, args.json)
     if args.update_lock:
         if kuralsiz_total:
-            print(f"\n--update-lock YAPILMADI: {kuralsiz_total} KURALSIZ dosya var.")
+            _yazilmadi(f"--update-lock YAPILMADI: {kuralsiz_total} KURALSIZ dosya var"
+                       + (" — kimlik kaydı da YAZILMADI (kilitle birlikte yazılır)." if args.kimlik_kaydi else "."),
+                       args.json)
             return 1
+        if cekirdek_rapor and kimlik_kaydi_canli is None:
+            _yazilmadi("--update-lock YAPILMADI: çekirdek kimlik kaydı üretilemedi — "
+                       f"{report['kimlik_uyumu']['olculemedi']} (kilit kayıtsız ilerlerse kayıt eski commit'te kalır).",
+                       args.json)
+            return 3
         merged = {"_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
                   "sources": {**(lock.get("sources") or {}), **new_lock_sources}}
         LOCK_FILE.write_text(json.dumps(merged, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
         if not args.json:
             print(f"\nKilit güncellendi: {LOCK_FILE} ({', '.join(new_lock_sources)})")
-        if kimlik_kaydi_canli is not None and not args.kimlik_kaydi:
-            _kimlik_kaydi_yaz_ve_bildir(kimlik_kaydi_canli, cekirdek_rapor, args.json)
+    if kimlik_kaydi_canli is not None and (args.kimlik_kaydi or args.update_lock):
+        _kimlik_kaydi_yaz_ve_bildir(kimlik_kaydi_canli, cekirdek_rapor, args.json)
     return 1 if (kuralsiz_total or missing_targets) else 0
 
 

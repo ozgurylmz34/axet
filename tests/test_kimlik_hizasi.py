@@ -224,8 +224,9 @@ SIZINTI_ISARETI = "SIZINTI-ISARETI-7Q"
 
 @unittest.skipUnless(BETIK.is_file(), "maintenance/sync_check.py yok (public sürümde maintenance/ dışlanır)")
 class KimlikKaydiUreteci(GeciciTest):
-    """Üretecin giriş noktası `main()` (`--source DEV_CORE=<sahte çekirdek> --kimlik-kaydi`), süreç İÇİ: modül
-    globalleri (kural/kilit/kayıt yolu) geçici dosyalara çevrilir ⇒ gerçek `maintenance/` dosyalarına yazılmaz."""
+    """Üretecin giriş noktası `main()` (`--source <kaynak çekirdek>=<sahte çekirdek> --kimlik-kaydi`), süreç İÇİ:
+    modül globalleri (kural/kilit/kayıt yolu) geçici dosyalara çevrilir ⇒ gerçek `maintenance/` dosyalarına yazılmaz.
+    Kaynak adı `sync_check.CEKIRDEK_KAYNAK`'tan okunur — bu dosya public depoya gider, iç adı düz yazmaz."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -252,22 +253,60 @@ class KimlikKaydiUreteci(GeciciTest):
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(metin, encoding="utf-8", newline="\n")
 
-    def kural_yaz(self, karar: str = "alinmaz") -> None:
-        self.kurallar.write_text(json.dumps({"sources": {"DEV_CORE": {}}, "rules": [
-            {"source": "DEV_CORE", "pattern": "*", "decision": karar, "status": "-", "targets": [],
+    def kural_yaz(self, karar: str = "alinmaz", desen: str = "*") -> None:
+        ad = self.sc.CEKIRDEK_KAYNAK
+        self.kurallar.write_text(json.dumps({"sources": {ad: {}}, "rules": [
+            {"source": ad, "pattern": desen, "decision": karar, "status": "-", "targets": [],
              "note": "test"}]}), encoding="utf-8")
 
-    def uret(self) -> tuple[int, str]:
-        cikti = io.StringIO()
+    def calistir_main(self, *bayraklar: str) -> tuple[int, str, str]:
+        cikti, hata = io.StringIO(), io.StringIO()
+        self.kilit = self.tmp / "sync-lock.json"
         with mock.patch.object(self.sc, "RULES_FILE", self.kurallar), \
-                mock.patch.object(self.sc, "LOCK_FILE", self.tmp / "sync-lock.json"), \
+                mock.patch.object(self.sc, "LOCK_FILE", self.kilit), \
                 mock.patch.object(self.sc, "KIMLIK_KAYDI", self.kayit), \
                 mock.patch.object(self.sc, "AXET_HOME", self.tmp / "bos-axet"), \
-                mock.patch.object(sys, "argv", ["sync_check.py", "--source", f"DEV_CORE={self.cekirdek}",
-                                                "--kimlik-kaydi"]), \
-                contextlib.redirect_stdout(cikti):
+                mock.patch.object(sys, "argv", ["sync_check.py", "--source",
+                                                f"{self.sc.CEKIRDEK_KAYNAK}={self.cekirdek}", *bayraklar]), \
+                contextlib.redirect_stdout(cikti), contextlib.redirect_stderr(hata):
             rc = self.sc.main()
-        return rc, cikti.getvalue()
+        return rc, cikti.getvalue(), hata.getvalue()
+
+    def uret(self) -> tuple[int, str]:
+        rc, cikti, hata = self.calistir_main("--kimlik-kaydi")
+        return rc, cikti + hata
+
+    # --- kilit + kayıt: ikisi birlikte yazılır ya da hiçbiri ----------------------------------------------------
+
+    def test_kilit_guncellemesi_kaydi_da_yazar(self):
+        rc, cikti, hata = self.calistir_main("--update-lock")
+        self.assertEqual(rc, 0, cikti + hata)
+        self.assertTrue(self.kilit.is_file(), cikti)
+        self.assertTrue(self.kayit.is_file(), "kilit yazıldı ama kimlik kaydı yazılmadı")
+
+    def test_kayit_uretilemezse_kilit_de_yazilmaz(self):
+        (self.cekirdek / self.sc.CEKIRDEK_EK_DOSYALAR[0]).unlink()   # kayıt kaynağı eksik ⇒ üretilemez
+        rc, cikti, hata = self.calistir_main("--update-lock")
+        self.assertNotEqual(rc, 0, cikti)
+        self.assertFalse(self.kilit.exists(), "kimlik kaydı üretilemezken kilit yeni commit'e geçti")
+        self.assertFalse(self.kayit.exists())
+        self.assertIn("--update-lock YAPILMADI: çekirdek kimlik kaydı üretilemedi", cikti)
+
+    def test_kuralsiz_varken_kilit_ve_kayit_birlikte_yazilmaz(self):
+        self.kural_yaz(desen="playbook/*")   # standards/ dosyaları KURALSIZ kalır
+        rc, cikti, hata = self.calistir_main("--update-lock", "--kimlik-kaydi")
+        self.assertEqual(rc, 1, cikti)
+        self.assertFalse(self.kilit.exists())
+        self.assertFalse(self.kayit.exists(), "KURALSIZ varken kilit yazılmadı ama kimlik kaydı yazıldı")
+        self.assertIn("kimlik kaydı da YAZILMADI", cikti)
+
+    def test_json_kipinde_yazilmadi_mesaji_stderr(self):
+        self.kural_yaz(karar="gecersiz-karar")
+        rc, cikti, hata = self.calistir_main("--kimlik-kaydi", "--json")
+        self.assertEqual(rc, 2, cikti + hata)
+        json.loads(cikti)   # stdout yalnız JSON taşır
+        self.assertIn("YAZILMADI", hata)
+        self.assertNotIn("YAZILMADI", cikti)
 
     def test_kayit_dosyasina_cekirdek_basligi_yazilmaz(self):
         rc, cikti = self.uret()
@@ -294,7 +333,7 @@ class KimlikKaydiUreteci(GeciciTest):
         rc, cikti = self.uret()
         self.assertEqual(rc, 2, cikti)
         self.assertFalse(self.kayit.exists(), "kural dosyası hatalıyken kimlik kaydı yazıldı")
-        self.assertIn("Kimlik kaydı YAZILMADI", cikti)
+        self.assertIn("kimlik kaydı YAZILMADI", cikti)
 
     def test_kirli_cekirdek_kayda_isaretlenir(self):
         (self.cekirdek / "izlenmeyen.txt").write_text("x", encoding="utf-8")

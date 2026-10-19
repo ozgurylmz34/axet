@@ -3,6 +3,8 @@
 > **Tarih:** 2026-10-19 · **Kaynak:** çekirdek `254134f` (kimlik kaydı `maintenance/kimlik-kaydi.json`, 454 kimlik; FS/TS şablonunun 6 örnek kimliği dışlanır)
 > · **Kapsam:** 115 eski aXet kimliği · bugünkü tanımları 9 dosyada (aşağıdaki «Bugünkü tanım» sütunu; sayılar tablodan ölçülür). Bu dosya **tarihçe ve çeviri tablosudur** — eski numarayla
 > yazılmış bir kayıt (iş listesi, yayın notu, eski oturum notu) okunurken yeni karşılığı buradan bulunur.
+> Çekirdek başlık alıntıları («…») `maintenance/` altında bilerek tutulur (yayına girmez); kayıt dosyası
+> (`kimlik-kaydi.json`) başlık taşımaz.
 
 ## Neden
 
@@ -26,7 +28,11 @@ düşüyordu; bir sonraki aktarımda yanlış kurala atıf riski sessizdi.
    çekirdek kimliğini alır; diğerleri tabloda "birleşik" notuyla yazılır (içerik bölme ayrı iştir — Z196).
 
 **Mekanik bekçi:** `python maintenance/sync_check.py --kimlik-denetle` (kök test takımında
-`tests/test_kimlik_hizasi.py` koşar). Kayıt `--kimlik-kaydi` ya da başarılı `--update-lock` ile yenilenir;
+`tests/test_kimlik_hizasi.py` koşar). Kayıt `--kimlik-kaydi` ya da `--update-lock` ile yenilenir. Kilit ve
+kayıt aynı çekirdek commit'ini anlatır; `--update-lock` verildiğinde **ikisi birlikte yazılır ya da hiçbiri**:
+kural dosyası hatalıysa, KURALSIZ dosya varsa ya da çekirdek kaydı üretilemiyorsa ikisi de yazılmaz, çıkış kodu 0
+olmaz ve mesaj basılır (`--json` kipinde stderr'e). Yalnız `--kimlik-kaydi` kilide dokunmaz; KURALSIZ dosya onu
+durdurmaz, kural dosyası hatası ve üretilemeyen kayıt durdurur. Kirli çekirdek ağacında kayıt `kirli: true` taşır;
 aktarım denetimi (`--source DEV_CORE=…`) her koşumda **KİMLİK UYUMU** uyarı listesini basar (çıkış kodunu
 değiştirmez): çekirdekte olup aXet'te olmayan kimlikler + aynı numarada başlığı uzaklaşmış satırlar.
 
@@ -69,7 +75,7 @@ bilinen-hata kataloğunun indeksidir (kontrol listesi değil); çekirdekte `K-` 
 | `UI-BOOT-06` | `UI-BOOT-05` | çekirdek «Manifest DIŞI her istek (new ODataModel(...) — varyant/$batc» | `skills-sap/sap-ui5-fiori/references/checklists.md:20` |
 | `UI-SAVE-05` | `AX-UI-SAVE-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-22` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok; çekirdek UI-SAVE-05 başka kural (aXet'te eski UI-SAVE-06 olarak duruyordu) | `skills-sap/sap-ui5-fiori/references/checklists.md:40` |
 | `UI-SAVE-06` | `UI-SAVE-05` | çekirdek «Belge kilidi varsa: unload bırakma = fetch + keepalive + CSR» | `skills-sap/sap-ui5-fiori/references/checklists.md:39` |
-| `UI-ARCH-05` | `AX-UI-ARCH-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-13` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:30` |
+| `UI-ARCH-05` | `AX-UI-ARCH-01` | aXet'e özgü oluşturma maddesi — ALV özellikleri ayağı çekirdek oluşturma listesinde kısmen `UI-PERSO-01` (ui-freestyle-creation; aXet'te aynı kimlikle `checklists.md:56`); grid ayağı yalnız çekirdek inceleme maddesi `FE-13` (bug-checklist-frontend) | `skills-sap/sap-ui5-fiori/references/checklists.md:30` |
 | `UI-BIND-04` | `AX-UI-BIND-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-07` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:48` |
 | `UI-VH-03` | `AX-UI-VH-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-32` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:55` |
 | `UI-FIN-05` | `AX-UI-FIN-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-11` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:65` |
