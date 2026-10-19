@@ -121,6 +121,7 @@ description: >
 | `references/forms-f1-help.md` | Adobe Forms iş bölümü + driver + kontrol listesi, Yol D özeti; F1/SE61 ITF standardı ve üretimi |
 | `references/checklists.md` | klasik dialog programı ön kontrol listesi (5 faz) |
 | `references/known-errors-classic.md` | belirti → dosya/bölüm indeksi |
+| `%sap-dev` → `references/clean-abap.md` | ABAP stili (yalnız yeni/değişen satır): Clean ABAP + OO alt kümesi, CLN-nn / OO-n; kapı değil, incelemede `ÖNERİ`; bu skill'in kuralları (ALV satır içi, include yapısı) önceliklidir — ayıklananlar §1 |
 | `references/screen-gen-kit.md` | ekran üreteci kiti: 16 parametre, `EV_RC` bantları + `nav_remap=ON` sinyali, dört şablonun üreteç çağrıları, hangi şablondan başla, kite özgü tuzaklar, kaynaktan fark |
 | `templates/classic-alv-list.prog.abap` | ALV liste programı **iskeleti** (tek gövde gösterir; gerçek programda include'lara bölünür) |
 | `templates/classic-dynpro-dialog.prog.abap` | tek kayıtlık modal diyalog ekranı şablonu |
