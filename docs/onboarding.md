@@ -102,8 +102,8 @@ Var olan bir projeyi şablona getirmek için aXet'te **`%guncelle-proje`** yaz; 
 
 ### 3.2 SAP kimlik bilgileri
 Her SAP sistemi `conn\<AD>.env` dosyasıdır; aktif bağlantı proje kökündeki `.conn_adt`'dir. Bağlantı dosyaları
-(`conn/*.env`, `.conn_adt`) git'e girmez; `conn/` altında yalnız `conn/README.md` izlenir (şablon `.gitignore`:
-`!conn/README.md`) ve onun commit'i kullanıcıdadır — aXet `conn/` altında README dahil hiçbir dosyayı git'e eklemez.
+(`conn/*.env`, `.conn_adt`) git'e girmez; `conn/` altında hiçbir dosya izlenmez. Klasörün açıklaması projede
+`docs/sap-baglanti.md`'dir (eski projelerdeki `conn/README.md`'yi `%guncelle-proje` oraya taşır).
 `conn/` ve `.conn_adt` aXet ajanına kapalıdır (denylist), içeriği sohbete yazılmaz.
 
 1. **Proje klasöründeki `KURULUMU-TAMAMLA`'ya çift tıkla** (`%yeni-proje` yazar; yoksa
