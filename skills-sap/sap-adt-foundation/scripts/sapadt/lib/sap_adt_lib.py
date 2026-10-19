@@ -2028,8 +2028,8 @@ class SAPADTClient:
         # istek SAP'de işlenmiş olabilir; ardından gelen AlreadyExists aracın KENDİ kabuğu olabilir (`_zaten_var_hatasi`).
         # CSRF yeniden denemesi kaydedilmez: SAP isteği token yüzünden reddetti, işlemedi.
         # Z207 BİLİNÇLİ İSTİSNASI (2026-10-19, lider kararı): HTTP adapter'ı yan etkili POST'u artık tekrarlamaz, ama
-        # bu katman beş yaratma çağrısında (DTEL · domain · struct · tablo · CDS) POST'u 503/504/zaman aşımında 3 kez
-        # gönderir. Neden güvenli: yaratma tekrarı ÇİFT OBJE üretemez — ikinci deneme "already exists" alır ve Z52 telafisi
+        # bu katman beş yaratma çağrısında (DTEL · domain · struct · tablo · CDS) POST'u 5xx'te (500 dahil —
+        # `_should_retry` `status >= 500`), 408'de ve zaman aşımında 3 kez gönderir. Neden güvenli: yaratma tekrarı ÇİFT OBJE üretemez — ikinci deneme "already exists" alır ve Z52 telafisi
         # (`_son_yeniden_denemeler` → araçta `already_exists_after_retry` + `own_shell_possible`) tam bu yolu işler.
         # 3 → 1 yapılırsa o telafi ölü kalır; bkz. `tests/test_yan_etkili_tekrar.py` Y8 · IMPLEMENTATION §25.4.
         self._son_yeniden_denemeler = []

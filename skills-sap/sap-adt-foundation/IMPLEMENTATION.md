@@ -1512,8 +1512,13 @@ kaçışsız; kaçış yapan YEDİ ayrı kopya (`_xml_escape`, domain `_att` lam
 - **`adt_get_method` (tools/diag.py):** `_atom._read_source_object(name, "oo/classes")` (tek GET, `source/main`) → `METHOD <ad>.` ..
   `ENDMETHOD.` metinsel. Birden çok blok `belirsiz`, kapanmamış blok `kapanmamis` (ikisi de `found:null`). `output_path` `adt_get` ile
   aynı yol kuralı; pull kaydı YAZMAZ. Okuma kümesinde, `available_on: all`.
+  **Sınır belirsizliği (2026-10-19 inceleme düzeltmesi):** ölçüm (düzeltme öncesi) — `METHOD a. ENDMETHOD.` tek satır + ardından
+  `METHOD b.` → `a` için b'nin gövdesi `found:true` ile dönüyordu; `y = 2. ENDMETHOD.` zincirli bitiş atlanıyordu. Artık sınır güvenle
+  çıkarılamazsa (METHOD satırında ENDMETHOD · satır ortasında ENDMETHOD · bitişten önce yeni `METHOD` satırı) `belirsiz` + `found:null`,
+  `source` dönmez; tam satır yorumundaki (`*` sütun 1, satır başı `"`) ENDMETHOD sayılmaz. Bilinen sınır (DÜZELTİLMEDİ): çok satırlı
+  string şablonu içinde satır başına düşen `ENDMETHOD.` hâlâ bitiş sayılır.
 - **Sayılar (`--list`, çevrimdışı):** okuma 29 · yazma 15 · toplam 44.
-- **Testler:** `tests/test_checkrun_sozdizimi.py` (21 test / 32 senaryo; kaynak çekirdeğin canlı DEV yanıt gövdeleri
+- **Testler:** `tests/test_checkrun_sozdizimi.py` (25 test / 38 senaryo — C7-C10 sınır belirsizliği, 5 mutasyon ADIYLA kırıldı; kaynak çekirdeğin canlı DEV yanıt gövdeleri
   `tests/fixtures/checkrun_sozdizimi/`, jenerik `ZSD001_*`) — kapanış ölçütü: gerçek `_build_session` + yerel sahte HTTP sunucusunda
   araç YALNIZ checkruns'a 1 POST (PUT 0 · aktivasyon 0 · kilit 0). `test_cli_gate` (okuma 29, yazma kümesi, araç içi namespace
   kapısı `--sap-write`'sız) · `test_verdict_activation` J12/J13 checkrun'a uyarlandı (J11 `SAPClient.syntax_check` aynen). Mutasyon
@@ -1570,15 +1575,33 @@ yalnız classrun 1 (Z190 ayrı adapter'ı). İlk istek SAP'de işlenmiş olabili
 - **Classrun önek kuralı KORUNDU:** genel kural artık classrun POST'unu da tekrarlamaz; Z190 mount'u derinlemesine savunma
   olarak durur — izinli listeye ileride geniş bir önek (ör. `/sap/bc/adt/oo/`) eklenirse en uzun önek kuralı classrun'u yine
   tekrarsız tutar. Davranış farkı yalnız bağlantı sayacı (classrun `connect=2`, genel `total=3`).
-- **Ölçüm (düzeltme sonrası, aynı düzenek):** yan etkili 10 uç → 1 istek (503 yanıtı çağırana ulaşır, `RetryError` değil) ·
-  okuma GET ve 5 okuma-POST öneki → 4 · classrun → 1. Okuma zaman aşımında yaratma POST'u ve kaynak PUT'u 1, GET 4.
+- **Ölçüm (düzeltme sonrası, aynı düzenek — HTTP adapter katmanı, oturumdan tek istek):** yan etkili 10 uç → 1 istek (503 yanıtı
+  çağırana ulaşır, `RetryError` değil) · okuma GET ve 5 okuma-POST öneki → 4 · classrun → 1. Okuma zaman aşımında yaratma POST'u
+  ve kaynak PUT'u 1, GET 4. Bu ölçüm uygulama katmanındaki döngüleri KAPSAMAZ (aşağıdaki iki madde).
 - **BİLİNÇLİ İSTİSNA — ikinci katman (değişmedi, lider kararı 2026-10-19):** `_retry_request` (Z52, `max_retries=3`) beş yaratma çağrısında (DTEL · domain ·
   struct · tablo · CDS) 5xx/504/zaman aşımını uygulama katmanında kendisi yeniden dener. Ölçüm: önce 503 → 4 POST + `RetryError`
   (uygulama tekrarı hiç devreye girmiyordu), okuma zaman aşımı → **12 POST** (adapter 4 × uygulama 3); sonra 503 → 3 ·
   zaman aşımı → 3. "Yaratma POST'u 1 kez" bu beş çağrıda SAĞLANMAZ; `already_exists_after_retry` telafisi (Z52) bu katmana
-  dayanır ve artık 503'te de çalışır. Gerekçe: yaratma tekrarı ÇİFT OBJE üretemez (ikinci deneme "already exists" alır);
-  Z207'nin hedefi çift YAN ETKİ (çift PUT / aktivasyon / DELETE / transport kaydı) idi, o kapandı. Gerekçe kodda
-  `_retry_request` yorumunda ve testin adında durur. `RetryError`'a bağımlı üretim kodu yok (grep: yalnız test).
+  dayanır ve artık 503'te de çalışır. Gerekçe: yaratma tekrarı ÇİFT OBJE üretemez (ikinci deneme "already exists" alır).
+  Gerekçe kodda `_retry_request` yorumunda ve testin adında durur. `RetryError`'a bağımlı üretim kodu yok (grep: yalnız test).
+- **AÇIK — uygulama katmanı yaklaşım döngüleri (canlı ölçüm bekliyor; bu turda davranış DEĞİŞMEDİ):** Z207'nin kapattığı
+  genel HTTP adapter katmanındaki tekrardır; uçtan uca "yan etkili istek 1 kez" SAĞLANMAZ. Üç kütüphane döngüsü 2xx dışı
+  yanıtta (503 dahil) bir sonraki parametre/biçim yaklaşımına geçer ve aynı yan etkili isteği yeniden gönderir. Ölçüm
+  (2026-10-19, gerçek `_build_session` + yerel sahte sunucu, her yanıt 503):
+  · `set_object_source` (kaynak PUT, 4 transport yaklaşımı; 2xx ve 412 dışı yanıtta sonrakine geçer) → **4 PUT**
+    (transport verilse de verilmese de) · 503 sonra 200 → 2 PUT + başarı.
+  · `delete_object` (yaklaşım listesi kilit/transport'a göre süzülür) → kilit + transport **5 DELETE** · yalnız kilit 2 ·
+    `NO_LOCK_SUPPORT` + transport 2 · ikisi de yok 1. 503 sonra 404 → 5 DELETE + `SAPADTError("Failed to delete object")`;
+    hatanın `status_code`'u **None** (son yanıt 4xx olduğu için `if last_response` yanlış döner ve kod `'unknown'` olur) ⇒
+    404 çağırana görünmez.
+  · `create_object` → `PROG/P` **3 POST** · `PROG/I` 3 · `CLAS/OC` 1 · `INTF/OI` 1 (yeniden kuyruğa alma yalnız 415/400
+    önerisinde; 503'te yalnız baştaki yaklaşım listesi tükenir). `adt_post_shell` program yolu bu çağrıdan geçer
+    (`tools/atom.py` `client.create_object`). 503 sonra 400 "already exists" → 3 POST + `Failed to create PROG/P after 3 attempts`.
+  Sonuç (sahte sunucuda ölçülen yanıt dizisinin yorumu; ilk isteğin SAP'de işlenip işlenmediği canlıda ÖLÇÜLMEDİ): ilk DELETE
+  işlendiyse sonrakiler 404 alır → araç **yanlış "silinemedi"** raporlar; ilk `PROG/P` POST'u işlendiyse sonrakiler "zaten
+  var" alır → **yanlış "yaratılamadı"** raporu. Çift obje oluşmaz (aynı ad ikinci kez yaratılamaz). PUT tekrarı aynı kaynağı
+  yeniden yazar. Davranış düzeltmesi yapılmadı: 500/503'ün bu döngülerde "başka yaklaşım dene" anlamı taşıyıp taşımadığı
+  canlıda ölçülmeden değiştirmek tahmin olur. Ölçüm betiği turun scratch'inde kaldı (repoya alınmadı); kalıcı test yok.
 - **Ayrıca:** `check_struct_field_dtel_active._tekrar_denemeyi_kapat` yalnız `https://`/`http://` mount'unu değiştirir;
   okuma-POST mount'ları kalır, gate yalnız `/ddic/` GET'i attığı için etkilenmez.
 - **Testler:** `tests/test_yan_etkili_tekrar.py` (8 test): yan etkili 11 uç (classrun dahil) 503 → 1 · GET/HEAD 503 → 4 ·

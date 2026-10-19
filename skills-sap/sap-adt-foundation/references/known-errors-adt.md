@@ -339,8 +339,11 @@
 - **Sınır:** davranış yerel sahte HTTP sunucusuyla ölçüldü (`tests/test_classrun_tek_post.py`); SAP'ye karşı
   DOĞRULANMADI. Z207'den (2026-10-19) beri genel HTTP katmanı da POST/PUT/DELETE'i `502/503/504`/okuma zaman aşımında
   tekrarlamaz; yalnız GET/HEAD/OPTIONS ve okuma amaçlı POST uçları yeniden denenir (`IMPLEMENTATION.md` §25.4).
-  Uygulama katmanındaki `_retry_request` (Z52) beş yaratma çağrısında 5xx/zaman aşımını kendisi 3 kez dener — bu madde
-  onu kapsamaz.
+  Bu yalnız HTTP adapter katmanıdır. Uygulama katmanı yan etkili isteği hâlâ tekrar edebilir: `_retry_request` (Z52) beş
+  yaratma çağrısında 5xx/zaman aşımını kendisi 3 kez dener; ayrıca yaklaşım döngüleri 503'te sonraki yaklaşıma geçer —
+  sahte sunucuda `set_object_source` 4 PUT · `delete_object` (kilit + transport) 5 DELETE · `create_object` `PROG/P` 3 POST.
+  İlk istek SAP'de işlendiyse sonrakiler 404 / "zaten var" alır ve araç yanlış "silinemedi" / "yaratılamadı" raporlar (çift
+  obje oluşmaz). AÇIK — canlı ölçüm bekliyor (`IMPLEMENTATION.md` §25.4). Bu madde (classrun) onları kapsamaz.
 
 ---
 

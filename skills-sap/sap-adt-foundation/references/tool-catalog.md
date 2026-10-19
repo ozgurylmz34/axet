@@ -310,7 +310,9 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
   çıkan hatalar burada görünmeyebilir) · eski aktive eden yol (`syntax_check_via_activation`) araçtan KALDIRILDI; kütüphanede push'un
   aktivasyon öncesi ön kontrolü olarak durur · kaynak çekirdekte canlı ölçüldü (DEV, 4 tip: sınıf · FM · tablo · CDS — aktivasyon ön
   denetimiyle aynı kök hata + satır/kolon; temiz inaktif sürüm aktive OLMADI); aXet'te canlı **ÖLÇÜLMEDİ** (sahte sunucu testi:
-  `tests/test_checkrun_sozdizimi.py`).
+  `tests/test_checkrun_sozdizimi.py`). ⚠ **FM desteklenmez (generic URL yok):** aXet aracı `object_type="function"`/`"func"`'ı
+  checkrun'dan ÖNCE reddeder — `object_types.get_object_url` FM için `ValueError` verir (FM'in ADT ucu fonksiyon grubunu içerir,
+  grup adı FM adından türetilemez). Kaynak çekirdekteki FM ölçümü aXet'te karşılıksızdır.
 
 ### `adt_get_method` (tek metot gövdesi — OKUMA, 2026-10-19, Z195)
 - **Amaç:** sınıfın ana kaynağından TEK metodun `METHOD <ad>.` .. `ENDMETHOD.` bloğunu döndürür; tüm sınıfı bağlama almadan okuma.
@@ -320,6 +322,9 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
 - **Dönüş:** `{ok, name, method, found, start_line, end_line, source | output_path+written+line_count, scope, client_log}`.
   `found:false` = aranan yüzeyde yok (`scope` okunur: yerel sınıflar / test include'ları / makrolar ARANMAZ ⇒ "metot yok" demek değildir).
   `belirsiz` (ana kaynakta birden çok aynı adlı blok — yerel sınıf; `matches[]`) ve `kapanmamis` (`ENDMETHOD.` yok) ⇒ `ok:false, found:null`.
+  Sınır satır yapısından güvenle çıkarılamazsa da `belirsiz` (`source` yok): tek satırlık `METHOD a. ENDMETHOD.` · satır ortasında
+  zincirli `ENDMETHOD.` · bitişten önce yeni `METHOD` satırı. Tam satır yorumundaki ENDMETHOD sayılmaz; çok satırlı string şablonu
+  içinde satır başına düşen `ENDMETHOD.` hâlâ bitiş sayılır (bilinen sınır).
 - **Yerel dosya kuralları:** `adt_get`/`adt_pretty_print` ile aynı (proje kökü içi · kaynak uzantısı · `.axet-code/` ve denylist dışı;
   var olan dosya `overwrite=false` iken `output_exists`; yol denetimi SAP'ye gitmeden). Pull kaydı (`sap-pull-state.json`) YAZMAZ —
   metodu düzenleyip geri yazmak için tam kaynak `adt_get` ile çekilir. aXet'te canlı **ÖLÇÜLMEDİ**.

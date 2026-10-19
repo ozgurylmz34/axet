@@ -599,18 +599,32 @@ def adt_pretty_print(name: str, object_type: str = "class", output_path: str | N
 # SAP'ye YAZMAZ (yalnız `adt_get` ile aynı `source/main` GET'i); pull kaydı YAZILMAZ (tam kaynak değil).
 _METOT_BAS = re.compile(r"^\s*METHOD\s+([A-Za-z0-9_/~]+)(?=[\s.]|$)", re.IGNORECASE)
 _METOT_SON = re.compile(r"^\s*ENDMETHOD\s*\.", re.IGNORECASE)
+# Satır içinde (başta olmayan) ENDMETHOD sözcüğü: `METHOD a. ENDMETHOD.` tek satır ya da `y = 2. ENDMETHOD.` zinciri.
+_METOT_SON_ICERDE = re.compile(r"(?<![A-Za-z0-9_])ENDMETHOD(?![A-Za-z0-9_])", re.IGNORECASE)
 # Yorum ayıklayıcı YOK (bilinçli, kaynak çekirdekle aynı): iki desen satır başına `^\s*` ile çapalıdır ⇒ sütun-1 `*`
 # yorumu ve `"` satır-içi yorumu yapısal olarak eşleşemez.
+# Sınır güvenle çıkarılamıyorsa (bitiş METHOD satırında / satır ortasında, ya da bitişten önce yeni `METHOD` satırı)
+# blok BELİRSİZ döner — yanlış blok döndürmek yerine (2026-10-19 inceleme bulgusu: tek satırlık metot komşu metodun
+# gövdesini found:true ile döndürüyordu).
 _METOT_KAPSAM = (
     "Sinifin ANA kaynagi (`source/main`, EN GUNCEL surum — `version` parametresiz GET: bekleyen inaktif surum varsa "
     "O okunur, aktif surum DEGIL) METINSEL taranir: `METHOD <ad>.` .. `ENDMETHOD.`. Yerel siniflar / test "
     "include'lari (ccimp/ccau/ccdef) ve makrolar ARANMAZ ⇒ found:false 'metot yok' demek DEGILDIR.")
 
 
-def _metot_cikar(kaynak: str, metot: str) -> list:
-    """`METHOD <metot>.` .. `ENDMETHOD.` blokları → [(bas, son, metin)] (1-tabanlı satır).
+def _satir_ici_bitis(satir: str) -> bool:
+    """Satırda başta olmayan bir ENDMETHOD sözcüğü var mı (tam satır yorumları hariç)."""
+    if satir.startswith("*") or satir.lstrip().startswith('"'):
+        return False
+    return bool(_METOT_SON_ICERDE.search(satir))
 
-    Kapanmamış blok `son=None` ile döner (çağıran ÖLÇÜLEMEDİ der). Satır bölme yalnız `\n`
+
+def _metot_cikar(kaynak: str, metot: str) -> list:
+    """`METHOD <metot>.` .. `ENDMETHOD.` blokları → [(bas, son, metin, belirsiz_sebep)] (1-tabanlı satır).
+
+    Kapanmamış blok `son=None, sebep=None` ile döner (çağıran ÖLÇÜLEMEDİ der). Sınırı güvenle çıkarılamayan
+    blok `son=None` + `sebep` (str) ile döner (çağıran `belirsiz` der): METHOD satırında ENDMETHOD · bitiş satır
+    ortasında (zincirli) · bitişten önce yeni `METHOD` satırı. Satır bölme yalnız `\n`
     (str.splitlines Unicode ayırıcılarda da böler)."""
     hedef = (metot or "").strip().upper()
     satirlar = [s[:-1] if s.endswith("\r") else s for s in (kaynak or "").split("\n")]
@@ -618,11 +632,29 @@ def _metot_cikar(kaynak: str, metot: str) -> list:
     while i < len(satirlar):
         m = _METOT_BAS.match(satirlar[i])
         if m and m.group(1).upper() == hedef:
-            j = next((k for k in range(i + 1, len(satirlar)) if _METOT_SON.match(satirlar[k])), None)
+            if _METOT_SON_ICERDE.search(satirlar[i][m.end():]):
+                bulunan.append((i + 1, None, satirlar[i], "METHOD satırında ENDMETHOD (tek satırlık metot)"))
+                i += 1
+                continue
+            j, sebep = None, None
+            for k in range(i + 1, len(satirlar)):
+                if _METOT_SON.match(satirlar[k]):
+                    j = k
+                    break
+                if _METOT_BAS.match(satirlar[k]):
+                    j, sebep = k, "ENDMETHOD. bulunmadan yeni METHOD satırı (satır %d)" % (k + 1)
+                    break
+                if _satir_ici_bitis(satirlar[k]):
+                    j, sebep = k, "ENDMETHOD satır ortasında (satır %d)" % (k + 1)
+                    break
             if j is None:
-                bulunan.append((i + 1, None, "\n".join(satirlar[i:])))
+                bulunan.append((i + 1, None, "\n".join(satirlar[i:]), None))
                 break
-            bulunan.append((i + 1, j + 1, "\n".join(satirlar[i:j + 1])))
+            if sebep:
+                bulunan.append((i + 1, None, "\n".join(satirlar[i:j]), sebep))
+                i = j if _METOT_BAS.match(satirlar[j]) else j + 1
+                continue
+            bulunan.append((i + 1, j + 1, "\n".join(satirlar[i:j + 1]), None))
             i = j
         i += 1
     return bulunan
@@ -647,6 +679,8 @@ def adt_get_method(name: str, method: str, output_path: str | None = None, overw
         {ok, name, method, found, start_line?, end_line?, source?, output_path, written, scope, client_log}
         `found: false` + `scope` = aranan yüzeyde YOK (yerel include'lar aranmadı).
         Birden çok eşleşme ya da kapanmamış blok ⇒ ok:false (`belirsiz` / `kapanmamis`, found:null).
+        Sınırı güvenle çıkarılamayan blok (tek satırlık `METHOD a. ENDMETHOD.` · satır ortasında zincirli
+        `ENDMETHOD.` · bitişten önce yeni `METHOD` satırı) ⇒ `belirsiz`, found:null — yanlış blok döndürülmez.
     """
     if not (isinstance(name, str) and name.strip()) or not (isinstance(method, str) and method.strip()):
         return {"ok": False, "error": "invalid_argument", "scope": _METOT_KAPSAM,
@@ -672,10 +706,16 @@ def adt_get_method(name: str, method: str, output_path: str | None = None, overw
         return {"ok": True, "found": False, **ortak}
     if len(bloklar) > 1:
         return {"ok": False, "error": "belirsiz", "found": None,
-                "matches": [{"start_line": b, "end_line": s} for b, s, _ in bloklar],
+                "matches": [{"start_line": b, "end_line": s} for b, s, _m, _sb in bloklar],
                 "message": ("Ana kaynakta %d ayrı `METHOD %s.` bloğu var (yerel sınıf?) — hangisi olduğu ad ile "
                             "AYIRT EDİLEMEZ." % (len(bloklar), method.strip().upper())), **ortak}
-    bas, son, metin = bloklar[0]
+    bas, son, metin, sebep = bloklar[0]
+    if sebep:
+        return {"ok": False, "error": "belirsiz", "found": None,
+                "matches": [{"start_line": bas, "end_line": None}],
+                "message": ("`METHOD %s.` bloğunun sınırı satır yapısından güvenle çıkarılamadı (%s) — gövde "
+                            "DÖNDÜRÜLMEDİ (yanlış blok riski). Tam kaynak için adt_get."
+                            % (method.strip().upper(), sebep)), **ortak}
     if son is None:
         return {"ok": False, "error": "kapanmamis", "found": None, "start_line": bas,
                 "message": "`METHOD` bulundu ama `ENDMETHOD.` bulunamadı — gövde ÖLÇÜLEMEDİ.", **ortak}
