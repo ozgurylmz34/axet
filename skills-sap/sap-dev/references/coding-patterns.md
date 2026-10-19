@@ -198,7 +198,7 @@ manuel) ve hangi canlı teyitle: `write-api-selection.md`.
 | `VBAK` / `VBAP` | released satış belgesi CDS (okuma); yazma `write-api-selection.md` (ölçülmüş: `I_SalesOrderTP` EML) |
 | `LIKP` / `LIPS` | released teslimat CDS (okuma); yazma `write-api-selection.md` (released BO kapsamı ölçülmedi) |
 | `T001` | released organizasyon CDS |
-| `CL_GUI_ALV_GRID` | `CL_SALV_TABLE` (klasik) / UI5 grid (RAP) |
+| `CL_GUI_ALV_GRID` | released değil (clean core uyarısı verir). Salt okunur liste → `CL_SALV_TABLE`; düzenlenebilir / özel toolbar / hücre olayı / kolon kişiselleştirme → GRID kalır, released alternatif kullanılmadığı için gerekçe kullanıcıya bildirilir (aşağıdaki son paragraf). Senaryo tablosunun tek kaynağı: `%sap-classic-abap` → `references/alv-report.md` §2. RAP'ta UI5 grid |
 | `CL_GUI_ALV_TREE` | `CL_SALV_TREE` |
 
 Released CDS adını tahmin etme: sistemde `adt_search_objects` ile ara, `adt_get` ile oku. Emin olunamayan
