@@ -29,6 +29,7 @@ KAPSAM — bakılmayanlar (bu motor ÖLÇMEZ):
     kaynak yolda V6/V6d (silme ya da "sende değişmiş, duruyor"), hedef yolda V2 olarak görünür.
     Yerel değişiklik KAYBOLMAZ (V6d silmez), ama "taşındı" diye raporlanmaz.
   · `templates/package/**` (K5: kullanıcı doldurur, taban anlamsız) — yalnız bilgi satırı.
+  · git: motor commit atmaz; tek istisna `conn/README.md` V6 silmesini index'e sahnelemesidir (Z164 ⓐ).
   · testler/bütünlük turu: proje şablonunun test komutu yoktur; ölçüm klon tarafının işidir.
   · değişikliğin ANLAMCA doğru olduğu · aXet'in yeni bağlamı fiilen yüklediği · canlı SAP.
 """
@@ -940,6 +941,68 @@ def komut_geri_al(b: Baglam, args) -> int:
 # =====================================================================================================
 # KAPANIŞ
 # =====================================================================================================
+CONN_README_ESKI = "conn/README.md"
+CONN_README_YENI = "docs/sap-baglanti.md"
+
+
+def _git(kok: Path, *args: str) -> subprocess.CompletedProcess | None:
+    try:
+        return subprocess.run(["git", "-C", str(kok), *args], capture_output=True, text=True,
+                              stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+
+
+def conn_readme_silmesini_sahnele(kok: Path) -> tuple[bool, str]:
+    """Z164 ⓐ (kullanıcı kararı 2026-10-19) — DAR İSTİSNA, LİSTE DEĞİL: motorun git index'ine yazdığı TEK yol
+    `CONN_README_ESKI`'dir ve yalnız V6'da (yerel=taban, motor sildi) çağrılır. Sebep: `conn/` ajan denylist'inde
+    olduğu için silmeyi ajan sahneleyemez; sahnelenmezse Z164 şikâyeti son bir kez tekrar ederdi. Commit ATILMAZ.
+    Döner: (sahnelendi_mi, rapor satırı). Sessiz geçiş yok: sahnelenemeyen her durum sebebiyle yazılır."""
+    yedek = f" — kendi terminalinde: `git rm --cached {CONN_README_ESKI}` + commit."
+    if not _git_deposu_mu(kok):
+        return False, "sahnelenemedi: proje git deposu değil" + yedek
+    if (kok / CONN_README_ESKI).exists():
+        return False, f"sahnelenemedi: `{CONN_README_ESKI}` diskte duruyor (silme doğrulanmadı)" + yedek
+    r = _git(kok, "ls-files", "--error-unmatch", "--", CONN_README_ESKI)
+    if r is None or r.returncode not in (0, 1):
+        hata = (r.stderr or "").strip().splitlines()[:1] if r else ["git çalıştırılamadı"]
+        return False, f"sahnelenemedi: izlenme durumu ÖLÇÜLEMEDİ ({hata[0] if hata else 'çıktı yok'})" + yedek
+    if r.returncode == 1:
+        h = _git(kok, "cat-file", "-e", f"HEAD:{CONN_README_ESKI}")
+        if h is not None and h.returncode == 0:
+            return True, "silme zaten sahnelenmiş (index'te yok, HEAD'de var) — olağan commit'le gider."
+        return False, "sahnelenemedi: dosya git'te izlenmiyor (sahnelenecek silme yok)" + yedek
+    rm = _git(kok, "rm", "--cached", "--quiet", "--", CONN_README_ESKI)
+    if rm is None or rm.returncode != 0:
+        hata = (rm.stderr or "").strip().splitlines()[:1] if rm else ["git çalıştırılamadı"]
+        return False, f"sahnelenemedi: `git rm --cached` başarısız ({hata[0] if hata else 'çıktı yok'})" + yedek
+    return True, ("silme git index'ine sahnelendi (motor, commit YOK) — projenin olağan commit'iyle gider; "
+                  "`conn/` için kullanıcıya ayrı commit adımı kalmadı.")
+
+
+def conn_readme_tasima_satirlari(b: Baglam, plan: dict, durum: dict) -> list[str]:
+    """Z164: `conn/README.md` → `docs/sap-baglanti.md` taşımasının kapanış satırları (yoksa boş liste).
+
+    aynı (V6, silindi) → taşındı + silme sahnelenir · değişmiş (V6d) → ezilmedi, uyarı, sahneleme yok ·
+    yok → yeni yerde oluştu (V2)."""
+    kalem = {d["yol"]: d for d in plan["dosyalar"]}
+    eski, yeni = kalem.get(CONN_README_ESKI), kalem.get(CONN_README_YENI)
+    yeni_yazildi = bool(yeni) and durum["dosyalar"].get(CONN_README_YENI, {}).get("durum") == "dogrulandi"
+    out: list[str] = []
+    if eski and eski.get("vaka") == "V6" and durum["dosyalar"].get(CONN_README_ESKI, {}).get("durum") == "dogrulandi":
+        out.append(f"TAŞINDI: `{CONN_README_ESKI}` sende değişmemişti → silindi; açıklama artık `{CONN_README_YENI}`"
+                   f"{'' if yeni_yazildi else ' (yeni dosya bu kapanışta DOĞRULANMADI — yukarıdaki satırına bak)'}.")
+        _sahnelendi, satir = conn_readme_silmesini_sahnele(b.p.kok)
+        out.append(f"`{CONN_README_ESKI}`: {satir}")
+    elif eski and eski.get("vaka") == "V6d":
+        out.append(f"UYARI: `{CONN_README_ESKI}` sende değiştirilmiş → EZİLMEDİ, yerinde duruyor (git'e de "
+                   f"dokunulmadı). Şablonun güncel açıklaması `{CONN_README_YENI}`'de; kendi notlarını oraya taşıyıp "
+                   "eski dosyayı kendin silebilirsin (aXet `conn/` altına dokunamaz).")
+    elif yeni and yeni.get("vaka") == "V2" and yeni_yazildi:
+        out.append(f"OLUŞTU: `{CONN_README_YENI}` (projede `{CONN_README_ESKI}` yoktu).")
+    return out
+
+
 def komut_kapanis(b: Baglam, args) -> int:
     p, plan = b.p, plan_oku(b.p)
     onay_dogrula(b)
@@ -1015,22 +1078,25 @@ def komut_kapanis(b: Baglam, args) -> int:
         rapor += ["", "## Ekip reposu",
                   "Bu değişiklikler proje reposuna commit edilecek; ekip arkadaşların pull edince "
                   "onlara da gelir. Commit KULLANICININ onayıyla atılır; push asla."]
-    # Z97/Z110 (karar 2026-09-26): `conn/README.md` şablon gereği İZLENİR (`.gitignore`: `!conn/README.md`), ama modelin
-    # `git add conn/...` denemesi denylist'e takılır (canlı ölçüldü: kullanıcı "commit et" dedi, model conn/README.md'yi
-    # eklemeye kalktı, "Access denied"). Model bu dosyayı hiç sahnelemez; commit'i kullanıcıya bırakılır. SAP dışı
-    # projede conn/ yoktur ⇒ bölüm basılmaz. Komut yalnız bu kapanışta GERÇEKTEN yazılan conn/ dosyaları için verilir.
+    # Z164 ⓑ (kullanıcı kararı 2026-10-19; Z97/Z110'u değiştirir): bağlantı açıklaması `conn/README.md`'den
+    # `docs/sap-baglanti.md`'ye TAŞINDI. Sebep: `conn/` ajan denylist'indedir (`conn`) ⇒ izlenen README'nin her
+    # güncellemesi commit'i kullanıcıya düşürüyordu ("conn/README.md hâlâ bekliyor"). Taşıma için ayrı kod YOK: şablonda
+    # yol değişince eski yol V6 (yerel=taban → silinir) ya da V6d (yerel değişmiş → dokunulmaz), yeni yol V2 (yazılır)
+    # olur — bu bölüm sonucu kullanıcı diliyle söyler. Commit atılmaz; motorun index'e yazdığı TEK durum V6'da
+    # `conn/README.md` silmesinin sahnelenmesidir (Z164 ⓐ, `conn_readme_silmesini_sahnele`).
+    conn_tasima = conn_readme_tasima_satirlari(b, plan, durum)
+    if conn_tasima:
+        rapor += ["", f"## SAP bağlantı açıklaması — `{CONN_README_ESKI}` → `{CONN_README_YENI}`", *conn_tasima]
+    # Şablonda `conn/` altında artık dosya yok; ileride biri gelirse model onu sahneleyemez (denylist) ⇒ komut verilir.
     conn_yazilan = [d["yol"] for d in plan["dosyalar"]
                     if d["yol"].startswith("conn/")
                     and durum["dosyalar"].get(d["yol"], {}).get("durum") == "dogrulandi"
-                    and durum["dosyalar"].get(d["yol"], {}).get("karar") != "yerel"]
-    if p.sap or conn_yazilan:
+                    and durum["dosyalar"].get(d["yol"], {}).get("karar") != "yerel"
+                    and d.get("vaka") != "V6"]
+    if conn_yazilan:
         rapor += ["", "## conn/ — commit kullanıcının",
-                  "aXet `conn/` altında README dahil hiçbir dosyayı git'e eklemez (`git add -A` / `git add .` ile de "
-                  "sahnelemez); `conn/README.md`'nin commit'i kullanıcıya bırakılır (şablon onu izler, bağlantı "
-                  "dosyaları `.gitignore`'dadır)."]
-        if conn_yazilan:
-            rapor += [f"Bu güncellemede yazıldı: {', '.join(conn_yazilan)} — kendi terminalinde: "
-                      f"`git add {' '.join(conn_yazilan)}` + commit."]
+                  "aXet `conn/` altına git'te dokunamaz (denylist) — bu güncellemede yazıldı: "
+                  f"{', '.join(conn_yazilan)}; kendi terminalinde: `git add {' '.join(conn_yazilan)}` + commit."]
     # Z48 (ürün kararı): `guncelle-proje` manifest'i KENDİSİ yenilemez — davranış yüzeyi onayı
     # bilinçli olarak kullanıcının terminalinde kalır; aksi güvenlik tasarımını deler. Yalnız tam
     # komut verilir.

@@ -438,7 +438,7 @@ python <foundation>/scripts/sap_adt_populate.py msag --name <ZMSG> --description
 
 ## 10. Çoklu sistem ve tier
 **Konvansiyon:** proje kökünde tek aktif dosya `.conn_adt`; birden çok sistem varsa her biri `conn/<SISTEM_ADI>.env` slotunda (aynı anahtarlar,
-`ADT_SAP_SYSTEM_NAME` = slot adı). Proje şablonunun `.gitignore`'u `.conn*` ve `conn/*`'ı dışarıda tutar (yalnız `*.example` / `conn/README.md` girer).
+`ADT_SAP_SYSTEM_NAME` = slot adı). Proje şablonunun `.gitignore`'u `.conn*` ve `conn/*`'ı dışarıda tutar (yalnız `*.example` girer; klasörün açıklaması `docs/sap-baglanti.md`).
 
 | Adım | Kim · nasıl | Sonuç |
 |---|---|---|
