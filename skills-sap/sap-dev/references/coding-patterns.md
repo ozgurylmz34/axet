@@ -117,13 +117,38 @@ kurdur; projede farklıysa spesifikasyondan al.
 - Eski sistemden kopyalanan standart tablo/alan adlarını hedef sistemde doğrula.
 - Klasik program tek gövde yazılmaz: ana program yalnız `INCLUDE` satırları ve olay blokları; kod include'lara
   (`references/naming.md` §4.1).
-- Metot silinince önündeki ABAP Doc yorumunu da sil: sahipsiz yorum sınıf push'unda 400 döndürebilir.
+- Metot silinince önündeki ABAP Doc yorumunu da sil: sahipsiz yorum sınıf push'unda 400 döndürebilir (metot dışındaki
+  tüm yorum konumları: `%sap-code-review` `checklist-abap.md` BE-10b).
 - `TYPES … WITH EMPTY KEY` tanımlı iç tabloda ölçütsüz `SORT itab.` ve `DELETE ADJACENT DUPLICATES FROM itab.`
   birincil anahtara dayanır — ve o anahtar boştur; ATC "check the semantics of the statement" der. Etki bağlama göre
   değişir (sıralama bir doğruluk kuralıysa, ör. kilitleri artan sırada alma, kural sessizce delinmiş olabilir; yalnız
   `FOR ALL ENTRIES` girdisi hazırlıyorsa etki verimliliktir), ama düzeltme her durumda aynı ve güvenlidir:
   `SORT itab BY table_line ASCENDING.` · `DELETE ADJACENT DUPLICATES FROM itab COMPARING table_line.` "Bugün no-op
-  muydu" sorusunu ölçmeden koda yazma. Yerel kontrol bunu görmez; ATC koşunca görünür (ekip dersi).
+  muydu" sorusunu ölçmeden koda yazma. Yerel kontrol bunu görmez; ATC koşunca görünür (ekip dersi; BE-85).
+- **Sorted/hashed tablo satırı `CHANGING` parametresine verilmez.** Birincil anahtar alanları salt okunurdur ⇒ satırı
+  gösteren field-symbol *kısmen korumalıdır*; bağlama anında program düşer — metot anahtara hiç yazmasa bile
+  (`MOVE_TO_LIT_NOTALLOWED_NODATA` / `CX_SY_DYN_CALL_ILLEGAL_TYPE`, *"… is at least partly protected against changes"*;
+  mesajdaki alan anahtar alan olmayabilir). Sözdizimi, aktivasyon, abaplint ve ATC **hepsi geçer**; ilk çalıştırmada
+  patlar. Kaynak vakada iki inceleme riski görüp "anahtar alana yazılmıyor" diye geçti — bu kalıpta kanıt değildir.
+  ```abap
+  " mt_item TYPE HASHED TABLE OF ty_out WITH UNIQUE KEY vbeln posnr
+  " ⛔ YANLIŞ
+  LOOP AT mt_item ASSIGNING FIELD-SYMBOL(<ls_item>).
+    calc_quantities( CHANGING cs_out = <ls_item> ).
+  ENDLOOP.
+  " ✅ DOĞRU — kopya üzerinde çalış, anahtarla geri yaz (metot anahtar alanı değiştirmemeli)
+  DATA ls_item TYPE ty_out.
+  LOOP AT mt_item INTO ls_item.
+    calc_quantities( CHANGING cs_out = ls_item ).
+    MODIFY TABLE mt_item FROM ls_item.
+  ENDLOOP.
+  ```
+  `<fs> = ls_item.` ile bütün satırı geri atamak da anahtar alana yazar (aynı döküm). `ASSIGN itab[ … ] TO <fs>` ile
+  alınan satırda anahtar dışı alana doğrudan atama ve `IMPORTING` parametresine verme serbesttir. Kardeş taraması:
+  aynı döngüde ardışık birkaç `CHANGING` çağrısı olur. İnceleme satırı: BE-84 (komşu BE-71).
+- Sabit genişlikli CHAR alanı `|{ f ALPHA = OUT }|` ile dizeye çevirince sonda boşluk kalır (sıfırlar atılır, genişlik
+  korunur) → sonucu birleştirmeden, karşılaştırmadan ya da uzunluğunu sınırlamadan önce `condense( |{ f ALPHA = OUT }| )`.
+  Kural ifadeye bağlıdır, konuya değil (e-posta dışı bir motorda da çıktı; BE-86).
 
 **Ekip kodlama kuralları:**
 - `CHECK sy-subrc = 0.` yazma; `IF sy-subrc = 0. … ENDIF.` kullan (akış görünür kalır).
