@@ -1585,7 +1585,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "ZATEN VAR: fs-authoring.md:93 'Defter / havuz tasarımı' + doc-checklist.md:55 AX-DOC-FS-01 (eski aXet DOC-FS-08)."
+      "note": "ZATEN VAR: fs-authoring.md:93 'Defter / havuz tasarımı' + doc-checklist.md AX-DOC-FS-01 (eski aXet DOC-FS-08)."
     },
     {
       "source": "DEV_CORE",
@@ -1784,7 +1784,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "ZATEN VAR: fs-authoring.md İlke 2b 'Üç katman, üç yer' (:62-78) + doc-checklist.md:50 DOC-FS-05."
+      "note": "ZATEN VAR: fs-authoring.md İlke 2b 'Üç katman, üç yer' (:62-78) + doc-checklist.md DOC-FS-05."
     },
     {
       "source": "DEV_CORE",
@@ -1878,7 +1878,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "ZATEN VAR: kd-authoring.md:99 'Veri garantisi yazmadan önce ölç' + doc-checklist.md:76 AX-DOC-CR-02 (eski aXet DOC-CR-05)."
+      "note": "ZATEN VAR: kd-authoring.md:99 'Veri garantisi yazmadan önce ölç' + doc-checklist.md AX-DOC-CR-02 (eski aXet DOC-CR-05)."
     },
     {
       "source": "DEV_CORE",
@@ -2630,7 +2630,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "ZATEN VAR: ts-authoring.md §5.2 (:128) + doc-checklist.md:63 DOC-TS-05."
+      "note": "ZATEN VAR: ts-authoring.md §5.2 (:128) + doc-checklist.md DOC-TS-05."
     },
     {
       "source": "DEV_CORE",
@@ -2642,7 +2642,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "ZATEN VAR: fs-authoring.md:124-128 + doc-checklist.md:75 AX-DOC-CR-01 (eski aXet DOC-CR-04)."
+      "note": "ZATEN VAR: fs-authoring.md:124-128 + doc-checklist.md AX-DOC-CR-01 (eski aXet DOC-CR-04)."
     },
     {
       "source": "DEV_CORE",

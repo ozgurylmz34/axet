@@ -6,6 +6,7 @@
 > **Ne DEĞİL:** modül paketi. Paket (`../sd.md`) *ne sorulur, neye bakılır, hangi tuzak var* der (tetik haritası + kontrol +
 > soru); bu klasör *standart SAP'de ne nerede* der. İkisi ayrı amaçlıdır, birbirinin yerine geçmez.
 > **Kaynak:** ekip çekirdeğinin modül referans katmanı (SD) + iki SD reçetesi; aXet'e uyarlandı, proje izleri ayıklandı.
+> **Profil:** içerik `s4_private` (2025) üzerinde derlendi; başka profilde (ECC, public cloud) her satır hipotezdir — canlıda teyit et.
 
 ## Şablon (her modül altı temel dosya + gerekirse reçete)
 `tables.md` · `bapi.md` · `enhancements.md` · `spro.md` · `tcodes.md` · `workflows.md`

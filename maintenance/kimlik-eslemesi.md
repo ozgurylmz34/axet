@@ -47,21 +47,21 @@ bilinen-hata kataloğunun indeksidir (kontrol listesi değil); çekirdekte `K-` 
 
 | Eski | Yeni | Gerekçe (eşleşen çekirdek başlığı ya da aXet'e özgü) | Bugünkü tanım |
 |---|---|---|---|
-| `FE-42` | `AX-FE-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; eski aXet FE-42 sıfır dolgusu kuralıydı; çekirdek FE-42 başka kural (büyük yük → HTTP 414) | `skills-sap/sap-ui5-fiori/references/checklists.md:125` |
-| `FE-43` | `FE-46` | çekirdek «UI5 bootstrap'ı dış CDN'e sabitlenmiş patch'ten yükleniyor →» | `skills-sap/sap-ui5-fiori/references/checklists.md:121` |
-| `FE-44` | `FE-45` | çekirdek «Tarih-yalnız (Edm.DateTime + sap:display-format="Date", arka» | `skills-sap/sap-ui5-fiori/references/checklists.md:120` |
-| `FE-45` | `FE-47` | çekirdek «Function import urlParameters'ına null değer verildi → 400 "» | `skills-sap/sap-ui5-fiori/references/checklists.md:122` |
+| `FE-42` | `AX-FE-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; eski aXet FE-42 sıfır dolgusu kuralıydı; çekirdek FE-42 başka kural (büyük yük → HTTP 414) | `skills-sap/sap-ui5-fiori/references/checklists.md:129` |
+| `FE-43` | `FE-46` | çekirdek «UI5 bootstrap'ı dış CDN'e sabitlenmiş patch'ten yükleniyor →» | `skills-sap/sap-ui5-fiori/references/checklists.md:122` |
+| `FE-44` | `FE-45` | çekirdek «Tarih-yalnız (Edm.DateTime + sap:display-format="Date", arka» | `skills-sap/sap-ui5-fiori/references/checklists.md:121` |
+| `FE-45` | `FE-47` | çekirdek «Function import urlParameters'ına null değer verildi → 400 "» | `skills-sap/sap-ui5-fiori/references/checklists.md:123` |
 | `FE-46` | `FE-42` | çekirdek «OData V2 callFunction BÜYÜK YÜK taşıyor → HTTP 414 (Request-» | `skills-sap/sap-ui5-fiori/references/checklists.md:118` |
 | `FE-47` | `FE-43` | çekirdek «İkinci ODataModel kuruldu ama metadataUrlParams DEVRALINMADI» | `skills-sap/sap-ui5-fiori/references/checklists.md:119` |
-| `DOC-TS-06` | `AX-DOC-TS-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-TS-06` başka kural («Legacy (ECC) izi mi, S/4 standardı mı?») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:65` |
-| `DOC-TS-07` | `AX-DOC-TS-02` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-TS-07` başka kural («Obje listesi ↔ tasarım iki yönlü kapalı:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:66` |
-| `DOC-TS-08` | `AX-DOC-TS-03` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek CLC-SCR7'nin belge tarafı genellemesi; belge kuralı olarak aXet'e özgü | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:67` |
-| `DOC-CR-04` | `AX-DOC-CR-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-04` başka kural («Muğlak ifade kararı gizler:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:75` |
-| `DOC-CR-05` | `AX-DOC-CR-02` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-05` başka kural («Zorunlu kesitler SESSİZCE yok olamaz:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:76` |
-| `DOC-CR-06` | `AX-DOC-CR-03` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-06` başka kural («Kaynak izi — etiketsiz varsayım YOK:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:77` |
-| `DOC-CR-07` | `AX-DOC-CR-04` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:78` |
-| `DOC-CR-08` | `AX-DOC-CR-05` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:79` |
-| `DOC-FS-08` | `AX-DOC-FS-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-FS-08` başka kural («Gereksinim izlenebilirliği — yetim gereksinim YOK:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:55` |
+| `DOC-TS-06` | `AX-DOC-TS-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-TS-06` başka kural («Legacy (ECC) izi mi, S/4 standardı mı?») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:69` |
+| `DOC-TS-07` | `AX-DOC-TS-02` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-TS-07` başka kural («Obje listesi ↔ tasarım iki yönlü kapalı:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:70` |
+| `DOC-TS-08` | `AX-DOC-TS-03` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek CLC-SCR7'nin belge tarafı genellemesi; belge kuralı olarak aXet'e özgü | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:71` |
+| `DOC-CR-04` | `AX-DOC-CR-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-04` başka kural («Muğlak ifade kararı gizler:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:82` |
+| `DOC-CR-05` | `AX-DOC-CR-02` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-05` başka kural («Zorunlu kesitler SESSİZCE yok olamaz:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:83` |
+| `DOC-CR-06` | `AX-DOC-CR-03` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-CR-06` başka kural («Kaynak izi — etiketsiz varsayım YOK:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:84` |
+| `DOC-CR-07` | `AX-DOC-CR-04` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:85` |
+| `DOC-CR-08` | `AX-DOC-CR-05` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:86` |
+| `DOC-FS-08` | `AX-DOC-FS-01` | aXet'e özgü — çekirdekte içerik karşılığı yok; çekirdek `DOC-FS-08` başka kural («Gereksinim izlenebilirliği — yetim gereksinim YOK:») | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:56` |
 | `DOC-KD-17` | `AX-DOC-KD-01` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-fs-ts-docs/references/doc-checklist.md:42` |
 | `OD-01` | `AX-OD-01` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-code-review/references/checklist-odata-backend.md:11` |
 | `OD-02` | `AX-OD-02` | aXet'e özgü — çekirdekte içerik karşılığı yok | `skills-sap/sap-code-review/references/checklist-odata-backend.md:12` |
@@ -78,7 +78,7 @@ bilinen-hata kataloğunun indeksidir (kontrol listesi değil); çekirdekte `K-` 
 | `UI-BOOT-06` | `UI-BOOT-05` | çekirdek «Manifest DIŞI her istek (new ODataModel(...) — varyant/$batc» | `skills-sap/sap-ui5-fiori/references/checklists.md:20` |
 | `UI-SAVE-05` | `AX-UI-SAVE-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-22` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok; çekirdek UI-SAVE-05 başka kural (aXet'te eski UI-SAVE-06 olarak duruyordu) | `skills-sap/sap-ui5-fiori/references/checklists.md:40` |
 | `UI-SAVE-06` | `UI-SAVE-05` | çekirdek «Belge kilidi varsa: unload bırakma = fetch + keepalive + CSR» | `skills-sap/sap-ui5-fiori/references/checklists.md:39` |
-| `UI-ARCH-05` | `AX-UI-ARCH-01` | aXet'e özgü oluşturma maddesi — ALV özellikleri ayağı çekirdek oluşturma listesinde kısmen `UI-PERSO-01` (ui-freestyle-creation; aXet'te aynı kimlikle `checklists.md:56`); grid ayağı yalnız çekirdek inceleme maddesi `FE-13` (bug-checklist-frontend) | `skills-sap/sap-ui5-fiori/references/checklists.md:30` |
+| `UI-ARCH-05` | `AX-UI-ARCH-01` | aXet'e özgü oluşturma maddesi — ALV özellikleri ayağı çekirdek oluşturma listesinde kısmen `UI-PERSO-01` (ui-freestyle-creation; aXet'te aynı kimlikle `skills-sap/sap-ui5-fiori/references/checklists.md:30`); grid ayağı yalnız çekirdek inceleme maddesi `FE-13` (bug-checklist-frontend) | `skills-sap/sap-ui5-fiori/references/checklists.md:30` |
 | `UI-BIND-04` | `AX-UI-BIND-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-07` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:48` |
 | `UI-VH-03` | `AX-UI-VH-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-32` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:55` |
 | `UI-FIN-05` | `AX-UI-FIN-01` | aXet'e özgü oluşturma maddesi — çekirdekte inceleme karşılığı `FE-11` (bug-checklist-frontend); çekirdeğin oluşturma listesinde karşılığı yok | `skills-sap/sap-ui5-fiori/references/checklists.md:65` |
