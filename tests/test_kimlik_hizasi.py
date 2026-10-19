@@ -48,6 +48,18 @@ class GercekDepoKimlikHizasi(GeciciTest):
         self.assertTrue(kayit.get("commit"), "kayıtta kaynak commit yok")
         self.assertGreater(len(kayit.get("kimlikler") or {}), 100, "kayıt boş ya da eksik üretilmiş")
 
+    def test_cekirdek_kaynak_adi_kural_dosyasi_ve_kayitla_ayni(self):
+        """Fixture testleri adı sabitten okur ⇒ sabit tek başına değişse onlar yeşil kalır. Bu test sabiti GERÇEK
+        kural dosyası ve kayıtla karşılaştırır (ad metne yazılmaz, dosyalardan okunur)."""
+        spec = importlib.util.spec_from_file_location("sync_check_gercek_ad", BETIK)
+        sc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sc)
+        kurallar = json.loads((BETIK.parent / "sync-rules.json").read_text(encoding="utf-8"))
+        self.assertIn(sc.CEKIRDEK_KAYNAK, kurallar.get("sources") or {},
+                      "CEKIRDEK_KAYNAK sync-rules.json 'sources' içinde yok — --update-lock kaydı yazamaz")
+        self.assertEqual(json.loads(KAYIT.read_text(encoding="utf-8")).get("kaynak"), sc.CEKIRDEK_KAYNAK,
+                         "kimlik kaydının kaynağı CEKIRDEK_KAYNAK ile aynı değil")
+
     def test_depo_kayda_uyar(self):
         r = self.calistir(BETIK, "--kimlik-denetle", scripts_dir=BETIK.parent)
         cikti = self.cikti(r)
@@ -253,8 +265,8 @@ class KimlikKaydiUreteci(GeciciTest):
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(metin, encoding="utf-8", newline="\n")
 
-    def kural_yaz(self, karar: str = "alinmaz", desen: str = "*") -> None:
-        ad = self.sc.CEKIRDEK_KAYNAK
+    def kural_yaz(self, karar: str = "alinmaz", desen: str = "*", ad: str | None = None) -> None:
+        ad = ad or self.sc.CEKIRDEK_KAYNAK
         self.kurallar.write_text(json.dumps({"sources": {ad: {}}, "rules": [
             {"source": ad, "pattern": desen, "decision": karar, "status": "-", "targets": [],
              "note": "test"}]}), encoding="utf-8")
@@ -292,6 +304,25 @@ class KimlikKaydiUreteci(GeciciTest):
         self.assertFalse(self.kayit.exists())
         self.assertIn("--update-lock YAPILMADI: çekirdek kimlik kaydı üretilemedi", cikti)
 
+    def test_kural_dosyasinda_cekirdek_kaynagi_yoksa_hicbir_sey_yazilmaz(self):
+        self.kural_yaz(ad="BASKA-KAYNAK")   # sabit ile kural dosyası ayrışmış
+        rc, cikti, hata = self.calistir_main("--update-lock")
+        self.assertEqual(rc, 3, cikti + hata)
+        self.assertFalse(self.kilit.exists(), "çekirdek kaynağı tanımsızken kilit yazıldı")
+        self.assertFalse(self.kayit.exists())
+        self.assertIn("'sources' içinde yok", cikti)
+
+    def test_kayit_yazilamazsa_kilit_eski_kalir(self):
+        self.kilit = self.tmp / "sync-lock.json"
+        eski = '{"sources": {}}\n'
+        self.kilit.write_text(eski, encoding="utf-8")
+        self.kayit = self.tmp / "olmayan-klasor" / "kimlik-kaydi.json"   # yazım FileNotFoundError ile patlar
+        rc, cikti, hata = self.calistir_main("--update-lock")
+        self.assertEqual(rc, 3, cikti + hata)
+        self.assertEqual(self.kilit.read_text(encoding="utf-8"), eski, "kayıt yazılamadı ama kilit yenilendi")
+        self.assertIn("Kimlik kaydı YAZILAMADI", cikti)
+        self.assertIn("kilit de YAZILMADI", cikti)
+
     def test_kuralsiz_varken_kilit_ve_kayit_birlikte_yazilmaz(self):
         self.kural_yaz(desen="playbook/*")   # standards/ dosyaları KURALSIZ kalır
         rc, cikti, hata = self.calistir_main("--update-lock", "--kimlik-kaydi")
@@ -318,6 +349,7 @@ class KimlikKaydiUreteci(GeciciTest):
         self.assertTrue(all(set(v) == {"yer"} for v in veri["kimlikler"].values()),
                         "kayıt kimlik başına yalnız `yer` taşımalı (başlık anahtarı yok)")
         self.assertIs(veri["kirli"], False)
+        self.assertFalse(self.kilit.exists(), "yalnız --kimlik-kaydi kilide dokunmamalı")
 
     def test_sablon_ornek_kimlikleri_kayda_girmez(self):
         rc, cikti = self.uret()

@@ -15,7 +15,11 @@ Kullanım (template kökünden):
   python maintenance/sync_check.py ... --json              makinece okunur çıktı
   python maintenance/sync_check.py ... --update-lock       aktarım bittikten SONRA: hash'leri kilitle
                                                            (KURALSIZ=0 ve kural hatası yokken çalışır)
-Çıkış kodu: 0 temiz · 1 KURALSIZ dosya ya da eksik 'tamam' hedefi var · 2 kural dosyası hatası · 3 kullanım/git hatası.
+        --update-lock çekirdek kimlik kaydını da yeniden yazar; ikisi BİRLİKTE yazılır ya da hiçbiri. Kayıt
+        üretilemezse ya da CEKIRDEK_KAYNAK kural dosyasının 'sources' anahtarlarında yoksa çıkış 3, kilit yazılmaz.
+        Yazma sırası: önce kayıt, sonra kilit (ikisi de geçici dosya + os.replace); kayıt yazılamazsa kilit eski kalır.
+Çıkış kodu: 0 temiz · 1 KURALSIZ dosya ya da eksik 'tamam' hedefi var · 2 kural dosyası hatası · 3 kullanım/git
+hatası, kimlik kaydı üretilemedi/yazılamadı ya da kilit yazılamadı.
 Hash satır sonundan bağımsızdır (CRLF -> LF normalize edilir).
 
 KİMLİK HİZASI (Z206, 2026-10-19) — çekirdek ailelerinde kontrol listesi numarasını YALNIZ çekirdek verir:
@@ -36,6 +40,7 @@ import difflib
 import fnmatch
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -392,11 +397,21 @@ def _kimlik_uyumu_yaz(u: dict) -> None:
           f" Dışlanan şablon kimliği (CEKIRDEK_ORNEK_HARIC): {u.get('sablon_haric', 0)}.")
 
 
+def _atomik_yaz(yol: Path, metin: str) -> None:
+    """Geçici dosyaya yaz + `os.replace`: yarım yazılmış dosya kalmaz; hata olursa hedef ESKİ hâliyle durur."""
+    gecici = yol.with_name(yol.name + ".yaziliyor")
+    try:
+        gecici.write_text(metin, encoding="utf-8", newline="\n")   # *.json eol=lf (.gitattributes)
+        os.replace(gecici, yol)
+    finally:
+        if gecici.exists():
+            gecici.unlink()
+
+
 def _kimlik_kaydi_yaz_ve_bildir(kayit: dict, cekirdek_rapor: dict, sessiz: bool) -> None:
     # Kirli ağaç: kilit dosyasıyla AYNI desen (yaz + uyar) — reddetmek `--update-lock` akışında kilit ile kaydı
     # ayrıştırırdı. Fark: kayıt bunu `kirli: true` olarak TAŞIR, `--kimlik-denetle` kapsam beyanında UYARI basar.
-    KIMLIK_KAYDI.write_text(json.dumps(kayit_dosya_bicimi(kayit), ensure_ascii=False, indent=1) + "\n",
-                            encoding="utf-8", newline="\n")   # *.json eol=lf (.gitattributes)
+    _atomik_yaz(KIMLIK_KAYDI, json.dumps(kayit_dosya_bicimi(kayit), ensure_ascii=False, indent=1) + "\n")
     if not sessiz:
         print(f"\nKimlik kaydı yazıldı: {KIMLIK_KAYDI} ({len(kayit['kimlikler'])} kimlik, commit "
               f"{kayit['commit'][:10]})" + (" · ⚠ çekirdek çalışma ağacı temiz değil — kayda `kirli: true` yazıldı; "
@@ -460,6 +475,11 @@ def main() -> int:
         return 3
 
     data = json.loads(RULES_FILE.read_text(encoding="utf-8"))
+    if args.update_lock and CEKIRDEK_KAYNAK not in (data.get("sources") or {}):
+        # Sabit ile kural dosyası ayrışırsa çekirdek raporu hiç bulunmaz ⇒ kilit yazılır, kayıt sessizce yazılmazdı.
+        _yazilmadi(f"--update-lock YAPILMADI: çekirdek kaynak adı ({CEKIRDEK_KAYNAK}) {RULES_FILE.name} 'sources' "
+                   "içinde yok — CEKIRDEK_KAYNAK ile kural dosyası ayrışmış; kilit ve kimlik kaydı yazılmadı.", args.json)
+        return 3
     problems = validate(data)
     rules = data["rules"]
     lock = json.loads(LOCK_FILE.read_text(encoding="utf-8")) if LOCK_FILE.exists() else {"sources": {}}
@@ -602,7 +622,7 @@ def main() -> int:
         elif ku:
             _kimlik_uyumu_yaz(ku)
         else:
-            print("\n=== KİMLİK UYUMU ÖLÇÜLMEDİ: DEV_CORE kaynağı verilmedi.")
+            print(f"\n=== KİMLİK UYUMU ÖLÇÜLMEDİ: {CEKIRDEK_KAYNAK} kaynağı verilmedi.")
 
     # Yazma ilkesi: kilit ve kimlik kaydı aynı çekirdek commit'ini anlatır ⇒ İKİSİ BİRLİKTE yazılır ya da hiçbiri.
     # (Önce: yalnız --update-lock'ta kayıt üretilemezse kilit yeni commit'e geçip kayıt eski kalıyordu, rc 0; KURALSIZ
@@ -622,13 +642,29 @@ def main() -> int:
                        f"{report['kimlik_uyumu']['olculemedi']} (kilit kayıtsız ilerlerse kayıt eski commit'te kalır).",
                        args.json)
             return 3
+    # SIRA: önce kayıt, sonra kilit. Kayıt yazılamazsa kilit ESKİ kalır ⇒ sonraki koşum aynı farkı DEĞİŞEN olarak
+    # yine gösterir (güvenli yön). Ters sırada kilit yeni / kayıt eski kalıyor ve fark bir daha görünmüyordu.
+    kayit_yazildi = False
+    if kimlik_kaydi_canli is not None and (args.kimlik_kaydi or args.update_lock):
+        kayit_yazildi = True
+        try:
+            _kimlik_kaydi_yaz_ve_bildir(kimlik_kaydi_canli, cekirdek_rapor, args.json)
+        except OSError as exc:
+            _yazilmadi(f"Kimlik kaydı YAZILAMADI ({exc})"
+                       + (" — kilit de YAZILMADI (eski hâliyle duruyor)." if args.update_lock else "."), args.json)
+            return 3
+    if args.update_lock:
         merged = {"_aciklama": "sync_check.py --update-lock üretir; elle düzenleme. Hash CRLF->LF normalize sha256.",
                   "sources": {**(lock.get("sources") or {}), **new_lock_sources}}
-        LOCK_FILE.write_text(json.dumps(merged, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        try:
+            _atomik_yaz(LOCK_FILE, json.dumps(merged, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+        except OSError as exc:
+            _yazilmadi(f"--update-lock: kilit YAZILAMADI ({exc}) — "
+                       + ("kimlik kaydı yeni, kilit eski: " if kayit_yazildi else "kilit eski hâliyle duruyor: ")
+                       + "sonraki koşum farkı DEĞİŞEN olarak yine gösterir; --update-lock'u yinele.", args.json)
+            return 3
         if not args.json:
             print(f"\nKilit güncellendi: {LOCK_FILE} ({', '.join(new_lock_sources)})")
-    if kimlik_kaydi_canli is not None and (args.kimlik_kaydi or args.update_lock):
-        _kimlik_kaydi_yaz_ve_bildir(kimlik_kaydi_canli, cekirdek_rapor, args.json)
     return 1 if (kuralsiz_total or missing_targets) else 0
 
 

@@ -29,10 +29,13 @@ düşüyordu; bir sonraki aktarımda yanlış kurala atıf riski sessizdi.
 
 **Mekanik bekçi:** `python maintenance/sync_check.py --kimlik-denetle` (kök test takımında
 `tests/test_kimlik_hizasi.py` koşar). Kayıt `--kimlik-kaydi` ya da `--update-lock` ile yenilenir. Kilit ve
-kayıt aynı çekirdek commit'ini anlatır; `--update-lock` verildiğinde **ikisi birlikte yazılır ya da hiçbiri**:
-kural dosyası hatalıysa, KURALSIZ dosya varsa ya da çekirdek kaydı üretilemiyorsa ikisi de yazılmaz, çıkış kodu 0
-olmaz ve mesaj basılır (`--json` kipinde stderr'e). Yalnız `--kimlik-kaydi` kilide dokunmaz; KURALSIZ dosya onu
-durdurmaz, kural dosyası hatası ve üretilemeyen kayıt durdurur. Kirli çekirdek ağacında kayıt `kirli: true` taşır;
+kayıt aynı çekirdek commit'ini anlatır. `--update-lock` verildiğinde kural dosyası hatalıysa, KURALSIZ dosya
+varsa, `CEKIRDEK_KAYNAK` kural dosyasının `sources` anahtarlarında yoksa ya da çekirdek kaydı üretilemiyorsa
+**ikisi de yazılmaz**, çıkış kodu 0 olmaz ve mesaj basılır (`--json` kipinde stderr'e). Yazma sırası önce kayıt,
+sonra kilit (ikisi de geçici dosya + `os.replace`): kayıt yazılamazsa kilit eski kalır. Kayıt yazılıp kilit
+yazılamazsa (G/Ç hatası) kayıt yeni, kilit eski kalır — tam atomiklik YOK; bu yön güvenlidir çünkü sonraki
+koşum farkı DEĞİŞEN olarak yine gösterir (çıkış 3 + mesaj). Yalnız `--kimlik-kaydi` kilide dokunmaz; KURALSIZ
+dosya onu durdurmaz, kural dosyası hatası ve üretilemeyen kayıt durdurur. Kirli çekirdek ağacında kayıt `kirli: true` taşır;
 aktarım denetimi (`--source DEV_CORE=…`) her koşumda **KİMLİK UYUMU** uyarı listesini basar (çıkış kodunu
 değiştirmez): çekirdekte olup aXet'te olmayan kimlikler + aynı numarada başlığı uzaklaşmış satırlar.
 
