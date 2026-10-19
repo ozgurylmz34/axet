@@ -2052,6 +2052,21 @@ class YorumlayiciTest(GeciciTest):
         self.assertEqual("WARN", durum, mesaj)
         self.assertIn("3.11.9 <", mesaj)
 
+    def test_yoklama_10_sn_ile_sinirli_zaman_asimi_WARN(self):
+        """Ö1 (bağımsız inceleme 2026-10-19): `%guncelle` bütünlük turunda doctor adımının bütçesi 45 sn; yorumlayıcı
+        yoklaması onu yiyemez ⇒ 10 sn. Zaman aşımı sessiz geçmez: BAŞLAMIYOR WARN olur, doctor çökmez."""
+        gorulen = {}
+
+        def sahte_run(*a, **kw):
+            gorulen.update(kw)
+            raise subprocess.TimeoutExpired(a[0], kw.get("timeout"))
+        with mock.patch.object(doctor.subprocess, "run", sahte_run):
+            durum, mesaj = self._satir("C:/x/python.exe")
+        self.assertEqual(10, gorulen.get("timeout"), gorulen)
+        self.assertEqual("WARN", durum, mesaj)
+        self.assertIn("BAŞLAMIYOR", mesaj)
+        self.assertIn("TimeoutExpired", mesaj)
+
     def test_farkli_yorumlayici_notu(self):
         durum, mesaj = self._satir("C:/x/python.exe", kos=self._kos(0, "AXET-YORUMLAYICI-OK 3 13 1\n"),
                                    kendi="C:/baska/python.exe")

@@ -1493,6 +1493,9 @@ def check_ps_politika(windows: bool | None = None, okuyucu=None, which=None) -> 
 
 YORUMLAYICI_ETIKETI = "skill yorumlayıcısı (`python`)"
 _YORUMLAYICI_ISARET = "AXET-YORUMLAYICI-OK"
+# `%guncelle` bütünlük turunda doctor adımının bütçesi 45 sn (`guncelle.BUTUNLUK_ADIM_SN`); tek yoklama onu
+# yiyemez. Başlamayan yorumlayıcı (Store yönlendiricisi) zaten saniyesinde döner — 10 sn bol.
+_YORUMLAYICI_SN = 10
 _YORUMLAYICI_KAPSAM = ("KAPSAM: skill komutlarının çağırdığı `python`, doctor sürecinin PATH'iyle çözüldü — aXet "
                        "kabuğunun (bash aracı) PATH'i ayrıca ÖLÇÜLMEDİ; FAIL üretmez")
 _YORUMLAYICI_DUZELTME = ("aXet-Kur.cmd'ye tekrar çift tıkla (gerçek Python'u kullanıcı PATH'inin başına ekler), "
@@ -1502,7 +1505,7 @@ _YORUMLAYICI_DUZELTME = ("aXet-Kur.cmd'ye tekrar çift tıkla (gerçek Python'u 
 def _yorumlayici_kos(yol: str) -> tuple[int, str]:
     try:
         r = subprocess.run([yol, "-c", f"import sys; print('{_YORUMLAYICI_ISARET}', *sys.version_info[:3])"],
-                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+                           capture_output=True, text=True, timeout=_YORUMLAYICI_SN, stdin=subprocess.DEVNULL)
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except Exception as exc:  # noqa: BLE001 — ölçüm hatası: satır ÖLÇÜLEMEDİ/başlamıyor olur, doctor çökmez
         return -1, f"{type(exc).__name__}: {exc}"
