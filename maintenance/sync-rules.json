@@ -5125,7 +5125,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_syntax_check (yazma sinifi). 2026-09-14: kontrol kosmadiginda valid=None (NOT MEASURED), sahte 'hata var' yok; DDIC CLI parcasi alinmadi (CLI yok)."
+      "note": "adt_syntax_check (okuma sinifi; 2026-10-19 Z195 salt-okur checkrun, eskiden yazma sinifi). 2026-09-14: kontrol kosmadiginda valid=None (NOT MEASURED), sahte 'hata var' yok; DDIC CLI parcasi alinmadi (CLI yok)."
     },
     {
       "source": "DEV_CORE",
