@@ -8,7 +8,9 @@
   "standards/**/*.md",
   "playbook/howto-belge-canli-teyit-turu.md",
   "playbook/modules/sd.md",
-  "playbook/adt-cds.md"
+  "playbook/adt-cds.md",
+  "playbook/howto-ecc-s4-yeniden-yazim.md",
+  "playbook/howto-kuyruk-dikis-sozlesmesi.md"
  ],
  "tanim_bicimleri": [
   "tablo satırının ilk hücresi (tablo başlığının ilk hücresi ∈ {ID, #, Kimlik}; harf sonekli kimlik dahil)",
@@ -30,8 +32,8 @@
    "D-01 (standards/04-documentation-fs-ts.md:1118)"
   ]
  },
- "dosya_sayisi": 33,
- "tanim_sayisi": 454,
+ "dosya_sayisi": 35,
+ "tanim_sayisi": 464,
  "cekirdek_ici_cift": {},
  "kimlikler": {
   "AF-005": {
@@ -543,6 +545,21 @@
   },
   "C-ITG-06": {
    "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-PORT-01": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-02": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-03": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-04": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-05": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
   },
   "C-RAP-ACT-01": {
    "yer": "playbook/checklists/rap-creation.md"
@@ -1194,6 +1211,21 @@
   },
   "FE-52": {
    "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "KDS-1": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-2": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-3": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-4": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-5": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
   },
   "OO-1": {
    "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"

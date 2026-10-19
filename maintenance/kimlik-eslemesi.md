@@ -1,6 +1,6 @@
 # Kontrol listesi kimlik eşlemesi (Z206)
 
-> **Tarih:** 2026-10-19 · **Kaynak:** çekirdek `254134f` (kimlik kaydı `maintenance/kimlik-kaydi.json`, 454 kimlik; FS/TS şablonunun 6 örnek kimliği dışlanır)
+> **Tarih:** 2026-10-19 · **Kaynak:** çekirdek `254134f` (kimlik kaydı `maintenance/kimlik-kaydi.json`, 464 kimlik; FS/TS şablonunun 6 örnek kimliği dışlanır)
 > · **Kapsam:** 115 eski aXet kimliği · bugünkü tanımları 9 dosyada (aşağıdaki «Bugünkü tanım» sütunu; sayılar tablodan ölçülür). Bu dosya **tarihçe ve çeviri tablosudur** — eski numarayla
 > yazılmış bir kayıt (iş listesi, yayın notu, eski oturum notu) okunurken yeni karşılığı buradan bulunur.
 > Çekirdek başlık alıntıları («…») `maintenance/` altında bilerek tutulur (yayına girmez); kayıt dosyası

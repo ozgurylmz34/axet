@@ -154,7 +154,9 @@ def muaf_aile_cekirdekte(kayit: dict) -> list[str]:
 CEKIRDEK_KAYIT_DIZINLERI = ("playbook/checklists", "standards")
 CEKIRDEK_EK_DOSYALAR = ("playbook/howto-belge-canli-teyit-turu.md",   # C-1..C-n (canlı teyit turu)
                         "playbook/modules/sd.md",                     # SD-K*, T-SD-*
-                        "playbook/adt-cds.md")                        # CDS-DCL-*, CDS-NSDM-*
+                        "playbook/adt-cds.md",                        # CDS-DCL-*, CDS-NSDM-*
+                        "playbook/howto-ecc-s4-yeniden-yazim.md",     # C-PORT-* (sap-dev ecc-to-s4-rewrite)
+                        "playbook/howto-kuyruk-dikis-sozlesmesi.md")  # KDS-* (sap-dev batch-judgment-queue)
 # DAR dışlama (dosya, aile): FS/TS belge standardının ÖRNEK tabloları (`RPT-001`, `EXC-001`, `D-01`, `S-01`) kural
 # değil, şablon içi satır kimliğidir — aXet tarafında `templates/` ve FR-/KR-/TC- belge içi kimlikleriyle aynı sınıf.
 # Ölçüldü (254134f): bu dosya kayda YALNIZ bu 6 kimliği veriyordu ve uyum raporunda 4 sahte "eksik aile" üretiyordu.

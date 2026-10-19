@@ -1119,7 +1119,7 @@ M7 `unmeasured` düşürüldü (K1d) · M8 include eşlemesi `None` (K1a/d).
 - Tekrar deneme kapalıyken canlıda geçici 429/502/503/504 cevaplarının sıklığı (gelirse aday ÖLÇÜLEMEDİ → BLOCKER; yanlış BLOCKER oranı ölçülmedi).
 
 ### 20.5 Açık kalemler
-- Standart DTEL (Z/Y/ad-alanı dışı) varlığı bu gate'in kapsamı dışında (STR-FIELD-3; `check_standard_table_fields.py` yalnız WARNING ve struct alan tipine bakmıyor — ölçülmedi).
+- Standart DTEL (Z/Y/ad-alanı dışı) varlığı bu gate'in kapsamı dışında (C-STR-FIELD-03; `check_standard_table_fields.py` yalnız WARNING ve struct alan tipine bakmıyor — ölçülmedi).
 - `run_reviewer` sarmalayıcısının kendi SKIP'leri (`run_review_script_missing`, `reviewer_exception`) struct yolunda da yazmayı durdurmaz (mevcut sözleşme; görünür not ile).
 - Sarmalayıcı zaman aşımında Windows'ta yalnız `run_review` süreci öldürülür; o anda koşan validator alt süreci kendi süresi bitene kadar yaşar
   (DTEL gate'i için artık bütçeyle sınırlı; `check_standard_table_fields.py` gibi bütçesiz ağ validator'ları için sınırsız — önceden var, ölçülmedi).
@@ -1136,7 +1136,7 @@ M7 `unmeasured` düşürüldü (K1d) · M8 include eşlemesi `None` (K1a/d).
 
 ### 20.6 Bug gate düzeltmeleri (2026-09-14, taze bug-expert BLOCKER → B1-B5)
 Prior-art: kaynak çekirdek `playbook/checklists/table-update.md` "Önemli Vakalar" 7 ("checklist satırı ≠ çalıştırılan validator" — reviewer-kör
-vakası) · kaynak çekirdek `struct-creation.md` C-STR-FIELD-02 (BLOCKER) · template `sap-cds-ddic/references/checklists.md:70` (STR-FIELD-2).
+vakası) · kaynak çekirdek `struct-creation.md` C-STR-FIELD-02 (BLOCKER) · template `sap-cds-ddic/references/checklists.md:72` (C-STR-FIELD-02).
 
 | Bulgu | Önce (ölçülen) | Sonra |
 |---|---|---|
