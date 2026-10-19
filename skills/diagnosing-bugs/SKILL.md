@@ -95,8 +95,9 @@ bir sezgidir: keskinleştir ya da at.
 
 ### 4. Prob — tek değişken
 - Her prob Faz 3'teki **bir tahmine** karşılık gelir. **Aynı anda tek değişken** değiştirilir.
-- Tercih sırası: salt-okur ölçüm (`adt_sql_query`, `adt_dump_read`, `adt_get`, HTTP GET) → sınır noktalarında
-  hedefli iz → asla "her şeyi logla, sonra ara".
+- Tercih sırası: salt-okur ölçüm (`adt_sql_query`, `adt_dump_read`, `adt_get`; OData'da `$metadata` için
+  `%sap-ui5-fiori` `fetch_ui_source.py metadata`, entity okuması için kullanıcının tarayıcısı — kimlik bilgisiyle
+  istek atan betik YAZMA) → sınır noktalarında hedefli iz → asla "her şeyi logla, sonra ara".
 - Geçici iz **etiketli** olur (ör. `DEBUG-a4f2`); temizlik tek aramayla yapılır. SAP'deki iz bir **SAP
   yazmasıdır**: yazma kapısı + aynı etiket + Faz 6'da geri alma.
 - **Performans dalı:** iz değil **ölçüm**. Önce taban ölçülür (çalışma süresi, SQL izi, süre ölçen betik), sonra

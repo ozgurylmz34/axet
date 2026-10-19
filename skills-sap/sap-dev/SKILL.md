@@ -65,6 +65,7 @@ Her şeyi değil, ilgili olanı oku.
 |---|---|
 | Obje ya da paket adı | `references/naming.md` + paketin `.rules.md` Naming tablosu (paket kuralı önceliklidir) |
 | ABAP kodu (sınıf, program, FM, SELECT, range, kur) | `references/coding-patterns.md` |
+| Sebebi bilinmeyen hata, dump, yanlış veri, ara ara bozulma, yavaşlama | önce `%diagnosing-bugs` (kök neden); düzeltme kapsamı belli olunca bu tabloya dön |
 | ABAP stili (yalnız yeni/değişen satır), sınıf tasarımı, "desen uygulayayım mı" | `references/clean-abap.md` (Clean ABAP alt kümesi; kapı değil, `ÖNERİ`) |
 | ECC / eski sistem geliştirmesini S/4'te yeniden yazma | `references/ecc-to-s4-rewrite.md` (TS öncesi ön kontrol) + `%sap-intake-triage` `references/protocol.md` §5 |
 | Çok kalemli model yargısını betiğe bağlama (toplu ATC düzeltmesi, eşleme satırları) | `references/batch-judgment-queue.md` |

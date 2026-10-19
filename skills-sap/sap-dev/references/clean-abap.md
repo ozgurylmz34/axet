@@ -28,16 +28,16 @@
 | A1 | Hata bildiriminde dönüş kodu değil yalnız istisna | **Daraltıldı:** yeni OO iç mantıkta istisna tercih edilir; ama BAPI/FM/RFC arayüzünde `BAPIRET2`, RAP/EML'de `failed`/`reported` **korunur** — sınırdaki çevirici katman mesajı taşır, yutmaz (`write-api-selection.md`) |
 | A2 | Test edilebilirlik için constructor injection / test double varsayılan tasarım | **Alınmadı** — varsayılan tasarım test-double'a göre şekillenmez (§0 madde 4, §3 "Alınmayanlar") |
 | A3 | Liste çıktısında `CL_SALV_TABLE` tercihi | **Alınmadı** — ALV aracı senaryoya göre seçilir: `%sap-classic-abap` `references/alv-report.md` §2 + kanonik şablon |
-| A4 | Ad ön eki (`lv_`, `lt_`, `gs_` …) kullanmama | **Alınmadı** — ön ekler kullanılır; paket `.rules.md` ve `naming.md` geçerlidir |
+| A4 | Ad ön eki (`lv_`, `lt_`, `gs_` …) kullanmama | **Alınmadı** — ön ekler kullanılır: `coding-patterns.md` §5 "Değişken ve sabit ön ekleri" tablosu (paket `.rules.md` farklı öneki öngörüyorsa o geçerlidir) |
 | A5 | `DEFAULT KEY`'den kaçın + tek sonuçta `RETURNING` | **Birlikte yazılır:** `RETURNING` tercih edilir **ama** dönen tablo tipi tam tiplidir (key ifadesi şart — aksi aktivasyon reddi); `WITH EMPTY KEY` seçilirse ölçütsüz `SORT` / `DELETE ADJACENT DUPLICATES` anlamsızdır. Yeni tipte anahtarı bilinçli seç |
 
 ## 2. Alınan kurallar (yeni/değişen satır için)
 | ID | Kural | Ek şart / tuzak |
 |---|---|---|
 | **CLN-01** | Mantıksal değer `abap_bool` + `abap_true`/`abap_false`; koşuldan değer üretmek için `xsdbool( )` | — |
-| **CLN-02** | Değişkeni ilk kullanıldığı yerde satır içi bildir (`DATA(...)`; release izin veriyorsa `FINAL(...)`) | ⚠ Döngü içinde **sayaç/bayrak/biriktirici** için satır içi bildirim YAZMA — her turda sıfırlanmaz (`checklist-abap.md`: döngü içi `DATA` biriktirici) |
+| **CLN-02** | Değişkeni ilk kullanıldığı yerde satır içi bildir (`DATA(...)`; release izin veriyorsa `FINAL(...)`) | ⚠ Döngü içinde **sayaç/bayrak/biriktirici** için satır içi bildirim YAZMA. Bildirim konumdan bağımsız bir kez yapılır: `DATA … VALUE` başlangıç değeri yalnız bir kez atanır, `INTO DATA(...)` hedefi bulunamayan kayıtta önceki turun değerini taşır (`checklist-abap.md`: döngü içi `DATA` biriktirici). Açık atama (`DATA(lv_x) = 0.`) her turda çalışır; yine de sayaç/biriktiricinin yeri döngünün dışıdır, okunurluk için orada bildir |
 | **CLN-03** | Tek sonuç → `RETURNING`; az sayıda `IMPORTING`; davranışı ikiye ayıran mantıksal giriş parametresi yerine iki metot | `RETURNING` tipi tam tipli (A5). Biriktirilen tabloyu `EXPORTING` ile döndürme — çağrıda hedef tablo boşalır (`checklist-abap.md`: `EXPORTING et_msg`) |
-| **CLN-04** | Sihirli sayı/dize yerine sabit | — |
+| **CLN-04** | Sihirli sayı/dize yerine sabit | Zaten ekip kuralı: `coding-patterns.md` §5 "Değişken ve sabit ön ekleri" |
 | **CLN-05** | Koşulu olumlu yaz; `IS NOT` biçimi; erken `RETURN` ile koruma cümlesi; tek değişken üzerindeki uzun `ELSEIF` zinciri yerine `CASE` | — |
 | **CLN-06** | Tablo türünü erişim desenine göre seç (STANDARD/SORTED/HASHED); varlık sorgusu `line_exists( )`; SORTED/HASHED'e `INSERT … INTO TABLE` | A5 · `FOR ALL ENTRIES` öncesi boş tablo kontrolü: `coding-patterns.md` §3 |
 | **CLN-07** | Dize birleştirmede şablon `\|…\|`; teknik literal için backtick | Kullanıcıya görünen metin literal DEĞİL: metin havuzu / mesaj sınıfı (`%sap-classic-abap`). Şablonda kaçışsız `\|` kaydetme reddi verir (`checklist-abap.md`) |

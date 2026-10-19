@@ -102,5 +102,5 @@ SOFTWARE.
 
 - **Kaynak:** https://github.com/SAP/styleguides (*Clean ABAP*)
 - **Kullanım yeri:** `skills-sap/sap-dev/references/clean-abap.md`. Rehberden seçilmiş kuralların kendi cümlelerimizle yazılmış, değiştirilmiş özetidir: metin kopyalanmadı; bu template'in kurallarıyla çelişen öneriler ayıklandı ya da daraltıldı (dosyanın §1 tablosu değişiklikleri listeler). Rehberin tamamı ve özgün metin için kaynağa bakın.
-- **Hak sahibi:** kaynak deposundaki telif bildirimi geçerlidir (bu kayıt yazılırken ağdan doğrulanmadı).
+- **Telif:** Copyright 2019-2021 SAP SE or an SAP affiliate company and styleguides contributors. (Kaynak: deponun REUSE kaydı `.reuse/dep5`, `Files: *` — https://github.com/SAP/styleguides/blob/main/.reuse/dep5; 2026-10-19'da okundu.)
 - **Lisans:** Creative Commons Attribution 3.0 — https://creativecommons.org/licenses/by/3.0/
