@@ -3062,12 +3062,500 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_abap-unit-aktivasyon-sonrasi-sahte-sifir-test.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/classes.md",
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "classes.md §5 'Sahte sıfır — include DOLU iken de olur' (:105) + known-errors-classic indeks satırı (:14). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_adt-get-dtel-ana-dil-metnini-dondurur.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/known-errors-adt.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-adt K-29 (:349) + indeks satırı; DD04T dil T sorgusu adt_sql_query CLI biçiminde. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ambalaj-talimati-coklu-p-eml-yaratamaz-vhupo-fm.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/packing-instruction.md",
+        "skills-sap/sap-intake-triage/references/modules/sd.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "packing-instruction §6 'Talimatı programdan yaratma' (:76) + kapsam notu; sd.md T-SD-4 tuzak (:78). ADIM 4 gerekçesi write-api-selection'a bağlı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_api-teslimat-yolu-vorlage-kopieren-e-ugramaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/modules/referans/sd/enhancements.md",
+        "skills-sap/sap-intake-triage/references/modules/sd.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "referans/sd/enhancements.md 'Teslimat yaratma yolları' (:33) + sd.md T-SD-3 (:67). Z199/Z200."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_atc-fle-bulgusu-ci-fldext-ok-not-numarali.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: sap-code-review/references/atc-fix-patterns.md §0 (:18-21) CI_FLDEXT_OK[<not no>]."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_atc-pretty-print-birim-basina-ilk-fark.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: sap-classic-abap/references/classes.md §7.1 + atc-fix-patterns.md §0 'Incorrect Pretty Print state'."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_atc-pseudo-comment-satir-basina-tek-ve-bulgu-satirina.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/atc-fix-patterns.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "atc-fix-patterns §0 'Pseudo-comment yerleşimi' (:24): satır başına tek #EC, bulgu satırına, ad belge bağlantısından. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cds-endusertext-label-40-karakter.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-cds-ddic/references/cds.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "cds.md §3.1 @EndUserText.label ≤40 (:190). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cl-bcs-set-message-subject-uzun-konu-canli-dogrulandi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: sap-classic-abap/references/email.md (:96-98) + mail-eki.md (:4,20) set_message_subject."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_cl-fdt-xl-mutlak-iliski-target-core005.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-classic indeks satırı (:16) + 'Ek notlar' CL_FDT_XL_SPREADSHEET (:76). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_exit-yeni-satira-updkz-u-vy701-sm13-dump-yok.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/modules/referans/sd/enhancements.md",
+        "skills-sap/sap-intake-triage/references/modules/sd.md",
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "referans/sd/enhancements.md UPDKZ bölümü (:46) + sd.md T-SD-3 + known-errors-classic VY 701 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_hashed-satir-field-symbol-changing-parametresine-baglanamaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-classic satır (:15) + 'Sorted/hashed satır CHANGING'e bağlanmaz' (:66). Kontrol listesi maddesi BE-84 = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_klasik-alv-quickinfo-char30-symsgv-char50.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/alv-report.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "alv-report §7 'Metin uzunluğu — sessiz kesilme' (:100). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_referansli-talep-oncesi-kopyalama-kontrolunu-olc-tvcpa.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/modules/sd.md",
+        "skills-sap/sap-intake-triage/references/modules/referans/sd/spro.md",
+        "skills-sap/sap-intake-triage/references/modules/referans/sd/tables.md",
+        "skills-sap/sap-intake-triage/references/modules/referans/sd/workflows.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "sd.md SD-K2 (:26) + referans/sd spro.md (:23) · tables.md (:44) · workflows.md bağ alanı doluluğu (:23). Z199/Z200."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_sap-standart-kur-cevrimi-ters-yon-kaydina-sessizce-duser.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-intake-triage/references/modules/sd.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "sd.md T-SD-2 kur ters yön tuzağı (:56). Kodlama kalıbı önerisi K6'ya (coding-patterns). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_stxl-clustr-bos-metin-sondasi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-classic-abap/references/known-errors-classic.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-classic indeks satırı + 'Uzun metin boş mu: STXL-CLUSTR' (:87). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_basecontroller-navto-sarmalayici-replace-dusurur.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "app-skeleton §9 navTo sarmalayıcısı (:298) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_daterangeselection-ikinci-tarih-gun-sonu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §6.1 (:151) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gateway-substringof-maxlength-400-ve-tr-harf-sinifi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-odata-backend/references/filter-search.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §6.2 MaxLength süzgeci (:164) + TR harf sınıfı (:168); filter-search §1 (:24); known-errors-ui5 iki satır. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_m-table-esnek-kolon-dar-ekranda-sifir-px.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §7 (:205) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_multiinput-yazili-metin-validator-zorunlu.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §6.1 'Yazılı metin → token' (:137) + known-errors-ui5 satırı. Kontrol listesi FE-50 = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_playwright-httpcredentials-sap-bsp-401-onden-basic.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "runtime-verification §4.6 (:240) + known-errors-ui5 satırı; playwright-cli'de extraHTTPHeaders ÖLÇÜLMEDİ. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui5-float-source-decimal-nokta-tr-yerelde-x1000.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "known-errors-ui5 Render satırı (:35); reçete freestyle-odata-v2 §5.1'e K6 önerisi (dosya K6 sahipliğinde). Kontrol listesi FE-52 komşusu = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui5-suspended-binding-tablo-render-istegi-atar.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §2 (:66) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_v2-date-only-filtre-utc-gece-yarisi.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: sap-ui5-fiori/references/checklists.md FE-45 (:120) + freestyle-odata-v2.md (:194)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_vh-kosul-sekmesi-kucuk-harf-sessiz-bos-sonuc.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §6.1 (:143) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_vhd-exclude-bos-dizi-gizlemez-sessiz-dusme.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "list-grid-alv §6.1 (:147) + known-errors-ui5 satırı. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ui5-table-ctrl-a-testi-odakla-tik-sahte-negatif.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "runtime-verification §4.2 (:100) + known-errors-ui5 satırı. Kontrol listesi FE-51 = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_doc-builder-diagram-png-render-gurultusu-geri-al.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "pdf-with-screenshots Tuzaklar (:172); geri alma yalnız dosya adıyla `git restore -- <png>`. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_html-yorumu-icinde-mermaid-ok-yorumu-erken-kapatir.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "pdf-with-screenshots Tuzaklar (:171); verify_doc_html.py yalnız <pre> + language-mermaid tarar (kör nokta yazıldı). DOC-KD-15 ekseni = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kd-mock-yanit-sekli-gercek-be-yi-izlemeli.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-user-guide/references/mock-ortam.md",
+        "skills-sap/sap-ui5-user-guide/references/gorsel-kontrol.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "mock-ortam §3 'Yanıt şekli' (:111) + gorsel-kontrol G14 (:37). DOC-KD-01 ekseni = K6. Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_pdftotext-enc-utf8-olmadan-turkce-bozuk.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "pdf-with-screenshots Tuzaklar (:173). html_to_pdf.js çıplak ad yarısı alınmadı: aXet html_to_pdf.js:270 path.resolve kullanıyor."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_git-stash-u-salt-okunur-bos-dizinde-yarim-kalir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_git-stash-u-yarim-kalabilir.md",
+        "memory/MEMORY.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Yeni hafıza dersi (genericize). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_gmail-smtp-gecersiz-kimlikte-535-degil-baglanti-keser.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynak ekibin kendi mail aracına özgü; genel ilke VAR: memory/feedback_ortam-normal-hukmu-hata-metnini-oku.md + feedback_sifir-sonuc-kanitla-once-kontrol-grubu.md."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_paralel-oturum-ayni-calisma-agacinda-degisikligi-tasir.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_paralel-oturum-ayni-calisma-agaci.md",
+        "memory/MEMORY.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Yeni hafıza dersi (genericize). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_windowsta-posix-ekseni-simule-edilemez-kanit-gercek-ci.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_yerel-suit-ci-ikizi-degil.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Mevcut derse dört platform ekseni maddesi (:18). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_ajan-idle-bildirimi-bayat-durum-yeni-durum-degil.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynak ekibin çoklu-ajan bildirim mekanizmasına özgü; aXet'te karşılığı yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_alt-ajan-spawn-edince-bekci-baslat-onay-beklemesin.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynak ekibin ajan bekçisi (Monitor) mekanizmasına özgü; aXet'te karşılığı yok."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_public-core-brifinde-tuketici-proje-adlarini-yasakla.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Kaynak ekibin iç süreci; genel ilke VAR: memory/feedback_sizinti-taramasi-arama-uzayi-git-deltasidir.md + yayin_hazirla --depo-tara."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_kalite-hizdan-once-tasarim-olcutu.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "ZATEN VAR: memory/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md + feedback_yesil-sinyal-kapsamini-sor.md + feedback_performans-onerisi-de-iddiadir.md."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_lider-is-kurali-sessizce-gomulmez-kullaniciya-sunulur.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_is-kurali-sessizce-gomulmez.md",
+        "memory/MEMORY.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Yeni hafıza dersi (genericize). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/feedback_yeni-onay-kurali-verilmis-karari-yeniden-sordurmaz.md",
+      "decision": "uyarla",
+      "targets": [
+        "memory/feedback_verilmis-karar-yeniden-sorulmaz.md",
+        "memory/MEMORY.md"
+      ],
+      "party": 9,
+      "status": "tamam",
+      "note": "Yeni hafıza dersi (genericize). Z199."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/memory-seed/_indeks-terfi-2026-10-18.md",
+      "decision": "alinmaz",
+      "targets": [],
+      "party": 9,
+      "status": "-",
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi (Z199)."
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "claude/memory-seed/*",
       "decision": "bekliyor",
       "targets": [],
       "party": null,
       "status": "-",
       "note": "Yakalama kurali: yeni eklenen tohum dosyalari buraya duser; dosya bazinda karar ver, ozel satir ekle."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/rules/abap-clean-code.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/clean-abap.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328): kural + std 11 alt kumesi tek referansta; sap-classic-abap yonlendiricisinden link (Z196)."
     },
     {
       "source": "DEV_CORE",
@@ -3091,6 +3579,18 @@
       "party": 4,
       "status": "tamam",
       "note": "Rules + referanslar; §4 popup cumlesi memory/playbook ile ters -> alinmadi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/skills/diagnosing-bugs/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills/diagnosing-bugs/",
+        "THIRD_PARTY_NOTICES.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Z197 (tur 6, kaynak #327): SKILL.md -> skills/diagnosing-bugs/SKILL.md (alt ajan rolleri yok, adt_classrun yan etki uyarisi); KAYNAK.md -> skill ici kaynak notu; LICENSE.upstream (MIT) -> THIRD_PARTY_NOTICES.md gomulu tam metin (aXet duzeni)."
     },
     {
       "source": "DEV_CORE",
@@ -3127,6 +3627,28 @@
       "party": 4,
       "status": "tamam",
       "note": "Global npm -g ve Claude'a ozgu allowed-tools; yerine proje ici ui-smoke. Genel skill ihtiyaci dogarsa ayri yazilir. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #317 run-code sir kurali (kod/--filename aynen geri basilir, run-code icinde process yok; sir open aninda gecici config httpCredentials + PLAYWRIGHT_MCP_SECRETS_FILE ile) -> runtime-verification.md §4.6 'Sirlar' (Z167). Cekirdek 0.1.17'de olctu; aXet 0.1.21'de OLCULMEDI olarak beyan edildi. Test: test_sap_skill_bilgi PlaywrightSirKuraliTest."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/templates/fs-ozet.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/templates/FS-summary-template.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "claude/templates/integration-sheet.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-fs-ts-docs/templates/integration-sheet-template.md"
+      ],
+      "party": 4,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328)."
     },
     {
       "source": "DEV_CORE",
@@ -3575,7 +4097,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Yalniz SD var; diger moduller uydurulmaz. 2026-09-25: SD-K3 sirasi (RFC FM eklendi) + write-api-selection linki + SD_SCDS_CREATE ADIM 4 notu."
+      "note": "Yalniz SD var; diger moduller uydurulmaz. 2026-09-25: SD-K3 sirasi (RFC FM eklendi) + write-api-selection linki + SD_SCDS_CREATE ADIM 4 notu. 2026-10-19 (Z200): referans/sd/ katmani (tablolar, BAPI, gelistirme noktalari, SPRO, islem kodlari, is akislari) + LO-VC belge konfigurasyonu (#355) + karakteristik hizli giris (#354) + T-SD-8."
     },
     {
       "source": "DEV_CORE",
@@ -4128,6 +4650,39 @@
       "party": 9,
       "status": "tamam",
       "note": "aXet bakımcısının kaynak çekirdekte gördüğü kusuru bildirme akışı: kusurun yerini ayır, kontrol grubuyla ölç, kanıt formatında taslak, sızıntı kontrolü, kullanıcı onayı, iş listesinde takip (iş listesi Z131). 2026-09-25 tur 2: kaynağın yedi bölümlü kapanışını görünce yapılacaklar → §6 (4. bölüm uygulanır; 'güncelleme onarır' adımı güncellemeden sonra ÖLÇÜLÜR)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-atc-duzeltme-kaliplari.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/atc-fix-patterns.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328); Z199 dersleri §0'a eklendi."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-ecc-s4-yeniden-yazim.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/ecc-to-s4-rewrite.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328); C-PORT-* kimlikleri kimlik kaydinda (CEKIRDEK_EK_DOSYALAR)."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "playbook/howto-kuyruk-dikis-sozlesmesi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/batch-judgment-queue.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328); KDS-* kimlikleri kimlik kaydinda (CEKIRDEK_EK_DOSYALAR)."
     },
     {
       "source": "DEV_CORE",
@@ -5696,6 +6251,40 @@
       "party": 10,
       "status": "tamam",
       "note": "2026-09-25: yeni karar agaci aXet arac adlariyla (adt_get bdef/ddls/function, adt_search_objects, adt_atc_check, adt_where_used + CROSS, released_successors.py lookup); $metadata araci yok -> kullanicidan; FM releaseState/processingType aXet'te OLCULMEDI; DOGRULANMADI etiketleri korundu; profil tablosu sap-project.json sap_profile+cleancore_policy ile eslendi. Genel standards/* telafi kuralina dusmemesi icin ozel kural."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/11-clean-abap-ve-oo-alt-kumesi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-dev/references/clean-abap.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328). Onceden standards/* genel kuralina dusup yaniltici 'tamam' gosteriyordu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/12-clean-core-seviye-referansi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-code-review/references/clean-core.md"
+      ],
+      "party": 3,
+      "status": "tamam",
+      "note": "Z198 (tur 6, kaynak #328); mevcut clean-core.md / checklist-clean-core.md ile birlesti. Onceden standards/* genel kuralina dusuyordu."
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "standards/13-kural-yazim-standardi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills/write-skill/SKILL.md",
+        "skills/remember/SKILL.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "Z203 (tur 6, kaynak #336): 'Kural yazarken' alanlari + testler; code-review kural incelemesi bu bolume atif yapar (Z202). Onceden standards/* genel kuralina dusuyordu."
     },
     {
       "source": "DEV_CORE",
