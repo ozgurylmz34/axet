@@ -147,6 +147,8 @@ BE-10b (yetim yorum) · BE-55 (satır içi `TABLE OF` parametre) · BE-49 (adlan
 | CDS/SRVD yorum sözdizimi | doğrulayıcıya bağlıydı | yok → BE-61 elle |
 | Paket/obje adlandırma (klasik include türetme dahil) | doğrulayıcıya bağlıydı | yok → BE-49 elle |
 | UI5 freestyle tuzakları, liste ekranı grid standardı | FE listesine bağlıydı | `%sap-ui5-fiori` kapsamı |
+| ABAP Doc yetim yorum ön taraması (BE-10b) | ortak kontrol listesi programı + `class_push` yazma kapısında BLOCKER | yok → BE-10b elle (`checklist-abap.md`) |
+| Push öncesi yerel metni Pretty Printer ile biçimleme (BE-88) | yerel biçimleme yolu; "biçimleyici çıktısı ↔ dosya farkı = 0" ön kanıtı | yok → `adt_pretty_print` canlıdan okur; kanıt push + aktivasyon sonrası ATC `CI_PRETTY_PRINT` = 0 (`%sap-classic-abap` `classes.md` §7.1) |
 
 ## 5. Elle koşum ve okuma
 ```
