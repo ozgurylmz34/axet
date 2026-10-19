@@ -456,7 +456,7 @@ def _sozdizimi_checkrun(client, name: str, object_type: str) -> dict:
     return {"ok": False, "error": "sozdizimi_belirsiz", "valid": None,
             "valid_reason": "checkrun ÖLÇÜLEMEDİ (%s)" % sebep,
             "message": ("Sözdizimi ÖLÇÜLEMEDİ (checkrun: %s). Bu sonuç 'sözdizimi TEMİZ' de "
-                        "'HATALI' da DEĞİLDİR — ör. inaktif sürümü olmayan objede SAP "
+                        "'HATALI' da DEĞİLDİR — ör. inaktif sürümü olmayan tabloda SAP "
                         "`notProcessed` döner." % sebep),
             **ortak}
 

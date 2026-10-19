@@ -304,7 +304,9 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
 - **Çağrı:** tek istek — `POST /sap/bc/adt/checkruns?reporters=abapCheckRun`, gövde `chkrun:checkObjectList` (`version="inactive"`).
 - **Dönüş:** `{ok, valid: true|false, errors, warnings, source:"checkrun", scope}`; `errors[]` = `{type, message, line, column, href, t100}`.
   Ölçülemediyse `{ok:false, error:"sozdizimi_belirsiz", valid:null, valid_reason, message, scope}` — boş/bozuk yanıt, rapor ya da
-  `abapCheckRun` raporu yok, obje raporlanmadı, `status≠processed` (inaktif sürümü olmayan objede SAP `notProcessed` döner),
+  `abapCheckRun` raporu yok, obje raporlanmadı, `status≠processed` (tipe bağlı — canlı ölçüm 2026-10-19, DEV, salt okuma: inaktif sürümü olmayan Z tablosunda
+  `notProcessed` "Error while importing object … from the database"; inaktif sürümü olmayan Z sınıfında `processed`, aktif sürüm
+  denetlenir → `valid:true`),
   tanınmayan mesaj tipi, HTTP ≠ 200 ya da ağ istisnası. `valid:false` yalnız `ok:true` iken "hatalı"dır.
 - **Uyarılar:** `scope` = KAPSAM BEYANI: ATC, ABAP Unit, co-activation ve yetki denetimi DEĞİL · aktivasyonun yerini tutmaz (aktivasyonda
   çıkan hatalar burada görünmeyebilir) · eski aktive eden yol (`syntax_check_via_activation`) araçtan KALDIRILDI; kütüphanede push'un

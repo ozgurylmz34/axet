@@ -207,7 +207,7 @@ kullanıcıya aktar, ne gerektiğini söyle.
 - QA/PRD'de hassas veri okuma (KVKK) açık onay ister; DEV muaftır (SAP çekirdeği). Onay kelimesi
   net olmalı ("onay"); "dene", "çek" onay değildir.
 - `adt_syntax_check` salt-okur checkrun'dır (okuma sınıfı, Z195): bekleyen sürümü aktive ETMEZ; `valid:null` = ölçülemedi
-  (ör. inaktif sürüm yok → `notProcessed`), temiz DEĞİL. Aktivasyonun yerini tutmaz.
+  (ör. inaktif sürümü olmayan tabloda `notProcessed`; sınıfta inaktif sürüm yoksa aktif sürüm denetlenir), temiz DEĞİL. Aktivasyonun yerini tutmaz.
 - Alt ajana (`agent`) SAP yazma işi verilmez; alt ajan yalnız okuma sınıfı araçlarla araştırır ve
   brifinge "yazma sınıfı araç çağırma" kuralı açıkça yazılır.
 - Yeni bir ADT yöntemi başarısız denemelerden sonra çalıştıysa: çalışan yöntem + denenen başarısız yollar
