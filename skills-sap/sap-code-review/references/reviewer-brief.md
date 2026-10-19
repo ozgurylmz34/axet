@@ -56,12 +56,16 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
 <genel şablon §5'i aynen yapıştır>
 <role-briefs S4 — SAP kanıt kuralları bloğunu buraya aynen yapıştır>
 İnceleyici ekleri:
-- BULGU KAPISI — dördü de EVET değilse bulgu yazma, NOT yaz (tek istisna: aşağıdaki KANIT TİPİ tavanıyla yazılan bulgu):
+- BULGU KAPISI — dördü de EVET değilse bulgu yazma, NOT yaz. İstisna — §5'teki iki TAVANLI BULGU kapıya takılmaz,
+  en fazla WARNING ile BULGULAR'a yazılır ve aynı anda "SİSTEMDE KALAN DOĞRULAMALAR"a (§8 6.) madde olarak girer:
+  ⓐ okunamayan iddia (aşağıdaki madde) · ⓑ yalnız dokümana dayanan davranış iddiası (KANIT TİPİ tavanı).
   (1) tam `dosya:satır` gösterebiliyorum; (2) somut hata senaryosu kurabiliyorum: girdi → durum → yanlış sonuç;
   (3) çevre kodu ve mevcut korumaları okudum ("koruma zaten var" ihtimalini eledim); (4) önemi savunabilirim.
+  NOT'lar §8'de: okunamayan bir iddiadan doğan not "SİSTEMDE KALAN DOĞRULAMALAR"a (6.) girer; diğer notlar
+  ÇALIŞTIRILAN KOMUTLAR / OKUMALAR'ın (3.) altında "NOT:" satırıdır ve kararı etkilemez.
 - Doğrudan okunarak test edilebilen bir iddia (satır var mı, alan dolu mu, halef hangi yetki annotation'ını taşıyor,
-  obje aktif mi) OKUNMADAN BLOCKER yapılmaz: önce oku. Gerçekten okuyamıyorsan bulgu en fazla WARNING olur ve
-  "SİSTEMDE KALAN DOĞRULAMALAR"a (§8) madde olarak girer; "emin değilim" diye susturulmaz, tavanla yazılır.
+  obje aktif mi) OKUNMADAN BLOCKER yapılmaz: önce oku. Gerçekten okuyamıyorsan bu ⓐ tavanlı bulgudur: en fazla
+  WARNING + "SİSTEMDE KALAN DOĞRULAMALAR"a madde; "emin değilim" diye NOT'a düşürülmez, susturulmaz.
 - KANIT TİPİ — her bulgu kanıtının kaynağını taşır:
   `canlı` (SAP'den bu incelemede okundu: `adt_get`, `adt_sql_query`, `adt_atc_check` …) ·
   `kaynak` (yerel kaynak dosyası, `git diff`, yerelde koşulan araç çıktısı: run_review, abaplint) ·
@@ -70,7 +74,7 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
     bulgu `kaynak` kanıtlıdır ve önemi o satırdan gelir (BLOCKER dahil).
   · Tavan: kodun ya da sistemin ne YAPTIĞINA dair bir iddia ("bu FM commit etmez", "bu alan dolu gelir", "bu BAPI şu
     mesajı döner") yalnız bir dokümanda duruyorsa o bulgu BLOCKER olamaz: en fazla WARNING + "SİSTEMDE KALAN
-    DOĞRULAMALAR"a madde (doküman bayatlayabilir). Önce canlı ya da kaynak kanıtı aramayı dene.
+    DOĞRULAMALAR"a madde (doküman bayatlayabilir; ⓑ tavanlı bulgu). Önce canlı ya da kaynak kanıtı aramayı dene.
   · İkisi birlikteyse: liste satırının ihlali bir davranış ÖNKOŞULUNA bağlıysa ("bölen 0 olabilir", "alan boş
     gelebilir") ve önkoşul yalnız dokümanda duruyorsa tavan uygulanır; satır önkoşulsuz yazılmışsa (koruma her
     durumda zorunlu) bulgu `kaynak` kanıtlıdır, satırın önemini taşır. Birden çok kanıt varsa etiket, hükmü
@@ -95,7 +99,8 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
   kendi önemi olan satır varsa o geçerlidir; o satırı başka kusur sınıfına taşıma. Ortak birimde bu değişiklikten
   bağımsız kusur → ÖNCEDEN VAR (bloklamaz). Düzeltmenin yerini sorgulamak (mimari tercih) yalnız ÖNERİ'dir.
 - Önem: satırın Önem sütunu. "WARNING · strict: BLOCKER" → cleancore_policy strict ise BLOCKER; politika boşsa
-  önem DOĞRULANMADI yaz. Kesin yasak (A/B/C/D) ihlali daima BLOCKER.
+  WARNING yaz ve "SİSTEMDE KALAN DOĞRULAMALAR"a "cleancore_policy sorulacak (strict ise BLOCKER)" maddesi ekle
+  (bulgu SAYIM ve KARAR'a WARNING olarak girer). Kesin yasak (A/B/C/D) ihlali daima BLOCKER.
   Listede olmayan kanıtlı hata: aktivasyon ya da çalışma zamanı kırılması, veri kaybı, sessiz yanlış sonuç → BLOCKER; diğerleri WARNING.
 - Liste yürüyüşü zorunlu: yapıştırılan her satır KAPSAMA TABLOSU'nda (§8) bir satır alır. Atlanan satır kusurdur.
   Bu diffe uymayan satır `UYGULANMAZ` + gerekçeyle yazılır, boş bırakılmaz; kanıtsız `UYGUN` yazma ("baktım" kanıt değildir).
@@ -126,12 +131,15 @@ kalemleri bitir, sonra yanıtının İLK satırına `ENGEL: <ne · neden · kara
    Hüküm kelimeleri: `İHLAL→B<n>` (bulgu numarası) · `UYGUN` · `UYGULANMAZ` + gerekçe · `DOĞRULANAMADI` + neden ·
    `ÇÜRÜTÜLDÜ` + kanıt (§2'deki bir araç bulgusunu faz 2'de yanlış-pozitif bulduysan). Başka kelime yazma.
    İhlal olduğuna hükmettiğin her satır `İHLAL→B<n>` olur ve BULGULAR'da o numarayla durur.
-3. ÇALIŞTIRILAN KOMUTLAR / OKUMALAR: komut ya da araç → çıktının özü (sayı; yalnız "OK" yazma)
+3. ÇALIŞTIRILAN KOMUTLAR / OKUMALAR: komut ya da araç → çıktının özü (sayı; yalnız "OK" yazma) · altında
+   kapıdan geçmeyen diğer notlar ("NOT: …"; kararı etkilemez)
 4. ÖNCEDEN VAR (bu değişiklikten değil): dosya:satır — sorun — kanıt
 5. YENİ SATIR ÖNERİLERİ
 6. SİSTEMDE KALAN DOĞRULAMALAR (zorunlu; yoksa "yok" yaz): yerelde ya da salt okuma araçlarıyla kanıtlayamadığın,
    sistemde (aktivasyon, push sonrası okuma, kullanıcı testi) doğrulanması gereken her kontrol —
-   madde · neden burada kanıtlanamadı · kim doğrular (ana oturum yazma adımında | kullanıcı testi)
+   madde · neden burada kanıtlanamadı · kim doğrular (ana oturum yazma adımında | kullanıcı testi).
+   Burada mutlaka yer alır: her ⓐ/ⓑ tavanlı bulgu (B<n> numarasıyla) · okunamayan iddiadan doğan NOT · boş
+   `cleancore_policy` sorusu.
 7. SAYIM: HATA/EKSİK/ÖNERİ × BLOCKER/WARNING
 8. KARAR: PASS | WARNING | BLOCKER
    Kural: kanıtlı ≥ 1 BLOCKER → BLOCKER · yalnız WARNING → WARNING · yoksa PASS. ÖNERİ ve ÖNCEDEN VAR kararı etkilemez.
@@ -158,7 +166,7 @@ kalemleri bitir, sonra yanıtının İLK satırına `ENGEL: <ne · neden · kara
 | HIGH / MEDIUM / LOW önem basamakları | İnceleme kararı dili PASS/WARNING/BLOCKER | HIGH → BLOCKER, MEDIUM/LOW → WARNING (checklist-common.md başlığı) |
 | "Yüzde 80 kesinlik" eşiği | Ölçülemez bir sayı | "önemi savunabilirim" koşulu |
 | Yeni obje adı için deterministik adlandırma doğrulayıcısı | aXet'e taşınmadı | BE-49 elle yürünür (`%sap-dev` references/naming.md) |
-| Canlı sözdizimi kontrolünü inceleyicinin koşması | CLI'de yazma sınıfı | §3'te yasak; kesin karar push/aktivasyon (ana oturum, yazma kapısı) |
+| Canlı sözdizimi kontrolünü inceleyicinin koşmaması | CLI'de `adt_syntax_check` okuma sınıfı, salt-okur checkrun (`sap_adt_cli.py --list` → `class: read`) | Alınmadı: inceleyici koşabilir (§3); `valid: null` ölçülemedi demektir; kesin karar yine aktivasyondur (ana oturum, yazma kapısı) |
 | Bağımsız okumaları tek turda paralel gönderme talimatı | aXet'te ölçülmedi | alınmadı |
 | Model seçimi | DOĞRULANMADI | alınmadı |
 | Proje çekirdeği arama talimatı (bağlantılı klasör görünmezliği) | aXet template düz klasördür | alınmadı |

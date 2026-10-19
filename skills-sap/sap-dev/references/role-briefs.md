@@ -161,7 +161,7 @@ sonra ana oturumun `%sap-adt-foundation` yazma akışına girer. Genel şablon �
   · Teslimden önce bu turda değişen her metodu/include'u SAP Pretty Printer biçimiyle karşılaştır — çünkü ATC
     `CI_PRETTY_PRINT` birim başına yalnız ilk farkı bildirir, sonradan kovalamak ATC + push döngüsüdür (BE-88).
     aXet'te `adt_pretty_print` SAP'deki kaynağı biçimler, yerel taslağı değil: yerel taslak için karşılaştırma yolu
-    yoksa bu maddeyi `DOĞRULANMADI` yaz (ana oturum push sonrası ATC ile ölçer).
+    yoksa bu maddeyi `DOĞRULANAMADI` yaz (ana oturum push sonrası ATC ile ölçer).
 - TESLİM ÖNCESİ ÖZ-DENETİM (ZORUNLU, ÇIKTI'dan önce):
   1. `python <TEMPLATE>/skills-sap/sap-code-review/scripts/abaplint_run.py <değişen ABAP dosyaları>` — çıkış 1 = bulgu
      → düzelt · 3 = ölçülmedi · 4 = kısmi ölçüm (ölçülmeyen dosyaları listele). Son `ABAPLINT-RUN-STATUS` satırını

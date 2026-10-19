@@ -231,11 +231,22 @@ class DdicAdOnerisiKuraliTest(unittest.TestCase):
         kanit = rb[rb.index("## 5. KANIT KURALLARI"):rb.index("## ROL: SAP KOD İNCELEYİCİ")]
         self.assertRegex(kanit, r"yalnız bir dokümanda duruyorsa o bulgu BLOCKER olamaz")
         self.assertIn("Kural kaynağı bulguyu `doküman` YAPMAZ", kanit)
-        self.assertIn("KARDEŞ ÇAĞIRANLARINI", rb)
+        # Bulgu kapısının istisnası İKİ tavanı da sayar (okunamayan iddia + KANIT TİPİ); yoksa okunamayan iddia NOT'a
+        # düşer, B<n> doğmaz, KARAR PASS olur (bug gate B1).
+        self.assertRegex(kanit, r"BULGU KAPISI[^\n]*İstisna[^\n]*TAVANLI BULGU(?:[^\n]*\n){1,2}"
+                                r"[^\n]*ⓐ okunamayan iddia[^\n]*ⓑ yalnız dokümana dayanan")
+        self.assertRegex(kanit, r"okunamayan bir iddiadan doğan not \"SİSTEMDE KALAN DOĞRULAMALAR\"a")
+        # ÖNEM kümesi kapalıdır (BLOCKER | WARNING): boş politika ayrı bir önem kelimesi üretmez (bug gate B2).
+        self.assertRegex(rb, r"politika boşsa\s+WARNING yaz")
+        self.assertNotIn("önem DOĞRULANMADI yaz", rb)
+        self.assertRegex(rb, r"(?i)kardeş\s+ça[gğ]")
         cr = _oku(AXET_HOME / "skills" / "code-review" / "SKILL.md")
-        for parca in ("KANIT TİPİ", "KAPSAMA TABLOSU", "SİSTEMDE KALAN DOĞRULAMALAR", "kardeş"):
+        for parca in ("KANIT TİPİ", "KAPSAMA TABLOSU", "SİSTEMDE KALAN DOĞRULAMALAR"):
             with self.subTest(parca=parca):
                 self.assertIn(parca, cr)
+        self.assertRegex(cr, r"(?i)kardeş\s+ça[gğ]")
+        # Başlık tek başına yetmez: tavan kuralının kendisi (doküman-tek davranış iddiası BLOCKER olamaz) aranır.
+        self.assertRegex(cr, r"yalnız dokümanda duruyorsa bulgu BLOCKER olamaz:\s*en fazla WARNING")
 
     def test_rol_brifleri_yazim_ani_ve_oz_denetim_tasir(self):
         """Z202: backend ve UI5 alt görev brifleri yazım anı satırlarını (kontrol listesi kimliğiyle) ve teslim öncesi

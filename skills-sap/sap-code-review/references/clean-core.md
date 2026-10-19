@@ -22,7 +22,7 @@ Proje kimliği `sap-project.json`'dadır (`sap_profile`, `cleancore_policy`).
 | `strict` | Yalnız released API; yeni klasik Dynpro politika gereği yasak | `WARNING · strict: BLOCKER` satırları BLOCKER; AX-CC-02 uygulanır |
 | `balanced` | Profil varsayılanı: released tercih, klasik meşru | WARNING; released kullanılmayacaksa gerekçe kullanıcıya bildirilir (sessiz geçiş yok) |
 | `classic` | RAP tercih baskısı kalkar; released tercihi değişmez | `balanced` ile aynı önem |
-| boş / tanımsız değer | Ölçülemez | önem DOĞRULANMADI, kullanıcıya sor |
+| boş / tanımsız değer | Ölçülemez | WARNING; sistemde kalan doğrulamalara "cleancore_policy sorulacak (strict ise BLOCKER)", kullanıcıya sor |
 
 Not: CLI `cleancore_policy`'yi yalnız metin olarak doğrular (`sap-adt-foundation` `project.py`); yazım hatası sessizce
 "tanımsız" olur → incelemede boş gibi ele al.
