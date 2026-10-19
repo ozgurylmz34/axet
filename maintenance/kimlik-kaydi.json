@@ -1,0 +1,1432 @@
+{
+ "_aciklama": "sync_check.py --kimlik-kaydi üretir; ELLE DÜZENLEME. Çekirdeğin kontrol listesi kimlik tanımlarının anlık görüntüsü: aXet önekli olmayan (AX- dışı) bir kimliği ancak burada varsa tanımlayabilir (tests/test_kimlik_hizasi.py zorlar). Eski → yeni eşleme: kimlik-eslemesi.md. Çekirdek kural METNİ (başlık) bilerek YAZILMAZ: serbest metin public depoya taşınmaz; uyum raporu başlığı çekirdekten canlı okur.",
+ "kaynak": "DEV_CORE",
+ "commit": "254134f4daf5f77f23f6fec91bcb24e3ff3e6f05",
+ "kirli": false,
+ "taranan": [
+  "playbook/checklists/**/*.md",
+  "standards/**/*.md",
+  "playbook/howto-belge-canli-teyit-turu.md",
+  "playbook/modules/sd.md",
+  "playbook/adt-cds.md",
+  "playbook/howto-ecc-s4-yeniden-yazim.md",
+  "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+ ],
+ "tanim_bicimleri": [
+  "tablo satırının ilk hücresi (tablo başlığının ilk hücresi ∈ {ID, #, Kimlik}; harf sonekli kimlik dahil)",
+  "başlık `#… <KİMLİK>` + ayraç (· — – : |) ya da satır sonu (`<KİMLİK> ek ·` alt bölümdür)"
+ ],
+ "sablon_haric": {
+  "kural": [
+   "standards/04-documentation-fs-ts.md [D-]: FS/TS şablonunun örnek tablo kimliği (kural değil)",
+   "standards/04-documentation-fs-ts.md [EXC-]: FS/TS şablonunun örnek tablo kimliği (kural değil)",
+   "standards/04-documentation-fs-ts.md [RPT-]: FS/TS şablonunun örnek tablo kimliği (kural değil)",
+   "standards/04-documentation-fs-ts.md [S-]: FS/TS şablonunun örnek tablo kimliği (kural değil)"
+  ],
+  "dislanan": [
+   "RPT-001 (standards/04-documentation-fs-ts.md:443)",
+   "RPT-002 (standards/04-documentation-fs-ts.md:444)",
+   "EXC-001 (standards/04-documentation-fs-ts.md:465)",
+   "EXC-002 (standards/04-documentation-fs-ts.md:466)",
+   "S-01 (standards/04-documentation-fs-ts.md:517)",
+   "D-01 (standards/04-documentation-fs-ts.md:1118)"
+  ]
+ },
+ "dosya_sayisi": 35,
+ "tanim_sayisi": 464,
+ "cekirdek_ici_cift": {},
+ "kimlikler": {
+  "AF-005": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-DIV-01": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-DIV-02": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-DRV-01": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-DRV-02": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-DRV-03": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-IF-01": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-NAM-01": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-01": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-02": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-03": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-04": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-05": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-06": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "AF-XDP-07": {
+   "yer": "playbook/checklists/adobe-forms-creation.md"
+  },
+  "BE-01": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-02": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-03": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-04": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-05": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-06": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-07": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-08": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-09": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-10a": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-10b": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-11": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-12": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-13": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-14": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-15": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-16": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-17": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-18": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-19": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-20": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-21": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-22": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-23": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-24": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-25": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-26": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-27": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-28": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-29": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-30": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-31": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-32": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-33": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-34": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-35": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-36": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-37": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-38": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-39": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-40": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-41": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-42": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-43": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-44": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-45": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-46": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-47": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-48": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-49": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-50": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-51": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-52": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-53": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-54": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-55": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-56": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-57": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-58": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-59": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-60": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-61": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-62": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-63": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-64": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-65": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-66": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-67": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-68": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-69": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-70": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-71": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-72": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-73": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-74": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-75": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-76": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-77": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-78": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-79": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-80": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-81": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-82": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-83": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-84": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-85": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-86": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-87": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-88": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-ACT-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-ACT-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-ACT-03": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-ACT-04": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-AUDIT-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-BDEF-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-BDEF-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-BDEF-03": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-BDEF-04": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-BDEF-05": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-CDS-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-CDS-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-CDS-03": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-CDS-04": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-DV-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-DV-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-FIN-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-SRV-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-SRV-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-SRV-03": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-SRV-04": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-TOOL-01": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-TOOL-02": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "BE-TOOL-03": {
+   "yer": "playbook/checklists/ui-backend-rap-creation.md"
+  },
+  "C-1": {
+   "yer": "playbook/howto-belge-canli-teyit-turu.md"
+  },
+  "C-2": {
+   "yer": "playbook/howto-belge-canli-teyit-turu.md"
+  },
+  "C-3": {
+   "yer": "playbook/howto-belge-canli-teyit-turu.md"
+  },
+  "C-4": {
+   "yer": "playbook/howto-belge-canli-teyit-turu.md"
+  },
+  "C-5": {
+   "yer": "playbook/howto-belge-canli-teyit-turu.md"
+  },
+  "C-CDS-2PHASE-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-AGG-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-AGGUNIT-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-AUTH-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-AUTH-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-CONSUME-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-CONVEXIT-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-CUR-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-CUR-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-CUR-03": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-DEPR-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FIELDRM-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FROM-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FROM-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FROM-03": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FROM-04": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-FROM-05": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-KEY-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-LABEL-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-LANG-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-NAME-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-NS-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-NS-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-QTYEXPR-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-SQLV-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-SQLV-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-SQLV-03": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-TD-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-TD-02": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-UNION-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-CDS-WIN-01": {
+   "yer": "playbook/checklists/cds-creation.md"
+  },
+  "C-ITG-01": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-ITG-02": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-ITG-03": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-ITG-04": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-ITG-05": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-ITG-06": {
+   "yer": "playbook/checklists/itg-s2-signoff.md"
+  },
+  "C-PORT-01": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-02": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-03": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-04": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-PORT-05": {
+   "yer": "playbook/howto-ecc-s4-yeniden-yazim.md"
+  },
+  "C-RAP-ACT-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-AE-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-AE-02": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-02": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-03": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-04": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-05": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-BD-06": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-LANG-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-NAME-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-NAME-02": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-PKG-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-REL-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-SB-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-SB-02": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-SB-03": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-SB-04": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-SB-05": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-STD-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-TR-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-TXT-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-01": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-02": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-03": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-04": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-05": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-06": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-07": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-RAP-VE-08": {
+   "yer": "playbook/checklists/rap-creation.md"
+  },
+  "C-STR-CUR-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-CUR-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-CUR-03": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-CUR-04": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-CUR-05": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-DEPR-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-FIELD-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-FIELD-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-FIELD-03": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-FIELD-04": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-KAP-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-KAP-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-LABEL-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-LABEL-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-LABEL-03": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-LANG-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-NAME-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-NAME-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-UNIT-01": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-STR-UNIT-02": {
+   "yer": "playbook/checklists/struct-creation.md"
+  },
+  "C-TBL-APPEND-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CUR-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CUR-02": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CUR-03": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CUR-04": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-DLI-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-DROP-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-DROP-02": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-DTEL-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-LOCK-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-MAINT-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-NAME-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-ORDER-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-PUT-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-QUAN-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-QUAN-02": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-RENAME-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-SOURCE-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-STD-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-TD-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-TYPE-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "CDS-DCL-01": {
+   "yer": "playbook/adt-cds.md"
+  },
+  "CDS-DCL-02": {
+   "yer": "playbook/adt-cds.md"
+  },
+  "CDS-NSDM-01": {
+   "yer": "playbook/adt-cds.md"
+  },
+  "CLC-005": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-07": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-ALV1": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-ALV2": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-ALV3": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG1": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG2": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG3": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG4": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG5": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG6": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG7": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-DLG8": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-NAM": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR1": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR2": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR3": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR4": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR5": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR6": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-SCR7": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLC-TXT": {
+   "yer": "playbook/checklists/classic-dialog-creation.md"
+  },
+  "CLN-01": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-02": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-03": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-04": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-05": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-06": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-07": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-08": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-09": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-10": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-11": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-12": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CLN-13": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "CORE-01": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-02": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-03": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-04": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-05": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-06": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-07": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "CORE-08": {
+   "yer": "playbook/checklists/core-script-development.md"
+  },
+  "DE-005": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-ACT-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-DOM-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-NAM-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-REUSE-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-REUSE-02": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-TR-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-TR-02": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DE-TXT-01": {
+   "yer": "playbook/checklists/domain-dtel-creation.md"
+  },
+  "DOC-CR-01": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-CR-02": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-CR-03": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-CR-04": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-CR-05": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-CR-06": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-01": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-02": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-03": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-04": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-05": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-06a": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-06b": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-07": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-FS-08": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-01": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-02": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-03": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-04": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-05": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-06": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-07": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-08": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-09": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-10": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-11": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-12": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-13": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-14": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-15": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-KD-16": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-01": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-02": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-03": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-04": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-05": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-06": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-07": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "DOC-TS-08": {
+   "yer": "playbook/checklists/doc-checklist.md"
+  },
+  "FE-01": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-02": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-03": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-04": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-05": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-06": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-07": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-08": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-09": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-10": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-11": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-12": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-13": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-14": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-15": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-16": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-17": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-18": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-19": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-20": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-21": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-22": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-23": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-24": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-25": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-26": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-27": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-28": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-29": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-30": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-31": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-32": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-33": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-34": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-35": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-36": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-37": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-38": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-39": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-40": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-41": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-42": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-43": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-44": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-45": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-46": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-47": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-48": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-49": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-50": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-51": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-52": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "KDS-1": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-2": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-3": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-4": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "KDS-5": {
+   "yer": "playbook/howto-kuyruk-dikis-sozlesmesi.md"
+  },
+  "OO-1": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "OO-2": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "OO-3": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "OO-4": {
+   "yer": "standards/11-clean-abap-ve-oo-alt-kumesi.md"
+  },
+  "PACK-01": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-02": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-03": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-04": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-05": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-06": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-07": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-08": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-09": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-10": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-11": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-12": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-13": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PACK-14": {
+   "yer": "playbook/checklists/packing-consumption-creation.md"
+  },
+  "PC-1": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-10": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-11": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-12": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-2": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-3": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-4": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-5": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-6": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-7": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-8": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "PC-9": {
+   "yer": "standards/09-packing-instruction-consumption.md"
+  },
+  "SD-K1": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "SD-K2": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "SD-K3": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "SD-K4": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "SD-K5": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-1": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-2": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-3": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-4": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-5": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-6": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-7": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "T-SD-8": {
+   "yer": "playbook/modules/sd.md"
+  },
+  "UI-ARCH-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-ARCH-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-ARCH-03": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-ARCH-04": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BIND-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BIND-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BIND-03": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BOOT-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BOOT-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BOOT-03": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BOOT-04": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-BOOT-05": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-FIN-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-FIN-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-FIN-03": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-FIN-04": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-PERSO-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-SAVE-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-SAVE-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-SAVE-03": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-SAVE-04": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-SAVE-05": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-VH-01": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  },
+  "UI-VH-02": {
+   "yer": "playbook/checklists/ui-freestyle-creation.md"
+  }
+ }
+}
