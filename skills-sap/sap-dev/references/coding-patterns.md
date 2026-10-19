@@ -168,7 +168,7 @@ kurdur; projede farklıysa spesifikasyondan al.
   ② Varlık da kanıt değildir: o tabloyu standart akış da okuyor olabilir. Yalnız size özel okumaları ayırt edici say;
   izi `PROGRAM` kolonuyla kendi sınıf/programına filtrele, ham `STATEMENT_WITH_VALUES` + `USER_NAME` kolonlarını oku
   (vakada kanıt, WHERE'e enjekte edilmiş CDS yetki reddi koşuluydu). Kullanıcıya özgü farklarda kontrol grubu için
-  `%sap-cds-ddic` `references/cds.md` CDS-DCL-03.
+  `%sap-cds-ddic` `references/cds.md` AX-CDS-DCL-01.
 - Yerel yardımcı Python script'i yazıyorsan Windows konsolu (`cp1252`) Unicode basamayabilir:
   `sys.stdout.reconfigure(encoding="utf-8", errors="replace")` ya da ASCII çıktı. Geçici script `.tmp/`'ye.
 

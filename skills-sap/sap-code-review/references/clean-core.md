@@ -19,7 +19,7 @@ Proje kimliği `sap-project.json`'dadır (`sap_profile`, `cleancore_policy`).
 
 | `cleancore_policy` | Anlamı | İncelemede |
 |---|---|---|
-| `strict` | Yalnız released API; yeni klasik Dynpro politika gereği yasak | `WARNING · strict: BLOCKER` satırları BLOCKER; CC-02 uygulanır |
+| `strict` | Yalnız released API; yeni klasik Dynpro politika gereği yasak | `WARNING · strict: BLOCKER` satırları BLOCKER; AX-CC-02 uygulanır |
 | `balanced` | Profil varsayılanı: released tercih, klasik meşru | WARNING; released kullanılmayacaksa gerekçe kullanıcıya bildirilir (sessiz geçiş yok) |
 | `classic` | RAP tercih baskısı kalkar; released tercihi değişmez | `balanced` ile aynı önem |
 | boş / tanımsız değer | Ölçülemez | önem DOĞRULANMADI, kullanıcıya sor |
@@ -50,7 +50,7 @@ Not: CLI `cleancore_policy`'yi yalnız metin olarak doğrular (`sap-adt-foundati
    yapamıyorsa 5. adım.
 7. **Birim semantiği tuzağı:** released görünümlerde birim çevrim alanları `@Semantics.quantity` taşıyabilir; aritmetik ya
    da `case` içinde doğrudan kullanım "UNIT-reference" aktivasyon hatası verir → önce `cast( … as abap.dec(n,m) )`.
-8. **Sınıf, arayüz, FM:** tablo haritası yalnız ipucudur; otorite ATC "Usage of APIs" (§5, CC-01).
+8. **Sınıf, arayüz, FM:** tablo haritası yalnız ipucudur; otorite ATC "Usage of APIs" (§5, AX-CC-01).
 9. **Eski kod:** mevcut koddaki ham tablo tek başına bulgu değildir (envanter); migrasyon proje kararıdır.
 
 ## 4. Otomasyon — neyi yakalar, neyi kaçırır
@@ -69,7 +69,7 @@ Yazma kapısı validator'ı `check_released_objects.py` (`<skills-sap>/sap-adt-f
 | `/* … from <tablo> … */` blok yorum | bulgu verir (yanlış pozitif) |
 | Harita dosyası yok ya da boş | `SKIP` + durum satırı `status=SKIPPED measured=false` basar, çıkış 0 → `run_review` SKIP (WARNING) sayar; 2026-09-14 öncesi durum satırı yoktu ve PASS sayılıyordu |
 
-Son satır nedeniyle CC-03 vardır: `released_successors.py status` haritayı doğrular (yok/boş/bozuk → çıkış 2).
+Son satır nedeniyle AX-CC-03 vardır: `released_successors.py status` haritayı doğrular (yok/boş/bozuk → çıkış 2).
 Yazma kapısının bu durumu ölçmeden geçmesi foundation tarafında açık bir kalemdir (kapıya dokunulmadı).
 
 ## 5. ATC — tüm obje tipleri için otorite

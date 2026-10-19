@@ -14,7 +14,7 @@ description: >
 # SAP kod incelemesi — kontrol listeli bağımsız inceleme
 
 > **Profil:** clean core satırları `ecc`'de uygulanmaz, `s4_public`/`btp_abap`'ta zorunludur, `s4_private`'ta `cleancore_policy`'ye
-> bağlıdır (`references/clean-core.md` §1); profil yeteneği varsayımı SR-03 satırıdır.
+> bağlıdır (`references/clean-core.md` §1); profil yeteneği varsayımı AX-SR-03 satırıdır.
 
 > Genel akış `%code-review`'dadır; bu skill SAP backend'ine özgü parçaları ekler: obje tipi kontrol listeleri
 > (kimlikli satırlar), çevrimdışı kontroller ve inceleyici brifingi.
@@ -97,8 +97,9 @@ Ayrıntı: `references/validator-map.md` (satır ↔ validator, kapsam) · `refe
 Listede olmayan ve tekrar edebilecek bir tuzak bulunduysa ders yalnız nota ya da hafızaya yazılmaz:
 1. Düzelt (ana oturum).
 2. Çalışan deseni ilgili obje tipi skill'inin referansına yaz.
-3. İlgili `references/checklist-*.md`'ye satır **öner**: sıradaki boş kimlik (backend `BE-82`, OData `OD-06`, clean core `CC-04`,
-   ortak `SR-04`'ten başlar), altı sütun dolu: ne · nasıl · önem · otomasyon · kaynak ders (tarih + kanıt).
+3. İlgili `references/checklist-*.md`'ye satır **öner**: aXet'e özgü yeni madde `AX-<aile>-<nn>` alır; çekirdek ailelerinde
+   (`BE-`, `FE-`, `DOC-*`, `UI-*` …) numara verilmez (sıradaki: backend `AX-BE-01`, OData `AX-OD-06`, clean core `AX-CC-04`,
+   ortak `AX-SR-04`; kök test takımındaki kimlik hizası testi zorlar), altı sütun dolu: ne · nasıl · önem · otomasyon · kaynak ders (tarih + kanıt).
    Otomasyon sütununa yalnız gerçekten var olan validator yazılır (`tests/test_checklists.py` zorlar); yoksa `YOK`.
 4. Deterministik yakalanabiliyorsa validator adayı olarak açık kalem yaz. Yazma kapısına validator eklemek araç
    değişikliğidir → önce kullanıcıya açıkla, onay al.

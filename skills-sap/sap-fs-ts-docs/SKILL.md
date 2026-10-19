@@ -134,7 +134,7 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 | `scripts/verify_doc_html.py` | ölü içindekiler bağlantısı, ham Mermaid sızıntısı, görsel sayısı/eksik dosya, PDF bağlantı sayısı |
 | `scripts/doc_equivalence_check.py` | yeniden yazımda veri kaybı (kimlik, mockup, değer, cümle) + kapanmış karar ters yönü |
 | `scripts/check_fs_no_analysis_log.py` | FS gövdesinde analiz günlüğü izi sayımı (sürüm etiketi, inceleme kimliği, süreç ifadesi, kullanıcı alıntısı, önceden→şimdi) + §1.1 satır uzunluğu (DOC-FS-05/06a); uyarıdır, kapı değil |
-| `scripts/check_fm_signature_doc_sync.py` | dokümandaki `<!-- FM-IMZA: <FM> -->` bloğu ↔ FM kaynağındaki imza parametreleri, iki yönde (EKSİK · HAYALET); kaynak kökü `sap-project.json` `source_root` (DOC-TS-08); uyarıdır, kapı değil |
+| `scripts/check_fm_signature_doc_sync.py` | dokümandaki `<!-- FM-IMZA: <FM> -->` bloğu ↔ FM kaynağındaki imza parametreleri, iki yönde (EKSİK · HAYALET); kaynak kökü `sap-project.json` `source_root` (AX-DOC-TS-03); uyarıdır, kapı değil |
 | `scripts/gen_field_table.py` | CDS (+ interface CDS, BDEF, CSV) → alan tablosu |
 | `scripts/program_to_spec.py` | ABAP/CDS kaynağından taslak FS/TS (yalnız kaynakta olan) |
 | `tests/run_tests.py` | çevrimdışı testler (SAP'ye ve tarayıcıya bağlanmaz) |
