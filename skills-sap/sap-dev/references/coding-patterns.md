@@ -134,6 +134,19 @@ kurdur; projede farklıysa spesifikasyondan al.
 - Başta belli olan sonuç tablosunu döngüde `READ` + `INSERT` ile değil `VALUE #( FOR … )` ile kur. Satır içi
   `FIELD-SYMBOL(<x>)` aynı kapsamda iki kez tanımlanamaz; gerekiyorsa DATA bloğunda tanımla.
 
+**Değişken ve sabit ön ekleri (ekip kuralı):** sihirli sayı/dize yerine `CONSTANTS` ya da metin elemanı.
+Paket `.rules.md` farklı bir ön ek öngörüyorsa o geçerlidir. Obje adları (sınıf, tablo, program) bu tabloya değil
+`naming.md`'ye tabidir.
+
+| Ne | Global | Yerel |
+|---|---|---|
+| Sabit | `c_` | `c_` |
+| Elemanter değişken | `gv_` | `lv_` |
+| İç tablo | `gt_` | `lt_` |
+| Yapı | `gs_` | `ls_` |
+| Obje referansı | `go_` | `lo_` |
+| Seçim ekranı | `s_<ad>` (`SELECT-OPTIONS`) · `p_<ad>` (`PARAMETERS`) — ad ≤ 8 karakter: `%sap-classic-abap` `references/programs-includes.md` §2 | — |
+
 **Bilinen tuzak — standart tablo alanını DDL metninde aramak.**
 - **Belirti:** "`MARA.MATKL` yok", "`LIKP.WBSTK` yok" hükmü; alan gerçekte vardır. Elle yazılan bir kontrol script'i ya da
   `adt_get` kaynağında metin araması CDS/ABAP kodunda sahte "alan yok" bulgusu üretir.
@@ -185,7 +198,7 @@ manuel) ve hangi canlı teyitle: `write-api-selection.md`.
 | `VBAK` / `VBAP` | released satış belgesi CDS (okuma); yazma `write-api-selection.md` (ölçülmüş: `I_SalesOrderTP` EML) |
 | `LIKP` / `LIPS` | released teslimat CDS (okuma); yazma `write-api-selection.md` (released BO kapsamı ölçülmedi) |
 | `T001` | released organizasyon CDS |
-| `CL_GUI_ALV_GRID` | `CL_SALV_TABLE` (klasik) / UI5 grid (RAP) |
+| `CL_GUI_ALV_GRID` | released değil (clean core uyarısı verir). Salt okunur liste → `CL_SALV_TABLE`; düzenlenebilir / özel toolbar / hücre olayı / kolon kişiselleştirme → GRID kalır, released alternatif kullanılmadığı için gerekçe kullanıcıya bildirilir (aşağıdaki son paragraf). Senaryo tablosunun tek kaynağı: `%sap-classic-abap` → `references/alv-report.md` §2. RAP'ta UI5 grid |
 | `CL_GUI_ALV_TREE` | `CL_SALV_TREE` |
 
 Released CDS adını tahmin etme: sistemde `adt_search_objects` ile ara, `adt_get` ile oku. Emin olunamayan

@@ -78,7 +78,8 @@ Okuma kuralları:
   üretir (`not-run` ayrı sütun · artefaktsız `pass` geçersiz · 0 test ya da dar kapsam `warn` · kaydedilmemiş kapı
   varken hüküm `KISMI`). Hiçbir akışa bloklayıcı olarak bağlanmaz; çıkış kodunu **insan** okur.
 
-Ayrıntı: `references/validator-map.md` (satır ↔ validator, kapsam) · `references/clean-core.md` · `references/abaplint.md` · `references/quality-scorecard.md` (kapı defteri + karne).
+Ayrıntı: `references/validator-map.md` (satır ↔ validator, kapsam) · `references/clean-core.md` (§2.1 seviye × politika) · `references/abaplint.md` · `references/quality-scorecard.md` (kapı defteri + karne) ·
+`references/atc-fix-patterns.md` (ATC bulgusu düzeltme kalıpları, önce okunacak bağlam) · stil (`ÖNERİ` düzeyi): `%sap-dev` `references/clean-abap.md`.
 
 ### 4. Bağımsız inceleyici
 `references/reviewer-brief.md`'deki brifingi doldur → `agent` aracıyla **taze** alt ajan. İlgili kontrol listesi tablolarını ve

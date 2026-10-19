@@ -37,6 +37,34 @@ Not: CLI `cleancore_policy`'yi yalnız metin olarak doğrular (`sap-adt-foundati
 
 İnceleme raporunda yeni objenin seviyesi A değilse gerekçesiyle yazılır. D daima BLOCKER'dır (kesin yasak A).
 
+### 2.1 Politika × seviye ve teknik × politika (`s4_private`)
+Bu tablo yeni kural koymaz; §1 politika ekseni, §2 seviyeler ve `%sap-dev` `write-api-selection.md`'yi hizalar —
+çelişkide onlar geçerlidir. **Hücre sözlüğü:** `serbest` · `gerekçeyle` (TS'te yazılı gerekçe) · `yasak` ·
+**`ölçülmedi`** = matristen/dokümandan türetildi, canlı ya da araçla doğrulanmadı · **`zorlama yok`** = hiçbir araç bu
+politikayı uygulamıyor (yalnız doküman + inceleme). ⛔ Boş ya da `ölçülmedi` hücre "serbest" demek DEĞİLDİR.
+
+| Politika | A | B | C | D | Durum |
+|---|---|---|---|---|---|
+| `strict` | serbest (tercih) | gerekçeyle — yeni klasik Dynpro yasak | **yasak** (yalnız released API) | **yasak** | ölçülmedi · zorlama yok (inceleme önemi §1) |
+| `balanced` | serbest (tercih) | serbest | gerekçeyle — yazma kapısındaki halef validator'ı WARNING verir (yalnız tablo okuması, §4); otorite ATC "Usage of APIs" | **yasak** | C hücresinin tablo dışı kısmı ölçülmedi |
+| `classic` | serbest (RAP tercih baskısı yok) | serbest | gerekçeyle | **yasak** | ölçülmedi · zorlama yok |
+
+D sütunu her politikada yasaktır ve politika ekseninden değil **kesin yasak A**'dan gelir; hiçbir politika değeri
+standart obje değişikliğini açmaz.
+
+| Teknik | `strict` | `balanced` | `classic` | Not |
+|---|---|---|---|---|
+| Standart tabloyu doğrudan **okuma** | yasak (C) | gerekçeyle; released halef önerilir (§3) | gerekçeyle | Kesin yasak B okumayı yasaklamaz. Halef `#CHECK` taşıyorsa kontrol fail-open olabilir (§3 madde 4) |
+| Standart veriye **yazma** | yalnız released yollar | tam zincir (`write-api-selection.md`) | tam zincir | Doğrudan SQL her politikada yasak (kesin yasak B) |
+| Klasik rapor / Dynpro / ALV | Dynpro yasak; rapor ölçülmedi | serbest (`%sap-classic-abap`) | serbest | — |
+| RAP / released CDS | tercih | tercih | serbest | — |
+| SEGW OData | ölçülmedi | serbest | serbest | `%sap-odata-backend` |
+
+**Kullanım:** FS/TS'te ve inceleme raporunda Clean Core gerekçesi **seviye harfi + politika** ile yazılır ("C seviyesi
+okuma, `balanced` — released halef yok / `#CHECK` riski"). Bir hücreyi `ölçülmedi`den çıkarmak canlı ölçüm ister (ATC
+"Usage of APIs" ya da aktivasyon). `cleancore_policy`'yi okuyup davranış değiştiren bir doğrulayıcı yoktur (değer
+yalnız proje kurulumunda, oturum özetinde ve template doktorunun tutarlılık uyarısında okunur); bunu değiştirmek araç kararıdır.
+
 ## 3. Karar akışı — standart obje okunacaksa
 1. **Yazma mı?** Bu okuma akışı değil: kesin yasak B — released API (released RAP BO/EML · released BAPI · released OData) →
    BAPI → RFC FM → BDC → kullanıcıdan manuel; hangi yol ve hangi canlı teyitle: `%sap-dev` → `write-api-selection.md` (BE-79).
