@@ -1488,7 +1488,7 @@ kaçışsız; kaçış yapan YEDİ ayrı kopya (`_xml_escape`, domain `_att` lam
   (sessiz yanlış veri doğmaz).
 - **DDL düzeyi (kapsam dışı, açık):** `create_table` `@EndUserText.label : '{description}'` — tek tırnak DDL dizesini bozar; XML
   değil DDL kaçışıdır, bu kalemde değişmedi.
-- **Testler:** `tests/test_xml_kacis.py` (11): yardımcı vektörleri · `sorumlu_coz` · kopyaların kimlikle tek kaynağa bağlı olduğu ·
+- **Testler:** `tests/test_xml_kacis.py` (10): yardımcı vektörleri · `sorumlu_coz` · kopyaların kimlikle tek kaynağa bağlı olduğu ·
   `create_object` 4 tip gövdesi `&<"'` ile ayrıştırılır ve değer aynen geri okunur · sorumlu boş → 0 istek, CSRF yok · `SAPClient`
   hatayı yutmaz · DTEL açıklama + sorumlu + 4 etiket aynen, uzunluk ham metinden · DTEL sorumlu boş → 0 istek · FUGR + FM gövdesi ·
   E070 yerel XML. Mutasyonlar 7/7 test ADIYLA kırıldı, md5 geri yükleme eşit.

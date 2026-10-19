@@ -29,7 +29,7 @@ KAPSAM — bakılmayanlar (bu motor ÖLÇMEZ):
     kaynak yolda V6/V6d (silme ya da "sende değişmiş, duruyor"), hedef yolda V2 olarak görünür.
     Yerel değişiklik KAYBOLMAZ (V6d silmez), ama "taşındı" diye raporlanmaz.
   · `templates/package/**` (K5: kullanıcı doldurur, taban anlamsız) — yalnız bilgi satırı.
-  · git: motor commit atmaz; tek istisna `conn/README.md` V6 silmesini index'e sahnelemesidir (Z164 ⓐ).
+  · git: motor commit atmaz; tek istisna `conn/README.md` V6 silmesini index'e sahnelemesidir (Z164 sahneleme istisnası).
   · testler/bütünlük turu: proje şablonunun test komutu yoktur; ölçüm klon tarafının işidir.
   · değişikliğin ANLAMCA doğru olduğu · aXet'in yeni bağlamı fiilen yüklediği · canlı SAP.
 """
@@ -929,7 +929,7 @@ def komut_geri_al(b: Baglam, args) -> int:
             hedef.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(kaynak, hedef)
             print(f"GERİ ALINDI: {rel}")
-            if rel == CONN_README_ESKI:   # Z164 ⓐ: kapanışın sahnelediği silme index'te kalırsa olağan commit siler
+            if rel == CONN_README_ESKI:   # Z164 sahneleme istisnası: kapanışın sahnelediği silme index'te kalırsa olağan commit siler
                 print(f"  {CONN_README_ESKI} (git): {conn_readme_sahnelemesini_geri_al(p.kok)}")
         elif yoktu.is_file():
             p.sil(rel)
@@ -962,7 +962,7 @@ def _ilk_satir(r: subprocess.CompletedProcess | None) -> str:
 
 
 def conn_readme_silmesini_sahnele(kok: Path) -> tuple[bool, str]:
-    """Z164 ⓐ (kullanıcı kararı 2026-10-19) — DAR İSTİSNA, LİSTE DEĞİL: motorun git index'ine yazdığı TEK yol
+    """Z164 sahneleme istisnası (kullanıcı kararı 2026-10-19: "Motor silmeyi sahnelesin"; IS-LISTESI ⓐ seçeneği DEĞİL) — DAR İSTİSNA, LİSTE DEĞİL: motorun git index'ine yazdığı TEK yol
     `CONN_README_ESKI`'dir ve yalnız V6'da (yerel=taban, motor sildi) + kapanış KAPANDI iken çağrılır. Sebep: `conn/`
     ajan denylist'inde olduğu için silmeyi ajan sahneleyemez; sahnelenmezse Z164 şikâyeti son bir kez tekrar ederdi.
     Commit ATILMAZ. Döner: (git_tarafi_tamam, rapor satırı) — `False` = kullanıcıya iş kaldı ya da ölçülemedi.
@@ -992,7 +992,7 @@ def conn_readme_silmesini_sahnele(kok: Path) -> tuple[bool, str]:
 
 
 def conn_readme_sahnelemesini_geri_al(kok: Path) -> str:
-    """Z164 ⓐ'nın tersi: `geri-al` `CONN_README_ESKI`'yi diske geri yazdığında kapanışın sahnelediği silme index'te
+    """Z164 sahneleme istisnasının tersi: `geri-al` `CONN_README_ESKI`'yi diske geri yazdığında kapanışın sahnelediği silme index'te
     kalırsa sonraki olağan commit dosyayı SESSİZCE siler (ölçüldü). Dosya HEAD'de varsa ve index'te yoksa
     `git reset -q HEAD -- <yol>` ile silme geri alınır. Sessiz geçiş yok: her dal bir satır döner."""
     if not _git_deposu_mu(kok):
@@ -1121,7 +1121,7 @@ def komut_kapanis(b: Baglam, args) -> int:
     # güncellemesi commit'i kullanıcıya düşürüyordu ("conn/README.md hâlâ bekliyor"). Taşıma için ayrı kod YOK: şablonda
     # yol değişince eski yol V6 (yerel=taban → silinir) ya da V6d (yerel değişmiş → dokunulmaz), yeni yol V2 (yazılır)
     # olur — bu bölüm sonucu kullanıcı diliyle söyler. Commit atılmaz; motorun index'e yazdığı TEK durum V6'da
-    # `conn/README.md` silmesinin sahnelenmesidir (Z164 ⓐ, `conn_readme_silmesini_sahnele`).
+    # `conn/README.md` silmesinin sahnelenmesidir (Z164 sahneleme istisnası, `conn_readme_silmesini_sahnele`).
     conn_tasima = conn_readme_tasima_satirlari(b, plan, durum, kapandi=not eksikler)
     if conn_tasima:
         rapor += ["", f"## SAP bağlantı açıklaması — `{CONN_README_ESKI}` → `{CONN_README_YENI}`", *conn_tasima]
