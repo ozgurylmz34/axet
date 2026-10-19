@@ -33,8 +33,8 @@ Hükmü ve raporu SCRIPT verir; sen yalnız yargı gereken yerde kullanıcıya s
 4. **Commit ajanın işi değil.** Proje reposuna commit KULLANICININ onayıyla atılır; `push` asla.
    **`conn/` altında hiçbir dosyayı git'e EKLEMEZSİN** (`git add conn/...` denylist'e takılır;
    `git add -A` / `git add .` ile de sahneleme — yolları tek tek ekle). Bağlantı açıklaması `conn/README.md`'den
-   `docs/sap-baglanti.md`'ye taşındı: motor eski dosya sende değişmemişse siler ve silmeyi index'e kendisi
-   sahneler (commit atmaz); sende değişmişse dokunmaz. Kapanış raporunun "SAP bağlantı açıklaması" bölümünü aynen ver.
+   `docs/sap-baglanti.md`'ye taşındı: motor eski dosya sende değişmemişse siler ve silmeyi kapanış KAPANDI
+   iken index'e kendisi sahneler (commit atmaz; `geri-al` bunu da geri alır); sende değişmişse dokunmaz. Kapanış raporunun "SAP bağlantı açıklaması" bölümünü aynen ver.
 5. Script'in çıktısını **aynen** göster; raporu sen yazma.
 
 ## How to use this skill

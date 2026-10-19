@@ -1588,7 +1588,7 @@ class Z164ConnReadmeTasimaTest(ProjeTemel):
         self.git(self.f.proje, "commit", "-q", "-m", "ilk")
         self.git(self.f.proje, "ls-files", "--error-unmatch", "conn/README.md")
 
-    def _akis(self, yerel_koru: tuple[str, ...] = ()) -> str:
+    def _akis(self, yerel_koru: tuple[str, ...] = (), kapanis_kodu: int = 0) -> str:
         self.f.ilerlet(Z164_V2)
         r = self.planla()
         self.assertEqual(r.returncode, 0, self.cikti(r))
@@ -1598,7 +1598,7 @@ class Z164ConnReadmeTasimaTest(ProjeTemel):
             i = self.f.calistir("isaretle", rel, "--karar", "yerel")
             self.assertEqual(i.returncode, 0, self.cikti(i))
         k = self.f.calistir("kapanis")
-        self.assertEqual(k.returncode, 0, self.cikti(k))
+        self.assertEqual(k.returncode, kapanis_kodu, self.cikti(k))
         return (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
 
     def _sahnelenen(self) -> list[str]:
@@ -1635,6 +1635,53 @@ class Z164ConnReadmeTasimaTest(ProjeTemel):
         self.assertNotIn("sahnelendi", rapor)
         self.assertNotIn("D\tconn/README.md", self._sahnelenen(), "V6d'de index'e dokunulmamalı")
 
+    def test_F2a_KAPANMADI_kapanista_sahneleme_yok(self):
+        """F2(a) (bağımsız inceleme 2026-10-19): kapanış eksikle bittiyse (burada başka bir V6d kararsız) index'e
+        yazılmaz — kullanıcı `geri-al` diyebilir; sahnelenmiş silme o yolda geride kalırdı."""
+        self.f.yerel_degistir("eski-not.md", "# eski not YEREL\n")
+        rapor = self._akis(kapanis_kodu=1)
+        self.assertIn("## KAPANMADI", rapor, "önkoşul: kapanış eksikle bitmeli")
+        self.assertEqual(self.f.vakalar().get("conn/README.md"), "V6")
+        self.assertFalse((self.f.proje / "conn" / "README.md").exists(), "önkoşul: V6 diskten sildi")
+        self.assertIn("sahnelenMEDİ — kapanış KAPANMADI", rapor)
+        self.assertEqual(self._sahnelenen(), [], "KAPANMADI kapanışta index'e hiçbir şey yazılmamalı")
+
+    def test_F2b_sahneleme_sonrasi_geri_al_index_i_temizler(self):
+        """F2(b): kapanış silmeyi sahneledikten sonra `geri-al --hepsi` dosyayı diske geri yazar VE index'teki silmeyi
+        geri alır (ölçülen kusur: disk geri gelmiş, index'te `D conn/README.md` kalmış → sonraki commit siler)."""
+        self._akis()
+        self.assertEqual(self._sahnelenen(), ["D\tconn/README.md"], "önkoşul: silme sahnelenmiş olmalı")
+        g = self.f.calistir("geri-al", "--hepsi")
+        self.assertEqual(g.returncode, 0, self.cikti(g))
+        self.assertTrue((self.f.proje / "conn" / "README.md").is_file(), "geri-al dosyayı diske yazmalı")
+        self.assertIn("sahnelenmiş silme index'ten geri alındı", g.stdout)
+        self.assertEqual(self._sahnelenen(), [], "geri-al sonrası index HEAD ile aynı olmalı")
+        self.git(self.f.proje, "ls-files", "--error-unmatch", "conn/README.md")
+
+
+class Z164IzlenmeyenTest(ProjeTemel):
+    """F1 (bağımsız inceleme 2026-10-19): README projede var ama HİÇ commit'lenmemiş — gerçek durum (`yeni_proje.py` ilk
+    commit'i atmaz, ajan `conn/`u denylist yüzünden ekleyemez). V6 silince git'e yapılacak iş YOKTUR: rapor
+    `git rm --cached` komutu VERMEZ (komut "pathspec did not match" ile düşerdi)."""
+    sap = True
+    ek_v1 = Z164_V1
+
+    def test_hic_commitlenmemis_V6_komut_basmaz(self):
+        r = self.git(self.f.proje, "ls-files", "--error-unmatch", "conn/README.md", kontrol=False)
+        self.assertNotEqual(r.returncode, 0, "önkoşul: README izlenmiyor olmalı")
+        self.f.ilerlet(Z164_V2)
+        self.assertEqual(self.planla().returncode, 0)
+        u = self.f.calistir("uygula", "--otomatik")
+        self.assertEqual(u.returncode, 0, self.cikti(u))
+        k = self.f.calistir("kapanis")
+        self.assertEqual(k.returncode, 0, self.cikti(k))
+        rapor = (self.f.durum_dizini() / "RAPOR.md").read_text(encoding="utf-8")
+        self.assertEqual(self.f.vakalar().get("conn/README.md"), "V6")
+        self.assertIn("TAŞINDI: `conn/README.md`", rapor)
+        self.assertIn("git'te izlenmiyordu (HEAD'de de yok) — yapılacak git işi yok", rapor)
+        self.assertNotIn("git rm --cached", rapor, "koşulamayacak komut verilmemeli")
+        self.assertNotIn("sahnelenemedi", rapor)
+
 
 class Z164YokTest(ProjeTemel):
     """Z164 kontrol grubu: projede `conn/README.md` HİÇ yoktu (bugünkü fixture'ın varsayılanı) → yeni yerde oluşur;
@@ -1656,8 +1703,9 @@ class Z164YokTest(ProjeTemel):
 
 
 class Z164SahnelemeBirimTest(GeciciTest):
-    """`conn_readme_silmesini_sahnele` doğrudan (gerçek git, repo DIŞI geçici kök): git dışı klasör ve izlenmeyen
-    dosya için sessiz geçiş yok, yedek komut verilir; izlenmeyen dosyada `git rm` HİÇ koşmaz (çağrı kaydıyla)."""
+    """`conn_readme_silmesini_sahnele` + `conn_readme_sahnelemesini_geri_al` doğrudan (gerçek git, repo DIŞI geçici
+    kök): her dal bir satır yazar (sessiz geçiş yok); kullanıcıya komut YALNIZ koşulabildiği yerde (izleniyor ama
+    `git rm` düştü) verilir; izlenmeyen dosyada `git rm` HİÇ koşmaz (çağrı kaydıyla)."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -1689,23 +1737,41 @@ class Z164SahnelemeBirimTest(GeciciTest):
         self.git(d, "commit", "-q", "-m", "ilk")
         return d
 
-    def test_git_disi_klasor_yedek_mesaj(self):
+    def test_git_disi_klasor_bilgi_komut_yok(self):
+        """F1: git deposu olmayan projede yapılacak git işi yok ⇒ bilgi satırı, komut YOK, git hiç çağrılmaz."""
         d = self.tmp / "gitsiz"
         d.mkdir()
         ok, satir = self.gp.conn_readme_silmesini_sahnele(d)
-        self.assertFalse(ok)
-        self.assertIn("sahnelenemedi: proje git deposu değil", satir)
-        self.assertIn("`git rm --cached conn/README.md`", satir)
+        self.assertTrue(ok, satir)
+        self.assertIn("proje git deposu değil — yapılacak git işi yok", satir)
+        self.assertNotIn("git rm", satir)
         self.assertEqual(self.cagrilar, [], "git deposu olmayan yerde git hiç çağrılmamalı")
 
-    def test_izlenmeyen_dosyada_git_rm_kosmaz(self):
+    def test_izlenmeyen_dosyada_git_rm_kosmaz_komut_yok(self):
+        """F1: izlenmeyen + HEAD'de yok → `git rm` koşmaz VE kullanıcıya da verilmez (rc=128 pathspec ile düşerdi)."""
         d = self._depo("depo", {"a.txt": "a\n"})
         ok, satir = self.gp.conn_readme_silmesini_sahnele(d)
-        self.assertFalse(ok)
-        self.assertIn("sahnelenemedi: dosya git'te izlenmiyor", satir)
-        self.assertIn("`git rm --cached conn/README.md`", satir)
+        self.assertTrue(ok, satir)
+        self.assertIn("git'te izlenmiyordu (HEAD'de de yok) — yapılacak git işi yok", satir)
+        self.assertNotIn("git rm", satir)
         self.assertNotIn("rm", [a[0] for a in self.cagrilar], "izlenmeyen dosyada `git rm` koşmamalı")
         self.assertEqual(self.git(d, "diff", "--cached", "--name-only").stdout.strip(), "")
+
+    def test_rm_basarisizsa_yedek_komut_verilir(self):
+        """Kontrol grubu: komut YALNIZ gerçekten koşulabildiği yerde kalır — dosya izleniyor ama `git rm` düştü."""
+        d = self._depo("depo4", {"conn/README.md": "x\n"})
+        (d / "conn" / "README.md").unlink()
+        onceki = self.gp._git
+
+        def rm_dusen(kok, *args):
+            if args and args[0] == "rm":
+                return subprocess.CompletedProcess(["git", *args], 1, "", "fatal: index.lock var\n")
+            return onceki(kok, *args)
+        self.gp._git = rm_dusen
+        ok, satir = self.gp.conn_readme_silmesini_sahnele(d)
+        self.assertFalse(ok)
+        self.assertIn("sahnelenemedi: `git rm --cached` başarısız (fatal: index.lock var)", satir)
+        self.assertIn("kendi terminalinde: `git rm --cached conn/README.md`", satir)
 
     def test_izlenen_silinmis_dosya_sahnelenir_baska_hicbir_sey_sahnelenmez(self):
         d = self._depo("depo2", {"conn/README.md": "x\n", "b.txt": "b\n", "c.txt": "c\n"})
@@ -1725,7 +1791,27 @@ class Z164SahnelemeBirimTest(GeciciTest):
         ok, satir = self.gp.conn_readme_silmesini_sahnele(d)
         self.assertFalse(ok)
         self.assertIn("diskte duruyor", satir)
+        self.assertNotIn("git rm", satir)
         self.assertEqual(self.git(d, "diff", "--cached", "--name-only").stdout.strip(), "")
+
+    def test_geri_al_yardimcisi_sahnelenmis_silmeyi_geri_alir(self):
+        d = self._depo("depo5", {"conn/README.md": "x\n", "b.txt": "b\n"})
+        (d / "conn" / "README.md").unlink()
+        self.assertTrue(self.gp.conn_readme_silmesini_sahnele(d)[0])
+        (d / "conn" / "README.md").write_text("x\n", encoding="utf-8")   # geri-al diske yazdı
+        satir = self.gp.conn_readme_sahnelemesini_geri_al(d)
+        self.assertIn("geri alındı", satir)
+        self.assertEqual(self.git(d, "diff", "--cached", "--name-only").stdout.strip(), "")
+        self.assertIn("sahnelenmiş silme yok", self.gp.conn_readme_sahnelemesini_geri_al(d), "ikinci çağrı no-op")
+
+    def test_geri_al_yardimcisi_git_disi_ve_izlenmeyen_bilgi_verir(self):
+        d = self.tmp / "gitsiz2"
+        d.mkdir()
+        self.assertIn("git deposu değil — index işi yok", self.gp.conn_readme_sahnelemesini_geri_al(d))
+        self.assertEqual(self.cagrilar, [])
+        d2 = self._depo("depo6", {"a.txt": "a\n"})
+        self.assertIn("HEAD'de yok", self.gp.conn_readme_sahnelemesini_geri_al(d2))
+        self.assertNotIn("reset", [a[0] for a in self.cagrilar])
 
 
 class Z97SapDisiConnTest(ProjeTemel):
