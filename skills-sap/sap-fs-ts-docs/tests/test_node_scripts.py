@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Node script'leri: sözdizimi, yapılandırma doğrulaması (tarayıcısız), kullanım hataları; isteğe bağlı uçtan uca PDF."""
 import importlib.util
+import json
 import os
 import re
 import shutil
@@ -8,7 +9,7 @@ import subprocess
 import tempfile
 import unittest
 
-from _common import BROWSER_TESTS, TEMPLATES, node_path, run_node, run_py, sample
+from _common import BROWSER_TESTS, SCRIPTS, TEMPLATES, node_path, run_node, run_py, sample
 
 
 @unittest.skipUnless(node_path(), "node bulunamadı")
@@ -178,6 +179,159 @@ class SayfaNoYerImiTest(unittest.TestCase):
         r2 = run_node("html_to_pdf.js", ic, os.path.join(d, "ic.pdf"), "--sayfa-no")
         self.assertEqual(0, r2.returncode, r2.stdout + r2.stderr)
         self.assertIn("etkin alt bosluk 20.0mm (css-@page)", r2.stdout)
+
+    def _dibe_dayanan(self, ad, alt_mm, ek_css=""):
+        """Son satırı gövde alanının DİBİNE dayanan tek sayfalık belge (flex sütun; alan yüksekliği = sayfa alanı)."""
+        yol = os.path.join(self.tmp.name, ad + ".html")
+        with open(yol, "w", encoding="utf-8") as fh:
+            fh.write("<html><head><meta charset='utf-8'><style>" + ek_css + " @page { margin: 10mm 10mm %smm 10mm } "
+                     "html,body{margin:0;height:100%%} body{display:flex;flex-direction:column;justify-content:flex-end}"
+                     "</style></head><body><div style='font-size:12pt;line-height:12pt;text-align:right;"
+                     "padding-right:10mm'>gjpqy SON SATIR gjpqy</div></body></html>" % alt_mm)
+        return yol, os.path.join(self.tmp.name, ad + ".pdf")
+
+    def test_sayfa_no_altbilgi_govdeye_binmez(self):
+        """F1 (bug gate 2026-10-19): Chromium altbilgiyi sayfanın ALT KENARINA göre sabit yere basar; eşik o yerleşimden
+        türer. Eşiğin hemen üstünde gövdenin son satırı altbilgiye BİNMEZ (PDF'ten ölçülür), hemen altında DURDU."""
+        if not importlib.util.find_spec("pymupdf"):
+            self.skipTest("çakışma ölçümü için PyMuPDF gerekli")
+        import pymupdf
+        h, p = self._dibe_dayanan("olcum", 30)
+        r = run_node("html_to_pdf.js", h, p, "--sayfa-no")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        gerek = float(re.search(r"gereken ([\d.]+)mm", r.stdout).group(1))
+        # altbilgi yüksekliği belgenin CSS'inden yalıtık ölçülür: !important'lı div kuralı ölçümü küçültmemeli
+        h2, p2 = self._dibe_dayanan("dusman", 30, "div{line-height:.3 !important;font-size:3pt !important}")
+        r2 = run_node("html_to_pdf.js", h2, p2, "--sayfa-no")
+        self.assertEqual(0, r2.returncode, r2.stdout + r2.stderr)
+        self.assertEqual(re.search(r"altbilgi ([\d.]+)mm", r.stdout).group(1),
+                         re.search(r"altbilgi ([\d.]+)mm", r2.stdout).group(1), "altbilgi ölçümü belge CSS'inden etkilendi")
+        ust = round(gerek + 0.3, 1)
+        h, p = self._dibe_dayanan("ust", ust)
+        r = run_node("html_to_pdf.js", h, p, "--sayfa-no")
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        mm = 72 / 25.4
+        with pymupdf.open(p) as d:
+            self.assertEqual(1, d.page_count)
+            sayfa = d[0]
+            altbilgi, son = sayfa.search_for("Sayfa 1 / 1")[0], sayfa.search_for("SON SATIR")[0]
+            alan_dibi = sayfa.rect.height - ust * mm
+            # kalibrasyon: son satır gerçekten alanın dibinde (yoksa çakışma ölçümü boş geçer)
+            self.assertLess(alan_dibi - son.y1, 3 * mm, "son satır alanın dibine dayanmıyor")
+            self.assertLessEqual(son.y1, altbilgi.y0, "altbilgi gövdenin son satırına biniyor")
+        h, p = self._dibe_dayanan("alt", round(gerek - 0.5, 1))
+        r = run_node("html_to_pdf.js", h, p, "--sayfa-no")
+        self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+        self.assertIn("[DURDU]", r.stderr)
+        # inceleme vakası (6 mm alt boşluk — eski eşik 6.0 mm'de geçiyordu, altbilgi gövdeye biniyordu)
+        h, p = self._dibe_dayanan("alti", 6)
+        self.assertEqual(2, run_node("html_to_pdf.js", h, p, "--sayfa-no").returncode)
+
+
+_SAHTE_PLAYWRIGHT = r"""
+// Sahte playwright-core: tarayıcı açmaz; page.pdf seçeneklerini ve evaluate sayısını JSON'a yazar.
+const fs = require("fs");
+const kayit = process.env.SAHTE_KAYIT;
+const olcum = JSON.parse(process.env.SAHTE_OLCUM || "null");
+const durum = { pdf: null, evaluate: 0 };
+const yaz = () => fs.writeFileSync(kayit, JSON.stringify(durum));
+const page = {
+  goto: async () => {}, emulateMedia: async () => {},
+  evaluate: async (fn, arg) => { durum.evaluate++; yaz();
+    return arg === undefined ? { toplam: 0, uygulanan: 0, geri: 0 } : olcum; },
+  pdf: async (o) => { durum.pdf = o; yaz(); fs.writeFileSync(o.path, "%PDF-1.4 sahte"); },
+};
+module.exports = { chromium: { launch: async () => ({
+  newContext: async () => ({ newPage: async () => page }), close: async () => {} }) } };
+"""
+
+
+@unittest.skipUnless(node_path(), "node bulunamadı")
+class SahteTarayiciTest(unittest.TestCase):
+    """Tarayıcısız (CI'da koşar): GERÇEK html_to_pdf.js, sahte playwright-core ile (PLAYWRIGHT_CORE_PATH). page.pdf
+    seçenek nesnesi ve --sayfa-no eşik/DURDU mantığı ölçülür; yerleşimin gerçekliği tarayıcılı SayfaNoYerImiTest'tedir."""
+
+    # Taban 9fe98c8 html_to_pdf.js'in page.pdf çağrısı (path hariç) — bayraksız seçenek bununla BİREBİR kalmalı.
+    TABAN_SECENEK = {"format": "A4", "printBackground": True,
+                     "margin": {"top": "14mm", "bottom": "16mm", "left": "12mm", "right": "12mm"}}
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        d = self.tmp.name
+        self.pw = os.path.join(d, "sahte-pw")
+        os.makedirs(self.pw)
+        with open(os.path.join(self.pw, "package.json"), "w", encoding="utf-8") as fh:
+            fh.write('{"name": "playwright-core", "main": "index.js"}')
+        with open(os.path.join(self.pw, "index.js"), "w", encoding="utf-8") as fh:
+            fh.write(_SAHTE_PLAYWRIGHT)
+        self.html = os.path.join(d, "a.html")
+        with open(self.html, "w", encoding="utf-8") as fh:
+            fh.write("<html></html>")
+        self.pdf = os.path.join(d, "a.pdf")
+        self.kayit = os.path.join(d, "kayit.json")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _kos(self, *bayrak, olcum=None):
+        if os.path.exists(self.kayit):
+            os.remove(self.kayit)
+        env = dict(os.environ, PLAYWRIGHT_CORE_PATH=self.pw, SAHTE_KAYIT=self.kayit, SAHTE_OLCUM=json.dumps(olcum))
+        r = subprocess.run([node_path(), os.path.join(SCRIPTS, "html_to_pdf.js"), self.html, self.pdf, *bayrak],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, timeout=60)
+        kayit = None
+        if os.path.exists(self.kayit):
+            with open(self.kayit, encoding="utf-8") as fh:
+                kayit = json.load(fh)
+        return r, kayit
+
+    @staticmethod
+    def _olcum(etkin, altbilgi=4.0, okunamayan=()):
+        return {"etkinMm": etkin, "kaynak": "css-@page", "altbilgiMm": altbilgi, "medya": {"sorgu": 0, "viewport": 0},
+                "okunamayan": list(okunamayan), "adopted": 0}
+
+    def test_KONTROL_bayraksiz_page_pdf_secenegi_tabanla_birebir(self):
+        r, kayit = self._kos()
+        self.assertEqual(0, r.returncode, r.stdout + r.stderr)
+        secenek = dict(kayit["pdf"])
+        self.assertEqual(os.path.abspath(self.pdf), os.path.abspath(secenek.pop("path")))
+        self.assertEqual(self.TABAN_SECENEK, secenek)
+        self.assertEqual(0, kayit["evaluate"], "bayraksız yolda belge ölçülmemeli/değiştirilmemeli")
+
+    def test_sayfa_no_esik_alt_ic_bosluk_dahil(self):
+        """Eşik = alt iç boşluk + altbilgi + pay. 'altbilgi + pay' (eski hesap, 6 mm) yetmez: 9 mm'de DURDU."""
+        r, kayit = self._kos("--sayfa-no", olcum=self._olcum(9.0))
+        self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+        self.assertIn("[DURDU]", r.stderr)
+        self.assertIsNone(kayit["pdf"])
+        m = re.search(r"gereken ([\d.]+)mm = alt ic bosluk ([\d.]+)mm \+ altbilgi 4\.0mm \+ pay 2mm", r.stdout)
+        self.assertTrue(m, r.stdout)
+        gerek = float(m.group(1))
+        self.assertAlmostEqual(gerek, float(m.group(2)) + 4.0 + 2, places=1)
+        r2, kayit2 = self._kos("--sayfa-no", olcum=self._olcum(gerek + 0.1))
+        self.assertEqual(0, r2.returncode, r2.stdout + r2.stderr)
+        self.assertTrue(kayit2["pdf"]["displayHeaderFooter"])
+        self.assertIn('Sayfa <span class="pageNumber"></span>', kayit2["pdf"]["footerTemplate"])
+        secenek = {k: v for k, v in kayit2["pdf"].items()
+                   if k not in ("path", "displayHeaderFooter", "headerTemplate", "footerTemplate")}
+        self.assertEqual(self.TABAN_SECENEK, secenek, "--sayfa-no gövde margin'ini değiştirmemeli")
+
+    def test_durdu_onceki_pdf_silinmez_uyari_basar(self):
+        """Ö3: DURDU'da (dar margin · okunamayan stil sayfası) hedefteki eski PDF silinmez, sessiz de kalmaz."""
+        with open(self.pdf, "w", encoding="utf-8") as fh:
+            fh.write("%PDF eski")
+        for olcum in (self._olcum(3.0), self._olcum(30.0, okunamayan=["dis.css"])):
+            r, _ = self._kos("--sayfa-no", olcum=olcum)
+            self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+            self.assertIn("UYARI: hedefte onceki PDF duruyor, bu kosumda yazilmadi: ", r.stderr)
+            with open(self.pdf, encoding="utf-8") as fh:
+                self.assertEqual("%PDF eski", fh.read())
+
+    def test_KONTROL_durdu_onceki_pdf_yoksa_uyari_yok(self):
+        r, _ = self._kos("--sayfa-no", olcum=self._olcum(3.0))
+        self.assertEqual(2, r.returncode, r.stdout + r.stderr)
+        self.assertNotIn("onceki PDF", r.stderr)
+        self.assertFalse(os.path.exists(self.pdf))
 
 
 if __name__ == "__main__":

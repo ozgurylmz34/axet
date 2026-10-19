@@ -144,9 +144,12 @@ Otomatik kurulum yok.
   aynı satırı BLOCKER sayar; eskiden yalnız sayılıyordu ve `tests/`'e düşen bir iç ad 6 CI işini kırmızı yaptı).
   Aynı sınıflar `DISLANANLAR` yollarında (`maintenance/`, `_lab/` …) yalnız UYARI'dır, "iç repo adı" orada yalnız
   sayılır: o yollar yayın kopyasına girmez ve geliştirme deposu iç adları orada bilerek taşır — ⚠ yine de public'tir.
-  Yapısal kimlik izi (bulut tenant host'u, `<SID>K` + 6 rakam transport numarası; Z204) her yolda **UYARI**'dır,
-  çıkış kodunu değiştirmez, satır içeriği basılmaz (yalnız `dosya:satır (tür)`); bugün test fixture'larındaki yer
-  tutucular (`ZXX`/`DEV` SID'li) da uyarı verir. Geçmiş commit'leri ve commit mesajlarını taramaz.
+  Yapısal kimlik izi (bulut tenant host'u, `<SID>K` + 6 rakam transport numarası; Z204) her yolda **UYARI**'dır ve
+  çıkış kodunu değiştirmez; **yalnız bu uyarı listesinde** satır içeriği basılmaz (`dosya:satır (tür)`) — BLOCKER
+  ve öbür UYARI satırları içeriği (140 karaktere kadar) basar. Bugün test fixture'larındaki yer tutucular
+  (`ZXX`/`DEV` SID'li) da uyarı verir. `.json` dosyaları ham satır + çözülmüş dize değerleriyle taranır (yayın
+  taramasında da), `guncelle/yayinlar.json`'dan üretilecek CHANGELOG.md de taranır (yayına giren yol kuralıyla).
+  Geçmiş commit'leri ve commit mesajlarını taramaz.
 
 ## Parti kapanış kuralı
 Bir parti ancak şu üçü sağlanınca "tamam" sayılır: o partinin kurallarında `bekliyor` kalmadı · `sync_check`

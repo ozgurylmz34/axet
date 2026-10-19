@@ -259,8 +259,60 @@ def tara(hedef: Path, yollar: list[str], ek: list[tuple] | None = None) -> list[
     return bulgular + desen_tara(hedef, yollar, desenler)
 
 
+def json_cozulmus_satirlar(y: str, metin: str) -> list[tuple[str, str]]:
+    """`.json` metnindeki her dize değerinin (ve anahtarın) ÇÖZÜLMÜŞ hâli → (`json$.yol`, satır) çiftleri.
+
+    Neden (Z193 bug gate, 2026-10-19, ölçüldü): JSON metninde ters bölü çift (`\\\\`), ASCII dışı harf `\\uXXXX` olarak
+    durur ⇒ `C:\\Users\\<ad>` deseni HAM satırda tutmaz; aynı değer yayında üretilen CHANGELOG.md'ye çözülmüş yazılınca
+    tutar (depo taraması 0, CI kırmızı). Ayrıştırılamayan JSON için boş liste — ham satırlar yine taranır."""
+    if Path(y).suffix.lower() != ".json":
+        return []
+    try:
+        veri = json.loads(metin)
+    except ValueError:
+        return []
+    cikti: list[tuple[str, str]] = []
+
+    def gez(d, yol: str) -> None:
+        if isinstance(d, dict):
+            for k, v in d.items():
+                alt = f"{yol}.{k}"
+                cikti.extend((f"json{alt}(anahtar)", parca) for parca in str(k).split("\n"))
+                gez(v, alt)
+        elif isinstance(d, list):
+            for i, v in enumerate(d):
+                gez(v, f"{yol}[{i}]")
+        elif isinstance(d, str):
+            cikti.extend((f"json{yol}", parca) for parca in d.split("\n"))
+    gez(veri, "$")
+    return cikti
+
+
+def desen_tara_metin(y: str, metin: str, desenler: list[tuple]) -> list[tuple[str, str]]:
+    """Tek metnin satır satır desen araması — yayın ve depo taraması ORTAK (dosya ya da üretilen içerik).
+
+    `.json` metinde ham satırlara EK olarak çözülmüş dize değerleri de taranır (`json_cozulmus_satirlar`); ham
+    satırda AYNI eşleşmeyi (aynı desen + aynı eşleşen metin) vermiş değer ikinci kez raporlanmaz."""
+    bulgular: list[tuple[str, str]] = []
+    ham_eslesme: dict[str, set[str]] = {}
+    # split("\n"), splitlines() DEĞİL: splitlines U+2028/U+0085/\f gibi ayraçlarda da böler, git bölmez ⇒
+    # raporlanan `dosya:satır` git'teki satırdan kayardı (Z133). Tespit etkilenmez, yalnız numara.
+    for no, satir in enumerate(metin.split("\n"), 1):
+        satir = satir.removesuffix("\r")
+        for siddet, ad, desen, bayrak in desenler:
+            eslesen = [m.group(0) for m in re.finditer(desen, satir, bayrak)]
+            if eslesen:
+                ham_eslesme.setdefault(desen, set()).update(eslesen)
+                bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))
+    for konum, satir in json_cozulmus_satirlar(y, metin):
+        for siddet, ad, desen, bayrak in desenler:
+            if any(m.group(0) not in ham_eslesme.get(desen, set()) for m in re.finditer(desen, satir, bayrak)):
+                bulgular.append((siddet, f"{ad}: {y}:{konum}: {satir.strip()[:140]}"))
+    return bulgular
+
+
 def desen_tara(hedef: Path, yollar: list[str], desenler: list[tuple]) -> list[tuple[str, str]]:
-    """Metin dosyalarında satır satır desen araması (yayın ve depo taraması ortak). utf-8 okunamayan = BLOCKER."""
+    """Metin dosyalarında desen araması (yayın ve depo taraması ortak). utf-8 okunamayan = BLOCKER."""
     bulgular: list[tuple[str, str]] = []
     for y in yollar:
         if Path(y).suffix.lower() in IKILI_UZANTI:
@@ -270,13 +322,7 @@ def desen_tara(hedef: Path, yollar: list[str], desenler: list[tuple]) -> list[tu
         except UnicodeDecodeError:
             bulgular.append((BLOCKER, f"OKUNAMADI (utf-8 değil, taranmadı): {y}"))
             continue
-        # split("\n"), splitlines() DEĞİL: splitlines U+2028/U+0085/\f gibi ayraçlarda da böler, git bölmez ⇒
-        # raporlanan `dosya:satır` git'teki satırdan kayardı (Z133). Tespit etkilenmez, yalnız numara.
-        for no, satir in enumerate(metin.split("\n"), 1):
-            satir = satir.removesuffix("\r")
-            for siddet, ad, desen, bayrak in desenler:
-                if re.search(desen, satir, bayrak):
-                    bulgular.append((siddet, f"{ad}: {y}:{no}: {satir.strip()[:140]}"))
+        bulgular += desen_tara_metin(y, metin, desenler)
     return bulgular
 
 
@@ -316,10 +362,12 @@ _YER_TUTUCU_SID = re.compile(r"X{3}", re.I)
 # Bulut tenant host'u: <ilk-etiket>[.<ara etiketler>].<SAP bulut soneki>. `<tenant>.…` yer tutucusu desene uymaz
 # (`>` ilk etiketi keser); `<`/`{` bilerek ön-sınır sınıfında YOK: `<host>` sarmalındaki somut host da uyarı verir.
 TENANT_HOST_DESENI = re.compile(
-    r"(?<![A-Za-z0-9._-])([A-Za-z0-9][A-Za-z0-9-]*)(?:\.[A-Za-z0-9-]+)*?"
+    r"(?<![A-Za-z0-9._-])([A-Za-z0-9][A-Za-z0-9-]*)((?:\.[A-Za-z0-9-]+)*?)"
     r"\.(?:s4hana\.cloud\.sap|s4hana\.ondemand\.com|hana\.ondemand\.com|accounts\.ondemand\.com|accounts\.cloud\.sap)"
     r"(?![A-Za-z0-9-])", re.I)
-_BOLGE_ETIKETI = re.compile(r"[a-z]{2}\d{1,3}(?:-\d{1,3})?", re.I)   # eu10, us10-002 … = yalın bölge alanı
+# Yalın bölge alanı (`eu10.hana.ondemand.com`) = ilk etiket bölge kodu VE ara etiket YOK. Ara etiket varsa bölge
+# biçimli ilk etiket de tenant'tır (`ab12.authentication.eu10.…` sessiz kalıyordu — bug gate 2026-10-19).
+_BOLGE_ETIKETI = re.compile(r"[a-z]{2}\d{1,3}(?:-\d{1,3})?", re.I)   # eu10, us10-002 …
 ORNEK_TENANT = frozenset({"abc123"})
 _YER_TUTUCU_ETIKET = re.compile(r"x{3,}", re.I)
 
@@ -327,11 +375,27 @@ _YER_TUTUCU_ETIKET = re.compile(r"x{3,}", re.I)
 def yapisal_iz_turleri(satir: str) -> list[str]:
     """Satırdaki warn-first yapısal kimlik izlerinin TÜRLERİ (token döndürmez — çağıran basamasın diye)."""
     turler = ["tenant host" for m in TENANT_HOST_DESENI.finditer(satir)
-              if m.group(1).lower() not in ORNEK_TENANT and not _BOLGE_ETIKETI.fullmatch(m.group(1))
+              if m.group(1).lower() not in ORNEK_TENANT
+              and not (_BOLGE_ETIKETI.fullmatch(m.group(1)) and not m.group(2))
               and not _YER_TUTUCU_ETIKET.fullmatch(m.group(1))]
     turler += ["transport no" for m in TRANSPORT_DESENI.finditer(satir)
                if m.group(1).upper() not in ORNEK_SID and not _YER_TUTUCU_SID.fullmatch(m.group(1))]
     return turler
+
+
+def yapisal_iz_metin(y: str, metin: str) -> list[str]:
+    """Tek metin için `konum (tür)` listesi; satır içeriği BASILMAZ. `.json`'da çözülmüş dize değerleri de taranır
+    (ham satırda zaten uyarı veren değer yinelenmez — tür bazında)."""
+    sonuc, ham_tur = [], set()
+    for no, satir in enumerate(metin.split("\n"), 1):
+        for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
+            sonuc.append(f"{y}:{no} ({tur})")
+            ham_tur.add(tur)
+    for konum, satir in json_cozulmus_satirlar(y, metin):
+        for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
+            if tur not in ham_tur:
+                sonuc.append(f"{y}:{konum} ({tur})")
+    return sonuc
 
 
 def yapisal_iz_tara(kok: Path, yollar: list[str]) -> list[str]:
@@ -344,10 +408,24 @@ def yapisal_iz_tara(kok: Path, yollar: list[str]) -> list[str]:
             metin = (kok / y).read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        for no, satir in enumerate(metin.split("\n"), 1):
-            for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
-                sonuc.append(f"{y}:{no} ({tur})")
+        sonuc += yapisal_iz_metin(y, metin)
     return sonuc
+
+
+def uretilen_metinler(kok: Path) -> tuple[list[tuple[str, str]], str]:
+    """Yayın anında ÜRETİLEN ve kullanıcı metni taşıyan dosyalar → ([(sanal yol, metin)], beyan).
+
+    Z193 bug gate (2026-10-19, ölçüldü): `guncelle/yayinlar.json`'daki bir değer yayında CHANGELOG.md'ye ÇÖZÜLMÜŞ
+    yazılır ve CI'ın public düzen taraması onu orada görür; depo taraması dosyayı yalnız JSON olarak görüyordu.
+    Üretim yayındakiyle AYNI fonksiyondur (`changelog_uret(miras_uygula(…))`). Ayrıştırılamayan kaynak = ÖLÇÜLEMEDİ."""
+    veri, hata = yayinlar_oku(kok / YAYINLAR_YOLU)
+    if hata:
+        return [], f"üretilen {CHANGELOG_YOLU}: ÖLÇÜLEMEDİ ({hata})"
+    try:
+        metin = changelog_uret(miras_uygula(veri))
+    except Exception as e:   # şema bozuksa üretim de bozulur — yayın taraması aynı durumda yayını durdurur
+        return [], f"üretilen {CHANGELOG_YOLU}: ÖLÇÜLEMEDİ (üretilemedi: {type(e).__name__})"
+    return [(f"{CHANGELOG_YOLU}(üretilen←{YAYINLAR_YOLU})", metin)], f"üretilen {CHANGELOG_YOLU} (←{YAYINLAR_YOLU})"
 
 
 def depo_yollari(kok: Path = KOK) -> tuple[list[str], list[str]]:
@@ -371,6 +449,10 @@ def depo_tara(kok: Path = KOK) -> int:
     bulgular = desen_tara(kok, yollar, ek_desenler) + desen_tara(kok, yayin_yollari, blocker_desenleri)
     uyarilar = [b for _, b in desen_tara(kok, dislanan_yollar, blocker_desenleri)]
     yapisal = yapisal_iz_tara(kok, yollar)
+    uretilen, uretilen_beyan = uretilen_metinler(kok)
+    for sanal, metin in uretilen:            # üretilen dosya yayına GİRER ⇒ yayın yolu kuralı
+        bulgular += desen_tara_metin(sanal, metin, ek_desenler + blocker_desenleri)
+        yapisal += yapisal_iz_metin(sanal, metin)
     liste_var = (kok / YEREL_LISTE_YOLU).is_file()
     liste_ignore = git_sessiz("check-ignore", "-q", YEREL_LISTE_YOLU, cwd=kok)[0] == 0
     siniflar = ", ".join(d[1] for d in blocker_desenleri)
@@ -385,11 +467,13 @@ def depo_tara(kok: Path = KOK) -> int:
           "(tenant host, transport no; warn-first, her yolda, token basılmaz)")
     print(f"KAPSAM — dışlanan: {YEREL_LISTE_YOLU} (listenin kendisi — yalnız bu TAM yol) · .gitignore'lu yollar · "
           "ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + ")")
+    print(f"KAPSAM — ek yüzey: {uretilen_beyan} · .json dosyalarında ham satır + çözülmüş dize değerleri "
+          "(ayrıştırılamayan JSON yalnız ham)")
     print(olculemedi_satiri(dusen))
     print("KAPSAM — bakılmayan: git geçmişi (eski commit içerikleri ve commit mesajları) · PR başlığı/gövdesi · "
           "yayın taramasının WARNING sınıfları (dışlanan dosyaya atıf: yalnız yayın kopyasında anlamlı) · kişi adları "
           "sözlüğü · SAP host/SID/client serbest metni (yapısal desene uymayan) · yayın taramasında (--yalniz-tara) "
-          "yapısal kimlik izi.")
+          "yapısal kimlik izi · yayında üretilen öbür dosyalar (ci-durum.json, README sürüm damgası).")
     if liste_var and not liste_ignore:
         print(f"UYARI: {YEREL_LISTE_YOLU} .gitignore'da DEĞİL — `git add -A` listeyi (adları) depoya sokar.")
     sayilan: dict[str, dict[str, int]] = {}
