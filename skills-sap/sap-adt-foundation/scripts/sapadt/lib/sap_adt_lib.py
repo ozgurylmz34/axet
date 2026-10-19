@@ -31,6 +31,9 @@ _scripts_dir = Path(__file__).parent
 if str(_scripts_dir) not in sys.path:
     sys.path.insert(0, str(_scripts_dir))
 
+# Z194: XML öznitelik/eleman kaçışı + sorumlu çözümü TEK KAYNAK (utils/xml_kacis.py).
+from utils.xml_kacis import attr_escape, text_escape, sorumlu_coz, SORUMLU_YOK_MESAJI  # noqa: E402
+
 # Import auth providers for BTP cloud support
 try:
     from auth.i_auth_provider import IAuthProvider
@@ -4713,11 +4716,17 @@ class SAPADTClient:
         """
 
 
+        # Z194: sorumlu çözülemezse AĞ ÇAĞRISINDAN ÖNCE dur — eskiden `None` f-string'e
+        # `adtcore:responsible="None"` diye yazılıyordu. Öznitelikler `attr_escape` ile yazılır.
+        sorumlu = sorumlu_coz(responsible, self)
+        if sorumlu is None:
+            raise SAPValidationError(SORUMLU_YOK_MESAJI)
+        responsible_xml = attr_escape(sorumlu)
+        description_xml = attr_escape(description)
+
         # Ensure we have CSRF token
         if not self.csrf_token:
             self.fetch_csrf_token()
-
-        responsible_xml = responsible or self.user
         name_upper = name.upper()
         package_upper = package_name.upper()
 
@@ -4777,22 +4786,22 @@ class SAPADTClient:
                 creation_body = f'''<?xml version="1.0" encoding="UTF-8"?>
 <{xml_element}:abapProgram xmlns:{xml_element}="{namespace}"
                       xmlns:adtcore="http://www.sap.com/adt/core"
-                      adtcore:description="{description}"
+                      adtcore:description="{description_xml}"
                       adtcore:name="{name_upper}"
                       adtcore:responsible="{responsible_xml}"
                       adtcore:masterLanguage="{self.language}">
-  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{package_path}"/>
+  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{attr_escape(package_path)}"/>
 </{xml_element}:abapProgram>'''
             elif obj_type == 'PROG/I':
                 creation_body = f'''<?xml version="1.0" encoding="UTF-8"?>
 <{xml_element}:abapInclude xmlns:{xml_element}="{namespace}"
                       xmlns:adtcore="http://www.sap.com/adt/core"
                       adtcore:type="{obj_type}"
-                      adtcore:description="{description}"
+                      adtcore:description="{description_xml}"
                       adtcore:name="{name_upper}"
                       adtcore:responsible="{responsible_xml}"
                       adtcore:masterLanguage="{self.language}">
-  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{package_path}"/>
+  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{attr_escape(package_path)}"/>
 </{xml_element}:abapInclude>'''
             elif obj_type == 'INTF/OI':
                 # Interface
@@ -4800,11 +4809,11 @@ class SAPADTClient:
 <{xml_element}:abapInterface xmlns:{xml_element}="{namespace}"
                             xmlns:adtcore="http://www.sap.com/adt/core"
                             adtcore:type="{obj_type}"
-                            adtcore:description="{description}"
+                            adtcore:description="{description_xml}"
                             adtcore:name="{name_upper}"
                             adtcore:responsible="{responsible_xml}"
                             adtcore:masterLanguage="{self.language}">
-  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{package_path}"/>
+  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{attr_escape(package_path)}"/>
 </{xml_element}:abapInterface>'''
             else:
                 # Class
@@ -4812,11 +4821,11 @@ class SAPADTClient:
 <{xml_element}:abapClass xmlns:{xml_element}="{namespace}"
                             xmlns:adtcore="http://www.sap.com/adt/core"
                             adtcore:type="{obj_type}"
-                            adtcore:description="{description}"
+                            adtcore:description="{description_xml}"
                             adtcore:name="{name_upper}"
                             adtcore:responsible="{responsible_xml}"
                             adtcore:masterLanguage="{self.language}">
-  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{package_path}"/>
+  <adtcore:packageRef adtcore:name="{package_upper}" adtcore:uri="{attr_escape(package_path)}"/>
 </{xml_element}:abapClass>'''
 
             headers = self._get_headers(media_type, media_type)
@@ -5117,7 +5126,7 @@ class SAPADTClient:
         ns_adtcore = 'http://www.sap.com/adt/core'
 
         xml_parts = ['<?xml version="1.0" encoding="utf-8"?>']
-        xml_parts.append(f'<tm:root adtcore:name="{self.user}" xmlns:tm="{ns_tm}" xmlns:adtcore="{ns_adtcore}">')
+        xml_parts.append(f'<tm:root adtcore:name="{attr_escape(self.user)}" xmlns:tm="{ns_tm}" xmlns:adtcore="{ns_adtcore}">')
         xml_parts.append(f'  <tm:workbench tm:category="Workbench">')
 
         # Group by status
@@ -5146,7 +5155,7 @@ class SAPADTClient:
                     timestamp = ''
 
                 # XML for this request
-                request_xml = f'''        <tm:request tm:number="{trkorr}" tm:parent="" tm:owner="{as4user}" tm:desc="{as4text}" tm:type="K" tm:status="{trstatus}" tm:target="{tarssystem}" tm:target_desc="" tm:cts_project="" tm:cts_project_desc="" tm:lastchanged_timestamp="{timestamp}" tm:uri="/sap/bc/adt/cts/transportrequests/{trkorr}">
+                request_xml = f'''        <tm:request tm:number="{trkorr}" tm:parent="" tm:owner="{attr_escape(as4user)}" tm:desc="{attr_escape(as4text)}" tm:type="K" tm:status="{attr_escape(trstatus)}" tm:target="{attr_escape(tarssystem)}" tm:target_desc="" tm:cts_project="" tm:cts_project_desc="" tm:lastchanged_timestamp="{timestamp}" tm:uri="/sap/bc/adt/cts/transportrequests/{trkorr}">
           <tm:long_desc/>
         </tm:request>'''
 
@@ -5176,13 +5185,8 @@ class SAPADTClient:
 
     @staticmethod
     def _xml_escape(text):
-        """Escape special characters for XML attribute values."""
-        return (str(text)
-                .replace('&', '&amp;')
-                .replace('<', '&lt;')
-                .replace('>', '&gt;')
-                .replace('"', '&quot;')
-                .replace("'", '&apos;'))
+        """XML öznitelik değeri kaçışı — Z194: ortak `utils.xml_kacis.attr_escape`'e indirgendi."""
+        return attr_escape(text)
 
     @staticmethod
     def _extract_transport_from_location(location):
@@ -5565,6 +5569,11 @@ class SAPADTClient:
         Returns:
             dict with success status and object URL
         """
+        # Z194: sorumlu çözülemezse AĞ ÇAĞRISINDAN ÖNCE dur (eskiden `"None"` yazılırdı).
+        sorumlu = sorumlu_coz(None, self)
+        if sorumlu is None:
+            raise SAPValidationError(SORUMLU_YOK_MESAJI)
+
         # Ensure we have CSRF token
         if not self.csrf_token:
             self.fetch_csrf_token()
@@ -5586,12 +5595,12 @@ class SAPADTClient:
         # Doğru kök: blue:wbobj + nested dtel:dataElement; TÜM zorunlu adtcore
         # attribute'lar (responsible/abapLanguageVersion/language) dolu olmalı.
         dtel_xml = f'''<?xml version="1.0" encoding="utf-8"?>
-<blue:wbobj adtcore:responsible="{self.user}"
+<blue:wbobj adtcore:responsible="{attr_escape(sorumlu)}"
             adtcore:masterLanguage="{self.language}"
             adtcore:abapLanguageVersion="standard"
             adtcore:name="{name.upper()}"
             adtcore:type="DTEL/DE"
-            adtcore:description="{description}"
+            adtcore:description="{attr_escape(description)}"
             adtcore:language="{self.language}"
             xmlns:blue="http://www.sap.com/wbobj/dictionary/dtel"
             xmlns:adtcore="http://www.sap.com/adt/core">
@@ -5600,20 +5609,20 @@ class SAPADTClient:
                       adtcore:name="{package_name.upper()}"/>
   <dtel:dataElement xmlns:dtel="http://www.sap.com/adt/dictionary/dataelements">
     <dtel:typeKind>domain</dtel:typeKind>
-    <dtel:typeName>{domain_name.upper()}</dtel:typeName>
+    <dtel:typeName>{text_escape(domain_name.upper())}</dtel:typeName>
     <dtel:dataType>{dom_datatype}</dtel:dataType>
     <dtel:dataTypeLength>{dom_length}</dtel:dataTypeLength>
     <dtel:dataTypeDecimals>{dom_decimals}</dtel:dataTypeDecimals>
-    <dtel:shortFieldLabel>{short_label}</dtel:shortFieldLabel>
+    <dtel:shortFieldLabel>{text_escape(short_label)}</dtel:shortFieldLabel>
     <dtel:shortFieldLength>{len(short_label)}</dtel:shortFieldLength>
     <dtel:shortFieldMaxLength>10</dtel:shortFieldMaxLength>
-    <dtel:mediumFieldLabel>{medium_label}</dtel:mediumFieldLabel>
+    <dtel:mediumFieldLabel>{text_escape(medium_label)}</dtel:mediumFieldLabel>
     <dtel:mediumFieldLength>{len(medium_label)}</dtel:mediumFieldLength>
     <dtel:mediumFieldMaxLength>20</dtel:mediumFieldMaxLength>
-    <dtel:longFieldLabel>{long_label}</dtel:longFieldLabel>
+    <dtel:longFieldLabel>{text_escape(long_label)}</dtel:longFieldLabel>
     <dtel:longFieldLength>{len(long_label)}</dtel:longFieldLength>
     <dtel:longFieldMaxLength>40</dtel:longFieldMaxLength>
-    <dtel:headingFieldLabel>{heading_label}</dtel:headingFieldLabel>
+    <dtel:headingFieldLabel>{text_escape(heading_label)}</dtel:headingFieldLabel>
     <dtel:headingFieldLength>{len(heading_label)}</dtel:headingFieldLength>
     <dtel:headingFieldMaxLength>55</dtel:headingFieldMaxLength>
     <dtel:searchHelp/>
@@ -5830,8 +5839,6 @@ class SAPADTClient:
         # populate_domains.py:169-191,202-203. Formül TEK KAYNAKTA: lib/utils/ddic_domain.py.
         from utils.ddic_domain import expected_output_length
         output_length_str = str(expected_output_length(datatype, length, decimals)).zfill(6)
-        from xml.sax.saxutils import escape as _xml_escape
-        _att = lambda v: _xml_escape(str(v), {'"': '&quot;'})  # noqa: E731
 
         # Build fixed values XML
         # aXet 2026-09-13: değer/metin XML kaçışlı (kaynak populate_domains.py:213-214 `xml_escape`); metin
@@ -5845,9 +5852,9 @@ class SAPADTClient:
                 text = fv.get('text', '')
                 fix_values_xml += f'''<doma:fixValue>
       <doma:position>{str(idx).zfill(4)}</doma:position>
-      <doma:low>{_att(value)}</doma:low>
+      <doma:low>{text_escape(value)}</doma:low>
       <doma:high/>
-      <doma:text>{_att(text)}</doma:text>
+      <doma:text>{text_escape(text)}</doma:text>
     </doma:fixValue>'''
             fix_values_xml += '</doma:fixValues>'
         else:
@@ -5857,7 +5864,7 @@ class SAPADTClient:
         domain_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <doma:domain adtcore:name="{name.upper()}"
              adtcore:type="DOMA/DD"
-             adtcore:description="{_att(description)}"
+             adtcore:description="{attr_escape(description)}"
              adtcore:masterLanguage="{self.language}"
              xmlns:doma="http://www.sap.com/dictionary/domain"
              xmlns:adtcore="http://www.sap.com/adt/core">
@@ -6030,12 +6037,12 @@ class SAPADTClient:
 <blue:blueSource xmlns:blue="http://www.sap.com/wbobj/blue"
                   xmlns:adtcore="http://www.sap.com/adt/core"
                   adtcore:name="{name.upper()}"
-                  adtcore:description="{description}"
+                  adtcore:description="{attr_escape(description)}"
                   adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
                       adtcore:name="{package_name.upper()}"/>
-  <blue:source>{ddl_source}</blue:source>
+  <blue:source>{text_escape(ddl_source)}</blue:source>
 </blue:blueSource>'''
 
         params = {}
@@ -6287,12 +6294,12 @@ define table {name.lower()} {{
                   xmlns:adtcore="http://www.sap.com/adt/core"
                   adtcore:name="{name.upper()}"
                   adtcore:type="TABL/DT"
-                  adtcore:description="{description}"
+                  adtcore:description="{attr_escape(description)}"
                   adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
                       adtcore:name="{package_name.upper()}"/>
-  <blue:source>{ddl_source}</blue:source>
+  <blue:source>{text_escape(ddl_source)}</blue:source>
 </blue:blueSource>'''
 
         headers = self._get_headers(
@@ -6364,7 +6371,7 @@ define table {name.lower()} {{
             raise
         ml = (master_language or self.language or '').upper()
         tablo_url = f'/sap/bc/adt/ddic/tables/{name.lower()}'
-        esc = lambda v: str(v).replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')  # noqa: E731
+        esc = attr_escape  # Z194: ortak öznitelik kaçışı (eski yerel lambda TAB/LF/CR ve `>` kaçışlamıyordu)
         kabuk = f'''<?xml version="1.0" encoding="UTF-8"?>
 <blue:blueSource xmlns:blue="http://www.sap.com/wbobj/blue"
                  xmlns:adtcore="http://www.sap.com/adt/core"
@@ -6667,7 +6674,7 @@ define table {name.lower()} {{
 <ddl:ddlSource xmlns:ddl="http://www.sap.com/adt/ddic/ddlsources"
                  xmlns:adtcore="http://www.sap.com/adt/core"
                  adtcore:name="{name.upper()}"
-                 adtcore:description="{description}"
+                 adtcore:description="{attr_escape(description)}"
                  adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
@@ -6803,7 +6810,7 @@ constants:
 <atypgr:abapTypeGroup xmlns:atypgr="http://www.sap.com/adt/ddic/typegroups"
                        xmlns:adtcore="http://www.sap.com/adt/core"
                        adtcore:name="{name.upper()}"
-                       adtcore:description="{description}"
+                       adtcore:description="{attr_escape(description)}"
                        adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
@@ -6898,7 +6905,7 @@ constants:
 <group:abapFunctionGroup xmlns:group="http://www.sap.com/adt/functions/groups"
                          xmlns:adtcore="http://www.sap.com/adt/core"
                          adtcore:name="{name.upper()}"
-                         adtcore:description="{description}"
+                         adtcore:description="{attr_escape(description)}"
                          adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
@@ -6978,7 +6985,7 @@ constants:
 <fmodule:abapFunctionModule xmlns:fmodule="http://www.sap.com/adt/functions/fmodules"
                             xmlns:adtcore="http://www.sap.com/adt/core"
                             adtcore:name="{name.upper()}"
-                            adtcore:description="{description}"
+                            adtcore:description="{attr_escape(description)}"
                             adtcore:masterLanguage="{self.language}">
 </fmodule:abapFunctionModule>'''
 
@@ -7580,7 +7587,7 @@ constants:
 <ddlx:ddlxSource xmlns:ddlx="http://www.sap.com/adt/ddic/ddlxsources"
                 xmlns:adtcore="http://www.sap.com/adt/core"
                   adtcore:name="{name.upper()}"
-                  adtcore:description="{description}"
+                  adtcore:description="{attr_escape(description)}"
                   adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
@@ -7654,7 +7661,7 @@ constants:
 <acm:dclSource xmlns:acm="http://www.sap.com/adt/acm/dclsources"
                xmlns:adtcore="http://www.sap.com/adt/core"
                adtcore:name="{name.upper()}"
-               adtcore:description="{description}"
+               adtcore:description="{attr_escape(description)}"
                adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"
@@ -7730,7 +7737,6 @@ constants:
         # KANITLI reçete: playbook/adt-rap.md §32.6c + create_rap_service.py.
         # ESKİ (bozuk) payload: bdef:behaviorDefinition + yanlış ns + yanlış
         # endpoint (/behaviordefinitions, /bo eksik) → 404, hiç çalışmıyordu.
-        from xml.sax.saxutils import escape as _xe
         bdef_base = '/sap/bc/adt/bo/behaviordefinitions'
         bdef_ct = 'application/vnd.sap.adt.blues.v1+xml'
         object_url = f'{bdef_base}/{name.lower()}'
@@ -7740,7 +7746,7 @@ constants:
             '<blue:blueSource xmlns:blue="http://www.sap.com/wbobj/blue"\n'
             '                 xmlns:adtcore="http://www.sap.com/adt/core"\n'
             f'                 adtcore:name="{name.upper()}"\n'
-            f'                 adtcore:description="{_xe(description or name)}"\n'
+            f'                 adtcore:description="{attr_escape(description or name)}"\n'
             '                 adtcore:type="BDEF/BDO"\n'
             f'                 adtcore:masterLanguage="{self.language}">\n'
             f'  <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"\n'
@@ -7853,7 +7859,7 @@ constants:
 <bimpl:behaviorImplementation xmlns:bimpl="http://www.sap.com/adt/behaviorImplementations"
                                xmlns:adtcore="http://www.sap.com/adt/core"
                                adtcore:name="{name.upper()}"
-                               adtcore:description="{description or name}"
+                               adtcore:description="{attr_escape(description or name)}"
                                adtcore:masterLanguage="{self.language}">
   <adtcore:packageRef adtcore:uri="/sap/bc/adt/packages/{package_name.lower()}"
                       adtcore:type="DEVC/K"

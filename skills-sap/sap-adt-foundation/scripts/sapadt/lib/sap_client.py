@@ -31,6 +31,7 @@ from typing import Optional, List, Dict, Any
 from sap_adt_lib import (
     SAPADTClient,
     SAPTransportError,
+    SAPValidationError,
     check_sap_config,
     create_conn_file,
     create_conn_template,
@@ -38,6 +39,7 @@ from sap_adt_lib import (
     get_explicit_working_dir,
     validate_sap_config
 )
+from utils.xml_kacis import attr_escape  # Z194: öznitelik kaçışı tek kaynak
 from object_types import (
     get_object_url,
     get_source_url,
@@ -1364,6 +1366,10 @@ class SAPClient:
                 print(f"\n[ERROR] {result.get('message')}")
                 return None
 
+        except SAPValidationError:
+            # Z194: girdi/yapılandırma reddi (ör. sorumlu çözülemedi) istek GİTMEDEN doğar;
+            # yutulursa araç katmanı "yaratıldı mı?" varlık sondası için ağa çıkar.
+            raise
         except Exception as e:
             print(f"\n[ERROR] {str(e)}")
             return None
@@ -2742,7 +2748,7 @@ class SAPClient:
 <ttyp:tableType xmlns:ttyp="http://www.sap.com/dictionary/tabletype"
                 xmlns:adtcore="http://www.sap.com/adt/core"
                 adtcore:name="{name.upper()}"
-                adtcore:description="{description}"
+                adtcore:description="{attr_escape(description)}"
                 adtcore:masterLanguage="{self.adt_client.language}">
     <adtcore:packageRef adtcore:name="{package.upper()}"/>
     <ttyp:rowType>
@@ -2831,7 +2837,7 @@ class SAPClient:
 <mc:messageClass xmlns:mc="http://www.sap.com/adt/MessageClass"
                  xmlns:adtcore="http://www.sap.com/adt/core"
                  adtcore:name="{name.upper()}"
-                 adtcore:description="{description}">
+                 adtcore:description="{attr_escape(description)}">
     <adtcore:packageRef adtcore:name="{package.upper()}"/>
 </mc:messageClass>'''
 
@@ -2920,7 +2926,7 @@ class SAPClient:
 <enqu:lockobject xmlns:enqu="http://www.sap.com/adt/ddic/enqu"
                  xmlns:adtcore="http://www.sap.com/adt/core"
                  adtcore:name="{name.upper()}"
-                 adtcore:description="{description}">
+                 adtcore:description="{attr_escape(description)}">
     <adtcore:packageRef adtcore:name="{package.upper()}"/>
     <enqu:content>
         <enqu:allowRFC>{allow_rfc_str}</enqu:allowRFC>

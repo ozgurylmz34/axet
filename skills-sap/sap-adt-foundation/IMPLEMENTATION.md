@@ -1268,7 +1268,7 @@ tek tek CR, LF, U+2028, U+2029, U+0085 çıkarıldı (her birinde yalnız o kara
 
 DOĞRULANMADI: canlı SAP'nin `--`, çok satırlı etiket ya da U+2028/U+0085 içeren DDL'i nasıl ayrıştırdığı (artık gönderilmiyor) · Windows dışı davranış.
 Açık kalemler (dokunulmadı): artefaktlı yolda `--` kör noktası (`ddic_dtel.py` `_STRING_YORUM`; artefakt metni kullanıcıdan gelir, bu kural onu kapsamaz) ·
-POST XML kaçışı (`sap_adt_lib.create_structure` POST gövdesi) · ADT_* env mirası · sarmalayıcı SKIP.
+~~POST XML kaçışı (`sap_adt_lib.create_structure` POST gövdesi)~~ → KAPANDI §25.1 (Z194) · ADT_* env mirası · sarmalayıcı SKIP.
 
 ### 20.9 K10 — inceleme zincirinin süre bütçesi: ölç → uzat → BLOCKER (2026-09-17)
 
@@ -1465,3 +1465,30 @@ Canlı SAP'de ölçülmedi.
 - **Testler:** `test_std_ext_gate.py` `Z117Tarayici` (5) + `Kapi.test_std_ext_gate_z117` · `test_verdict_reviewer_k1_d1.py` B4b ·
   `test_ddic_textpool.py` R1-R5 · `test_cli_gate.py` test_01 (okuma 26, `adt_textpool_read` satırı) · abapGit
   `test_dml_scanner_runtime_error_is_structured_fail`. Kırmızı-önce ve mutasyonlar: iş listesinde Z117 / Z39 kapanış notu.
+
+## 25. Uyum turu 6 — XML kaçışı tek kaynak, salt-okur sözdizimi, yan etkili istek tekrarı (2026-10-19)
+
+### 25.1 Z194 — XML öznitelik/eleman kaçışı TEK KAYNAK + sorumlu çözülemezse istek yok
+
+Kaynak çekirdek kuralı: `scripts/utils/xml_kacis.py` (2026-10-18). Ölçüm (düzeltme öncesi): `create_object` `responsible_xml = responsible or
+self.user` → kullanıcı boşsa `adtcore:responsible="None"`; açıklama öznitelikleri kaçışsız (`create_object` ×4, DTEL, yapı, tablo, CDS,
+tip grubu, FUGR, FM, DDLX, DCL, BIMP; `sap_client` TTYP/MSAG/ENQU ×3); DTEL'in dört etiketi ve yapı/tablo `blue:source` eleman metni
+kaçışsız; kaçış yapan YEDİ ayrı kopya (`_xml_escape`, domain `_att` lambda'sı, `esc`, `_xe` — `"` kaçırmıyordu —, `tools/shells._att`,
+`tools/msgclass._att`, `utils/ddic_ttyp._att`; `tools/description.py` satır içi).
+
+- **Tek kaynak:** `lib/utils/xml_kacis.py` — `attr_escape` (`& < > "` + TAB/LF/CR; `None` → boş) · `text_escape` (`& < >`) ·
+  `sorumlu_coz(verilen, client)` (verilen > `client.user`; boş → `None`) · `SORUMLU_YOK_MESAJI`. Yedi kopya buna bağlandı
+  (`_xml_escape` adı geri uyum için kalır, gövdesi `attr_escape`).
+- **Sorumlu:** `create_object` ve `create_dataelement` sorumluyu CSRF dahil HİÇBİR ağ çağrısından önce çözer; çözülemezse
+  `SAPValidationError`. `SAPClient.create_object` bu hatayı artık yutmaz (yutsaydı araç katmanı varlık sondası için ağa çıkardı).
+- **Yerel XML de:** `user_transports_from_table` E070 yedeğinin ürettiği XML'de `owner/desc/status/target` + kök kullanıcı kaçışlı
+  (çağıran ayrıştırır; `&` içeren talep metni ayrıştırmayı düşürüyordu).
+- **Kaçışlanmayanlar (bilerek):** ad/paket/dil/URI/transport numarası gibi tanımlayıcılar ve önceden kaçışlanmış ara değişkenler.
+  Tanımlayıcılar ad/namespace kurallarıyla sınırlıdır; kural dışı bir değer iyi biçimsiz gövde üretir ve SAP 400 ile reddeder
+  (sessiz yanlış veri doğmaz).
+- **DDL düzeyi (kapsam dışı, açık):** `create_table` `@EndUserText.label : '{description}'` — tek tırnak DDL dizesini bozar; XML
+  değil DDL kaçışıdır, bu kalemde değişmedi.
+- **Testler:** `tests/test_xml_kacis.py` (11): yardımcı vektörleri · `sorumlu_coz` · kopyaların kimlikle tek kaynağa bağlı olduğu ·
+  `create_object` 4 tip gövdesi `&<"'` ile ayrıştırılır ve değer aynen geri okunur · sorumlu boş → 0 istek, CSRF yok · `SAPClient`
+  hatayı yutmaz · DTEL açıklama + sorumlu + 4 etiket aynen, uzunluk ham metinden · DTEL sorumlu boş → 0 istek · FUGR + FM gövdesi ·
+  E070 yerel XML. Mutasyonlar 7/7 test ADIYLA kırıldı, md5 geri yükleme eşit.
