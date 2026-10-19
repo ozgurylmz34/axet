@@ -2758,7 +2758,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Vardı: sap-code-review abaplint.md + SKILL.md; eklendi: reviewer-brief.md:67 (statik PASS ≠ hazır) + runtime-verification.md §3 (:47 her route)."
+      "note": "Vardı: sap-code-review abaplint.md + SKILL.md; eklendi: reviewer-brief.md §5 'Statik PASS' maddesi (statik PASS ≠ hazır) + runtime-verification.md §3 (:47 her route)."
     },
     {
       "source": "DEV_CORE",

@@ -184,6 +184,6 @@ birden çok kuralı kapsıyor.
 ## İçerik farkları (numara korundu, metin ayrışmış — Z196)
 
 - `UI-BOOT-01` ve `UI-SAVE-04`: konu çekirdekle aynı, aXet metni farklılaşmış; numara korundu.
-- Çekirdek `FE-44` (istemci boyut kapısı) aXet'te henüz yok.
+- Çekirdek `FE-44` (istemci boyut kapısı) tur 6'da eklendi (Z196; kılavuzu `freestyle-odata-v2.md` §7.3).
 - Çekirdekte olup aXet'te olmayan kimliklerin tam listesi: `sync_check.py --source DEV_CORE=…` çıktısındaki
-  KİMLİK UYUMU bölümü (2026-10-19 ilk ölçüm: 143 kimlik / 58 aile; şablon örnek kimlikleri dışlandıktan sonra 137 / 54). Birleşik satırın ikinci çekirdek kimliği (ör. C-CDS-TD-02, C-STR-KAP-02) bu listede yine «eksik» görünür: uyum raporu yalnız tanım hücresini okur, satır içi "çekirdekte ayrıca …" notunu okumaz.
+  KİMLİK UYUMU bölümü (2026-10-19 ilk ölçüm: 143 kimlik / 58 aile; şablon örnek kimlikleri dışlandıktan sonra 137 / 54; tur 6 Z196 aktarımından sonra 102 / 48 — kalanlar bilinçli alınmayan ya da karşılığı kimliksiz satırda duran kimliklerdir). Birleşik satırın ikinci çekirdek kimliği (ör. C-CDS-TD-02, C-STR-KAP-02) bu listede yine «eksik» görünür: uyum raporu yalnız tanım hücresini okur, satır içi "çekirdekte ayrıca …" notunu okumaz.
