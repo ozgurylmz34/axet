@@ -21,6 +21,17 @@
   köşeli parantezde **not numarası** şarttır. ⚠ Pseudo-comment **sessizce yok sayılıyorsa** ilk bakılacak yer:
   denetlenen sistemde ve merkezi ATC sisteminde ilgili SAP notunun uygulanmış olması (dış kaynak SAP Note 2754597 /
   KBA 3624162'yi gösteriyor — numaralar DOĞRULANAMADI, uygulamadan önce SAP'de oku).
+- **Pseudo-comment yerleşimi (canlı ATC ile ölçüldü, ekip dersi 2026-10-15):**
+  1. **Satır başına tek `"#EC`.** `… "#EC CI_NESTED "#EC CI_STDSEQ` yazılırsa yalnız İLKİ tutar, ikinci bulgu sessizce
+     kalır (ABAP belgesi ABENPSEUDO_COMMENT: "Only one pseudo comment can be specified per program line"). Birden çok
+     muafiyet gereken ifadeyi satırlara böl, her satır sonunda tek `"#EC`.
+  2. **Bulgunun ATC'de gösterildiği satıra koy.** Düz `LOOP … WHERE`'de ifadenin herhangi bir satır sonu tutar; ama
+     `VALUE …( FOR x IN t WHERE ( … ) … )` içindeki bulguda `"#EC` FOR satırında tutmadı, WHERE satırına taşınınca tuttu.
+  3. **Ad kaynağı:** bulgunun ATC sonucundaki belge bağlantısı (`rel="documentation"`) "Finding can be suppressed with
+     pseudo comment …" der; aynı belge muafiyet edilemeyen bulguyu da söyler ("Cannot be suppressed …").
+  Denetim sınıfının kaynağından "aynı satırda iki tane olur" diye çıkarım yapılmıştı, canlı ATC çürüttü: hüküm kaynak
+  okuması değil push + ATC ölçümüdür. Push sonrası "0 bulgu" görünce koşunun tam olduğunu (`objectSetIsComplete="true"`) ve
+  aynı koşuda başka bir kontrolün bulgu raporladığını doğrula ("koşmadı" olasılığı).
 - **"Incorrect Pretty Print state"** birim başına yalnız İLK farkı bildirir — satırı düzeltmek kapatmaz; birimi bütün
   olarak biçimle: `%sap-classic-abap` `references/classes.md` §7.1.
 

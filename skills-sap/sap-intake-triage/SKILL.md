@@ -39,6 +39,7 @@ Tam protokol, kriterler ve örnekler: `references/protocol.md` — ilk kullanım
    - Teknik tip (NASIL?): klasik ABAP / RAP / CDS / UI5 / DDIC … (ABAP/RAP/UI5 modül değildir).
    - **Kapsam:** S0 nokta-düzeltme · S1 lokalize · S2 kapsamlı. Gerekçeyi **bir cümleyle yaz**; kullanıcı görür, yanlışsa düzeltir.
 2. **Modül paketini oku (varsa):** `references/modules/<modül>.md` (bugün yalnız `sd.md`). Paket yoksa uydurma; genel protokolle ilerle.
+   Standart tablo/BAPI/genişletme/SPRO bilgisi gerekiyorsa `references/modules/referans/<modül>/` (hipotez; canlıda teyit).
 3. **İsterlerden konu çıkar:** her anlamlı alan/gereksinim bir domain konusu doğurabilir ("kullanılabilir stok" → ATP; "kredi durumu" → kredi yönetimi).
 4. **3 eksende araştır** (kapsamla orantılı derinlik):
    - (a) **Domain:** nasıl çalışır — resmi kaynak; sözdizimi/annotation tahmin edilmez.
