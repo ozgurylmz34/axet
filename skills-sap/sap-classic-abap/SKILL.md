@@ -133,7 +133,7 @@ description: >
   Tip playbook'u eksik görünüyorsa "yapılamaz" deme: paketteki çalışan `.abap` kaynaklarını ve benzer Z objeyi oku.
 - Klasik program **tek gövde yazılmaz**; ALV kurulumu **programda satır içi**, ortak ALV sınıfı yaratılmaz.
 - Yeniden kullanılacak araç objesine (FM, grup, sınıf) ilk kullanan programın adı verilmez; ad aracın amacını yansıtır — yaratmadan önce sor.
-- `adt_classrun` ve `adt_syntax_check` **yazma sınıfıdır**. Diyalog bağlamı isteyen FM'ler classrun ile koşmaz.
+- `adt_classrun` **yazma sınıfıdır**; `adt_syntax_check` salt-okur checkrun'dır (okuma sınıfı). Diyalog bağlamı isteyen FM'ler classrun ile koşmaz.
 - Standart programlar (ör. CUA donörü) yalnız **okunur**; standart program/status/ekran/exit yazılmaz (yasak A).
   Ekran/status üreteci hedef adı Z/Y olmalı; korumayı var olmayan bir adla dene.
 - ATC: proje `AGENTS.md` politikası geçerli; yoksa öncelik 1 bulgular zorunlu düzeltilir, öncelik 2/3 kullanıcıya gösterilip

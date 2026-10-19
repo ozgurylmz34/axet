@@ -73,7 +73,7 @@ Okuma kuralları:
 - "Push'ta zincir yok" satırlarında yazma kapısı hiçbir gate koşmaz; inceleme `run_review`'u elle koşar.
 - `abaplint_run.py` çıkış 0 yalnız her dosya ölçülüp temizse; 3 = ölçülemedi (araç yok, çıktı doğrulanamadı), 4 = kısmi
   ölçüm. abaplint derleme kanıtı değildir.
-- `adt_syntax_check` bir inceleme aracı değildir: yazma sınıfıdır (bekleyen sürümü aktive eder).
+- `adt_syntax_check` salt-okur checkrun'dır (okuma sınıfı; bekleyen sürümü aktive etmez): `valid: null` = ölçülemedi, temiz DEĞİL; ATC/ABAP Unit yerine geçmez.
 - `quality_scorecard.py` **bir kapı DEĞİL, rapordur**: koşan kapıları append-only bir deftere yazar ve tek bir karne
   üretir (`not-run` ayrı sütun · artefaktsız `pass` geçersiz · 0 test ya da dar kapsam `warn` · kaydedilmemiş kapı
   varken hüküm `KISMI`). Hiçbir akışa bloklayıcı olarak bağlanmaz; çıkış kodunu **insan** okur.
