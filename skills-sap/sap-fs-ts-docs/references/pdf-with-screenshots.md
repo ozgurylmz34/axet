@@ -168,6 +168,9 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/verify_doc_html.py docs/KD-S
 | Görsel metin olarak çıkıyor | `![](…)` kod bloğu içinde | bloğun tamamını değiştir (`--map`) |
 | İkinci dokümanın diyagramı birincinin yerine geçti | aynı klasörde aynı PNG adı | kimlik ön eki (varsayılan) ya da `--prefix` |
 | Diyagram çıktıda kod olarak görünüyor | `mmdc` yok ya da render hatası | kur/düzelt; `verify_doc_html.py` raw-mermaid |
+| Mermaid kaynağının bir kısmı HTML/PDF'te düz metin olarak görünüyor; kaynak `<!-- … -->` içinde "gizlenmişti" | mermaid oku `A --> B` içindeki ilk `-->` HTML yorumunu orada kapatır; hata yok | mermaid kaynağını HTML yorumunda saklama — render edilen çitte bırak ya da ayrı `.mmd` dosyasında tut. `verify_doc_html.py` ham mermaid aramasını yalnız `<pre>` bloklarında ve `language-mermaid` sınıfında yapar, yorumdan taşan metni **yakalamaz**: üretilen HTML'in görünür metninde `-->` ve `graph TD` / `flowchart` ara (ekip dersi, 2026-10-10) |
+| Kaynak değişmediği hâlde her üretimde diyagram PNG'leri değişmiş görünüyor (`git status` → `M …png`, yardım kopyası da) | üretici her koşuda mermaid'i yeniden çizer; PNG baytları kenar yumuşatma gürültüsüyle farklı çıkar | "dosya değişti" ≠ "içerik değişti": Markdown'daki mermaid bloğu değişmediyse o PNG'leri commit'e alma, yalnız o dosyaları adıyla geri al (`git restore -- <png yolu>`); dizin ya da joker vermeden (ekip dersi, 2026-10-10, dört doküman turu) |
+| PDF metninde ş/ğ/ı/ç `�` görünüyor (Windows, `pdftotext`) | `pdftotext` kodlama bayrağı verilmedi; PDF sağlam | metin sondası daima `pdftotext -enc UTF-8 <pdf> -`; bayraksız ölçüm sahte "bozuk karakter" bulgusu üretir (ekip dersi, 2026-10-10) |
 | Arayüz İngilizce | dil parametresi yok | `?sap-ui-language=tr` |
 | Konsolda `UnicodeEncodeError` | Windows konsol kod sayfası | script'ler UTF-8'e ayarlar; çıktıyı dosyaya yaz |
 | Mock boş ya da yanlış servis | `ui5-mock.yaml` eski | `urlPath` + `metadata.xml` güncelle |

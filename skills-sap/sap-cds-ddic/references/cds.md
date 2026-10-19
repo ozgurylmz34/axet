@@ -187,6 +187,10 @@ kabuğu** açar, kaynak gövdeye konmaz (§1.3 tuzağıyla uyumlu) → kaynak ay
 @EndUserText.label: '<master_language metni, spesifikasyondan>'
 define view zsd001_ddl_order_destination as select from ...
 ```
+- `@EndUserText.label` **en çok 40 karakter**: aşılırsa aktivasyon hata değil **W** verir (`Annotation value '…' length (N)
+  too long. Type must be 'String(40)'`) ve değer ön yüzde kesilebilir. Obje açıklaması (`adtcore:description`, 60) tam
+  yazıldığı için "açıklama doğru" readback'i bu uyarıyı GÖSTERMEZ — etiket listesini ≤40'a göre hazırla, aktivasyon
+  yanıtındaki uyarıları oku (ekip dersi, 2026-09-30: "≤60" diye geçen 12 objede 5 uyarı; alan etiketleri de dahil).
 - `@AbapCatalog.preserveKey` S/4'te deprecated (uyarı: `Annotation 'AbapCatalog.preserveKey' is deprecated`) → yeni view'da kullanma, taşırken kaldır.
 - Diğer info seviyesindeki aktivasyon uyarıları normaldir.
 - En az bir `key` alan; `sum()`/`count()` varsa `group by`.

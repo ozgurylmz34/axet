@@ -38,6 +38,7 @@
 | "araç bozuk" hissi · aynı hata tekrar tekrar | G-1 … G-6 |
 | "obje ne zaman değişti" — `E070-AS4DATE` her objede aynı tarih · sürüm geçmişi ucu `406` | K-27 |
 | classrun `500`/`502`/`504` · zaman aşımı · `islenmis_olabilir: true` | K-28 |
+| standart DTEL/domain metni `adt_get`'te İngilizce geldi (TR ekrana alıntı) | K-29 |
 
 ---
 
@@ -345,6 +346,17 @@
   İlk istek SAP'de işlendiyse sonrakiler 404 / "zaten var" alır ve araç yanlış "silinemedi" / "yaratılamadı" raporlar (çift
   obje oluşmaz). AÇIK — canlı ölçüm bekliyor (`IMPLEMENTATION.md` §25.4). Bu madde (classrun) onları kapsamaz.
 
+## K-29 · `adt_get` standart DTEL'de ana dil metnini verir — TR alıntısı DD04T'den
+- **Belirti:** standart bir veri elemanının etiketi `adt_get` ile "alıntılandı", TR ekrana/belgeye İngilizce etiket girdi.
+- **Kök sebep:** yanıt `language="TR"` taşısa da ana dili EN olan obje için `adt_get` **ana dil** metnini döndürdü
+  (ekip dersi, 2026-10-09: DD04T'de dil `T` satırı Türkçe etiketi taşıyordu; İngilizce metin yalnız E/D satırlarındaydı).
+  "Alıntı" damgası metni doğru kılmaz; alıntı kuralı onay turunu da atlattığı için yanlış dil kimseye görünmez.
+- **ÇALIŞAN YÖNTEM:** standart DTEL metnini TR alıntılarken
+  `cli adt_sql_query '{"query":"SELECT scrtext_s, scrtext_m, scrtext_l, reptext FROM dd04t WHERE rollname = '\''<DTEL>'\'' AND ddlanguage = '\''T'\'' AND as4local = '\''A'\''"}'`
+  (domain sabit metni için `dd07t`, `ddlanguage = 'T'`). Satır yoksa "TR metni yok" yaz; İngilizceyi çevirip alıntı diye sunma.
+- **Sınır:** Z objelerde (ana dil TR) `adt_get` doğru dili verir — fark ana dildedir. Ölçüm tek sistemde; aXet aracıyla
+  ayrıca ölçülmedi.
+
 ---
 
 ## Genel teşhis dersleri (tüm maddelerin ortak çekirdeği)
@@ -406,3 +418,5 @@ CDS-DCL-01/02) · #22, #23 klasik Dynpro üretimi → `%sap-classic-abap` `refer
 
 **2026-09-25 eşitlemesinde eklenen (ekip dersi):** K-23'e include `prog` tipiyle 404 sahte negatifi; K-27 (`E070-AS4DATE` ≠ obje değişim tarihi, sürüm geçmişi ucu ve
 `Accept` başlığı). Kaynaktaki transport/obje adları ve ham GET kod deseni alınmadı.
+
+**2026-10-19 eşitlemesinde eklenen (ekip dersi):** K-29 (`adt_get` standart DTEL'de ana dil metni; TR alıntısı DD04T'den).
