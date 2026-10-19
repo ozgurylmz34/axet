@@ -50,7 +50,8 @@ class BuildTest(unittest.TestCase):
         return p
 
     def test_templates_build_without_dead_links(self):
-        for tpl in ("FS-template.md", "TS-template.md", "KD-template.md"):
+        for tpl in ("FS-template.md", "TS-template.md", "KD-template.md", "FS-summary-template.md",
+                    "integration-sheet-template.md"):
             html = os.path.join(self.dir, tpl.replace("-template.md", "-XX-001_Sablon.html"))
             with mock.patch.object(doc_tools, "resolve_cli", return_value=None):
                 call_main(build_doc_pdf.main, [os.path.join(TEMPLATES, tpl), html])

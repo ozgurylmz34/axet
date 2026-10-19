@@ -7,9 +7,10 @@ description: >
   functional spec (FS). Classifies scope (S0 point-fix, S1 localized, S2 comprehensive),
   identifies module and work type, researches domain, live system and memory, and evaluates
   with evidence. Triggers: "bu ekrana kolon koyalım", "rapora şu alanı getir", "yeni rapor
-  lazım", "şu alan yanlış geliyor", "revize edelim", "FS geldi". Do NOT use for pure research,
-  documentation-only work, changes to this template's own tooling, or a request already
-  triaged in this session (re-classify only if the scope grew).
+  lazım", "şu alan yanlış geliyor", "revize edelim", "FS geldi". Do NOT use for a defect whose
+  cause is not yet known (dump, "neden boş geliyor bilmiyoruz" — use diagnosing-bugs first),
+  pure research, documentation-only work, changes to this template's own tooling, or a request
+  already triaged in this session (re-classify only if the scope grew).
 ---
 
 # SAP intake triage — geliştirme talebi alım protokolü
@@ -26,8 +27,9 @@ description: >
   (anlamca tanı: "müşteri adını da görelim" bir kolon talebidir).
 - İsterler prompt, Excel ya da fonksiyonel spesifikasyon (FS) olarak geldiğinde.
 - SAP'ye yazma yapacak bir işe başlamadan önce (yazma CLI'si kapsam beyanı ister).
-- **Kullanma:** yalnız "bu kod ne yapıyor / nerede kullanılıyor" soruları (→ `%explore`, `%sap-adt-foundation`),
-  yalnız doküman işi, bu template'in kendi araçları, bu oturumda zaten sınıflanmış talep.
+- **Kullanma:** sebebi henüz bilinmeyen hata (dump, "neden boş geliyor bilmiyoruz" → önce `%diagnosing-bugs`; teşhis
+  bitip düzeltme kapsamı belli olunca buraya dönülür), yalnız "bu kod ne yapıyor / nerede kullanılıyor" soruları
+  (→ `%explore`, `%sap-adt-foundation`), yalnız doküman işi, bu template'in kendi araçları, bu oturumda zaten sınıflanmış talep.
 
 ## How to use this skill
 Tam protokol, kriterler ve örnekler: `references/protocol.md` — ilk kullanımda oku.
