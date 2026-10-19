@@ -138,9 +138,15 @@ Otomatik kurulum yok.
   yüzden yerel yayın taraması asıl kapıdır. Geçmiş commit'lerdeki adlar bu değişiklikle silinmez.
 - **Geliştirme deposu taraması (Z145, 2026-09-26):** yayın taraması `maintenance/`'ı görmez, ama geliştirme deposu da
   public'tir. PR açmadan / push etmeden önce: `python maintenance/yayin_hazirla.py --depo-tara` — depoyu yerinde tarar
-  (izlenen + izlenmeyen, `.gitignore`'lular hariç, `maintenance/` dahil). Çıkış 1 = yerel listeden isabet (ya da liste
-  yok: ÖLÇÜLEMEDİ); öbür sızıntı sınıfları yalnız UYARI'dır, "iç repo adı" yalnız sayılır. Geçmiş commit'leri ve commit
-  mesajlarını taramaz.
+  (izlenen + izlenmeyen, `.gitignore`'lular hariç, `maintenance/` dahil). Çıkış 1 = yerel listeden isabet (her yolda;
+  liste yoksa da çıkış 1: ÖLÇÜLEMEDİ) ya da yayın sızıntı sınıflarından (iç repo adı, iç kullanıcı/dizin, oturum
+  bağlantısı, gerçek alan adı örneği) biri **yayına giren** yolda (Z193, 2026-10-19 — CI'ın public düzen taraması
+  aynı satırı BLOCKER sayar; eskiden yalnız sayılıyordu ve `tests/`'e düşen bir iç ad 6 CI işini kırmızı yaptı).
+  Aynı sınıflar `DISLANANLAR` yollarında (`maintenance/`, `_lab/` …) yalnız UYARI'dır, "iç repo adı" orada yalnız
+  sayılır: o yollar yayın kopyasına girmez ve geliştirme deposu iç adları orada bilerek taşır — ⚠ yine de public'tir.
+  Yapısal kimlik izi (bulut tenant host'u, `<SID>K` + 6 rakam transport numarası; Z204) her yolda **UYARI**'dır,
+  çıkış kodunu değiştirmez, satır içeriği basılmaz (yalnız `dosya:satır (tür)`); bugün test fixture'larındaki yer
+  tutucular (`ZXX`/`DEV` SID'li) da uyarı verir. Geçmiş commit'leri ve commit mesajlarını taramaz.
 
 ## Parti kapanış kuralı
 Bir parti ancak şu üçü sağlanınca "tamam" sayılır: o partinin kurallarında `bekliyor` kalmadı · `sync_check`

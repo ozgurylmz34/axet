@@ -281,18 +281,73 @@ def desen_tara(hedef: Path, yollar: list[str], desenler: list[tuple]) -> list[tu
 
 
 # =====================================================================================================
-# DEPO TARAMASI — geliştirme deposunun KENDİSİ (Z145ⓑ, 2026-09-26)
+# DEPO TARAMASI — geliştirme deposunun KENDİSİ (Z145ⓑ, 2026-09-26; Z193 + Z204, 2026-10-19)
 # =====================================================================================================
 # Geliştirme deposu da public'tir, ama yayın taraması yalnız YAYIN kopyasını görür (maintenance/ dışlanır). Ölçülen
 # vaka: yerel listedeki bir müşteri adı maintenance/IS-LISTESI.md üzerinden birçok PR'la main'e girdi. Bu kip depoyu
 # YERİNDE (kopya yok) tarar: izlenen + izlenmeyen dosyalar, `.gitignore`'lular hariç, maintenance/ DAHİL.
-#   BLOCKER (çıkış 1) = yerel liste (müşteri/kurum). Liste yoksa kip fail-closed (çıkış 1, ÖLÇÜLEMEDİ).
-#   UYARI (çıkışı etkilemez) = DESENLER'in BLOCKER sınıfları; "iç repo adı" yalnız SAYILIR: geliştirme deposu
-#   maintenance/ altında iç repo adlarını bilerek taşır (ölçüldü 2026-09-26: 768 satır, 589'u sync-rules.json) —
-#   bu kipte onları BLOCKER yapmak kipi kalıcı kırmızıya çevirir, yani kör eder.
+#   BLOCKER (çıkış 1) = ① yerel liste (müşteri/kurum) — her yolda ② DESENLER'in BLOCKER sınıfları — YALNIZ yayına
+#     GİREN yolda (`dislanan_mi` False). Liste yoksa kip fail-closed (çıkış 1, ÖLÇÜLEMEDİ).
+#   UYARI (çıkışı etkilemez) = DESENLER'in BLOCKER sınıfları DIŞLANAN yolda ("iç repo adı" orada yalnız SAYILIR) ·
+#     yapısal kimlik izi (bulut tenant host'u, transport numarası; warn-first, aşağıda).
+# ② Z193 (2026-10-04, ölçüldü): eski kip "iç repo adı"nı HER yolda yalnız sayıyordu; `tests/`'e düşen bir iç ad
+#   BULGU 0 ile geçti, CI'ın public düzen taraması aynı satırı BLOCKER saydı (6 iş kırmızı). Muafiyetin gerekçesi
+#   yalnız DIŞLANAN yollar için geçerlidir: o yollar yayın kopyasına girmez (DISLANANLAR) ve geliştirme deposu
+#   maintenance/ altında iç adları BİLEREK taşır (ölçüldü 2026-10-19: 786 satır / 13 dosya, hepsi maintenance/).
+#   Muafiyet bu yüzden `dislanan_mi` ile tanımlanır — yayın taraması ve CI'ın public düzeni ile AYNI küme, tek kaynak.
+#   ⚠ Dışlanan yol "public değil" demek DEĞİLDİR: geliştirme deposu public'tir; muafiyet yalnız yayın kapısının
+#   o satırı görmeyeceğini söyler.
 # Muafiyet YALNIZ listenin kendi TAM yoludur (`YEREL_LISTE_YOLU`; desenlerin kaynağı kendini yakalar). Başka klasördeki
 # aynı adlı dosya taranır. `.gitignore` dışlaması git'in kendi kararıdır (`--exclude-standard`).
 DEPO_YALNIZ_SAYI = ("iç repo adı",)
+
+# ---- Yapısal kimlik izi — WARN-FIRST (Z204, 2026-10-19). Kaynak çekirdekteki warn-first desenlerden uyarlandı. ----
+# Bulut tenant host'u ve transport numarası İSİM değil BİÇİM taşır ⇒ yerel ad listesi onları yakalayamaz.
+# ⚠ Çıkış kodunu DEĞİŞTİRMEZ: yanlış pozitif ölçüldü (2026-10-19, bu depo: transport biçimli 16 yer tutucu
+# isabeti — skills-sap/*/tests 15 · tests/ 1; tenant biçimli 2 yer tutucu host). Bloklayıcıya terfi ayrı karardır.
+# ⚠ TOKEN BASILMAZ: uyarı satırı yalnız `dosya:satır (tür)` söyler — uyarı bloklamadığı için iz her koşumda yeniden
+# yazılırdı (çıktı CI günlüğüne düşebilir).
+# SAP transport numarası: <SID>K<6 rakam>; SID 3 karakter, ilki harf.
+TRANSPORT_DESENI = re.compile(r"(?<![A-Za-z0-9])([A-Z][A-Z0-9]{2})K(\d{6})(?![A-Za-z0-9])", re.I)
+# Yer tutucu olduğu ÖLÇÜLEN SID'ler. Buraya SID eklemek o SID için uyarıyı KALICI susturur ⇒ gerçek bir sisteme
+# ait olmadığı ölçülmeden eklenmez. `XXX` biçimi ayrıca yer tutucudur.
+ORNEK_SID = frozenset({"SAH", "AB1"})
+_YER_TUTUCU_SID = re.compile(r"X{3}", re.I)
+# Bulut tenant host'u: <ilk-etiket>[.<ara etiketler>].<SAP bulut soneki>. `<tenant>.…` yer tutucusu desene uymaz
+# (`>` ilk etiketi keser); `<`/`{` bilerek ön-sınır sınıfında YOK: `<host>` sarmalındaki somut host da uyarı verir.
+TENANT_HOST_DESENI = re.compile(
+    r"(?<![A-Za-z0-9._-])([A-Za-z0-9][A-Za-z0-9-]*)(?:\.[A-Za-z0-9-]+)*?"
+    r"\.(?:s4hana\.cloud\.sap|s4hana\.ondemand\.com|hana\.ondemand\.com|accounts\.ondemand\.com|accounts\.cloud\.sap)"
+    r"(?![A-Za-z0-9-])", re.I)
+_BOLGE_ETIKETI = re.compile(r"[a-z]{2}\d{1,3}(?:-\d{1,3})?", re.I)   # eu10, us10-002 … = yalın bölge alanı
+ORNEK_TENANT = frozenset({"abc123"})
+_YER_TUTUCU_ETIKET = re.compile(r"x{3,}", re.I)
+
+
+def yapisal_iz_turleri(satir: str) -> list[str]:
+    """Satırdaki warn-first yapısal kimlik izlerinin TÜRLERİ (token döndürmez — çağıran basamasın diye)."""
+    turler = ["tenant host" for m in TENANT_HOST_DESENI.finditer(satir)
+              if m.group(1).lower() not in ORNEK_TENANT and not _BOLGE_ETIKETI.fullmatch(m.group(1))
+              and not _YER_TUTUCU_ETIKET.fullmatch(m.group(1))]
+    turler += ["transport no" for m in TRANSPORT_DESENI.finditer(satir)
+               if m.group(1).upper() not in ORNEK_SID and not _YER_TUTUCU_SID.fullmatch(m.group(1))]
+    return turler
+
+
+def yapisal_iz_tara(kok: Path, yollar: list[str]) -> list[str]:
+    """`dosya:satır (tür)` listesi; satır içeriği BASILMAZ. utf-8 okunamayan dosya `desen_tara`'da BLOCKER olur."""
+    sonuc = []
+    for y in yollar:
+        if Path(y).suffix.lower() in IKILI_UZANTI:
+            continue
+        try:
+            metin = (kok / y).read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for no, satir in enumerate(metin.split("\n"), 1):
+            for tur in dict.fromkeys(yapisal_iz_turleri(satir)):
+                sonuc.append(f"{y}:{no} ({tur})")
+    return sonuc
 
 
 def depo_yollari(kok: Path = KOK) -> tuple[list[str], list[str]]:
@@ -310,23 +365,31 @@ def depo_tara(kok: Path = KOK) -> int:
               "(biçim: maintenance/UPDATE-PROCEDURE.md).", file=sys.stderr)
         return 1
     yollar, dusen = depo_yollari(kok)
-    bulgular = desen_tara(kok, yollar, ek_desenler)
-    uyari_desenleri = [d for d in DESENLER if d[0] == BLOCKER]
-    uyarilar = [b for _, b in desen_tara(kok, yollar, uyari_desenleri)]
+    yayin_yollari = [y for y in yollar if not dislanan_mi(y)]
+    dislanan_yollar = [y for y in yollar if dislanan_mi(y)]
+    blocker_desenleri = [d for d in DESENLER if d[0] == BLOCKER]
+    bulgular = desen_tara(kok, yollar, ek_desenler) + desen_tara(kok, yayin_yollari, blocker_desenleri)
+    uyarilar = [b for _, b in desen_tara(kok, dislanan_yollar, blocker_desenleri)]
+    yapisal = yapisal_iz_tara(kok, yollar)
     liste_var = (kok / YEREL_LISTE_YOLU).is_file()
     liste_ignore = git_sessiz("check-ignore", "-q", YEREL_LISTE_YOLU, cwd=kok)[0] == 0
+    siniflar = ", ".join(d[1] for d in blocker_desenleri)
 
-    print(f"Taranan dosya: {len(yollar)} (izlenen + izlenmeyen; .gitignore'lular hariç; maintenance/ DAHİL)")
-    print(f"KAPSAM — BLOCKER (çıkış 1): {YEREL_LISTE_ADI}: {len(ek_desenler)} desen ({ek_kaynak}; içerik basılmaz) · "
+    print(f"Taranan dosya: {len(yollar)} (izlenen + izlenmeyen; .gitignore'lular hariç; maintenance/ DAHİL) — "
+          f"yayına giren {len(yayin_yollari)} · dışlanan {len(dislanan_yollar)} (DISLANANLAR: {', '.join(DISLANANLAR)})")
+    print(f"KAPSAM — BLOCKER (çıkış 1): {YEREL_LISTE_ADI}: {len(ek_desenler)} desen ({ek_kaynak}; içerik basılmaz; "
+          f"her yolda) · {siniflar} — yalnız yayına GİREN yolda (CI'ın public düzen taraması da bunları BLOCKER sayar) · "
           "utf-8 okunamayan metin dosyası (taranmadı = temiz sayılmaz)")
-    print("KAPSAM — UYARI (çıkışı etkilemez): " + ", ".join(d[1] for d in uyari_desenleri)
-          + f" — {', '.join(DEPO_YALNIZ_SAYI)} yalnız SAYILIR (geliştirme deposu maintenance/ altında bunları bilerek taşır)")
+    print(f"KAPSAM — UYARI (çıkışı etkilemez): {siniflar} — DIŞLANAN yolda ({', '.join(DEPO_YALNIZ_SAYI)} orada "
+          "yalnız SAYILIR: geliştirme deposu maintenance/ altında bunları bilerek taşır) · yapısal kimlik izi "
+          "(tenant host, transport no; warn-first, her yolda, token basılmaz)")
     print(f"KAPSAM — dışlanan: {YEREL_LISTE_YOLU} (listenin kendisi — yalnız bu TAM yol) · .gitignore'lu yollar · "
           "ikili dosyalar (" + ", ".join(sorted(IKILI_UZANTI)) + ")")
     print(olculemedi_satiri(dusen))
     print("KAPSAM — bakılmayan: git geçmişi (eski commit içerikleri ve commit mesajları) · PR başlığı/gövdesi · "
           "yayın taramasının WARNING sınıfları (dışlanan dosyaya atıf: yalnız yayın kopyasında anlamlı) · kişi adları "
-          "sözlüğü · SAP host/SID/client serbest metni.")
+          "sözlüğü · SAP host/SID/client serbest metni (yapısal desene uymayan) · yayın taramasında (--yalniz-tara) "
+          "yapısal kimlik izi.")
     if liste_var and not liste_ignore:
         print(f"UYARI: {YEREL_LISTE_YOLU} .gitignore'da DEĞİL — `git add -A` listeyi (adları) depoya sokar.")
     sayilan: dict[str, dict[str, int]] = {}
@@ -339,14 +402,17 @@ def depo_tara(kok: Path = KOK) -> int:
             sayilan[sinif][dosya] = sayilan[sinif].get(dosya, 0) + 1
         else:
             listelenen.append(u)
-    if sayilan or listelenen:
-        print(f"\nUYARI: {len(listelenen) + sum(sum(v.values()) for v in sayilan.values())} (çıkış kodunu etkilemez)")
+    if sayilan or listelenen or yapisal:
+        print(f"\nUYARI: {len(listelenen) + len(yapisal) + sum(sum(v.values()) for v in sayilan.values())} "
+              "(çıkış kodunu etkilemez)")
         for sinif, dosyalar in sayilan.items():
             sirali = sorted(dosyalar.items(), key=lambda x: (-x[1], x[0]))
-            print(f"  {sinif}: {sum(dosyalar.values())} satır (yalnız sayı — dosya başına: "
+            print(f"  {sinif}: {sum(dosyalar.values())} satır (yalnız sayı — dışlanan yol; dosya başına: "
                   + " · ".join(f"{d} {n}" for d, n in sirali[:10]) + (" · …" if len(sirali) > 10 else "") + ")")
         for u in listelenen:
             print("  " + u)
+        for u in yapisal:
+            print("  yapısal kimlik izi: " + u + " — yer tutucuya çevir (<tenant>, <SID>K9NNNNN)")
     engelleyen = [b for s, b in bulgular if s == BLOCKER]
     if engelleyen:
         print(f"\nBULGU: {len(engelleyen)} (BLOCKER)")
