@@ -154,6 +154,8 @@ kapanış `KAPANDI — test borcu var: %testler` der ve `doctor` borç sürdük�
 - `%verify-done` — "tamam" demeden tam kapsam doğrulaması
 - `%explore` — salt-okur araştırmayı alt ajana devret
 - `%code-review` — bağımsız inceleyiciyle kod incelemesi
+- `%diagnosing-bugs` — sebebi bilinmeyen hata, dump, yanlış veri ya da yavaşlamada kök neden döngüsü (önce yeniden
+  üret, hipotezleri tek tek çürüt, sonra düzelt)
 - `%handoff` — oturum devir notu / "devam"
 - `%commit-pr` — commit, push, PR disiplini; uzak deposu olmayan projede dalı `main`'e yerel birleştirme
   (onayınla; cevapsız onay = hayır)
