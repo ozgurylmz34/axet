@@ -1,7 +1,7 @@
 {
  "_aciklama": "sync_check.py --kimlik-kaydi üretir; ELLE DÜZENLEME. Çekirdeğin kontrol listesi kimlik tanımlarının anlık görüntüsü: aXet önekli olmayan (AX- dışı) bir kimliği ancak burada varsa tanımlayabilir (tests/test_kimlik_hizasi.py zorlar). Eski → yeni eşleme: kimlik-eslemesi.md. Çekirdek kural METNİ (başlık) bilerek YAZILMAZ: serbest metin public depoya taşınmaz; uyum raporu başlığı çekirdekten canlı okur.",
  "kaynak": "DEV_CORE",
- "commit": "254134f4daf5f77f23f6fec91bcb24e3ff3e6f05",
+ "commit": "dd9ba0ff78e93f7630bd6a830f28bd0dcd5457bf",
  "kirli": false,
  "taranan": [
   "playbook/checklists/**/*.md",
