@@ -1,0 +1,285 @@
+[
+ {
+  "pattern": "playbook/00-discipline-and-principles.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): paket-türevli önek + RAP ad kuralı <önek> (Z·Y·/<NS>/) → sap-cds-ddic cds.md §3.2 (namespace'li classic view 14 karakter sınırı notu)",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-cds-ddic/references/cds.md"
+  ]
+ },
+ {
+  "pattern": "playbook/adt-cds.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): namespace önekli sqlViewName + view entity adı; C-CDS-FROM-04 mevcut kod muafiyeti (BE-68)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-tables-structures.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): başka tabloya nitelenmiş para birimi başvurusu (KONP), konwa/konws CUKY · kmein/konms UNIT",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-rap.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag üç save biçimi + namespace BDEF; iki managed kök aynı tablo; custom entity + query sınıfı §5a (araç desteği A2); BY \\_assoc FIELDS(…) WITH varsayılan (HANA -305); SUBMIT yasak/DESTINATION NONE serbest; eski sürüm SNAPT; additional save BO dışı tampon",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-rap/references/troubleshoot.md"
+  ]
+ },
+ {
+  "pattern": "playbook/adt-classes.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): türetilmiş RAP tipi (OO_SOURCE_BASED 011), 409 ilk deneme, ABAP Unit sahte sıfır tekrar sırası → classes.md; adt_get_method ENDMETHOD. ENDCLASS. notu tool-catalog'da (A2)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-foundation.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ENHO bağlı include tek aktivasyon + version=inactive tuzağı (ops §4.3); ATC sırası push→aktive→ATC, öncesi↔sonrası, clean-core P1 muafiyeti, ölçülemeyen tip ≠ temiz (query §4); SM12 dili VAR",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-fugr-functions.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): güncelleme modülü protokolü §2.3 (processingType=update, startImmediate, kanıt TFDIR-UTASK='1'); 'Z/Y' metni A1 namespace sonrası güncellenecek",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-mcp.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): guardrail metni müşteri ad alanı + adt_get_method sınır kuralı → tool-catalog (A2 kulvarı; B2 dokunmadı)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/adt-programs.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SM12 kalıntı kilit: kullanıcı siler, ajan force-clear etmez — VAR (foundation-ops)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/known-errors.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): fallbackLocale 1.71.85 satırı UI5 → B1 kulvarı (B2 dokunmadı)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/lessons-learned.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): kardeş taraması 'kopyalar birebir aynı olmayabilir' UI5 → B1 kulvarı (B2 dokunmadı)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/howto-kullanici-dokumani-pdf-ekran-goruntulu.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #389 yerleşim, #/%/boşluklu klasör, dizin listesi DURDU, localhost UNC, MSYS_NO_PATHCONV, PDF UYARILI → pdf-with-screenshots §B4; çıplak dosya adı cwd tuzağı",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/bug-checklist-backend.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BE-55 · BE-12 (clean-core muafiyeti) · BE-26 (SUBMIT) · BE-20 (niteleyici) · BE-13 (yapı) · YENİ BE-89 (get_as_ranges or → 500); taşınan abaplint blokları VAR",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/cds-creation.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-CDS-SQLV-02 namespace öneki (/NSPC/SD001_V_ = 14)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/struct-creation.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-STR-FIELD-01 INFO→WARNING (doğrulayıcı aXet'te yok → elle) · C-STR-CUR-02",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/table-update.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-TBL-CUR-02 · C-TBL-DROP-01 fiziksel tip · YENİ C-TBL-CRE-01 (WARNING) / C-TBL-CRE-02 (BLOCKER); AX-TBL-APPROVAL-01 korundu",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/rap-creation.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag satırı (troubleshoot)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/rap-troubleshoot.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag satırı (troubleshoot)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "playbook/checklists/checklist-map.yaml",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BE-89 → validator-map (100 satır); FE-53..57 B1; aXet'te yaml altyapısı yok",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-code-review/references/validator-map.md"
+  ]
+ },
+ {
+  "pattern": "playbook/modules/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): sd.md +118 → YENİ sd-dersler.md SD-D1…SD-D11 (kimlik aynı) + sd.md işaretçileri",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-intake-triage/references/modules/sd-dersler.md"
+  ]
+ },
+ {
+  "pattern": "profiles/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): s4_private 1909: define view entity … as select from yok, BDEF strict yok → profiles.md",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "standards/02-coding-backend.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ETag: otomatik If-Match yalnız update/remove, callFunction mParameters.eTag açıkça, 428 → segw-service.md",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "standards/04-documentation-fs-ts.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): TS build'den önce SIRA bloğu → ts-authoring.md",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/gen_field_table.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #410 custom entity · #412 string'e duyarlı yorum ayıklama (--) · G1/G2 namespace adı + #ns# komşu dosya; kaynak utils.ad_politikasi/cds_metin yerine yerel stdlib doc_ad_metin.py (lider kararı)",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-fs-ts-docs/scripts/doc_ad_metin.py"
+  ]
+ },
+ {
+  "pattern": "scripts/program_to_spec.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): G3 namespace adayı + katı gramer + ayrı namespace kovası; Türkçe sözcük kesilmez (doc_ad_metin)",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-fs-ts-docs/scripts/doc_ad_metin.py"
+  ]
+ },
+ {
+  "pattern": "scripts/scaffold_classic_program.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): MSYS_NO_PATHCONV ipucu alındı; namespace'li program adı kabulü ALINMADI (Z/Y; A1 ad_politikasi'ne bağlanabilir)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/html_to_pdf.js",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #389 elle port: dosyaUrl (pathToFileURL + localhost UNC), dizin listesi [DURDU] rc 2, işaret bağlı PDF_CSS, yerlesimOlc kademe 1/2/3, YERLESIM satırı, PDF UYARILI; tarayıcılı fikstür vakaları (Y3/Y5b/Y5k/Y6/Y7b/Y7c/Y8) test olarak taşınmadı",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/build_doc_pdf.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): docstring: 'bayraksız aynı' daraltıldı, PDF CSS üreticiye yazılmaz, MSYS_NO_PATHCONV",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/build_kd_pdf.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): docstring: 'bayraksız aynı' daraltıldı, PDF CSS üreticiye yazılmaz, MSYS_NO_PATHCONV",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_abap-unit-aktivasyon-sonrasi-sahte-sifir-test.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): tekrar + sıra → classes.md, known-errors-classic (fonksiyon grubu da)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_atc-priority-1-zorunlu.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): clean-core P1 muafiyeti, sıra, öncesi↔sonrası, ölçülemeyen tip → foundation-query §4 + BE-12",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/references/foundation-query.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_clean-core-released-cds-proaktif.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): mevcut kod muafiyeti (proje politikası üstün) → C-CDS-FROM-04, BE-12, foundation-query",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_pdftotext-enc-utf8-olmadan-turkce-bozuk.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): html_to_pdf göreli yol cwd'ye göre (eski '/' şartı yanlıştı) → pdf-with-screenshots Tuzaklar",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): niteleyici FIELDS(…) WITH varsayılan, ALL FIELDS HANA -305 → behavior-impl §8 + BE-20",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-rap/references/behavior-impl.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_tablo-yaratma-onay-gate.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-TBL-CRE-02 + AX-TBL-APPROVAL-01 korundu",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): DE-TXT-01: AI önerir + türetme + kullanıcı onayı",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-cds-ddic/references/checklists.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_canli-test-oracle-sistem-kaydi-uygulama-durumu-degil.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SAP yarısı → sd-dersler SD-D10 (standart tablo öncesi/sonrası farkı); genel yarısı D kulvarı",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-intake-triage/references/modules/sd-dersler.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_exit-include-e-az-yorum.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): exit include kısa yorum kuralı → programs-includes §1",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-classic-abap/references/programs-includes.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_rap-isleyicide-submit-yasak-destination-none-izinli.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): → behavior-impl §10 + BE-26",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-rap/references/behavior-impl.md",
+   "skills-sap/sap-code-review/references/checklist-rap.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_read-entities-bo-disi-tamponu-gormez.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): additional save BO dışı tampon → behavior-impl §11 önü",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-rap/references/behavior-impl.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_sessiz-yanlis-fiyat-gorunur-eksikten-agir.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): → sd-dersler SD-D10",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-intake-triage/references/modules/sd-dersler.md"
+  ]
+ },
+ {
+  "pattern": "claude/memory-seed/feedback_yeni-surum-api-yoklugu-denetim-yoklugu-degildir.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SAP yarısı (eski sürüm SNAPT) → behavior-impl; genel yarısı D kulvarı",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-rap/references/behavior-impl.md"
+  ]
+ }
+]

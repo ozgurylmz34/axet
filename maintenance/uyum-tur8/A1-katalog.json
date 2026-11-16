@@ -1,0 +1,108 @@
+[
+ {
+  "tur": "yeni",
+  "kritik": true,
+  "baslik": "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması",
+  "neden": "Kendi SAP namespace'ini kullanan projeler artık sap-project.json'daki customer_namespaces listesine /<NS>/ yazarak o namespace'teki objeleri yaratıp değiştirebilir. Listede olmayan namespace (ör. /ABC/), SAP'nin kendi namespace'leri ve standart objeler eskisi gibi reddedilir; liste bozuk, çift yazılmış ya da proje kökünde bağlantı dosyası yoksa yalnız Z/Y kabul edilir. Transport yaratma/release hâlâ yok. Red mesajı namespace'in neden kabul edilmediğini söyler.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ad_politikasi.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/guardrails.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+   "skills-sap/sap-adt-foundation/SKILL.md",
+   "skills-sap/sap-adt-foundation/tests/test_ad_politikasi.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k ad_politikasi",
+   "python tests/run_tests.py -k guard",
+   "python tests/run_tests.py -k namespace"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": true,
+  "baslik": "Davranış değişikliği: bildirilmemiş /Z…/ ve /Y…/ tablolar artık standart sayılır",
+  "neden": "Kaynakta standart tabloya doğrudan INSERT/UPDATE/DELETE/MODIFY ve standart objeyi genişletme (append/extend) denetimleri eskiden her /Z…/ ve /Y…/ namespace'ini müşteri sayıyordu. Artık yalnız Z/Y adlı ya da customer_namespaces ile bildirilmiş namespace'teki hedef serbest. Projeniz kendi /Z…/ namespace'ine yazıyorsa ve bu güncellemeden sonra yazma reddediliyorsa çözüm: o namespace'i sap-project.json customer_namespaces listesine ekleyin.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/std_ext_scan.py",
+   "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
+   "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+   "skills-sap/sap-adt-foundation/tests/test_std_dml_scan.py",
+   "skills-sap/sap-adt-foundation/tests/test_std_ext_gate.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k StdDml",
+   "python tests/run_tests.py -k std_ext"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "İnceleme kapıları namespace'li ve çözülemeyen adı 'temiz' saymaz",
+  "neden": "Yazma öncesi inceleme denetimleri obje adını tek bir ortak ad kuralıyla okur. Namespace'li adlar (/NSPC/…) artık denetlenir; adı çözülemeyen (ör. /AB/X) ya da namespace'i bildirilmemiş kaynakta denetim 'kapsam dışı/temiz' yerine 'ölçülemedi' der. RAP consumption katmanı kuralı Y ve bildirilmiş namespace adlarını da görür, abapGit .bdef.asbdef dosyalarını BDEF sayar. İnceleme raporu DCL (erişim kontrolü) dosyalarının hiç denetlenmediğini açıkça yazar. Yorum satırı (`//eski_alan : tip;`, `/* … */`) artık alan sanılmaz: tablo/yapı kapıları alanları yorumlar ayıklanmış metinde tarar — önceki taslakta boşluksuz yorumlu bir alan satırı kapıyı 'ölçülemedi'ye düşürüp Z/Y projede de yazmayı engelliyordu. Standart tablo alan denetimi `_Item` gibi ilişki adlarını ve rakamla başlayan parçaları alan saymaz.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_rap_readonly_consumption.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_reuse_gate.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_active_version.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_struct_consistency.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_struct_field_dtel_active.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_abaplint.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_audit_fields_autofill.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_bdef_backtick.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_released_objects.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_standard_table_fields.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_dtel_creation_labels.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_sap_master_language.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_rap_managed_etag.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/run_review.py",
+   "skills-sap/sap-adt-foundation/tests/test_validator_ad_grameri.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_table_field_drop.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ddl_yorum.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_cds_currency_reference.py",
+   "skills-sap/sap-adt-foundation/tests/test_bug_gate_tur8_duzeltme.py"
+  ],
+  "gerektirir": [
+   "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"
+  ],
+  "test": [
+   "python tests/run_tests.py -k validator_ad",
+   "python tests/run_tests.py -k reviewer",
+   "python tests/run_tests.py -k gate_status",
+   "python tests/run_tests.py -k fixtures"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": true,
+  "baslik": "Tablo değişikliğinde alan tipi daralması artık yakalanır",
+  "neden": "Var olan tabloda alan tipini küçültmek (ör. abap.char(100) → abap.char(10), abap.int4 → abap.int2) eskiden fark edilmiyordu ve sessiz veri kaybına yol açabiliyordu. Artık alan tipleri SAP'deki gerçek uzunluk/ondalıkla karşılaştırılır: daralma, tür değişikliği ve tipi okunamayan alan yazmayı durdurur; genişleme uyarı verir; yalnız veri öğesi adı değişip fiziksel tip aynı kalıyorsa bilgi notu çıkar ve yazma engellenmez.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_table_field_drop.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/run_review.py",
+   "skills-sap/sap-adt-foundation/tests/test_validator_ad_grameri.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k validator_ad",
+   "python tests/run_tests.py -k reviewer"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": false,
+  "baslik": "Para birimi referansında yanlış engelleme giderildi",
+  "neden": "Koşul kaydı para birimi/birim veri öğeleri (KONWA, KONWS, KMEIN, KONMS) tanınmadığı için bu tipte para birimi alanına başvuran tutar alanı yanlışlıkla 'referans tabloda yok' diye engelleniyordu. Ayrıca sözlükte tanınmayan para birimi tipi artık engel değil uyarı, başka tabloya nitelikli başvuru geçerli, takma adsız CDS elemanları da denetlenir.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ddic_semantics.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/validators/check_cds_currency_reference.py",
+   "skills-sap/sap-adt-foundation/tests/test_validator_ad_grameri.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k validator_ad"
+  ]
+ }
+]

@@ -18,11 +18,12 @@
         "core/00-temel.md",
         "core/sap/00-sap.md",
         "skills/gun-sonu/SKILL.md",
-        "maintenance/rule-coverage.md"
+        "maintenance/rule-coverage.md",
+        "skills/explore/references/brief-template.md"
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (satirlar orada listeli). 2026-09-25 turu: 'Ertelenmiş-iş süpürmesi' PORTLANDI → skills/gun-sonu/SKILL.md adım 4 (:37-39) + rule-coverage.md #19 notu (:38). 'Tohum terfi gözlemi', 'Gelen çekirdek bildirimi gözlemi', 'Spawn brief agent_stall_watch referansı', 'Memory §5 iki-yüzeyli terfi (metadata.seed)' — dördü de ALINMAZ: kaynağın auto-memory/alt-ajan/tohum mimarisine özgü, aXet'te karşılık mekanizma yok. 2026-09-25 tur 2: B özet satırı → core/sap/00-sap.md (G2). §1.1 worktree ⓑ içerik karşılaştırması ALINMAZ: aXet'te worktree denetim aracı yok (harness:statusline/worktrees alinmaz). Dosya indeksindeki standards/10 satiri -> skills-sap/README.md sap-dev satiri + sap-dev router (aXet'te CLAUDE.core dosya indeksinin karsiligi skill indeksi)."
+      "note": "Madde bazli karsilik: maintenance/rule-coverage.md (satirlar orada listeli). 2026-09-25 turu: 'Ertelenmiş-iş süpürmesi' PORTLANDI → skills/gun-sonu/SKILL.md adım 4 (:37-39) + rule-coverage.md #19 notu (:38). 'Tohum terfi gözlemi', 'Gelen çekirdek bildirimi gözlemi', 'Spawn brief agent_stall_watch referansı', 'Memory §5 iki-yüzeyli terfi (metadata.seed)' — dördü de ALINMAZ: kaynağın auto-memory/alt-ajan/tohum mimarisine özgü, aXet'te karşılık mekanizma yok. 2026-09-25 tur 2: B özet satırı → core/sap/00-sap.md (G2). §1.1 worktree ⓑ içerik karşılaştırması ALINMAZ: aXet'te worktree denetim aracı yok (harness:statusline/worktrees alinmaz). Dosya indeksindeki standards/10 satiri -> skills-sap/README.md sap-dev satiri + sap-dev router (aXet'te CLAUDE.core dosya indeksinin karsiligi skill indeksi). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): onay penceresi açan komut biçimi → core §3 + brief-template §3; gün sonu 'PR ile main'e girer' → %gun-sonu adım 8 (push ≠ main; birleştirme gün sonunda değil); worktree --wt-taban/entegrasyon dalı, tohum terfi kararı, onay bekleme gözlemi, ajana müdahale ALMA"
     },
     {
       "source": "DEV_CORE",
@@ -44,7 +45,7 @@
       ],
       "party": 8,
       "status": "tamam",
-      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda. 2026-09-25: yeni §6c (gelen bildirim değerlendirme protokolü) → maintenance/howto-gelen-bildirim-degerlendirme.md (iş listesi Z131: ihbar ≠ kanıt, kimlik taraması, iddia başına yeniden ölçüm, etki analizi, açık onay, durum etiketleri). §6b'nin fork/PR topolojisi ve CI secret kısıtı kaynağın kendi deposuna özgü, alınmadı. 2026-09-25 tur 2: §6c yedi bölümlü KAPANIŞ YORUMU iskeleti → howto-gelen-bildirim-degerlendirme.md §6 (okuyucu = bildiren kullanıcı; 4. bölüm önce %guncelle) + hata-bildir 'Gönderdikten sonra' (kullanıcı kapanışı görünce ne yapar)."
+      "note": "§1 yazma disiplini, §2 genericize, §4 stable+rollback, §5 pull+drift, §7 icerik nereye, §8 kurulum onarimi -> UPDATE-PROCEDURE §4 ve §8. §3 applies_to (aXet'te paths/applies_to yok; profil etiketi skill metninde), §3b damga (sap_stamp), §6 project.yaml katalogu (sap-project.json alanlari) ayri karsiliklarinda. 2026-09-25: yeni §6c (gelen bildirim değerlendirme protokolü) → maintenance/howto-gelen-bildirim-degerlendirme.md (iş listesi Z131: ihbar ≠ kanıt, kimlik taraması, iddia başına yeniden ölçüm, etki analizi, açık onay, durum etiketleri). §6b'nin fork/PR topolojisi ve CI secret kısıtı kaynağın kendi deposuna özgü, alınmadı. 2026-09-25 tur 2: §6c yedi bölümlü KAPANIŞ YORUMU iskeleti → howto-gelen-bildirim-degerlendirme.md §6 (okuyucu = bildiren kullanıcı; 4. bölüm önce %guncelle) + hata-bildir 'Gönderdikten sonra' (kullanıcı kapanışı görünce ne yapar). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): sql_view_prefix namespace satırı ALMA (aXet'te prefix türetme/populate_cds_views yok)"
     },
     {
       "source": "DEV_CORE",
@@ -56,7 +57,7 @@
       ],
       "party": 5,
       "status": "tamam",
-      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI. 2026-09-25: yeni §0a KURULUM KAPSAMI tablosu + parity_probe + user-settings-template ALINMAZ (katman ayrımı kaynağın junction/hafıza mimarisine özgü; aXet install.py/kur.ps1 tek adımda tüm yüzeyi kurar). PowerShell yürütme politikası: kod karşılığı doctor.py check_ps_politika (Z129); önceki 'ders memory'de var' iddiası yanlıştı. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #376 core-guncelle §5d (team_setup kurulu aracı yükseltmez) — çekirdek kurulum akışına özgü; aXet güncelleme akışı sürümleri kendisi pinler, değişiklik yok."
+      "note": "Makine/klon/install/ilk oturum dogrulamasi/kimlik/proje-paket/gunluk kullanim. Junction/misafir modu alinmadi. setup_credentials adimi yazildi (59a16c0); canli akis DOGRULANMADI. 2026-09-25: yeni §0a KURULUM KAPSAMI tablosu + parity_probe + user-settings-template ALINMAZ (katman ayrımı kaynağın junction/hafıza mimarisine özgü; aXet install.py/kur.ps1 tek adımda tüm yüzeyi kurar). PowerShell yürütme politikası: kod karşılığı doctor.py check_ps_politika (Z129); önceki 'ders memory'de var' iddiası yanlıştı. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #376 core-guncelle §5d (team_setup kurulu aracı yükseltmez) — çekirdek kurulum akışına özgü; aXet güncelleme akışı sürümleri kendisi pinler, değişiklik yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ix_doctor .tmp yazımı → aXet doctor hiçbir şey yazmaz (VAR); docs/onboarding.md değişmez"
     },
     {
       "source": "DEV_CORE",
@@ -125,7 +126,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #309 CI parca bolme: aXet'te zaten 5 parca (Z158) — gerekmedi."
+      "note": "CI karari K2 (2026-09-15): GitHub Actions + PR/CI-yesili merge. Z44 (2026-09-21) ile guncellendi. aXet'in kendi CI'i: testler.yml (kok / kok-public / foundation) + CODEOWNERS. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #309 CI parca bolme: aXet'te zaten 5 parca (Z158) — gerekmedi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): core-ci pyyaml ALMA (aXet YAML'ı kendi ayrıştırıcısıyla okur; B1 testi gerektirmedi)"
     },
     {
       "source": "DEV_CORE",
@@ -143,11 +144,12 @@
       "targets": [
         "core/sap/00-sap.md",
         "scripts/sap_stamp.py",
-        "maintenance/rule-coverage.md"
+        "maintenance/rule-coverage.md",
+        "skills-sap/sap-dev/references/role-briefs.md"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "A/B/C/D kodla zorlaniyor (paket yasagi, std_dml_scan ADR_0005_B, kilit silme araci yok, dil/etiket kontrolleri); fiziksel damga sap_stamp + doctor. 2026-09-25: B sirasi released API (RAP BO/EML · released BAPI · released OData) ile basliyor, AXET-SAP-0.5.2 (sap_stamp kodu degismedi, damga kanonikten turer; projelerde %guncelle-proje). Canli yazma davranisi DOGRULANMADI."
+      "note": "A/B/C/D kodla zorlaniyor (paket yasagi, std_dml_scan ADR_0005_B, kilit silme araci yok, dil/etiket kontrolleri); fiziksel damga sap_stamp + doctor. 2026-09-25: B sirasi released API (RAP BO/EML · released BAPI · released OData) ile basliyor, AXET-SAP-0.5.2 (sap_stamp kodu degismedi, damga kanonikten turer; projelerde %guncelle-proje). Canli yazma davranisi DOGRULANMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A-EK müşteri ad alanı (Z/Y + sap-project.json customer_namespaces) damgaya + role-briefs S1; sap_stamp.py kodu değişmedi"
     },
     {
       "source": "DEV_CORE",
@@ -228,11 +230,12 @@
       "decision": "telafi",
       "targets": [
         "skills-sap/sap-adt-foundation/scripts/sap_adt_cli.py",
-        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py"
+        "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py",
+        "skills-sap/sap-dev/SKILL.md"
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Tek SAP yazicisi rolu yerine tek yazma kapisi (gate.check_write). Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). Tur 2 (2026-09-25): B sirasi aynasi -> kapi red mesaji (std_dml_scan YONLENDIRME) released API ile basliyor."
+      "note": "Tek SAP yazicisi rolu yerine tek yazma kapisi (gate.check_write). Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). Tur 2 (2026-09-25): B sirasi aynasi -> kapi red mesaji (std_dml_scan YONLENDIRME) released API ile basliyor. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BE-13 tablo/yapı onay kaydı (DTEL'siz alan adıyla) → sap-dev SKILL §6; namespace kapısı A1 kulvarında"
     },
     {
       "source": "DEV_CORE",
@@ -241,7 +244,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Claude takim altyapisi rolu."
+      "note": "Claude takim altyapisi rolu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [infra-expert.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -253,18 +256,19 @@
       ],
       "party": 6,
       "status": "tamam",
-      "note": "Genel brifing code-review'da; SAP inceleyici brifingi (2 faz, 4 soruluk kapi, HATA/EKSIK/ONERI) sap-code-review. Arac listesi/SendMessage/model secimi alinmadi."
+      "note": "Genel brifing code-review'da; SAP inceleyici brifingi (2 faz, 4 soruluk kapi, HATA/EKSIK/ONERI) sap-code-review. Arac listesi/SendMessage/model secimi alinmadi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): büyük kaynak istisnası + KAPSAMA tablosunda tek kimlik/tek satır → reviewer-brief §4/§8 + code-review SKILL"
     },
     {
       "source": "DEV_CORE",
       "pattern": "claude/agents/*",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-dev/references/role-briefs.md"
+        "skills-sap/sap-dev/references/role-briefs.md",
+        "skills/research/SKILL.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "backend/frontend/sap-feature/sap-research -> agent araci icin rol brifingleri (ortak yasak/KVKK/ALV bloklari 00-sap.md'den birebir). Alt ajanin arac yuzeyi canli olculmedi. Tur 2: frontend-expert sap-client/unload maddesi → (c) UI5 brifingi (:174); bayat 'UI5 skill henüz yok' cümlesi (:152) ve alınmayanlar satırı (:210) düzeltildi."
+      "note": "backend/frontend/sap-feature/sap-research -> agent araci icin rol brifingleri (ortak yasak/KVKK/ALV bloklari 00-sap.md'den birebir). Alt ajanin arac yuzeyi canli olculmedi. Tur 2: frontend-expert sap-client/unload maddesi → (c) UI5 brifingi (:174); bayat 'UI5 skill henüz yok' cümlesi (:152) ve alınmayanlar satırı (:210) düzeltildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BAĞLAM DİSİPLİNİ → role-briefs S5; teslim öncesi öz-kapı (KAHİN/SINIF/METİN/KARDEŞ) → (b)/(c); FE mock davranışı canlı dökümden; transkript okuma ve onay penceresi bölümü ALMA"
     },
     {
       "source": "DEV_CORE",
@@ -297,7 +301,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Takim/dispatch dili tek model + agent aracina indirildi."
+      "note": "Takim/dispatch dili tek model + agent aracina indirildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): teknik şartlar da önce, şart brifin içinde"
     },
     {
       "source": "DEV_CORE",
@@ -308,7 +312,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): deploy kapsamı = çalışma ağacı; yazma brifine deploy adımı koyma"
     },
     {
       "source": "DEV_CORE",
@@ -451,7 +455,7 @@
         "skills-sap/sap-cds-ddic/"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-TBL-CRE-02 + AX-TBL-APPROVAL-01 korundu"
     },
     {
       "source": "DEV_CORE",
@@ -481,10 +485,11 @@
       "party": 3,
       "pattern": "claude/memory-seed/feedback_rap-by-assoc-read-all-fields.md",
       "targets": [
-        "skills-sap/sap-rap/"
+        "skills-sap/sap-rap/",
+        "skills-sap/sap-rap/references/behavior-impl.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): niteleyici FIELDS(…) WITH varsayılan, ALL FIELDS HANA -305 → behavior-impl §8 + BE-20"
     },
     {
       "source": "DEV_CORE",
@@ -602,10 +607,11 @@
       "party": 3,
       "pattern": "claude/memory-seed/feedback_atc-priority-1-zorunlu.md",
       "targets": [
-        "skills-sap/sap-classic-abap/"
+        "skills-sap/sap-classic-abap/",
+        "skills-sap/sap-adt-foundation/references/foundation-query.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): clean-core P1 muafiyeti, sıra, öncesi↔sonrası, ölçülemeyen tip → foundation-query §4 + BE-12"
     },
     {
       "source": "DEV_CORE",
@@ -613,10 +619,11 @@
       "party": 3,
       "pattern": "claude/memory-seed/feedback_zli-obje-text-tahmin-yasak.md",
       "targets": [
-        "skills-sap/sap-classic-abap/"
+        "skills-sap/sap-classic-abap/",
+        "skills-sap/sap-cds-ddic/references/checklists.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): DE-TXT-01: AI önerir + türetme + kullanıcı onayı"
     },
     {
       "source": "DEV_CORE",
@@ -651,7 +658,7 @@
         "skills-sap/sap-ui5-fiori/scripts/"
       ],
       "status": "tamam",
-      "note": "Backend + UI5 (§6, check_filter_search_pattern)."
+      "note": "Backend + UI5 (§6, check_filter_search_pattern). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): wildcard yalnız seçim/VH; kolon kutusu düz arama + Filtre… penceresi (list-grid-alv §6.4)"
     },
     {
       "source": "DEV_CORE",
@@ -689,7 +696,7 @@
         "skills-sap/sap-dev/references/coding-patterns.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): mevcut kod muafiyeti (proje politikası üstün) → C-CDS-FROM-04, BE-12, foundation-query"
     },
     {
       "source": "DEV_CORE",
@@ -933,7 +940,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Takim rolleri alinmaz; gun sonu + push %gun-sonu'da (kullanici karari)."
+      "note": "Takim rolleri alinmaz; gun sonu + push %gun-sonu'da (kullanici karari). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): dal ≠ main → %gun-sonu adım 8"
     },
     {
       "source": "DEV_CORE",
@@ -955,7 +962,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): kanonik kaynak şablon + sürüme bağlı satır modu"
     },
     {
       "source": "DEV_CORE",
@@ -998,11 +1005,12 @@
       "decision": "uyarla",
       "targets": [
         "memory/feedback_ui5-runtime-sayiyla-dogrula.md",
-        "skills-sap/sap-ui5-fiori/references/runtime-verification.md"
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
       ],
       "party": 4,
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): MessageBox ters istisnası → runtime-verification §4.2 + known-errors"
     },
     {
       "source": "DEV_CORE",
@@ -1043,7 +1051,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "SendMessage mekanizmasi."
+      "note": "SendMessage mekanizmasi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_agent-briefing-sendmessage-main.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1052,7 +1060,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Lider/gateway rolleri."
+      "note": "Lider/gateway rolleri. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_arac-kod-fix-lider-isi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1178,7 +1186,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Cozulmus; hata sonrasi unlock kodda."
+      "note": "Cozulmus; hata sonrasi unlock kodda. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_push-failure-stale-lock-persistent-session.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1205,7 +1213,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Tohum indeksi; aXet'in kendi indeksi var."
+      "note": "Tohum indeksi; aXet'in kendi indeksi var. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [MEMORY.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1277,7 +1285,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Subagent rapor-kabul disiplini; aXet'in ajan-raporlama ekseni yok, genel ilke kanit kurallari ailesinde zaten var."
+      "note": "Subagent rapor-kabul disiplini; aXet'in ajan-raporlama ekseni yok, genel ilke kanit kurallari ailesinde zaten var. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1313,7 +1321,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Lider->alt-ajan talimat aktarimi baglamina ozgu; aXet'te talimat dogrudan kullanicidan gelir."
+      "note": "Lider->alt-ajan talimat aktarimi baglamina ozgu; aXet'te talimat dogrudan kullanicidan gelir. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1393,7 +1401,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Memory dersi, dalga 2 (Z130)."
+      "note": "Memory dersi, dalga 2 (Z130). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): 4. vaka (0x08) + 5. vaka (kabuk vektörü) eklendi"
     },
     {
       "source": "DEV_CORE",
@@ -1460,7 +1468,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "IX RESUME/SESSION_NOTES capa sistemine ozgu; aXet'in %gun-sonu mekanizmasi farkli."
+      "note": "IX RESUME/SESSION_NOTES capa sistemine ozgu; aXet'in %gun-sonu mekanizmasi farkli. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_capadaki-acik-madde-devralmadan-once-olculur.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1637,7 +1645,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Coklu-ajan kod-duzeltme+dokuman turu paralel calistirma cakismasi; aXet tek-oturumlu, risk yapisi farkli."
+      "note": "Coklu-ajan kod-duzeltme+dokuman turu paralel calistirma cakismasi; aXet tek-oturumlu, risk yapisi farkli. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1655,7 +1663,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "IX cok-turlu bug-gate review kulturune ozgu."
+      "note": "IX cok-turlu bug-gate review kulturune ozgu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1664,7 +1672,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Ayni aile, IX kapi-kulturu."
+      "note": "Ayni aile, IX kapi-kulturu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_duzeltme-turu-kendi-regresyonunu-uretir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1793,7 +1801,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "IX'in kendi PDF-uretim zincirine (build_*_pdf_*.py, html_to_pdf.js) ozgu teslim-bicimi karari; aXet'in dokuman uretim hatti DOGRULANAMADI."
+      "note": "IX'in kendi PDF-uretim zincirine (build_*_pdf_*.py, html_to_pdf.js) ozgu teslim-bicimi karari; aXet'in dokuman uretim hatti DOGRULANAMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_fs-ts-html-uretilmez-teslim-bicimi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -1999,7 +2007,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "IX'in cok-oturumlu infra-kuyruk turu is yonetimine ozgu; aXet tek-oturumlu."
+      "note": "IX'in cok-oturumlu infra-kuyruk turu is yonetimine ozgu; aXet tek-oturumlu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2008,7 +2016,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-ajan-takim.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2080,7 +2088,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi."
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-terfi-2026-09-18.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2429,7 +2437,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "aXet'in 'kararları önce topla' dersiyle (memory/feedback_kararlari-once-topla.md) çelişir: işten önce kullanıcıya ait kararlar tek seferde toplanır, iş ortasında soru trafiği açılmaz."
+      "note": "aXet'in 'kararları önce topla' dersiyle (memory/feedback_kararlari-once-topla.md) çelişir: işten önce kullanıcıya ait kararlar tek seferde toplanır, iş ortasında soru trafiği açılmaz. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_sorulari-tek-tek-sor-oneriyle.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2451,7 +2459,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Memory dersi, dalga 2 (Z130)."
+      "note": "Memory dersi, dalga 2 (Z130). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): vaka 3 (karar kaydından gelen onay kalemi) + vaka 4 ('küçük' değişikliği kendin yazmak)"
     },
     {
       "source": "DEV_CORE",
@@ -2758,7 +2766,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Vardı: sap-code-review abaplint.md + SKILL.md; eklendi: reviewer-brief.md §5 'Statik PASS' maddesi (statik PASS ≠ hazır) + runtime-verification.md §3 (:47 her route)."
+      "note": "Vardı: sap-code-review abaplint.md + SKILL.md; eklendi: reviewer-brief.md §5 'Statik PASS' maddesi (statik PASS ≠ hazır) + runtime-verification.md §3 (:47 her route). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): Vaka 2/3 NUMC → BE-80 VAR (sap-code-review checklist-abap); UI hedefinde değişiklik yok"
     },
     {
       "source": "DEV_CORE",
@@ -2830,7 +2838,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Zaten CLAUDE.core.md §1.1 sync satırıyla core/00-temel.md'ye kısmen taşınmış (sync-rules tamam); ayrıca çok-ajan brifing odaklı."
+      "note": "Zaten CLAUDE.core.md §1.1 sync satırıyla core/00-temel.md'ye kısmen taşınmış (sync-rules tamam); ayrıca çok-ajan brifing odaklı. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_kapsam-disi-bulgu-protokolu.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2857,7 +2865,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Lider+worktree ajanı paralel yazım çakışması; aXet'te worktree/çoklu-ajan yok."
+      "note": "Lider+worktree ajanı paralel yazım çakışması; aXet'te worktree/çoklu-ajan yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_lider-ajan-paralel-yazim-cakismasi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2866,7 +2874,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "DEV_CORE'un kendi seed_memory.py satır-enjeksiyon mekanizmasına özgü; aXet dosya-bazlı git dağıtımı kullanıyor."
+      "note": "DEV_CORE'un kendi seed_memory.py satır-enjeksiyon mekanizmasına özgü; aXet dosya-bazlı git dağıtımı kullanıyor. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -2929,7 +2937,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Standing alt-ajan bekleme süresi ölçümü; aXet'te subagent yok."
+      "note": "Standing alt-ajan bekleme süresi ölçümü; aXet'te subagent yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_standing-ajani-bos-bekletme-tek-tam-brif.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -3070,7 +3078,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "classes.md §5 'Sahte sıfır — include DOLU iken de olur' (:105) + known-errors-classic indeks satırı (:14). Z199."
+      "note": "classes.md §5 'Sahte sıfır — include DOLU iken de olur' (:105) + known-errors-classic indeks satırı (:14). Z199. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): tekrar + sıra → classes.md, known-errors-classic (fonksiyon grubu da)"
     },
     {
       "source": "DEV_CORE",
@@ -3422,7 +3430,7 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "pdf-with-screenshots Tuzaklar (:173). html_to_pdf.js çıplak ad yarısı alınmadı: aXet html_to_pdf.js:270 path.resolve kullanıyor."
+      "note": "pdf-with-screenshots Tuzaklar (:173). html_to_pdf.js çıplak ad yarısı alınmadı: aXet html_to_pdf.js:270 path.resolve kullanıyor. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): html_to_pdf göreli yol cwd'ye göre (eski '/' şartı yanlıştı) → pdf-with-screenshots Tuzaklar"
     },
     {
       "source": "DEV_CORE",
@@ -3535,16 +3543,35 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi (Z199)."
+      "note": "Navigasyon/indeks dosyasi, icerik tasimiyor; linklenen feedback dosyalari ayri ayri degerlendirildi (Z199). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-terfi-2026-10-18.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
       "pattern": "claude/memory-seed/*",
       "decision": "bekliyor",
-      "targets": [],
+      "targets": [
+        "memory/feedback_engellenen-silmeyi-komut-olarak-verme.md",
+        "memory/feedback_is-parametresini-koda-gomme.md",
+        "memory/feedback_kayit-tarihini-olc.md",
+        "memory/feedback_kurulumdan-sonra-yeni-parti-sorulur.md",
+        "memory/feedback_python-yerinde-duzenleme-bayt-kipi.md",
+        "memory/feedback_uygulama-testi-onayla-yazilir.md",
+        "memory/feedback_yeniden-inceleme-dar-kapsam.md",
+        "memory/feedback_aralikli-hata-avina-butce.md",
+        "memory/feedback_isaret-onermeden-once-prior-art.md",
+        "memory/feedback_belge-incelemesi-iki-tur.md",
+        "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md",
+        "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+        "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+        "skills-sap/sap-intake-triage/references/modules/sd-dersler.md",
+        "skills-sap/sap-classic-abap/references/programs-includes.md",
+        "skills-sap/sap-rap/references/behavior-impl.md",
+        "skills-sap/sap-code-review/references/checklist-rap.md"
+      ],
       "party": null,
-      "status": "-",
-      "note": "Yakalama kurali: yeni eklenen tohum dosyalari buraya duser; dosya bazinda karar ver, ozel satir ekle."
+      "status": "kismi",
+      "note": "Yakalama kurali: yeni eklenen tohum dosyalari buraya duser; dosya bazinda karar ver, ozel satir ekle. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): D kulvarı 19 yeni ders — 10 AL/UYARLA (memory/feedback_engellenen-silmeyi-komut-olarak-verme, is-parametresini-koda-gomme, kayit-tarihini-olc, kurulumdan-sonra-yeni-parti-sorulur, python-yerinde-duzenleme-bayt-kipi, uygulama-testi-onayla-yazilir, yeniden-inceleme-dar-kapsam, aralikli-hata-avina-butce, isaret-onermeden-once-prior-art, belge-incelemesi-iki-tur); gun-sonu-dal-pr → %gun-sonu; kapi-raporu → reviewer-brief tek satır; her-mesaj-turkce VAR (core §12); ts-builddan-once B kulvarı; 5 Claude'a özgü + _indeks-* ALMA · [claude/memory-seed/feedback_cdn-surum-varligi-surum-dosyasiyla-kanitlanmaz.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: maket/yerel CDN sürümü kütüphane dosyasıyla ölçülür → known-errors · [claude/memory-seed/feedback_deploy-ui-yarida-kesilince-bsp-yine-yaratilmis-olabilir.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: kesilen deploy → deploy-and-local-run §4 + known-errors · [claude/memory-seed/feedback_onay-diyalogu-afterclose-once-sozu-sonuclandir-sonra-destroy.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: known-errors Render satırı · [claude/memory-seed/feedback_ui-testi-dom-varligi-gorunurluk-ve-olay-parametresi.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: runtime-verification §4.3 · [claude/memory-seed/feedback_ui-testinin-son-kontrolu-sunucu-durumunu-olcmeli.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: runtime-verification §4.3 · [claude/memory-seed/feedback_ui5-analyticaltable-v2-toplam-tuzaklari.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: list-grid-alv §4.1 · [claude/memory-seed/feedback_ui5-mockserver-batch-etag-iki-nokta-keser.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: known-errors (Git Bash kill/rg yan notları ALMA) · [claude/memory-seed/feedback_ui5-yapici-ayarinda-suslu-parantez-baglamadir.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ DESEN: known-errors Render satırı · [claude/memory-seed/feedback_canli-test-oracle-sistem-kaydi-uygulama-durumu-degil.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SAP yarısı → sd-dersler SD-D10 (standart tablo öncesi/sonrası farkı); genel yarısı D kulvarı · [claude/memory-seed/feedback_exit-include-e-az-yorum.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): exit include kısa yorum kuralı → programs-includes §1 · [claude/memory-seed/feedback_rap-isleyicide-submit-yasak-destination-none-izinli.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): → behavior-impl §10 + BE-26 · [claude/memory-seed/feedback_read-entities-bo-disi-tamponu-gormez.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): additional save BO dışı tampon → behavior-impl §11 önü · [claude/memory-seed/feedback_sessiz-yanlis-fiyat-gorunur-eksikten-agir.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): → sd-dersler SD-D10 · [claude/memory-seed/feedback_yeni-surum-api-yoklugu-denetim-yoklugu-degildir.md] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SAP yarısı (eski sürüm SNAPT) → behavior-impl; genel yarısı D kulvarı"
     },
     {
       "source": "DEV_CORE",
@@ -3563,11 +3590,12 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-dev/SKILL.md",
-        "skills-sap/sap-adt-foundation/SKILL.md"
+        "skills-sap/sap-adt-foundation/SKILL.md",
+        "skills-sap/sap-dev/references/naming.md"
       ],
       "party": 3,
       "status": "kismi",
-      "note": "§1 pull-before-edit foundation + yazma kapisi (kod ajani), §2 reviewer gate, §3 ADT sirasi sap-dev §5, §4 once-oku sap-dev §4, §5 tek yazici = alt ajana yazma verilmez, §6-7 klasor core/sap + .rules.md, §10 teyit tablosu sap-dev §6. Eksik: §12 paket naming/obje paket siniri validator'lari (parti 7). Tur 2 (2026-09-25): §9 yasak B sirasi -> sap-dev router + foundation SKILL ADR_0005_B satiri."
+      "note": "§1 pull-before-edit foundation + yazma kapisi (kod ajani), §2 reviewer gate, §3 ADT sirasi sap-dev §5, §4 once-oku sap-dev §4, §5 tek yazici = alt ajana yazma verilmez, §6-7 klasor core/sap + .rules.md, §10 teyit tablosu sap-dev §6. Eksik: §12 paket naming/obje paket siniri validator'lari (parti 7). Tur 2 (2026-09-25): §9 yasak B sirasi -> sap-dev router + foundation SKILL ADR_0005_B satiri. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): DTEL'siz alan listesi → sap-dev SKILL §6 (C-TBL-CRE-01/02 elle); §9 namespace → naming.md §3 + damga; foundation SKILL (A2) dokunulmadı"
     },
     {
       "source": "DEV_CORE",
@@ -3578,7 +3606,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Rules + referanslar; §4 popup cumlesi memory/playbook ile ters -> alinmadi."
+      "note": "Rules + referanslar; §4 popup cumlesi memory/playbook ile ters -> alinmadi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): şablondan başla + sürüm/tema backend'den ölçülür → SKILL §1/§4"
     },
     {
       "source": "DEV_CORE",
@@ -3610,11 +3638,12 @@
       "targets": [
         "skills-sap/sap-dev/SKILL.md",
         "skills-sap/sap-dev/references/coding-patterns.md",
-        "skills-sap/sap-dev/references/write-api-selection.md"
+        "skills-sap/sap-dev/references/write-api-selection.md",
+        "skills-sap/sap-dev/references/naming.md"
       ],
       "party": 3,
       "status": "kismi",
-      "note": "Router: intake->profil->paket->is turu->ADT sirasi->kullanicidan gelenler->kapanis. operational-lessons: ADT protokol kismi foundation'da, ABAP/islem tuzaklari coding-patterns §5-6; clean-core-replacements -> coding-patterns §7. Eksik: obje tipi skill satirlari (RAP, klasik dialog, UI5 deploy, Adobe, dynpro uretimi) — skill'ler geldikce router tablosu guncellenir. Musteri FM'i (ekran uretici) ve deferred-triggers alinmadi. Tur 2 (2026-09-25): yasak B ozeti -> router satiri 'standart veriye yazma' + description tetikleri + coding-patterns §7. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): clean-core-replacements #356/#359 — SALV de released değil (ARS) + ALV ağacı notu -> skills-sap/sap-dev/references/coding-patterns.md."
+      "note": "Router: intake->profil->paket->is turu->ADT sirasi->kullanicidan gelenler->kapanis. operational-lessons: ADT protokol kismi foundation'da, ABAP/islem tuzaklari coding-patterns §5-6; clean-core-replacements -> coding-patterns §7. Eksik: obje tipi skill satirlari (RAP, klasik dialog, UI5 deploy, Adobe, dynpro uretimi) — skill'ler geldikce router tablosu guncellenir. Musteri FM'i (ekran uretici) ve deferred-triggers alinmadi. Tur 2 (2026-09-25): yasak B ozeti -> router satiri 'standart veriye yazma' + description tetikleri + coding-patterns §7. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): clean-core-replacements #356/#359 — SALV de released değil (ARS) + ALV ağacı notu -> skills-sap/sap-dev/references/coding-patterns.md. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): guardrail namespace metni → naming.md §3; 409/kilit reçetesi foundation-ops §5'te VAR (araç yalnız kendi handle'ını bırakır)"
     },
     {
       "source": "DEV_CORE",
@@ -3659,7 +3688,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Genel brifing sablonu; ara mesaj/arka plan/worktree karsiligi yok (dosya sonunda tablo). 2026-09-14: kardes taramasi satiri ve canli baglanti olcum satiri alindi; ara mesaj yedegi alinmadi."
+      "note": "Genel brifing sablonu; ara mesaj/arka plan/worktree karsiligi yok (dosya sonunda tablo). 2026-09-14: kardes taramasi satiri ve canli baglanti olcum satiri alindi; ara mesaj yedegi alinmadi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): doğrulama kadansı + komut biçimi → brief-template §3; KOD DONDU sonrası kapsam eklenmez → yapısal (ara kanal yok), alınmayanlar tablosu"
     },
     {
       "source": "DEV_CORE",
@@ -3746,11 +3775,15 @@
         "scripts/sap_stamp.py",
         "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
         "skills-sap/sap-adt-foundation/scripts/sapadt/std_dml_scan.py",
-        "skills-sap/sap-dev/references/write-api-selection.md"
+        "skills-sap/sap-dev/references/write-api-selection.md",
+        "templates/project-sap/sap-project.json",
+        "templates/project/AGENTS.md",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ad_politikasi.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/guardrails.py"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "A/C/D metin + gate.check_names; B kaynak taramasi std_dml_scan (ADR_0005_B dogrudan BLOCKER, kullanici karari); proje AGENTS.md damgasi. 2026-09-25: ZORUNLU akis released API ile basliyor + B6 -> 00-sap B satiri, std_dml_scan YONLENDIRME mesaji, ayrinti write-api-selection.md (gate.py metni sira tasimiyor, degismedi)."
+      "note": "A/C/D metin + gate.check_names; B kaynak taramasi std_dml_scan (ADR_0005_B dogrudan BLOCKER, kullanici karari); proje AGENTS.md damgasi. 2026-09-25: ZORUNLU akis released API ile basliyor + B6 -> 00-sap B satiri, std_dml_scan YONLENDIRME mesaji, ayrinti write-api-selection.md (gate.py metni sira tasimiyor, degismedi). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A-EK metni core/sap/00-sap.md damgasında; bildirim şablonu sap-project.json customer_namespaces; karar kodu ad_politikasi (A1) · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A-EK karar kodu: ad_politikasi (guardrails · gate · std_dml_scan · std_ext_scan · sap_adt_lib ad doğrulaması)"
     },
     {
       "source": "DEV_CORE",
@@ -3786,7 +3819,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "m.Table govdesi §7 istisnasina indirildi."
+      "note": "m.Table govdesi §7 istisnasina indirildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): şerh: kopya kaynağı şablon, proje kopyaları ayrışık → list-grid-alv başlık + §3 (core/sap/00-sap.md D kulvarında)"
     },
     {
       "source": "DEV_CORE",
@@ -3976,7 +4009,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi. 2026-09-25: B62 (MCP import denetimi / ix_doctor K1-K3 / session_start gerilik) tamamen DEV_CORE junction+MCP altyapısına özgü, taşınmadı. B63 (msag mesaj silme reçetesi) ÖZELLİK OLARAK ZATEN VAR — skills-sap/sap-cds-ddic/references/message-class.md §3.5-3.7'de daha ayrıntılı belgeli (delete_gate, TOCTOU, TAB/LF/CR); fixture'ın kendisi (sahte-SAP-sunucu test korpusu) DEV_CORE CLI test altyapısına özgü. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362/#363/#360 reçete satırları çekirdek fixture'larına ait; aXet karşılığı birim testleri (test_abap_metot_blok, test_yan_etkili_tekrar, test_node_scripts). sap-gui pin satırı alınmadı (init_project kararı)."
+      "note": "Kontrol grubu, negatif vaka, gercek giris noktasi ilkeleri testlerde. 2026-09-14 recete eklemeleri (kum sizintisi olcumu, fugr reviewer pin) testlere yansidi; recete metni alinmadi. 2026-09-25: B62 (MCP import denetimi / ix_doctor K1-K3 / session_start gerilik) tamamen DEV_CORE junction+MCP altyapısına özgü, taşınmadı. B63 (msag mesaj silme reçetesi) ÖZELLİK OLARAK ZATEN VAR — skills-sap/sap-cds-ddic/references/message-class.md §3.5-3.7'de daha ayrıntılı belgeli (delete_gate, TOCTOU, TAB/LF/CR); fixture'ın kendisi (sahte-SAP-sunucu test korpusu) DEV_CORE CLI test altyapısına özgü. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362/#363/#360 reçete satırları çekirdek fixture'larına ait; aXet karşılığı birim testleri (test_abap_metot_blok, test_yan_etkili_tekrar, test_node_scripts). sap-gui pin satırı alınmadı (init_project kararı). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [infra-test-recipes.md] yeni reçeteler B89–B106 bu turda alınan kalemlerin testlerine karşılık gelir (kulvar testleri: ad_politikasi, validator_ad_grameri, fugr_include_yazim, badi_spot, csrf_custom_entity, kucuk_duzeltmeler_tur8, ui5_xml_yorumu, node html_to_pdf); reçete metni alınmadı, ilke aynı"
     },
     {
       "source": "DEV_CORE",
@@ -3985,7 +4018,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Claude takim/junction isletimi: operating model, CORE-INDEX, infra changelog, removed controls, plugin/vscode kurulumu, arastirma artigi."
+      "note": "Claude takim/junction isletimi: operating model, CORE-INDEX, infra changelog, removed controls, plugin/vscode kurulumu, arastirma artigi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [agent-teams-operating-model.md, infra-changelog.md, removed-controls.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -4003,11 +4036,12 @@
       "pattern": "mcp_servers/*",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+        "skills-sap/sap-adt-foundation/scripts/sapadt/",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/badi.py"
       ],
       "party": 2,
       "status": "kismi",
-      "note": "MCP'siz shim + CLI. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14 tasima: aktivasyon hukmu uc degerli + worklist sondasi, push on-kontrol olculemedi isareti, sorgu araclari (SAP hata govdesi, kesin truncated, TADIR 5'li parca, FM takma adi, where-used paket ayrimi, kanonik worklist), reviewer fugr/func pin (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): query.py #314 dump okuma -> Z166 (adt_dump_read + adt_dump_list baska-client gizleme/sayac + arac gurultusu etiketi; skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py, gate.READ_TOOLS). query.py #312 SQL 255 -> Z165 (asagida sap_adt_lib). MCP arac aciklamasi < 2000 karakter butcesi ALINMAZ: aXet MCP sunmuyor (CLI); aciklamanin modele ulasma yolu OLCULMEDI. Canli SAP dogrulamasi (Z165/Z166) bekliyor. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): query.py: #362 metot bloğu sınırı -> aXet diag._metot_cikar (adt_get_method) ortak modüle bağlandı; #365 geçersiz escape aXet'te zaten vardı."
+      "note": "MCP'siz shim + CLI. Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14 tasima: aktivasyon hukmu uc degerli + worklist sondasi, push on-kontrol olculemedi isareti, sorgu araclari (SAP hata govdesi, kesin truncated, TADIR 5'li parca, FM takma adi, where-used paket ayrimi, kanonik worklist), reviewer fugr/func pin (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): query.py #314 dump okuma -> Z166 (adt_dump_read + adt_dump_list baska-client gizleme/sayac + arac gurultusu etiketi; skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py, gate.READ_TOOLS). query.py #312 SQL 255 -> Z165 (asagida sap_adt_lib). MCP arac aciklamasi < 2000 karakter butcesi ALINMAZ: aXet MCP sunmuyor (CLI); aciklamanin modele ulasma yolu OLCULMEDI. Canli SAP dogrulamasi (Z165/Z166) bekliyor. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): query.py: #362 metot bloğu sınırı -> aXet diag._metot_cikar (adt_get_method) ortak modüle bağlandı; #365 geçersiz escape aXet'te zaten vardı. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): guardrails/gate ad kararı ad_politikasi'ne bağlandı (bildirilmiş /<NS>/, root parametresi); std_dml_scan/std_ext_scan _izinli ad politikasından — bildirilmemiş /Z…/ /Y…/ artık standart (sıkılaştırma) · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: tools/badi.py YENİ (adt_badi_spot_read · adt_badi_spot_write, s4_private); atom/query FUGR/I group argümanı; adt_atc_check ENHS atc_kapsam_disi; adt_sql_query execution_time_ms; _reviewer fugr_include→program_push (aXet farkı); composite yol parçası url_segmenti; 2cc3454 fikstür çapası ALMA; c457161 #434 adt_where_used bdef dar uç (/bo/behaviordefinitions/<url_segmenti>, varlık aynı uçtan; yalnız 404 = yok) UYARLANDI; 8565c9d #408 ack_drop docstring'i (_reviewer + adt_push_source: tip hükmüne etkisi yok) UYARLANDI; adt_publish_service metadata_path (odata_servis_yolu, /NS/X → /sap/opu/odata/ns/X)"
     },
     {
       "source": "DEV_CORE",
@@ -4019,7 +4053,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Satir 754'teki duz metin sifre TASINMAZ (yer tutucu)."
+      "note": "Satir 754'teki duz metin sifre TASINMAZ (yer tutucu). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ENHO bağlı include tek aktivasyon + version=inactive tuzağı (ops §4.3); ATC sırası push→aktive→ATC, öncesi↔sonrası, clean-core P1 muafiyeti, ölçülemeyen tip ≠ temiz (query §4); SM12 dili VAR"
     },
     {
       "source": "DEV_CORE",
@@ -4029,8 +4063,8 @@
         "skills-sap/sap-adt-foundation/references/tool-catalog.md"
       ],
       "party": 2,
-      "status": "tamam",
-      "note": "MCP semantigi -> CLI arac katalogu. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): adt-mcp.md dump okuma bolumu -> tool-catalog.md 'adt_dump_read' + foundation-query.md §6 (Z166). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): metot bloğu sınırı + retry notları -> references/tool-catalog.md adt_get_method + IMPLEMENTATION §26; radar satırı alınmadı."
+      "status": "kismi",
+      "note": "MCP semantigi -> CLI arac katalogu. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): adt-mcp.md dump okuma bolumu -> tool-catalog.md 'adt_dump_read' + foundation-query.md §6 (Z166). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): metot bloğu sınırı + retry notları -> references/tool-catalog.md adt_get_method + IMPLEMENTATION §26; radar satırı alınmadı. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): guardrail metni müşteri ad alanı + adt_get_method sınır kuralı → tool-catalog (A2 kulvarı; B2 dokunmadı)"
     },
     {
       "source": "DEV_CORE",
@@ -4043,7 +4077,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "ADT kismi foundation known-errors-adt; klasik 12.6 sap-classic-abap/references/known-errors-classic.md; UI5 12.1-12.4 sap-ui5-fiori/references/known-errors-ui5.md (12.5 ADT konusu)."
+      "note": "ADT kismi foundation known-errors-adt; klasik 12.6 sap-classic-abap/references/known-errors-classic.md; UI5 12.1-12.4 sap-ui5-fiori/references/known-errors-ui5.md (12.5 ADT konusu). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): fallbackLocale 1.71.85 satırı UI5 → B1 kulvarı (B2 dokunmadı)"
     },
     {
       "source": "DEV_CORE",
@@ -4063,7 +4097,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-46 (:121; Z206 öncesi aXet FE-43) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): lessons-learned tur 4 eklemeleri (SQL 255 · dump client) -> Z165/Z166 belge karsiliklari (foundation-query.md). Tur 5 (2026-10-04): PATTERN #41 -> memory/feedback_ortam-normal-hukmu-hata-metnini-oku.md (prior-art yok). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): PATTERN #19 $TMP notu -> known-errors-adt.md G-1 (aXet istisnasıyla)."
+      "note": "Madde madde eslendi (2026-09-13): genel dersler hafizaya (#15 #17 #18 #26 #31 + #12/#14, #27, #30/#33-meta/#18g-h, tetik ifadeleri); ADT dersleri known-errors-adt + foundation-query; CDS #21/#32 cds.md; #11 kardes coding-patterns §5; klasik #7 #8 #22 #23 #33 sap-classic-abap; yasak tetik cumleleri core/sap. Alinmaz: #10 #28 #29 talimat-bakimi, oturum protokolu, istatistik (Claude/junction/tarihsel). 2026-09-25 (#34-#39): #34 → memory/feedback_olcum-onkosullu-risk-notu.md; #35 (paylaşım/önbellek sorusu çalışma zamanında ölçülür) → memory/feedback_yesil-sinyal-kapsamini-sor.md madde 7 (:28); #36 zaten var memory/feedback_bayat-sayi-referans.md:16; #37 zaten var sap-ui5-fiori checklists.md FE-46 (:121; Z206 öncesi aXet FE-43) + app-skeleton.md §7 (:136); #38 zaten var message-class.md §3.7 (:118); #39 alınmaz (ajan aracına özgü ayar uyarısı ölçümü, aXet'te karşılığı yok). Tur 2 (2026-09-25): PATTERN #40 genel dersi (çerçevenin kendi nesnesine eklediği parametreyi elle kurulan istek almaz; tek-bağlam testi yapısal olarak yakalayamaz) → memory/feedback_ui5-elle-kurulan-istek-sap-client.md 'Genel ders'; tetik ifadeleri → known-errors-ui5.md belirti satırları (:62-63). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): lessons-learned tur 4 eklemeleri (SQL 255 · dump client) -> Z165/Z166 belge karsiliklari (foundation-query.md). Tur 5 (2026-10-04): PATTERN #41 -> memory/feedback_ortam-normal-hukmu-hata-metnini-oku.md (prior-art yok). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): PATTERN #19 $TMP notu -> known-errors-adt.md G-1 (aXet istisnasıyla). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): kardeş taraması 'kopyalar birebir aynı olmayabilir' UI5 → B1 kulvarı (B2 dokunmadı)"
     },
     {
       "source": "DEV_CORE",
@@ -4086,18 +4120,19 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "2026-09-27 uyum turu 3: aXet karşılığı v0.5.13 Z144 (indir/eslik/drift/salt-okur proxy) + v0.5.14 Z160 (anlik-kur). Kaynak kural 'localService dışlaması etkisiz' deploy-and-local-run.md'de aynı."
+      "note": "2026-09-27 uyum turu 3: aXet karşılığı v0.5.13 Z144 (indir/eslik/drift/salt-okur proxy) + v0.5.14 Z160 (anlik-kur). Kaynak kural 'localService dışlaması etkisiz' deploy-and-local-run.md'de aynı. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BSP adı politikası + ns ICF yolu → deploy-and-local-run §2; tazelik damgası store'ları ALMA"
     },
     {
       "source": "DEV_CORE",
       "pattern": "playbook/modules/*",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-intake-triage/references/modules/"
+        "skills-sap/sap-intake-triage/references/modules/",
+        "skills-sap/sap-intake-triage/references/modules/sd-dersler.md"
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Yalniz SD var; diger moduller uydurulmaz. 2026-09-25: SD-K3 sirasi (RFC FM eklendi) + write-api-selection linki + SD_SCDS_CREATE ADIM 4 notu. 2026-10-19 (Z200): referans/sd/ katmani (tablolar, BAPI, gelistirme noktalari, SPRO, islem kodlari, is akislari) + LO-VC belge konfigurasyonu (#355) + karakteristik hizli giris (#354) + T-SD-8."
+      "note": "Yalniz SD var; diger moduller uydurulmaz. 2026-09-25: SD-K3 sirasi (RFC FM eklendi) + write-api-selection linki + SD_SCDS_CREATE ADIM 4 notu. 2026-10-19 (Z200): referans/sd/ katmani (tablolar, BAPI, gelistirme noktalari, SPRO, islem kodlari, is akislari) + LO-VC belge konfigurasyonu (#355) + karakteristik hizli giris (#354) + T-SD-8. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): sd.md +118 → YENİ sd-dersler.md SD-D1…SD-D11 (kimlik aynı) + sd.md işaretçileri"
     },
     {
       "source": "DEV_CORE",
@@ -4139,7 +4174,7 @@
         "skills-sap/sap-cds-ddic/references/checklists.md"
       ],
       "status": "tamam",
-      "note": "Yazma oncesi kontrol listesi."
+      "note": "Yazma oncesi kontrol listesi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-CDS-SQLV-02 namespace öneki (/NSPC/SD001_V_ = 14)"
     },
     {
       "source": "DEV_CORE",
@@ -4161,7 +4196,7 @@
         "skills-sap/sap-cds-ddic/references/checklists.md"
       ],
       "status": "tamam",
-      "note": "Yazma oncesi kontrol listesi."
+      "note": "Yazma oncesi kontrol listesi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-STR-FIELD-01 INFO→WARNING (doğrulayıcı aXet'te yok → elle) · C-STR-CUR-02"
     },
     {
       "source": "DEV_CORE",
@@ -4172,7 +4207,7 @@
         "skills-sap/sap-cds-ddic/references/checklists.md"
       ],
       "status": "tamam",
-      "note": "Yazma oncesi kontrol listesi."
+      "note": "Yazma oncesi kontrol listesi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): C-TBL-CUR-02 · C-TBL-DROP-01 fiziksel tip · YENİ C-TBL-CRE-01 (WARNING) / C-TBL-CRE-02 (BLOCKER); AX-TBL-APPROVAL-01 korundu"
     },
     {
       "source": "DEV_CORE",
@@ -4195,7 +4230,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "2026-09-25: C-RAP-STD-01/BD-01 -> checklists.md sekil secimi satiri (write-api-selection sirasi + TS §6.4); troubleshoot'a released BO 'operation not activated' satiri. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #359 nötr ifade — aXet'te zaten nötr, değişiklik yok."
+      "note": "2026-09-25: C-RAP-STD-01/BD-01 -> checklists.md sekil secimi satiri (write-api-selection sirasi + TS §6.4); troubleshoot'a released BO 'operation not activated' satiri. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #359 nötr ifade — aXet'te zaten nötr, değişiklik yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag satırı (troubleshoot)"
     },
     {
       "source": "DEV_CORE",
@@ -4207,7 +4242,7 @@
         "skills-sap/sap-rap/references/troubleshoot.md"
       ],
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag satırı (troubleshoot)"
     },
     {
       "source": "DEV_CORE",
@@ -4256,7 +4291,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Oluşturma 6 faz + FE-01..49; Otomatik sütunu script adı ya da yok. 2026-09-25: kaynak FE-45/46/47 aXet'te farklı numarayla zaten vardı (o tarihte aXet FE-44/FE-43/FE-45). Kaynak FE-42 (büyük yük → HTTP 414) ve FE-43 (ikinci modelde metadataUrlParams) o tarihte aXet FE-46/FE-47 olarak eklendi + freestyle-odata-v2.md §7.3 (:287). Tur 2: kaynak FE-48/FE-49 aXet'te aynı numarayla (çakışma yok) → checklists.md + freestyle §7.4/§7.5; FE-15 FE-49'a atıf. Z206 (2026-10-19): FE-42..47 kaynak numaralarına hizalandı (checklists.md :118-122), eski aXet FE-42 (sıfır dolgusu) → AX-FE-01 (:125); kaynak FE-44 (istemci boyut kapısı) aXet'te yok — eski → yeni maintenance/kimlik-eslemesi.md. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): FE-44 1024² düzeltmesi — aXet'te zaten 1024² (değişiklik gerekmedi)."
+      "note": "Oluşturma 6 faz + FE-01..49; Otomatik sütunu script adı ya da yok. 2026-09-25: kaynak FE-45/46/47 aXet'te farklı numarayla zaten vardı (o tarihte aXet FE-44/FE-43/FE-45). Kaynak FE-42 (büyük yük → HTTP 414) ve FE-43 (ikinci modelde metadataUrlParams) o tarihte aXet FE-46/FE-47 olarak eklendi + freestyle-odata-v2.md §7.3 (:287). Tur 2: kaynak FE-48/FE-49 aXet'te aynı numarayla (çakışma yok) → checklists.md + freestyle §7.4/§7.5; FE-15 FE-49'a atıf. Z206 (2026-10-19): FE-42..47 kaynak numaralarına hizalandı (checklists.md :118-122), eski aXet FE-42 (sıfır dolgusu) → AX-FE-01 (:125); kaynak FE-44 (istemci boyut kapısı) aXet'te yok — eski → yeni maintenance/kimlik-eslemesi.md. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): FE-44 1024² düzeltmesi — aXet'te zaten 1024² (değişiklik gerekmedi). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): FE-53..FE-57 kaynak numarasıyla; FE-32 (c)/(e) kolon filtresi penceresi; FE-46 core sürümü notu"
     },
     {
       "source": "DEV_CORE",
@@ -4267,7 +4302,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Olusturma 6 faz + FE-01..49; Otomatik sutunu script adi ya da yok. Tur 2 (2026-09-25): UI-BOOT-04 devDeps adlari zaten vardi (:19); kaynak UI-BOOT-05 / UI-SAVE-05 aXet'te baska maddelerde dolu oldugu icin o tarihte UI-BOOT-06 / UI-SAVE-06 olarak eklendi. Z206 (2026-10-19): kaynak numaralarina hizalandi — UI-BOOT-05 (:20) / UI-SAVE-05 (:39); eski aXet UI-BOOT-05 / UI-SAVE-05 → AX-UI-BOOT-01 / AX-UI-SAVE-01; eski → yeni maintenance/kimlik-eslemesi.md."
+      "note": "Olusturma 6 faz + FE-01..49; Otomatik sutunu script adi ya da yok. Tur 2 (2026-09-25): UI-BOOT-04 devDeps adlari zaten vardi (:19); kaynak UI-BOOT-05 / UI-SAVE-05 aXet'te baska maddelerde dolu oldugu icin o tarihte UI-BOOT-06 / UI-SAVE-06 olarak eklendi. Z206 (2026-10-19): kaynak numaralarina hizalandi — UI-BOOT-05 (:20) / UI-SAVE-05 (:39); eski aXet UI-BOOT-05 / UI-SAVE-05 → AX-UI-BOOT-01 / AX-UI-SAVE-01; eski → yeni maintenance/kimlik-eslemesi.md. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): UI-BOOT-01 ölçülen sürüm/tema/@since; UI-PERSO-01 util şablondan"
     },
     {
       "source": "DEV_CORE",
@@ -4280,18 +4315,19 @@
       ],
       "party": 9,
       "status": "tamam",
-      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164). Tur 2 (2026-09-25): BE-79 (WARNING, kaynak MEDIUM) checklist-abap §E; BE-24 sirasi (released BAPI -> OData) + BE-08 savemode_direct checklist-rap; SKILL §6 siradaki BE-80; validator-map 73. Tur 5 (2026-10-04): BE-80 (NUMC karakter literali) -> checklist-abap §B BLOCKER, BE-81 (ABAP PCRE ciplak bosluk) -> §C WARNING; SKILL siradaki BE-82; validator-map dosyadan yeniden sayildi 92/elle 75 (eski 89 bayatti)."
+      "note": "Genel playbook/checklists/* kuralından ayrıldı (2026-09-25). BE-69/BE-72 table-types.md §5.1/§5.2'de zaten vardı. BE-71..78 checklist-abap.md'ye eklendi (:42-45, :63-66); BE-71 ayrıntısı table-types.md §5.4 (:164). Tur 2 (2026-09-25): BE-79 (WARNING, kaynak MEDIUM) checklist-abap §E; BE-24 sirasi (released BAPI -> OData) + BE-08 savemode_direct checklist-rap; SKILL §6 siradaki BE-80; validator-map 73. Tur 5 (2026-10-04): BE-80 (NUMC karakter literali) -> checklist-abap §B BLOCKER, BE-81 (ABAP PCRE ciplak bosluk) -> §C WARNING; SKILL siradaki BE-82; validator-map dosyadan yeniden sayildi 92/elle 75 (eski 89 bayatti). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BE-55 · BE-12 (clean-core muafiyeti) · BE-26 (SUBMIT) · BE-20 (niteleyici) · BE-13 (yapı) · YENİ BE-89 (get_as_ranges or → 500); taşınan abaplint blokları VAR"
     },
     {
       "source": "DEV_CORE",
       "pattern": "playbook/checklists/*",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-code-review/references/"
+        "skills-sap/sap-code-review/references/",
+        "skills-sap/sap-code-review/references/validator-map.md"
       ],
       "party": 6,
       "status": "tamam",
-      "note": "bug-checklist-backend -> checklist-common/abap/cds-ddic/rap/odata-backend/clean-core (69/70; BE-19 sap-rap §A'da). Satir<->validator eslemesini test_checklists koda karsi dogrular."
+      "note": "bug-checklist-backend -> checklist-common/abap/cds-ddic/rap/odata-backend/clean-core (69/70; BE-19 sap-rap §A'da). Satir<->validator eslemesini test_checklists koda karsi dogrular. · [playbook/checklists/checklist-map.yaml] 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): BE-89 → validator-map (100 satır); FE-53..57 B1; aXet'te yaml altyapısı yok"
     },
     {
       "source": "DEV_CORE",
@@ -4302,7 +4338,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Inline POST olcumu, DCL/replacement, sqlViewName/namespace, T1-T14 tuzaklari. Yeni CDS kabugu CLI'de yok (kullanici acar). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): T7 kapsam notu + T7-b (DDIC tabanlı view'da WHEN koşulunda aritmetik) -> skills-sap/sap-cds-ddic/references/cds.md."
+      "note": "Inline POST olcumu, DCL/replacement, sqlViewName/namespace, T1-T14 tuzaklari. Yeni CDS kabugu CLI'de yok (kullanici acar). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): T7 kapsam notu + T7-b (DDIC tabanlı view'da WHEN koşulunda aritmetik) -> skills-sap/sap-cds-ddic/references/cds.md. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): namespace önekli sqlViewName + view entity adı; C-CDS-FROM-04 mevcut kod muafiyeti (BE-68)"
     },
     {
       "source": "DEV_CORE",
@@ -4324,7 +4360,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Yapi, table type, Z tablo. TYPE-POOL alinmadi. Tablo kabugu ve table type araci yok."
+      "note": "Yapi, table type, Z tablo. TYPE-POOL alinmadi. Tablo kabugu ve table type araci yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): başka tabloya nitelenmiş para birimi başvurusu (KONP), konwa/konws CUKY · kmein/konms UNIT"
     },
     {
       "source": "DEV_CORE",
@@ -4367,11 +4403,12 @@
         "skills-sap/sap-rap/references/layering-and-bdef.md",
         "skills-sap/sap-rap/references/behavior-impl.md",
         "skills-sap/sap-rap/references/service-publish.md",
-        "skills-sap/sap-rap/references/eml.md"
+        "skills-sap/sap-rap/references/eml.md",
+        "skills-sap/sap-rap/references/troubleshoot.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "§32-35 dagitildi. BDEF/CCIMP push ve DDLS/SRVD/BDEF kabugu CLI'de yok."
+      "note": "§32-35 dagitildi. BDEF/CCIMP push ve DDLS/SRVD/BDEF kabugu CLI'de yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): etag üç save biçimi + namespace BDEF; iki managed kök aynı tablo; custom entity + query sınıfı §5a (araç desteği A2); BY \\_assoc FIELDS(…) WITH varsayılan (HANA -305); SUBMIT yasak/DESTINATION NONE serbest; eski sürüm SNAPT; additional save BO dışı tampon"
     },
     {
       "source": "DEV_CORE",
@@ -4428,8 +4465,8 @@
         "skills-sap/sap-adt-foundation/references/tool-catalog.md"
       ],
       "party": 3,
-      "status": "tamam",
-      "note": "Python REST şablonları alınmadı; ccau/ccimp push aracı yok. 2026-09-25: run_pretty_printer düzeltmesi (kaynağı değiştirmez) zaten vardı (classes.md §7); ATC 'Incorrect Pretty Print state' mekanizması + kapatma reçetesi classes.md §7.1 (:133); biçimleme alt komutu adt_pretty_print (tool-catalog.md :248, iş listesi Z128). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #364 $TMP lab daraltması — aXet'e uyarlandı: aXet'te TMP_MUAF_ARACLAR var (kabuk/domain/DTEL/ttyp $TMP'de transportsuz) -> known-errors-adt.md G-1."
+      "status": "kismi",
+      "note": "Python REST şablonları alınmadı; ccau/ccimp push aracı yok. 2026-09-25: run_pretty_printer düzeltmesi (kaynağı değiştirmez) zaten vardı (classes.md §7); ATC 'Incorrect Pretty Print state' mekanizması + kapatma reçetesi classes.md §7.1 (:133); biçimleme alt komutu adt_pretty_print (tool-catalog.md :248, iş listesi Z128). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #364 $TMP lab daraltması — aXet'e uyarlandı: aXet'te TMP_MUAF_ARACLAR var (kabuk/domain/DTEL/ttyp $TMP'de transportsuz) -> known-errors-adt.md G-1. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): türetilmiş RAP tipi (OO_SOURCE_BASED 011), 409 ilk deneme, ABAP Unit sahte sıfır tekrar sırası → classes.md; adt_get_method ENDMETHOD. ENDCLASS. notu tool-catalog'da (A2)"
     },
     {
       "source": "DEV_CORE",
@@ -4440,7 +4477,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Text pool yazma araci yok."
+      "note": "Text pool yazma araci yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): SM12 kalıntı kilit: kullanıcı siler, ajan force-clear etmez — VAR (foundation-ops)"
     },
     {
       "source": "DEV_CORE",
@@ -4452,7 +4489,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "FUGR/FM yaratma ve FM push araci yok. Ekran uretici FM yer tutucu."
+      "note": "FUGR/FM yaratma ve FM push araci yok. Ekran uretici FM yer tutucu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): f646f36 (FM güncelleme modülü metadata PUT · readback 2 boş satır) başka kulvarca fugr-fm.md'de işlendi; A2 ek yapmadı · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): güncelleme modülü protokolü §2.3 (processingType=update, startImmediate, kanıt TFDIR-UTASK='1'); 'Z/Y' metni A1 namespace sonrası güncellenecek"
     },
     {
       "source": "DEV_CORE",
@@ -4504,6 +4541,18 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "playbook/templates/ui5-freestyle/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/templates/ui5-freestyle/",
+        "skills-sap/sap-ui5-fiori/tests/test_ui5_sablon.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ÖZEL DESEN (playbook/templates/* classic deseninden ÖNCE): kanonik freestyle şablon → templates/ui5-freestyle/ (atıflar aXet yollarına, iç numaralar nötr, README aXet için); test tests/test_ui5_sablon.py"
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "playbook/templates/*",
       "decision": "al",
       "targets": [
@@ -4540,11 +4589,13 @@
       "pattern": "playbook/ui-freestyle-odata-v2.md",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/references/"
+        "skills-sap/sap-ui5-fiori/references/",
+        "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "freestyle-odata-v2, list-grid-alv, app-skeleton, deploy-and-local-run. Tur 2: §E TablePersonalizer 'kopyalamadan önce' notu → list-grid-alv.md §3 (:93)."
+      "note": "freestyle-odata-v2, list-grid-alv, app-skeleton, deploy-and-local-run. Tur 2: §E TablePersonalizer 'kopyalamadan önce' notu → list-grid-alv.md §3 (:93). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): minUI5/tema ölçümü, flexibilityservices 1.71 adı, util kopyaları ayrışık (278–844), satır modu/rowsUpdated sürüme bağlı"
     },
     {
       "source": "DEV_CORE",
@@ -4557,7 +4608,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Dogrulama kodu script'e donustu."
+      "note": "Dogrulama kodu script'e donustu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #389 yerleşim, #/%/boşluklu klasör, dizin listesi DURDU, localhost UNC, MSYS_NO_PATHCONV, PDF UYARILI → pdf-with-screenshots §B4; çıplak dosya adı cwd tuzağı"
     },
     {
       "source": "DEV_CORE",
@@ -4589,11 +4640,12 @@
         "core/00-temel.md",
         "skills-sap/sap-dev/SKILL.md",
         "skills-sap/sap-dev/references/coding-patterns.md",
-        "skills-sap/sap-classic-abap/references/alv-report.md"
+        "skills-sap/sap-classic-abap/references/alv-report.md",
+        "skills-sap/sap-cds-ddic/references/cds.md"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "3 deneme DUR kurali cekirdek §1; spec otoritesi sap-dev §6; ekip ABAP kurallari coding-patterns §5; hotspot->CALL TRANSACTION alv-report §4. Referans script klasoru ve baglanti bolumu alinmadi."
+      "note": "3 deneme DUR kurali cekirdek §1; spec otoritesi sap-dev §6; ekip ABAP kurallari coding-patterns §5; hotspot->CALL TRANSACTION alv-report §4. Referans script klasoru ve baglanti bolumu alinmadi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): paket-türevli önek + RAP ad kuralı <önek> (Z·Y·/<NS>/) → sap-cds-ddic cds.md §3.2 (namespace'li classic view 14 karakter sınırı notu)"
     },
     {
       "source": "DEV_CORE",
@@ -4602,7 +4654,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Claude altyapi fix proseduru."
+      "note": "Claude altyapi fix proseduru. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-infra-fix-proseduru.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -4611,7 +4663,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "DEV_CORE sistem denetimi runbook'u."
+      "note": "DEV_CORE sistem denetimi runbook'u. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-sistem-denetimi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -4629,7 +4681,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "DEV_CORE playbook indeksi; aXet'te skill description'lari."
+      "note": "DEV_CORE playbook indeksi; aXet'te skill description'lari. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [README.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -4638,7 +4690,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "aXet'te ZATEN VAR ve DAHA GELİŞMİŞ: scripts/guncelle.py (%guncelle) + scripts/guncelle_proje.py (%guncelle-proje). DEV_CORE howto'sunun 9 manuel adımı (durum ölç, pull, team_setup, overlay-onaylı, tohum doğrula, makine-lokal yüzeyler, validator, oturum kapat-aç, ölç) yerine tek motor: otomatik vaka tespiti (V0-V7), 3-yollu git merge-file birleştirme, onay sözleşmesi (Q1: her proje ayrı onaylanır), çakışma eşiği (K6a). Genel disiplin dersleri (kirli ağaçta pull etme, --force yok, junction'a özyinelemeli silme yok) zaten guncelle.py'nin kendi Dur/GECERLI_KARARLAR/K4 kurallarında karşılanıyor."
+      "note": "aXet'te ZATEN VAR ve DAHA GELİŞMİŞ: scripts/guncelle.py (%guncelle) + scripts/guncelle_proje.py (%guncelle-proje). DEV_CORE howto'sunun 9 manuel adımı (durum ölç, pull, team_setup, overlay-onaylı, tohum doğrula, makine-lokal yüzeyler, validator, oturum kapat-aç, ölç) yerine tek motor: otomatik vaka tespiti (V0-V7), 3-yollu git merge-file birleştirme, onay sözleşmesi (Q1: her proje ayrı onaylanır), çakışma eşiği (K6a). Genel disiplin dersleri (kirli ağaçta pull etme, --force yok, junction'a özyinelemeli silme yok) zaten guncelle.py'nin kendi Dur/GECERLI_KARARLAR/K4 kurallarında karşılanıyor. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-cekirdek-guncelleme.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -4686,6 +4738,17 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "playbook/adt-enhancement-spot-badi.md",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-adt-foundation/references/enhancement-spot-badi.md"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): kaynak CLI kullanımı aXet araç akışına çevrildi (adt_badi_spot_read/write); ölçüm etiketleri korundu"
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "playbook/*",
       "decision": "bekliyor",
       "targets": [],
@@ -4702,7 +4765,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Etiket blogu REGISTRY/TIP_PROFIL_KISITI ile testli; matris rehber."
+      "note": "Etiket blogu REGISTRY/TIP_PROFIL_KISITI ile testli; matris rehber. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): s4_private 1909: define view entity … as select from yok, BDEF strict yok → profiles.md"
     },
     {
       "source": "DEV_CORE",
@@ -4713,7 +4776,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: aktivasyon govde hukmu True/False/None + ayirt edici worklist sondasi (olcemeyen sonda basari degil), syntax_check valid uc degerli (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #312/#317 freestyle 255 karakter SATIR siniri -> Z165: sql_satirlarini_kir + SQLSatirKirilamadi, freestyle'a POST eden 3 nokta (hayalet transport sondasi, list_transports, run_query) kirar; run_query 400 govdesini kirpmadan tasir. Test: tests/test_sql_satir_kirma.py (K1-K13, R1-R3, S1, D1). Canli dogrulama bekliyor. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #363 alındı -> sapadt/lib/sap_adt_lib.py _should_retry: son denemede uyumadan son yanıt döner, 500 yeniden denenmez (Z211, IMPLEMENTATION §26.2)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: aktivasyon govde hukmu True/False/None + ayirt edici worklist sondasi (olcemeyen sonda basari degil), syntax_check valid uc degerli (IMPLEMENTATION.md §17). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #312/#317 freestyle 255 karakter SATIR siniri -> Z165: sql_satirlarini_kir + SQLSatirKirilamadi, freestyle'a POST eden 3 nokta (hayalet transport sondasi, list_transports, run_query) kirar; run_query 400 govdesini kirpmadan tasir. Test: tests/test_sql_satir_kirma.py (K1-K13, R1-R3, S1, D1). Canli dogrulama bekliyor. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #363 alındı -> sapadt/lib/sap_adt_lib.py _should_retry: son denemede uyumadan son yanıt döner, 500 yeniden denenmez (Z211, IMPLEMENTATION §26.2). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): validate_object_name/validate_package_name/_validate_object_name(referans=) ad_politikasi'ne bağlandı (A1, Edit); URL kodlaması A2 · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: ENHS lib (get/create/write/activate_enhancement_spot + enhs_*), CSRF ortak yüklem _csrf_reddi_mi, custom entity kaynak kapısı, find_ghost_transports okunamadı≠yok, oturum best-effort kapatma (_oturumu_kapat), set_object_source biçim döngüsü içerik reddinde durur, kilit hatası SAP sebebi; 35 kodsuz yol parçası url_segmenti (ad doğrulaması A1)"
     },
     {
       "source": "DEV_CORE",
@@ -4724,7 +4787,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: SAP hata govdesi (last_sql_error), arama tip suzgeci elemesi gorunur, push on-kontrol olculemedi isareti, kanonik worklist + where-used paket ayrimi yardimcilari (IMPLEMENTATION.md §17). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362 alındı -> _push_method_includes ortak lib/utils/abap_metot_blok.py ile (belirsiz/kapanmamış/AMDP blokta kilit ve PUT yok, Z213). aXet'e özgü ek: yaratma hatasında SAP gövdesi redact + 500 karakter kesmeyle log'a (_sap_govdesi_eki)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 575/575 senaryo + 244 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-14: SAP hata govdesi (last_sql_error), arama tip suzgeci elemesi gorunur, push on-kontrol olculemedi isareti, kanonik worklist + where-used paket ayrimi yardimcilari (IMPLEMENTATION.md §17). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362 alındı -> _push_method_includes ortak lib/utils/abap_metot_blok.py ile (belirsiz/kapanmamış/AMDP blokta kilit ve PUT yok, Z213). aXet'e özgü ek: yaratma hatasında SAP gövdesi redact + 500 karakter kesmeyle log'a (_sap_govdesi_eki). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: FUGR/I push_fugr_include + grup kanıtı + activate_object(group=); islem-izinli get_object_url (silme/metadata/atc); hayalet transport okunamadı uyarısı; run_sql_query execution_time_ms; _hata_ayrintisi_ekle (redact ile); 11 kodsuz yol parçası url_segmenti; ce8a124 G1 yerel dosya adı: download_object/push_object/delete_object `yerel_ad` (/NS/X → #ns#x; eski ad delete_object'te sürücü kökündeki dosyayı unlink ederdi)"
     },
     {
       "source": "DEV_CORE",
@@ -4735,7 +4798,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: FUGR/I (FUGR_INCLUDE_TYPES, grup kanıtı, ad kuralı) + ENHS enhancementspot işlem-izinli girdi (islem_reddi, get_object_url(islem=))"
     },
     {
       "source": "DEV_CORE",
@@ -4820,7 +4883,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Kod ajani tasidi."
+      "note": "Kod ajani tasidi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): konwa/konws CUKY · kmein/konms UNIT; curr CURR'dan çıkarıldı (gevşetme, kaynak sahip onaylı)"
     },
     {
       "source": "DEV_CORE",
@@ -4853,7 +4916,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Kod ajani tasidi. Yeniden yazildi."
+      "note": "Kod ajani tasidi. Yeniden yazildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): 27ae65e yaml-lite tırnak içi '#' ALMA — aXet sap-project.json'u json ile okur"
     },
     {
       "source": "DEV_CORE",
@@ -4875,18 +4938,20 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362 ortak metot bloğu sınırı modülü alındı; kod gövdesi çekirdekle birebir, başlık aXet yollarına uyarlandı; TEK FARK aXet eki `bitis_sonrasi_kod` (`ENDMETHOD. ENDCLASS.` bitiş sayılmaz — bug gate F1, iş listesi Z221): sonraki turda birebir kopyalanırken bu ek KORUNMALI. Okuma (diag._metot_cikar) ve yazma (_push_method_includes) yolu bunu kullanır."
+      "note": "2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #362 ortak metot bloğu sınırı modülü alındı; kod gövdesi çekirdekle birebir, başlık aXet yollarına uyarlandı; TEK FARK aXet eki `bitis_sonrasi_kod` (`ENDMETHOD. ENDCLASS.` bitiş sayılmaz — bug gate F1, iş listesi Z221): sonraki turda birebir kopyalanırken bu ek KORUNMALI. Okuma (diag._metot_cikar) ve yazma (_push_method_includes) yolu bunu kullanır. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): d5da3c1 ENDMETHOD'dan sonra kod → aXet'te VAR (bitis_sonrasi_kod; adt_get_method belirsiz + end_line:null)"
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/utils/*",
       "decision": "alinmaz",
       "targets": [
-        "skills-sap/sap-adt-foundation/scripts/sapadt/"
+        "skills-sap/sap-adt-foundation/scripts/sapadt/",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ad_politikasi.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/cds_metin.py"
       ],
       "party": 2,
       "status": "-",
-      "note": "Kalanlar: console (CLI basinda UTF-8 ile telafi), ddic_aktivasyon (populate 2026-09-14 tasindi ama modul yine alinmadi: satir basina adt_activate/composite; tetik: cok-objeli tek istek DDIC aktivasyonu ihtiyaci), drift_imzasi (aXet karsiligi yok), send_mail (konu disi). Yeni dosya gelirse dosya bazinda satir ac."
+      "note": "Kalanlar: console (CLI basinda UTF-8 ile telafi), ddic_aktivasyon (populate 2026-09-14 tasindi ama modul yine alinmadi: satir basina adt_activate/composite; tetik: cok-objeli tek istek DDIC aktivasyonu ihtiyaci), drift_imzasi (aXet karsiligi yok), send_mail (konu disi). Yeni dosya gelirse dosya bazinda satir ac. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ad_politikasi.py → lib/utils/ad_politikasi.py (tek ad politikası, customer_namespaces sap-project.json, fail-closed, url_segmenti, iki katmanlı gramer, #ns# dosya adı, OData/FUGR yardımcıları); project_config 27ae65e yaml '#' ALMA (JSON) · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: YENİ cds_metin.py → lib/utils/cds_metin.py (cds_kod_metni tek kaynak; sap_adt_lib yeniden dışa açar)"
     },
     {
       "source": "DEV_CORE",
@@ -4897,7 +4962,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-25 tur 2: uzun-yol teşhis ipucu aXet'te ZATEN VAR (sapadt/lib/validators/run_review.py uzun_yol_ipucu + tests/test_uzun_yol_teshisi.py). Kaynağın ek LongPathsEnabled değeri + \\\\?\\ önekli varlık sondası alınmadı (yazma kapısı altyapısı; kazanç düşük)."
+      "note": "Kod + cevrimdisi test tamam (2026-09-14 yeniden kosuldu: 401/401 senaryo + 135 unittest); canli SAP dogrulamasi bekliyor (maintenance/canli-test-plani.md). 2026-09-25 tur 2: uzun-yol teşhis ipucu aXet'te ZATEN VAR (sapadt/lib/validators/run_review.py uzun_yol_ipucu + tests/test_uzun_yol_teshisi.py). Kaynağın ek LongPathsEnabled değeri + \\\\?\\ önekli varlık sondası alınmadı (yazma kapısı altyapısı; kazanç düşük). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): DCL ÖLÇÜLMEDİ kapsam beyanı (metin + json bakilmayan); drop-guard #408 metni; check_ddic_builtin_fields zinciri ALMA"
     },
     {
       "source": "DEV_CORE",
@@ -5007,7 +5072,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): abaplint pin 2.120.38 -> 2.120.64 (cekirdek 160 dosyalik korpusla olctu) — isteğe bağlı, karar kullanicida; aXet pini degismedi. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): pin 2.120.64 -> 2.120.89 (gate + sap-code-review abaplint_run + belge); aXet'te 13 dosya yan yana ölçüldü, çıktı birebir aynı, 2.120.9999 negatif kontrolü FAIL. (Not düzeltmesi: tur 6'da pin zaten 2.120.64'e taşınmıştı; yukarıdaki 'aXet pini degismedi' ifadesi tur 4 itibarıyla geçerliydi.)"
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): abaplint pin 2.120.38 -> 2.120.64 (cekirdek 160 dosyalik korpusla olctu) — isteğe bağlı, karar kullanicida; aXet pini degismedi. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): pin 2.120.64 -> 2.120.89 (gate + sap-code-review abaplint_run + belge); aXet'te 13 dosya yan yana ölçüldü, çıktı birebir aynı, 2.120.9999 negatif kontrolü FAIL. (Not düzeltmesi: tur 6'da pin zaten 2.120.64'e taşınmıştı; yukarıdaki 'aXet pini degismedi' ifadesi tur 4 itibarıyla geçerliydi.) · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması AD_ADAYI (#402 K1)"
     },
     {
       "source": "DEV_CORE",
@@ -5029,7 +5094,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması ad politikasından (#402)"
     },
     {
       "source": "DEV_CORE",
@@ -5040,7 +5105,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması ad politikasından (#402)"
     },
     {
       "source": "DEV_CORE",
@@ -5051,7 +5116,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #399 sözlük dışı CUKY başvurusu WARNING (gevşetme), qualified başka tablo, abap.cuky; #405 takma adsız eleman; AD_ADAYI"
     },
     {
       "source": "DEV_CORE",
@@ -5095,7 +5160,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad kararı ad politikasından"
     },
     {
       "source": "DEV_CORE",
@@ -5117,7 +5182,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #405 blok düzeyi etag (kök master, çocuk master|dependent, yoksa ÖLÇÜLMEDİ); ad yakalaması kaldırıldı"
     },
     {
       "source": "DEV_CORE",
@@ -5128,7 +5193,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması AD_ADAYI"
     },
     {
       "source": "DEV_CORE",
@@ -5139,7 +5204,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): musteri_karari (eski her-namespace-müşteri regex'i kaldırıldı) + AD_ADAYI + root abstract/custom entity + url_segmenti"
     },
     {
       "source": "DEV_CORE",
@@ -5150,7 +5215,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): dosya adı → SAP adı dosya_adindan_ad (#ns#x)"
     },
     {
       "source": "DEV_CORE",
@@ -5161,7 +5226,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): yapı/alan adı gramerden, çözülemeyen → SKIPPED ad-cozulemedi, url_segmenti"
     },
     {
       "source": "DEV_CORE",
@@ -5172,7 +5237,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI + musteri_karari"
     },
     {
       "source": "DEV_CORE",
@@ -5183,7 +5248,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): aday çıkarımı aXet'te zaten namespace'li (VAR, kaynak namespace-kayitsiz SKIP ALINMADI — aXet ölçüyor); URL url_segmenti; abap.* kapsam beyanı VAR"
     },
     {
       "source": "DEV_CORE",
@@ -5194,7 +5259,7 @@
       ],
       "party": 2,
       "status": "kismi",
-      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. ack_drop yasak (gate)."
+      "note": "run_review yazma oncesi zincirinde; proje pre-commit'i parti 7. ack_drop yasak (gate). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #408 fiziksel tip kıyası (tür/daralma/çözülemeyen BLOCKER, genişleme WARNING, aynı tip INFO), tam tip metni, çözülemeyen ad → SKIPPED, url_segmenti, sap-client bağlantıdan"
     },
     {
       "source": "DEV_CORE",
@@ -5240,7 +5305,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Naming tablosu regex'leri, istisna, include turetme, 26 karakter; tests/test_package_naming (13)."
+      "note": "Naming tablosu regex'leri, istisna, include turetme, 26 karakter; tests/test_package_naming (13). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): d6572b3 ① asddls/asdcls/#ns#/KAPSAM aXet'te VAR; A1 değişikliği yok"
     },
     {
       "source": "DEV_CORE",
@@ -5251,7 +5316,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Kural B (yerel BDEF yoksa) OLCULEMEDI, bloklamaz. rap_cds_creation zincirinde."
+      "note": "Kural B (yerel BDEF yoksa) OLCULEMEDI, bloklamaz. rap_cds_creation zincirinde. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI/c_katmani (Z/Y/bildirilmiş NS, Y sıkılaştırma), .bdef.asbdef, ad_gecis_deseni, SKIPPED ad-cozulemedi|namespace-kayitsiz; aXet Rule B sırası korundu"
     },
     {
       "source": "DEV_CORE",
@@ -5262,7 +5327,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Kok = proje dizini; tarama siniri measured=false; musteri master adlari cikarildi."
+      "note": "Kok = proje dizini; tarama siniri measured=false; musteri master adlari cikarildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI + ad_coz, çözülemeyen ad → SKIPPED ad-cozulemedi"
     },
     {
       "source": "DEV_CORE",
@@ -5324,11 +5389,12 @@
       "pattern": "scripts/validators/check_ui5_freestyle_traps.py",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/scripts/"
+        "skills-sap/sap-ui5-fiori/scripts/",
+        "skills-sap/sap-ui5-fiori/tests/test_ui5_xml_yorumu.py"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Proje klasorune calisan bagimsiz script + KAPSAM; tests 38/38."
+      "note": "Proje klasorune calisan bagimsiz script + KAPSAM; tests 38/38. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): XML yorum maskesi aXet'te VAR (_ui5scan.xml_yorumsuz); kaynak senaryoları test olarak"
     },
     {
       "source": "DEV_CORE",
@@ -5339,7 +5405,7 @@
       ],
       "party": 7,
       "status": "-",
-      "note": "Yakalama kurali: dosya bazinda satirlar var (run_review zinciri, pre-commit, skill script'leri); yeni validator buraya duser, dosya bazinda karar ver. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #315 check_id_uniqueness ALINMADI: aXet skills-sap 278 tablo kimligi tarandi, gercek cift 0 (tek 'cift' FS/TS sablon ornek kimlikleri FR-001 vb.). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): check_object_in_correct_pkg.py: #359 nötr ifade — karar 'bekliyor' aynen."
+      "note": "Yakalama kurali: dosya bazinda satirlar var (run_review zinciri, pre-commit, skill script'leri); yeni validator buraya duser, dosya bazinda karar ver. 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #315 check_id_uniqueness ALINMADI: aXet skills-sap 278 tablo kimligi tarandi, gercek cift 0 (tek 'cift' FS/TS sablon ornek kimlikleri FR-001 vb.). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): check_object_in_correct_pkg.py: #359 nötr ifade — karar 'bekliyor' aynen. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): check_object_in_correct_pkg VAR (paket-özgü .rules.md regex'i scripts/check_package_naming.py'de) · check_source_drift ALMA (bağlantılı dönemsel araç) · checklist_check ALMA (checklist-map altyapısı yok) · YENİ check_ddic_builtin_fields ALMA (kardeş README sözleşmesi aXet geçici artefaktına uymuyor; açık kalem)"
     },
     {
       "source": "DEV_CORE",
@@ -5374,7 +5440,7 @@
       ],
       "party": 2,
       "status": "tamam",
-      "note": "Hook yerine yazma kapisinda zorunlu kontrol (edit ani degil push ani). Canli okuma kaydi olculdu."
+      "note": "Hook yerine yazma kapisinda zorunlu kontrol (edit ani degil push ani). Canli okuma kaydi olculdu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/hooks/pull_before_edit.py: ALMA — #405 namespace'li adın kabuk komutunda tırnaklanması: aXet'te hook yok, kapı yazma anında pull_state (SAP adı + tip anahtarı) ve önerilen adım kabuk komutu değil araç çağrısı (JSON argüman) ⇒ `/` yol dönüşümü ve `#` yorum tuzağı oluşmaz. 6811b83 worktree damgası lider kararıyla ALMA."
     },
     {
       "source": "DEV_CORE",
@@ -5418,11 +5484,12 @@
       "targets": [
         "scripts/session_brief.py",
         "core/00-temel.md",
-        "scripts/doctor.py"
+        "scripts/doctor.py",
+        "tests/test_session_brief.py"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Hook yerine cekirdek §0: ilk yanittan once session_brief.py. Kullanici karari 2026-09-13. 2026-09-25: _origin_kontrol()'un commit-sayısı ölçüm düzeltmesi (Q337, throttle sadece fetch'te) aXet'te ZATEN DAHA İYİ ÇÖZÜLMÜŞ — scripts/guncelle_proje.py::Klon.geride_mi() (satır ~144-189) katalog/yayın-kalemi bazlı ölçüm kullanıyor (Z29, 2026-09-21, 'commit sayısı ölçü DEĞİLDİR' dersi bağımsız olarak öğrenilmiş)."
+      "note": "Hook yerine cekirdek §0: ilk yanittan once session_brief.py. Kullanici karari 2026-09-13. 2026-09-25: _origin_kontrol()'un commit-sayısı ölçüm düzeltmesi (Q337, throttle sadece fetch'te) aXet'te ZATEN DAHA İYİ ÇÖZÜLMÜŞ — scripts/guncelle_proje.py::Klon.geride_mi() (satır ~144-189) katalog/yayın-kalemi bazlı ölçüm kullanıyor (Z29, 2026-09-21, 'commit sayısı ölçü DEĞİLDİR' dersi bağımsız olarak öğrenilmiş). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): Q349 tam ref → session_brief YAYINLAR_REF refs/remotes/origin/main (test + mutasyon); guncelle*.py açık kalem"
     },
     {
       "source": "DEV_CORE",
@@ -5512,7 +5579,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "tooling_radar_check, instructions_loaded_log, README: Claude isletimine ozgu."
+      "note": "tooling_radar_check, instructions_loaded_log, README: Claude isletimine ozgu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_pbe_msag_textpool.py, _pbe_ui.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -5524,7 +5591,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Proje pre-commit: kimlik dosyasi, sir deseni, paket adlandirma, validators-local, SAP cevrimdisi reviewer. tests/test_precommit (16). 2026-09-25 farkı alınmadı (core_precommit.py): kaynağın public çekirdek sızıntı kapısında dosya-bazlı muafiyet listesi → satır-bazlı, gerekçesi zorunlu muafiyet + her koşumda KAPSAM satırı. aXet eşdeğeri maintenance/yayin_hazirla.py iz taramasında dosya muafiyeti hiç yok (ikili uzantı dışında her metin satır satır; okunamayan BLOCKER) ve KAPSAM satırı basılıyor; 'muafiyet gerekçesinden geniş' dersi Z17'de (kapsam_dogrula) uygulandı + memory/feedback_muafiyet-gerekcesinden-genis-olmasin.md. Proje pre-commit'inde (project_precommit.py) muafiyet listesi yok."
+      "note": "Proje pre-commit: kimlik dosyasi, sir deseni, paket adlandirma, validators-local, SAP cevrimdisi reviewer. tests/test_precommit (16). 2026-09-25 farkı alınmadı (core_precommit.py): kaynağın public çekirdek sızıntı kapısında dosya-bazlı muafiyet listesi → satır-bazlı, gerekçesi zorunlu muafiyet + her koşumda KAPSAM satırı. aXet eşdeğeri maintenance/yayin_hazirla.py iz taramasında dosya muafiyeti hiç yok (ikili uzantı dışında her metin satır satır; okunamayan BLOCKER) ve KAPSAM satırı basılıyor; 'muafiyet gerekçesinden geniş' dersi Z17'de (kapsam_dogrula) uygulandı + memory/feedback_muafiyet-gerekcesinden-genis-olmasin.md. Proje pre-commit'inde (project_precommit.py) muafiyet listesi yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): core_precommit Q349/changelog ALMA (project_precommit'te origin/main ve changelog mantığı yok)"
     },
     {
       "source": "DEV_CORE",
@@ -5598,22 +5665,24 @@
       "decision": "uyarla",
       "targets": [
         "skills-sap/sap-adt-foundation/scripts/sapadt/tools/shells.py",
-        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py"
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/rap_service.py"
       ],
       "party": 3,
       "status": "kismi",
-      "note": "adt_post_shell tipe ozel kabuk: ddls/srvd/bdef/fugr/func/msag/enqu/ttyp; mesaj yazma adt_msgclass_write (cevrimdisi 323/323; canli DOGRULANMADI). KALAN: ddlx/dcl/srvb kabugu, ttyp satir tipi duzeltme, text pool. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): create_rap_service.py: #359 yalnız kurum adı yerine nötr ifade — aXet'te nötr ifade zaten vardı, değişiklik yok."
+      "note": "adt_post_shell tipe ozel kabuk: ddls/srvd/bdef/fugr/func/msag/enqu/ttyp; mesaj yazma adt_msgclass_write (cevrimdisi 323/323; canli DOGRULANMADI). KALAN: ddlx/dcl/srvb kabugu, ttyp satir tipi duzeltme, text pool. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): create_rap_service.py: #359 yalnız kurum adı yerine nötr ifade — aXet'te nötr ifade zaten vardı, değişiklik yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/create_lock_object.py: VAR — kilit nesnesi ad kuralı aXet'te yazma kapısında (ad_politikasi.musteri_adi_mi: E+Z/Y ya da bildirilmiş /NS/…); kaynak yalnız 'E ile başlar' UYARISINI namespace'ten sonraki parçaya taşıdı, aXet'te bu uyarı yok (kapı Z/Y'de E'yi zaten zorunlu tutar, /NS/ kilit nesnesinde E'siz ad meşru) → ALMA. scripts/create_rap_service.py: UYARLA — yol parçaları url_segmenti (lib/rap_service.py publish_xml; bu tur) + odata_servis_yolu → adt_publish_service yanıtında metadata_path (/NS/X servis /sap/opu/odata/ns/X; namespace'li yol canlı ÖLÇÜLMEDİ); e2e/verify adımları aXet'te araç değil (çağıran $metadata'yı okur)."
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/populate_*.py",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-adt-foundation/"
+        "skills-sap/sap-adt-foundation/",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/tools/badi.py"
       ],
       "party": 3,
       "status": "kismi",
-      "note": "2026-09-14 (D3): scripts/sap_adt_populate.py + scripts/sapadt/populate.py tasindi — turler domain, dtel, cds, enqu, msag. Her satirin her adimi sap_adt_cli.calistir uzerinden (kapi + reviewer + arac; ikinci yazma yolu yok); yazmadan once TUM planli cagrilar on geciste kapidan gecer (red -> 0 yazma, exit 2). --force-recreate tasindi: yalniz domain/dtel/cds + --only <TEK AD>; DELETE calistir'dan gecer, delete_verified okunur (dogrulanamazsa kosum durur, kalan satirlar islenmedi); oneri metni tek ada daraltilir. enqu varligi adt_get(enqu) salt-GET sondasi (yeni). Kilit silme/temizleme cagrisi yok; kilit cakismasi satir HATA + SM12 tarifi, kosum devam. Tablolar ALINMADI (toplu CSV turu olarak): 2026-09-21'den beri tek tablo reçetesi (kabuk POST DDL'siz -> ayni oturumda LOCK -> PUT If-Match'siz -> UNLOCK -> aktivasyon -> readback) tools/ddic.py adt_table_create + sap_adt_lib.create_table_with_ddl olarak TASINDI (cevrimdisi test, canli DOGRULANMADI); populate turune baglanmasi ilk canli basaridan sonra degerlendirilir. Alinmayan kaynak ozellikleri: CDS ad on-ek whitelist / sprint gate / TD spec on kontrolu, msgno zfill (3 hane zorunlu), DTEL datatype/length/decimals kolonlari (domain'den okunur). Cevrimdisi testler tests/test_populate.py + tests/test_populate_hat.py; canli SAP DOGRULANMADI. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): populate_cds_views.py: #359 yalnız kurum adı yerine nötr ifade — aXet'te zaten nötr, değişiklik yok."
+      "note": "2026-09-14 (D3): scripts/sap_adt_populate.py + scripts/sapadt/populate.py tasindi — turler domain, dtel, cds, enqu, msag. Her satirin her adimi sap_adt_cli.calistir uzerinden (kapi + reviewer + arac; ikinci yazma yolu yok); yazmadan once TUM planli cagrilar on geciste kapidan gecer (red -> 0 yazma, exit 2). --force-recreate tasindi: yalniz domain/dtel/cds + --only <TEK AD>; DELETE calistir'dan gecer, delete_verified okunur (dogrulanamazsa kosum durur, kalan satirlar islenmedi); oneri metni tek ada daraltilir. enqu varligi adt_get(enqu) salt-GET sondasi (yeni). Kilit silme/temizleme cagrisi yok; kilit cakismasi satir HATA + SM12 tarifi, kosum devam. Tablolar ALINMADI (toplu CSV turu olarak): 2026-09-21'den beri tek tablo reçetesi (kabuk POST DDL'siz -> ayni oturumda LOCK -> PUT If-Match'siz -> UNLOCK -> aktivasyon -> readback) tools/ddic.py adt_table_create + sap_adt_lib.create_table_with_ddl olarak TASINDI (cevrimdisi test, canli DOGRULANMADI); populate turune baglanmasi ilk canli basaridan sonra degerlendirilir. Alinmayan kaynak ozellikleri: CDS ad on-ek whitelist / sprint gate / TD spec on kontrolu, msgno zfill (3 hane zorunlu), DTEL datatype/length/decimals kolonlari (domain'den okunur). Cevrimdisi testler tests/test_populate.py + tests/test_populate_hat.py; canli SAP DOGRULANMADI. 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): populate_cds_views.py: #359 yalnız kurum adı yerine nötr ifade — aXet'te zaten nötr, değişiklik yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): populate_badi_spot.py → araç olarak: tools/badi.py (adt_badi_spot_read/_write; definitions + remove_badis, ince kaldırma bayrakları ALMA — ölçülmemiş)"
     },
     {
       "source": "DEV_CORE",
@@ -5624,18 +5693,20 @@
       ],
       "party": 3,
       "status": "kismi",
-      "note": "adt_push_source bdef/ccimp/ccau/func eklendi (cevrimdisi test). KALAN: srvb/msag/enqu/ccdef/ccmac push, FM RFC-enable (SE37). 2026-09-14: sozdizimi on-kontrolu olculemediyse syntax_precheck=olculemedi + bildirim (CLI satiri alinmadi: push CLI yok)."
+      "note": "adt_push_source bdef/ccimp/ccau/func eklendi (cevrimdisi test). KALAN: srvb/msag/enqu/ccdef/ccmac push, FM RFC-enable (SE37). 2026-09-14: sozdizimi on-kontrolu olculemediyse syntax_precheck=olculemedi + bildirim (CLI satiri alinmadi: push CLI yok). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): push_object.py b0bcfac FUGR/I → atom adt_push_source(group=); d7f2fa0 'ÖNCE O YANITA BAK'/'başka geliştirici' basımı ALMA (aXet'te put_denemeleri araç yanıtında, redact ile)"
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/deploy_ui.py",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/scripts/deploy_ui.py"
+        "skills-sap/sap-ui5-fiori/scripts/deploy_ui.py",
+        "skills-sap/sap-ui5-fiori/scripts/_bspnet.py",
+        "skills-sap/sap-ui5-fiori/tests/test_bsp_adi_namespace.py"
       ],
       "party": 4,
       "status": "kismi",
-      "note": "prepare/verify/deploy; deploy kullanici OK sonrasi, izin 'ask' + fiori/npm deploy deny. Gercek deploy DOGRULANMADI."
+      "note": "prepare/verify/deploy; deploy kullanici OK sonrasi, izin 'ask' + fiori/npm deploy deny. Gercek deploy DOGRULANMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): prepare BSP adı ad_politikasi'na bağlı (Z/Y + bildirilmiş /NS/, --project-dir, fail-closed), bsp_icf_yolu ns dalı, yinelenen anahtar ihlal; --all ALMA"
     },
     {
       "source": "DEV_CORE",
@@ -5680,7 +5751,7 @@
       ],
       "party": 3,
       "status": "kismi",
-      "note": "adt_set_description (s4_private, transport zorunlu; kilit silinmez). Cevrimdisi 24 test; canli once DDLS sonra class. srvb/prog/dtel unsupported_type."
+      "note": "adt_set_description (s4_private, transport zorunlu; kilit silinmez). Cevrimdisi 24 test; canli once DDLS sonra class. srvb/prog/dtel unsupported_type. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/sap_set_object_description.py: UYARLA (metin) — ad kararı aXet'te yazma kapısında (gate → ad_politikasi; namespace dahil, A1); URL quote(ad.lower(), safe='') = url_segmenti eşdeğeri (VAR); kilit bırakılamadı uyarısı aXet'te adsız SM12 metni (url_adi gereksiz, VAR); adt_set_description docstring'i 'Z/Y' → 'Z/Y ya da projede bildirilmiş /<NS>/'."
     },
     {
       "source": "DEV_CORE",
@@ -5691,7 +5762,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_syntax_check (okuma sinifi; 2026-10-19 Z195 salt-okur checkrun, eskiden yazma sinifi). 2026-09-14: kontrol kosmadiginda valid=None (NOT MEASURED), sahte 'hata var' yok; DDIC CLI parcasi alinmadi (CLI yok)."
+      "note": "adt_syntax_check (okuma sinifi; 2026-10-19 Z195 salt-okur checkrun, eskiden yazma sinifi). 2026-09-14: kontrol kosmadiginda valid=None (NOT MEASURED), sahte 'hata var' yok; DDIC CLI parcasi alinmadi (CLI yok). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/syntax_check.py: VAR — DDIC sözdizimi kontrol yolu aXet'te sap_adt_lib (`/sap/bc/adt/ddic/{endpoint}/{_adt_seg(name)}`, bu turun URL kodlaması)."
     },
     {
       "source": "DEV_CORE",
@@ -5702,18 +5773,19 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_get object_type=package + adt_package_contents package_verified. Paket tipi canli DOGRULANMADI."
+      "note": "adt_get object_type=package + adt_package_contents package_verified. Paket tipi canli DOGRULANMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/check_package.py: VAR — paket yol parçası url_segmenti; aXet'te paket URL'i object_types.get_object_url'den (quote(ad.lower(), safe='') = aynı kodlama), değişiklik yok."
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/download_*.py",
       "decision": "telafi",
       "targets": [
-        "skills-sap/sap-adt-foundation/references/foundation-ops.md"
+        "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+        "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_package_contents + tek tek adt_get; dosyayi model yazar. Toplu indirme araci yok (gerek gorulmedi)."
+      "note": "adt_package_contents + tek tek adt_get; dosyayi model yazar. Toplu indirme araci yok (gerek gorulmedi). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/download_ddic_objects.py + scripts/download_object.py: G1 yerel_ad — aXet araçları dosyayı modelin verdiği output_path'e yazar (ad türetmez) ⇒ araç yolunda VAR; ama lib SAPClient.download_object/push_object/delete_object adı dosya adına çeviriyordu → yerel_ad ile UYARLANDI (sap_client.py)."
     },
     {
       "source": "DEV_CORE",
@@ -5735,7 +5807,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_revisions; link deseni (atom:link) canli DOGRULANMADI."
+      "note": "adt_revisions; link deseni (atom:link) canli DOGRULANMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): list_revisions.py tablo ucu (1228623) → aXet adt_revisions object_types üzerinden zaten /ddic/tables (VAR)"
     },
     {
       "source": "DEV_CORE",
@@ -5746,7 +5818,7 @@
       ],
       "party": 3,
       "status": "kismi",
-      "note": "ATC/logon(ping+adt_get)/veri onizleme (adt_table_read+adt_sql_query KVKK)/SQL var. Pretty printer yok: ertelendi (deger dusuk; metni dondurur, kaydetmez)."
+      "note": "ATC/logon(ping+adt_get)/veri onizleme (adt_table_read+adt_sql_query KVKK)/SQL var. Pretty printer yok: ertelendi (deger dusuk; metni dondurur, kaydetmez). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): run_sql_query.py ms birimi → adt_sql_query execution_time_ms; run_atc_check.py ENHS → adt_atc_check atc_kapsam_disi"
     },
     {
       "source": "DEV_CORE",
@@ -5790,7 +5862,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Ezme riski pull_state ile kapali. Repo<->canli fark raporu kullanici karariyla ALINMADI (2026-09-13 Q1: yeni okuma araclari evet, fark raporu haric)."
+      "note": "Ezme riski pull_state ile kapali. Repo<->canli fark raporu kullanici karariyla ALINMADI (2026-09-13 Q1: yeni okuma araclari evet, fark raporu haric). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/source_drift.py: ALMA — #405 dosya_adindan_ad (repo dosyası arama / pbe_siniflandir): aXet'te dosyadan ad çözen yol yok; 6811b83 ek store damgası (git ağaç kökleri) lider kararıyla ALMA."
     },
     {
       "source": "DEV_CORE",
@@ -5801,7 +5873,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "adt_get pull kaydi yazar; dosyayi model yazar."
+      "note": "adt_get pull kaydi yazar; dosyayi model yazar. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/sap_sync_pull.py: ALMA — #405 dosya adı ↔ SAP adı (dosya_adindan_ad) ve tırnaklı tekrar komutu: aXet'te ad JSON argümanıdır, dosya adından ad çözülmez (adt_get output_path model verir), pull kaydı SAP adı + tip anahtarlı (d6572b3 pull kararı, lider onaylı)."
     },
     {
       "source": "DEV_CORE",
@@ -5819,22 +5891,24 @@
       "pattern": "scripts/verify_ui_static_assets.py",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/scripts/verify_ui_static_assets.py"
+        "skills-sap/sap-ui5-fiori/scripts/verify_ui_static_assets.py",
+        "skills-sap/sap-ui5-fiori/scripts/_bspnet.py"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Gercek ICF DOGRULANMADI."
+      "note": "Gercek ICF DOGRULANMADI. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ICF yolu _bspnet.bsp_url→bsp_icf_yolu üzerinden (kod değişmedi, VAR); --all ALMA"
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/check_ui_odata_refs.py",
       "decision": "uyarla",
       "targets": [
-        "skills-sap/sap-ui5-fiori/scripts/check_ui_odata_refs.py"
+        "skills-sap/sap-ui5-fiori/scripts/check_ui_odata_refs.py",
+        "skills-sap/sap-ui5-fiori/tests/test_odata_refs.py"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Cevrimdisi $metadata dosyasi."
+      "note": "Cevrimdisi $metadata dosyasi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): namespace'li servis /NS/AD + bildirilmiş ns ana servis seçimi + --project-dir"
     },
     {
       "source": "DEV_CORE",
@@ -5843,7 +5917,7 @@
       "targets": [],
       "party": 7,
       "status": "-",
-      "note": "CI karari verildi (K2 2026-09-15) — tetigin o kolu kapandi. Kalan tetik: canli SAP CBO envanteri ihtiyaci. Z44 (2026-09-21)."
+      "note": "CI karari verildi (K2 2026-09-15) — tetigin o kolu kapandi. Kalan tetik: canli SAP CBO envanteri ihtiyaci. Z44 (2026-09-21). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [build_cbo_inventory.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -5896,7 +5970,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "--also parca birlestirme."
+      "note": "--also parca birlestirme. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): docstring: 'bayraksız aynı' daraltıldı, PDF CSS üreticiye yazılmaz, MSYS_NO_PATHCONV"
     },
     {
       "source": "DEV_CORE",
@@ -5907,7 +5981,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "Projeye ozel kisimlar atildi, JSON esleme."
+      "note": "Projeye ozel kisimlar atildi, JSON esleme. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): docstring: 'bayraksız aynı' daraltıldı, PDF CSS üreticiye yazılmaz, MSYS_NO_PATHCONV"
     },
     {
       "source": "DEV_CORE",
@@ -5928,19 +6002,20 @@
         "skills-sap/sap-fs-ts-docs/scripts/html_to_pdf.js"
       ],
       "party": 4,
-      "status": "tamam",
-      "note": "Gercek PDF olculdu (Edge). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #360 — @page uzunluk ölçümü gölge kökte (font:inherit), altbilgi ayrı boş sayfada, eski PDF uyarısı DURDU · tarayıcı başlatılamadı · hata yollarında. Eşik (ALTBILGI_ALT_IC_MM) tur 6'da alınmıştı. Uyarlandı (aXet kopyası ayrışmış; birebir alınmadı)."
+      "status": "kismi",
+      "note": "Gercek PDF olculdu (Edge). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #360 — @page uzunluk ölçümü gölge kökte (font:inherit), altbilgi ayrı boş sayfada, eski PDF uyarısı DURDU · tarayıcı başlatılamadı · hata yollarında. Eşik (ALTBILGI_ALT_IC_MM) tur 6'da alınmıştı. Uyarlandı (aXet kopyası ayrışmış; birebir alınmadı). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #389 elle port: dosyaUrl (pathToFileURL + localhost UNC), dizin listesi [DURDU] rc 2, işaret bağlı PDF_CSS, yerlesimOlc kademe 1/2/3, YERLESIM satırı, PDF UYARILI; tarayıcılı fikstür vakaları (Y3/Y5b/Y5k/Y6/Y7b/Y7c/Y8) test olarak taşınmadı"
     },
     {
       "source": "DEV_CORE",
       "pattern": "scripts/gen_field_table.py",
       "decision": "al",
       "targets": [
-        "skills-sap/sap-fs-ts-docs/scripts/gen_field_table.py"
+        "skills-sap/sap-fs-ts-docs/scripts/gen_field_table.py",
+        "skills-sap/sap-fs-ts-docs/scripts/doc_ad_metin.py"
       ],
       "party": 4,
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #410 custom entity · #412 string'e duyarlı yorum ayıklama (--) · G1/G2 namespace adı + #ns# komşu dosya; kaynak utils.ad_politikasi/cds_metin yerine yerel stdlib doc_ad_metin.py (lider kararı)"
     },
     {
       "source": "DEV_CORE",
@@ -5958,11 +6033,12 @@
       "pattern": "scripts/program_to_spec.py",
       "decision": "al",
       "targets": [
-        "skills-sap/sap-fs-ts-docs/scripts/program_to_spec.py"
+        "skills-sap/sap-fs-ts-docs/scripts/program_to_spec.py",
+        "skills-sap/sap-fs-ts-docs/scripts/doc_ad_metin.py"
       ],
       "party": 4,
       "status": "tamam",
-      "note": ""
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): G3 namespace adayı + katı gramer + ayrı namespace kovası; Türkçe sözcük kesilmez (doc_ad_metin)"
     },
     {
       "source": "DEV_CORE",
@@ -5972,8 +6048,8 @@
         "skills-sap/sap-classic-abap/scripts/scaffold_classic_program.py"
       ],
       "party": 3,
-      "status": "tamam",
-      "note": "Stdlib, SAP'ye yazmaz. Kaynaktaki bayat ALV sinifi ve include adlari duzeltildi."
+      "status": "kismi",
+      "note": "Stdlib, SAP'ye yazmaz. Kaynaktaki bayat ALV sinifi ve include adlari duzeltildi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): MSYS_NO_PATHCONV ipucu alındı; namespace'li program adı kabulü ALINMADI (Z/Y; A1 ad_politikasi'ne bağlanabilir)"
     },
     {
       "source": "DEV_CORE",
@@ -5991,11 +6067,14 @@
       "pattern": "scripts/bootstrap_package.py",
       "decision": "uyarla",
       "targets": [
-        "scripts/new_package.py"
+        "scripts/new_package.py",
+        "templates/package/.rules.md.tmpl",
+        "scripts/check_package_naming.py",
+        "tests/test_new_package.py"
       ],
       "party": 3,
       "status": "tamam",
-      "note": "Farklar: modul addan cikarilir; soneksiz (cloud) paket desteklenir; Y onekli pakette sinif YCL_<govde> (DEV_CORE yalniz Z atar); SAP'de paket yaratilmaz; bos klasorlere .gitkeep; owner varsayilani yer tutucu. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F1 modul klasoru new_package.py zaten yaratiyor (mkdir parents); sabit modul listesi alinmadi (aXet modulu addan cikarir)."
+      "note": "Farklar: modul addan cikarilir; soneksiz (cloud) paket desteklenir; Y onekli pakette sinif YCL_<govde> (DEV_CORE yalniz Z atar); SAP'de paket yaratilmaz; bos klasorlere .gitkeep; owner varsayilani yer tutucu. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F1 modul klasoru new_package.py zaten yaratiyor (mkdir parents); sabit modul listesi alinmadi (aXet modulu addan cikarir). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): namespace'li paket (ad_politikasi importlib; yoksa Z/Y fail-closed; #ns# klasör; kilit satırı DOĞRULANMADI)"
     },
     {
       "source": "DEV_CORE",
@@ -6016,7 +6095,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "IX public-core sizinti altyapisi; aXet'te UPDATE-PROCEDURE uyarlama kurali metinle."
+      "note": "IX public-core sizinti altyapisi; aXet'te UPDATE-PROCEDURE uyarlama kurali metinle. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [genericize_common.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6089,11 +6168,12 @@
       "pattern": "scripts/init_project.py",
       "decision": "telafi",
       "targets": [
-        "scripts/new_project.py"
+        "scripts/new_project.py",
+        "templates/project-sap/sap-project.json"
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F2 ruleset/guard check adlari uygulanmaz (new_project ruleset uretmez; aXet ruleset tek kontrol \"CI tamam\"). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #375 sap-gui MCP kurulum ipucu pini — aXet'te karşılığı yok, alınmadı."
+      "note": "Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F2 ruleset/guard check adlari uygulanmaz (new_project ruleset uretmez; aXet ruleset tek kontrol \"CI tamam\"). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): #375 sap-gui MCP kurulum ipucu pini — aXet'te karşılığı yok, alınmadı. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): customer_namespaces → templates/project-sap/sap-project.json boş liste + açıklama"
     },
     {
       "source": "DEV_CORE",
@@ -6105,7 +6185,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "2026-09-25: 1e PowerShell yürütme politikası × npm .ps1 shim kontrolü → doctor.py check_ps_politika (:1428, iş listesi Z129; testler tests/test_doctor.py). Önceki 'ders memory'de var' iddiası yanlıştı; dersin kendisi doctor kontrolüne gömüldü. repo_mode LITE (K3/K5a) alınmadı: aXet doctor'da repo modu yok. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F3 doctor remote FAIL dali yok (GitKimlikTest kilitli); F4 K7a karsiligi proje reposu."
+      "note": "2026-09-25: 1e PowerShell yürütme politikası × npm .ps1 shim kontrolü → doctor.py check_ps_politika (:1428, iş listesi Z129; testler tests/test_doctor.py). Önceki 'ders memory'de var' iddiası yanlıştı; dersin kendisi doctor kontrolüne gömüldü. repo_mode LITE (K3/K5a) alınmadı: aXet doctor'da repo modu yok. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F3 doctor remote FAIL dali yok (GitKimlikTest kilitli); F4 K7a karsiligi proje reposu. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): 4h/4i/4j kanca kablolaması ALMA (aXet'te kanca yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6116,7 +6196,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "Hafiza repoda, context_paths ile yuklenir. 2026-09-25 tur 2: --terfi-adaylari KAPSAM satırına bildirim kanalı yönlendirmesi ALINMAZ (terfi aracı aXet'te yok; kullanıcı dersini %hata-bildir önerisiyle iletir). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #318 tohum govde guncellemesi ALINMAZ: aXet ekip hafizasini klondan okur, kopyalamaz (scripts/install.py context_paths)."
+      "note": "Hafiza repoda, context_paths ile yuklenir. 2026-09-25 tur 2: --terfi-adaylari KAPSAM satırına bildirim kanalı yönlendirmesi ALINMAZ (terfi aracı aXet'te yok; kullanıcı dersini %hata-bildir önerisiyle iletir). 2026-10-03 tur 4 (çekirdek bfb3f60..fadf091): #318 tohum govde guncellemesi ALINMAZ: aXet ekip hafizasini klondan okur, kopyalamaz (scripts/install.py context_paths). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #430 indeks / a-taze ALMA (aXet'te tohum dağıtıcısı yok); MEMORY.md'ye 10 yeni ders satırı"
     },
     {
       "source": "DEV_CORE",
@@ -6127,7 +6207,7 @@
       ],
       "party": 1,
       "status": "tamam",
-      "note": "2026-09-25 tur 2: --wt-denetim içerik karşılaştırması + ReadOnly silme onarıcısı ALINMAZ — aXet install.py worktree yönetmez. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F12a sapma gorunurlugu new_project [VAR, dokunulmadi] + install.py UYARI ile var; F12b %guncelle-proje 3-yollu + geri-al; F5 install makine kapsamli, CLI proje kokunu kendi sabitler."
+      "note": "2026-09-25 tur 2: --wt-denetim içerik karşılaştırması + ReadOnly silme onarıcısı ALINMAZ — aXet install.py worktree yönetmez. Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): F12a sapma gorunurlugu new_project [VAR, dokunulmadi] + install.py UYARI ile var; F12b %guncelle-proje 3-yollu + geri-al; F5 install makine kapsamli, CLI proje kokunu kendi sabitler. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): settings tazeleme, --wt-ac/--wt-taban, provizyon ALMA (Claude/worktree)"
     },
     {
       "source": "DEV_CORE",
@@ -6136,7 +6216,7 @@
       "targets": [],
       "party": null,
       "status": "-",
-      "note": "Kalanlar Claude/IX isletimi: acik_madde_tarayici, agent_log, agent_time_report, agent_watchdog, build_core_index, guest_mode, inspector, setup_plugins, statusline, sync_yasaklar. YENI script buraya duserse sync_check 'yeni' listesinde gosterir: karar ver."
+      "note": "Kalanlar Claude/IX isletimi: acik_madde_tarayici, agent_log, agent_time_report, agent_watchdog, build_core_index, guest_mode, inspector, setup_plugins, statusline, sync_yasaklar. YENI script buraya duserse sync_check 'yeni' listesinde gosterir: karar ver. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [agent_stall_watch.py, fetch_ui_source.py, guest_mode.py, inspector.py, izin_bekleme_taramasi.py, parity_probe.py +1] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6162,7 +6242,7 @@
       ],
       "party": 3,
       "status": "tamam",
-      "note": "FLP/PFCG/UI5 kısmı parti 4; rol metni alınmadı. 2026-09-25: 'BAPI sarmalayıcı — TABLES aktüeli yazılabilir olmalı' (BE-71) table-types.md §5.4'e yazıldı (BE-69/BE-72 ile aynı TABLES ailesi). Tur 2 (2026-09-25): oncelik tablosu satir 2 -> segw-service §1.2 write-api-selection.md linki; dpc-crud §3 sira guncellendi."
+      "note": "FLP/PFCG/UI5 kısmı parti 4; rol metni alınmadı. 2026-09-25: 'BAPI sarmalayıcı — TABLES aktüeli yazılabilir olmalı' (BE-71) table-types.md §5.4'e yazıldı (BE-69/BE-72 ile aynı TABLES ailesi). Tur 2 (2026-09-25): oncelik tablosu satir 2 -> segw-service §1.2 write-api-selection.md linki; dpc-crud §3 sira guncellendi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ETag: otomatik If-Match yalnız update/remove, callFunction mParameters.eTag açıkça, 428 → segw-service.md"
     },
     {
       "source": "DEV_CORE",
@@ -6171,11 +6251,13 @@
       "targets": [
         "skills-sap/sap-ui5-fiori/references/",
         "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
-        "skills-sap/sap-ui5-fiori/references/checklists.md"
+        "skills-sap/sap-ui5-fiori/references/checklists.md",
+        "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+        "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
       ],
       "party": 4,
       "status": "tamam",
-      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Müşteri özel §12.3/§12.4 alınmadı. Kaynaktaki çelişkiler referanslarda tavrıyla yazılı. 2026-09-25: §2.5 bootstrap zaten vardı (app-skeleton.md §7 :136); §18.5a (büyük yük → HTTP 414, ikinci model, $batch) → freestyle-odata-v2.md §7.3 (:287) + checklists.md FE-42/FE-43 (Z206 öncesi aXet FE-46/FE-47). 2026-09-25 tur 2: §18.5b (elle kurulan istek sap-client) → freestyle-odata-v2.md §7.4 (:334) + §7.3 örneği _secondModelUrl ile düzeltildi (:302); §2.0 app package.json devDep ADLARI zaten vardı (app-skeleton.md §2, aXet'te 4.0.69 ile ölçülmüş) — 4.0.57 teyidi + CLI 3.x/build-deploy/yeniden-install ÖLÇÜLMEDİ sınırı eklendi (:45-47), ÇIKARILAN notu güncellendi (:384)."
+      "note": "app-skeleton, freestyle, list-grid, deploy, fiori-elements-ux. Müşteri özel §12.3/§12.4 alınmadı. Kaynaktaki çelişkiler referanslarda tavrıyla yazılı. 2026-09-25: §2.5 bootstrap zaten vardı (app-skeleton.md §7 :136); §18.5a (büyük yük → HTTP 414, ikinci model, $batch) → freestyle-odata-v2.md §7.3 (:287) + checklists.md FE-42/FE-43 (Z206 öncesi aXet FE-46/FE-47). 2026-09-25 tur 2: §18.5b (elle kurulan istek sap-client) → freestyle-odata-v2.md §7.4 (:334) + §7.3 örneği _secondModelUrl ile düzeltildi (:302); §2.0 app package.json devDep ADLARI zaten vardı (app-skeleton.md §2, aXet'te 4.0.69 ile ölçülmüş) — 4.0.57 teyidi + CLI 3.x/build-deploy/yeniden-install ÖLÇÜLMEDİ sınırı eklendi (:45-47), ÇIKARILAN notu güncellendi (:384). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): §2.6 sürüm+tema ölçümü + @since tablosu → app-skeleton §7.1; §10.0.1 kolon filtresi penceresi → list-grid-alv §6.4; kanonik kaynak = şablon"
     },
     {
       "source": "DEV_CORE",
@@ -6188,7 +6270,7 @@
       ],
       "party": 4,
       "status": "tamam",
-      "note": "fs/ts/kd-authoring + traceability + sablonlar; F1 uretimi %sap-classic-abap'a, S0/S1/S2 %sap-intake-triage'e bagli. Sirket fs-generator uydurma-yok kurallari + fs2ts 4 seviyeli clean-core agaci/5 parca uyarlandi (2026-09-13). Tur 2 (2026-09-25): TS §6.4 API secimi -> TS-template.md 6.4 tablo + ts-authoring §5 bolum 6 + §7 kalite satiri + Yasak B sirasi."
+      "note": "fs/ts/kd-authoring + traceability + sablonlar; F1 uretimi %sap-classic-abap'a, S0/S1/S2 %sap-intake-triage'e bagli. Sirket fs-generator uydurma-yok kurallari + fs2ts 4 seviyeli clean-core agaci/5 parca uyarlandi (2026-09-13). Tur 2 (2026-09-25): TS §6.4 API secimi -> TS-template.md 6.4 tablo + ts-authoring §5 bolum 6 + §7 kalite satiri + Yasak B sirasi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): TS build'den önce SIRA bloğu → ts-authoring.md"
     },
     {
       "source": "DEV_CORE",
@@ -6328,7 +6410,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Genel 'tests/fixtures/*' kuralı (uyarla/kismi) bu vakada YANLIŞ karar verirdi: kaynağı scripts/agent_stall_watch.py zaten alinmaz (subagent mekanizması aXet'te yok). Özel kural — genel desenden ÖNCE dener."
+      "note": "Genel 'tests/fixtures/*' kuralı (uyarla/kismi) bu vakada YANLIŞ karar verirdi: kaynağı scripts/agent_stall_watch.py zaten alinmaz (subagent mekanizması aXet'te yok). Özel kural — genel desenden ÖNCE dener. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6355,7 +6437,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "Kaynağı scripts/seed_memory.py --terfi-adaylari zaten alinmaz (tohum/terfi ayrımı aXet memory modelinde yok). Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+      "note": "Kaynağı scripts/seed_memory.py --terfi-adaylari zaten alinmaz (tohum/terfi ayrımı aXet memory modelinde yok). Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6384,7 +6466,7 @@
       "targets": [],
       "party": 9,
       "status": "-",
-      "note": "DERS ZATEN VAR ve DAHA İYİ ÇÖZÜLMÜŞ: scripts/guncelle_proje.py::Klon.geride_mi() katalog/yayın-kalemi bazlı ölçüm kullanıyor (commit-sayısı ölçü DEĞİLDİR dersi Z29'da bağımsız öğrenilmiş). session_start.py hook'u aXet'te yok."
+      "note": "DERS ZATEN VAR ve DAHA İYİ ÇÖZÜLMÜŞ: scripts/guncelle_proje.py::Klon.geride_mi() katalog/yayın-kalemi bazlı ölçüm kullanıyor (commit-sayısı ölçü DEĞİLDİR dersi Z29'da bağımsız öğrenilmiş). session_start.py hook'u aXet'te yok. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6413,7 +6495,7 @@
       "targets": [],
       "party": 10,
       "status": "-",
-      "note": "Kaynağı team_setup --wt-* worktree araçları; aXet'te worktree yönetimi yok. Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi."
+      "note": "Kaynağı team_setup --wt-* worktree araçları; aXet'te worktree yönetimi yok. Genel 'tests/fixtures/*' kuralı bu vakada yanlış karar verirdi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
     },
     {
       "source": "DEV_CORE",
@@ -6428,14 +6510,67 @@
     },
     {
       "source": "DEV_CORE",
+      "pattern": "tests/fixtures/ui5_freestyle_sablon/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/tests/test_ui5_sablon.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ÖZEL DESEN: → sap-ui5-fiori tests/test_ui5_sablon.py"
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/ui5_xml_yorumu/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/tests/test_ui5_xml_yorumu.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ÖZEL DESEN: → sap-ui5-fiori tests/test_ui5_xml_yorumu.py"
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/check_ui5_freestyle_traps/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/tests/test_ui5_xml_yorumu.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ÖZEL DESEN: Booking.view.xml (yorumdaki <f:fields>) → test_ui5_xml_yorumu N0 (VAR)"
+    },
+    {
+      "source": "DEV_CORE",
+      "pattern": "tests/fixtures/ui5_blok_yorumu/*",
+      "decision": "uyarla",
+      "targets": [
+        "skills-sap/sap-ui5-fiori/tests/test_static_checks.py"
+      ],
+      "party": 1,
+      "status": "tamam",
+      "note": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ÖZEL DESEN: yalnız yorum değişti → TestTraps (VAR)"
+    },
+    {
+      "source": "DEV_CORE",
       "pattern": "tests/fixtures/*",
       "decision": "uyarla",
       "targets": [
-        "tests/"
+        "tests/",
+        "skills-sap/sap-adt-foundation/tests/test_ad_politikasi.py",
+        "skills-sap/sap-adt-foundation/tests/test_validator_ad_grameri.py",
+        "skills-sap/sap-adt-foundation/tests/test_fugr_include_yazim.py",
+        "skills-sap/sap-adt-foundation/tests/test_badi_spot.py",
+        "skills-sap/sap-adt-foundation/tests/test_csrf_custom_entity.py",
+        "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py",
+        "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/readback_aktif.xml",
+        "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/put_kabul.xml",
+        "skills-sap/sap-adt-foundation/tests/test_tur8_tamamlama.py"
       ],
       "party": 7,
       "status": "kismi",
-      "note": "sir_gate, gitignore, manifest, precommit failclosed, paket uzanti, git sorgu, reviewer skip -> tests/. Validator bad/good ciftleri skills-sap testlerine bekliyor. Claude hook/MCP/overlay/worktree/statusline alinmaz. 2026-09-14: aktivasyon/push on-kontrol/sorgu araclari/reviewer fugr fixture'lari foundation unittest'lerine uyarlandi (test_verdict_*). Salt-okur kum temizligi (_sil) alinmadi: kok tests/_helpers.py zaten chmod'lu rmtree; foundation suite izole TMP'de 0 test kumu birakti (tek artik node-compile-cache). Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): retry_500_govde / pdf_sayfa_no_yer_imi vb. çekirdek fixture'ları; aXet karşılığı birim testleri (tur 7)."
+      "note": "sir_gate, gitignore, manifest, precommit failclosed, paket uzanti, git sorgu, reviewer skip -> tests/. Validator bad/good ciftleri skills-sap testlerine bekliyor. Claude hook/MCP/overlay/worktree/statusline alinmaz. 2026-09-14: aktivasyon/push on-kontrol/sorgu araclari/reviewer fugr fixture'lari foundation unittest'lerine uyarlandi (test_verdict_*). Salt-okur kum temizligi (_sil) alinmadi: kok tests/_helpers.py zaten chmod'lu rmtree; foundation suite izole TMP'de 0 test kumu birakti (tek artik node-compile-cache). Tur 5 (2026-10-04): #320/#321 aXet kodunda olculdu (Z192): aXet karsiliginda degisiklik gerekmedi (yeni fixture vektorleri aXet testleriyle karsilanir). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): retry_500_govde / pdf_sayfa_no_yer_imi vb. çekirdek fixture'ları; aXet karşılığı birim testleri (tur 7). · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A1: q393_namespace_ad_politikasi/validator_ad_grameri/namespace_tesisat → tests test_ad_politikasi.py; q405/cds_curr_referans_tipi/table_field_drop_tip/validator_ad_deseni → test_validator_ad_grameri.py; issue391 ALMA; ddic_builtin_fields ALMA · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: fugr_include_yazim → test_fugr_include_yazim.py · enhs_badi_spot + enhs_tip_yuzeyi → test_badi_spot.py (+ fixtures/enhs_badi_spot/*.xml) · csrf_tanima_ortak + cds_kaynak_kapisi → test_csrf_custom_entity.py · revizyon_okuma (H) + adt_oturum_kapatma + sql_sure_birimi + set_object_source_bicim_durdurma → test_kucuk_duzeltmeler_tur8.py · fm_okuma_where_used (#434 bdef) + G1 yerel ad + G3 servis yolu → test_tur8_tamamlama.py"
     },
     {
       "source": "DEV_CORE",
@@ -6446,7 +6581,7 @@
       ],
       "party": 7,
       "status": "tamam",
-      "note": "Stdlib unittest kosucusu (87 test); fixture JSON bicimi alinmadi. 2026-09-25 farkı alınmadı (run_fixture_tests.py): yalnız yeni fixture korpuslarının kayıt/harita satırları (MCP import, ix_doctor repo_mode/PS politikası, session_start gerilik, msag silme, tohum terfi, Z-desen, satır-bazlı muafiyet, ajan takılma bekçisi); korpuslar tests/fixtures/<ad>/* kurallarında tek tek kararlı. PS politikası karşılığı tests/test_doctor.py (Z129). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): run_fixture_tests.py: yeni fixture kaydı (retry_500_govde, pdf_sayfa_no_yer_imi) — aXet'te birim test olarak karşılandı, çalıştırıcı değişikliği gerekmedi."
+      "note": "Stdlib unittest kosucusu (87 test); fixture JSON bicimi alinmadi. 2026-09-25 farkı alınmadı (run_fixture_tests.py): yalnız yeni fixture korpuslarının kayıt/harita satırları (MCP import, ix_doctor repo_mode/PS politikası, session_start gerilik, msag silme, tohum terfi, Z-desen, satır-bazlı muafiyet, ajan takılma bekçisi); korpuslar tests/fixtures/<ad>/* kurallarında tek tek kararlı. PS politikası karşılığı tests/test_doctor.py (Z129). 2026-10-28 tur 7 (çekirdek 254134f..dd9ba0f): run_fixture_tests.py: yeni fixture kaydı (retry_500_govde, pdf_sayfa_no_yer_imi) — aXet'te birim test olarak karşılandı, çalıştırıcı değişikliği gerekmedi. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run_fixture_tests.py] run_fixture_tests.py yalnız fixture kayıt listesi; her fixture'ın kararı ilgili kulvar karar tablosunda (maintenance/uyum-tur8/*-karar.md)"
     },
     {
       "source": "PROVA",
@@ -6458,7 +6593,7 @@
       ],
       "party": 1,
       "status": "kismi",
-      "note": "Madde bazli: rule-coverage.md bolum 4. 2026-09-25 tur 2: yalniz yasak damgasinin B satiri degisti (released API ile baslayan sira) -> core/sap/00-sap.md B satiri, AXET-SAP-0.5.2; proje AGENTS.md damgasi %guncelle-proje ile yenilenir."
+      "note": "Madde bazli: rule-coverage.md bolum 4. 2026-09-25 tur 2: yalniz yasak damgasinin B satiri degisti (released API ile baslayan sira) -> core/sap/00-sap.md B satiri, AXET-SAP-0.5.2; proje AGENTS.md damgasi %guncelle-proje ile yenilenir. · 2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): proje damgası A-EK → aXet damgası core/sap/00-sap.md (VAR); AGENTS şablonuna müşteri namespace satırı"
     },
     {
       "source": "PROVA",

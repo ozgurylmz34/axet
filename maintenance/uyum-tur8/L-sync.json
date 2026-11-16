@@ -1,0 +1,182 @@
+[
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/agents/infra-expert.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [infra-expert.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/MEMORY.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [MEMORY.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/_indeks-ajan-takim.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-ajan-takim.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/_indeks-terfi-2026-09-18.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-terfi-2026-09-18.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/_indeks-terfi-2026-10-18.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_indeks-terfi-2026-10-18.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_agent-briefing-sendmessage-main.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_agent-briefing-sendmessage-main.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_ajan-bulgusu-dogru-mekanizmasi-yanlis.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_aktardigin-olcum-emre-donusunce-kanitini-tasi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_arac-kod-fix-lider-isi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_arac-kod-fix-lider-isi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_capadaki-acik-madde-devralmadan-once-olculur.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_capadaki-acik-madde-devralmadan-once-olculur.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_dokuman-turu-donmus-kod-ister-paralel-kosturma.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_duzeltme-turu-kendi-ciktisina-kapi-ister.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_duzeltme-turu-kendi-regresyonunu-uretir.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_duzeltme-turu-kendi-regresyonunu-uretir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_fs-ts-html-uretilmez-teslim-bicimi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_fs-ts-html-uretilmez-teslim-bicimi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_infra-turunda-yeni-acilan-maddeye-baslama-mevcutlari-bitir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_kapsam-disi-bulgu-protokolu.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_kapsam-disi-bulgu-protokolu.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_lider-ajan-paralel-yazim-cakismasi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_lider-ajan-paralel-yazim-cakismasi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_merge-safe-dagitimda-satir-yalniz-onarilan-dosyaya-ulasir.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_push-failure-stale-lock-persistent-session.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_push-failure-stale-lock-persistent-session.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_sorulari-tek-tek-sor-oneriyle.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_sorulari-tek-tek-sor-oneriyle.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "claude/memory-seed/feedback_standing-ajani-bos-bekletme-tek-tam-brif.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [feedback_standing-ajani-bos-bekletme-tek-tam-brif.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "governance/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [agent-teams-operating-model.md, infra-changelog.md, removed-controls.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "governance/infra-test-recipes.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [infra-test-recipes.md] yeni reçeteler B89–B106 bu turda alınan kalemlerin testlerine karşılık gelir (kulvar testleri: ad_politikasi, validator_ad_grameri, fugr_include_yazim, badi_spot, csrf_custom_entity, kucuk_duzeltmeler_tur8, ui5_xml_yorumu, node html_to_pdf); reçete metni alınmadı, ilke aynı"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/README.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [README.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/howto-cekirdek-guncelleme.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-cekirdek-guncelleme.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/howto-infra-fix-proseduru.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-infra-fix-proseduru.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/howto-sistem-denetimi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [howto-sistem-denetimi.md] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [agent_stall_watch.py, fetch_ui_source.py, guest_mode.py, inspector.py, izin_bekleme_taramasi.py, parity_probe.py +1] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/build_cbo_inventory.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [build_cbo_inventory.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/genericize_common.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [genericize_common.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/hooks/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [_pbe_msag_textpool.py, _pbe_ui.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/fixtures/agent_stall_watch/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/fixtures/session_start_origin_geriligi/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/fixtures/tohum_terfi_gorunurlugu/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/fixtures/worktree_yasam_dongusu/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run.py] içerik değişti, karar aynı (ALINMAZ — kaynağın Claude'a özgü altyapısı/hafıza tohumu; aXet'te karşılık mekanizma yok)"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): [run_fixture_tests.py] run_fixture_tests.py yalnız fixture kayıt listesi; her fixture'ın kararı ilgili kulvar karar tablosunda (maintenance/uyum-tur8/*-karar.md)"
+ }
+]

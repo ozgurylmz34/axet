@@ -1,0 +1,156 @@
+[
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/sap_adt_lib.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: ENHS lib (get/create/write/activate_enhancement_spot + enhs_*), CSRF ortak yüklem _csrf_reddi_mi, custom entity kaynak kapısı, find_ghost_transports okunamadı≠yok, oturum best-effort kapatma (_oturumu_kapat), set_object_source biçim döngüsü içerik reddinde durur, kilit hatası SAP sebebi; 35 kodsuz yol parçası url_segmenti (ad doğrulaması A1)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/sap_client.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: FUGR/I push_fugr_include + grup kanıtı + activate_object(group=); islem-izinli get_object_url (silme/metadata/atc); hayalet transport okunamadı uyarısı; run_sql_query execution_time_ms; _hata_ayrintisi_ekle (redact ile); 11 kodsuz yol parçası url_segmenti; ce8a124 G1 yerel dosya adı: download_object/push_object/delete_object `yerel_ad` (/NS/X → #ns#x; eski ad delete_object'te sürücü kökündeki dosyayı unlink ederdi)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/object_types.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: FUGR/I (FUGR_INCLUDE_TYPES, grup kanıtı, ad kuralı) + ENHS enhancementspot işlem-izinli girdi (islem_reddi, get_object_url(islem=))",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "mcp_servers/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: tools/badi.py YENİ (adt_badi_spot_read · adt_badi_spot_write, s4_private); atom/query FUGR/I group argümanı; adt_atc_check ENHS atc_kapsam_disi; adt_sql_query execution_time_ms; _reviewer fugr_include→program_push (aXet farkı); composite yol parçası url_segmenti; 2cc3454 fikstür çapası ALMA; c457161 #434 adt_where_used bdef dar uç (/bo/behaviordefinitions/<url_segmenti>, varlık aynı uçtan; yalnız 404 = yok) UYARLANDI; 8565c9d #408 ack_drop docstring'i (_reviewer + adt_push_source: tip hükmüne etkisi yok) UYARLANDI; adt_publish_service metadata_path (odata_servis_yolu, /NS/X → /sap/opu/odata/ns/X)",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/tools/badi.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/populate_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): populate_badi_spot.py → araç olarak: tools/badi.py (adt_badi_spot_read/_write; definitions + remove_badis, ince kaldırma bayrakları ALMA — ölçülmemiş)",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/tools/badi.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/push_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): push_object.py b0bcfac FUGR/I → atom adt_push_source(group=); d7f2fa0 'ÖNCE O YANITA BAK'/'başka geliştirici' basımı ALMA (aXet'te put_denemeleri araç yanıtında, redact ile)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/run_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): run_sql_query.py ms birimi → adt_sql_query execution_time_ms; run_atc_check.py ENHS → adt_atc_check atc_kapsam_disi",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/list_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): list_revisions.py tablo ucu (1228623) → aXet adt_revisions object_types üzerinden zaten /ddic/tables (VAR)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/utils/abap_metot_blok.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): d5da3c1 ENDMETHOD'dan sonra kod → aXet'te VAR (bitis_sonrasi_kod; adt_get_method belirsiz + end_line:null)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/utils/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: YENİ cds_metin.py → lib/utils/cds_metin.py (cds_kod_metni tek kaynak; sap_adt_lib yeniden dışa açar)",
+  "status": "-",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/cds_metin.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/adt-enhancement-spot-badi.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): kaynak CLI kullanımı aXet araç akışına çevrildi (adt_badi_spot_read/write); ölçüm etiketleri korundu",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/references/enhancement-spot-badi.md"
+  ],
+  "decision": "uyarla"
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "playbook/adt-fugr-functions.md",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): f646f36 (FM güncelleme modülü metadata PUT · readback 2 boş satır) başka kulvarca fugr-fm.md'de işlendi; A2 ek yapmadı",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "tests/fixtures/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A2: fugr_include_yazim → test_fugr_include_yazim.py · enhs_badi_spot + enhs_tip_yuzeyi → test_badi_spot.py (+ fixtures/enhs_badi_spot/*.xml) · csrf_tanima_ortak + cds_kaynak_kapisi → test_csrf_custom_entity.py · revizyon_okuma (H) + adt_oturum_kapatma + sql_sure_birimi + set_object_source_bicim_durdurma → test_kucuk_duzeltmeler_tur8.py · fm_okuma_where_used (#434 bdef) + G1 yerel ad + G3 servis yolu → test_tur8_tamamlama.py",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/tests/test_fugr_include_yazim.py",
+   "skills-sap/sap-adt-foundation/tests/test_badi_spot.py",
+   "skills-sap/sap-adt-foundation/tests/test_csrf_custom_entity.py",
+   "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py",
+   "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/readback_aktif.xml",
+   "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/put_kabul.xml",
+   "skills-sap/sap-adt-foundation/tests/test_tur8_tamamlama.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/check_package.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/check_package.py: VAR — paket yol parçası url_segmenti; aXet'te paket URL'i object_types.get_object_url'den (quote(ad.lower(), safe='') = aynı kodlama), değişiklik yok."
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/create_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/create_lock_object.py: VAR — kilit nesnesi ad kuralı aXet'te yazma kapısında (ad_politikasi.musteri_adi_mi: E+Z/Y ya da bildirilmiş /NS/…); kaynak yalnız 'E ile başlar' UYARISINI namespace'ten sonraki parçaya taşıdı, aXet'te bu uyarı yok (kapı Z/Y'de E'yi zaten zorunlu tutar, /NS/ kilit nesnesinde E'siz ad meşru) → ALMA. scripts/create_rap_service.py: UYARLA — yol parçaları url_segmenti (lib/rap_service.py publish_xml; bu tur) + odata_servis_yolu → adt_publish_service yanıtında metadata_path (/NS/X servis /sap/opu/odata/ns/X; namespace'li yol canlı ÖLÇÜLMEDİ); e2e/verify adımları aXet'te araç değil (çağıran $metadata'yı okur).",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/rap_service.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/download_*.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/download_ddic_objects.py + scripts/download_object.py: G1 yerel_ad — aXet araçları dosyayı modelin verdiği output_path'e yazar (ad türetmez) ⇒ araç yolunda VAR; ama lib SAPClient.download_object/push_object/delete_object adı dosya adına çeviriyordu → yerel_ad ile UYARLANDI (sap_client.py).",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py"
+  ]
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/hooks/pull_before_edit.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/hooks/pull_before_edit.py: ALMA — #405 namespace'li adın kabuk komutunda tırnaklanması: aXet'te hook yok, kapı yazma anında pull_state (SAP adı + tip anahtarı) ve önerilen adım kabuk komutu değil araç çağrısı (JSON argüman) ⇒ `/` yol dönüşümü ve `#` yorum tuzağı oluşmaz. 6811b83 worktree damgası lider kararıyla ALMA."
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/sap_set_object_description.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/sap_set_object_description.py: UYARLA (metin) — ad kararı aXet'te yazma kapısında (gate → ad_politikasi; namespace dahil, A1); URL quote(ad.lower(), safe='') = url_segmenti eşdeğeri (VAR); kilit bırakılamadı uyarısı aXet'te adsız SM12 metni (url_adi gereksiz, VAR); adt_set_description docstring'i 'Z/Y' → 'Z/Y ya da projede bildirilmiş /<NS>/'."
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/sap_sync_pull.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/sap_sync_pull.py: ALMA — #405 dosya adı ↔ SAP adı (dosya_adindan_ad) ve tırnaklı tekrar komutu: aXet'te ad JSON argümanıdır, dosya adından ad çözülmez (adt_get output_path model verir), pull kaydı SAP adı + tip anahtarlı (d6572b3 pull kararı, lider onaylı)."
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/source_drift.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/source_drift.py: ALMA — #405 dosya_adindan_ad (repo dosyası arama / pbe_siniflandir): aXet'te dosyadan ad çözen yol yok; 6811b83 ek store damgası (git ağaç kökleri) lider kararıyla ALMA."
+ },
+ {
+  "source": "DEV_CORE",
+  "pattern": "scripts/syntax_check.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): scripts/syntax_check.py: VAR — DDIC sözdizimi kontrol yolu aXet'te sap_adt_lib (`/sap/bc/adt/ddic/{endpoint}/{_adt_seg(name)}`, bu turun URL kodlaması)."
+ }
+]

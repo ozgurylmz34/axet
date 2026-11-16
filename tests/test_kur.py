@@ -59,6 +59,11 @@ def _gercek_damga() -> dict:
     for f in izlenen:
         damga[str(f)] = (f.stat().st_size, f.stat().st_mtime_ns) if f.is_file() else None
     damga["yedekler"] = sorted(p.name for p in cfg_dizin.glob("axet-code.json.bak-*")) if cfg_dizin.is_dir() else None
+    # aXet tur 8 bug-gate: ajan kurulumu (scripts/ajan_kurulum.py) GERÇEK `<XDG_CONFIG_HOME|~/.config>/axet-code/agents`
+    # dizinine yazar — bekçi bu yeni yazma hedefini de izler (göreli ad + boyut + mtime; içerik okunmaz).
+    ajanlar = cfg_dizin / "agents"
+    damga["ajanlar"] = (sorted((str(p.relative_to(ajanlar)), p.stat().st_size, p.stat().st_mtime_ns)
+                               for p in ajanlar.rglob("*") if p.is_file()) if ajanlar.is_dir() else None)
     # Z98 bekçisi: kur.ps1 artık kullanıcı PATH'ine yazabilir. Testler yalnız AXET_KUR_PATH_KAYDI sahte hedefine yazar;
     # GERÇEK HKCU\Environment Path ham değeri (genişletilmemiş) ve türü koşum öncesi/sonrası aynı kalmalı.
     try:
@@ -418,6 +423,30 @@ class KurTestTaban(GeciciTest):
 
     def z98_kayit(self) -> Path:
         return self.hedef / ".axet-kurulum" / "kullanici-path.json"
+
+
+class GercekDamgaBekcisiTest(unittest.TestCase):
+    """`_gercek_damga` (gerçek kullanıcı bekçisi) ajan kurulumunun yazma hedefini de izler (aXet tur 8 bug-gate):
+    `<XDG_CONFIG_HOME ya da ~/.config>/axet-code/agents`. Ölçüm geçici XDG tabanında: ajan dosyası eklenince ya da
+    değişince damga DEĞİŞMELİ (eskiden yalnız axet-code.json + yedekler izleniyordu ⇒ değişiklik görünmezdi)."""
+
+    def test_ajan_dizini_degisikligi_damgayi_degistirir(self):
+        from unittest import mock
+        kok = gecici_dizin("axet-damga-")
+        try:
+            ajanlar = kok / "axet-code" / "agents"
+            with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(kok)}):
+                bos = _gercek_damga().get("ajanlar")         # dizin yok (yalnız bu anahtar: hata metni PATH sızdırmasın)
+                ajanlar.mkdir(parents=True)
+                (ajanlar / "sap-ui5.md").write_text("a", encoding="utf-8")
+                ilk = _gercek_damga().get("ajanlar")
+                self.assertNotEqual(bos, ilk)               # ajan dosyası eklendi
+                (ajanlar / "sap-ui5.md").write_text("ab", encoding="utf-8")
+                self.assertNotEqual(ilk, _gercek_damga().get("ajanlar"))   # içerik/boyut değişti
+                self.assertEqual(ilk_tekrar := _gercek_damga().get("ajanlar"), _gercek_damga().get("ajanlar"))
+                self.assertIsNotNone(ilk_tekrar)            # kontrol grubu: değişiklik yoksa eşit, dizin görüldü
+        finally:
+            _sil(kok)
 
 
 class KurTest(KurTestTaban):

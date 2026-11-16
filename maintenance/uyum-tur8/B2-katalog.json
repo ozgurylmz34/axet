@@ -1,0 +1,185 @@
+[
+ {
+  "tur": "duzeltme",
+  "kritik": true,
+  "baslik": "PDF: klasör adında # olan belge artık doğru basılıyor; dizin listesi açılırsa durur",
+  "neden": "html_to_pdf.js girdi yolunu düz metin birleştirerek URL'e çeviriyordu; klasör adındaki # URL parçası sayılıyor, tarayıcı üst klasörün dizin listesini basıyor ve araç yine 'PDF OK' diyordu (sessiz yanlış çıktı). Yol artık kodlanarak açılır; açılan sayfa bir dizin listesiyse PDF yazılmaz, çıkış 2. \\\\localhost\\ UNC yolu 127.0.0.1 üzerinden açılır.",
+  "dosyalar": [
+   "skills-sap/sap-fs-ts-docs/scripts/html_to_pdf.js",
+   "skills-sap/sap-fs-ts-docs/tests/test_node_scripts.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k node"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": true,
+  "baslik": "PDF: geniş görsel, pre ya da tablo artık bütün belgeyi küçültmüyor",
+  "neden": "Sayfadan taşan tek bir öğe Chromium'un bütün belgeyi küçültmesine yol açıyordu (gövde 10,5 → 7 pt) ve geniş pre sağdan kırpılıyordu. html_to_pdf.js basmadan önce yalnız taşan/kırpık öğeye ve taşan tabloya PDF'e özel CSS uygular (sığan tablo değişmez). Her koşumda YERLESIM satırı basılır; düzeltilemeyen taşma kalırsa PDF yazılır ama 'PDF UYARILI' + stderr uyarısı (çıkış 0). Bayraksız page.pdf seçenekleri aynı; taşan öğeli belgenin PDF'i bilinçli olarak değişir.",
+  "dosyalar": [
+   "skills-sap/sap-fs-ts-docs/scripts/html_to_pdf.js",
+   "skills-sap/sap-fs-ts-docs/scripts/build_doc_pdf.py",
+   "skills-sap/sap-fs-ts-docs/scripts/build_kd_pdf.py",
+   "skills-sap/sap-fs-ts-docs/references/pdf-with-screenshots.md",
+   "skills-sap/sap-fs-ts-docs/tests/test_node_scripts.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k node",
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k build_verify"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": true,
+  "baslik": "Alan tablosu üreticisi: custom entity, -- yorumu ve namespace'li adlar doğru okunuyor",
+  "neden": "gen_field_table.py custom entity adını '?' yapıyor ve başlık annotation'ındaki { işaretini gövde sanabiliyordu; -- satır yorumundaki eski 'define' başlığı ad olarak alınıyor, yorumlu alan satırı listeyi boşaltıyordu; etiket içindeki // metni kesiyordu; /NS/X adlı entity yanlış gövdeyle sessizce yanlış tablo üretiyordu. Yorum ayıklama string'e duyarlı oldu, ad grameri namespace'i tanıyor, komşu dosya #ns#x adıyla aranıyor. Yardımcı modül yalnız standart kütüphane kullanır (SAP bağlantısı ya da proje ayarı okumaz). Namespace'li kaynak alanı (`/nspc/fld as X`, `_tab./nspc/fld`) tabloya alınır; çözülemeyen alan satırı sessizce düşmez, belgede 'çözülemedi' satırıyla listelenir.",
+  "dosyalar": [
+   "skills-sap/sap-fs-ts-docs/scripts/gen_field_table.py",
+   "skills-sap/sap-fs-ts-docs/scripts/doc_ad_metin.py",
+   "skills-sap/sap-fs-ts-docs/tests/test_field_table.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k field_table"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": false,
+  "baslik": "Taslak FS/TS üreticisi namespace'li tabloları kaybetmiyor",
+  "neden": "program_to_spec.py ad yakalamasında / tanınmadığı için FROM /ns/tab hiçbir listeye girmiyordu. Namespace'li adlar artık katı gramerle alınır ve ayrı 'Namespace'li tablolar' satırında listelenir (müşterinin mi SAP'nin mi olduğu teyit edilecek); Türkçe sözcükler kesilmez.",
+  "dosyalar": [
+   "skills-sap/sap-fs-ts-docs/scripts/program_to_spec.py",
+   "skills-sap/sap-fs-ts-docs/tests/test_program_to_spec.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k program_to_spec"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "Klasik program iskeleti: Git Bash'te / ile başlayan ad için ipucu",
+  "neden": "Git Bash / ile başlayan argümanı Windows yoluna çevirir (/NS/X → C:/Program Files/Git/NS/X); ad reddi bu durumda nedenini söylemiyordu. Red mesajı artık MSYS_NO_PATHCONV=1 ipucu verir. Namespace'li program adı kabulü bu turda yok (ad kararı Z/Y).",
+  "dosyalar": [
+   "skills-sap/sap-classic-abap/scripts/scaffold_classic_program.py",
+   "tests/test_kural_hatirlatma.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k kural_hatirlatma"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "Kod inceleme kontrol listeleri: BE-89 yeni; BE-12/13/20/26/55 güncel",
+  "neden": "RAP sorgu sağlayıcıda get_as_ranges ile alanlar arası 'or' filtresi 500 döndürüyor (BE-89). ATC P1 kuralında mevcut koddaki clean-core ailesi muaf (proje politikası aksini demiyorsa); BY \\_assoc okumada varsayılan FIELDS ( … ) WITH (ALL FIELDS türetilmiş alanlı view'da dökümle bitebiliyor); RAP işleyicide SUBMIT/iş planlama yasak; arayüz parametresinde satır içi tablo tipi ve türetilmiş RAP tipi isimli tip ister; yeni yapı da onay ister. validator-map fonksiyon grubu include anahtarlarını listeler.",
+  "dosyalar": [
+   "skills-sap/sap-code-review/references/checklist-abap.md",
+   "skills-sap/sap-code-review/references/checklist-rap.md",
+   "skills-sap/sap-code-review/references/checklist-cds-ddic.md",
+   "skills-sap/sap-code-review/references/validator-map.md",
+   "skills-sap/sap-code-review/tests/test_checklists.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-code-review && python -m unittest discover -s tests -p test_checklists.py"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "CDS/DDIC: namespace önekli adlar, başka tabloya para birimi başvurusu, tablo yaratma maddeleri",
+  "neden": "Paket öneki müşteri namespace'i de olabilir (/NSPC/SD001_V_ 14 karakter — classic view sığmaz, view entity tercih edilir). CURR alanı başka tablonun para birimi alanına nitelenmiş olarak başvurabilir. Yeni tablo için C-TBL-CRE-01 (DTEL'siz alan listesi, WARNING) ve C-TBL-CRE-02 (onay kaydı, BLOCKER); C-STR-FIELD-01 WARNING oldu; tip değişikliği fiziksel tiple kıyaslanır; etiket metnini AI önerir ama kullanıcı onaylar; mevcut koddaki ham tablo kullanımı tek başına bulgu değildir.",
+  "dosyalar": [
+   "skills-sap/sap-cds-ddic/references/cds.md",
+   "skills-sap/sap-cds-ddic/references/checklists.md",
+   "skills-sap/sap-cds-ddic/references/tables-structures.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-code-review && python -m unittest discover -s tests -p test_checklists.py"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "RAP dersleri: etag, custom entity, BY \\_assoc niteleyicisi, SUBMIT yasağı, BO dışı tampon",
+  "neden": "Ölçülmüş RAP hataları referanslara eklendi: etag satırı üç save biçimini kapsar; aynı tabloyu paylaşan iki managed kök; custom entity + query sınıfı (araç desteği henüz yok); ALL FIELDS WITH kardinalitesi bozuk view'da HANA -305; işleyicide SUBMIT/JOB yasak (DESTINATION NONE serbest); additional save'de READ ENTITIES BO dışı tabloyu görmez; eski sürümde snapshot notu.",
+  "dosyalar": [
+   "skills-sap/sap-rap/references/troubleshoot.md",
+   "skills-sap/sap-rap/references/layering-and-bdef.md",
+   "skills-sap/sap-rap/references/behavior-impl.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "Klasik ABAP dersleri: güncelleme modülü, türetilmiş RAP tipi, ABAP Unit sahte sıfır, exit include",
+  "neden": "Güncelleme modülü (IN UPDATE TASK) metadata PUT ile kurulur; kanıt aktivasyon sonrası TFDIR-UTASK. Arayüzde türetilmiş RAP tipi isimli TYPES ister. Aktivasyondan hemen sonraki ABAP Unit koşusu sahte 0 test verebilir (doğrulama sırası yazıldı). Standart programa bağlı exit include'larda kısa yorum kuralı.",
+  "dosyalar": [
+   "skills-sap/sap-classic-abap/references/classes.md",
+   "skills-sap/sap-classic-abap/references/fugr-fm.md",
+   "skills-sap/sap-classic-abap/references/known-errors-classic.md",
+   "skills-sap/sap-classic-abap/references/programs-includes.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "Temel ADT notları: ATC sırası ve muafiyeti, ENHO'lu include, 1909 profili",
+  "neden": "ATC aktif sürümü ölçer (push → aktive → ATC), öncesi ↔ sonrası kıyaslanır, ölçülemeyen tip temiz sayılmaz, mevcut koddaki clean-core P1 ailesi iş kalemi değildir; paket ATC'si pahalıdır. ENHO'ya bağlı include tek başına aktive edilebilir. s4_private 1909'da view entity ve BDEF strict yok.",
+  "dosyalar": [
+   "skills-sap/sap-adt-foundation/references/foundation-ops.md",
+   "skills-sap/sap-adt-foundation/references/foundation-query.md",
+   "skills-sap/sap-adt-foundation/references/profiles.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "OData ETag: callFunction için eTag açıkça verilir",
+  "neden": "UI5 V2 otomatik If-Match başlığını yalnız update/remove'da ekler; ETag'li BO'da instance action callFunction eTag'siz 428 alır. Backend referansına not eklendi.",
+  "dosyalar": [
+   "skills-sap/sap-odata-backend/references/segw-service.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "TS build'den önce yazılır",
+  "neden": "Yeni geliştirmede sıra: FS onayı → TS → build → inceleme → SAP yazma; TS'i kodu yazan ajan yazmaz.",
+  "dosyalar": [
+   "skills-sap/sap-fs-ts-docs/references/ts-authoring.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k skill_structure"
+  ]
+ },
+ {
+  "tur": "yeni",
+  "kritik": false,
+  "baslik": "SD modülü dersleri (SD-D1…SD-D11)",
+  "neden": "SD iş alımı için ölçülmüş saha dersleri ayrı dosyada: fiyat onayı/koşul kaydı, teslimat planı, embedded EWM, sessiz yanlış fiyatın görünür eksikten ağır olması, canlı testte kâhinin standart tablo kaydı olması. sd.md ilgili tetikleyicilerden bu derslere işaret eder.",
+  "dosyalar": [
+   "skills-sap/sap-intake-triage/references/modules/sd-dersler.md",
+   "skills-sap/sap-intake-triage/references/modules/sd.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ }
+]

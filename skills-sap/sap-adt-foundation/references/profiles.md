@@ -28,6 +28,8 @@
 
 **Sürüm/politika farkları (yalnız `s4_private` ve `ecc`):**
 - `s4_private` 1909 → `abap_cloud: none`, `rap: available`; 2020/2021 → `abap_cloud: none`; 2022+ fark yok.
+  1909 (SAP_BASIS 754) ayrıca ölçüldü: `define view entity … as select from` **YOK** (projeksiyon view entity kabul; I-katmanı
+  klasik `sqlViewName` + `preserveKey`) ve BDEF **strict modu YOK**. 2020–2023 için bu iki eksen ÖLÇÜLMEDİ.
 - `s4_private` `cleancore_policy`: `strict` → klasik Dynpro yasak + yalnız released API · `balanced` → matris
   varsayılanı · `classic` → RAP tercih baskısı kalkar.
 - `ecc` `db`: `hana` → AMDP var · `anydb` → AMDP yok (anyDB'de AMDP önermek hatadır).

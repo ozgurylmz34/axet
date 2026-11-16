@@ -1,0 +1,178 @@
+[
+  {
+    "tur": "yeni",
+    "kritik": false,
+    "baslik": "Fonksiyon grubu include'una yazma ve aktivasyon (group argümanı)",
+    "neden": "Fonksiyon grubunun include'ları (LZ…F01 gibi) artık adt_get, adt_push_source, adt_activate ve adt_lock_check ile, object_type=\"fugr_include\" ve group argümanı verilerek okunup yazılabilir. Yazmadan, aktive etmeden ve kilit sorgulamadan önce include'un gerçekten o gruba ait olduğu SAP'den kanıtlanır; kanıt tutmazsa hiçbir şey yazılmaz. Grup müşteri adı olmalı ve include grubun önekiyle başlamalı; standart gruba yazma kapıda reddedilir. Yazımda transport zorunludur.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/object_types.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/pull_state.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/_reviewer.py",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/tests/test_fugr_include_yazim.py",
+      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py"
+    ],
+    "gerektirir": [
+      "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"
+    ],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k fugr_include",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k cli_gate"
+    ]
+  },
+  {
+    "tur": "yeni",
+    "kritik": false,
+    "baslik": "BAdI enhancement spot okuma ve yazma araçları",
+    "neden": "İki yeni araç: adt_badi_spot_read bir BAdI enhancement spot'unu ve BAdI tanımlarını okur; adt_badi_spot_write müşteri spot'u yaratır, BAdI tanımı ekler, günceller ya da açıkça istenen tanımı kaldırır. Spot her yazımda SAP'den taze okunur, verilmeyen alanlar ve listede olmayan tanımlar korunur; okumadan sonra spot başkası tarafından değiştirildiyse yazılmaz. Standart spot'a ve standart BAdI adına yazma reddedilir; transport zorunludur. Yalnız s4_private profilinde açıktır.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/badi.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/object_types.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/gate.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/_app.py",
+      "skills-sap/sap-adt-foundation/references/enhancement-spot-badi.md",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/SKILL.md",
+      "skills-sap/sap-dev/references/role-briefs.md",
+      "skills-sap/sap-adt-foundation/tests/test_badi_spot.py",
+      "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/readback_aktif.xml",
+      "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/put_kabul.xml",
+      "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
+      "docs/sap-api-policy.md",
+      "skills-sap/README.md"
+    ],
+    "gerektirir": [
+      "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"
+    ],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k badi_spot",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k cli_gate"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "CSRF reddi dilden bağımsız tanınır; CDS custom entity kaynak denetiminden geçer",
+    "neden": "SAP'nin CSRF reddi yalnız İngilizce hata metniyle tanınıyordu; başka dilde dönen yanıtlarda istek taze token'la yeniden denenmiyordu. Artık 403 yanıtı CSRF başlığı ya da metni taşıyorsa her yolda aynı şekilde tanınır. Ayrıca define custom entity ile başlayan CDS kaynağı artık yanlışlıkla reddedilmiyor.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/cds_metin.py",
+      "skills-sap/sap-adt-foundation/tests/test_csrf_custom_entity.py",
+      "skills-sap/sap-adt-foundation/tests/test_ddic_textpool.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k csrf_custom",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k ddic_textpool"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "Kaynak yazma hatasında gerçek SAP yanıtı gösterilir",
+    "neden": "Kaynak yazımı reddedildiğinde (ör. kaynak taraması reddi) araç sonraki transport biçimlerini de deneyip yalnız sonuncunun yanıtını gösteriyordu; bu yanıt çoğu zaman kendi kilidine çarpan bir 409 olduğundan teşhis yanlış yöne gidiyordu. Artık içerik reddinde ilk yanıtta durulur ve yanıtta denenen her biçimin sonucu listelenir (bağlantı adresi ve parola temizlenmiş olarak).",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k kucuk_duzeltmeler_tur8"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "Hayalet transport listesi okunamazsa 'yok' denmez",
+    "neden": "Başarısız bir yazımdan sonra boş kalmış transport'ları bulan sorgu okunamadığında 'hayalet transport yok' ile aynı görünüyordu. Artık okunamazsa bunu açıkça söyler ve SE10'da elle bakılmasını önerir.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k kucuk_duzeltmeler_tur8"
+    ]
+  },
+  {
+    "tur": "iyilestirme",
+    "kritik": false,
+    "baslik": "SAP oturumu iş bitince kapatılır; SQL süresi milisaniye olarak verilir",
+    "neden": "Araç SAP'de açtığı oturumu süreç biterken kapatmaya çalışır; böylece oturum SAP tarafında zaman aşımına kadar boşta kalmaz (kapatılamazsa iş etkilenmez). adt_sql_query yanıtına SAP'nin sorgu süresi execution_time_ms alanıyla, birimi milisaniye olarak eklendi.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py",
+      "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k kucuk_duzeltmeler_tur8"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "Namespace'li obje adları SAP adreslerinde doğru kodlanır",
+    "neden": "/NS/ ile başlayan obje adları SAP ADT adreslerine kodlanmadan yazılıyordu; bu yüzden namespace'li objelerde istek yanlış adrese gidebiliyordu. Artık bütün adres parçaları tek bir yardımcıyla kodlanır; Z/Y adlarında adres değişmez.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/rap_service.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/composite.py",
+      "skills-sap/sap-adt-foundation/tests/test_kucuk_duzeltmeler_tur8.py"
+    ],
+    "gerektirir": [
+      "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"
+    ],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k kucuk_duzeltmeler_tur8",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k lib_regressions"
+    ]
+  },
+  {
+    "tur": "yeni",
+    "kritik": false,
+    "baslik": "Behavior definition (BDEF) için where-used",
+    "neden": "adt_where_used object_type=\"bdef\" ile artık çalışır; eskiden 'desteklenmeyen tip' hatası veriyordu. Obje önce aynı adresten var mı diye sorulur: yoksa 'tüketicisi yok' değil 'obje yok' döner; sunucu hatası 'yok' sayılmaz. Yanıt BDEF'in kendisini de bir referans olarak içerir ve count onu da sayar. Bu araç aXet'ten canlı SAP'de ölçülmedi.",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/tests/test_tur8_tamamlama.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k tur8_tamamlama",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k verdict_query_tools"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "Namespace'li obje yerel dosyası proje dışına yazılmaz/silinmez; servis yayınında $metadata yolu verilir",
+    "neden": "Kütüphanenin yerel dosya adı türeten üç yeri (indirme, yazma, silme) /NS/ ile başlayan adı olduğu gibi dosya yoluna koyuyordu; Windows'ta bu yol sürücü köküne kaçar ve silme oradaki aynı adlı dosyayı silebilirdi. Artık ad #ns#x biçimine çevrilir; Z/Y adları değişmez. adt_publish_service yanıtına doğrulama için okunacak metadata_path eklendi (Z/Y: /sap/opu/odata/sap/<AD>/$metadata; namespace'li servis /sap/opu/odata/<ns>/<AD>/$metadata — namespace'li yol canlıda ölçülmedi). adt_set_description açıklaması namespace'li müşteri adlarını da anar. Obje SAP'de silindiği hâlde yerel dosya adı çevrilemezse sonuç artık 'başarısız' değil 'silindi' döner (yerel temizlik uyarıyla atlanır).",
+    "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/rap_service.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/description.py",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/tests/test_tur8_tamamlama.py",
+      "skills-sap/sap-adt-foundation/tests/test_bug_gate_tur8_duzeltme.py"
+    ],
+    "gerektirir": [
+      "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"
+    ],
+    "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k tur8_tamamlama",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k set_description"
+    ]
+  }
+]
