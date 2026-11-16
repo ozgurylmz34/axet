@@ -228,6 +228,13 @@ class DoctorAjanTest(unittest.TestCase):
         (s, _), = self.durum(False)
         self.assertEqual("INFO", s)
 
+    def test_kaynak_klasoru_yoksa_olculemedi_warn(self):
+        """R3 bug gate F3: şablonun agents/ klasörü yoksa doctor susmaz, ÖLÇÜLEMEDİ der."""
+        with mock.patch.object(ak, "KAYNAK_DIZIN", Path(self._td.name) / "yok"):
+            durum = self.durum(True)
+        self.assertEqual(["WARN"], [s for s, _ in durum], durum)
+        self.assertIn("ÖLÇÜLEMEDİ", durum[0][1])
+
     def test_emekli_ajan_warn(self):
         """Bug gate LOW-3: şablonda artık olmayan işaretli ajan kuruluysa PASS değil WARN."""
         ak.uygula(ak.planla(sap=True))

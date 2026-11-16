@@ -1660,12 +1660,15 @@ class KurTest3(KurTestTaban):
         self.uzakta_commit()
         once_cfg = self.cfg.read_bytes()
         once_git = _goruntu(self.hedef / ".git")
+        once_dizin = sorted(p.name for p in self.cfg.parent.iterdir())  # gerçek kurulumun ürünleri (ör. SAP ajanları: agents/)
         r = self.kur("-DenemeModu")
         self.assertEqual(r.returncode, 0, self.cikti(r))
         self.assertIn("dry-run", self.cikti(r))
         self.assertEqual(self.cfg.read_bytes(), once_cfg)
         self.assertEqual(_goruntu(self.hedef / ".git"), once_git)
-        self.assertEqual(sorted(p.name for p in self.cfg.parent.iterdir()), ["axet-code.json"])  # yedek de yok
+        sonra_dizin = sorted(p.name for p in self.cfg.parent.iterdir())
+        self.assertEqual(sonra_dizin, once_dizin)  # deneme modu config dizinine hiçbir şey eklemez (yedek de yok)
+        self.assertEqual([n for n in sonra_dizin if n.startswith("axet-code.json")], ["axet-code.json"])
 
     # --- K-B: klonun içindeki kur.cmd -Kaldir KENDİ klonunu kaldırır ---------------------------------------------
     def test_kaldir_hedefsiz_betigin_kendi_klonunu_kaldirir(self):

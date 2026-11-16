@@ -3,12 +3,13 @@
   "tur": "yeni",
   "kritik": false,
   "baslik": "Kanonik freestyle UI5 şablonu (1.71 / 1.120 sürüm parçalı)",
-  "neden": "Yeni liste/rapor uygulaması artık sıfırdan ya da proje içindeki eski bir kopyadan değil, skill'le gelen şablondan kurulur: seçim ekranı → grid liste → değişiklik ekranı, kişiselleştirme util'i (kolon göster/gizle, varyant, Excel, kolon filtresi penceresi) ve backend UI5 sürümüne göre seçilen sürüm parçası. Proje kopyalarının birbirinden yüzlerce satır ayrıştığı ölçülmüştü. Değişiklik ekranı alt kalem yolunda kalem anahtarındaki tırnak da kaçırılır.",
+  "neden": "Yeni liste/rapor uygulaması artık sıfırdan ya da proje içindeki eski bir kopyadan değil, skill'le gelen şablondan kurulur: seçim ekranı → grid liste → değişiklik ekranı, kişiselleştirme util'i (kolon göster/gizle, varyant, Excel, kolon filtresi penceresi) ve backend UI5 sürümüne göre seçilen sürüm parçası. Proje kopyalarının birbirinden yüzlerce satır ayrıştığı ölçülmüştü. Değişiklik ekranı alt kalem yolunda kalem anahtarındaki tırnak da kaçırılır. Şablon dosyaları her platformda LF olarak çıkar (Windows klonunda CRLF'e çevrilmez).",
   "dosyalar": [
    "skills-sap/sap-ui5-fiori/templates/ui5-freestyle/",
    "skills-sap/sap-ui5-fiori/tests/test_ui5_sablon.py",
    "skills-sap/sap-ui5-fiori/SKILL.md",
-   "skills-sap/sap-ui5-fiori/references/list-grid-alv.md"
+   "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+   ".gitattributes"
   ],
   "gerektirir": [],
   "test": [

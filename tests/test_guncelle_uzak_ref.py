@@ -139,6 +139,8 @@ class PlanRefNormalTest(unittest.TestCase):
         plan = {"taban_commit": "abc", "yeni_etiket": TAM}
         eski = {"plan": {"taban_commit": "abc", "yeni_etiket": "origin/main"}}
         self.assertIsNone(self.g._muhur_sorunu("x.json", eski, plan))
+        ham_plan = {"taban_commit": "abc", "yeni_etiket": "origin/main"}  # R3 ÖNERİ-1: ham plan geçen çağıran
+        self.assertIsNone(self.g._muhur_sorunu("x.json", {"plan": dict(plan)}, ham_plan))
         baska = {"plan": {"taban_commit": "abc", "yeni_etiket": "v0.5.21"}}
         self.assertIsNotNone(self.g._muhur_sorunu("x.json", baska, plan))
 

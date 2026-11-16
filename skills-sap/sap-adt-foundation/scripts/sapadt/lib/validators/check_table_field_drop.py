@@ -95,6 +95,13 @@ TABLE_KW_RE = re.compile(r'define\s+table\s+(?!function\b)', re.IGNORECASE)
 _NON_FIELD = {'define', 'table', 'with', 'include'}
 
 
+def tablo_adi(text: str) -> str:
+    """Katı gramere uyan tablo adı ya da '' — yorumlar maskelenmiş metinde aranır: yorumdaki eski `define table`
+    adı okunursa validator YANLIŞ objeyi kıyaslar (yoksa 404 → 'yeni yaratım, temiz' = sahte ölçüm)."""
+    m = TABLE_NAME_RE.search(yorumlari_maskele(text))
+    return ad_coz(m.group(1))[0] if m else ''
+
+
 def cozulemeyen_alanlar(text: str) -> list[str]:
     """Alan konumunda olup katı ad gramerine UYMAYAN adlar (`/ab/x : …`).
 
@@ -268,9 +275,8 @@ def main() -> int:
         return 1
 
     new_text = path.read_text(encoding='utf-8', errors='replace')
-    m = TABLE_NAME_RE.search(new_text)
-    table = ad_coz(m.group(1))[0] if m else ''
-    if not table and TABLE_KW_RE.search(new_text):
+    table = tablo_adi(new_text)
+    if not table and TABLE_KW_RE.search(yorumlari_maskele(new_text)):
         # #402 K2: `define table` VAR ama ad katı gramere uymadı (ör. `/AB/T`) ⇒ ÖLÇÜLEMEDİ.
         # Eski hâl "kapsam dışı" + measured=TRUE idi: DROP-guard koşmadan "ölçtüm, temiz".
         print(f'ÖLÇÜLEMEDİ — {path.name} `define table` içeriyor ama tablo adı çözülemedi '

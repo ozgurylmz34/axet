@@ -45,7 +45,7 @@
 | # | Sonuç | Kanıt | Not |
 |---|---|---|---|
 | T1 | ✅ GEÇTİ | lab9: `install.py --sap` rc 0 + `new_project.py --sap` rc 0 (`out/t1-newproject.txt`) | lab XDG yalıtılmış |
-| T2 | ✅ GEÇTİ | `doctor.py` 0 FAIL (`out/t2-doctor.txt`) · `--live` kanarya 6/6 CORE 0.10.1 / SAP 0.5.4 (`out/t2-doctor-live.txt`) | ilk koşu AGENTS.md yer tutucu FAIL'i = beklenen; doldurulunca 0 |
+| T2 | ✅ GEÇTİ | `doctor.py` 0 FAIL (`out/t2-doctor.txt`) · `--live` kanarya 6/6 CORE 0.10.1 / SAP 0.5.4 (`out/t2-doctor-live.txt`) | ⚠ DÜZELTME (CI sonrası): ilk koşudaki AGENTS.md yer tutucu FAIL'i 'beklenen' DEĞİLDİ — yeni `<yok ya da /NS/>` satırını sihirbaz doldurmuyordu (CI `test_yeni_proje` 6 kırmızı); `yeni_proje.sap_satiri` düzeltildi. Ders: lab'da görülen FAIL elle 'beklenen' sayılmadan önce nedeni ölçülür |
 | T3 | ✅ GEÇTİ | doctor skill envanteri 37 skill, açıklama sınırı içinde | |
 | T4 | ✅ GEÇTİ | t4a S0 (araçsız, sınıf beyanı var) · t4b `view sap-intake-triage/SKILL.md` → S1 · t4c `view` → S2 (DB oturumları 70e6ec97 · b045e7f4 · 533f020c) | skill okuma 2/3 = ölçüt; S0'da okumadan sınıfladı |
 | T5 | ✅ GEÇTİ (yeniden koşu) | t5r: `glob sap-fs-ts-docs/**/*.md` → `view templates/FS-template.md`, doğru bölüm listesi (54b9db8e, 16 sn) · std 04 maddesi `references/ts-authoring.md:7` SIRA bloğunda | ilk koşu t5 480 sn asılı: yerleşik `task` alt ajanının proje dışı `ls`'i (aşağıda K16) |

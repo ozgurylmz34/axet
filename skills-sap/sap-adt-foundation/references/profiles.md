@@ -44,6 +44,8 @@ kayıt defteriyle (`REGISTRY`, `_profile.TIP_PROFIL_KISITI`) birebir kıyaslanı
 <!-- CLI-ETIKETLERI -->
 | Araç / tip | Açık olduğu profiller | Dayanak |
 |---|---|---|
+| `adt_badi_spot_read` | s4_private | enhancement spot (ENHS) okuma reçetesinin kaynak profili (`tools/badi.py`) |
+| `adt_badi_spot_write` | s4_private | ENHS kilitli PUT + readback reçetesinin kaynak profili (`tools/badi.py`); aXet'te canlı DOĞRULANMADI |
 | `adt_msgclass_write` | s4_private | reçetenin ölçüldüğü profil (`tools/msgclass.py`) |
 | `adt_screen_generate` | ecc, s4_private | klasik Dynpro/CUA yalnız bu profillerde (matris §1) |
 | `adt_set_description` | s4_private | envelope PUT reçetesinin kanıt profili; ölçüm yalnız DDLS (`tools/description.py`) |

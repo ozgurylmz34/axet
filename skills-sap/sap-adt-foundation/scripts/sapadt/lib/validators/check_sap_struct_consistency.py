@@ -50,7 +50,7 @@ _ALAN_SATIRI = re.compile(r'^(' + AD_ADAYI + r')\s*:\s+')
 
 def extract_struct_name(text: str) -> str | None:
     """Katı gramere uyan yapı adı (büyük harf) ya da None (`define structure` yok / ad bozuk)."""
-    m = STRUCT_NAME_PATTERN.search(text)
+    m = STRUCT_NAME_PATTERN.search(yorumlari_maskele(text))   # yorumdaki eski `define structure` adı okunmaz
     ad = ad_coz(m.group(1))[0] if m else ''
     return ad.upper() if ad else None
 
@@ -117,7 +117,7 @@ def main() -> int:
 
     local_text = path.read_text(encoding='utf-8', errors='replace')
     struct_name = extract_struct_name(local_text)
-    if not struct_name and STRUCT_KW_PATTERN.search(local_text):
+    if not struct_name and STRUCT_KW_PATTERN.search(yorumlari_maskele(local_text)):
         # #402 K2: `define structure` VAR ama ad katı gramere uymadı (ör. `/AB/X`) ⇒ ÖLÇÜLEMEDİ.
         print(f'ÖLÇÜLEMEDİ — {path.name} `define structure` içeriyor ama yapı adı çözülemedi '
               f'→ SAP kıyası KOŞMADI')

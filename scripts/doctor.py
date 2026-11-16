@@ -1327,6 +1327,12 @@ def check_ajanlar(sap: bool) -> None:
     except Exception as exc:  # noqa: BLE001 — teşhis
         add("WARN" if sap else "INFO", f"özel ajanlar: ÖLÇÜLEMEDİ ({type(exc).__name__}: {exc})")
         return
+    if sap and not ak.KAYNAK_DIZIN.is_dir():
+        # R3 bug gate F3: kısmi güncellemede şablonun `agents/` klasörü yoksa plan bilerek boştur (kurulu ajanlara
+        # dokunulmaz) — sessiz kalmak "ölçüldü, sorun yok" gibi okunur.
+        add("WARN", f"özel ajanlar: ÖLÇÜLEMEDİ — şablonda {ak.KAYNAK_DIZIN.name}/ klasörü yok (yarım güncelleme?) → "
+            "aXet'te %guncelle yaz")
+        return
     if not plan:
         return
     dizin = ak.ajan_dizini()

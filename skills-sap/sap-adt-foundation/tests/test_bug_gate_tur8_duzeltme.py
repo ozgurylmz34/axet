@@ -89,6 +89,29 @@ class YRM_YorumMaskesi(unittest.TestCase):
         H.kaydet("SCS yorum satırı alan adayı değil", "[] + 3 alan", "eşit", True)
 
 
+class YRM_AdYorumdanOkunmaz(unittest.TestCase):
+    """R3 bug gate F1: tablo/yapı ADI da yorum maskeli metinden okunur (yorumdaki eski ad → yanlış obje → sahte temiz)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tfd = _modul("check_table_field_drop")
+        cls.scs = _modul("check_sap_struct_consistency")
+
+    def test_YRM7_tablo_adi_yorumdan_okunmaz(self):
+        metin = ("// eski ad: define table zsd001_t_old {\n/* define table zsd001_t_eski { */\n"
+                 "define table zsd001_t_new {\n  key id : abap.int4;\n}\n")
+        self.assertEqual(self.tfd.tablo_adi(metin), "zsd001_t_new")
+        self.assertEqual(self.tfd.tablo_adi("define table zsd001_t_new {\n}\n"), "zsd001_t_new")  # kontrol grubu
+        H.kaydet("TFD tablo adı yorumdan okunmaz", "zsd001_t_new", "eşit", True)
+
+    def test_YRM8_yapi_adi_yorumdan_okunmaz(self):
+        metin = ("/* define structure zsd001_s_old { */\n// define structure zsd001_s_eski\n"
+                 "define structure zsd001_s_new {\n  id : abap.int4;\n}\n")
+        self.assertEqual(self.scs.extract_struct_name(metin), "ZSD001_S_NEW")
+        self.assertIsNone(self.scs.extract_struct_name("// define structure zsd001_s_old {\n"))
+        H.kaydet("SCS yapı adı yorumdan okunmaz", "ZSD001_S_NEW", "eşit", True)
+
+
 class YRM_UctanUca(_Proje):
     """Validator alt süreçle (ağsız, sahte URL): yorumlu kaynak `ad-cozulemedi` ile SKIPPED olmaz."""
 

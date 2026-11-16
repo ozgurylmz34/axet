@@ -44,7 +44,8 @@
       "skills-sap/sap-adt-foundation/tests/fixtures/enhs_badi_spot/put_kabul.xml",
       "skills-sap/sap-adt-foundation/tests/test_cli_gate.py",
       "docs/sap-api-policy.md",
-      "skills-sap/README.md"
+      "skills-sap/README.md",
+      "skills-sap/sap-adt-foundation/references/profiles.md"
     ],
     "gerektirir": [
       "Müşteri namespace'i (/<NS>/) desteği: ad kapısı ve SAP ad doğrulaması"

@@ -3,14 +3,15 @@
     "tur": "yeni",
     "kritik": true,
     "baslik": "Müşteri namespace'i kesin yasak metninde tanımlandı",
-    "neden": "SAP'de kendi namespace'ini (/<NS>/) kullanan projeler artık bunu sap-project.json'daki customer_namespaces listesiyle bildirebilir; yasak metni neyin müşteri adı, neyin standart obje olduğunu açıkça söyler (SAP'nin kendi namespace'leri ve bildirilmemiş namespace standarttır). Proje AGENTS.md damgası ve alt görev brifleri aynı metni taşır.",
+    "neden": "SAP'de kendi namespace'ini (/<NS>/) kullanan projeler artık bunu sap-project.json'daki customer_namespaces listesiyle bildirebilir; yasak metni neyin müşteri adı, neyin standart obje olduğunu açıkça söyler (SAP'nin kendi namespace'leri ve bildirilmemiş namespace standarttır). Proje AGENTS.md damgası ve alt görev brifleri aynı metni taşır. Yeni proje sihirbazı AGENTS.md'deki namespace satırını sap-project.json'dan doldurur (bildirim yoksa 'yok').",
     "dosyalar": [
       "core/sap/00-sap.md",
       "skills-sap/sap-dev/references/role-briefs.md",
       "templates/project-sap/sap-project.json",
       "templates/project/AGENTS.md",
       "skills-sap/sap-dev/references/naming.md",
-      "tests/test_new_project.py"
+      "tests/test_new_project.py",
+      "scripts/yeni_proje.py"
     ],
     "gerektirir": [],
     "test": [

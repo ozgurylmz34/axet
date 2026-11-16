@@ -442,6 +442,8 @@ def _muhur_sorunu(ad: str, veri: dict | None, plan: dict) -> str | None:
     if not isinstance(m, dict):
         return f"{ad} plan damgası TAŞIMIYOR (önceki sürümden kalmış olabilir)"
     bekl = _plan_muhru(plan)
+    if "yeni_etiket" in bekl:  # iki taraf da normalize: ham plan geçen bir çağıran da aynı turu tanır
+        bekl = dict(bekl, yeni_etiket=_ref_normal(bekl["yeni_etiket"]))
     m = dict(m, yeni_etiket=_ref_normal(m.get("yeni_etiket"))) if "yeni_etiket" in m else m
     if m != bekl:
         return (f"{ad} BAŞKA bir güncelleme turuna ait — damga "
