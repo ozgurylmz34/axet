@@ -1,0 +1,141 @@
+[
+  {
+    "tur": "yeni",
+    "kritik": true,
+    "baslik": "Müşteri namespace'i kesin yasak metninde tanımlandı",
+    "neden": "SAP'de kendi namespace'ini (/<NS>/) kullanan projeler artık bunu sap-project.json'daki customer_namespaces listesiyle bildirebilir; yasak metni neyin müşteri adı, neyin standart obje olduğunu açıkça söyler (SAP'nin kendi namespace'leri ve bildirilmemiş namespace standarttır). Proje AGENTS.md damgası ve alt görev brifleri aynı metni taşır. Yeni proje sihirbazı AGENTS.md'deki namespace satırını sap-project.json'dan doldurur (bildirim yoksa 'yok').",
+    "dosyalar": [
+      "core/sap/00-sap.md",
+      "skills-sap/sap-dev/references/role-briefs.md",
+      "templates/project-sap/sap-project.json",
+      "templates/project/AGENTS.md",
+      "skills-sap/sap-dev/references/naming.md",
+      "tests/test_new_project.py",
+      "scripts/yeni_proje.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_sap_stamp",
+      "python tests/run_tests.py -k test_sap_skill_bilgi",
+      "python tests/run_tests.py -k test_new_project",
+      "python tests/run_tests.py -k test_doctor"
+    ]
+  },
+  {
+    "tur": "yeni",
+    "kritik": false,
+    "baslik": "new_package.py namespace'li paket klasörü kurar",
+    "neden": "Bildirilmiş müşteri namespace'iyle paket (/<NS>/SD001_CLC) açılabilir: klasör adı abapGit biçiminde (#ns#…), adlandırma kuralları namespace önekiyle üretilir. Namespace bildirilmemişse ya da SAP paketi kurulu değilse yalnız Z/Y kabul edilir; Z/Y paketlerinin çıktısı değişmedi. Git Bash ad başındaki `/`'yı Windows yoluna çevirirse (`C:/Program Files/Git/NSPC/…`) yanıltıcı ret yerine `MSYS_NO_PATHCONV=1` ipucu verilir; `--project-dir` ortamdaki eski proje değişkenini ezer.",
+    "dosyalar": [
+      "scripts/new_package.py",
+      "templates/package/.rules.md.tmpl",
+      "scripts/check_package_naming.py",
+      "tests/test_new_package.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_new_package",
+      "python tests/run_tests.py -k test_package_naming"
+    ]
+  },
+  {
+    "tur": "iyilestirme",
+    "kritik": false,
+    "baslik": "Alt görev brifleri: bağlam disiplini ve teslim öncesi öz-kapı",
+    "neden": "SAP alt görevleri büyük tablo/kaynak okurken bağlamı şişirmesin diye okuma kuralları eklendi; backend ve UI5 alt görevleri teslimden önce sonucu bağımsız kaynakla kıyaslar, aynı hatanın kopyalarını ve etkilenen metinleri arar. İnceleme brifi uzun kaynakta bölge okumayı ve kapsama tablosunda madde başına tek satırı ister. Brif şablonu onay soran komut biçimlerinden ve gereksiz ağır doğrulamadan kaçınmayı söyler.",
+    "dosyalar": [
+      "skills-sap/sap-dev/references/role-briefs.md",
+      "skills-sap/sap-code-review/references/reviewer-brief.md",
+      "skills/code-review/SKILL.md",
+      "skills/explore/references/brief-template.md",
+      "skills/research/SKILL.md",
+      "skills-sap/sap-dev/SKILL.md"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_sap_skill_bilgi",
+      "python tests/run_tests.py -k test_skill"
+    ]
+  },
+  {
+    "tur": "iyilestirme",
+    "kritik": false,
+    "baslik": "Onay soran komut biçimi çekirdek kuralı",
+    "neden": "Kullanıcı ekranda değilken izin soran bir komut işi saatlerce durdurabilir; çekirdek artık geçici çıktıyı silmek yerine üzerine yazmayı, çalışma dizini dışına çıkmamayı ve reddedilen komutu tekrarlamamayı söyler.",
+    "dosyalar": [
+      "core/00-temel.md"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_doctor"
+    ]
+  },
+  {
+    "tur": "iyilestirme",
+    "kritik": false,
+    "baslik": "Gün sonu: push etmek main'e girmek değildir",
+    "neden": "Gün sonunda dal push'lansa da iş main'e girmemiş olabilir; artık iş listesinde dalın durumu (PR yok / PR açık) yazılır, bitmiş iş için PR akışı önerilir ve incelemesi koşmamış iş main'e alınmaz.",
+    "dosyalar": [
+      "skills/gun-sonu/SKILL.md"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_skill"
+    ]
+  },
+  {
+    "tur": "duzeltme",
+    "kritik": false,
+    "baslik": "Açılış özeti yayın listesini aynı adlı etiketle karıştırmaz",
+    "neden": "Klonda origin/main adlı bir etiket varsa açılış özeti güncelleme kalemlerini yanlış kaynaktan okuyabiliyordu; artık uzak dalın tam adı kullanılır.",
+    "dosyalar": [
+      "scripts/session_brief.py",
+      "tests/test_session_brief.py"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_session_brief"
+    ]
+  },
+  {
+    "tur": "yeni",
+    "kritik": false,
+    "baslik": "Ekip hafızasına 10 yeni çalışma dersi, 4 ders güncellendi",
+    "neden": "Yeni dersler: engellenen silmeyi kullanıcıya komut olarak vermemek, iş parametresini koda gömmemek, kayıt tarihini ölçmek, kurulumdan sonra yeni partiyi sormak, Python ile bayt kipinde düzenlemek, uygulama testini onayla yazmak, yeniden incelemeyi dar tutmak, aralıklı hata avına bütçe koymak, kaynağa işaret önermeden önce aramak, belge incelemesini iki turda yapmak. Kabuk kaçışı, deploy kapsamı, kararları önce toplama ve yeniden sınıflandırma derslerine yeni vakalar eklendi.",
+    "dosyalar": [
+      "memory/MEMORY.md",
+      "memory/feedback_engellenen-silmeyi-komut-olarak-verme.md",
+      "memory/feedback_is-parametresini-koda-gomme.md",
+      "memory/feedback_kayit-tarihini-olc.md",
+      "memory/feedback_kurulumdan-sonra-yeni-parti-sorulur.md",
+      "memory/feedback_python-yerinde-duzenleme-bayt-kipi.md",
+      "memory/feedback_uygulama-testi-onayla-yazilir.md",
+      "memory/feedback_yeniden-inceleme-dar-kapsam.md",
+      "memory/feedback_aralikli-hata-avina-butce.md",
+      "memory/feedback_isaret-onermeden-once-prior-art.md",
+      "memory/feedback_belge-incelemesi-iki-tur.md",
+      "memory/feedback_bash-heredoc-turkce-kacis.md",
+      "memory/feedback_deploy-kullanici-testi-sonrasi.md",
+      "memory/feedback_kararlari-once-topla.md",
+      "memory/feedback_kendi-isini-yeniden-siniflandirip-kural-disina-cikma.md"
+    ],
+    "gerektirir": [],
+    "test": [
+      "python tests/run_tests.py -k test_recall"
+    ]
+  },
+  {
+    "tur": "iyilestirme",
+    "kritik": false,
+    "baslik": "Bakımcı kapsama tablosu tur 8",
+    "neden": "Bakımcılar için kural kapsama tablosu yeni müşteri ad alanı, komut biçimi, alt görev brifi ve gün sonu satırlarıyla güncellendi; uyum turu karar kaydı eklendi.",
+    "dosyalar": [
+      "maintenance/rule-coverage.md",
+      "maintenance/uyum-tur8/D-karar.md",
+      "maintenance/uyum-tur8/D-sync.json",
+      "maintenance/uyum-tur8/D-katalog.json"
+    ],
+    "gerektirir": [],
+    "test": []
+  }
+]

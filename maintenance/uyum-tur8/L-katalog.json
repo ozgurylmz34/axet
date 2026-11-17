@@ -1,0 +1,72 @@
+[
+ {
+  "tur": "yeni",
+  "kritik": false,
+  "baslik": "SAP rolleri aXet özel ajanı olarak kurulur: sap-arastirma · sap-backend · sap-ui5 · sap-inceleme · sap-gelistirme",
+  "neden": "aXet.code 1.5.1 kullanıcı tanımlı ajanları destekliyor. SAP paketi açıkken kurulum (ve her %guncelle) şablonun beş ajanını kullanıcı ajan dizinine yazar. Ölçüldü: bu ajanlar yerleşik görev ajanından farklı olarak çekirdek kuralları, SAP kurallarını, ekip hafızasını ve proje AGENTS.md'sini görür — brifinge kuralları kopyalamak gerekmez, yalnız işin kendisi yazılır. sap-arastirma ve sap-inceleme'de dosya düzenleme araçları kapalı (bash açık; salt okuma istemle sağlanır). sap-gelistirme isteğe bağlı bir ana ajandır (`axet-code --agent sap-gelistirme`): her mesajda önce kapsam sınıflaması yapar (yeni talepte 'INTAKE: S0|S1|S2', devam mesajında 'INTAKE: devam'), sonra uygulamaya geçer; varsayılan ajan değiştirilmez. Kullanıcının aynı adlı kendi ajanı varsa ona dokunulmaz; SAP paketi kapatılınca ya da kaldırmada yalnız şablonun kurduğu ajanlar silinir. doctor kurulu ajanların güncel olup olmadığını gösterir; şablondan çıkarılmış (emekli) bir ajan kuruluysa uyarır. Güncelleme yarım kalıp `agents/` klasörü gelmezse kurulu ajanlara dokunulmaz.",
+  "dosyalar": [
+   "agents/README.md",
+   "agents/sap-arastirma.md",
+   "agents/sap-backend.md",
+   "agents/sap-ui5.md",
+   "agents/sap-inceleme.md",
+   "agents/sap-gelistirme.md",
+   "scripts/ajan_kurulum.py",
+   "scripts/install.py",
+   "scripts/doctor.py",
+   "tests/test_ajan_kurulum.py",
+   "tests/_helpers.py",
+   "guncelle/harita.json",
+   "guncelle/kartlar/sinif-kurulum-bakim-scripti.md",
+   "GUNCELLE.md",
+   "skills/guncelle/SKILL.md",
+   "README.md",
+   "AGENTS.md",
+   "docs/onboarding.md",
+   "tests/test_kur.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k test_ajan_kurulum",
+   "python tests/run_tests.py -k test_install",
+   "python tests/run_tests.py -k guncelle_harita"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": false,
+  "baslik": "Alt ajan kuralları aXet.code 1.5.1 ölçümüne göre güncellendi",
+  "neden": "Çekirdek ve SAP rol brifleri 'aXet'te özel ajan çalışmaz' diyordu; 1.5.1'de çalışıyor. Kurallar artık iki durumu ayırır: yerleşik görev ajanı çekirdeği ve proje kurallarını görmez (brifing her şeyi metin olarak taşır), özel sap-* ajanları görür ama konuşmayı ve paket .rules.md'sini görmez. Bağımsız inceleme için salt-okur sap-inceleme ajanı önerilir. Davranış ölçümleri belgesine 1.5.1 satırları (özel ajan, fazlar, alt ajan bağlamı) eklendi. Ölçüldü (1.5.1, run kipi): yerleşik görev ajanının çalışma dizini dışındaki klasöre `ls`'i görünmeyen izin sorusunda asılı kalıyor, aynı yerdeki dosyaya `view` geçiyor — kural artık alt ajana dış yol verilecekse klasör değil dosyanın tam yolunun verilmesini söyler.",
+  "dosyalar": [
+   "core/00-temel.md",
+   "skills-sap/sap-code-review/references/reviewer-brief.md",
+   "skills-sap/sap-dev/references/role-briefs.md",
+   "skills-sap/sap-dev/SKILL.md",
+   "docs/axet-davranis-olcumleri.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k sap_skill_bilgi",
+   "python scripts/doctor.py"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": false,
+  "baslik": "Güncelleme aracı yayın kataloğunu ve kartları daima uzak daldan okur",
+  "neden": "Güncelleme aracı yayın kataloğunu, güncelleme kartlarını ve CI kaydını `origin/main` kısa adıyla okuyordu. Klonda aynı adlı bir etiket varsa git kısa adı etikete çözer ve kalemler yanlış kaynaktan okunurdu (oturum özetindeki aynı kusur da düzeltildi). Artık git'e daima tam uzak dal adı verilir — %guncelle talimatının motoru çıkardığı ve sürümü sorduğu komutlar dahil (gölge etiket motorun kendisini seçebiliyordu); ekrandaki mesajlar değişmedi. Fonksiyon grubu belgesindeki ad kuralı da müşteri ad alanına göre güncellendi.",
+  "dosyalar": [
+   "scripts/guncelle.py",
+   "scripts/guncelle_proje.py",
+   "tests/test_guncelle_uzak_ref.py",
+   "skills-sap/sap-classic-abap/references/fugr-fm.md",
+   "skills/guncelle/SKILL.md",
+   "GUNCELLE.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "python tests/run_tests.py -k test_guncelle_uzak_ref",
+   "python tests/run_tests.py -k test_guncelle_proje"
+  ]
+ }
+]

@@ -1,7 +1,7 @@
 {
  "_aciklama": "sync_check.py --kimlik-kaydi üretir; ELLE DÜZENLEME. Çekirdeğin kontrol listesi kimlik tanımlarının anlık görüntüsü: aXet önekli olmayan (AX- dışı) bir kimliği ancak burada varsa tanımlayabilir (tests/test_kimlik_hizasi.py zorlar). Eski → yeni eşleme: kimlik-eslemesi.md. Çekirdek kural METNİ (başlık) bilerek YAZILMAZ: serbest metin public depoya taşınmaz; uyum raporu başlığı çekirdekten canlı okur.",
  "kaynak": "DEV_CORE",
- "commit": "dd9ba0ff78e93f7630bd6a830f28bd0dcd5457bf",
+ "commit": "c4571615139b5c023ec29cf9bff740a1b05fb9f3",
  "kirli": false,
  "taranan": [
   "playbook/checklists/**/*.md",
@@ -29,11 +29,11 @@
    "EXC-001 (standards/04-documentation-fs-ts.md:465)",
    "EXC-002 (standards/04-documentation-fs-ts.md:466)",
    "S-01 (standards/04-documentation-fs-ts.md:517)",
-   "D-01 (standards/04-documentation-fs-ts.md:1118)"
+   "D-01 (standards/04-documentation-fs-ts.md:1120)"
   ]
  },
  "dosya_sayisi": 35,
- "tanim_sayisi": 464,
+ "tanim_sayisi": 472,
  "cekirdek_ici_cift": {},
  "kimlikler": {
   "AF-005": {
@@ -346,6 +346,9 @@
    "yer": "playbook/checklists/bug-checklist-backend.md"
   },
   "BE-88": {
+   "yer": "playbook/checklists/bug-checklist-backend.md"
+  },
+  "BE-89": {
    "yer": "playbook/checklists/bug-checklist-backend.md"
   },
   "BE-ACT-01": {
@@ -712,6 +715,12 @@
    "yer": "playbook/checklists/struct-creation.md"
   },
   "C-TBL-APPEND-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CRE-01": {
+   "yer": "playbook/checklists/table-update.md"
+  },
+  "C-TBL-CRE-02": {
    "yer": "playbook/checklists/table-update.md"
   },
   "C-TBL-CUR-01": {
@@ -1210,6 +1219,21 @@
    "yer": "playbook/checklists/bug-checklist-frontend.md"
   },
   "FE-52": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-53": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-54": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-55": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-56": {
+   "yer": "playbook/checklists/bug-checklist-frontend.md"
+  },
+  "FE-57": {
    "yer": "playbook/checklists/bug-checklist-frontend.md"
   },
   "KDS-1": {

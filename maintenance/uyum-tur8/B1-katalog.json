@@ -1,0 +1,143 @@
+[
+ {
+  "tur": "yeni",
+  "kritik": false,
+  "baslik": "Kanonik freestyle UI5 şablonu (1.71 / 1.120 sürüm parçalı)",
+  "neden": "Yeni liste/rapor uygulaması artık sıfırdan ya da proje içindeki eski bir kopyadan değil, skill'le gelen şablondan kurulur: seçim ekranı → grid liste → değişiklik ekranı, kişiselleştirme util'i (kolon göster/gizle, varyant, Excel, kolon filtresi penceresi) ve backend UI5 sürümüne göre seçilen sürüm parçası. Proje kopyalarının birbirinden yüzlerce satır ayrıştığı ölçülmüştü. Değişiklik ekranı alt kalem yolunda kalem anahtarındaki tırnak da kaçırılır. Şablon dosyaları her platformda LF olarak çıkar (Windows klonunda CRLF'e çevrilmez).",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/templates/ui5-freestyle/",
+   "skills-sap/sap-ui5-fiori/tests/test_ui5_sablon.py",
+   "skills-sap/sap-ui5-fiori/SKILL.md",
+   "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+   ".gitattributes"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k ui5_sablon"
+  ]
+ },
+ {
+  "tur": "yeni",
+  "kritik": true,
+  "baslik": "UI5 sürümü ve tema backend'den ölçülür; sürüme bağlı kontroller tablosu",
+  "neden": "minUI5Version ve tema örnekten kopyalanınca eski backend'de açılmayan kontrol (modül 404) ya da sessizce temel temaya düşen sahte Horizon çıkıyordu. app-skeleton §7.1 ölçüm komutlarını ve @since tablosunu verir; manifest i18n her iki hatta çalışan dizgi biçimine çevrildi (1.71.85 nesne biçimini ve supportedLocales/fallbackLocale'i okumaz).",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/references/app-skeleton.md",
+   "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md",
+   "skills-sap/sap-ui5-fiori/references/fiori-elements-ux.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k ui5_sablon"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "Grid kolon filtresi: kutuda düz arama, koşul Filtre… penceresinden",
+  "neden": "Kolon başlığı kutusuna koşul sözdizimi yazmak kullanıcının bilmesi gereken gizli bir dildi; kutu artık düz arama yapar, koşul yazımı uyarıyla reddedilir ve önceki filtre korunur, koşullar tip duyarlı tanımlı listeden pencerede seçilir. Satır modu ve boş durum sürüme bağlandı; AnalyticalTable tuzakları eklendi.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/references/list-grid-alv.md",
+   "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k ui5_sablon"
+  ]
+ },
+ {
+  "tur": "yeni",
+  "kritik": false,
+  "baslik": "FE-53..FE-57 inceleme maddeleri",
+  "neden": "Sürüm/tema/@since seçimi, sunucu sayfalaması (ölçülen 100 satır, d.__next), instance action'da eTag (428), mükerrer anahtarda 400 ve custom entity'de alanlar arası or (500) için inceleme satırları; FE-32 ve FE-46, UI-BOOT-01, UI-PERSO-01 güncellendi.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/references/checklists.md",
+   "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+  ],
+  "gerektirir": [
+   "kimlik-kaydi yenilemesi (sync_check.py --kimlik-kaydi)"
+  ],
+  "test": [
+   "python maintenance/sync_check.py --kimlik-denetle"
+  ]
+ },
+ {
+  "tur": "yeni",
+  "kritik": true,
+  "baslik": "BSP adı müşteri namespace'ini tanır (deploy_ui prepare + ICF yolu)",
+  "neden": "prepare BSP adını yalnız Z ile sınırlıyordu; artık Z/Y ve sap-project.json'da bildirilmiş /<NS>/ kabul edilir, karar SAP yazma kapısıyla aynı müşteri ad politikasından gelir (yüklenemezse reddeder). Namespace'li BSP'nin canlı ICF yolu doğru kurulur, deploy görevinde yinelenen anahtar ihlal sayılır. Bildirilmemiş namespace reddedilir.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/scripts/deploy_ui.py",
+   "skills-sap/sap-ui5-fiori/scripts/_bspnet.py",
+   "skills-sap/sap-ui5-fiori/tests/test_bsp_adi_namespace.py",
+   "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+   "skills-sap/sap-ui5-fiori/SKILL.md"
+  ],
+  "gerektirir": [
+   "sap-adt-foundation ad_politikasi (A1)"
+  ],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k bsp_adi",
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k deploy_ui",
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k static_assets"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "check_ui_odata_refs namespace'li servisleri çözer",
+  "neden": "/sap/opu/odata/<ns>/<AD>/ adresli servisler /NS/<AD> adıyla eşlenir; ana servis otomatik seçimi yalnız bildirilmiş müşteri namespace'inde yapılır, aksi hâlde açık --metadata istenir.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/scripts/check_ui_odata_refs.py",
+   "skills-sap/sap-ui5-fiori/tests/test_odata_refs.py",
+   "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+  ],
+  "gerektirir": [
+   "sap-adt-foundation ad_politikasi (A1)"
+  ],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k odata_refs"
+  ]
+ },
+ {
+  "tur": "duzeltme",
+  "kritik": false,
+  "baslik": "check_i18n_keys dinamik önekli anahtarı tanır",
+  "neden": "getText(\"kfp.op.\" + sOp) gibi önekli kullanım eksik anahtar sanılıp yanlış ERROR veriyordu (şablonda görüldü); artık o önekle başlayan en az bir anahtarın temel ve dil dosyalarında bulunması aranır. Birleştirme olmadan noktayla biten bir anahtar (`getText(\"btn.\")`) önek sayılmaz, eksikse raporlanır.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/scripts/check_i18n_keys.py",
+   "skills-sap/sap-ui5-fiori/tests/test_static_checks.py",
+   "skills-sap/sap-ui5-fiori/references/freestyle-odata-v2.md"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k TestI18n"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "XML yorum maskesi senaryo testleri",
+  "neden": "T1–T4 tuzak taramasının yorum içindeki metni saymadığı ve satır numarasını koruduğu kaynak senaryolarla test edildi (davranış zaten vardı).",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/tests/test_ui5_xml_yorumu.py"
+  ],
+  "gerektirir": [],
+  "test": [
+   "cd skills-sap/sap-ui5-fiori/ && python tests/run_tests.py -k xml_yorumu"
+  ]
+ },
+ {
+  "tur": "iyilestirme",
+  "kritik": false,
+  "baslik": "UI test ve deploy dersleri",
+  "neden": "Kesilen deploy'da BSP yine yaratılmış olabilir; UI testinde DOM varlığı görünürlük değildir, olay parametresi kaynaktan okunur, son kontrol sunucu durumunu ölçer; MessageBox'ta firePress ters çalışır; yapıcıda süslü parantez bağlamadır; onay diyaloğu Esc kilidi; MockServer ETag ':' sahte 412; maket CDN sürümü kütüphane dosyasıyla ölçülür.",
+  "dosyalar": [
+   "skills-sap/sap-ui5-fiori/references/runtime-verification.md",
+   "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+   "skills-sap/sap-ui5-fiori/references/known-errors-ui5.md"
+  ],
+  "gerektirir": [],
+  "test": []
+ }
+]

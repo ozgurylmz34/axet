@@ -1,0 +1,160 @@
+[
+ {
+  "pattern": "scripts/utils/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): YENİ ad_politikasi.py → lib/utils/ad_politikasi.py (tek ad politikası, customer_namespaces sap-project.json, fail-closed, url_segmenti, iki katmanlı gramer, #ns# dosya adı, OData/FUGR yardımcıları); project_config 27ae65e yaml '#' ALMA (JSON)",
+  "status": "-",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ad_politikasi.py"
+  ]
+ },
+ {
+  "pattern": "scripts/utils/ddic_semantics.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): konwa/konws CUKY · kmein/konms UNIT; curr CURR'dan çıkarıldı (gevşetme, kaynak sahip onaylı)",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/utils/project_config.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): 27ae65e yaml-lite tırnak içi '#' ALMA — aXet sap-project.json'u json ile okur",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "mcp_servers/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): guardrails/gate ad kararı ad_politikasi'ne bağlandı (bildirilmiş /<NS>/, root parametresi); std_dml_scan/std_ext_scan _izinli ad politikasından — bildirilmemiş /Z…/ /Y…/ artık standart (sıkılaştırma)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "governance/decisions/0005-*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A-EK karar kodu: ad_politikasi (guardrails · gate · std_dml_scan · std_ext_scan · sap_adt_lib ad doğrulaması)",
+  "status": "tamam",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/ad_politikasi.py",
+   "skills-sap/sap-adt-foundation/scripts/sapadt/guardrails.py"
+  ]
+ },
+ {
+  "pattern": "scripts/sap_adt_lib.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): validate_object_name/validate_package_name/_validate_object_name(referans=) ad_politikasi'ne bağlandı (A1, Edit); URL kodlaması A2",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/run_review.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): DCL ÖLÇÜLMEDİ kapsam beyanı (metin + json bakilmayan); drop-guard #408 metni; check_ddic_builtin_fields zinciri ALMA",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_abaplint.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması AD_ADAYI (#402 K1)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_audit_fields_autofill.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması ad politikasından (#402)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_bdef_backtick.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması ad politikasından (#402)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_cds_currency_reference.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #399 sözlük dışı CUKY başvurusu WARNING (gevşetme), qualified başka tablo, abap.cuky; #405 takma adsız eleman; AD_ADAYI",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_dtel_creation_labels.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad kararı ad politikasından",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_rap_managed_etag.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #405 blok düzeyi etag (kök master, çocuk master|dependent, yoksa ÖLÇÜLMEDİ); ad yakalaması kaldırıldı",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_released_objects.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): ad yakalaması AD_ADAYI",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_sap_active_version.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): musteri_karari (eski her-namespace-müşteri regex'i kaldırıldı) + AD_ADAYI + root abstract/custom entity + url_segmenti",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_sap_master_language.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): dosya adı → SAP adı dosya_adindan_ad (#ns#x)",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_sap_struct_consistency.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): yapı/alan adı gramerden, çözülemeyen → SKIPPED ad-cozulemedi, url_segmenti",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_standard_table_fields.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI + musteri_karari",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_struct_field_dtel_active.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): aday çıkarımı aXet'te zaten namespace'li (VAR, kaynak namespace-kayitsiz SKIP ALINMADI — aXet ölçüyor); URL url_segmenti; abap.* kapsam beyanı VAR",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_table_field_drop.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): #408 fiziksel tip kıyası (tür/daralma/çözülemeyen BLOCKER, genişleme WARNING, aynı tip INFO), tam tip metni, çözülemeyen ad → SKIPPED, url_segmenti, sap-client bağlantıdan",
+  "status": "kismi",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_rap_readonly_consumption.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI/c_katmani (Z/Y/bildirilmiş NS, Y sıkılaştırma), .bdef.asbdef, ad_gecis_deseni, SKIPPED ad-cozulemedi|namespace-kayitsiz; aXet Rule B sırası korundu",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_reuse_gate.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): AD_ADAYI + ad_coz, çözülemeyen ad → SKIPPED ad-cozulemedi",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/check_package_naming.py",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): d6572b3 ① asddls/asdcls/#ns#/KAPSAM aXet'te VAR; A1 değişikliği yok",
+  "status": "tamam",
+  "targets_add": []
+ },
+ {
+  "pattern": "scripts/validators/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): check_object_in_correct_pkg VAR (paket-özgü .rules.md regex'i scripts/check_package_naming.py'de) · check_source_drift ALMA (bağlantılı dönemsel araç) · checklist_check ALMA (checklist-map altyapısı yok) · YENİ check_ddic_builtin_fields ALMA (kardeş README sözleşmesi aXet geçici artefaktına uymuyor; açık kalem)",
+  "status": "-",
+  "targets_add": []
+ },
+ {
+  "pattern": "tests/fixtures/*",
+  "note_append": "2026-11-17 tur 8 (çekirdek dd9ba0f..c457161): A1: q393_namespace_ad_politikasi/validator_ad_grameri/namespace_tesisat → tests test_ad_politikasi.py; q405/cds_curr_referans_tipi/table_field_drop_tip/validator_ad_deseni → test_validator_ad_grameri.py; issue391 ALMA; ddic_builtin_fields ALMA",
+  "status": "kismi",
+  "targets_add": [
+   "skills-sap/sap-adt-foundation/tests/test_ad_politikasi.py",
+   "skills-sap/sap-adt-foundation/tests/test_validator_ad_grameri.py"
+  ]
+ }
+]
