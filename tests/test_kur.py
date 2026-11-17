@@ -59,11 +59,16 @@ def _gercek_damga() -> dict:
     for f in izlenen:
         damga[str(f)] = (f.stat().st_size, f.stat().st_mtime_ns) if f.is_file() else None
     damga["yedekler"] = sorted(p.name for p in cfg_dizin.glob("axet-code.json.bak-*")) if cfg_dizin.is_dir() else None
-    # aXet tur 8 bug-gate: ajan kurulumu (scripts/ajan_kurulum.py) GERÇEK `<XDG_CONFIG_HOME|~/.config>/axet-code/agents`
-    # dizinine yazar — bekçi bu yeni yazma hedefini de izler (göreli ad + boyut + mtime; içerik okunmaz).
-    ajanlar = cfg_dizin / "agents"
-    damga["ajanlar"] = (sorted((str(p.relative_to(ajanlar)), p.stat().st_size, p.stat().st_mtime_ns)
-                               for p in ajanlar.rglob("*") if p.is_file()) if ajanlar.is_dir() else None)
+    # Ajan kurulumunun (scripts/ajan_kurulum.py) GERÇEK yazma/silme hedefleri de izlenir (göreli ad + boyut + mtime;
+    # içerik okunmaz). Ölçüldü (aXet.code 1.5.1, Windows, 2026-11-17): XDG yokken motor ajanları
+    # `%LOCALAPPDATA%/axet-code/agents`'tan okur ve v0.5.23 oraya yazar; `<XDG|~/.config>/axet-code/agents` ise
+    # (v0.5.22'nin yanlış hedefi) eski konum temizliğinde SİLİNİR — ikisi de izlenir (bug-gate R2 F4).
+    for anahtar, ajanlar in (("ajanlar", cfg_dizin / "agents"),
+                             ("ajanlar-yerel", (Path(os.environ["LOCALAPPDATA"]) / "axet-code" / "agents")
+                              if os.environ.get("LOCALAPPDATA") else None)):
+        damga[anahtar] = (sorted((str(p.relative_to(ajanlar)), p.stat().st_size, p.stat().st_mtime_ns)
+                                 for p in ajanlar.rglob("*") if p.is_file())
+                          if ajanlar is not None and ajanlar.is_dir() else None)
     # Z98 bekçisi: kur.ps1 artık kullanıcı PATH'ine yazabilir. Testler yalnız AXET_KUR_PATH_KAYDI sahte hedefine yazar;
     # GERÇEK HKCU\Environment Path ham değeri (genişletilmemiş) ve türü koşum öncesi/sonrası aynı kalmalı.
     try:
@@ -426,9 +431,10 @@ class KurTestTaban(GeciciTest):
 
 
 class GercekDamgaBekcisiTest(unittest.TestCase):
-    """`_gercek_damga` (gerçek kullanıcı bekçisi) ajan kurulumunun yazma hedefini de izler (aXet tur 8 bug-gate):
-    `<XDG_CONFIG_HOME ya da ~/.config>/axet-code/agents`. Ölçüm geçici XDG tabanında: ajan dosyası eklenince ya da
-    değişince damga DEĞİŞMELİ (eskiden yalnız axet-code.json + yedekler izleniyordu ⇒ değişiklik görünmezdi)."""
+    """`_gercek_damga` (gerçek kullanıcı bekçisi) ajan kurulumunun iki gerçek hedefini de izler: `%LOCALAPPDATA%/
+    axet-code/agents` (XDG yokken motorun okuduğu ve v0.5.23'ün yazdığı dizin — ölçüldü 1.5.1 Windows) ve
+    `<XDG_CONFIG_HOME ya da ~/.config>/axet-code/agents` (eski konum; temizlikte silinir). Ölçüm geçici tabanlarda:
+    ajan dosyası eklenince ya da değişince damga DEĞİŞMELİ."""
 
     def test_ajan_dizini_degisikligi_damgayi_degistirir(self):
         from unittest import mock
@@ -445,6 +451,24 @@ class GercekDamgaBekcisiTest(unittest.TestCase):
                 self.assertNotEqual(ilk, _gercek_damga().get("ajanlar"))   # içerik/boyut değişti
                 self.assertEqual(ilk_tekrar := _gercek_damga().get("ajanlar"), _gercek_damga().get("ajanlar"))
                 self.assertIsNotNone(ilk_tekrar)            # kontrol grubu: değişiklik yoksa eşit, dizin görüldü
+        finally:
+            _sil(kok)
+
+    def test_localappdata_ajan_dizini_de_izlenir(self):
+        """Bug-gate R2 F4: XDG yokken gerçek yazma hedefi `%LOCALAPPDATA%/axet-code/agents` — bekçi onu da görmeli."""
+        from unittest import mock
+        kok = gecici_dizin("axet-damga-yerel-")
+        try:
+            ajanlar = kok / "axet-code" / "agents"
+            with mock.patch.dict(os.environ, {"LOCALAPPDATA": str(kok)}):
+                bos = _gercek_damga().get("ajanlar-yerel")
+                ajanlar.mkdir(parents=True)
+                (ajanlar / "sap-ui5.md").write_text("a", encoding="utf-8")
+                ilk = _gercek_damga().get("ajanlar-yerel")
+                self.assertIsNone(bos)
+                self.assertNotEqual(bos, ilk)
+                (ajanlar / "sap-ui5.md").write_text("ab", encoding="utf-8")
+                self.assertNotEqual(ilk, _gercek_damga().get("ajanlar-yerel"))
         finally:
             _sil(kok)
 

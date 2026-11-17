@@ -2,8 +2,9 @@
 
 Bu klasördeki `sap-*.md` dosyaları aXet.code'un **kullanıcı ajanı** tanımlarıdır. `scripts/install.py --sap` bunları
 motorun kullanıcı ajan dizinine yazar — sıra: `AXET_AGENTS_DIR` → `XDG_CONFIG_HOME/axet-code/agents` → Windows'ta
-`%LOCALAPPDATA%\axet-code\agents` (ölçüldü 1.5.1, `axet-code dirs`; global config dosyası `~/.config/axet-code`'da
-kalsa da ajanlar oradan okunmaz) — ve gövdedeki
+`%LOCALAPPDATA%\axet-code\agents` → (Windows dışı, XDG yoksa) `~/.config/axet-code/agents` (Windows sırası ölçüldü
+1.5.1, `axet-code dirs`; global config dosyası `~/.config/axet-code`'da kalsa da Windows'ta ajanlar oradan okunmaz;
+Windows dışı yol ölçülmedi, varsayımdır) — ve gövdedeki
 `{{AXET_KLON}}` yer tutucusunu bu klonun mutlak yoluyla değiştirir. Dosyalar yalnız rol tanımıdır; rolün ayrıntılı
 kuralları skill referanslarında durur (tek kaynak), ajan gövdesi oraya yönlendirir.
 

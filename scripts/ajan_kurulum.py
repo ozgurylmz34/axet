@@ -101,14 +101,29 @@ def ajan_dizini() -> Path:
     return _ev_dizini() / ".config" / "axet-code" / "agents"
 
 
+def _ayni_dizin(a: Path, b: Path) -> bool:
+    """Yol METNİ değil fiziksel dizin karşılaştırılır: junction/symlink ile aynı yere çıkan iki yol aynı sayılır — yoksa
+    aynı dosya hem "güncel" hem "eski konumda sil" olur, ajanlar her iki kurulumda bir kaybolur. Ölçülemezse
+    (OSError) aynı sayılır: temizlik atlanır, silme olmaz (fail-closed)."""
+    if a == b:
+        return True
+    try:
+        if a.exists() and b.exists():
+            return os.path.samefile(a, b)
+        return a.resolve() == b.resolve()
+    except OSError:
+        return True
+
+
 def eski_ajan_dizini() -> Path | None:
     """v0.5.22 Windows'ta XDG yokken ajanları `~/.config/axet-code/agents`'a yazıyordu; motor orayı okumaz. O dizinde
-    kalan İŞARETLİ kopyalar temizlenir. Yalnız o durumda (Windows · XDG yok · AXET_AGENTS_DIR yok) döner — testlerin
-    XDG'si tanımlı olduğundan gerçek ev dizinine dokunulmaz."""
+    kalan İŞARETLİ kopyalar temizlenir. Yalnız o durumda (Windows · XDG yok · AXET_AGENTS_DIR yok) ve eski dizin
+    fiziksel olarak güncel dizinden FARKLIYSA döner (LOCALAPPDATA yokken ikisi aynı yola düşer). Testlerin gerçek ev
+    dizinine ulaşmaması bu fonksiyona BAĞLI DEĞİLDİR: testler ev dizinini ve LOCALAPPDATA'yı kendileri yamalar."""
     if os.environ.get("AXET_AGENTS_DIR") or os.environ.get("XDG_CONFIG_HOME") or not _windows():
         return None
     eski = _ev_dizini() / ".config" / "axet-code" / "agents"
-    return None if eski == ajan_dizini() else eski
+    return None if _ayni_dizin(eski, ajan_dizini()) else eski
 
 
 def klon_yolu() -> str:

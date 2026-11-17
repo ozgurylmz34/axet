@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """ajan_kurulum.py — şablonun özel aXet ajanlarını kullanıcı ajan dizinine kurma / güncelleme / kaldırma.
 
-Ölçülen motor davranışı (aXet.code 1.5.1): kullanıcı ajanları `$AXET_AGENTS_DIR` ya da
-`<XDG_CONFIG_HOME|~/.config>/axet-code/agents` dizininden okunur. Testler gerçek kullanıcı dizinine dokunmaz:
-her test geçici bir hedef dizin ve geçici kaynak verir.
+Ölçülen motor davranışı (aXet.code 1.5.1, Windows, `axet-code dirs` + `agent list`, kontrol gruplu 2026-11-17):
+kullanıcı ajanları `$AXET_AGENTS_DIR` → `$XDG_CONFIG_HOME/axet-code/agents` → (XDG yoksa, Windows)
+`%LOCALAPPDATA%\\axet-code\\agents` dizininden okunur. ⚠ Bu dosyanın v0.5.22 sürümündeki "`<XDG_CONFIG_HOME|~/.config>`"
+cümlesi YANLIŞTI: yalnız XDG tanımlı lab'da ölçülmüştü; XDG yokken motor `~/.config/axet-code/agents`'ı OKUMAZ.
+Windows dışı (XDG yok) ölçülmedi — kod `~/.config` varsayar.
+Testler gerçek kullanıcı dizinine dokunmaz: her test geçici hedef/kaynak verir; ayrıca modül düzeyinde ev dizini
+(`_ev_dizini`, USERPROFILE/HOME/HOMEDRIVE/HOMEPATH) ve LOCALAPPDATA geçici dizine yamalanır (setUpModule).
 """
 from __future__ import annotations
 
@@ -40,8 +44,13 @@ def setUpModule():
     td = tempfile.TemporaryDirectory()
     _MODUL_YAMALARI.append(td)
     kok = Path(td.name)
-    for yama in (mock.patch.object(ak, "_ev_dizini", return_value=kok / "ev"),
-                 mock.patch.dict(os.environ, {"LOCALAPPDATA": str(kok / "yerel")})):
+    ev = kok / "ev"
+    # Path.home() de yamalı env'den çözülsün: `_ev_dizini` yerine doğrudan Path.home() kullanan bir gerileme/mutant
+    # gerçek ev dizinine ulaşmasın (bug-gate R2 F3: yalnız `_ev_dizini` yamalıyken M23 sahte evdeki kopyaları sildi).
+    ortam = {"LOCALAPPDATA": str(kok / "yerel"), "USERPROFILE": str(ev), "HOME": str(ev),
+             "HOMEDRIVE": ev.drive or "", "HOMEPATH": str(ev)[len(ev.drive):]}
+    for yama in (mock.patch.object(ak, "_ev_dizini", return_value=ev),
+                 mock.patch.dict(os.environ, ortam)):
         yama.start()
         _MODUL_YAMALARI.append(yama)
 
@@ -204,6 +213,65 @@ class AjanDiziniTest(unittest.TestCase):
                 self.assertEqual({"sap-kendi.md"}, {p.name for p in eski.iterdir()})
                 self.assertEqual([], list(yeni.glob("sap-*.md")))
 
+    def test_axet_agents_dir_varken_eski_konum_temizligi_yok(self):
+        """Katalog iddiası (0.5.23-02): AXET_AGENTS_DIR tanımlıysa davranış değişmez — eski konuma dokunulmaz."""
+        with self._ortam(LOCALAPPDATA="C:/yerel", AXET_AGENTS_DIR="C:/ozel"),                 mock.patch.object(ak, "_windows", return_value=True),                 mock.patch.object(ak, "_ev_dizini", return_value=Path("C:/ev")):
+            self.assertEqual(ak.ajan_dizini(), Path("C:/ozel"))
+            self.assertIsNone(ak.eski_ajan_dizini())
+
+    def _iki_tur(self, kok: Path, **ortam) -> Path:
+        """Windows varsayımıyla iki kez kurar; ikinci tur hiçbir şey silmemeli, ajanlar yerinde kalmalı."""
+        with self._ortam(**ortam), mock.patch.object(ak, "_windows", return_value=True),                 mock.patch.object(ak, "_ev_dizini", return_value=kok / "ev"):
+            kaynak = self._kaynak(kok)
+            self.assertEqual([], ak.uygula(ak.planla(sap=True, kaynak=kaynak)))
+            ikinci = ak.planla(sap=True, kaynak=kaynak)
+            self.assertEqual([], [e for e in ikinci if e.tur == "sil"], ikinci)
+            ak.uygula(ikinci)
+            hedef = ak.ajan_dizini()
+            self.assertEqual({"sap-ui5.md"}, {f.name for f in hedef.glob("sap-*.md")})
+            return hedef
+
+    def _kaynak(self, kok: Path) -> Path:
+        kaynak = kok / "kaynak"
+        if not kaynak.is_dir():
+            kaynak.mkdir()
+            (kaynak / "sap-ui5.md").write_text(ORNEK, encoding="utf-8")
+        return kaynak
+
+    def test_windows_localappdata_yoksa_eski_konum_guncel_konumdur(self):
+        """Bug-gate R2 F5: LOCALAPPDATA yokken güncel dizin `~/.config/...`'a düşer = eski konum; kurulan ajanlar ikinci
+        turda 'eski konumda' diye SİLİNMEMELİ (eşitlik koruması kaldırılınca 5 ajanın 5'i silindi — ölçüldü)."""
+        with tempfile.TemporaryDirectory() as td:
+            hedef = self._iki_tur(Path(td))
+            self.assertEqual(Path(td) / "ev" / ".config" / "axet-code" / "agents", hedef)
+
+    @unittest.skipUnless(os.name == "nt", "junction yalnız Windows")
+    def test_junction_ile_ayni_dizin_silinmez(self):
+        """Bug-gate R2 F5: `~/.config/axet-code/agents` bir junction ile `%LOCALAPPDATA%/axet-code/agents`'a
+        çıkıyorsa iki yol metni farklıdır ama dizin aynıdır — eski konum temizliği güncel ajanları silmemeli."""
+        import _winapi
+        with tempfile.TemporaryDirectory() as td:
+            kok = Path(td)
+            gercek = kok / "yerel" / "axet-code" / "agents"
+            gercek.mkdir(parents=True)
+            bag = kok / "ev" / ".config" / "axet-code" / "agents"
+            bag.parent.mkdir(parents=True)
+            _winapi.CreateJunction(str(gercek), str(bag))
+            try:
+                self.assertTrue(ak._ayni_dizin(bag, gercek))
+                self._iki_tur(kok, LOCALAPPDATA=str(kok / "yerel"))
+            finally:
+                os.rmdir(bag)  # önce bağ (hedefe dokunmadan), sonra geçici ağaç
+
+    def test_ayni_dizin_olculemezse_temizlik_yok(self):
+        with tempfile.TemporaryDirectory() as td:
+            a, b = Path(td) / "a", Path(td) / "b"
+            a.mkdir()
+            b.mkdir()
+            self.assertFalse(ak._ayni_dizin(a, b))
+            with mock.patch.object(ak.os.path, "samefile", side_effect=OSError("ölçülemedi")):
+                self.assertTrue(ak._ayni_dizin(a, b))  # fail-closed: aynı say → silme yok
+
 
 class SablonAjanlariTest(unittest.TestCase):
     """Depodaki gerçek `agents/sap-*.md` tanımları: frontmatter sözleşmesi + yönlendirdikleri dosyalar var mı."""
@@ -278,6 +346,18 @@ class MotorSurumTest(unittest.TestCase):
             self.assertTrue(ak.motor_eski_mi(eski), eski)
         for yeni in ((1, 5, 1), (1, 5, 2), (1, 10, 0), (2, 0, 0), None):
             self.assertFalse(ak.motor_eski_mi(yeni), yeni)
+
+    def test_motor_hata_kodu_olculemedi_sayilir(self):
+        """`axet-code -v` sıfırdan farklı dönerse çıktısındaki sürüm GÜVENİLMEZ: ölçülemedi (None), eski değil."""
+        tamam = ak.subprocess.CompletedProcess(["axet-code", "-v"], 0, "axet-code version 1.4.0\n", "")
+        hata = ak.subprocess.CompletedProcess(["axet-code", "-v"], 1, "axet-code version 1.4.0\n", "")
+        with mock.patch.object(ak.shutil, "which", return_value="C:/x/axet-code.exe"):
+            with mock.patch.object(ak.subprocess, "run", return_value=tamam):
+                self.assertEqual((1, 4, 0), ak.motor_surumu())
+            with mock.patch.object(ak.subprocess, "run", return_value=hata):
+                self.assertIsNone(ak.motor_surumu())
+        with mock.patch.object(ak.shutil, "which", return_value=None):
+            self.assertIsNone(ak.motor_surumu())
 
     def test_mesaj_surumu_ve_yolu_soyler(self):
         m = ak.motor_eski_mesaji((1, 4, 0))
@@ -512,6 +592,12 @@ class InstallAjanAdimiTest(GeciciTest):
         r = self.calistir(self.klon / "scripts" / "ajan_kurulum.py")
         self.assertEqual(0, r.returncode, self.cikti(r))
         self.assertEqual({p.name for p in (AXET_HOME / "agents").glob("sap-*.md")}, self.kurulu())
+        # kaldırma motor sürümünden bağımsızdır (eski motorda da işaretli ajanlar kaldırılabilmeli)
+        self.sahte_motor("1.4.0")
+        r = self.calistir(self.klon / "scripts" / "ajan_kurulum.py", "--kaldir")
+        self.assertEqual(0, r.returncode, self.cikti(r))
+        self.assertNotIn("ATLANDI", r.stdout, self.cikti(r))
+        self.assertEqual(set(), self.kurulu())
 
     def test_olculemeyen_motorda_kurulum_surer_beyanli(self):
         self.sahte_motor("bilinmiyor")  # `axet-code version bilinmiyor` → sürüm çözülemez
