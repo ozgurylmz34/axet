@@ -215,13 +215,16 @@ class AjanDiziniTest(unittest.TestCase):
 
     def test_axet_agents_dir_varken_eski_konum_temizligi_yok(self):
         """Katalog iddiası (0.5.23-02): AXET_AGENTS_DIR tanımlıysa davranış değişmez — eski konuma dokunulmaz."""
-        with self._ortam(LOCALAPPDATA="C:/yerel", AXET_AGENTS_DIR="C:/ozel"),                 mock.patch.object(ak, "_windows", return_value=True),                 mock.patch.object(ak, "_ev_dizini", return_value=Path("C:/ev")):
+        with self._ortam(LOCALAPPDATA="C:/yerel", AXET_AGENTS_DIR="C:/ozel"), \
+                mock.patch.object(ak, "_windows", return_value=True), \
+                mock.patch.object(ak, "_ev_dizini", return_value=Path("C:/ev")):
             self.assertEqual(ak.ajan_dizini(), Path("C:/ozel"))
             self.assertIsNone(ak.eski_ajan_dizini())
 
     def _iki_tur(self, kok: Path, **ortam) -> Path:
         """Windows varsayımıyla iki kez kurar; ikinci tur hiçbir şey silmemeli, ajanlar yerinde kalmalı."""
-        with self._ortam(**ortam), mock.patch.object(ak, "_windows", return_value=True),                 mock.patch.object(ak, "_ev_dizini", return_value=kok / "ev"):
+        with self._ortam(**ortam), mock.patch.object(ak, "_windows", return_value=True), \
+                mock.patch.object(ak, "_ev_dizini", return_value=kok / "ev"):
             kaynak = self._kaynak(kok)
             self.assertEqual([], ak.uygula(ak.planla(sap=True, kaynak=kaynak)))
             ikinci = ak.planla(sap=True, kaynak=kaynak)
