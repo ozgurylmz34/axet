@@ -19,15 +19,17 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
 
 ## 2. BAĞLAM (konuşmayı ve proje kurallarını görmüyorsun; bilmen gerekenler burada)
 - Değişikliğin amacı / spesifikasyon: <SPEC dosya:satır ya da kullanıcı isteğinin metni> — istek `.docx`/`.xlsx`/`.pdf`
-  ise yolunu VERME (`view` ikili `.docx`'i açmadı, alt ajan okuyamadı — ölçüldü, tek oturum; başka okuma aracına
-  erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi); `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
+  ise yolunu VERME (`view` ikili `.docx`'i açmadı, alt ajan okuyamadı — ölçüldü, aXet.code 1.5.1, 2026-11-19, iki koşu;
+  yerleşik görev alt ajanının araç kümesi glob, grep, ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk
+  yok; `.xlsx`/`.pdf` denenmedi); `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
   (`.axet-code/tmp/<id>/INDEX.md` · `.axet-code/tmp/<id>/metin.md` · `.axet-code/tmp/<id>/gorsel-notlari.md` ·
   `.axet-code/tmp/<id>/media/`; `references/traceability.md` §2-B). Paket görsel içeriyorsa brife şu satırı ekle:
   "gorsel-notlari.md'deki her görseli `view` aracıyla aç ve notu görselle karşılaştır; görselde olup notta ya da
-  belgede olmayan alan/düğme/değer bulgudur; GÖRÜNTÜLENEMEZ yazanı ÖLÇÜLEMEDİ yaz" (doc-checklist AX-DOC-CR-07).
+  belgede olmayan alan/düğme/değer bulgudur; GÖRÜNTÜLENEMEZ yazanın `media/<kimlik>.kullanici.png` kopyası varsa onu
+  aç, yoksa ÖLÇÜLEMEDİ yaz" (doc-checklist AX-DOC-CR-07).
   Brif yalnız metin ve görsel yolu taşır, betik koşturma adımı içermez: ajan türü verilmeden açılan yerleşik görev
-  ajanında kabuk ve `read_docx` yoktur, `view` vardır (ölçüldü: statik yapılandırma referansı + oturum veritabanı;
-  canlı teyit sürüyor) — `kaynak_paketi.py iz` çıktısını ana oturum koşar ve brife yapıştırır
+  ajanında kabuk ve `read_docx` yoktur, `view` vardır (ölçüldü — aXet.code 1.5.1, 2026-11-19: araç kümesi glob, grep,
+  ls, sourcegraph, view; motor logu tools=5) — `kaynak_paketi.py iz` çıktısını ana oturum koşar ve brife yapıştırır
 - Değişen dosyalar ve diff: <git diff özeti · dosya:satır aralıkları>
 - Canlı kaynak çekimi: <obje · adt_get include_source=true · zaman> | "çekilmedi — ilk iş olarak çek"
 - Etki alanı (ana oturumun ölçtüğü): <çağıranlar/çağrılanlar + adt_where_used / adt_impact_analysis kapsam alanları>

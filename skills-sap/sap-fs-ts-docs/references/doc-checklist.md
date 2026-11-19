@@ -85,7 +85,7 @@ inceleme yorgunluğu doğar ve kapı mekanik onaya döner.
 | AX-DOC-CR-04 | **Teslim paketi = çalışma dosyası:** dışarı gönderilen paket (zip/ek/teslim klasörü) teslim anında güncel dosyalardan kurulmuş; üye özetleri çalışma ağacıyla eşit (ölçüm çıktısı); beklenen özetler eşlik eden notta; aynı yerde eski sürüm paket yok (`traceability.md` §3) | HIGH (HATA) | yok — özet karşılaştırması istenir |
 | AX-DOC-CR-05 | **Kayıp tablo 0 (Markdown → HTML/PDF):** kaynaktaki tablo ayraç satırı sayısı (yalnız dikey çizgi, tire, iki nokta ve boşluktan oluşan satır) ile HTML'deki `<table>` sayısı eşit. Render olmayan tablo hata vermez; ayraç satırı ekranda ham metin kalır. Üç tetikleyici: başlık satırından önce boş satır yok (ham metin `<p>` içine düşer) · tablo liste öğesi altında girintili (`<li>` içine düşer) · tablo `<details>` ham HTML bloğu içinde. Son ikisini "`<p>` içinde ayraç" desen araması **yakalamaz** (ekip dersi: "0 kırık" diyen desen taraması 7 kayıp tabloyu kaçırdı). Parser'a bağlıdır: PDF hattı python-markdown `tables` eklentisini kullanır ve girintili tabloyu kaybeder; GitHub'da görünmesi yeterli değildir. Toplu girinti düzeltmesinden önce ve sonra sayım yapılır; kötüleşiyorsa geri alınır | HIGH (HATA) | yok — `verify_doc_html.py` tablo saymaz; iki sayı elle karşılaştırılır (kod bloklarındaki örnek tablolar ayıklanır) |
 | AX-DOC-CR-06 | **İkili kaynaktan yazılan belgede kaynak izi tam:** girdi `.docx`/`.xlsx` ise belge mekanik kaynak paketinden yazılmış (`INDEX.md` DOĞRULAMA PASS) ve kaynak maddesi → belge kimliği iz tablosu `kaynak_paketi.py iz` ile **PASS** (eksik/hayalet/boş/belgede olmayan kimlik 0). BİLGİ ve KAPSAM-DIŞI işaretli her satırın kaynak metni `metin.md`'de okunmuş: gerçekten gereksinim değil mi, dışlama gerekçesi kullanıcı isteğiyle çelişiyor mu (İlke 1). Kaynak `.pdf` ise paket yoktur: inceleyici "kaynak izi ÖLÇÜLEMEDİ" yazar (`traceability.md` §2-B) | HIGH (EKSİK) | kısmi: `kaynak_paketi.py iz` (madde ↔ kimlik eşleşmesinin varlığı; anlamca doğruluk ve BİLGİ/KAPSAM-DIŞI haklılığı elle) |
-| AX-DOC-CR-07 | **Kaynaktaki görseller okunmuş:** kaynak paketinde görsel (KG ya da görsel içerikli KN) varsa her biri `view` aracıyla açılmış ve `gorsel-notlari.md`'de Görülen alanı yazılmış (ekran adı, alanlar, düğmeler, değerler, okunabilen metin); görselden türeyen her öğe belgede bir kimliğe bağlı ve notta `→ <kimlik>` ile, iz tablosunda o görselin satırında anılıyor. İnceleyici her görseli kendisi `view` ile açar ve notu görselle karşılaştırır: görselde olup notta ya da belgede olmayan alan/düğme/değer = bulgu. GÖRÜNTÜLENEMEZ biçim (ör. `emf`) "ÖLÇÜLEMEDİ — biçim" yazılır; kullanıcıdan PNG istenip istenmediği sorulur (`traceability.md` §2-B "Görsel okuma"). Ekran görüntüsü okunmadan yazılan FS, görseldeki istekleri sessizce düşürür (kullanıcı geri bildirimi) | HIGH (EKSİK) | kısmi: `kaynak_paketi.py iz` (boş not = GÖRSEL OKUNMADI FAIL; notta olup iz satırında olmayan kimlik = UYARI; notun görselle uyumu elle) |
+| AX-DOC-CR-07 | **Kaynaktaki görseller okunmuş:** kaynak paketinde görsel (KG ya da görsel içerikli KN) varsa her biri `view` aracıyla açılmış ve `gorsel-notlari.md`'de Görülen alanı yazılmış (ekran adı, alanlar, düğmeler, değerler, okunabilen metin); görselden türeyen her öğe belgede bir kimliğe bağlı ve notta `→ <kimlik>` ile, iz tablosunda o görselin satırında anılıyor. İnceleyici her görseli kendisi `view` ile açar ve notu görselle karşılaştırır: görselde olup notta ya da belgede olmayan alan/düğme/değer = bulgu. GÖRÜNTÜLENEMEZ biçimin (ör. `emf`) okunabilir kopyası `media/<kimlik>.kullanici.png` varsa inceleyici o PNG'yi açar ve notun dönüştürülmüş/kullanıcı PNG'sinden okunduğunun yazılıp yazılmadığını denetler; kopya yoksa "ÖLÇÜLEMEDİ — biçim" yazar (`traceability.md` §2-B "Görsel okuma"). Ekran görüntüsü okunmadan yazılan FS, görseldeki istekleri sessizce düşürür (kullanıcı geri bildirimi) | HIGH (EKSİK) | kısmi: `kaynak_paketi.py iz` (boş not = GÖRSEL OKUNMADI FAIL, kullanıcı PNG'si olan görselde de; notta olup iz satırında olmayan kimlik = UYARI; notun görselle uyumu elle) |
 
 ## Hüküm
 - **PASS** → bitti denebilir.
@@ -101,18 +101,21 @@ Alt ajan bu dosyayı, skill'i, çekirdek kuralları ve konuşmayı **görmez**; 
 **metnini** yapıştır. Genel kanıt ve çıktı bölümleri için `skills/explore/references/brief-template.md` §5/§7/§8 eklenebilir.
 
 **İkili kaynak brife YOL olarak verilmez.** Girdi `.docx`/`.xlsx`/`.pdf` ise yolu verilmez: `view` ikili `.docx`'i açmadı
-("File appears to be binary"), alt ajan okuyamadı ve ~20 dk dolambaçlı aramayla okumaya çalıştı (ölçüldü, tek oturum;
-alt ajanın başka okuma aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi). Proje dışındaki yol izin sorusunda asılı
+("File appears to be binary"), alt ajan okuyamadı ve ~20 dk dolambaçlı aramayla okumaya çalıştı (ölçüldü — aXet.code
+1.5.1, 2026-11-19, iki koşu: talimatsız ve "read_docx kullan" denince; yerleşik görev alt ajanının araç kümesi glob, grep,
+ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk yok; `.xlsx`/`.pdf` denenmedi). Proje dışındaki yol izin sorusunda asılı
 kalabilir. Brife **kaynak paketinin** proje içindeki yolu verilir (`.axet-code/tmp/<id>/INDEX.md`,
 `kaynak_paketi.py cikar` — `traceability.md` §2-B). Kaynak metnini kendin yazıp dosyaya koyma: model yeniden yazınca
 kısaltır (ölçüldü: 21 test satırı → 13, bir başlık düştü). Paket `.pdf` için üretilemez → brife "kaynak: PDF, paket yok,
 kaynak izi ÖLÇÜLEMEDİ" yaz.
 
 **Brif yalnız metin ve görsel yolu taşır; betik koşturma adımı içermez.** `agent` çağrısında ajan türü verilmezse yerleşik
-görev ajanı açılır; araçları dosya okuma ve arama ile sınırlıdır (`view`, `glob`, `grep`, `ls`), kabuk ve
-`read_docx`/`read_xlsx` yoktur (ölçüldü: statik yapılandırma referansı + oturum veritabanı; canlı teyit sürüyor). Bu yüzden
-`kaynak_paketi.py iz`'i ana oturum koşar ve çıktısını brife yapıştırır. İnceleyici `metin.md`, `INDEX.md`,
-`gorsel-notlari.md` ve `media/` ile `gomulu/` altındaki png/jpg'leri `view` ile açar; bunun için görev ajanı da yeter.
+görev ajanı açılır; kabuk ve `read_docx`/`read_xlsx` yoktur. Ölçüldü (aXet.code 1.5.1, 2026-11-19): yerleşik görev
+alt ajanının araç kümesi glob, grep, ls, sourcegraph, view (motor logu tools=5); `.docx`'i iki koşuda da okuyamadı
+(talimatsız ve "read_docx kullan" denince); paket yolları verilince (`INDEX.md`, `metin.md`, `media/KG-01.png`) tablo
+değerini ve görseldeki kodu 45 sn'de doğru okudu. Bu yüzden `kaynak_paketi.py iz`'i ana oturum koşar ve çıktısını brife
+yapıştırır. İnceleyici `metin.md`, `INDEX.md`, `gorsel-notlari.md` ve `media/` ile `gomulu/` altındaki görüntülenebilir
+biçimdekileri (varsa `media/<kimlik>.kullanici.png` kopyalarını da) `view` ile açar; bunun için görev ajanı da yeter.
 Şablonun salt-okur `sap-inceleme` ajanı kuruluysa (`agents/sap-inceleme.md`) o da kullanılabilir.
 
 ```text
@@ -134,7 +137,8 @@ KONTROL LİSTESİ (metin):
 - Doğrudan okunabilen bir iddiayı okumadan bulgu yapma. Görsel maddelerde görüntü dosyasını aç.
 - KAYNAK PAKETİ varsa gorsel-notlari.md'deki her görseli (KG/KN) `view` aracıyla AÇ ve notu doğrula (AX-DOC-CR-07):
   not görseldeki ekran adını, alanları, düğmeleri, değerleri ve okunabilen metni karşılıyor mu; görselde olup notta ya
-  da belgede olmayan alan/düğme var mı. GÖRÜNTÜLENEMEZ yazan görseli açmayı deneme, "ÖLÇÜLEMEDİ — biçim" yaz.
+  da belgede olmayan alan/düğme var mı. GÖRÜNTÜLENEMEZ yazan görselin `media/<kimlik>.kullanici.png` kopyası varsa onu
+  aç ve notta PNG'den okunduğunun yazılıp yazılmadığına bak; kopya yoksa açmayı deneme, "ÖLÇÜLEMEDİ — biçim" yaz.
 - "Bulunamadı" demeden önce hangi başlık/deseni aradığını yaz. Bir script raporu verildiyse KAPSAM satırındaki
   "bakmadıkları"nı ayrıca kendin incele; script'in 0 bulgusu o yüzeyde temiz demek değildir.
 - Ölçemediğin maddeye "ÖLÇÜLEMEDİ" yaz, geçme.

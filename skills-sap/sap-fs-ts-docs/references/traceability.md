@@ -84,12 +84,23 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   **görsel başına bir `edit`** (uzun içerik bölüm bölüm). FS'e giren her öğenin yanına belge kimliği yazılır
   (`→ FR-003`) ve o görselin iz tablosu satırı aynı kimliği taşır; logo ya da süsleme gibi gereksinim taşımayan
   görsel `BİLGİ`'ye bağlanır, notu yine yazılır. Aynı kaynak ve aynı km şemasıyla yeniden `cikar` yazılmış notları
-  silmez; kaynak değiştiyse eski notlar `gorsel-notlari.<özet8>.md` adıyla kenara alınır.
-  **Görüntülenebilir biçimler** betikte tek listededir (`GORUNTULENEBILIR`: png, jpg, jpeg, gif, bmp). Word ekran
-  görüntülerini sık sık EMF/WMF olarak gömer; bunların `view` ile açılıp açılmadığı DOĞRULANMADI, bu yüzden listede
-  olmayan biçim INDEX'te ve notta **"GÖRÜNTÜLENEMEZ (emf)"** yazar: kullanıcıdan aynı ekranın PNG'sini iste, okuyunca
-  notu yaz ve PNG'den okunduğunu belirt. Paket dönüştürmez: standart kütüphane EMF/WMF'yi PNG'ye çeviremez ve ek
-  bağımlılık eklenmez.
+  silmez. Kaynak ya da km şeması değiştiyse ya da imza satırı silindiyse eski notlar `gorsel-notlari.<özet8|imzasiz>.md`
+  adıyla kenara alınır; var olan kenar dosyası ezilmez (sıra numarası eklenir) ve aynı kaynak yeniden çıkarılınca o
+  kaynağın kenardaki notları geri yüklenir. Not dosyasında bölüm başlığını değiştirme, araya başlık ekleme: Görülen
+  alanı bir sonraki başlıkta ya da iskeletin alan satırında (Dosya/Kaynak parçası/Konum/Biçim) biter; tanınmayan başlık
+  ve yinelenen bölüm `iz`'de UYARI'dır. Harf ya da rakam içermeyen not ("-", "?") ve TODO, "(boş)", "doldurulacak"
+  boş sayılır.
+  **Görüntülenebilir biçimler** betikte tek listededir: görüntülenebilir biçim (`GORUNTULENEBILIR`); belge listeyi
+  kopyalamaz, güncel liste INDEX'in "Görsel okuma" bölümündedir. Ölçüldü (aXet.code 1.5.1, 2026-11-19/20): `view`
+  EMF/WMF/BMP açmaz; Word ekran görüntülerini sık sık EMF/WMF olarak gömer. Listede olmayan biçim INDEX'te ve notta
+  **"GÖRÜNTÜLENEMEZ (emf)"** yazar. Okunabilir kopyanın tek bir sabit adı vardır: `media/<kimlik>.kullanici.png`.
+  Pillow kuruluysa paket klasöründe `python -c "from PIL import Image; Image.open('<görsel>').save('media/<kimlik>.kullanici.png')"`
+  ile çevir ve PNG'yi `view` ile aç; olmazsa kullanıcıdan PNG iste ve aynı ada kaydet (Pillow'la EMF çevirisi yalnız
+  Windows'ta ölçüldü). Kopya varken boş not FAIL'dir; notta PNG'den okunduğunu belirt. Paketin kendisi dönüştürmez:
+  standart kütüphane EMF/WMF'yi PNG'ye çeviremez ve betiğe bağımlılık eklenmez. Word SVG'yi PNG yedeğiyle birlikte
+  saklar (`svgBlip`): yedek pakette varsa SVG ÖLÇÜLEMEDİ değildir, o PNG'nin bölümünde okunur. Görsel, klasör adından
+  değil görsel ilişkisinden ve uzantısından tanınır; dosyaya bağlanamayan başvuru (`⟦… başvurusu çözülemedi⟧`) ve dışa
+  bağlı görsel (`⟦harici görsel bağlantısı — pakette yok⟧`) INDEX'te ve `iz`'de UYARI'dır.
 - **İz tablosu** git'te izlenen yerde durur: kaynak paketinin yanında değil, FS'in SAP paket klasöründe
   `ref_docs/iz-<belge no>.md` (kaynak ve dönüşüm belgelerinin yeri; FS gövdesine girmez — İlke 2b). Ölçüldü: proje
   şablonunun `.gitignore`'larıyla `git check-ignore` bu yolu izler, `.axet-code/tmp/**`'yu yok sayar. Kaynak paketi
