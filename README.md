@@ -64,6 +64,10 @@ sistem tipi `DEV`, çağrıda `--sap-write` ve kapsam beyanı (S0/S1 gerekçe, S
 aXet içinde **`%yeni-proje`** yaz: sorular sohbette tek tek sorulur, önce ne yapılacağı gösterilir, onayınla kurulur
 (klasör, git reposu, proje iskeleti, `AGENTS.md` ve `sap-project.json` alanları, kontrol). Var olan değerler ezilmez.
 
+> ⚠ **aXet'i diskin kökünde (`C:\`) açma.** aXet açıldığı klasörde `.axet-code` veri dizinini kendisi yaratır ve
+> o klasörü taramaya başlar (ölçüldü: `C:\`'de açılan bir oturum diskin kökünde 8,5 MB'lık veri dizini bıraktı).
+> aXet'i proje klasöründe aç: `axet-code -c <proje klasörü>`.
+
 Sonra **proje klasöründeki `KURULUMU-TAMAMLA`'ya çift tıkla** (aXet bu dosyayı yazar ama çalıştırmaz):
 1. Pencere SAP bağlantı dosyalarını hazırlar ve hangisini dolduracağını tam yoluyla söyler: `conn\DEV.env`
    (zorunlu) ve `conn\QA.env` (QA sistemin yoksa dokunma). Dosyayı aç, `<...>` yazan yerleri (adres, kullanıcı,

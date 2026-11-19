@@ -84,7 +84,10 @@ ekip kararıyla, **kendi terminalinde** açılır: `python $HOME\axet\scripts\in
 ## 3. İlk proje
 
 ### 3.1 Proje kur
-Projede çalışacağın klasörde aXet'i aç ve **`%yeni-proje`** yaz. Model şunları sırayla sorar:
+Projede çalışacağın klasörde aXet'i aç ve **`%yeni-proje`** yaz. **Diskin kökünde (`C:\`) açma:** aXet açıldığı
+klasörde `.axet-code` veri dizinini kendisi yaratır ve o klasörü taramaya başlar (ölçüldü: `C:\`'de açılan oturum
+diskin kökünde 8,5 MB'lık veri dizini bıraktı). Proje klasöründe açmak için: `axet-code -c <proje klasörü>`.
+Model şunları sırayla sorar:
 - proje klasörü ve adı;
 - SAP sistem profili, sürümü, master dili, clean core politikası;
 - projenin amacı, depo adresi, test ve çalıştırma komutları.

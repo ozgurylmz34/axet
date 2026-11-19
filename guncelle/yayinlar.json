@@ -4896,6 +4896,188 @@
      ]
     }
    ]
+  },
+  {
+   "etiket": "v0.5.24",
+   "tarih": "2026-11-19",
+   "kalemler": [
+    {
+     "id": "0.5.24-20",
+     "baslik": "SAP yanıtlarındaki parola ve sırlar büyük/küçük harf farkıyla da maskelenir",
+     "tur": "guvenlik",
+     "kritik": true,
+     "neden": "Hata ve günlük metinlerindeki sırlar (parola, bağlantı bilgisi) yalnız harfi harfine aynı yazılınca maskeleniyordu. SAP bir değeri büyük harfe çevirip geri yansıtırsa (ör. parola büyük harfle), metin maskelenmeden çıktıya düşebiliyordu. Artık eşleşme harf duyarsızdır; aynı değerin her yazılışı *** olur.",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/redact.py",
+      "skills-sap/sap-adt-foundation/tests/test_bakim_kucuk_kalemler.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_bakim_kucuk_kalemler"
+     ]
+    },
+    {
+     "id": "0.5.24-21",
+     "baslik": "SAP hata yanıtlarında gerçek HTTP kodu ve SAP gövdesi görünür (silme, tablo tipi / mesaj sınıfı / kilit nesnesi yaratma, araç hata yanıtı)",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Üç küçük kusur aynı sınıftandı: SAP'nin verdiği hata ayrıntısı kayboluyordu. (1) Başarısız her silmede (SAP 4xx ya da 5xx döndüğünde) hata kodu 'unknown', SAP'nin mesajı 'no response' diye raporlanıyordu; kilit desteklemeyen sistemin özel hata dalı da bu yüzden hiç çalışmıyordu. Artık gerçek kod ve SAP'nin mesajı yazılır. (2) Tablo tipi, mesaj sınıfı ve kilit nesnesi yaratma hata verince SAP gövdesi kırpılmadan ve maskelenmeden basılıyordu; artık diğer yaratma yollarıyla aynı biçimde (maskeli, 500 karakterde kesilmiş, [ERROR] [kod]) basılır. (3) Araç hata yanıtına SAP'nin HTTP kodu biliniyorsa ayrı bir status_code alanı eklenir; kodu mesaj metninden çıkarmak gerekmez.",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/atom.py",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/tests/test_bakim_kucuk_kalemler.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_bakim_kucuk_kalemler",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_msgclass"
+     ]
+    },
+    {
+     "id": "0.5.24-22",
+     "baslik": "Okuma amaçlı POST'un yeniden denenmesi yalnız tam uç adında olur (benzer adlı yazma ucu tekrarlanmaz)",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Bağlantı hatasında yeniden denenebilen okuma uçları (sözdizimi kontrolü, veri önizleme, paket ağacı, kullanım yeri, biçimleme) adın başından eşleniyordu. Bu yüzden aynı önekle başlayan başka bir uç (ör. '/checkruns' yerine '/checkrunsX') da yeniden denemeye giriyordu; o uç veri yazıyorsa istek bağlantı hatasında 4 kereye kadar gidebilirdi. Artık yalnız önekten sonra '/', '?' ya da adın sonu gelirse tekrar edilir; diğer istekler eskisi gibi tek gönderilir.",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
+      "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
+      "skills-sap/sap-adt-foundation/tests/test_yan_etkili_tekrar.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_yan_etkili_tekrar",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_classrun_tek_post"
+     ]
+    },
+    {
+     "id": "0.5.24-23",
+     "baslik": "ATC sonucu bulgu sayısı tavana eşitse 'kesilmiş olabilir' der",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "adt_atc_check en fazla max_verdicts (varsayılan 100) bulgu döndürür. Tam 100 bulgu geldiğinde listenin eksik olup olmadığı yanıttan anlaşılmıyordu. Artık yanıtta kesilmis_olabilir alanı ve bir kapsam cümlesi var: sayı tavana eşitse 'max_verdicts'i artırıp yeniden koş' denir. max_verdicts metin olarak gelirse (\"50\") sayıya çevrilir; pozitif tam sayı değilse SAP'ye gitmeden 'invalid_argument' döner.",
+     "dosyalar": [
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py",
+      "skills-sap/sap-adt-foundation/references/tool-catalog.md",
+      "skills-sap/sap-adt-foundation/tests/test_bakim_kucuk_kalemler.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_bakim_kucuk_kalemler",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_cli_gate"
+     ]
+    },
+    {
+     "id": "0.5.24-24",
+     "baslik": "Yerel UI proxy'si yalnız kendi sayfasından gelen tarayıcı isteğini SAP'ye iletir",
+     "tur": "guvenlik",
+     "kritik": true,
+     "neden": "Yerel çalıştırma proxy'si (ui_local_proxy.py) yabancı Host'u ve yazma isteklerini reddediyordu ama tarayıcının gönderdiği köken bilgisine bakmıyordu. Aynı makinede açık başka bir web sayfası, kullanıcının oturumuyla bu proxy üzerinden SAP'ye okuma isteği gönderebilirdi. Artık Origin başlığı proxy'nin kendi adresi değilse ya da Sec-Fetch-Site 'same-origin'/'none' değilse istek 403 ile kesilir ve günlüğe REDDEDİLDİ yazılır; ön kontrol (OPTIONS) istekleri de 403 alır. Başka bir localhost portundan gelen çağrılar da artık kesilir: uygulamayı proxy'nin kendi adresinden açın. Bu başlıkları göndermeyen istemciler (curl, betik) eskisi gibi çalışır. Kullanılmayan bir sabit de kaldırıldı.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-fiori/scripts/ui_local_proxy.py",
+      "skills-sap/sap-ui5-fiori/SKILL.md",
+      "skills-sap/sap-ui5-fiori/references/deploy-and-local-run.md",
+      "skills-sap/sap-ui5-fiori/tests/test_fetch_ui_source.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py -k test_koken_basligi",
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py -k test_uctan_uca_yabanci_koken_sapye_gitmez"
+     ]
+    },
+    {
+     "id": "0.5.24-25",
+     "baslik": "UI kaynak anlık görüntüsü takasın ortasında okunursa eski görüntü okunur",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Anlık görüntü yenilenirken eski klasör kenara alınıp yenisi yerine konur. Bu iki adım arasında okuyan bir çağrı görüntüyü hiç bulamıyor ve 'anlık görüntü yok' sanıyordu. Artık o aralıkta kenara alınmış eski görüntü okunur; ikisi de yoksa davranış değişmez.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-fiori/scripts/_bspkaynak.py",
+      "skills-sap/sap-ui5-fiori/tests/test_fetch_ui_source.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py -k test_anlik_oku_yarim_takasta_eski_goruntuyu_okur"
+     ]
+    },
+    {
+     "id": "0.5.24-26",
+     "baslik": "Mock veri raporu teknik SAP__ setlerinin kod alanlarını tek NOT satırında toplar",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "OData V4 servislerindeki teknik SAP__ setleri (birim, para birimi listeleri) her kod alanı adayı için ayrı UYARI satırı üretiyordu; gerçek uygulama alanlarının uyarıları bunların arasında kayboluyordu. Artık bu setlerin adayları tek bir 'NOT: teknik SAP__ setleri …' satırında set başına sayılır; diğer uyarılar değişmez, çıkış kodu değişmez.",
+     "dosyalar": [
+      "skills-sap/sap-ui5-user-guide/scripts/mock_veri.py",
+      "skills-sap/sap-ui5-user-guide/references/mock-ortam.md",
+      "skills-sap/sap-ui5-user-guide/tests/test_mock_veri.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python skills-sap/sap-ui5-user-guide/tests/run_tests.py -k test_mock_veri"
+     ]
+    },
+    {
+     "id": "0.5.24-27",
+     "baslik": "%guncelle sonunda geçici dizin silinsin mi diye sorulur, onayla güvenli tek komutla silinir",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Güncelleme bitince geçici dizinin yolu söylenip 'silmek size kalmış' deniyordu; çoğu zaman silinmedi ve eski dizinler birikti. Artık skill, akış gerçekten bittiğinde kullanıcıya bir kez sorar. Karar adıma değil klonun durumuna bakar: bu akışta dosya uygulandı ve ne kapanış başarıyla bitti ne de tüm kalemler geri alındıysa sormaz (hangi adımda durulmuş olursa olsun), yalnız dizinin yolunu ve geri alma/kapanış için tutulduğunu söyler, çünkü o durumdan çıkış geri alma ya da kapanış ister ve ikisi de geçici dizindeki motoru kullanır; geri kalan her bitişte ve durmada ('klon güncel', dosya uygulanmadan durma ya da vazgeçme, başarılı kapanış, tümünü geri alma) sorar. Onay gelirse belgedeki tek komutu çalıştırır. Komut yalnız mutlak yolla verilen, axet_guncelle_ önekli, bağ ya da junction olmayan, klonu içermeyen ve klonun içinde olmayan dizini siler, başka bir yol verilirse hiçbir şeye dokunmadan durur. Silme yarıda kalırsa çıktı aynen gösterilir, 'silindi' denmez. Onay verilmezse dizin kalır.",
+     "dosyalar": [
+      "skills/guncelle/SKILL.md",
+      "tests/test_guncelle_baslatici.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k test_guncelle_baslatici"
+     ]
+    },
+    {
+     "id": "0.5.24-28",
+     "baslik": "Belge düzeltmeleri: aXet'i disk kökünde açma uyarısı, custom entity desteği, metot bloğu modülü notları",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "README ve kurulum rehberi artık aXet'in diskin kökünde açılmamasını söyler (aXet açıldığı klasörde veri dizini yaratıp klasörü taramaya başlıyor; proje klasöründe açın). RAP katmanlama belgesindeki 'custom entity reddedilebilir' uyarısı kaldırıldı: kaynak kapısı custom entity'yi kabul ediyor (uçtan uca canlı yaratma hâlâ doğrulanmadı, belge bunu söylüyor). Metot bloğu sınır modülündeki 'bu kural yalnız aXet'te var' notu güncellendi: kaynak çekirdek aynı kuralı aldı, davranış eşit. Kod davranışı değişmedi.",
+     "dosyalar": [
+      "README.md",
+      "docs/onboarding.md",
+      "skills-sap/sap-rap/references/layering-and-bdef.md",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/lib/utils/abap_metot_blok.py",
+      "skills-sap/sap-adt-foundation/scripts/sapadt/tools/diag.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k readme",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_abap_metot_blok",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_diag_tools"
+     ]
+    },
+    {
+     "id": "0.5.24-29",
+     "baslik": "Test düzeltmeleri: kör kalan ref taraması, bozuk kaçış karakterleri, etiketler ve eksik testler",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Güncelleme talimatlarındaki kısa 'origin/main' yazımını arayan test, desendeki bozuk bir kaçış karakteri yüzünden hiçbir şey yakalayamıyordu; düzeltildi ve kendini sınayan bir kalibrasyon testi eklendi. İki test dosyasındaki görünmez kontrol karakterleri okunur kaçış dizilerine çevrildi (testin anlamı ve sonucu aynı). Bir testin etiketindeki yanlış sayı düzeltildi ve sayı hükme eklendi; mock sunucusunun 'yenile' komutu ile yayın kataloğu ve kimlik eşleme aracının hata çıktısı için testler eklendi. Kullanıcıya görünen davranış değişmedi.",
+     "dosyalar": [
+      "tests/test_guncelle_uzak_ref.py",
+      "tests/test_kur.py",
+      "tests/test_kimlik_hizasi.py",
+      "tests/test_yayin_surumleri.py",
+      "skills-sap/sap-ui5-fiori/tests/test_fetch_ui_source.py",
+      "skills-sap/sap-ui5-user-guide/tests/test_mock_sunucu.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k test_guncelle_uzak_ref",
+      "python tests/run_tests.py -k test_kimlik_hizasi",
+      "python tests/run_tests.py -k test_yayin_surumleri",
+      "python skills-sap/sap-ui5-fiori/tests/run_tests.py -k test_dbg_geri_kurma",
+      "python skills-sap/sap-ui5-user-guide/tests/run_tests.py -k test_mock_sunucu"
+     ]
+    },
+    {"id": "0.5.24-30", "tur": "duzeltme", "kritik": false, "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı", "neden": "Her yayında üretilen kayıt dosyaları: değişiklik günlüğü, bu katalog, yayının CI sonucu ve README'nin sürüm satırı.", "dosyalar": ["CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json", "README.md"], "gerektirir": [], "test": ["python tests/run_tests.py -k yayin_surumleri", "python tests/run_tests.py -k readme"]}
+   ]
   }
  ]
 }
