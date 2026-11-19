@@ -46,6 +46,10 @@ description: >
    değil) · varsa eski/çalışan kaynak. Girdide olmayan iş kuralı, süreç, standart SAP obje adı **uydurulmaz**.
    İstek **`.docx`/`.xlsx`** ise önce mekanik **kaynak paketi** (`kaynak_paketi.py cikar` → `references/traceability.md` §2-B);
    yazım ve inceleme paketi okur, ikili dosya yazıma da brife de yol olarak girmez, kaynak metni modelle yeniden yazılmaz.
+   Paket görsel içeriyorsa (`gorsel-notlari.md`) yazıma geçmeden **her görseli `view` aracıyla aç** ve gördüğünü (ekran
+   adı, alanlar, düğmeler, değerler, okunabilen metin) o görselin **Görülen** alanına yaz — görsel başına bir `edit`;
+   GÖRÜNTÜLENEMEZ biçim (ör. `emf`) için kullanıcıdan PNG iste. Görselden türeyen her öğe FS'te bir kimliğe bağlanır,
+   notta `→ <kimlik>` ile anılır ve iz tablosunda o görselin satırına girer; boş not `iz`'de FAIL'dir.
 2b. **Girdiler çelişirse** (aynı workshop'tan kalan birden çok not, transkript, özet ve eski belge sık sık
    çelişir): çelişkiyi **sessizce çözme**. Öncelik sırası: ① kullanıcı isteği (kanon) ② canlı sistemden
    ölçülen olgu ③ intake artefaktı ④ tarihi belli ve daha yeni olan not ⑤ tarihsiz not. Bu sıra bir
@@ -113,7 +117,8 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
    `references/doc-checklist.md` §E bloğunu, ilgili tip bölümünün (§A KD · §B FS · §C TS) ve §D çapraz kontrollerin
    **metnini yapıştır**; dokümanın yolunu ve (varsa) HTML/PDF/ekran görüntüsü yollarını ver. İkili kaynağın (`.docx`/
    `.xlsx`/`.pdf`) yolunu verme: `view` ikili `.docx`'i açmadı, alt ajan okuyamadı (ölçüldü, tek oturum; başka okuma
-   aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin ve iz tablosunun yolunu ver (§E).
+   aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin (`metin.md`, `gorsel-notlari.md`, `media/`) ve iz tablosunun yolunu ver, `iz`
+   çıktısını kendin koşup yapıştır; inceleyiciye görselleri `view` ile açıp notları doğrulamasını yaz (§E, AX-DOC-CR-07).
 3. Dönen her BLOCKER'ı kendin dokümanda okuyarak doğrula; doğrulanamayanı NOT'a indir.
 4. Düzeltme turu **ikinci kapıdan** geçmeden kapanmaz: dar kapsam (değişen satırlar + değişen sayı/adın diğer geçtiği
    yerler + kararın yayılım listesi), **başka** bir taze inceleyiciyle.
@@ -142,7 +147,7 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 | `scripts/capture_kd_screens.js` | yapılandırma dosyasıyla adım adım ekran çekimi + model verisi enjeksiyonu (UI5 mock) |
 | `scripts/verify_doc_html.py` | ölü içindekiler bağlantısı, ham Mermaid sızıntısı, görsel sayısı/eksik dosya, PDF bağlantı sayısı |
 | `scripts/doc_equivalence_check.py` | yeniden yazımda veri kaybı (kimlik, mockup, değer, cümle) + kapanmış karar ters yönü |
-| `scripts/kaynak_paketi.py` | `cikar`: `.docx`/`.xlsx` istekten mekanik paket (çıkarım kapsamındaki metin KM-nnnn, yapılandırılmayan XML metni geri düşüş bölümünde, görseller, OLE/altChunk gömülü nesneler, bağımsız sayımla doğrulama; `.pdf` desteklenmiyor) · `iz`: kaynak maddesi → belge kimliği tablosu denetimi |
+| `scripts/kaynak_paketi.py` | `cikar`: `.docx`/`.xlsx` istekten mekanik paket (çıkarım kapsamındaki metin KM-nnnn, yapılandırılmayan XML metni geri düşüş bölümünde, görseller, OLE/altChunk gömülü nesneler, bağımsız sayımla doğrulama, her görsel için `gorsel-notlari.md` iskeleti; `.pdf` desteklenmiyor) · `iz`: kaynak maddesi → belge kimliği tablosu denetimi + boş görsel notu FAIL (görüntülenemeyen biçim ÖLÇÜLEMEDİ) |
 | `scripts/check_fs_no_analysis_log.py` | FS gövdesinde analiz günlüğü izi sayımı (sürüm etiketi, inceleme kimliği, süreç ifadesi, kullanıcı alıntısı, önceden→şimdi) + §1.1 satır uzunluğu (DOC-FS-05/06a); uyarıdır, kapı değil |
 | `scripts/check_fm_signature_doc_sync.py` | dokümandaki `<!-- FM-IMZA: <FM> -->` bloğu ↔ FM kaynağındaki imza parametreleri, iki yönde (EKSİK · HAYALET); kaynak kökü `sap-project.json` `source_root` (AX-DOC-TS-03); uyarıdır, kapı değil |
 | `scripts/gen_field_table.py` | CDS (+ interface CDS, BDEF, CSV) → alan tablosu |

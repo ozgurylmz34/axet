@@ -45,6 +45,7 @@ Tam protokol, kriterler ve örnekler: `references/protocol.md` — ilk kullanım
    `python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py cikar <dosya>` → `.axet-code/tmp/<id>/INDEX.md`
    (çıkarım kapsamındaki metin `KM-nnnn`, yapılandırılmayan XML metni geri düşüş bölümünde, görseller, gömülü nesneler — ör. HTML ekran prototipi; `%sap-fs-ts-docs` `references/traceability.md` §2-B).
    Kaynak metnini modelle yeniden yazıp özetini kaynak yerine koyma; DOĞRULAMA FAIL ya da çıkış 3 (`.pdf`) ise kullanıcıya söyle.
+   Ekran görüntüleri metne çıkmaz: `gorsel-notlari.md`'deki her görseli `view` aracıyla aç ve gördüğünü (ekran, alan, düğme, değer) o görselin Görülen alanına yaz — görsel başına bir `edit`; GÖRÜNTÜLENEMEZ biçim için kullanıcıdan PNG iste. Görselden çıkan alanlar da konu çıkarımına girer.
 4. **3 eksende araştır** (kapsamla orantılı derinlik):
    - (a) **Domain:** nasıl çalışır — resmi kaynak; sözdizimi/annotation tahmin edilmez.
    - (b) **Canlı sistem + ilgili kod:** `%sap-adt-foundation` CLI okuma araçlarıyla önce harita

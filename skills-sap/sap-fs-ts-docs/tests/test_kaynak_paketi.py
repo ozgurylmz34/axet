@@ -809,6 +809,148 @@ class EvrenGeriDususTest(_Gecici):
         self.assertIn("formül / veri başvurusu (f, definedName) 0", out)
 
 
+class R3GateTest(_Gecici):
+    """Bug gate R3 bulguları: XML olmayan üye, xlsx payın kaynaktan geldiği, parçaya/değere bağlı yaprak sınıfları,
+    Fallback içerik karşılaştırması, mürekkep ve VML konumu, dosya üyelerinin toplam sınırı, boş paylaşılan dizge."""
+    docx = EvrenGeriDususTest.docx
+
+    def test_xml_olmayan_uye_listelenir_makro_ayrica_isaretlenir(self):
+        """F1: .docm'deki vbaProject.bin ve düz metin üye sessizce kaybolmaz; görsel (KG) iki kez listelenmez."""
+        png = os.path.join(self.d, "g.png")
+        write_png(png)
+        with open(png, "rb") as fh:
+            png_b = fh.read()
+        rc, out, _ = self.docx(p("Gövde", ek=GORSEL), rels=[("rIdImg", "image", "media/image1.png")], ekler={
+            "word/vbaProject.bin": b"\xd0\xcf\x11\xe0makro", "word/notlar.txt": "Onay iki gün içinde verilir",
+            "word/media/image1.png": png_b})
+        self.assertEqual(0, rc, out)
+        meta = json.loads(self.oku("paket.json"))
+        disi = {x["parca"]: x for x in meta["xml_disi"]}
+        self.assertEqual({"word/vbaProject.bin", "word/notlar.txt"}, set(disi))
+        self.assertIn("makro kodu (VBA) — okunmadı, iş kuralı içerebilir", disi["word/vbaProject.bin"]["not"])
+        self.assertEqual("XML değil — metni çıkarılmadı", disi["word/notlar.txt"]["not"])
+        self.assertEqual(len("Onay iki gün içinde verilir".encode("utf-8")), disi["word/notlar.txt"]["boyut"])
+        index = self.oku("INDEX.md")
+        self.assertIn("- XML olmayan üye `word/vbaProject.bin`", index)
+        self.assertIn("- XML olmayan üye `word/notlar.txt`", index)
+        self.assertNotIn("XML olmayan üye `word/media", index)
+        self.assertIn("XML olmayan üye: word/vbaProject.bin", out)
+        self.assertIn("XML olmayan üyelerin içeriği (makro kodu dahil)", kp.SCOPE_CIKAR)
+
+    def test_xlsx_sayfa_payi_kaynaktan_isaretlenir(self):
+        """F2: sayfa / paylaşılan dizge parçasının yapılandırılmış payı kaynaktan; sınıf bunu söyler."""
+        yol = os.path.join(self.d, "liste.xlsx")
+        kp.xlsx_okuyucu().write_xlsx(yol, [("S", [["No", "Kural"], ["R-01", 5.0]])])
+        rc, out, err = self.cikar(yol)
+        self.assertEqual(0, rc, out + err)
+        sinif = {r["parca"]: r["sinif"] for r in json.loads(self.oku("paket.json"))["parca_hesabi"]}
+        self.assertEqual(kp.YAPI_KAYNAKTAN, sinif["xl/worksheets/sheet1.xml"])
+        self.assertIn(kp.YAPI_KAYNAKTAN, self.oku("INDEX.md"))
+        self.assertIn("'yapılandırılmış' pay kaynaktan hesaplanır (pakette yalnız metin hücresi ölçülür)", kp.SCOPE_CIKAR)
+        # Aynı beyan belgede ve katalogda (gate R3 F2): okur INDEX'teki sınıfı yalnız betikte değil belgede de bulur.
+        trace = " ".join(_metin("skills-sap", "sap-fs-ts-docs", "references", "traceability.md").split())
+        self.assertIn("\"yapılandırılmış (kaynaktan; pakette yalnız metin hücresi ölçülür)\"", trace.replace("**", ""))
+        katalog = json.loads(_metin("guncelle", "yayinlar.json"))
+        k02 = [k for y in katalog["yayinlar"] for k in y["kalemler"] if k["id"] == "0.5.24-02"][0]
+        self.assertIn("pakette yalnız metin hücresi ölçülür", k02["neden"])
+
+    def test_konum_formul_bicim_adi_bilinmeyen_parcada_geri_dususte(self):
+        """F3 (definedName testinin eşi): konum adı metin taşıyorsa, f / formatCode bilinmeyen parçadaysa geri düşüş;
+        sayı değerli konum adı her yerde yok sayılır."""
+        rc, out, metin = self.docx(p("Gövde"), ekler={
+            "word/foo/x.xml": '<x:kok xmlns:x="urn:ornek"><x:row>İş metni satırda</x:row><x:row>42</x:row>'
+                              '<x:f>Formül değil not</x:f><x:formatCode>Biçim değil not</x:formatCode></x:kok>'})
+        self.assertEqual(0, rc, out)
+        for parca_metni in ("İş metni satırda", "Formül değil not", "Biçim değil not"):
+            self.assertIn("⟦P01 parça: word/foo/x.xml⟧ | %s |" % parca_metni, metin)
+        self.assertNotIn("42", metin.split("Yapılandırılmamış")[-1])
+        self.assertIn("konum/ölçü değeri 2", out)
+        self.assertIn("formül / veri başvurusu (f, definedName) 0", out)
+        self.assertIn("sayı biçim kodu (formatCode) 0", out)
+
+    def test_fallback_karakteri_esit_ama_metni_farkli_ise_pakette(self):
+        """F4: "Onay: 5 gün" ile "İade: 9 gün" aynı karakter sayısında; Fallback yutulmaz, geri düşüşe gider."""
+        rc, out, metin = self.docx(p("Önce") + p("", ek=kutu("Onay: 5 gün", "İade: 9 gün")))
+        self.assertEqual(0, rc, out)
+        self.assertIn("Onay: 5 gün", metin)
+        self.assertRegex(metin, r"⟦P01 parça: word/document\.xml⟧ \| İade: 9 gün \|")
+        self.assertIn("yinelenen gösterim (mc:Fallback, Choice ile eşit) 0", out)
+
+    def test_murekkep_ve_vml_konumu_km_uretmez(self):
+        """Ö-a / Ö-b: InkML koordinatı ve Excel VML x:Row/x:Column/x:Anchor sayıları kaynak maddesi olmaz; sınıfı
+        karakter sayısıyla basılır. VML'deki metin (açıklama) yine pakettedir."""
+        ink = ('<inkml:ink xmlns:inkml="%s"><inkml:trace contextRef="#c">100 200, 110 210</inkml:trace>'
+               '<inkml:trace>300 400</inkml:trace></inkml:ink>' % ("http" + "://www.w3.org/2003/InkML"))
+        vml = ('<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:x="urn:schemas-microsoft-com:office:excel">'
+               '<v:shape><v:textbox><div>Açıklama metni</div></v:textbox><x:ClientData ObjectType="Note">'
+               '<x:Anchor>1, 15, 0, 2, 3, 15, 4, 2</x:Anchor><x:Row>0</x:Row><x:Column>1</x:Column>'
+               '</x:ClientData></v:shape></xml>')
+        rc, out, metin = self.docx(p("Gövde"), ekler={"word/ink/ink1.xml": ink, "word/drawings/vmlDrawing1.vml": vml})
+        self.assertEqual(0, rc, out)
+        self.assertNotIn("word/ink/ink1.xml", metin)
+        self.assertIn("mürekkep koordinatı (inkml:trace) %d" % len("100200,110210300400"), out)
+        self.assertIn("| Açıklama metni |", metin)
+        self.assertNotRegex(metin, r"vmlDrawing1\.vml⟧ \|[^\n]*\b15\b")
+        self.assertIn("konum/ölçü değeri %d" % (len("1,15,0,2,3,15,4,2") + 2), out)
+
+    def test_dosya_uyeleri_metin_toplamina_sayilmaz_toplami_asan_atlanir(self):
+        """Ö-c: büyük görseller metin toplam sınırına sayılmaz (paket düşmez); görsel toplamını aşan üye atlanır."""
+        ekler = {"word/media/a.bin": b"\x01" * 3000, "word/media/b.bin": b"\x02" * 3000}
+        with mock.patch.object(kp, "MAX_TOPLAM", 2500):
+            rc, out, _ = self.docx(p("Metin korunur"), ekler=ekler)
+        self.assertEqual(0, rc, out)
+        self.assertIn("Metin korunur", self.oku("metin.md"))
+        self.kok = os.path.join(self.d, "k2")  # temiz paket klasörü (eski dosya artığı ayrı bir FAIL'dir)
+        with mock.patch.object(kp, "MAX_DOSYA_TOPLAM", 4000):
+            rc, out, _ = self.docx(p("Metin korunur"), ekler=ekler)
+        self.assertEqual(0, rc, out)
+        self.assertEqual(["KG-01_a.bin", "KG-02_b.bin.OLCULEMEDI.txt"], sorted(os.listdir(self.paket("media"))))
+        self.assertIn("görsel/gömülü üyelerin toplamı 4000 bayt sınırını aşıyor",
+                      self.oku("media", "KG-02_b.bin.OLCULEMEDI.txt"))
+
+    def test_bos_paylasilan_dizge_indeks_kaydirmaz(self):
+        """<si/> da bir indekstir: kontrol grubu (<si/>'siz) ve deney aynı paketi ve PASS verir (ölçüldü: önce FAIL)."""
+        sonuc = {}
+        for ad, bas in (("kontrol", ""), ("deney", "<si/>")):
+            yol = os.path.join(self.d, ad + ".xlsx")
+            si_kitabi(yol, bas)
+            rc, out, err = call_main(kp.main, ["cikar", yol, "--hedef-kok", self.kok, "--id", ad])
+            self.assertEqual(0, rc, out + err)
+            with open(os.path.join(self.kok, ad, "metin.md"), encoding="utf-8") as fh:
+                sonuc[ad] = [s for s in fh.read().splitlines() if "SY01" in s]
+        self.assertEqual(sonuc["kontrol"], sonuc["deney"])
+        self.assertIn("[KM-0002] ⟦SY01.S0002⟧ | R-01 | Kredi limiti |", sonuc["deney"])
+
+    def test_kaynakta_gorunmez_bicim_karakteri_yok(self):
+        """Ö-e: PUBLIC depo — betikte literal U+FEFF ya da başka Cf/Cc karakteri yok (kaçış dizisiyle yazılır)."""
+        import unicodedata
+        with open(kp.__file__, encoding="utf-8") as fh:
+            for no, satir in enumerate(fh, 1):
+                for ch in satir.rstrip("\n"):
+                    self.assertFalse(unicodedata.category(ch) in ("Cf", "Cc") and ch != "\t",
+                                     "satır %d: U+%04X" % (no, ord(ch)))
+
+
+def si_kitabi(yol, si_bas):
+    """Paylaşılan dizgeli elle kurulan xlsx; si_bas başa eklenen boş dizge (indeksler buna göre kaydırılır)."""
+    main = _S + "spreadsheetml/2006/main"
+    n = 1 if si_bas else 0
+    sst = ('<sst xmlns="%s">%s<si><t>No</t></si><si><t>Kural</t></si><si><t>R-01</t></si><si><t>Kredi limiti</t></si>'
+           '</sst>' % (main, si_bas))
+    sayfa = ('<worksheet xmlns="%s"><sheetData><row r="1"><c r="A1" t="s"><v>%d</v></c><c r="B1" t="s"><v>%d</v></c>'
+             '</row><row r="2"><c r="A2" t="s"><v>%d</v></c><c r="B2" t="s"><v>%d</v></c></row>'
+             '<row r="3"><c r="B3"><v>5</v></c></row></sheetData></worksheet>') % (main, n, 1 + n, 2 + n, 3 + n)
+    with zipfile.ZipFile(yol, "w") as z:
+        z.writestr("[Content_Types].xml", '<Types xmlns="%s"/>' % CT)
+        z.writestr("xl/workbook.xml", '<workbook xmlns="%s" xmlns:r="%s"><sheets><sheet name="S" sheetId="1" '
+                                      'r:id="rId1"/></sheets></workbook>' % (main, NS["r"]))
+        z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="%s"><Relationship Id="rId1" '
+                   'Type="%sworksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" '
+                   'Type="%ssharedStrings" Target="sharedStrings.xml"/></Relationships>' % (PKG_REL, REL, REL))
+        z.writestr("xl/worksheets/sheet1.xml", sayfa)
+        z.writestr("xl/sharedStrings.xml", sst)
+
+
 def cfb_paylasimli(d=1, k=9):
     """Döngüsüz, geçerli zincirli CFB; tek kusur: 4*d-1 akış AYNI k sektörlük veri zincirini gösterir (gerçek CFB'de
     olmaz; paylaşım çıktıyı akış sayısıyla çarpar)."""
@@ -908,10 +1050,22 @@ IZ_TABLOSU = """# İz tablosu — FS-SD-001
 BELGE = "FR-001 kayıt. FR-002 iptal. FR-003 öneri. KR-001 kural. TC-01, TC-02 test. SCR-001 ekran.\n"
 
 
+def notu_yaz(paket_dizini, kimlik, metin):
+    """gorsel-notlari.md'de `kimlik` bölümünün Görülen alanını doldurur (modelin görsel başına yaptığı `edit`)."""
+    yol = os.path.join(paket_dizini, kp.NOT_DOSYASI)
+    with open(yol, encoding="utf-8") as fh:
+        s = fh.read()
+    i = s.index("- Görülen:", s.index("## %s\n" % kimlik)) + len("- Görülen:")
+    with open(yol, "w", encoding="utf-8") as fh:
+        fh.write(s[:i] + " " + metin + s[i:])
+
+
 class IzDenetimiTest(_Gecici):
     def setUp(self):
         super().setUp()
         self.assertEqual(0, self.cikar()[0])
+        # KG-01 (png) okunmuş sayılır; KG-02 (emf) görüntülenemez → ÖLÇÜLEMEDİ, FAIL değil.
+        notu_yaz(self.paket(), "KG-01", "Şirket logosu; metin yok.")
         self.belge = os.path.join(self.d, "FS-SD-001.md")
         with open(self.belge, "w", encoding="utf-8") as fh:
             fh.write(BELGE)
@@ -1030,6 +1184,188 @@ class IzDenetimiTest(_Gecici):
         self.assertIn("paket: km şeması 1", out)
 
 # ── BÖLÜM: kural metni testleri ──
+# ── BÖLÜM: görsel notları (gorsel-notlari.md iskeleti + iz görsel denetimi) ──
+def _gorsel_r(rid):
+    return GORSEL.replace("rIdImg", rid)
+
+
+GORSEL_GOVDE = "".join([
+    p("Sipariş ekranı", stil="Balk1"),
+    p("Giriş ekranı aşağıda", ek=_gorsel_r("rIdG1")),
+    p("", ek=_gorsel_r("rIdG2")),
+    p("Onay penceresi"),
+    p("Hata mesajı", ek=_gorsel_r("rIdG3")),
+    p("Ek ekran:", ek=OLE % "rIdOle1"),
+    "<w:sectPr/>",
+])
+GORSEL_RELS = [("rIdG1", "image", "media/image1.png"), ("rIdG2", "image", "media/image2.png"),
+               ("rIdG3", "image", "media/image3.jpg"), ("rIdOle1", "oleObject", "embeddings/oleObject1.bin")]
+GORSEL_IZ = """# İz tablosu — FS-SD-002 · km şeması %d · Kaynak: gorselli.docx · sha256 %s
+
+| Kaynak | Belge kimliği | Not |
+|---|---|---|
+| KM-0001 | BİLGİ | başlık |
+| KM-0002..KM-0005 | FR-001 | |
+| KG-01..KG-03 | FR-001 | |
+| KN-01 | SCR-001 | |
+"""
+
+
+class GorselNotlariTest(_Gecici):
+    def setUp(self):
+        super().setUp()
+        png = os.path.join(self.d, "g.png")
+        write_png(png)
+        with open(png, "rb") as fh:
+            png_b = fh.read()
+        self.kaynak = os.path.join(self.d, "gorselli.docx")
+        docx_yaz(self.kaynak, GORSEL_GOVDE, rels=GORSEL_RELS, ekler={
+            "word/media/image1.png": png_b, "word/media/image2.png": png_b, "word/media/image3.jpg": png_b,
+            "word/embeddings/oleObject1.bin": cfb_yaz([("\x01Ole10Native", ole10native_yaz("ekran.png", png_b))])})
+        rc, self.cikti, _ = self.cikar()
+        self.assertEqual(0, rc, self.cikti)
+        self.belge = os.path.join(self.d, "FS-SD-002.md")
+        with open(self.belge, "w", encoding="utf-8") as fh:
+            fh.write("FR-001 sipariş girişi. SCR-001 ekran. FR-003 onay düğmesi.\n")
+
+    def meta(self):
+        return json.loads(self.oku("paket.json"))
+
+    def iz(self, tablo_metni=None):
+        if tablo_metni is None:
+            tablo_metni = GORSEL_IZ % (kp.KM_SEMASI, self.meta()["kaynak"]["sha256"][:16])
+        tablo = self.paket("iz-FS-SD-002.md")
+        with open(tablo, "w", encoding="utf-8") as fh:
+            fh.write(tablo_metni)
+        return call_main(kp.main, ["iz", self.paket(), "--tablo", tablo, "--belge", self.belge])
+
+    def hepsini_doldur(self, haric=()):
+        for k in ("KG-01", "KG-02", "KG-03", "KN-01"):
+            if k not in haric:
+                notu_yaz(self.paket(), k, "%s: Sipariş giriş ekranı; alanlar Müşteri, Malzeme; Kaydet düğmesi" % k)
+
+    def test_iskelet_her_gorsel_icin_bolum_konum_ve_bos_gorulen(self):
+        notlar = self.oku(kp.NOT_DOSYASI)
+        bolumler = re.findall(r"^## (K[GN]-\d+)$", notlar, re.M)
+        self.assertEqual(["KG-01", "KG-02", "KG-03", "KN-01"], bolumler)
+        self.assertEqual(4, notlar.count("- Görülen:"))
+        self.assertIn("- Dosya: `media/KG-01_image1.png`", notlar)
+        self.assertIn("- Dosya: `gomulu/KN-01_ekran.png`", notlar)
+        self.assertIn("- Konum: KM-0002 (metin.md", notlar)          # işaret KM satırında
+        self.assertIn("- Konum: KM-0002 sonrası (metin.md", notlar)  # işaret ayrı satırda
+        self.assertIn("- Konum: KM-0004 (metin.md", notlar)
+        self.assertIn("`view`", notlar)
+        self.assertEqual({"KG-01": "", "KG-02": "", "KG-03": "", "KN-01": ""}, kp.gorsel_notlarini_oku(
+            __import__("pathlib").Path(self.paket())))
+        meta = self.meta()
+        self.assertEqual(["KG-01", "KG-02", "KG-03", "KN-01"], [g["kimlik"] for g in meta["gorsel"]])
+        self.assertTrue(all(g["goruntulenebilir"] for g in meta["gorsel"]))
+        self.assertIn("## Görsel okuma — `gorsel-notlari.md`", self.oku("INDEX.md"))
+        self.assertIn("GÖRSEL NOTLARI:", self.cikti)
+
+    def test_iz_iki_bos_not_fail_ve_adlarini_basar(self):
+        self.hepsini_doldur(haric=("KG-02", "KN-01"))
+        rc, out, _ = self.iz()
+        self.assertEqual(1, rc, out)
+        self.assertIn("GÖRSEL OKUNMADI: 2 — KG-02, KN-01", out)
+        self.assertIn("notu dolu 2", out)
+        self.assertIn("SONUÇ: FAIL", out)
+
+    def test_iz_tum_notlar_dolu_pass(self):
+        self.hepsini_doldur()
+        rc, out, _ = self.iz()
+        self.assertEqual(0, rc, out)
+        self.assertIn("GÖRSEL OKUNMADI: 0", out)
+        self.assertIn("GÖRSEL ÖLÇÜLEMEDİ: 0", out)
+        self.assertIn("SONUÇ: PASS", out)
+        self.assertNotIn("ÖLÇÜLEMEDİ: 1", out)
+
+    def test_yer_tutucu_not_bos_sayilir_ve_bolum_silinirse_okunmadi(self):
+        self.hepsini_doldur(haric=("KG-01",))
+        notu_yaz(self.paket(), "KG-01", "—")
+        yol = self.paket(kp.NOT_DOSYASI)
+        with open(yol, encoding="utf-8") as fh:
+            s = fh.read()
+        bas = s.index("## KG-03\n")
+        with open(yol, "w", encoding="utf-8") as fh:
+            fh.write(s[:bas] + s[s.index("## KN-01\n"):])
+        rc, out, _ = self.iz()
+        self.assertEqual(1, rc, out)
+        self.assertIn("GÖRSEL OKUNMADI: 2 — KG-01, KG-03", out)
+
+    def test_not_dosyasi_yoksa_fail(self):
+        os.remove(self.paket(kp.NOT_DOSYASI))
+        rc, out, _ = self.iz()
+        self.assertEqual(1, rc, out)
+        self.assertIn("GÖRSEL NOTLARI DENETLENEMEDİ: 1", out)
+
+    def test_notta_anilan_kimlik_iz_satirinda_yoksa_uyari(self):
+        self.hepsini_doldur(haric=("KG-03",))
+        notu_yaz(self.paket(), "KG-03", "Onay penceresi; Onayla düğmesi → FR-003")
+        rc, out, _ = self.iz()
+        self.assertEqual(0, rc, out)  # UYARI, FAIL değil
+        self.assertIn("UYARI görsel notundaki kimlik iz tablosunda o görsele eşlenmemiş: 1", out)
+        self.assertIn("KG-03: FR-003 notta var, iz satırında yok", out)
+
+    def test_yeniden_cikarim_yazilmis_notlari_korur_kaynak_degisince_kenara_alir(self):
+        self.hepsini_doldur()
+        rc, out, _ = self.cikar()
+        self.assertEqual(0, rc, out)
+        self.assertIn("korundu", out)
+        self.assertIn("KG-01: Sipariş giriş ekranı", self.oku(kp.NOT_DOSYASI))
+        # Kaynağın yeni sürümü (aynı görseller, değişen metin → başka sha256): eski notlar silinmez, kenara alınır.
+        with zipfile.ZipFile(self.kaynak) as z:
+            ekler = {a: z.read(a) for a in z.namelist() if a.startswith("word/media/") or a.startswith("word/embed")}
+        docx_yaz(self.kaynak, p("Yeni sürüm notu") + GORSEL_GOVDE, rels=GORSEL_RELS, ekler=ekler)
+        rc, out, _ = self.cikar()
+        self.assertEqual(0, rc, out)
+        self.assertIn("yenilendi", out)
+        self.assertNotIn("Sipariş giriş ekranı", self.oku(kp.NOT_DOSYASI))
+        yedek = [f for f in os.listdir(self.paket()) if f.startswith("gorsel-notlari.") and f != kp.NOT_DOSYASI]
+        self.assertEqual(1, len(yedek), os.listdir(self.paket()))
+        with open(self.paket(yedek[0]), encoding="utf-8") as fh:
+            self.assertIn("KG-01: Sipariş giriş ekranı", fh.read())
+
+
+class GorselBicimTest(_Gecici):
+    def test_emf_goruntulenemez_olculemedi_fail_degil(self):
+        # Ana fikstür: KG-01 png (konumlu), KG-02 emf (gövdede başvurusuz).
+        rc, out, _ = self.cikar()
+        self.assertEqual(0, rc, out)
+        self.assertIn("ÖLÇÜLEMEDİ: KG-02 GÖRÜNTÜLENEMEZ (emf)", out)
+        index = self.oku("INDEX.md")
+        self.assertIn("| KG-02 | `word/media/image2.emf` | `media/KG-02_image2.emf` | GÖRÜNTÜLENEMEZ (emf) |", index)
+        notlar = self.oku(kp.NOT_DOSYASI)
+        self.assertIn("GÖRÜNTÜLENEMEZ (emf) — ÖLÇÜLEMEDİ", notlar)
+        self.assertIn("kullanıcıdan PNG iste", notlar)
+        self.assertIn("metinde konumu yok", notlar)
+        meta = json.loads(self.oku("paket.json"))
+        g = {x["kimlik"]: x for x in meta["gorsel"]}
+        self.assertEqual((True, False), (g["KG-01"]["goruntulenebilir"], g["KG-02"]["goruntulenebilir"]))
+        notu_yaz(self.paket(), "KG-01", "Logo")
+        tablo = self.paket("iz.md")
+        with open(tablo, "w", encoding="utf-8") as fh:
+            fh.write("# iz · km şeması %d\n\n| Kaynak | Belge kimliği | Not |\n|---|---|---|\n"
+                     "| KM-0001..KM-%04d | BİLGİ | x |\n| KG-01..KG-02 | BİLGİ | logo |\n| KN-01..KN-05 | BİLGİ | x |\n"
+                     % (kp.KM_SEMASI, meta["km_toplam"]))
+        belge = os.path.join(self.d, "FS.md")
+        with open(belge, "w", encoding="utf-8") as fh:
+            fh.write("Belge.\n")
+        rc, out, _ = call_main(kp.main, ["iz", self.paket(), "--tablo", tablo, "--belge", belge])
+        self.assertEqual(0, rc, out)
+        self.assertIn("GÖRSEL OKUNMADI: 0", out)
+        self.assertIn("GÖRSEL ÖLÇÜLEMEDİ: 1 — KG-02 GÖRÜNTÜLENEMEZ (emf)", out)
+        self.assertIn("SONUÇ: PASS", out)
+        self.assertIn("ÖLÇÜLEMEDİ: 1 görsel okunamadı (KG-02 GÖRÜNTÜLENEMEZ (emf)) — sonuç bu görselleri KAPSAMAZ", out)
+
+    def test_goruntulenebilir_liste_tek_kaynak(self):
+        self.assertEqual((".png", ".jpg", ".jpeg", ".gif", ".bmp"), kp.GORUNTULENEBILIR)
+        self.assertTrue(set(kp.GORUNTULENEBILIR) <= set(kp.GORSEL_UZANTILARI))
+        for uz in (".emf", ".wmf"):
+            g = kp._gorsel("KG-09", "word/media/x" + uz, "media/KG-09_x" + uz, [], False)
+            self.assertEqual((False, "GÖRÜNTÜLENEMEZ (%s)" % uz[1:]), (g["goruntulenebilir"], g["neden"]))
+
+
 def _metin(*yol):
     with open(os.path.join(REPO, *yol), encoding="utf-8") as fh:
         return fh.read()
@@ -1046,7 +1382,41 @@ class KaynakKuraliMetinTest(unittest.TestCase):
         self.assertIn("İZ TABLOSU:", brif)
         self.assertIn("İZ TABLOSUNA DAYALI İNCELEME'de belgeyi baştan sona okuma", brif)
         self.assertIn("| AX-DOC-CR-06 |", t)
-        self.assertIn("CR `AX-DOC-CR-07`", t)
+        self.assertIn("| AX-DOC-CR-07 |", t)
+        self.assertIn("CR `AX-DOC-CR-08`", t)
+
+    def test_gorsel_okuma_adimi_her_akista_ve_inceleyicide(self):
+        """Görsel okuma: yazım, alım ve inceleme metninde `view` + gorsel-notlari.md; inceleyici notu görselle doğrular."""
+        for yol in (("skills-sap", "sap-fs-ts-docs", "SKILL.md"),
+                    ("skills-sap", "sap-fs-ts-docs", "references", "fs-authoring.md"),
+                    ("skills-sap", "sap-fs-ts-docs", "references", "traceability.md"),
+                    ("skills-sap", "sap-fs-ts-docs", "references", "doc-checklist.md"),
+                    ("skills-sap", "sap-intake-triage", "SKILL.md"),
+                    ("skills-sap", "sap-code-review", "references", "reviewer-brief.md")):
+            t = " ".join(_metin(*yol).split())
+            self.assertIn("gorsel-notlari.md", t, "/".join(yol))
+            self.assertRegex(t, r"görsel\w* `view` (aracıyla|ile) a[çc]", "/".join(yol))
+            if "reviewer-brief.md" not in yol:  # PNG'yi yazar ister; inceleyici kullanıcıya soramaz, ÖLÇÜLEMEDİ yazar
+                self.assertIn("PNG", t, "/".join(yol))
+        brif = " ".join(_metin("skills-sap", "sap-fs-ts-docs", "references", "doc-checklist.md").split())
+        e = brif[brif.index("## §E"):]
+        self.assertIn("KAYNAK PAKETİ: <proje içi .axet-code/tmp/<id>/INDEX.md (metin.md · gorsel-notlari.md · media/", e)
+        self.assertIn("`view` aracıyla AÇ ve notu doğrula (AX-DOC-CR-07)", e)
+        self.assertIn("betik koşturma adımı içermez", e)
+        self.assertIn("ana oturumun koştuğu `kaynak_paketi.py iz` çıktısı", e)
+        rb = " ".join(_metin("skills-sap", "sap-code-review", "references", "reviewer-brief.md").split())
+        self.assertIn("`.axet-code/tmp/<id>/media/`", rb)
+        self.assertIn("betik koşturma adımı içermez", rb)
+        tr = " ".join(_metin("skills-sap", "sap-fs-ts-docs", "references", "traceability.md").split())
+        # Mekanik kapsam dışı ifadesi doğru kalır; model okuma adımı ve `iz` sayımı eklenir.
+        self.assertIn("gömülü dosyanın ve görselin içindeki metin", tr)
+        self.assertIn("**Görsel okuma (zorunlu adım — model okur, `iz` sayar):**", tr)
+        self.assertIn("**görsel başına bir `edit`**", tr)
+        self.assertIn("**\"GÖRÜNTÜLENEMEZ (emf)\"**", tr)
+        self.assertIn("standart kütüphane EMF/WMF'yi PNG'ye çeviremez", tr)
+        self.assertIn("DOĞRULANMADI", tr)
+        # İnceleyici ajan adı uydurulmaz: anılan özel ajan şablonda var.
+        self.assertTrue(os.path.isfile(os.path.join(REPO, "agents", "sap-inceleme.md")))
 
     def test_yazim_ve_alim_akisi_paketi_kullanir(self):
         for yol in (("skills-sap", "sap-fs-ts-docs", "SKILL.md"),
