@@ -284,6 +284,66 @@ class DdicAdOnerisiKuraliTest(unittest.TestCase):
             self.assertIn(parca, kabuk)
 
 
+class CekirdekBelgeOkumaTest(unittest.TestCase):
+    """Çekirdek §4 "Dosya okuma — tür → araç" + §7 ikili belge kuralı (v0.5.24 D kulvarı).
+
+    Ölçülen vakalar (aXet.code 1.5.1, `run`, 2026-11-19): `view` ikili dosyada "binary" hatası verip bash'e yönlendiriyor ·
+    `read_docx` görseli işaretsiz düşürüyor, tablo yapısını kaybediyor · `read_xlsx` inlineStr metin hücresini boş getiriyor ·
+    `read_pdf` metin katmanlı iki PDF'te de başarısız, model "taranmış" hükmü verdi · yerleşik `task`'ta `read_*` yok,
+    `.docx` yolu verilen `task` 2/2 okuyamadı, kaynak paketi yollarıyla 45 sn'de okudu.
+    KAPSAM — bakılmayanlar: modelin kuralı UYGULADIĞI (canlı koşu) · kaynak paketi betiğinin varlığı (ayrı dalda;
+    kural skill düzeyinde yazıldı) · metnin Türkçe doğruluğu.
+    """
+
+    def setUp(self):
+        self.md = _oku(AXET_HOME / "core" / "00-temel.md")
+
+    def _blok(self, bas: str, girinti: str = "  ") -> str:
+        """`bas` ile başlayan madde + `girinti` önekli devam satırları (alt madde için girinti 4 boşluk)."""
+        satirlar = self.md.splitlines()
+        i = next((n for n, s in enumerate(satirlar) if s.startswith(bas)), None)
+        self.assertIsNotNone(i, f"çekirdekte '{bas}' maddesi yok")
+        j = i + 1
+        while j < len(satirlar) and satirlar[j].startswith(girinti):
+            j += 1
+        return "\n".join(satirlar[i:j])
+
+    def test_tur_arac_rehberi(self):
+        blok = self._blok("- **Dosya okuma — tür → araç**")
+        self.assertIn(blok, _bolum(self.md, r"## 4\. "), "rehber §4'te değil (§7 ona '§4 \"Dosya okuma\"' diye atıf yapar)")
+        satirlar = {s.strip().split(" → ", 1)[0]: s for s in blok.splitlines()[1:] if s.startswith("  - ")}
+        beklenen = {"- `.docx`": ("read_docx", "görseller işaretsiz düşer", "kaynak paketi"),
+                    "- `.xlsx`": ("office_excel.py profile", "read_xlsx"),
+                    "- `.pdf`": ("read_pdf", "taranmış PDF", "HÜKMÜ VERME", "kullanıcıdan"),
+                    "- `.png`/`.jpg`/`.gif`": ("`view`", "`.bmp`/`.emf`/`.wmf`", "Pillow"),
+                    "- `.pptx`": ("okuyan araç yok",)}
+        for tur, parcalar in beklenen.items():
+            with self.subTest(tur=tur):
+                self.assertIn(tur, satirlar, f"rehberde {tur} satırı yok")
+                satir = self._blok(satirlar[tur], girinti="    ")
+                for parca in parcalar:
+                    self.assertIn(parca, satir)
+
+    def test_rehberin_andigi_arac_ve_skill_var(self):
+        """Rehberdeki yollar uydurma değil: `%office-excel` betiği `profile` alt komutunu taşır, skill'ler duruyor."""
+        betik = AXET_HOME / "skills" / "office-excel" / "scripts" / "office_excel.py"
+        self.assertIn('sub.add_parser("profile"', _oku(betik))
+        self.assertTrue((AXET_HOME / "skills-sap" / "sap-fs-ts-docs" / "SKILL.md").exists())
+        blok = self._blok("- **Dosya okuma — tür → araç**")
+        for skill in re.findall(r"%([a-z][a-z0-9-]+)", blok):
+            with self.subTest(skill=skill):
+                kok = AXET_HOME / ("skills-sap" if skill.startswith("sap-") else "skills")
+                self.assertTrue((kok / skill / "SKILL.md").exists(), skill)
+
+    def test_bolum7_ikili_belgeyi_alt_ajana_yol_olarak_vermez(self):
+        b7 = _bolum(self.md, r"## 7\. ")
+        self.assertNotIn("dosyayı kendin `view` ile oku", b7, "eski yönlendirme ikili belgede bash'e saptırıyordu")
+        self.assertIn('türüne uygun araçla oku (§4 "Dosya okuma")', b7)
+        kural = self._blok("- Alt ajana `.docx`/`.xlsx`/`.pdf` yolu verme")
+        for parca in ("türünden bağımsız", "kaynak paketi", "`INDEX.md`/`metin.md`", "görselleri `view` ile açtır"):
+            self.assertIn(parca, kural)
+
+
 class PlaywrightSirKuraliTest(unittest.TestCase):
     """Z167: playwright-cli `run-code` kodu/dosyayı aynen geri basar → sır değeri komut metnine yazılmaz."""
 

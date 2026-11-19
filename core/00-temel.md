@@ -74,6 +74,15 @@ denemeden önce (yeniden denemede zorunlu olan 1. adımdır, son hata mesajıyla
     (`no such file or directory`; proje içinde boş `c/...` ağacı kalır). Ad üretmek için `$(date …)` kullanma, boş genişleyebilir.
   - `python -c` içinde Türkçe metin için `encoding="utf-8"` ya da `PYTHONIOENCODING=utf-8` ver. Kodlama hatası alınca metni
     ASCII'ye DÜŞÜRME; kodlamayı düzelt.
+- **Dosya okuma — tür → araç** (ölçüldü, 1.5.1). `view` ikili dosyada "binary" hatası verip bash'e yönlendirir; bash'e sapma:
+  - `.docx` → `read_docx` yalnız metni verir: görseller işaretsiz düşer, tablonun satır/sütun yapısı kaybolur. Görsel ya da
+    tablo önemliyse ya da iş FS/gereksinimse `%sap-fs-ts-docs` skill'inin kaynak paketi adımını kullan.
+  - `.xlsx` → `%office-excel` (`office_excel.py profile <dosya>`) ya da kaynak paketi; `read_xlsx` metin hücresini boş getirebilir.
+  - `.pdf` → `read_pdf` boş, tek karakter ya da hata dönerse "taranmış PDF" HÜKMÜ VERME (metin katmanlı PDF'te de başarısız
+    ölçüldü); `pdftotext` varsa onu dene, yoksa kullanıcıdan `.docx` ya da metin iste.
+  - `.png`/`.jpg`/`.gif` → `view` (görsel olarak okunur). `.bmp`/`.emf`/`.wmf` → `view` açamaz: Pillow kuruluysa PNG'ye
+    çevirip `view` ile aç, yoksa kullanıcıdan PNG iste. `.html`/`.txt`/`.csv` → `view`/`grep`.
+  - `.pptx` → okuyan araç yok: kullanıcıdan PDF ya da metin iste.
 
 ## 5. Kapsam dışı bir kusur görürsen
 - Bizim işimizin yan etkisi mi → düzelt.
@@ -93,9 +102,14 @@ Her dalda kanıt şart; "sanırım bozuk" ile kalem açılmaz.
 ## 7. Alt görev devri (`agent` aracı)
 - Token-ağır araştırma ya da bağımsız inceleme için kullan; önemsiz işte kullanma. aXet.code ≥ 1.5.1'de şablonun özel ajanları
   (`sap-arastirma`, `sap-backend`, `sap-ui5`, `sap-inceleme`; SAP paketi açıkken kurulur) uygunsa yerleşik görev ajanına tercih edilir.
-- Yalnız dosya okumak için alt ajan açma; dosyayı kendin `view` ile oku. Alt ajanın çalışma dizini dışındaki okuması izin sorusu
-  açar ve bu soru ana ekranda görünmez: iş sessizce bekler (ölçüldü: 15,5 dk ve ~5 dk; 1.5.1 `run` kipinde dış klasöre `ls` asılı kaldı,
-  aynı klasördeki dosyaya `view` geçti). Alt ajana dış yol vereceksen dosyanın tam yolunu ver, klasör listeletme.
+- Yalnız dosya okumak için alt ajan açma; dosyayı kendin, türüne uygun araçla oku (§4 "Dosya okuma"). Alt ajanın çalışma
+  dizini dışındaki okuması izin sorusu açar ve bu soru ana ekranda görünmez: iş sessizce bekler (ölçüldü: 15,5 dk ve ~5 dk;
+  1.5.1 `run` kipinde dış klasöre `ls` asılı kaldı, aynı klasördeki dosyaya `view` geçti). Alt ajana dış yol vereceksen
+  dosyanın tam yolunu ver, klasör listeletme.
+- Alt ajana `.docx`/`.xlsx`/`.pdf` yolu verme — alt ajan türünden bağımsız. Önce kaynak paketini üret (`%sap-fs-ts-docs`
+  skill'inin kaynak paketi adımı), alt ajana `INDEX.md`/`metin.md` yolunu ver, görselleri `view` ile açtır. Ölçüldü (1.5.1):
+  yerleşik `task`'ta `read_*` araçları yok; `.docx` yolu verilen `task` 2/2 okuyamadı (105-152 sn), paket yolları verilince
+  45 sn'de tablo değerini ve görseldeki kodu doğru okudu. Metni kendin yeniden yazıp verme: kısaltabilirsin (ölçüldü: 21 satır → 13).
 - Yerleşik görev ajanı (`task`) konuşmayı da, bu çekirdeği, SAP kurallarını ve proje `AGENTS.md`'sini de GÖRMEZ; özel ajan (`sap-*`)
   çekirdeği, kuralları ve `AGENTS.md`'yi görür ama konuşmayı görmez (ikisi de ölçüldü, 1.5.1). Brifing tek başına yetmeli: amaç · kapsam ve sınırlar (neyi değiştirmeyecek) · kanıt kuralları (§1) · işe dokunan kesin yasaklar ve proje kuralları (metniyle) · beklenen çıktı biçimi. SAP'ye yazma işini alt ajana verme.
 - Brifingde iş türünü yaz: **salt-okur bağımsız inceleme** ya da **yazma**. İnceleme ise önceki bulguları (senin ya da başka ajanın) verme ve incelenecek hâli sabitle (commit ya da dosya hash'i); aksi hâlde ajan bağımsız değil, senin görüşünü doğrular.

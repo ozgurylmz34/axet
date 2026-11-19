@@ -3,6 +3,10 @@ description: SAP geliştirme ana ajanı — her talepte önce kapsam sınıflama
 whenToUse: SAP geliştirme oturumu — yeni geliştirme, alan/kolon ekleme, rapor, ekran değişikliği, revizyon; her talebin kapsamının uygulamadan önce sınıflanması istendiğinde.
 mode: primary
 extends: coder
+permission:
+  read_docx: allow
+  read_xlsx: allow
+  read_pdf: allow
 phases:
   - name: intake
     goal: "Kullanıcının SON mesajını sınıfla. Mesaj yeni bir geliştirme ya da değişiklik talebiyse sap-intake-triage skill'ini uygula: kapsam sınıfı (S0 nokta düzeltme, S1 lokalize, S2 kapsamlı), modül, iş tipi ve üç eksen araştırmasının planı. Çıktının ilk satırı 'INTAKE: S0|S1|S2 — <tek cümle gerekçe>' olsun. Mesaj yeni talep değilse (onay, cevap, soru, önceki işin devamı) ilk satır 'INTAKE: devam — <önceki sınıf ya da gerekçe>' olsun ve yeniden sınıflama yapma. Bu fazda kod yazma, dosya değiştirme, SAP'ye yazma. Bitince phase_done çağır."

@@ -32,6 +32,15 @@ motor onları kullanmaz. Motor güncellenince bir sonraki `%guncelle` ajanları 
 (motor PATH'te yok, çıktı çözülemedi) kurulum sürer, satırda "sürümü ölçülemedi" yazar. Kaldırma
 (`--no-sap`/`--uninstall`) motor sürümüne bakmaz.
 
+**Belge okuma izni:** beş tanımın frontmatter'ında `permission:` altında `read_docx`, `read_xlsx` ve `read_pdf` `allow`'dur.
+Ölçüldü (aXet.code 1.5.1, `run` kipi): bu blok yokken özel alt ajanın `read_docx` çağrısı ana ekranda görünmeyen izin
+sorusunda asılı kaldı (3/3, >290 sn zaman aşımı). Kontrollü deney: aynı deneme ajanı blok olmadan 290 sn zaman aşımına
+düştü, blokla belgeyi okuyup 41 sn'de bitti.
+Yazım, ölçülen deneydeki biçimdir (`<araç>: allow`). Motor referansına göre bu alan izin katmanlarının sonuncusudur; alt
+ajanın kuralları üst oturumunkiyle kesiştirilir, iki taraftaki `deny` de geçerli kalır. `bash` ve yazma araçlarına izin
+eklenmez. Ana ajanda (`sap-gelistirme`) etkisi ölçülmedi.
+Yerleşik `task` ajanında `read_*` araçları hiç yoktur; ikili belgeyi alt ajana yol olarak verme (çekirdek §7).
+
 **Sınırlar (bilinçli):** "dosya düzenleme araçları kapalı" = `disallowedTools: [edit, multiedit, write]`; `bash` açıktır,
 yani salt okuma araçla değil istemle sağlanır. Sahiplik işareti hangi klonun kurduğunu ayırmaz: aynı makinede
 ikinci bir klonda (ya da worktree'de) `install.py --sap` koşulursa ajanlar o klona yönlenir, `--no-sap`/`--uninstall`
