@@ -259,9 +259,19 @@ class TmpSilTest(GeciciTest):
         # bug-gate R3 N1: adım listesi üç turda üç kez eksik kaldı (F2 → F5 → N1: adım 10/11 DUR'u) ⇒ kural adım
         # adına değil KLON DURUMUNA bağlı: `hazirla` geri dönüş noktasını attıktan sonra, `kapanis` başarıyla
         # bitmeden gelen her DUR'da sorulmaz.
-        for parca in ("klonun durumuna", "`hazirla` geri dönüş noktasını attıktan SONRA",
-                      "`kapanis` başarıyla bitmeden", "hangi adımda olursa olsun"):
-            self.assertIn(parca, adim, f"10. adım kararı klon durumuna bağlamıyor: {parca}")
+        # bug-gate R4 F1/F2: ölçüt "uygulanmış ama kapanmamış dosya" — Sor/Sorma maddeleri AYRI ölçülür (ifade
+        # değil kural): geri-al --hepsi ve `uygula` öncesi bitişler Sor'da, kapanmamış durum Sorma'da.
+        self.assertIn("klonun durumuna", adim)
+        sorma_i, sor_i = adim.find("- **Sorma — henüz bitmedi:**"), adim.find("- **Sor:**")
+        self.assertTrue(0 < sorma_i < sor_i, "Sorma ve Sor maddeleri (bu sırayla) bulunamadı")
+        sorma, sor = adim[sorma_i:sor_i], adim[sor_i:adim.find("silinsin mi", sor_i)]
+        for parca in ("`uygula` koştu", "VE ne `kapanis`", "ne de `geri-al --hepsi` 0 döndü",
+                      "hangi adımda olursa olsun", "10 kullanım", "11", "yolunu"):
+            self.assertIn(parca, sorma, f"Sorma maddesinde eksik: {parca}")
+        for parca in ("`uygula` hiç koşmadı", "`kapanis` başarıyla bitti", "`geri-al --hepsi` 0 döndü",
+                      "`Klon güncel`", "vazgeçme"):
+            self.assertIn(parca, sor, f"Sor maddesinde eksik: {parca}")
+        self.assertNotIn("**Sor:**", sorma)
         self.assertNotIn("seçim beklemeyen DUR", self.metin, "2. adım hâlâ adım/seçim bazlı ölçütle yönlendiriyor")
         # ÖNERİ (R2): silme yarıda hata verirse "silindi" denmez
         self.assertIn("`SILINDI:` satırı basmazsa", adim)
