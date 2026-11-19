@@ -48,7 +48,9 @@ description: >
    yazım ve inceleme paketi okur, ikili dosya yazıma da brife de yol olarak girmez, kaynak metni modelle yeniden yazılmaz.
    Paket görsel içeriyorsa (`gorsel-notlari.md`) yazıma geçmeden **her görseli `view` aracıyla aç** ve gördüğünü (ekran
    adı, alanlar, düğmeler, değerler, okunabilen metin) o görselin **Görülen** alanına yaz — görsel başına bir `edit`;
-   GÖRÜNTÜLENEMEZ biçim (ör. `emf`) için kullanıcıdan PNG iste. Görselden türeyen her öğe FS'te bir kimliğe bağlanır,
+   GÖRÜNTÜLENEMEZ biçimi (ör. `emf`) Pillow kuruluysa paket klasöründe
+   `python -c "from PIL import Image; Image.open('<görsel>').save('media/<kimlik>.kullanici.png')"` ile çevir, PNG'yi
+   `view` ile aç; olmazsa kullanıcıdan PNG iste ve aynı ada kaydet. Görselden türeyen her öğe FS'te bir kimliğe bağlanır,
    notta `→ <kimlik>` ile anılır ve iz tablosunda o görselin satırına girer; boş not `iz`'de FAIL'dir.
 2b. **Girdiler çelişirse** (aynı workshop'tan kalan birden çok not, transkript, özet ve eski belge sık sık
    çelişir): çelişkiyi **sessizce çözme**. Öncelik sırası: ① kullanıcı isteği (kanon) ② canlı sistemden
@@ -116,8 +118,10 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 2. `agent` aracıyla taze bir inceleyici çalıştır. Alt ajan skill dosyalarını ve konuşmayı **görmez** (ölçüldü): brifinge
    `references/doc-checklist.md` §E bloğunu, ilgili tip bölümünün (§A KD · §B FS · §C TS) ve §D çapraz kontrollerin
    **metnini yapıştır**; dokümanın yolunu ve (varsa) HTML/PDF/ekran görüntüsü yollarını ver. İkili kaynağın (`.docx`/
-   `.xlsx`/`.pdf`) yolunu verme: `view` ikili `.docx`'i açmadı, alt ajan okuyamadı (ölçüldü, tek oturum; başka okuma
-   aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin (`metin.md`, `gorsel-notlari.md`, `media/`) ve iz tablosunun yolunu ver, `iz`
+   `.xlsx`/`.pdf`) yolunu verme: `view` ikili `.docx`'i açmadı, alt ajan okuyamadı (ölçüldü — aXet.code 1.5.1,
+   2026-11-19, iki koşu: talimatsız ve "read_docx kullan" denince; yerleşik görev alt ajanının araç kümesi glob, grep,
+   ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk yok; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin
+   (`INDEX.md`, `metin.md`, `gorsel-notlari.md`, `media/`) ve iz tablosunun yolunu ver, `iz`
    çıktısını kendin koşup yapıştır; inceleyiciye görselleri `view` ile açıp notları doğrulamasını yaz (§E, AX-DOC-CR-07).
 3. Dönen her BLOCKER'ı kendin dokümanda okuyarak doğrula; doğrulanamayanı NOT'a indir.
 4. Düzeltme turu **ikinci kapıdan** geçmeden kapanmaz: dar kapsam (değişen satırlar + değişen sayı/adın diğer geçtiği
