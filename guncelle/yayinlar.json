@@ -5188,7 +5188,7 @@
       "core/sap/00-sap.md",
       "tests/test_sap_skill_bilgi.py"
      ],
-     "gerektirir": [],
+     "gerektirir": ["0.5.24-02"],
      "test": [
       "python tests/run_tests.py -k CekirdekBelgeOkumaTest",
       "python tests/run_tests.py -k test_sap_skill_bilgi"
