@@ -84,6 +84,7 @@ inceleme yorgunluğu doğar ve kapı mekanik onaya döner.
 | AX-DOC-CR-03 | **Koda çapa kaymaz:** değişebilecek koda atıf satır numarasıyla değil metot/FORM/dal adıyla; doküman turu kod donduktan sonra koşulmuş (doküman, dayandığı kod sürümünü kaydediyor). Satır numarası varsa ölçülür, kaymışsa ada çevrilir (`traceability.md` §3) | MEDIUM (HATA) | yok |
 | AX-DOC-CR-04 | **Teslim paketi = çalışma dosyası:** dışarı gönderilen paket (zip/ek/teslim klasörü) teslim anında güncel dosyalardan kurulmuş; üye özetleri çalışma ağacıyla eşit (ölçüm çıktısı); beklenen özetler eşlik eden notta; aynı yerde eski sürüm paket yok (`traceability.md` §3) | HIGH (HATA) | yok — özet karşılaştırması istenir |
 | AX-DOC-CR-05 | **Kayıp tablo 0 (Markdown → HTML/PDF):** kaynaktaki tablo ayraç satırı sayısı (yalnız dikey çizgi, tire, iki nokta ve boşluktan oluşan satır) ile HTML'deki `<table>` sayısı eşit. Render olmayan tablo hata vermez; ayraç satırı ekranda ham metin kalır. Üç tetikleyici: başlık satırından önce boş satır yok (ham metin `<p>` içine düşer) · tablo liste öğesi altında girintili (`<li>` içine düşer) · tablo `<details>` ham HTML bloğu içinde. Son ikisini "`<p>` içinde ayraç" desen araması **yakalamaz** (ekip dersi: "0 kırık" diyen desen taraması 7 kayıp tabloyu kaçırdı). Parser'a bağlıdır: PDF hattı python-markdown `tables` eklentisini kullanır ve girintili tabloyu kaybeder; GitHub'da görünmesi yeterli değildir. Toplu girinti düzeltmesinden önce ve sonra sayım yapılır; kötüleşiyorsa geri alınır | HIGH (HATA) | yok — `verify_doc_html.py` tablo saymaz; iki sayı elle karşılaştırılır (kod bloklarındaki örnek tablolar ayıklanır) |
+| AX-DOC-CR-06 | **İkili kaynaktan yazılan belgede kaynak izi tam:** girdi `.docx`/`.xlsx` ise belge mekanik kaynak paketinden yazılmış (`INDEX.md` DOĞRULAMA PASS) ve kaynak maddesi → belge kimliği iz tablosu `kaynak_paketi.py iz` ile **PASS** (eksik/hayalet/boş/belgede olmayan kimlik 0). BİLGİ ve KAPSAM-DIŞI işaretli her satırın kaynak metni `metin.md`'de okunmuş: gerçekten gereksinim değil mi, dışlama gerekçesi kullanıcı isteğiyle çelişiyor mu (İlke 1). Kaynak `.pdf` ise paket yoktur: inceleyici "kaynak izi ÖLÇÜLEMEDİ" yazar (`traceability.md` §2-B) | HIGH (EKSİK) | kısmi: `kaynak_paketi.py iz` (madde ↔ kimlik eşleşmesinin varlığı; anlamca doğruluk ve BİLGİ/KAPSAM-DIŞI haklılığı elle) |
 
 ## Hüküm
 - **PASS** → bitti denebilir.
@@ -91,20 +92,30 @@ inceleme yorgunluğu doğar ve kapı mekanik onaya döner.
 - **BLOCKER** (ya da açık HATA/EKSİK) → düzelt + tekrar kapı (ikinci kapı kuralıyla). En sık BLOCKER'lar: DOC-KD-01 ve DOC-KD-03.
 - Kontrol listesi dışı iyileştirme `[ÖNERİ]` olarak yazılır (bağlayıcı değil). Tekrar eden yeni doküman tuzağı bulunursa buraya
   satır **önerilir**: aXet'e özgü yeni madde `AX-DOC-<tip>-<nn>` alır (sıradaki: KD `AX-DOC-KD-02`, FS `AX-DOC-FS-02`,
-  TS `AX-DOC-TS-04`, CR `AX-DOC-CR-06`); çekirdek `DOC-*` ailesinde numara verilmez (kök test takımındaki kimlik hizası
+  TS `AX-DOC-TS-04`, CR `AX-DOC-CR-07`); çekirdek `DOC-*` ailesinde numara verilmez (kök test takımındaki kimlik hizası
   testi zorlar). Template değişikliği → kullanıcı onayı.
 
 ## §E — Bağımsız inceleme brifingi (`agent` aracına yapıştırılır)
 Alt ajan bu dosyayı, skill'i, çekirdek kuralları ve konuşmayı **görmez**; aşağıdaki `<…>` yerlerine ilgili bölümlerin
 **metnini** yapıştır. Genel kanıt ve çıktı bölümleri için `skills/explore/references/brief-template.md` §5/§7/§8 eklenebilir.
 
+**İkili kaynak brife YOL olarak verilmez.** Girdi `.docx`/`.xlsx`/`.pdf` ise alt ajan onu okuyamaz (ölçüldü: `view` →
+"File appears to be binary", ajan ~20 dk dolambaçlı aramayla belgeyi okumaya çalıştı) ve proje dışındaki yol izin
+sorusunda asılı kalabilir. Brife **kaynak paketinin** proje içindeki yolu verilir (`.axet-code/tmp/<id>/INDEX.md`,
+`kaynak_paketi.py cikar` — `traceability.md` §2-B). Kaynak metnini kendin yazıp dosyaya koyma: model yeniden yazınca
+kısaltır (ölçüldü: 21 test satırı → 13, bir başlık düştü). Paket `.pdf` için üretilemez → brife "kaynak: PDF, paket yok,
+kaynak izi ÖLÇÜLEMEDİ" yaz.
+
 ```text
 GÖREV (SALT OKUMA — DOKÜMAN İNCELEMESİ): Aşağıdaki <FS|TS|KD> dokümanını kontrol listesine karşı incele.
 Hiçbir dosyayı değiştirme, yazan komut çalıştırma, SAP'ye bağlanma.
 DOKÜMAN: <md yolu>  ·  ÜRETİLEN: <html / pdf / screenshots klasörü yolları | yok>
 İLGİLİ DOKÜMANLAR: <FS no/yolu ↔ TS no/yolu ↔ KD no/yolu | yok>
+KAYNAK PAKETİ: <proje içi .axet-code/tmp/<id>/INDEX.md (metin.md · media/ · gomulu/) | kaynak md yolu | yok>
+İZ TABLOSU: <iz-<belge no>.md yolu + `kaynak_paketi.py iz` çıktısı | yok>
 KANIT EKLERİ: <canlı teyit turu raporu | denklik raporu | ekran envanteri eşleme tablosu | yok>
-BU TUR: <ilk inceleme | İKİNCİ KAPI — yalnız: değişen satırlar <liste>, değişen sayı/adlar <liste>, yayılım listesi <liste>>
+BU TUR: <ilk inceleme | İZ TABLOSUNA DAYALI İNCELEME | İKİNCİ KAPI — yalnız: değişen satırlar <liste>,
+        değişen sayı/adlar <liste>, yayılım listesi <liste>>
 
 KONTROL LİSTESİ (metin):
 <doc-checklist.md: ilgili tip bölümü (§A/§B/§C) + §D + "İkinci kapı" metni — tablo satırlarıyla birlikte>
@@ -116,6 +127,12 @@ KONTROL LİSTESİ (metin):
   "bakmadıkları"nı ayrıca kendin incele; script'in 0 bulgusu o yüzeyde temiz demek değildir.
 - Ölçemediğin maddeye "ÖLÇÜLEMEDİ" yaz, geçme.
 - Checklist dışı iyileştirme [ÖNERİ] olarak ayrı listelenir.
+- İZ TABLOSUNA DAYALI İNCELEME'de belgeyi baştan sona okuma. Sıra: ① iz çıktısı FAIL ise BLOCKER (AX-DOC-CR-06), dur
+  ② her eşleme satırında kaynak maddesinin metin.md metnini ve eşlenen kimliğin belgedeki satırını yan yana oku:
+  istek karşılanmış mı, kısaltılmış/değiştirilmiş mi ③ BİLGİ ve KAPSAM-DIŞI işaretli her maddeyi metin.md'de oku
+  ④ belgede tabloda anılmayan gereksinim (iz çıktısındaki UYARI) kaynaksız mı, öneri olarak işaretli mi ⑤ kontrol
+  listesinin yalnız yargı isteyen maddeleri (mekanik yardımcısı "yok" olanlar) için ilgili bölümü oku.
+  Okumadığın bölümü madde durumunda "ÖLÇÜLEMEDİ — iz kipinde okunmadı" diye yaz.
 ENGEL: dosya okunamıyor ya da kapsam belirsizse o maddede ilerleme; yanıtın ilk satırına "ENGEL: <ne · neden>" yaz.
 ÇIKTI (tek yanıt): 1) Bulgular önem sırasıyla [BLOCKER | HIGH | MEDIUM | ÖNERİ] + ID + konum + sorun
 2) Madde bazında durum: her ID → UYGUN / BULGU / ÖLÇÜLEMEDİ / UYGULANMAZ (gerekçe)

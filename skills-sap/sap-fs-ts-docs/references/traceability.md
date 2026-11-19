@@ -26,6 +26,41 @@ Yer   : <source_root>/<MODÜL>/<PAKET>/docs/     (kaynak/dönüşüm belgeleri r
 - Matris kaynağa bağlıdır: "N gereksinim karşılandı" yerine "FS §4.1'deki tüm FR'ler" yazılır (DOC-CR-02).
 - KD tarafında: FS'teki her kullanıcıya görünen işlev (ekran, buton, mesaj) KD'de bir bölüme karşılık gelir.
 
+## 2-B. Kaynak paketi ve kaynak → belge iz tablosu (FS ikili bir istek belgesinden yazılıyorsa)
+Kullanıcının isteği `.docx`/`.xlsx` olarak geldiyse oturumun **ilk** işi kaynak paketidir; intake, FS yazımı ve
+inceleyici aynı paketi okur. Kaynak metni model yeniden yazmaz, özetini kaynağın yerine koymaz.
+```
+python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py cikar <istek.docx|.xlsx>
+      → <proje>/.axet-code/tmp/<ad>-<özet8>/  INDEX.md · metin.md · media/ · gomulu/ · paket.json
+python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> --tablo <paket>/iz-<belge no>.md --belge <FS.md>
+```
+- **Paket:** `metin.md` kaynağın tam metnidir, sırası korunur; her başlık, paragraf ve metinli tablo satırı bir
+  **kaynak maddesi** `KM-nnnn`, her görsel `KG-nn`, her gömülü nesne `KN-nn` (OLE paket nesnesinin asıl dosyası — ör.
+  danışmanın HTML ekran prototipi —, OLE içindeki Excel/Word, altChunk; tanınmayan ham kopyalanır ve INDEX'te
+  "TANINMADI" yazar). `INDEX.md` kaynağın ayrı kodla yapılan sayımını diskteki paketle karşılaştırır: **DOĞRULAMA FAIL
+  olan paket kullanılmaz.** Çıkış `3` = biçim desteklenmiyor (`.pdf`, `.doc`, `.xls`): kullanıcıdan `.docx`/`.xlsx`
+  hâlini iste; olmuyorsa kaynak izi "ÖLÇÜLEMEDİ" kalır, metni elle yazıp paket gibi sunma.
+- **Kapsam dışı (INDEX'te yazar):** üst/altbilgi, dipnot, yorum, Word'ün otomatik numaraları, gömülü dosyanın ve
+  görselin içindeki metin. Gömülü HTML prototip tarayıcıda açılır; ekranı `capture_kd_screens.js` `file://` adresinden çeker.
+- **İz tablosu** (paket klasöründe `iz-<belge no>.md`; FS gövdesine girmez — İlke 2b). Her kaynak maddesi bir satırda;
+  aralık yazılabilir (`KM-0004..KM-0009`):
+
+| Kaynak | Belge kimliği | Not |
+|---|---|---|
+| KM-0001..KM-0006 | BİLGİ | kapak, doküman kontrolü |
+| KM-0007 | FR-001, KR-002 | |
+| KM-0021 | TC-01 | kaynaktaki test satırı 1 |
+| KM-0022 | TC-02 | (belge kimliği aralıkla yazılmaz; her biri ayrı) |
+| KM-0042 | KAPSAM-DIŞI | standart nesne değişikliği — kesin yasak A, kullanıcıya soruldu (S-03) |
+| KN-01 | SCR-001, SCR-002 | HTML prototip |
+
+  `BİLGİ` = gereksinim taşımayan madde · `KAPSAM-DIŞI` = bilerek alınmayan madde, gerekçe zorunlu. Geri kalan her
+  satır belgede gerçekten geçen kimlik(ler)e bağlanır. `iz` denetimi: tabloda olmayan madde · pakette olmayan madde ·
+  boş eşleme · belgede olmayan kimlik · gerekçesiz KAPSAM-DIŞI = **FAIL**; aynı madde iki satırda ve belgede olup
+  tabloda anılmayan FR/KR = UYARI. **Ölçmedikleri:** eşlemenin anlamca doğruluğu ve BİLGİ/KAPSAM-DIŞI işaretinin
+  haklılığı — inceleyici bunları okur (`doc-checklist.md` §E "İZ TABLOSUNA DAYALI İNCELEME", AX-DOC-CR-06).
+- TS için kaynak FS'in kendisidir: §2 matrisi FS'in her FR/KR'sini satır olarak taşır, iz tablosu yerine geçer.
+
 ## 3. Değişiklik kuralları
 - FS değişirse → TS güncellenir → versiyon artar → yeniden onay.
 - TS değişirse → FS değişikliği gerekmeyebilir → teknik lider onayı yeter; FS'i etkiliyorsa FS §11-A/§11-B'ye döner.

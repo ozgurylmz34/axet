@@ -1,5 +1,5 @@
 # aXet.code Çekirdek Çalışma Disiplini
-CORE-ID: AXET-CORE-0.10.1
+CORE-ID: AXET-CORE-0.10.2
 
 > Bu dosya `scripts/install.py` ile global config'e (`context_paths`) bağlanır ve **her oturumda** yüklenir.
 > Öncelik sırası: kullanıcının açık talimatı > proje `AGENTS.md` > bu çekirdek > genel alışkanlıkların.
@@ -12,7 +12,7 @@ CORE-ID: AXET-CORE-0.10.1
 - Bağlamındaki "AÇILIŞ BRIEF'İ" bloğu (proje `.axet-code/acilis-brief.md`) son özetin kopyasıdır ve her oturumda yüklenir. Özeti bu
   oturumda çalıştıramadıysan onu üretim saatiyle aktar; üretim tarihi bugün değilse `— BAYAT` yaz ve yenilemeyi öner.
 - İlk yanıtının ilk satırı şu olsun ve yalnız bağlamında GÖRDÜĞÜN kimliklerden doldurulsun (göremediğine `YOK` yaz, tahmin etme):
-  `[AXET-CORE-0.10.1 · SAP: <SAP-CORE-ID|YOK> · proje: <PROJECT-ID|YOK> · proje hafızası: <PROJECT-MEMORY-ID|YOK>]`
+  `[AXET-CORE-0.10.2 · SAP: <SAP-CORE-ID|YOK> · proje: <PROJECT-ID|YOK> · proje hafızası: <PROJECT-MEMORY-ID|YOK>]`
   aXet'te yüklemeyi doğrulayan hook yoktur; bu satır tek kanaryadır.
 - Ardından özetten en fazla 5 satır aktar: dal/değişiklik uyarısı, template güncelliği, FAIL/WARN, SAP profili, aktif paketin son kaydı, aktif işler ve devir notu. Açık iş varsa hangisiyle devam edileceğini sor.
 - Kullanıcı "gün sonu" derse `%gun-sonu`: kaldığın yeri dosyalara yaz, çalışma dalını commit + push et (bu söz, o dal için push talebidir; remote yoksa push yok, birleştirme de yok).
@@ -121,6 +121,10 @@ Her dalda kanıt şart; "sanırım bozuk" ile kalem açılmaz.
 ## 10. Bağlam yönetimi
 - Uzun oturumda bağlam şişer, otomatik özetleme ayrıntı kaybettirir. Büyük bir iş dilimi bitince ya da konu değişince `%handoff` ile devir notu yaz, yeni oturum öner.
 - Büyük çıktıları bağlama dökme: dosyaya yaz, ilgili kısmı `grep` ile oku.
+- **Uzun içeriği tek araç çağrısında üretme:** `write`/`edit`/`multiedit` içeriği ya da `bash` komutu (heredoc dahil) 150
+  satırı aşacaksa önce iskeleti (başlıklar, boş bölümler) yaz, sonra her bölümü ayrı `edit` çağrısıyla doldur; uzun betiği
+  dosyaya yaz, kısa komutla çalıştır. `504 Gateway Timeout` alırsan aynı çağrıyı tekrarlama, böl. Ölçülen tek nokta: ~400 satırlık
+  belge tek `write`'ta 3 tur × 4 deneme 504 (~20 dk), iskelet + bölümlerle kesintisiz; 150 eşiği ölçülmüş sınır değil, paydır.
 - Ölçülen sayıları birimi ve kaynağıyla (komut ya da `dosya:satır`) aktar.
 
 ## 11. Güvenlik
