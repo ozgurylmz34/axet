@@ -5075,7 +5075,8 @@
       "python skills-sap/sap-ui5-fiori/tests/run_tests.py -k test_dbg_geri_kurma",
       "python skills-sap/sap-ui5-user-guide/tests/run_tests.py -k test_mock_sunucu"
      ]
-    }
+    },
+    {"id": "0.5.24-30", "tur": "duzeltme", "kritik": false, "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı", "neden": "Her yayında üretilen kayıt dosyaları: değişiklik günlüğü, bu katalog, yayının CI sonucu ve README'nin sürüm satırı.", "dosyalar": ["CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json", "README.md"], "gerektirir": [], "test": ["python tests/run_tests.py -k yayin_surumleri", "python tests/run_tests.py -k readme"]}
    ]
   }
  ]
