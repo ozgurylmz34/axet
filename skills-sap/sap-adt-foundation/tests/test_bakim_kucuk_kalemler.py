@@ -177,7 +177,13 @@ class Z209AtcTavan(_Taban):
         for tavan in ("abc", "0", "-5", "", "1.5", "²", None, True, 0, 2.5):
             r = self._kos(5, tavan)
             gecersiz[repr(tavan)] = (r.get("ok"), r.get("error"), self.istemci.adt_client.giden)
-        ok = (sonuc == {"'50'": (True, 50, True, [50]), "' 7 '": (True, 3, False, [7]), "100": (True, 5, False, [100])}
+        # bug-gate R2 F4: yardımcı `@profil_tool()` ile `def adt_atc_check` arasına girince dekoratör YARDIMCIYI kaydetti,
+        # araç kayıttan düştü (her çağrı `unknown_tool`). Doğrudan fonksiyon çağrısı bunu göremez ⇒ kayıt da ölçülür.
+        from sapadt._app import load_all_tools
+        kayit = load_all_tools()
+        sonuc["kayit"] = ("adt_atc_check" in kayit, "_pozitif_tam_sayi" in kayit)
+        ok = (sonuc == {"'50'": (True, 50, True, [50]), "' 7 '": (True, 3, False, [7]), "100": (True, 5, False, [100]),
+                        "kayit": (True, False)}
               and all(v == (False, "invalid_argument", []) for v in gecersiz.values()))
         self.kaydet("Z209 F1 metin tavan '50'/' 7 ' → int · geçersiz → invalid_argument, SAP'ye gitmez",
                     "50 bayrak · 7 yok · 10 geçersiz reddi", [sonuc, gecersiz], ok)

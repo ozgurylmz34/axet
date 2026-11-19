@@ -4965,7 +4965,8 @@
      ],
      "gerektirir": [],
      "test": [
-      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_bakim_kucuk_kalemler"
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_bakim_kucuk_kalemler",
+      "python skills-sap/sap-adt-foundation/tests/run_tests.py -k test_cli_gate"
      ]
     },
     {
@@ -5022,7 +5023,7 @@
      "baslik": "%guncelle sonunda geçici dizin silinsin mi diye sorulur, onayla güvenli tek komutla silinir",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Güncelleme bitince geçici dizinin yolu söylenip 'silmek size kalmış' deniyordu; çoğu zaman silinmedi ve eski dizinler birikti. Artık skill, akış nasıl biterse bitsin (normal bitiş, 'klon güncel', herhangi bir durma) kullanıcıya sorar; onay gelirse belgedeki tek komutu çalıştırır. Komut yalnız mutlak yolla verilen, axet_guncelle_ önekli, bağ ya da junction olmayan, klonu içermeyen ve klonun içinde olmayan dizini siler, başka bir yol verilirse hiçbir şeye dokunmadan durur. Onay verilmezse dizin kalır.",
+     "neden": "Güncelleme bitince geçici dizinin yolu söylenip 'silmek size kalmış' deniyordu; çoğu zaman silinmedi ve eski dizinler birikti. Artık skill, akış gerçekten bittiğinde (normal bitiş, 'klon güncel' ya da seçim beklemeyen bir durma) kullanıcıya bir kez sorar; kullanıcıdan seçim bekleyen bir durmada (ör. geri alma seçenekleri) soru sorulmaz, seçim uygulanıp akış bitince sorulur. Onay gelirse belgedeki tek komutu çalıştırır. Komut yalnız mutlak yolla verilen, axet_guncelle_ önekli, bağ ya da junction olmayan, klonu içermeyen ve klonun içinde olmayan dizini siler, başka bir yol verilirse hiçbir şeye dokunmadan durur. Silme yarıda kalırsa çıktı aynen gösterilir, 'silindi' denmez. Onay verilmezse dizin kalır.",
      "dosyalar": [
       "skills/guncelle/SKILL.md",
       "tests/test_guncelle_baslatici.py"

@@ -399,9 +399,11 @@ def adt_where_used(name: str, object_type: str = "class") -> dict:
 # adt_atc_check  (gap-analysis #10)
 # =============================================================================
 
-@profil_tool()
 def _pozitif_tam_sayi(deger):
-    """int ya da rakamlı metin ("50", " 50 ") → int ≥ 1; bool, ondalık, boş, negatif, sıfır → None (Z209 F1)."""
+    """int ya da rakamlı metin ("50", " 50 ") → int ≥ 1; bool, ondalık, boş, negatif, sıfır → None (Z209 F1).
+
+    ⚠ Yardımcıdır, araç DEĞİL: `@profil_tool()` dekoratörünün ÜSTÜNDE durur (dekoratörle `def adt_atc_check`
+    arasına girerse dekoratör bunu kaydeder, `adt_atc_check` kayıttan düşer — bug-gate R2 F4)."""
     if isinstance(deger, bool):
         return None
     if isinstance(deger, int):
@@ -412,6 +414,7 @@ def _pozitif_tam_sayi(deger):
     return None
 
 
+@profil_tool()
 def adt_atc_check(name: str, object_type: str = "class",
                   variant: str | None = None, max_verdicts: int = 100) -> dict:
     """ATC statik kod kontrolü (Clean ABAP / performans / güvenlik) — read-only.

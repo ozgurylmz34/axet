@@ -250,8 +250,16 @@ class TmpSilTest(GeciciTest):
         self.assertGreater(i, 0, "10. adım (her bitişte geçici dizin) bulunamadı")
         j = self.metin.find("\n## ", i)
         adim = self.metin[i:j]
-        for parca in ("silinsin mi", TMP_SIL_BASLA, "Klon güncel", "DUR", "HANGİ YOLDAN"):
+        for parca in ("silinsin mi", TMP_SIL_BASLA, "Klon güncel", "GERÇEKTEN BİTTİĞİNDE", "BİR kez"):
             self.assertIn(parca, adim, f"10. adımda eksik: {parca}")
+        # bug-gate R2 F5: seçim bekleyen DUR (adım 7 durum · 8 kart · 13 üç seçenek · 14) akışın SONU DEĞİLDİR —
+        # soru orada sorulursa `<TMP>` silinir, ardından `geri-al`/`kapanis` motoru bulamaz.
+        for parca in ("Sorma — henüz bitmedi", "geri-al", "kapanis --kabul", "AYNI mesajda", "Seçim uygulanıp akış bitince"):
+            self.assertIn(parca, adim, f"10. adım seçim bekleyen DUR ayrımını yazmıyor: {parca}")
+        # ÖNERİ (R2): silme yarıda hata verirse "silindi" denmez
+        self.assertIn("`SILINDI:` satırı basmazsa", adim)
+        self.assertIn("\"silindi\" DEME", adim)
+        self.assertNotIn("herhangi bir DUR", self.metin, "soru yine her DUR'u kapsıyor (seçim bekleyenler dahil)")
         iki = self.metin[self.metin.find("2. **`<TMP>`'yi yarat.**"):self.metin.find(TMP_BASLA)]
         self.assertIn("10. adım", iki, "2. adım `<TMP>` yaratıldıktan sonra son işi (10. adım) anmıyor")
         yedi = self.metin[self.metin.find("7. **Bitişte**"):self.metin.find("\n8. ")]

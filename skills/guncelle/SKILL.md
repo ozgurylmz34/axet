@@ -41,7 +41,8 @@ FAIL'e düşürür (`guncelle.py onkontrol` bunu ayrıca denetler).
    doldur). Çıktısındaki tek satır `<TMP>`'dir. Sıfırdan farklı dönerse DUR ve çıktıyı aynen göster.
    aXet `%TEMP%`'i proje içine (`.axet-code/tmp`) çektiği için komut tabanı `%LOCALAPPDATA%\Temp`'ten
    alır; klon ya da bir `.axet-code` dizini içine düşerse yarattığını silip durur. Bu komut bir yol bastıktan
-   sonra akış nasıl biterse bitsin (normal bitiş, "Klon güncel", herhangi bir DUR) son iş **10. adımdır**.
+   sonra akış hangi yoldan biterse bitsin (normal bitiş, "Klon güncel", seçim beklemeyen DUR) son iş
+   **10. adımdır**; seçim bekleyen bir DUR'da akış henüz bitmemiştir.
 
 <!-- TMP-OLUSTUR:BASLA -->
 ```bash
@@ -82,14 +83,20 @@ python "<TMP>/scripts/guncelle.py" --klon "<KLON>" --help
    güncellemeyi BOZMAZ; `BT için elle kurulum komutu` satırını kendin çalıştırma. SAP açıksa aynı komut özel
    ajanları (`sap-*`) da eşitler: `AJANLAR: …` satırı basılırsa onu da AYNEN aktar (yeni tanımlar bir sonraki
    oturumda geçerli).
-10. **Akış HANGİ YOLDAN biterse bitsin — son iş geçici dizindir.** Normal bitiş (7-9) · "Klon güncel" → BİTİR
-   (`GUNCELLE.md` adım 2-4) · herhangi bir DUR (motor çıkarılamadı, ön kontrol, kullanıcı vazgeçti …): 2. adım
-   bir `<TMP>` yolu bastıysa son mesajından ÖNCE yolunu söyle ve kullanıcıya "geçici dizin silinsin mi?" diye
-   SOR. Onay verirse aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme komutu
-   SEÇME). Komut yalnız mutlak yolla verilen, `axet_guncelle_` önekli, bağ/junction OLMAYAN, klonu içermeyen ve
-   klonun içinde olmayan dizini siler; başka bir yol verilirse hiçbir şeye dokunmadan DUR der — o çıktıyı aynen
-   göster. Onay vermezse dizini bırak (yolunu zaten söyledin). 2. adım sıfırdan farklı döndüyse `<TMP>` yoktur;
-   bu adımı atla.
+10. **Akış GERÇEKTEN BİTTİĞİNDE — son iş geçici dizindir (akış başına BİR kez sor).** "Bitti" = ardından
+   motor (`<TMP>/scripts/guncelle.py`) gerektiren hiçbir adım ya da kullanıcı seçimi BEKLENMİYOR: normal bitiş
+   (7-9 tamam) · "Klon güncel" → BİTİR (`GUNCELLE.md` adım 2-4; 9. adım koştuktan sonra) · motor hiç
+   çıkarılamadan DUR (3. adım) ya da kullanıcı vazgeçti. **Sorma — henüz bitmedi:** kullanıcıdan seçim ya da
+   motor komutu bekleyen her DUR (ör. `GUNCELLE.md` adım 7 `durum` göster · adım 8 kartın DUR koşulu · adım 13
+   üç seçenek `geri-al` / `kapanis --kabul` · adım 14 seçenek). Silme sorusunu seçeneklerle AYNI mesajda sunma;
+   `<TMP>` silinirse `geri-al` ve `kapanis` motoru bulamaz. Seçim uygulanıp akış bitince sor.
+   TMP-OLUSTUR komutu (2. adım) bir `<TMP>` yolu bastıysa son mesajından ÖNCE yolunu söyle ve kullanıcıya
+   "geçici dizin silinsin mi?" diye SOR. Onay verirse aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme
+   komutu SEÇME). Komut yalnız mutlak yolla verilen, `axet_guncelle_` önekli, bağ/junction OLMAYAN, klonu
+   içermeyen ve klonun içinde olmayan dizini siler; başka bir yol verilirse hiçbir şeye dokunmadan DUR der — o
+   çıktıyı aynen göster. Komut sıfırdan farklı dönerse ya da `SILINDI:` satırı basmazsa (ör. silme yarıda kaldı,
+   Traceback) çıktıyı AYNEN göster ve "silindi" DEME. Onay vermezse dizini bırak (yolunu zaten söyledin).
+   TMP-OLUSTUR sıfırdan farklı döndüyse `<TMP>` yoktur; bu adımı atla.
 
 <!-- TMP-SIL:BASLA -->
 ```bash
