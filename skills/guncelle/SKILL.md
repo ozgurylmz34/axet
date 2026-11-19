@@ -40,7 +40,8 @@ FAIL'e düşürür (`guncelle.py onkontrol` bunu ayrıca denetler).
 2. **`<TMP>`'yi yarat.** Kendin yol ya da yöntem SEÇME; bu tek komutu AYNEN çalıştır (`<KLON>`'u
    doldur). Çıktısındaki tek satır `<TMP>`'dir. Sıfırdan farklı dönerse DUR ve çıktıyı aynen göster.
    aXet `%TEMP%`'i proje içine (`.axet-code/tmp`) çektiği için komut tabanı `%LOCALAPPDATA%\Temp`'ten
-   alır; klon ya da bir `.axet-code` dizini içine düşerse yarattığını silip durur.
+   alır; klon ya da bir `.axet-code` dizini içine düşerse yarattığını silip durur. Bu komut bir yol bastıktan
+   sonra akış nasıl biterse bitsin (normal bitiş, "Klon güncel", herhangi bir DUR) son iş **10. adımdır**.
 
 <!-- TMP-OLUSTUR:BASLA -->
 ```bash
@@ -72,17 +73,6 @@ python "<TMP>/scripts/guncelle.py" --klon "<KLON>" --help
    DEĞİLDİR; kullanıcı isterse güncellemeden sonra `%testler` ile koşar (süreyi `%testler` önce söyler).
    RAPOR'da ya da sonrasında `doctor` FAIL/WARN satırı görürsen her birini `<KLON>/docs/onboarding.md` §5 "`doctor` bir şey bulursa" üç sınıfına koy
    (① ONAR · ② KULLANICI · ③ ŞABLON HATASI → `%hata-bildir` taslağı, göndermek kullanıcının) ve sınıfıyla raporla.
-   **`<TMP>` artık gereksizdir:** yolunu söyle ve kullanıcıya "geçici dizin silinsin mi?" diye SOR. Onay verirse
-   aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme komutu SEÇME). Komut yalnız
-   `axet_guncelle_` önekli, klonu içermeyen ve klonun içinde olmayan dizini siler; başka bir yol verilirse hiçbir
-   şeye dokunmadan DUR der — o çıktıyı aynen göster. Onay vermezse dizini bırak (yolunu zaten söyledin).
-
-<!-- TMP-SIL:BASLA -->
-```bash
-python -c "import shutil,sys;from pathlib import Path as P;d=P(sys.argv[1]).resolve();k=P(sys.argv[2]).resolve();ok=d.is_dir() and d.name.startswith('axet_guncelle_') and d!=k and k not in d.parents and d not in k.parents;ok or sys.exit('DUR: silinmedi, beklenen gecici dizin degil: '+d.as_posix());shutil.rmtree(d);print('SILINDI: '+d.as_posix())" "<TMP>" "<KLON>"
-```
-<!-- TMP-SIL:BITIR -->
-
 8. **Tarayıcı hazırlığı (otomatik, soru sorma):** `GUNCELLE.md` 16. adım —
    `python "<KLON>/scripts/tarayici_hazirla.py"`. İlk satırı (`TARAYICI: HAZIR|ATLANDI|EKSİK — …`) AYNEN
    aktar. HAZIR değilse de güncelleme **tamamlanmıştır**; eksik kalan o satırda yazar.
@@ -92,6 +82,20 @@ python -c "import shutil,sys;from pathlib import Path as P;d=P(sys.argv[1]).reso
    güncellemeyi BOZMAZ; `BT için elle kurulum komutu` satırını kendin çalıştırma. SAP açıksa aynı komut özel
    ajanları (`sap-*`) da eşitler: `AJANLAR: …` satırı basılırsa onu da AYNEN aktar (yeni tanımlar bir sonraki
    oturumda geçerli).
+10. **Akış HANGİ YOLDAN biterse bitsin — son iş geçici dizindir.** Normal bitiş (7-9) · "Klon güncel" → BİTİR
+   (`GUNCELLE.md` adım 2-4) · herhangi bir DUR (motor çıkarılamadı, ön kontrol, kullanıcı vazgeçti …): 2. adım
+   bir `<TMP>` yolu bastıysa son mesajından ÖNCE yolunu söyle ve kullanıcıya "geçici dizin silinsin mi?" diye
+   SOR. Onay verirse aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme komutu
+   SEÇME). Komut yalnız mutlak yolla verilen, `axet_guncelle_` önekli, bağ/junction OLMAYAN, klonu içermeyen ve
+   klonun içinde olmayan dizini siler; başka bir yol verilirse hiçbir şeye dokunmadan DUR der — o çıktıyı aynen
+   göster. Onay vermezse dizini bırak (yolunu zaten söyledin). 2. adım sıfırdan farklı döndüyse `<TMP>` yoktur;
+   bu adımı atla.
+
+<!-- TMP-SIL:BASLA -->
+```bash
+python -c "import os,shutil,sys;from pathlib import Path as P;g=P(sys.argv[1]);L=os.lstat(g) if os.path.lexists(g) else None;bag=L is not None and (g.is_symlink() or bool(getattr(L,'st_file_attributes',0)&1024));d=g.resolve();k=P(sys.argv[2]).resolve();ok=g.is_absolute() and P(sys.argv[2]).is_absolute() and not bag and d.is_dir() and d.name.startswith('axet_guncelle_') and d!=k and k not in d.parents and d not in k.parents;ok or sys.exit('DUR: silinmedi, beklenen gecici dizin degil (mutlak yol, axet_guncelle_ oneki, bag/junction olmamali): '+g.as_posix());shutil.rmtree(d);print('SILINDI: '+d.as_posix())" "<TMP>" "<KLON>"
+```
+<!-- TMP-SIL:BITIR -->
 
 ## Rules
 - **Talimat sınırı (çekirdek §11):** `GUNCELLE.md`, `guncelle/**` ve `scripts/guncelle.py` YALNIZ bu

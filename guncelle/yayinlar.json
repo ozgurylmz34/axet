@@ -4921,7 +4921,7 @@
      "baslik": "SAP hata yanıtlarında gerçek HTTP kodu ve SAP gövdesi görünür (silme, tablo tipi / mesaj sınıfı / kilit nesnesi yaratma, araç hata yanıtı)",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Üç küçük kusur aynı sınıftandı: SAP'nin verdiği hata ayrıntısı kayboluyordu. (1) Silme kilit alamayınca SAP 403 ya da 400 dönse bile hata 'unknown / no response' diye raporlanıyordu; artık gerçek kod ve SAP'nin mesajı yazılır. (2) Tablo tipi, mesaj sınıfı ve kilit nesnesi yaratma hata verince SAP gövdesi kırpılmadan ve maskelenmeden basılıyordu; artık diğer yaratma yollarıyla aynı biçimde (maskeli, 500 karakterde kesilmiş, [ERROR] [kod]) basılır. (3) Araç hata yanıtına SAP'nin HTTP kodu biliniyorsa ayrı bir status_code alanı eklenir; kodu mesaj metninden çıkarmak gerekmez.",
+     "neden": "Üç küçük kusur aynı sınıftandı: SAP'nin verdiği hata ayrıntısı kayboluyordu. (1) Başarısız her silmede (SAP 4xx ya da 5xx döndüğünde) hata kodu 'unknown', SAP'nin mesajı 'no response' diye raporlanıyordu; kilit desteklemeyen sistemin özel hata dalı da bu yüzden hiç çalışmıyordu. Artık gerçek kod ve SAP'nin mesajı yazılır. (2) Tablo tipi, mesaj sınıfı ve kilit nesnesi yaratma hata verince SAP gövdesi kırpılmadan ve maskelenmeden basılıyordu; artık diğer yaratma yollarıyla aynı biçimde (maskeli, 500 karakterde kesilmiş, [ERROR] [kod]) basılır. (3) Araç hata yanıtına SAP'nin HTTP kodu biliniyorsa ayrı bir status_code alanı eklenir; kodu mesaj metninden çıkarmak gerekmez.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
       "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_client.py",
@@ -4940,7 +4940,7 @@
      "baslik": "Okuma amaçlı POST'un yeniden denenmesi yalnız tam uç adında olur (benzer adlı yazma ucu tekrarlanmaz)",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Bağlantı hatasında yeniden denenebilen okuma uçları (sözdizimi kontrolü, veri önizleme, paket ağacı, kullanım yeri, biçimleme) adın başından eşleniyordu. Bu yüzden aynı önekle başlayan başka bir uç (ör. '/checkruns' yerine '/checkrunsX') da yeniden denemeye giriyordu; o uç veri yazıyorsa istek iki kez gidebilirdi. Artık yalnız önekten sonra '/', '?' ya da adın sonu gelirse tekrar edilir; diğer istekler eskisi gibi tek gönderilir.",
+     "neden": "Bağlantı hatasında yeniden denenebilen okuma uçları (sözdizimi kontrolü, veri önizleme, paket ağacı, kullanım yeri, biçimleme) adın başından eşleniyordu. Bu yüzden aynı önekle başlayan başka bir uç (ör. '/checkruns' yerine '/checkrunsX') da yeniden denemeye giriyordu; o uç veri yazıyorsa istek bağlantı hatasında 4 kereye kadar gidebilirdi. Artık yalnız önekten sonra '/', '?' ya da adın sonu gelirse tekrar edilir; diğer istekler eskisi gibi tek gönderilir.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/lib/sap_adt_lib.py",
       "skills-sap/sap-adt-foundation/IMPLEMENTATION.md",
@@ -4957,7 +4957,7 @@
      "baslik": "ATC sonucu bulgu sayısı tavana eşitse 'kesilmiş olabilir' der",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "adt_atc_check en fazla max_verdicts (varsayılan 100) bulgu döndürür. Tam 100 bulgu geldiğinde listenin eksik olup olmadığı yanıttan anlaşılmıyordu. Artık yanıtta kesilmis_olabilir alanı ve bir kapsam cümlesi var: sayı tavana eşitse 'max_verdicts'i artırıp yeniden koş' denir.",
+     "neden": "adt_atc_check en fazla max_verdicts (varsayılan 100) bulgu döndürür. Tam 100 bulgu geldiğinde listenin eksik olup olmadığı yanıttan anlaşılmıyordu. Artık yanıtta kesilmis_olabilir alanı ve bir kapsam cümlesi var: sayı tavana eşitse 'max_verdicts'i artırıp yeniden koş' denir. max_verdicts metin olarak gelirse (\"50\") sayıya çevrilir; pozitif tam sayı değilse SAP'ye gitmeden 'invalid_argument' döner.",
      "dosyalar": [
       "skills-sap/sap-adt-foundation/scripts/sapadt/tools/query.py",
       "skills-sap/sap-adt-foundation/references/tool-catalog.md",
@@ -5022,7 +5022,7 @@
      "baslik": "%guncelle sonunda geçici dizin silinsin mi diye sorulur, onayla güvenli tek komutla silinir",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Güncelleme bitince geçici dizinin yolu söylenip 'silmek size kalmış' deniyordu; çoğu zaman silinmedi ve eski dizinler birikti. Artık skill kullanıcıya sorar; onay gelirse belgedeki tek komutu çalıştırır. Komut yalnız axet_guncelle_ önekli, klonu içermeyen ve klonun içinde olmayan dizini siler, başka bir yol verilirse hiçbir şeye dokunmadan durur. Onay verilmezse dizin kalır.",
+     "neden": "Güncelleme bitince geçici dizinin yolu söylenip 'silmek size kalmış' deniyordu; çoğu zaman silinmedi ve eski dizinler birikti. Artık skill, akış nasıl biterse bitsin (normal bitiş, 'klon güncel', herhangi bir durma) kullanıcıya sorar; onay gelirse belgedeki tek komutu çalıştırır. Komut yalnız mutlak yolla verilen, axet_guncelle_ önekli, bağ ya da junction olmayan, klonu içermeyen ve klonun içinde olmayan dizini siler, başka bir yol verilirse hiçbir şeye dokunmadan durur. Onay verilmezse dizin kalır.",
      "dosyalar": [
       "skills/guncelle/SKILL.md",
       "tests/test_guncelle_baslatici.py"

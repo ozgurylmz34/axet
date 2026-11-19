@@ -12,11 +12,13 @@ kaynaktır; belge değişirse bu test onu koşar.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
 import shutil
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 from _helpers import AXET_HOME, GeciciTest  # önce: scripts/ yolunu ekler
@@ -241,14 +243,74 @@ class TmpSilTest(GeciciTest):
     def sil(self, hedef: Path, klon: Path | None = None) -> subprocess.CompletedProcess:
         return komutu_kos(self, self.satir(), klon or self.klon, str(hedef), self.env)
 
-    def test_onay_sorulur_ve_eski_birakma_cumlesi_yok(self):
-        i = self.metin.find("7. **Bitişte**")
-        j = self.metin.find("\n8. ", i)
-        self.assertGreater(i, 0, "adım 7 bulunamadı")
+    def test_onay_her_bitis_yolunda_sorulur(self):
+        """bug-gate F2: soru yalnız 7. adımdaydı ⇒ "Klon güncel → BİTİR" (`GUNCELLE.md` adım 2-4) ve DUR yolları ona
+        hiç ulaşmıyordu. Soru, akışın HER bitişini kapsayan son adımda (10) durur; 2. adım oraya yönlendirir."""
+        i = self.metin.find("\n10. **")
+        self.assertGreater(i, 0, "10. adım (her bitişte geçici dizin) bulunamadı")
+        j = self.metin.find("\n## ", i)
         adim = self.metin[i:j]
-        self.assertIn("silinsin mi", adim, "adım 7 `<TMP>` silmeyi SORMUYOR")
-        self.assertIn(TMP_SIL_BASLA, adim, "TMP-SIL bloğu adım 7'nin içinde değil")
+        for parca in ("silinsin mi", TMP_SIL_BASLA, "Klon güncel", "DUR", "HANGİ YOLDAN"):
+            self.assertIn(parca, adim, f"10. adımda eksik: {parca}")
+        iki = self.metin[self.metin.find("2. **`<TMP>`'yi yarat.**"):self.metin.find(TMP_BASLA)]
+        self.assertIn("10. adım", iki, "2. adım `<TMP>` yaratıldıktan sonra son işi (10. adım) anmıyor")
+        yedi = self.metin[self.metin.find("7. **Bitişte**"):self.metin.find("\n8. ")]
+        self.assertNotIn(TMP_SIL_BASLA, yedi, "TMP-SIL hâlâ yalnız normal bitişin (7) içinde")
+        self.assertEqual(self.metin.count(TMP_SIL_BASLA), 1)
         self.assertNotIn("silmesini kendisi seçsin", self.metin)
+
+    def test_goreli_ya_da_bos_yol_silinmez(self):
+        """Doldurulmamış/boş/göreli `<TMP>` çalışma dizinine çözülür ⇒ mutlak yol şartı (cwd önekli olsa bile DUR)."""
+        d = self.tmp / "axet_guncelle_rel"
+        d.mkdir()
+        for verilen in ("axet_guncelle_rel", "", ".", "<TMP>"):
+            r = komutu_kos(self, self.satir(), self.klon, verilen, self.env)
+            self.assertNotEqual(r.returncode, 0, f"{verilen!r}: {self.cikti(r)}")
+        self.assertTrue(d.exists(), "göreli yol çalışma dizinine çözülüp silindi")
+        # doldurulmamış `<KLON>` (yer tutucu metni olduğu gibi kalır → göreli) da DUR
+        r = komutu_kos(self, self.satir().replace('"<KLON>"', '"<KLON_DOLDURULMADI>"'), self.klon, str(d), self.env)
+        self.assertNotEqual(r.returncode, 0, "göreli `<KLON>` kabul edildi: " + self.cikti(r))
+        self.assertTrue(d.exists())
+        r = self.sil(d)                                     # KONTROL GRUBU: aynı dizin mutlak yolla silinir
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse(d.exists())
+
+    @unittest.skipUnless(os.name == "nt", "junction yalnız Windows'ta")
+    def test_junction_ya_da_bag_silinmez(self):
+        """bug-gate Ö1: `resolve()` junction'ı izler ⇒ önekli bir junction önekli bir HEDEFİ gösterince hedef
+        siliniyordu. Verilen yol bağ/junction ise DUR; hedef ve bağ yerinde kalır. Kontrol: gerçek dizin silinir."""
+        import _winapi
+        hedef = self.tmp / "axet_guncelle_hedef"
+        (hedef / "alt").mkdir(parents=True)
+        (hedef / "degerli.txt").write_text("v", encoding="utf-8")
+        bag = self.tmp / "axet_guncelle_bag"
+        _winapi.CreateJunction(str(hedef), str(bag))
+        r = self.sil(bag)
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("DUR", self.cikti(r))
+        self.assertTrue((hedef / "degerli.txt").exists(), "junction'ın HEDEFİ silindi")
+        self.assertTrue(os.path.lexists(bag), "junction silindi")
+        oneksiz = self.tmp / "kurban"
+        oneksiz.mkdir()
+        bag2 = self.tmp / "axet_guncelle_bag2"
+        _winapi.CreateJunction(str(oneksiz), str(bag2))
+        r = self.sil(bag2)
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue(oneksiz.exists())
+        sembol = self.tmp / "axet_guncelle_sembol"
+        try:
+            os.symlink(str(hedef), str(sembol), target_is_directory=True)
+        except OSError:
+            sembol = None                                   # yetkisiz hesapta symlink yaratılamaz
+        if sembol is not None:
+            r = self.sil(sembol)
+            self.assertNotEqual(r.returncode, 0, self.cikti(r))
+            self.assertTrue((hedef / "degerli.txt").exists(), "symlink'in HEDEFİ silindi")
+        os.rmdir(bag)                                       # bağı kaldır (hedefe dokunmaz)
+        os.rmdir(bag2)
+        r = self.sil(hedef)                                 # KONTROL GRUBU: aynı dizin doğrudan verilince silinir
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertFalse(hedef.exists())
 
     def test_gecici_dizin_icerigiyle_silinir(self):
         d = self.tmp / "axet_guncelle_abc"

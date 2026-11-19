@@ -140,8 +140,10 @@ class Z210SilmeDurumKodu(_Taban):
 class _AtcAdt:
     def __init__(self, n):
         self.n = n
+        self.giden = []    # SAP'ye giden max_verdicts değerleri (çağrı başına)
 
     def run_atc_check(self, url, variant=None, max_verdicts=100):
+        self.giden.append(max_verdicts)
         return {"findings": [{"priority": "2", "message": f"b{i}"} for i in range(self.n)]}
 
 
@@ -154,12 +156,31 @@ class Z209AtcTavan(_Taban):
     def _kos(self, n, tavan):
         from sapadt.tools import query as Q
         eski = Q._get_client
-        Q._get_client = lambda: _AtcIstemci(n)
+        self.istemci = _AtcIstemci(n)
+        Q._get_client = lambda: self.istemci
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 return Q.adt_atc_check("ZCL_X", "class", variant="V", max_verdicts=tavan)
         finally:
             Q._get_client = eski
+
+    def test_Z209_metin_tavan_kabul_gecersiz_tavan_sapye_gitmez(self):
+        """bug-gate F1: CLI JSON'u tip dönüştürmeden geçirir (`{"max_verdicts":"50"}`). Eski kodda (Z209 öncesi)
+        bu girdi çalışıyordu; Z209'un `>=` karşılaştırması TypeError verip SAP'de koşmuş ATC'nin bulgularını
+        kaybediyordu. Metin → int; geçersiz → `invalid_argument` ve SAP'ye istek GİTMEZ."""
+        sonuc = {}
+        for tavan, n in (("50", 50), (" 7 ", 3), (100, 5)):
+            r = self._kos(n, tavan)
+            sonuc[repr(tavan)] = (r.get("ok"), r.get("finding_count"), r.get("kesilmis_olabilir"),
+                                  self.istemci.adt_client.giden)
+        gecersiz = {}
+        for tavan in ("abc", "0", "-5", "", "1.5", "²", None, True, 0, 2.5):
+            r = self._kos(5, tavan)
+            gecersiz[repr(tavan)] = (r.get("ok"), r.get("error"), self.istemci.adt_client.giden)
+        ok = (sonuc == {"'50'": (True, 50, True, [50]), "' 7 '": (True, 3, False, [7]), "100": (True, 5, False, [100])}
+              and all(v == (False, "invalid_argument", []) for v in gecersiz.values()))
+        self.kaydet("Z209 F1 metin tavan '50'/' 7 ' → int · geçersiz → invalid_argument, SAP'ye gitmez",
+                    "50 bayrak · 7 yok · 10 geçersiz reddi", [sonuc, gecersiz], ok)
 
     def test_Z209_tavana_esit_bulgu_kesilmis_olabilir(self):
         r100 = self._kos(100, 100)

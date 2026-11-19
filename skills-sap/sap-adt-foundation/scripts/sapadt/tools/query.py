@@ -400,6 +400,18 @@ def adt_where_used(name: str, object_type: str = "class") -> dict:
 # =============================================================================
 
 @profil_tool()
+def _pozitif_tam_sayi(deger):
+    """int ya da rakamlı metin ("50", " 50 ") → int ≥ 1; bool, ondalık, boş, negatif, sıfır → None (Z209 F1)."""
+    if isinstance(deger, bool):
+        return None
+    if isinstance(deger, int):
+        return deger if deger >= 1 else None
+    if isinstance(deger, str) and deger.strip().isascii() and deger.strip().isdigit():  # "²".isdigit() True ama int() düşer
+        sayi = int(deger.strip())
+        return sayi if sayi >= 1 else None
+    return None
+
+
 def adt_atc_check(name: str, object_type: str = "class",
                   variant: str | None = None, max_verdicts: int = 100) -> dict:
     """ATC statik kod kontrolü (Clean ABAP / performans / güvenlik) — read-only.
@@ -420,6 +432,13 @@ def adt_atc_check(name: str, object_type: str = "class",
         listesi döndürür ve bu sonuç VAR OLMAYAN objeninkiyle aynıdır (kaynak çekirdek canlı ölçümü 2026-11-11) —
         "0 bulgu" temizlik kanıtı olamaz; ATC'yi BAdI arabirimi/sınıflarında koş.
     """
+    # Z209 bug-gate F1 (2026-11-19): CLI JSON'u tip dönüştürmeden geçirir ⇒ `{"max_verdicts":"50"}` metin gelir.
+    # Tavan karşılaştırması (`len(findings) >= max_verdicts`) metinde TypeError verip SAP'de koşmuş ATC'nin
+    # bulgularını kaybediyordu ⇒ SAP'ye gitmeden ÖNCE tam sayıya çevrilir; çevrilemezse açık kullanım hatası.
+    max_verdicts = _pozitif_tam_sayi(max_verdicts)
+    if max_verdicts is None:
+        return {"ok": False, "error": "invalid_argument", "name": name, "type": object_type,
+                "finding_count": None, "message": "max_verdicts pozitif tam sayı olmalı (ör. 100 ya da \"100\")."}
     # Kaynak çekirdek #415 (9b38ab6): işlem-izinli tipte (ENHS) ATC kapsam dışı — ölçülemedi ≠ temiz.
     try:
         from object_types import islem_reddi  # type: ignore

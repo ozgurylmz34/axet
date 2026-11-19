@@ -170,7 +170,8 @@ Genel tablo `supports_create` bayrağı yalnız genel yaratıcının tiplerinde 
 
 ### `adt_atc_check`
 - **Amaç:** ATC statik kontrol (Clean ABAP, performans, güvenlik).
-- **Argümanlar:** `name` · `object_type="class"` · `variant` (yoksa bağlantıdaki ATC varyantı, o da yoksa `DEFAULT`) · `max_verdicts=100`.
+- **Argümanlar:** `name` · `object_type="class"` · `variant` (yoksa bağlantıdaki ATC varyantı, o da yoksa `DEFAULT`) · `max_verdicts=100` (pozitif tam sayı;
+  metin `"50"` sayıya çevrilir, geçersizse SAP'ye gidilmeden `ok:false, error:"invalid_argument"`).
 - **Dönüş:** `{ok, variant, finding_count, findings:[…], kesilmis_olabilir, kapsam}`. Sayının doğrulanamadığı durum için ayrı alan olabilir (`finding_count_unverified`).
   `kesilmis_olabilir:true` = bulgu sayısı `max_verdicts` tavanına eşit: liste kesilmiş olabilir, `max_verdicts`'i artırıp yeniden koş
   (2026-11-19, Z209; tavanın altındaysa `false`, `kapsam` metni aynısını söyler).
