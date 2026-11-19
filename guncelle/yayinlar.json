@@ -4902,6 +4902,107 @@
    "tarih": "2026-11-19",
    "kalemler": [
     {
+     "id": "0.5.24-01",
+     "baslik": "Uzun içerik tek araç çağrısında üretilmez: önce iskelet, sonra her bölüm ayrı düzenleme",
+     "tur": "kural",
+     "kritik": false,
+     "neden": "Model tek bir araç çağrısında uzun içerik üretince model ağ geçidi `504 Gateway Timeout` döndürüyor. Ölçüldü: yaklaşık 400 satırlık bir FS tek `write` ile 3 tur × 4 denemede düştü (~20 dk kayıp); aynı oturumda önce iskelet, sonra her bölüm ayrı düzenleme kesintisiz geçti (iskelet 13 sn, bölümler 20-50 sn). Çekirdek §10'a kural eklendi: `write`/`edit`/`multiedit` içeriği ya da `bash` komutu (heredoc dahil) 150 satırı aşacaksa önce iskelet yazılır, her bölüm ayrı `edit` ile doldurulur (eşik belgenin değil tek çağrının içeriğidir; 150 satırı aşan tek bölüm de bölünür); uzun heredoc yerine dosya + kısa komut; 504 gelirse aynı çağrı tekrarlanmaz, bölünür. 150 eşiği ölçülmüş bir sınır değil, paydır (ölçülen tek nokta ~400 satır). FS, TS ve KD yazım rehberleri ile `%sap-fs-ts-docs` adımları bu kurala bağlandı. Oturum açılış kimliği `AXET-CORE-0.10.2` olur.",
+     "dosyalar": [
+      "core/00-temel.md",
+      "skills-sap/sap-fs-ts-docs/SKILL.md",
+      "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+      "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
+      "skills-sap/sap-fs-ts-docs/references/kd-authoring.md",
+      "skills-sap/sap-fs-ts-docs/tests/test_kaynak_paketi.py"
+     ],
+     "gerektirir": [],
+     "test": [
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k KaynakKurali",
+      "python tests/run_tests.py -k test_kimlik_hizasi"
+     ]
+    },
+    {
+     "id": "0.5.24-02",
+     "baslik": ".docx/.xlsx istekten mekanik kaynak paketi: çıkarım kapsamındaki metin, yapılandırılmayan parçaların ham metni, görseller, gömülü nesneler ve parça bazında doğrulama",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "İstek Word ya da Excel dosyası olarak geldiğinde model dosyayı okuyup kendi cümleleriyle yeniden yazıyordu; ölçülen vakada 21 test satırı 13'e indi, bir başlık düştü. Aynı oturumda `view` ikili .docx'i açmadı ve alt ajan belgeyi okuyamadı (yaklaşık 20 dk kayıp; tek oturumda ölçüldü, .xlsx/.pdf denenmedi). Gömülü HTML ekran prototipi gibi nesneler de görünmüyordu. Yeni `scripts/kaynak_paketi.py cikar <dosya>` (yalnız Python standart kütüphanesi) kaynağı `.axet-code/tmp/<id>/` altına mekanik olarak çıkarır: numaralı metin (`KM-nnnn`; başlık, paragraf, tablo satırı), denklem metni (satır içinde), SmartArt ve grafik metni (kendi satırında; grafikte başlık, seri, kategori ve değer), xlsx çizimlerindeki metin kutuları, `media/` görselleri (`KG-nn`), gömülü nesneler (`KN-nn`: OLE paket nesnesinin içindeki asıl dosya — ör. HTML prototip —, gömülü Office dosyası, altChunk; tanınmayan ya da bozuk nesne ham kopya ve 'TANINMADI' notuyla) ve `INDEX.md`. Yapılandırılmış çıkarımın kapsamadığı her XML parçasının metni (üst/alt bilgi, dipnot, açıklama, grafiğin üstündeki metin kutusu, tanınmayan parçalar) ve yapılandırılmış parçalarda satıra girmeyen metin, `metin.md` sonundaki 'Yapılandırılmamış parça metni' bölümüne ham yazılır (`⟦P01 parça: …⟧`, KM numaralı). Çıkarımdan sonra kaynak bağımsız bir sayaçla yeniden sayılır ve diskteki paketle karşılaştırılır (metin bloğu, başlık, tablo, satır, karakter, denklem, SmartArt, grafik, metin kutusu, sayfa, görsel, gömülü nesne; xlsx'te karakter yalnız metin hücrelerinden). Ayrıca zip'teki HER XML parçası, çıkarımın parça listesinden bağımsız taranır ve parça başına 'metin − yok sayılan = yapılandırılmış + geri düşüş' aranır; bir sayı tutmazsa DOĞRULAMA FAIL (çıkış 1). Yapısal parçalar (stil, tema, ilişki, ayar, belge özelliği …) muaftır; liste çıktıda basılır ve her muaf parça karakter sayısıyla görünür. Muaf iddiası Microsoft Office'in kurulu 30 şablonunda ölçüldü (yalnız okundu): yapısal parçalarda 0 karakter, belge özelliği ve özel XML'de üst veri; aynı ölçümde 30/30 parça hesabı tuttu. Yok sayılan metin sınıfları dardır ve her biri karakter sayısıyla basılır: metni Choice'unkiyle aynı eski gösterim (karakter sayısı eşitliği yetmez), alan kodu, silinen metin, formül/başvuru (yalnız sayfa, grafik ve çalışma kitabı parçalarında), sayı biçim kodu (yalnız grafikte), konum değeri (yalnız değeri sayı ya da hizalama sözcüğüyse; Excel açıklama kutusu konumu dahil), mürekkep koordinatı, fonetik okunuş; aynı ad başka parçada ya da metin değeriyle geçerse pakete girer. xlsx sayfa ve paylaşılan dizge parçalarında 'yapılandırılmış' pay kaynaktan hesaplanır (pakette yalnız metin hücresi ölçülür; INDEX'te bu sınıf adıyla yazar). Boş paylaşılan dizge (`<si/>`) indeks kaydırmaz (ölçüldü: önce paket doğruyken FAIL veriyordu). XML olmayan zip üyeleri (ör. .docm'deki makro kodu, düz metin) metne çıkmaz ama adı, boyu ve notuyla INDEX'te listelenir; makro kodu 'okunmadı, iş kuralı içerebilir' notu alır. Zip üyesi gerçekten açılarak sayılır (başlıktaki boy beyanına güvenilmez); 100 MiB'ı aşan metin parçası ya da 512 MiB'ı aşan metin üyeleri toplamı okunmaz (çıkış 2; sınır ölçülmüş değil, paydır); görseller bu toplama sayılmaz, 100 MiB'ı ya da görsel toplamını (1 GiB) aşan görsel/gömülü nesne atlanır ve 'ÖLÇÜLEMEDİ — boyut' yazar, metin korunur. Bozuk, döngülü ya da sektör paylaşan OLE nesnesi paketi düşürmez, ham kopyalanır; beklenmeyen bir hata FAIL ile karışmaz, çıkış 2 olur. `.pdf`, `.doc`, `.xls` ve benzerleri 'desteklenmiyor' der (çıkış 3). Paket klasörünün aXet tarafından temizlenip temizlenmediği ölçülmedi.",
+     "dosyalar": [
+      "skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/tests/test_kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/tests/test_skill_structure.py",
+      "skills-sap/sap-fs-ts-docs/references/traceability.md",
+      "skills-sap/sap-fs-ts-docs/SKILL.md",
+      "skills-sap/README.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k kaynak_paketi",
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k skill_structure"
+     ]
+    },
+    {
+     "id": "0.5.24-03",
+     "baslik": "Kaynak → belge iz tablosu denetimi; bağımsız inceleme tabloya dayanır, belgeyi baştan okumaz",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "Uzun bir FS'in incelemesi kaynağı ve belgeyi baştan sona yeniden okuyordu; kaynak maddesinin belgede karşılığı olup olmadığı ise elle aranıyordu. Yeni `kaynak_paketi.py iz <paket> --tablo <iz.md> --belge <FS.md>` kaynak paketinin her maddesinin (KM/KG/KN) iz tablosunda bir belge kimliğine (FR/KR/TC …), `BİLGİ`'ye ya da gerekçeli `KAPSAM-DIŞI`'na bağlandığını mekanik olarak denetler. FAIL: eşlenmemiş madde, pakette olmayan madde, boş eşleme, belgede bulunmayan kimlik, gerekçesiz KAPSAM-DIŞI, tablodaki kaynak sha256'sının ya da km numaralandırma şemasının paketinkiyle uyuşmaması, paketin elle değiştirilmesi ya da doğrulamasının PASS olmaması. UYARI: aynı maddenin iki kez eşlenmesi, kaynağa bağlanmamış FR/KR, boş paket, sha256 ya da km şeması satırı olmayan tablo. İz tablosu git'te izlenen yerde, FS'in paketindeki `ref_docs/iz-<belge no>.md` dosyasında durur ve kaynağın adını, sha256'sını ve km şemasını taşır; paket git dışıdır, aynı kaynaktan AYNI BETİK SÜRÜMÜYLE (aynı km şeması) aynı kimliklerle yeniden üretilir — kaynak ikili dosya da `ref_docs/` altında saklanır. Betik numaralandırmayı değiştirirse şema artar ve eski tablo yeni pakete karşı FAIL verir (paketi yeniden çıkar, tabloyu yeniden eşle). Çıktı, incelemecinin elle okuyacağı satırları ayrıca listeler. Belge kontrol listesine AX-DOC-CR-06 eklendi; inceleme brifi ikili dosyanın yolunu değil paket ve iz tablosu yolunu taşır ve 'iz tablosuna dayalı inceleme' turunda incelemeci tabloyu, boş satırları ve mekanik olmayan maddeleri okur. Tablodaki eşlemenin anlamca doğru olduğunu araç ölçmez; bunu incelemeci okur.",
+     "dosyalar": [
+      "skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/tests/test_kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/references/traceability.md",
+      "skills-sap/sap-fs-ts-docs/references/doc-checklist.md",
+      "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+      "skills-sap/sap-fs-ts-docs/references/ts-authoring.md",
+      "skills-sap/sap-fs-ts-docs/SKILL.md"
+     ],
+     "gerektirir": [
+      "0.5.24-02"
+     ],
+     "test": [
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k IzDenetimi",
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k KaynakKurali"
+     ]
+    },
+    {
+     "id": "0.5.24-04",
+     "baslik": "Talep alımı ve kod inceleme brifi .docx/.xlsx kaynağı için kaynak paketini kullanır",
+     "tur": "kural",
+     "kritik": false,
+     "neden": "Talep Word ya da Excel olarak geldiğinde `%sap-intake-triage` artık önce kaynak paketini üretip onu okur; modelin yazdığı özet kaynağın yerine konmaz, doğrulama FAIL ya da desteklenmeyen biçim kullanıcıya söylenir. S2 talep artefaktına 'Kaynak' satırı eklendi (kaynak dosyanın adı, sha256'sı, sayılar ve iz tablosunun yeri; ikili dosya yolu değil). Kod inceleme brifi de ikili dosya yerine paketin proje içi yolunu verir: bir oturumda `view` ikili .docx'i açmadı ve alt ajan okuyamadı (alt ajanın başka okuma aracı ve .xlsx/.pdf ölçülmedi).",
+     "dosyalar": [
+      "skills-sap/sap-intake-triage/SKILL.md",
+      "skills-sap/sap-intake-triage/templates/intake-artifact.md",
+      "skills-sap/sap-code-review/references/reviewer-brief.md"
+     ],
+     "gerektirir": [
+      "0.5.24-02"
+     ],
+     "test": [
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k KaynakKurali",
+      "python tests/run_tests.py -k sap_skill_bilgi",
+      "python tests/run_tests.py -k skill_yonlendirme"
+     ]
+    },
+    {
+     "id": "0.5.24-05",
+     "tur": "duzeltme",
+     "kritik": false,
+     "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı",
+     "neden": "Her yayında üretilen kayıt dosyaları: değişiklik günlüğü, bu katalog, yayının CI sonucu ve README'nin sürüm satırı.",
+     "dosyalar": [
+      "CHANGELOG.md",
+      "guncelle/yayinlar.json",
+      "guncelle/ci-durum.json",
+      "README.md"
+     ],
+     "gerektirir": [],
+     "test": [
+      "python tests/run_tests.py -k yayin_surumleri",
+      "python tests/run_tests.py -k readme"
+     ]
+    },
+    {
      "id": "0.5.24-20",
      "baslik": "SAP yanıtlarındaki parola ve sırlar büyük/küçük harf farkıyla da maskelenir",
      "tur": "guvenlik",
@@ -5076,7 +5177,32 @@
       "python skills-sap/sap-ui5-user-guide/tests/run_tests.py -k test_mock_sunucu"
      ]
     },
-    {"id": "0.5.24-30", "tur": "duzeltme", "kritik": false, "baslik": "Yayın kataloğu, README sürüm satırı ve CI kaydı", "neden": "Her yayında üretilen kayıt dosyaları: değişiklik günlüğü, bu katalog, yayının CI sonucu ve README'nin sürüm satırı.", "dosyalar": ["CHANGELOG.md", "guncelle/yayinlar.json", "guncelle/ci-durum.json", "README.md"], "gerektirir": [], "test": ["python tests/run_tests.py -k yayin_surumleri", "python tests/run_tests.py -k readme"]}
+    {
+     "id": "0.5.24-06",
+     "baslik": "FS yazımında kaynaktaki ekran görüntüleri okunur; okunmayan görsel iz denetiminde FAIL",
+     "tur": "yetenek",
+     "kritik": false,
+     "neden": "Word isteğindeki ekran görüntüleri FS yazımında okunmuyordu (kullanıcı geri bildirimi): kaynak paketi görselleri `media/KG-nn_*` olarak çıkarıyor ve konumunu işaretliyordu ama hiçbir talimat modele görseli açtırmıyordu; görselin içindeki alan, düğme ve değerler FS'e girmeden kalabiliyordu. Kaynak paketi artık `gorsel-notlari.md` iskeleti üretir: her görsel (KG) ve içeriği görsel olan her gömülü nesne (KN, ör. OLE paketindeki png) için dosya yolu, konum (işaretin durduğu KM satırı), biçim ve boş 'Görülen' alanı. Model her görseli `view` aracıyla açar ve gördüğünü görsel başına bir düzenlemeyle o alana yazar; görselden FS'e giren öğenin kimliği notta ve iz tablosunda anılır. `kaynak_paketi.py iz` görüntülenebilir görselin boş notunu FAIL sayar ve adlarını basar ('GÖRSEL OKUNMADI: 2 — KG-02, KN-01'); notta anılıp o görselin iz satırında olmayan kimlik UYARI'dır. Görüntülenebilir biçimler betikte tek listededir (png, jpg, jpeg, gif, bmp); EMF/WMF gibi diğer biçimlerin `view` ile açılıp açılmadığı doğrulanmadı, bu yüzden 'GÖRÜNTÜLENEMEZ' yazılır, `iz` boş notlarını FAIL değil ÖLÇÜLEMEDİ sayar ve talimat kullanıcıdan PNG istemeyi söyler (paket dönüştürmez: standart kütüphane EMF/WMF çeviremez, ek bağımlılık eklenmedi). Aynı kaynakla yeniden çıkarım yazılmış notları silmez; kaynak değişirse eski notlar kenara alınır. Belge kontrol listesine AX-DOC-CR-07 eklendi; inceleme brifi `gorsel-notlari.md` ve `media/` yolunu taşır, incelemeciye her görseli `view` ile açıp notu görselle karşılaştırmasını söyler ve betik koşturma adımı içermez (`iz` çıktısını ana oturum yapıştırır). `iz` notun görseli doğru anlattığını ölçmez, yalnız dolu olduğunu sayar; uyumu incelemeci okur.",
+     "dosyalar": [
+      "skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/tests/test_kaynak_paketi.py",
+      "skills-sap/sap-fs-ts-docs/references/traceability.md",
+      "skills-sap/sap-fs-ts-docs/references/doc-checklist.md",
+      "skills-sap/sap-fs-ts-docs/references/fs-authoring.md",
+      "skills-sap/sap-fs-ts-docs/SKILL.md",
+      "skills-sap/sap-intake-triage/SKILL.md",
+      "skills-sap/sap-code-review/references/reviewer-brief.md"
+     ],
+     "gerektirir": [
+      "0.5.24-02",
+      "0.5.24-03"
+     ],
+     "test": [
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k Gorsel",
+      "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k KaynakKurali",
+      "python tests/run_tests.py -k sap_skill_bilgi"
+     ]
+    }
    ]
   }
  ]

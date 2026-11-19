@@ -26,6 +26,103 @@ Yer   : <source_root>/<MODÜL>/<PAKET>/docs/     (kaynak/dönüşüm belgeleri r
 - Matris kaynağa bağlıdır: "N gereksinim karşılandı" yerine "FS §4.1'deki tüm FR'ler" yazılır (DOC-CR-02).
 - KD tarafında: FS'teki her kullanıcıya görünen işlev (ekran, buton, mesaj) KD'de bir bölüme karşılık gelir.
 
+## 2-B. Kaynak paketi ve kaynak → belge iz tablosu (FS ikili bir istek belgesinden yazılıyorsa)
+Kullanıcının isteği `.docx`/`.xlsx` olarak geldiyse oturumun **ilk** işi kaynak paketidir; intake, FS yazımı ve
+inceleyici aynı paketi okur. Kaynak metni model yeniden yazmaz, özetini kaynağın yerine koymaz.
+```
+python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py cikar <istek.docx|.xlsx>
+      → <proje>/.axet-code/tmp/<ad>-<özet8>/  INDEX.md · metin.md · gorsel-notlari.md · media/ · gomulu/ · paket.json   (git dışı)
+python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> \
+      --tablo <source_root>/<MODÜL>/<PAKET>/ref_docs/iz-<belge no>.md --belge <FS.md>
+```
+- **Paket:** `metin.md` kaynağın **çıkarım kapsamındaki** metnidir, sırası korunur; her başlık, paragraf ve metinli
+  tablo satırı bir **kaynak maddesi** `KM-nnnn`. Metin kutusunun paragraf ve tabloları bulunduğu paragrafın satırına,
+  iç içe tablo hücre metnine düzleşir; denklem metni satır içinde `⟦denklem⟧` işaretiyle durur. SmartArt (`D01`) ve
+  grafik (`G01`; başlık, seri, kategori ve değer metni, ChartEx kategorileri dahil) kendi KM satırındadır; xlsx'te
+  çizimdeki metin kutuları (`K01`) de. Her görsel `KG-nn`, her gömülü nesne `KN-nn` (OLE paket nesnesinin asıl
+  dosyası — ör. danışmanın HTML ekran prototipi —, OLE içindeki Excel/Word, altChunk; tanınmayan ya da bozuk nesne ham
+  kopyalanır ve INDEX'te "TANINMADI" yazar; 100 MiB'ı ya da görsel/gömülü toplamını (1 GiB) aşan görsel/gömülü nesne
+  çıkarılmaz, yerinde not dosyası ve INDEX'te "ÖLÇÜLEMEDİ — boyut" durur; metin korunur). XML olmayan diğer zip üyeleri
+  (ör. `.docm`'deki makro kodu `vbaProject.bin`, düz metin dosyası, belge küçük resmi) metne çıkmaz ama sessizce de
+  kaybolmaz: INDEX ve `paket.json` (`xml_disi`) adını, boyunu ve notunu yazar — makro kodu "okunmadı, iş kuralı
+  içerebilir" notuyla; kullanıcıya sor.
+- **Geri düşüş:** yapılandırılmış çıkarımın kapsamadığı her XML parçasının metni (üst/altbilgi, dipnot, yorum,
+  grafiğin üstündeki metin kutusu, tanınmayan parçalar) ve yapılandırılmış parçalarda satıra girmeyen metin,
+  `metin.md` sonundaki **"Yapılandırılmamış parça metni"** bölümüne ham yazılır: `[KM-nnnn] ⟦P01 parça: <zip
+  parçası>⟧ | metin |` (paragraf altında birleşik; sayfa/hücre yapısı yoktur). Bunlar da kaynak maddesidir, iz
+  tablosunda yer alır. INDEX hangi parçaların geri düştüğünü listeler — okurken bu parçaları ayrıca değerlendir.
+- **Doğrulama:** `INDEX.md` kaynağın ayrı kodla yapılan sayımını (madde, başlık, tablo, satır, karakter, denklem,
+  SmartArt, grafik, metin kutusu, görsel, gömülü nesne; xlsx'te karakter yalnız metin hücrelerinden) diskteki
+  paketle karşılaştırır. Ayrıca **parça hesabı**: zip'teki HER XML parçasının metni, çıkarımın parça listesinden
+  bağımsız taranır ve parça başına `evren − yok sayılan = yapılandırılmış + geri düşüş` aranır; muaf (yapısal)
+  parçalar listesi SCOPE'ta basılır, her muaf parça INDEX'te metin karakteriyle görünür. Yok sayılan sınıflar dardır
+  ve her biri DOĞRULAMA satırında karakter sayısıyla basılır: metni (boşluksuz) Choice'unkiyle AYNI `mc:Fallback`
+  (karakter sayısı eşitliği yetmez), alan kodu (`instrText`; alan sonucu alınır), silinen metin, formül/başvuru (`f`
+  yalnız sayfa ve grafik parçalarında, `definedName` yalnız `xl/workbook.xml`'de), sayı biçim kodu (yalnız grafikte),
+  konum/ölçü değeri (yalnız değeri sayı ya da hizalama sözcüğüyse; Excel VML açıklama kutusunun `x:Row`/`x:Column`/
+  `x:Anchor` sayıları dahil), mürekkep koordinatı (`inkml:trace`, yalnız `ink/` parçasında), fonetik okunuş. Aynı
+  yerel ad başka parçada ya da metin değeriyle geçerse geri düşüşe gider. xlsx sayfa ve paylaşılan dizge
+  parçalarında **"yapılandırılmış (kaynaktan; pakette yalnız metin hücresi ölçülür)"**: bu parçaların payı hücre
+  tanımından hesaplanır; paket satırı hücrenin biçimli gösterimini taşıdığından sayı/tarih hücresinin pakete doğru
+  yazıldığını parça hesabı ölçmez (metin hücrelerinin karakteri ayrıca pakete karşı ölçülür).
+  **DOĞRULAMA FAIL olan paket kullanılmaz.** Çıkış `2` = okunamadı (bozuk zip, başlıktaki boy/CRC içerikle
+  uyuşmuyor) ya da boyut sınırı (metin parçası 100 MiB, açılmış metin üyeleri toplamı 512 MiB — görsel/gömülü
+  üyeler bu toplama sayılmaz; her üye gerçekten açılarak sayılır) aşıldı; çıkış `3` = biçim desteklenmiyor (`.pdf`, `.doc`, `.xls`):
+  kullanıcıdan `.docx`/`.xlsx` hâlini iste; olmuyorsa kaynak izi "ÖLÇÜLEMEDİ" kalır, metni elle yazıp paket gibi
+  sunma.
+- **Kapsam dışı (INDEX'te yazar):** öznitelikteki metin (görsel alternatif metni, veri doğrulama istemi, köprü
+  ipucu, içerik denetimi açılır liste seçenekleri `w:listItem` ve adı `w:alias`), XML olmayan üyelerin içeriği
+  (makro kodu dahil), Word'ün otomatik numaraları, gömülü dosyanın ve görselin içindeki metin, xlsx'te sayı/tarih hücresinin
+  biçimli gösterimi (satırda durur, karakter sayımına girmez) ve nesnenin hangi hücrede durduğu. Gömülü HTML prototip
+  tarayıcıda açılır; ekranı `capture_kd_screens.js` `file://` adresinden çeker.
+- **Görsel okuma (zorunlu adım — model okur, `iz` sayar):** mekanik çıkarım görselin içindeki metni almaz (yukarıdaki
+  kapsam dışı satırı bu yüzden doğrudur); ekran görüntüsündeki alan, düğme ve değerler ise çoğu zaman gereksinimdir.
+  Paket her `KG-nn` için ve içeriği görsel olan her `KN-nn` için (ör. OLE paketindeki `.png`) `gorsel-notlari.md`'de bir
+  bölüm üretir: dosya yolu, kaynak parçası, konum (işaretin durduğu `KM` satırı; xlsx'te ve başvurusuz görselde
+  "konumu yok"), biçim ve boş **Görülen** alanı. Model her görseli **`view` aracıyla açar** ve gördüğünü — ekran ya da
+  pencere adı, alanlar, düğmeler, tablo sütunları, değerler, okunabilen metin — o bölümün Görülen alanına yazar;
+  **görsel başına bir `edit`** (uzun içerik bölüm bölüm). FS'e giren her öğenin yanına belge kimliği yazılır
+  (`→ FR-003`) ve o görselin iz tablosu satırı aynı kimliği taşır; logo ya da süsleme gibi gereksinim taşımayan
+  görsel `BİLGİ`'ye bağlanır, notu yine yazılır. Aynı kaynak ve aynı km şemasıyla yeniden `cikar` yazılmış notları
+  silmez; kaynak değiştiyse eski notlar `gorsel-notlari.<özet8>.md` adıyla kenara alınır.
+  **Görüntülenebilir biçimler** betikte tek listededir (`GORUNTULENEBILIR`: png, jpg, jpeg, gif, bmp). Word ekran
+  görüntülerini sık sık EMF/WMF olarak gömer; bunların `view` ile açılıp açılmadığı DOĞRULANMADI, bu yüzden listede
+  olmayan biçim INDEX'te ve notta **"GÖRÜNTÜLENEMEZ (emf)"** yazar: kullanıcıdan aynı ekranın PNG'sini iste, okuyunca
+  notu yaz ve PNG'den okunduğunu belirt. Paket dönüştürmez: standart kütüphane EMF/WMF'yi PNG'ye çeviremez ve ek
+  bağımlılık eklenmez.
+- **İz tablosu** git'te izlenen yerde durur: kaynak paketinin yanında değil, FS'in SAP paket klasöründe
+  `ref_docs/iz-<belge no>.md` (kaynak ve dönüşüm belgelerinin yeri; FS gövdesine girmez — İlke 2b). Ölçüldü: proje
+  şablonunun `.gitignore`'larıyla `git check-ignore` bu yolu izler, `.axet-code/tmp/**`'yu yok sayar. Kaynak paketi
+  git dışıdır; kimlikleri yeniden üretmek için **kaynak ikili dosya** da saklanır — iz tablosunun yanında,
+  `ref_docs/` altında (müşteri belgesiyse projenin kaynak belge kuralına göre). Aynı kaynaktan **aynı betik
+  sürümüyle** (aynı `km şeması`) `cikar` aynı kimlikleri yeniden üretir; betik numaralandırmayı değiştirdiyse şema
+  artar ve eski tablo yeni pakete karşı `iz`'de **FAIL** verir ("NUMARALANDIRMA ŞEMASI FARKLI — paketi yeniden
+  çıkar, tabloyu yeniden eşle"). Bu yüzden tablonun ilk satırı kaynağı ve şemayı adlandırır:
+  `Kaynak: <dosya adı> · sha256 <ilk 16 hane> · km şeması <n>` (`iz` çıktısının `kaynak:` satırından kopyalanır).
+  Her kaynak maddesi bir satırda; aralık yazılabilir (`KM-0004..KM-0009`):
+
+| Kaynak | Belge kimliği | Not |
+|---|---|---|
+| KM-0001..KM-0006 | BİLGİ | kapak, doküman kontrolü |
+| KM-0007 | FR-001, KR-002 | |
+| KM-0021 | TC-01 | kaynaktaki test satırı 1 |
+| KM-0022 | TC-02 | (belge kimliği aralıkla yazılmaz; her biri ayrı) |
+| KM-0042 | KAPSAM-DIŞI | standart nesne değişikliği — kesin yasak A, kullanıcıya soruldu (S-03) |
+| KN-01 | SCR-001, SCR-002 | HTML prototip |
+| KG-03 | SCR-001, FR-004 | sipariş giriş ekranı görüntüsü (gorsel-notlari.md) |
+
+  `BİLGİ` = gereksinim taşımayan madde · `KAPSAM-DIŞI` = bilerek alınmayan madde, gerekçe zorunlu. Geri kalan her
+  satır belgede gerçekten geçen kimlik(ler)e bağlanır. `iz` denetimi: tabloda olmayan madde · pakette olmayan madde ·
+  boş eşleme · belgede olmayan kimlik · gerekçesiz KAPSAM-DIŞI · tablodaki sha256'nın ya da km şemasının paketinkiyle
+  uyuşmaması · Görülen alanı boş görüntülenebilir görsel (`GÖRSEL OKUNMADI: 2 — KG-02, KG-05`) ya da eksik
+  `gorsel-notlari.md` = **FAIL**; görüntülenemeyen biçimin boş notu = **ÖLÇÜLEMEDİ** (FAIL değil; SONUÇ satırı PASS'in
+  bu görselleri kapsamadığını yazar); aynı madde iki satırda, belgede olup tabloda anılmayan FR/KR, görsel notunda
+  anılıp o görselin iz satırında olmayan kimlik, boş paket (0 madde), sha256'sız ya da km şemasız tablo = UYARI.
+  **Ölçmedikleri:** eşlemenin anlamca doğruluğu, BİLGİ/KAPSAM-DIŞI işaretinin haklılığı ve görsel notunun görseli
+  doğru anlatıp anlatmadığı (`iz` yalnız notun dolu olduğunu sayar) — inceleyici bunları okur, görselleri `view` ile
+  açar (`doc-checklist.md` §E "İZ TABLOSUNA DAYALI İNCELEME", AX-DOC-CR-06, AX-DOC-CR-07).
+- TS için kaynak FS'in kendisidir: §2 matrisi FS'in her FR/KR'sini satır olarak taşır, iz tablosu yerine geçer.
+
 ## 3. Değişiklik kuralları
 - FS değişirse → TS güncellenir → versiyon artar → yeniden onay.
 - TS değişirse → FS değişikliği gerekmeyebilir → teknik lider onayı yeter; FS'i etkiliyorsa FS §11-A/§11-B'ye döner.
