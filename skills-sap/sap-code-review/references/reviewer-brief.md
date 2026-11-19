@@ -21,12 +21,17 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
 - Değişikliğin amacı / spesifikasyon: <SPEC dosya:satır ya da kullanıcı isteğinin metni> — istek `.docx`/`.xlsx`/`.pdf`
   ise yolunu VERME (`view` ikili `.docx`'i açmadı, alt ajan okuyamadı — ölçüldü, aXet.code 1.5.1, 2026-11-19, iki koşu;
   yerleşik görev alt ajanının araç kümesi glob, grep, ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk
-  yok; `.xlsx`/`.pdf` denenmedi); `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
+  yok; `.xlsx`/`.pdf` denenmedi). İstek `.docx`/`.xlsx` ise `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
   (`.axet-code/tmp/<id>/INDEX.md` · `.axet-code/tmp/<id>/metin.md` · `.axet-code/tmp/<id>/gorsel-notlari.md` ·
-  `.axet-code/tmp/<id>/media/`; `references/traceability.md` §2-B). Paket görsel içeriyorsa brife şu satırı ekle:
-  "gorsel-notlari.md'deki her görseli `view` aracıyla aç ve notu görselle karşılaştır; görselde olup notta ya da
-  belgede olmayan alan/düğme/değer bulgudur; GÖRÜNTÜLENEMEZ yazanın `media/<kimlik>.kullanici.png` kopyası varsa onu
-  aç, yoksa ÖLÇÜLEMEDİ yaz" (doc-checklist AX-DOC-CR-07).
+  `.axet-code/tmp/<id>/media/`; `references/traceability.md` §2-B). İstek `.pdf` ise kaynak paketi YOKTUR
+  (`kaynak_paketi.py` `.pdf`'i desteklemez, çıkış 3): kullanıcıdan `.docx`/`.xlsx` hâlini iste ya da metni çıkarıp
+  dosyaya yaz, o dosyanın yolunu ver (metni modelle yeniden yazma; kaynak izi ÖLÇÜLEMEDİ kalır).
+  Paket görsel içeriyorsa brife şu satırı ekle:
+  "gorsel-notlari.md'deki her görseli `view` aracıyla aç ve notu (o görselin `<!-- gorulen:KG-nn -->` ile
+  `<!-- /gorulen:KG-nn -->` satırları arası) görselle karşılaştır; görselde olup notta ya da belgede olmayan
+  alan/düğme/değer bulgudur; GÖRÜNTÜLENEMEZ yazanın `media/<kimlik>.kullanici.png` kopyası varsa onu aç, yoksa
+  ÖLÇÜLEMEDİ yaz; PNG yedeği olan SVG'yi o PNG'den oku, SVG dosyasını `view` ile açma (SVG'de `view` ölçülmedi)"
+  (doc-checklist AX-DOC-CR-07).
   Brif yalnız metin ve görsel yolu taşır, betik koşturma adımı içermez: ajan türü verilmeden açılan yerleşik görev
   ajanında kabuk ve `read_docx` yoktur, `view` vardır (ölçüldü — aXet.code 1.5.1, 2026-11-19: araç kümesi glob, grep,
   ls, sourcegraph, view; motor logu tools=5) — `kaynak_paketi.py iz` çıktısını ana oturum koşar ve brife yapıştırır
