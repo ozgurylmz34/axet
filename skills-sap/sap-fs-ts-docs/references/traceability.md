@@ -87,15 +87,19 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   görsel `BİLGİ`'ye bağlanır, notu yine yazılır. Aynı kaynak, aynı km şeması ve aynı not biçimiyle yeniden `cikar`
   yazılmış notları silmez. Kaynak, km şeması ya da not biçimi değiştiyse ya da imza satırı silindiyse eski notlar
   `gorsel-notlari.<özet8|özet8-sema<n>|özet8-bicim<n>|imzasiz>.md` adıyla, o anki `media/<kimlik>.kullanici.png`
-  kopyaları da `kenar/<aynı ad>/` altına kenara alınır — kullanıcı PNG'si kaynağa bağlıdır, başka kaynağın aynı
+  kopyaları da (ad harfe duyarsız tanınır, `.PNG` dahil; ad korunur) `kenar/<aynı ad>/` altına kenara alınır — kullanıcı PNG'si kaynağa bağlıdır, başka kaynağın aynı
   kimlikli görseli onunla açılmaz. Var olan kenar kaydı ezilmez (sıra numarası eklenir) ve aynı kaynak yeniden
   çıkarılınca o kaynağın kenardaki notları PNG kopyalarıyla birlikte geri yüklenir; okunamayan (UTF-8 olmayan) kenar
-  dosyası atlanır ve UYARI yazılır. Eski işaretsiz not biçimi dönüştürülmez, kenara alınır (notu yeni iskelette
+  dosyası atlanır ve UYARI yazılır. Not dosyası silinip aynı kaynak yeniden çıkarılırsa `media/`'daki kullanıcı PNG'si
+  `kenar/kullanici-png.sahipsiz/` altına alınır ve kendiliğinden geri gelmez — PNG'yi elle `media/`'ya geri koy. Eski işaretsiz not biçimi dönüştürülmez, kenara alınır (notu yeni iskelette
   işaretlerin arasına taşı). **Not sınırı açık işarettir:** `iz` notu YALNIZ işaret çiftinin arasından okur; Markdown
   biçimine (başlık, yatay çizgi, alıntı, paragraf) bakılmaz. Bir görsel bölümünde işaretlerin dışında kalan metin
   sayılmaz ve UYARI'dır; yinelenen işaret çifti UYARI'dır (ilki sayılır); açılışı ya da kapanışı eksik, sırası bozuk
   ya da başka kimliğin kapanışıyla biten not **GÖRSEL NOTU BOZUK** = FAIL. Harf ya da rakam içermeyen not ("-", "?")
-  ve TODO, "(boş)", "doldurulacak", "n/a", "tbd", "yok", "x" (tek başına) boş sayılır.
+  ve TODO, "(boş)", "doldurulacak", "n/a", "tbd", "yok", "none", yalnız x'lerden oluşan dizgi gibi yer tutucular boş
+  sayılır; notun TAMAMI "okunamadı", "görülmedi", "henüz yok", "görsel açılamadı" gibi bir ifade ya da yalnız bir kimlikse
+  ("KG-02") not boştur (cümle içinde geçmesi notu boşaltmaz); işaretlerin arasına düşmüş iskelet satırı ("## KG-nn", "- Dosya: …", Görülen satırı), başlık, kapanmamış
+  yorum (`<!--`), boş kod çiti, HTML boşluğu/etiketi (`&nbsp;`, `<br>`) ve Markdown görsel bağlantısı not sayılmaz.
   **Görüntülenebilir biçimler** betikte tek listededir: görüntülenebilir biçim (`GORUNTULENEBILIR`); belge listeyi
   kopyalamaz, güncel liste INDEX'in "Görsel okuma" bölümündedir. Ölçüldü (aXet.code 1.5.1, 2026-11-19/20): `view`
   EMF/WMF/BMP açmaz; Word ekran görüntülerini sık sık EMF/WMF olarak gömer. Listede olmayan biçim INDEX'te ve notta
@@ -105,8 +109,8 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   Windows'ta ölçüldü). Kopya varken boş not FAIL'dir; notta PNG'den okunduğunu belirt. Paketin kendisi dönüştürmez:
   standart kütüphane EMF/WMF'yi PNG'ye çeviremez ve betiğe bağımlılık eklenmez. Word SVG'yi PNG yedeğiyle birlikte
   saklar (`svgBlip`): yedek pakette varsa SVG ÖLÇÜLEMEDİ değildir, o PNG'nin bölümünde okunur (SVG dosyası `view`
-  ile açılmaz — SVG'de `view` ölçülmedi). Sözlük/yapı taşı belgesinin görselleri (`word/glossary/`) belge gövdesinde
-  görünmez: KG sayılmaz, not istenmez, INDEX'in XML dışı üye listesinde bu notla durur. Görsel, klasör adından
+  ile açılmaz — SVG'de `view` ölçülmedi). Sözlük/yapı taşı belgesinin görselleri (`word/glossary/`), gövde parçaları
+  (belge, üst/altbilgi …) başvurmadıkça belge gövdesinde görünmez: KG sayılmaz, not istenmez, INDEX'in XML dışı üye listesinde bu notla durur. Görsel, klasör adından
   değil görsel ilişkisinden ve uzantısından tanınır; dosyaya bağlanamayan başvuru (`⟦… başvurusu çözülemedi⟧`) ve dışa
   bağlı görsel (`⟦harici görsel bağlantısı — pakette yok⟧`) INDEX'te ve `iz`'de UYARI'dır.
 - **İz tablosu** git'te izlenen yerde durur: kaynak paketinin yanında değil, FS'in SAP paket klasöründe
