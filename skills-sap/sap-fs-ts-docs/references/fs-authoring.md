@@ -108,8 +108,9 @@ her giriş kuralı TS'te ve build'de ayrı bir soru olarak geri gelir.
    İstek `.docx`/`.xlsx` ise girdi **kaynak paketidir** (`traceability.md` §2-B): metin mekanik çıkarılır, model kaynağı
    yeniden yazmaz (ölçüldü: yeniden yazılan kaynakta 21 test satırı 13'e indi, bir başlık düştü); gömülü HTML prototip
    ekranların kaynağıdır. Kaynaktaki ekran görüntüleri de kaynaktır ama içlerindeki metin mekanik çıkmaz: her görsel
-   `view` aracıyla açılır, gördüğün `gorsel-notlari.md`'de o görselin Görülen alanına yazılır (görsel başına bir
-   `edit`). Görüntülenemeyen biçimi (ör. `emf`) Pillow kuruluysa
+   `view` aracıyla açılır, gördüğün `gorsel-notlari.md`'de yalnız o görselin işaret satırlarının
+   (`<!-- gorulen:KG-nn -->` … `<!-- /gorulen:KG-nn -->`) arasına yazılır (görsel başına bir `edit`; işaret dışındaki
+   metin sayılmaz). Görüntülenemeyen biçimi (ör. `emf`) Pillow kuruluysa
    `python -c "from PIL import Image; Image.open('<görsel>').save('media/<kimlik>.kullanici.png')"` ile çevir, PNG'yi
    `view` ile aç; olmazsa kullanıcıdan PNG iste ve aynı ada kaydet (`traceability.md` §2-B "Görsel okuma").
    FS yazılırken her kaynak maddesi ve her görsel iz tablosunda bir kimliğe, `BİLGİ`'ye ya da gerekçeli

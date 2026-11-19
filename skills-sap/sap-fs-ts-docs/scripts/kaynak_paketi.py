@@ -83,7 +83,7 @@ GORUNTULENEBILIR = (".png", ".jpg", ".jpeg", ".gif")
 KULLANICI_PNG = "media/%s.kullanici.png"
 KULLANICI_PNG_RE = re.compile(r"^K[GN]-\d+\.kullanici\.png$")
 # Görülen alanında yer tutucu: harf/rakam içermeyen metin ya da (noktalama atılınca) bu sözcüklerden biri boş sayılır.
-YER_TUTUCU = ("todo", "boş", "doldurulacak")
+YER_TUTUCU = ("todo", "boş", "doldurulacak", "na", "tbd", "yok", "x")  # "n/a" noktalama atılınca "na"
 # Bu sayıyı aşan görsel + gömülü nesne INDEX'te UYARI alır (sert sınır değil; bağlam bütçesi ve not yükü için).
 COK_GORSEL = 500
 # Gömülü nesne (KN) bu uzantılardan biriyse görsel sayılır ve not bölümü alır (KG'lerin hepsi zaten alır).
@@ -158,10 +158,11 @@ SCOPE_CIKAR = (
 SCOPE_IZ = (
     "KAPSAM (SCOPE): kaynak_paketi iz — paketin her KM/KG/KN maddesi tabloda tam bir satırda mı, eşleme boş mu, "
     "kimlik belgede geçiyor mu, tablo pakette olmayan madde anıyor mu, tablodaki kaynak sha256'sı ve km şeması "
-    "paketinkiyle aynı mı; gorsel-notlari.md'de her görselin Görülen alanı dolu mu (görüntülenebilir biçimde ya da "
+    "paketinkiyle aynı mı; gorsel-notlari.md'de her görselin notu — YALNIZ `<!-- gorulen:KG-nn -->` ile "
+    "`<!-- /gorulen:KG-nn -->` işaret satırlarının arası — dolu mu (görüntülenebilir biçimde ya da "
     "`media/<kimlik>.kullanici.png` kopyası varken boşsa FAIL, okunabilir kopyası olmayan biçimde ÖLÇÜLEMEDİ; PNG "
-    "yedeği olan SVG yedeğin bölümünde okunur); not dosyasında tanınmayan başlık ya da yinelenen bölüm, çözülemeyen "
-    "ve dışa bağlı görsel başvurusu (UYARI); belgedeki FR/KR tabloda anılıyor mu, görsel notunda anılan kimlik o "
+    "yedeği olan SVG yedeğin bölümünde okunur); işareti eksik ya da sırası bozuk görsel (FAIL); işaret dışında kalan "
+    "metin ve yinelenen işaret çifti, çözülemeyen ve dışa bağlı görsel başvurusu (UYARI); belgedeki FR/KR tabloda anılıyor mu, görsel notunda anılan kimlik o "
     "görselin iz satırında var mı, paket boş mu, tabloda sha256 / km şeması var mı (UYARI). "
     "BAKMADIKLARI: eşlemenin ANLAMCA doğruluğu (KM metni gerçekten o FR'de karşılanmış mı), BİLGİ/KAPSAM-DIŞI "
     "işaretinin haklılığı, görsel notunun görselle UYUMU (notun gerçekten görseli anlattığı; `iz` yalnız dolu olduğunu "
@@ -217,18 +218,27 @@ def ozet(data: bytes) -> str:
 
 def guvenli_ad(ad: str, varsayilan: str = "dosya") -> str:
     ad = ad.replace("\\", "/").rsplit("/", 1)[-1]
-    ad = re.sub(r'[<>:"|?*\x00-\x1f]', "_", ad).strip(" .")
+    # Kabukta ya da tırnaklı komut satırında anlam taşıyan karakterler de (' " $ ` %) değiştirilir: ad iskeletteki
+    # çevirme komutuna gömülür (`it's.emf` SyntaxError, `$x.emf` PowerShell'de açılır).
+    ad = re.sub(r"""[<>:"'|?*$`%\x00-\x1f]""", "_", ad).strip(" .")
     return ad[:120] or varsayilan
 
 
 def gorunur(s: str) -> str:
     """Zip üye adı gibi kaynaktan gelen metni tek satırlık işaret/tablo hücresine yazılabilir yapar: denetim karakteri,
-    satır/paragraf ayracı, işaret parantezi ⟦⟧ ve ters tırnak kaçırılır (`\\n`, `\\u2028`, …). Sıradan ad değişmez."""
+    satır/paragraf ayracı, işaret parantezi ⟦⟧, ters tırnak ve ters bölünün kendisi kaçırılır (`\\n`, `\\u2028`,
+    `\\\\`, …) — kaçış birebirdir: iki farklı ad aynı metne düşmez. Sıradan ad değişmez."""
     def kac(ch: str) -> str:
-        if ch in "\n\r\t":
-            return {"\n": "\\n", "\r": "\\r", "\t": "\\t"}[ch]
+        if ch in "\n\r\t\\":
+            return {"\n": "\\n", "\r": "\\r", "\t": "\\t", "\\": "\\\\"}[ch]
         return "\\x%02x" % ord(ch) if ord(ch) < 0x100 else "\\u%04x" % ord(ch)
-    return "".join(kac(ch) if ch in "⟦⟧`" or unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") else ch for ch in s)
+    return "".join(kac(ch) if ch in "⟦⟧`\\" or unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") else ch
+                   for ch in s)
+
+
+def hucre(s: str) -> str:
+    """Markdown tablo hücresine yazılacak kaynak metni: `gorunur` + dikey çizgi kaçışı."""
+    return gorunur(s).replace("|", "\\|")
 
 
 def bosluksuz(s: str) -> int:
@@ -581,7 +591,8 @@ def muaf_nedeni(ad: str, metinler: dict[str, str] | None = None) -> str | None:
     return None
 
 
-XML_BOZUK_NOTU = "XML gibi başlıyor, ayrıştırılamadı — metni çıkarılmadı, kaynağı aç (%s)"
+XML_BOZUK_NOTU = ("XML gibi başlıyor, ayrıştırılamadı (%s) — metni düzenli ifadeyle geri düşüşe alındı; bu parçayı "
+                  "kullanıcıyla doğrula")
 IKILI_ATLANDI_NOTU = "ÖLÇÜLEMEDİ — boyut: %s; okunmadı"
 
 
@@ -591,6 +602,8 @@ def ikili_atlanma_nedeni(n: int) -> str:
 
 
 def xml_disi_notu(ad: str) -> str:
+    if ad.startswith("word/glossary/") and Path(ad).suffix.lower() in GORSEL_UZANTILARI:
+        return "sözlük/yapı taşı görseli — belge gövdesinde görünmez (KG sayılmaz, not istenmez)"
     if re.search(r"(^|/)fonts/[^/]+\.odttf$", ad, re.I):
         return "gömülü yazı tipi (karartılmış yazı tipi dosyası; metin taşımaz)"
     if re.search(r"(^|/)vbaProject\.bin$", ad, re.I):
@@ -606,9 +619,9 @@ def xml_uyeleri(z: zipfile.ZipFile, atla: set[str] | frozenset = frozenset(),
                 disi: list[dict] | None = None) -> dict[str, str]:
     """Zip'teki HER üye gezilir (parça listesi yok); XML olanlar {ad: metin}. Dosya olarak çıkan üyeler (görsel,
     gömülü, altChunk) ve boyut sınırıyla atlananlar hariç. XML olmayan üye sessizce atlanmaz: `disi` verilirse
-    {parca, boyut, not} olarak eklenir (INDEX ve paket.json listeler). XML gibi başlayıp ayrıştırılamayan üye de oraya
-    gider (düzenli ifadeyle yarım okunmaz). Boyut sınırıyla atlanan XML olmayan üye (`atla` sözlükse bayt sayısıyla)
-    ÖLÇÜLEMEDİ notuyla listelenir."""
+    {parca, boyut, not} olarak eklenir (INDEX ve paket.json listeler). XML gibi başlayıp ayrıştırılamayan üye hem oraya
+    yazılır hem metniyle döner (evrene girer; geri düşüş düzenli ifadeyle düz metin düğümlerini yazar). Boyut sınırıyla
+    atlanan XML olmayan üye (`atla` sözlükse bayt sayısıyla) ÖLÇÜLEMEDİ notuyla listelenir."""
     dosya = dosya_uyeleri(z)
     haric = _afchunk_hedefleri(z)
     out: dict[str, str] = {}
@@ -626,10 +639,9 @@ def xml_uyeleri(z: zipfile.ZipFile, atla: set[str] | frozenset = frozenset(),
         if s is not None:
             try:
                 ET.fromstring(veri)
-            except ET.ParseError as exc:
+            except ET.ParseError as exc:  # listelenir VE metni evrende kalır (geri düşüş düz düğümlerle yazar)
                 if disi is not None:
                     disi.append({"parca": ad, "boyut": len(veri), "not": XML_BOZUK_NOTU % exc})
-                continue
             out[ad] = s
         elif disi is not None:
             disi.append({"parca": ad, "boyut": len(veri), "not": xml_disi_notu(ad)})
@@ -650,7 +662,8 @@ def _gorsel_uyeleri(z: zipfile.ZipFile, kok: str) -> list[str]:
             except ET.ParseError:
                 continue
             out |= {h for tip, h in hedefler if tip.lower() == "image" and h in adlar}
-    return sorted(a for a in out if not a.startswith(kok + "/embeddings/"))
+    # word/glossary/: yapı taşı (sözlük) belgesi — görselleri belge gövdesinde görünmez; XML dışı üye olarak listelenir.
+    return sorted(a for a in out if not a.startswith((kok + "/embeddings/", kok + "/glossary/")))
 
 
 def dosya_uyeleri(z: zipfile.ZipFile) -> frozenset:
@@ -844,7 +857,9 @@ def parca_artigi(c: "Cikti", parca: str, kok, tuk: set[int]) -> None:
 def geri_dusus_yaz(c: "Cikti", z: zipfile.ZipFile) -> None:
     """Yapılandırılmamış her XML parçası (muaf değil) + yapılandırılmış parçaların artığı → metin.md sonunda ham
     bölüm. Parça listesi YOKTUR: zip'teki her XML üyesi gezilir; yapılandırılmış çıkarımın işlemediği her parça buraya
-    gelir. Ayrıştırılamayan parça düz metin düğümleriyle yazılır ve INDEX'te ayrıca anılır."""
+    gelir. Ayrıştırılamayan parça (XML gibi başlayan ama ET'nin okuyamadığı) düzenli ifadeyle düz metin düğümleri olarak
+    yazılır — ilk etiketten önceki ve sonuncudan sonraki metin dahil — ve INDEX'te "XML gibi başlıyor" notuyla ayrıca
+    listelenir."""
     metinler = xml_uyeleri(z, set(c.atlanan))
     for ad in sorted(metinler):
         if ad in c.artik or muaf_nedeni(ad, metinler):
@@ -1118,7 +1133,7 @@ def docx_cikar(z: zipfile.ZipFile, atla: dict[str, int] | None = None) -> Cikti:
                 out.append("⟦%s%02d sonraki satırda⟧" % (harf, nesne_by[hedef][1]))
                 sonra.append(hedef)
             else:
-                out.append("⟦%s başvurusu çözülemedi: %s⟧" % (tur, rid))
+                out.append("⟦%s başvurusu çözülemedi: %s⟧" % (tur, gorunur(rid)))
         return " ".join(dict.fromkeys(out)), list(dict.fromkeys(sonra))
 
     sayac = {"tablo": 0}
@@ -1713,14 +1728,20 @@ def boyut_denetle(z: zipfile.ZipFile) -> dict[str, int]:
     for bilgi in z.infolist():
         if bilgi.is_dir():
             continue
-        n, ilk = 0, b""
+        n, ilk, bom = 0, b"", b""
         try:
             with z.open(bilgi) as f:
                 while True:
                     parca = f.read(OKUMA_PARCASI)
                     if not parca:
                         break
-                    ilk = ilk or parca
+                    if not ilk:  # sınıflama ilk BOŞLUK OLMAYAN parçaya göre (baştaki boşluk parçası ikili sayılmaz);
+                        # boşluk parçaları biriktirilmez (bellek/zaman sabit), UTF-16 BOM'u sonraki parçaya taşınır
+                        if n == 0 and parca[:2] in (b"\xff\xfe", b"\xfe\xff"):
+                            bom = parca[:2]
+                        deneme = parca if n == 0 else bom + parca
+                        if _xml_cozumle(deneme).strip():
+                            ilk = deneme
                     n += len(parca)
                     if n > MAX_UYE:
                         break
@@ -1751,16 +1772,24 @@ def boyut_denetle(z: zipfile.ZipFile) -> dict[str, int]:
 
 # ── BÖLÜM: görsel notları (model görseli `view` ile okur, `iz` boş notu sayar) ────────────────────────────────────
 HARICI_GORSEL = "⟦harici görsel bağlantısı — pakette yok⟧"
-COZULEMEDI_RE = re.compile(r"⟦(\w+) başvurusu çözülemedi: [^⟧]*⟧")
+COZULEMEDI_RE = re.compile(r"⟦(\w+) başvurusu çözülemedi(?::[^⟧]*)?⟧")
 GORSEL_IMLEC = re.compile(r"⟦(K[GN]-\d+) (?:görsel|gömülü)")
-NOT_BOLUM_RE = re.compile(r"^##[ \t]+(K[GN]-\d+)(?![\w-])")  # "## KG-02" ya da "## KG-02 — Onay ekranı"
-BASLIK_SATIRI_RE = re.compile(r"^#{1,6}(?:[ \t]|$)")
-# Görülen alanı bir sonraki başlıkta ya da iskeletin alan satırında biter (bölüm sonuna kadar DEĞİL): sona eklenen
-# serbest bir başlık ya da sonraki bölümün iskeleti boş notu "dolu" göstermesin.
-ISKELET_ALANI_RE = re.compile(r"^- (?:Dosya|Kaynak parçası|Konum|Biçim):")
-GORULEN_RE = re.compile(r"^- Görülen:(.*)$")
 YORUM_RE = re.compile(r"<!--.*?-->", re.S)
 PILLOW_KOMUTU = '''python -c "from PIL import Image; Image.open('%s').save('%s')"'''
+# Görülen notu AÇIK SINIRLAYICI arasında durur: `<!-- gorulen:KG-02 -->` … `<!-- /gorulen:KG-02 -->`. `iz` notu YALNIZ
+# bu iki satırın arasından okur; neyin alanı "bitirdiği" Markdown biçiminden tahmin edilmez (başlık, yatay çizgi,
+# alıntı, düz paragraf… hepsi işaret dışında kalır ve sayılmaz). İşaret eksik/sırası bozuksa o görselin notu BOZUK.
+NOT_BICIMI = 2  # 1 = işaretsiz "- Görülen:" alanı (yalnız bu geliştirme dalında vardı); 2 = işaret çifti
+ISARET_RE = re.compile(r"^[ \t]*<!--[ \t]*(/?)gorulen:(K[GN]-\d+)[ \t]*-->[ \t]*$")
+GORULEN_SATIRI = "- Görülen (yalnız aşağıdaki iki işaret satırının ARASINA yaz):"
+# İşaret dışında kalan ve metin SAYILMAYAN iskelet satırları (bölüm başlığı + alan satırları + Görülen satırı aynen)
+ISKELET_SATIRI_RE = re.compile(r"^(?:##[ \t]+K[GN]-\d+\b.*|- (?:Dosya|Kaynak parçası|Konum|Biçim): .*|%s)$"
+                               % re.escape(GORULEN_SATIRI))
+BOLUM_RE = re.compile(r"^##[ \t]+(K[GN]-\d+)\b")
+
+
+def isaret(kid: str, kapanis: bool = False) -> str:
+    return "<!-- %sgorulen:%s -->" % ("/" if kapanis else "", kid)
 
 
 def gorsel_konumlari(satirlar: list[str]) -> dict[str, list[str]]:
@@ -1820,22 +1849,36 @@ def gorsel_listesi(c: "Cikti") -> list[dict]:
 
 
 def _not_imzasi(veri: bytes) -> str:
-    return "<!-- kaynak_paketi görsel notları · sha256 %s · km şeması %d -->" % (ozet(veri)[:16], KM_SEMASI)
+    return "<!-- kaynak_paketi görsel notları · sha256 %s · km şeması %d · not biçimi %d -->" % (
+        ozet(veri)[:16], KM_SEMASI, NOT_BICIMI)
 
 
-def _kenar_yolu(hedef: Path, etiket: str) -> Path:
-    """Kenara alınacak not dosyasının BOŞ yolu: aynı etiketli dosya varsa sıra numarası eklenir — hiçbiri ezilmez."""
-    yol, n = hedef / ("gorsel-notlari.%s.md" % etiket), 2
-    while yol.exists():
-        yol, n = hedef / ("gorsel-notlari.%s.%d.md" % (etiket, n)), n + 1
-    return yol
+def _bos_ad(hedef: Path, kok: str) -> str:
+    """Kenara alma adı (`<kok>[.n]`): ne `<ad>.md` dosyası ne `kenar/<ad>/` klasörü var — hiçbir kenar kaydı ezilmez."""
+    ad, n = kok, 2
+    while (hedef / (ad + ".md")).exists() or (hedef / "kenar" / ad).exists():
+        ad, n = "%s.%d" % (kok, n), n + 1
+    return ad
+
+
+def _kopyalari_tasi(kaynak: Path, hedef: Path) -> int:
+    """`<kimlik>.kullanici.png` kopyalarını taşır (notlarla aynı kaderi paylaşırlar: kaynak değişince kenara gider,
+    notlar geri yüklenince geri gelir). Taşınan sayısını döner."""
+    n = 0
+    if kaynak.is_dir():
+        for p in sorted(kaynak.iterdir()):
+            if p.is_file() and KULLANICI_PNG_RE.match(p.name):
+                hedef.mkdir(parents=True, exist_ok=True)
+                p.replace(hedef / p.name)
+                n += 1
+    return n
 
 
 def _bicim_satiri(g: dict) -> str:
     if g["goruntulenebilir"]:
         return "%s — görüntülenebilir: `view` ile aç" % g["bicim"]
     if g.get("yedek"):
-        return ("%s — PNG yedeği %s üzerinden okunur: notu %s bölümüne yaz (bu bölüm boş kalabilir)"
+        return ("%s — PNG yedeği %s üzerinden okunur: notu %s bölümüne yaz (bu bölümün işaretleri arası boş kalabilir)"
                 % (g["bicim"], g["yedek"], g["yedek"]))
     png = KULLANICI_PNG % g["kimlik"]
     if g["neden"] == "ÖLÇÜLEMEDİ — boyut":
@@ -1845,40 +1888,74 @@ def _bicim_satiri(g: dict) -> str:
 
 
 def gorsel_notlari_yaz(hedef: Path, kaynak: Path, veri: bytes, gorseller: list[dict]) -> str:
-    """`gorsel-notlari.md` iskeleti. Aynı kaynak + aynı şemayla yeniden çıkarımda var olan dosya KORUNUR (modelin
-    yazdığı notlar silinmez). Başka kaynağın/şemanın ya da imzasız notlar `gorsel-notlari.<etiket>[.n].md` adıyla
-    kenara alınır — var olan kenar dosyası EZİLMEZ; kenardaki bu kaynağa ait notlar geri yüklenir (A→B→A kaybetmez)."""
+    """`gorsel-notlari.md` iskeleti. Aynı kaynak + aynı km şeması + aynı not biçimiyle yeniden çıkarımda var olan dosya
+    KORUNUR. Değilse (başka kaynak/şema, eski not biçimi, imzasız) notlar `gorsel-notlari.<etiket>[.n].md` adıyla, o anki
+    `media/<kimlik>.kullanici.png` kopyaları da `kenar/<aynı ad>/` altına kenara alınır — var olan kenar kaydı EZİLMEZ.
+    Kenarda bu kaynağın imzasını taşıyan notlar varsa kopyalarıyla birlikte geri yüklenir (A→B→A ne notu ne PNG'yi
+    kaybeder, C'nin KG-02'si A'nın PNG'siyle açılmaz). Eski biçim (işaretsiz) dönüştürülmez, kenara alınır: biçim yalnız
+    yayınlanmamış geliştirme dalında vardı ve dönüştürmek, kaldırılan sezgisel sınırı yeniden kullanmak olurdu."""
     yol = hedef / NOT_DOSYASI
     imza = _not_imzasi(veri)
     durum: list[str] = []
     if yol.is_file():
-        eski = yol.read_text(encoding="utf-8")
+        eski = yol.read_bytes().decode("utf-8", "replace")
         if imza in eski:
             return "korundu (aynı kaynak, aynı km şeması — yazılmış notlar silinmedi)"
         m = re.search(r"sha256 ([0-9a-f]{16}) · km şeması (\d+)", eski)
         if not m:
             etiket, neden = "imzasiz", "imza yok — hangi kaynağa ait olduğu belirlenemedi"
-        elif m.group(1) == ozet(veri)[:16]:
+        elif m.group(1) != ozet(veri)[:16]:
+            etiket, neden = m.group(1)[:8], "başka kaynağa ait"
+        elif int(m.group(2)) != KM_SEMASI:
             etiket, neden = "%s-sema%s" % (m.group(1)[:8], m.group(2)), "aynı kaynak, başka km şeması"
         else:
-            etiket, neden = m.group(1)[:8], "başka kaynağa ait"
-        kenar = _kenar_yolu(hedef, etiket)
-        yol.replace(kenar)
-        durum.append("önceki notlar (%s) kenara alındı → %s" % (neden, kenar.name))
-    adaylar = sorted((p for p in hedef.glob("gorsel-notlari.*.md") if p.is_file()
-                      and imza in p.read_text(encoding="utf-8")), key=lambda p: (p.stat().st_mtime, p.name))
+            b = re.search(r"not biçimi (\d+)", eski)
+            etiket, neden = ("%s-bicim%s" % (m.group(1)[:8], b.group(1) if b else "1"),
+                             "aynı kaynak, başka not biçimi (1 = işaretsiz) — notları yeni iskelette işaretlerin "
+                             "arasına taşı")
+        ad = _bos_ad(hedef, "gorsel-notlari.%s" % etiket)
+        yol.replace(hedef / (ad + ".md"))
+        n = _kopyalari_tasi(hedef / "media", hedef / "kenar" / ad)
+        durum.append("önceki notlar (%s) kenara alındı → %s.md%s" % (
+            neden, ad, "; %d kullanıcı PNG'si → kenar/%s/" % (n, ad) if n else ""))
+    else:
+        ad = _bos_ad(hedef, "kullanici-png.sahipsiz")
+        n = _kopyalari_tasi(hedef / "media", hedef / "kenar" / ad)
+        if n:
+            durum.append("not dosyası olmadan bulunan %d kullanıcı PNG'si kenara alındı → kenar/%s/ (hangi kaynağa ait "
+                         "olduğu bilinmiyor)" % (n, ad))
+    adaylar = []
+    for p in sorted(hedef.glob("gorsel-notlari.*.md")):
+        if not p.is_file():
+            continue
+        try:
+            icerik = p.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError) as exc:
+            durum.append("UYARI: %s okunamadı (%s) — geri yükleme adayı sayılmadı" % (p.name, type(exc).__name__))
+            continue
+        if imza in icerik:
+            adaylar.append(p)
     if adaylar:
-        adaylar[-1].replace(yol)
-        durum.append("bu kaynağın kenardaki notları geri yüklendi ← %s" % adaylar[-1].name)
+        sec = max(adaylar, key=lambda p: (p.stat().st_mtime, p.name))
+        sec.replace(yol)
+        n = _kopyalari_tasi(hedef / "kenar" / sec.stem, hedef / "media")
+        try:
+            (hedef / "kenar" / sec.stem).rmdir()
+        except OSError:
+            pass
+        durum.append("bu kaynağın kenardaki notları geri yüklendi ← %s%s" % (
+            sec.name, " (+%d kullanıcı PNG'si)" % n if n else ""))
         return "; ".join(durum)
     L = ["# Görsel notları — %s" % kaynak.name, imza, "",
-         "> Her görseli `view` aracıyla aç ve gördüğünü kendi bölümünün **Görülen** alanına yaz: ekran ya da pencere adı,",
-         "> alanlar, düğmeler, tablo sütunları, değerler, okunabilen her metin. FS'te karşılığı olan her öğenin yanına belge",
-         "> kimliğini yaz (`→ FR-003`); o görselin iz tablosu satırı da aynı kimliği taşır. Görsel başına AYRI bir `edit`",
-         "> (uzun içerik bölüm bölüm). Bölüm başlığını silme, araya başlık (`#`) ekleme: Görülen alanı ilk başlıkta biter.",
+         "> Her görseli `view` aracıyla aç ve gördüğünü YALNIZ o görselin iki işaret satırının ARASINA yaz",
+         "> (`<!-- gorulen:KG-nn -->` ile `<!-- /gorulen:KG-nn -->`): ekran ya da pencere adı, alanlar, düğmeler, tablo",
+         "> sütunları, değerler, okunabilen her metin — madde listesi ve tablo da olur. FS'te karşılığı olan her öğenin",
+         "> yanına belge kimliğini yaz (`→ FR-003`); o görselin iz tablosu satırı da aynı kimliği taşır. Görsel başına AYRI",
+         "> bir `edit`. İşaret satırlarını silme ya da değiştirme: `kaynak_paketi.py iz` notu YALNIZ işaretlerin arasından",
+         "> okur; işaret dışındaki metin sayılmaz (UYARI), işareti eksik ya da sırası bozuk görsel FAIL'dir.",
          "> GÖRÜNTÜLENEMEZ biçimi `media/<kimlik>.kullanici.png` adına çevir (Pillow) ya da kullanıcıdan o adla PNG iste;",
-         "> PNG'den okuduğunu notta yaz. `kaynak_paketi.py iz`: görüntülenebilir görselin (ya da kullanıcı PNG'si olanın)",
-         "> Görülen alanı boşsa FAIL, okunabilir kopyası olmayanınki boşsa ÖLÇÜLEMEDİ.",
+         "> PNG'den okuduğunu notta yaz. `iz`: görüntülenebilir görselin (ya da kullanıcı PNG'si olanın) notu boşsa FAIL,",
+         "> okunabilir kopyası olmayanınki boşsa ÖLÇÜLEMEDİ.",
          ""]
     if not gorseller:
         L.append("(Bu kaynakta okunacak görsel yok.)")
@@ -1889,7 +1966,7 @@ def gorsel_notlari_yaz(hedef: Path, kaynak: Path, veri: bytes, gorseller: list[d
               "- Konum: %s" % (", ".join(g["konum"]) + " (metin.md'de işaretin durduğu satır)" if g["konum"]
                                else "metinde konumu yok (xlsx, üst/altbilgi ya da başka parçadan bağlı)"),
               "- Biçim: %s" % _bicim_satiri(g),
-              "- Görülen:", ""]
+              GORULEN_SATIRI, isaret(g["kimlik"]), "", isaret(g["kimlik"], True), ""]
     yol.write_text("\n".join(L).rstrip() + "\n", encoding="utf-8")
     durum.append("iskelet yazıldı")
     return "; ".join(durum)
@@ -1901,50 +1978,57 @@ def gorulen_bos(metin: str) -> bool:
     return net == "" or net in YER_TUTUCU
 
 
-def _gorulen(satirlar: list[str]) -> str:
-    for i, s in enumerate(satirlar):
-        m = GORULEN_RE.match(s)
-        if m:
-            alan = [m.group(1)]
-            for t in satirlar[i + 1:]:
-                if ISKELET_ALANI_RE.match(t):
-                    break
-                alan.append(t)
-            metin = "\n".join(alan).strip()
-            return "" if gorulen_bos(metin) else metin
-    return ""
-
-
-def gorsel_notlarini_oku(paket: Path) -> tuple[dict[str, str], list[str]] | None:
-    """({kimlik: Görülen alanının metni}, yapı uyarıları); dosya yoksa None. Yorumlar ayıklanır. Bölüm başlığı
-    `## KG-nn` (arkasında metin olabilir); Görülen alanı '- Görülen:' satırından bir sonraki başlığa ya da iskelet alan
-    satırına kadardır. Tanınmayan başlık (ilk görsel bölümünden sonra) ve yinelenen kimlik UYARI'dır."""
+def gorsel_notlarini_oku(paket: Path) -> tuple[dict[str, str], list[str], dict[str, str]] | None:
+    """(notlar {kimlik: işaretler arası metin, yer tutucu boş}, uyarılar, bozuk {kimlik: neden}); dosya yoksa None.
+    Not YALNIZ `<!-- gorulen:K -->` ile `<!-- /gorulen:K -->` satırları arasından okunur (yorumlar ayıklanır). Kapanmayan
+    açılış, açılışsız ya da başka kimliğin kapanışı → o kimlik BOZUK. Yinelenen işaret çifti ve bir görsel bölümünde
+    işaretlerin dışında kalan metin (iskelet satırları hariç) UYARI'dır — sayılmaz, FAIL'i etkilemez."""
     yol = paket / NOT_DOSYASI
     if not yol.is_file():
         return None
-    metin = YORUM_RE.sub("", yol.read_text(encoding="utf-8"))
-    bolumler: list[tuple[str | None, str, list[str]]] = []
-    for satir in metin.splitlines():
-        if BASLIK_SATIRI_RE.match(satir):
-            m = NOT_BOLUM_RE.match(satir)
-            bolumler.append((m.group(1) if m else None, satir.strip(), []))
-        elif bolumler:
-            bolumler[-1][2].append(satir)
-    out: dict[str, str] = {}
+    notlar: dict[str, str] = {}
+    bozuk: dict[str, str] = {}
     uyari: list[str] = []
-    gorsel_basladi = False
-    for kimlik, baslik, satirlar in bolumler:
-        if kimlik is None:
-            if gorsel_basladi:
-                uyari.append("tanınmayan başlık `%s` — önceki bölümün Görülen alanını keser; notu kendi bölümüne taşı, "
-                             "başlığı kaldır" % gorunur(baslik[:80]))
+    dis: dict[str, list[int]] = {}
+    acik, govde, bolum, kapanan = None, [], None, set()
+    for no, s in enumerate(yol.read_bytes().decode("utf-8", "replace").splitlines(), 1):
+        m = ISARET_RE.match(s)
+        if m is None:
+            if acik:
+                govde.append(s)
+                continue
+            b = BOLUM_RE.match(s)
+            if b:
+                bolum = b.group(1)
+            elif bolum and YORUM_RE.sub("", s).strip() and (bolum in kapanan or not ISKELET_SATIRI_RE.match(s)):
+                # iskelet satırı yalnız işaret çiftinden ÖNCE muaftır; çift kapandıktan sonra gelen her metin dışarıdadır
+                dis.setdefault(bolum, []).append(no)
             continue
-        gorsel_basladi = True
-        if kimlik in out:
-            uyari.append("%s bölümü birden fazla — yalnız ilki sayıldı; fazlasını birleştir" % kimlik)
+        kapanis, kid = m.group(1) == "/", m.group(2)
+        if not kapanis:
+            if acik:
+                bozuk.setdefault(acik, "kapanış işareti yok (satır %d'de `%s` açıldı)" % (no, isaret(kid)))
+            acik, govde = kid, []
             continue
-        out[kimlik] = _gorulen(satirlar)
-    return out, uyari
+        if acik != kid:
+            bozuk.setdefault(kid, "satır %d: `%s` açılışsız ya da sırası bozuk" % (no, isaret(kid, True)))
+            if acik:
+                bozuk.setdefault(acik, "kapanış işareti yok (satır %d'de başka kimliğin kapanışı)" % no)
+            acik = None
+            continue
+        acik = None
+        kapanan.add(kid)
+        metin = YORUM_RE.sub("", "\n".join(govde)).strip()
+        if kid in notlar:
+            uyari.append("%s işaret çifti birden fazla — yalnız ilki sayıldı; fazlasını ilkine taşı" % kid)
+        else:
+            notlar[kid] = "" if gorulen_bos(metin) else metin
+    if acik:
+        bozuk.setdefault(acik, "kapanış işareti yok (dosya sonu)")
+    for kid, satirlar in sorted(dis.items()):
+        uyari.append("%s bölümünde işaretlerin dışında metin (satır %s) — sayılmaz; notu `%s` ile `%s` arasına taşı"
+                     % (kid, ", ".join(map(str, satirlar[:5])), isaret(kid), isaret(kid, True)))
+    return notlar, uyari, bozuk
 
 
 def varsayilan_id(kaynak: Path, veri: bytes) -> str:
@@ -1987,7 +2071,8 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
     L.append("| geri düşüş maddesi (bilgi; bağımsız karşılığı parça hesabıdır) | — | %d | — |" % paket_say.get("km_geri", 0))
     L += ["", "## Parça hesabı (zip'teki her XML parçası; evren − yok sayılan = yapılandırılmış + geri düşüş)", "",
           "| Parça | Sınıf | Evren | Yok sayılan | Yapılandırılmış | Geri düşüş |", "|---|---|---|---|---|---|"]
-    L += ["| `%s` | %s | %d | %d | %d | %d |" % (r["parca"], r["sinif"], r["evren"], r["yok"], r["yapi"], r["geri"])
+    L += ["| `%s` | %s | %d | %d | %d | %d |" % (r["parca"].replace("|", "\\|"), r["sinif"], r["evren"], r["yok"],
+                                                    r["yapi"], r["geri"])
           for r in parca]
     if c.geri:
         L += ["", "**Geri düşüşe giden parçalar** (yapılandırılmış çıkarım bu metni tanımıyor; metni metin.md sonunda "
@@ -2009,9 +2094,9 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
             if g and g.get("yedek"):
                 return "görsel (%s; PNG yedeği %s)" % (g["bicim"], g["yedek"])
             return "görsel (%s)" % g["bicim"] if g and g["goruntulenebilir"] else (g["neden"] if g else "görsel")
-        L += ["| %s | `%s` | `media/%s` | %s |" % (k, gorunur(a), gorunur(d), gorsel_turu(k, a))
+        L += ["| %s | `%s` | `media/%s` | %s |" % (k, hucre(a), hucre(d), gorsel_turu(k, a))
               for k, a, d in c.gorseller]
-        L += ["| %s | `%s` | `gomulu/%s` | %s%s |" % (k, gorunur(a), gorunur(d), t, (" · " + gb[k]["neden"])
+        L += ["| %s | `%s` | `gomulu/%s` | %s%s |" % (k, hucre(a), hucre(d), t, (" · " + gb[k]["neden"])
                                                        if k in gb and gb[k]["neden"] and not t.startswith("ÖLÇÜLEMEDİ")
                                                        else "")
               for k, a, d, _i, t in c.gomululer]
@@ -2024,8 +2109,10 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
                   (" (" + ", ".join("%s %s" % (g["kimlik"], g["neden"]) for g in olc) + ")") if olc else "",
                   c.not_durumu),
               "- Mekanik çıkarım görselin İÇİNDEKİ metni almaz. Her görseli `view` aracıyla aç, gördüğünü (ekran adı, "
-              "alanlar, düğmeler, değerler, okunabilen metin) `%s`'de kendi bölümünün **Görülen** alanına yaz — görsel "
-              "başına bir `edit`. `kaynak_paketi.py iz` görüntülenebilir görselin boş notunu FAIL sayar." % NOT_DOSYASI,
+              "alanlar, düğmeler, değerler, okunabilen metin) `%s`'de YALNIZ o görselin `<!-- gorulen:KG-nn -->` ile "
+              "`<!-- /gorulen:KG-nn -->` işaret satırlarının arasına yaz — görsel başına bir `edit`. `kaynak_paketi.py "
+              "iz` notu yalnız işaretlerin arasından okur; görüntülenebilir görselin boş notunu ve işareti bozuk notu "
+              "FAIL sayar." % NOT_DOSYASI,
               "- Görüntülenebilir biçimler: %s. Diğerleri GÖRÜNTÜLENEMEZ (ör. `emf`): Pillow kuruluysa `%s` adına çevir, "
               "olmazsa kullanıcıdan PNG iste ve aynı ada kaydet — kopya varken boş not FAIL'dir. Paket dönüştürmez (ek "
               "bağımlılık yok). Kopyası olmayanın boş notu `iz`'de ÖLÇÜLEMEDİ'dir, PASS onu kapsamaz. SVG'nin PNG yedeği "
@@ -2192,8 +2279,8 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
     # görselden gereksinim türediğinin mekanik işareti nottaki `→ FR-nnn` kimliğidir (iskelet bunu ister).
     gorseller = meta.get("gorsel")
     okuma = gorsel_notlarini_oku(paket)
-    notlar, not_yapi = okuma if okuma is not None else (None, [])
-    gorsel_sorun, okunmadi, olculemedi, not_kimlik = [], [], [], []
+    notlar, not_yapi, bozuk = okuma if okuma is not None else (None, [], {})
+    gorsel_sorun, okunmadi, olculemedi, not_kimlik, not_bozuk = [], [], [], [], []
     # Görüntülenemeyen görselin okunabilir kopyası (`media/<kimlik>.kullanici.png`) varsa görsel okunabilir sayılır.
     kopyali = {g["kimlik"] for g in gorseller or [] if not g["goruntulenebilir"]
                and (paket / (KULLANICI_PNG % g["kimlik"])).is_file()}
@@ -2202,9 +2289,18 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
                             "yeniden çıkar")
     elif gorseller and notlar is None:
         gorsel_sorun.append("`%s` yok — paketi yeniden çıkar, görselleri `view` ile okuyup notlara yaz" % NOT_DOSYASI)
+    if notlar is not None:
+        bilinen = {g["kimlik"] for g in gorseller or []}
+        for k, neden in sorted(bozuk.items()):
+            not_bozuk.append("%s: %s" % (k, neden) if k in bilinen else "%s (pakette böyle görsel yok): %s" % (k, neden))
+        for k in sorted(bilinen - set(notlar) - set(bozuk)):
+            not_bozuk.append("%s: işaret çifti yok (`%s` … `%s`) — iskelet satırları silinmiş" % (
+                k, isaret(k), isaret(k, True)))
     for g in (gorseller or []) if notlar is not None else []:
         k = g["kimlik"]
-        gorulen = notlar.get(k, "")
+        if k in bozuk or k not in notlar:
+            continue
+        gorulen = notlar[k]
         if not gorulen:
             if g["goruntulenebilir"]:
                 okunmadi.append(k)
@@ -2253,6 +2349,7 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
             ("BAŞKA KAYNAĞIN TABLOSU — tablodaki sha256 paketin kaynağıyla uyuşmuyor", sha_yanlis, fail),
             ("NUMARALANDIRMA ŞEMASI FARKLI — paketi yeniden çıkar, tabloyu yeniden eşle", sema_farkli, fail),
             ("GÖRSEL NOTLARI DENETLENEMEDİ", gorsel_sorun, fail),
+            ("GÖRSEL NOTU BOZUK — işaret eksik ya da sırası bozuk; not okunamadı", not_bozuk, fail),
             ("GÖRSEL OKUNMADI", okunmadi, fail),
             ("GÖRSEL ÖLÇÜLEMEDİ", olculemedi, olcu),
             ("UYARI boş paket", bos_paket, uyari),
@@ -2274,7 +2371,11 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
         if liste:
             sinif.append(baslik)
     if okunmadi:
-        L.append("  → `%s`'de bu görsellerin Görülen alanı boş: görseli `view` ile aç, gördüğünü yaz" % NOT_DOSYASI)
+        L.append("  → `%s`'de bu görsellerin işaretleri arası boş: görseli `view` ile aç, gördüğünü `%s` ile `%s` "
+                 "arasına yaz" % (NOT_DOSYASI, isaret("<kimlik>"), isaret("<kimlik>", True)))
+    if not_bozuk:
+        L.append("  → işaret satırlarını iskeletteki biçimiyle geri koy (her görselde bir `%s` ve onu izleyen bir `%s`); "
+                 "işaret dışındaki metin sayılmaz" % (isaret("<kimlik>"), isaret("<kimlik>", True)))
     if olculemedi:
         L.append("  → görüntülenemeyen biçim: Pillow ile `%s` adına çevir ya da kullanıcıdan o adla PNG iste; okununca "
                  "notu yaz (PNG'den okunduğunu belirt)" % (KULLANICI_PNG % "<kimlik>"))
@@ -2342,8 +2443,8 @@ def cikar(a: argparse.Namespace) -> int:
     print(f"PAKET: {hedef.as_posix()}")
     if c.gorsel_bilgi:
         olc = [g["kimlik"] + " " + g["neden"] for g in c.gorsel_bilgi if olculemez(g)]
-        print("GÖRSEL NOTLARI: %s — %d görsel%s; %s. Her görseli `view` ile aç, Görülen alanına yaz (görsel başına bir "
-              "edit); `iz` boş notu FAIL sayar." % ((hedef / NOT_DOSYASI).as_posix(), len(c.gorsel_bilgi),
+        print("GÖRSEL NOTLARI: %s — %d görsel%s; %s. Her görseli `view` ile aç, notunu yalnız o görselin işaret "
+              "satırlarının arasına yaz (görsel başına bir edit); `iz` boş ya da işareti bozuk notu FAIL sayar." % ((hedef / NOT_DOSYASI).as_posix(), len(c.gorsel_bilgi),
                                                    (" (ÖLÇÜLEMEDİ: " + ", ".join(olc) + " — Pillow ile `"
                                                     + KULLANICI_PNG % "<kimlik>" + "` adına çevir ya da kullanıcıdan "
                                                     "PNG iste)") if olc else "", c.not_durumu))

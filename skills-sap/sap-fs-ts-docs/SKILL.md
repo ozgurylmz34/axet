@@ -47,7 +47,9 @@ description: >
    İstek **`.docx`/`.xlsx`** ise önce mekanik **kaynak paketi** (`kaynak_paketi.py cikar` → `references/traceability.md` §2-B);
    yazım ve inceleme paketi okur, ikili dosya yazıma da brife de yol olarak girmez, kaynak metni modelle yeniden yazılmaz.
    Paket görsel içeriyorsa (`gorsel-notlari.md`) yazıma geçmeden **her görseli `view` aracıyla aç** ve gördüğünü (ekran
-   adı, alanlar, düğmeler, değerler, okunabilen metin) o görselin **Görülen** alanına yaz — görsel başına bir `edit`;
+   adı, alanlar, düğmeler, değerler, okunabilen metin) **yalnız o görselin iki işaret satırının arasına**
+   (`<!-- gorulen:KG-nn -->` … `<!-- /gorulen:KG-nn -->`) yaz — görsel başına bir `edit`; işaret dışındaki metni `iz`
+   saymaz, işareti silinen ya da sırası bozulan not FAIL'dir;
    GÖRÜNTÜLENEMEZ biçimi (ör. `emf`) Pillow kuruluysa paket klasöründe
    `python -c "from PIL import Image; Image.open('<görsel>').save('media/<kimlik>.kullanici.png')"` ile çevir, PNG'yi
    `view` ile aç; olmazsa kullanıcıdan PNG iste ve aynı ada kaydet. Görselden türeyen her öğe FS'te bir kimliğe bağlanır,
@@ -120,9 +122,11 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
    **metnini yapıştır**; dokümanın yolunu ve (varsa) HTML/PDF/ekran görüntüsü yollarını ver. İkili kaynağın (`.docx`/
    `.xlsx`/`.pdf`) yolunu verme: `view` ikili `.docx`'i açmadı, alt ajan okuyamadı (ölçüldü — aXet.code 1.5.1,
    2026-11-19, iki koşu: talimatsız ve "read_docx kullan" denince; yerleşik görev alt ajanının araç kümesi glob, grep,
-   ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk yok; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin
-   (`INDEX.md`, `metin.md`, `gorsel-notlari.md`, `media/`) ve iz tablosunun yolunu ver, `iz`
-   çıktısını kendin koşup yapıştır; inceleyiciye görselleri `view` ile açıp notları doğrulamasını yaz (§E, AX-DOC-CR-07).
+   ls, sourcegraph, view — read_docx, read_xlsx, read_pdf ve kabuk yok; `.xlsx`/`.pdf` denenmedi). Kaynak `.docx`/
+   `.xlsx` ise kaynak paketinin (`INDEX.md`, `metin.md`, `gorsel-notlari.md`, `media/`) ve iz tablosunun yolunu ver,
+   `iz` çıktısını kendin koşup yapıştır; inceleyiciye görselleri `view` ile açıp notları doğrulamasını yaz (§E,
+   AX-DOC-CR-07). Kaynak `.pdf` ise paket yoktur (`kaynak_paketi.py` çıkış 3): kullanıcıdan `.docx`/`.xlsx` hâlini iste
+   ya da metni çıkarıp dosyaya yaz, o dosyanın yolunu ver (metni modelle yeniden yazma; kaynak izi ÖLÇÜLEMEDİ kalır).
 3. Dönen her BLOCKER'ı kendin dokümanda okuyarak doğrula; doğrulanamayanı NOT'a indir.
 4. Düzeltme turu **ikinci kapıdan** geçmeden kapanmaz: dar kapsam (değişen satırlar + değişen sayı/adın diğer geçtiği
    yerler + kararın yayılım listesi), **başka** bir taze inceleyiciyle.

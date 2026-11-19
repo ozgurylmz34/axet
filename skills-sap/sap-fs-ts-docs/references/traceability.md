@@ -68,8 +68,8 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   **DOĞRULAMA FAIL olan paket kullanılmaz.** Çıkış `2` = okunamadı (bozuk zip, başlıktaki boy/CRC içerikle
   uyuşmuyor) ya da boyut sınırı (metin parçası 100 MiB, açılmış metin üyeleri toplamı 512 MiB — görsel/gömülü
   üyeler bu toplama sayılmaz; her üye gerçekten açılarak sayılır) aşıldı; çıkış `3` = biçim desteklenmiyor (`.pdf`, `.doc`, `.xls`):
-  kullanıcıdan `.docx`/`.xlsx` hâlini iste; olmuyorsa kaynak izi "ÖLÇÜLEMEDİ" kalır, metni elle yazıp paket gibi
-  sunma.
+  kullanıcıdan `.docx`/`.xlsx` hâlini iste ya da metni çıkarıp dosyaya yaz, o dosyanın yolunu ver; kaynak izi
+  "ÖLÇÜLEMEDİ" kalır, metni modelle yeniden yazıp paket gibi sunma.
 - **Kapsam dışı (INDEX'te yazar):** öznitelikteki metin (görsel alternatif metni, veri doğrulama istemi, köprü
   ipucu, içerik denetimi açılır liste seçenekleri `w:listItem` ve adı `w:alias`), XML olmayan üyelerin içeriği
   (makro kodu dahil), Word'ün otomatik numaraları, gömülü dosyanın ve görselin içindeki metin, xlsx'te sayı/tarih hücresinin
@@ -79,17 +79,23 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   kapsam dışı satırı bu yüzden doğrudur); ekran görüntüsündeki alan, düğme ve değerler ise çoğu zaman gereksinimdir.
   Paket her `KG-nn` için ve içeriği görsel olan her `KN-nn` için (ör. OLE paketindeki `.png`) `gorsel-notlari.md`'de bir
   bölüm üretir: dosya yolu, kaynak parçası, konum (işaretin durduğu `KM` satırı; xlsx'te ve başvurusuz görselde
-  "konumu yok"), biçim ve boş **Görülen** alanı. Model her görseli **`view` aracıyla açar** ve gördüğünü — ekran ya da
-  pencere adı, alanlar, düğmeler, tablo sütunları, değerler, okunabilen metin — o bölümün Görülen alanına yazar;
+  "konumu yok"), biçim ve arası boş bir **işaret çifti** (`<!-- gorulen:KG-nn -->` … `<!-- /gorulen:KG-nn -->`). Model
+  her görseli **`view` aracıyla açar** ve gördüğünü — ekran ya da pencere adı, alanlar, düğmeler, tablo sütunları,
+  değerler, okunabilen metin; madde listesi ve tablo da olur — **yalnız o görselin işaretlerinin arasına** yazar;
   **görsel başına bir `edit`** (uzun içerik bölüm bölüm). FS'e giren her öğenin yanına belge kimliği yazılır
   (`→ FR-003`) ve o görselin iz tablosu satırı aynı kimliği taşır; logo ya da süsleme gibi gereksinim taşımayan
-  görsel `BİLGİ`'ye bağlanır, notu yine yazılır. Aynı kaynak ve aynı km şemasıyla yeniden `cikar` yazılmış notları
-  silmez. Kaynak ya da km şeması değiştiyse ya da imza satırı silindiyse eski notlar `gorsel-notlari.<özet8|imzasiz>.md`
-  adıyla kenara alınır; var olan kenar dosyası ezilmez (sıra numarası eklenir) ve aynı kaynak yeniden çıkarılınca o
-  kaynağın kenardaki notları geri yüklenir. Not dosyasında bölüm başlığını değiştirme, araya başlık ekleme: Görülen
-  alanı bir sonraki başlıkta ya da iskeletin alan satırında (Dosya/Kaynak parçası/Konum/Biçim) biter; tanınmayan başlık
-  ve yinelenen bölüm `iz`'de UYARI'dır. Harf ya da rakam içermeyen not ("-", "?") ve TODO, "(boş)", "doldurulacak"
-  boş sayılır.
+  görsel `BİLGİ`'ye bağlanır, notu yine yazılır. Aynı kaynak, aynı km şeması ve aynı not biçimiyle yeniden `cikar`
+  yazılmış notları silmez. Kaynak, km şeması ya da not biçimi değiştiyse ya da imza satırı silindiyse eski notlar
+  `gorsel-notlari.<özet8|özet8-sema<n>|özet8-bicim<n>|imzasiz>.md` adıyla, o anki `media/<kimlik>.kullanici.png`
+  kopyaları da `kenar/<aynı ad>/` altına kenara alınır — kullanıcı PNG'si kaynağa bağlıdır, başka kaynağın aynı
+  kimlikli görseli onunla açılmaz. Var olan kenar kaydı ezilmez (sıra numarası eklenir) ve aynı kaynak yeniden
+  çıkarılınca o kaynağın kenardaki notları PNG kopyalarıyla birlikte geri yüklenir; okunamayan (UTF-8 olmayan) kenar
+  dosyası atlanır ve UYARI yazılır. Eski işaretsiz not biçimi dönüştürülmez, kenara alınır (notu yeni iskelette
+  işaretlerin arasına taşı). **Not sınırı açık işarettir:** `iz` notu YALNIZ işaret çiftinin arasından okur; Markdown
+  biçimine (başlık, yatay çizgi, alıntı, paragraf) bakılmaz. Bir görsel bölümünde işaretlerin dışında kalan metin
+  sayılmaz ve UYARI'dır; yinelenen işaret çifti UYARI'dır (ilki sayılır); açılışı ya da kapanışı eksik, sırası bozuk
+  ya da başka kimliğin kapanışıyla biten not **GÖRSEL NOTU BOZUK** = FAIL. Harf ya da rakam içermeyen not ("-", "?")
+  ve TODO, "(boş)", "doldurulacak", "n/a", "tbd", "yok", "x" (tek başına) boş sayılır.
   **Görüntülenebilir biçimler** betikte tek listededir: görüntülenebilir biçim (`GORUNTULENEBILIR`); belge listeyi
   kopyalamaz, güncel liste INDEX'in "Görsel okuma" bölümündedir. Ölçüldü (aXet.code 1.5.1, 2026-11-19/20): `view`
   EMF/WMF/BMP açmaz; Word ekran görüntülerini sık sık EMF/WMF olarak gömer. Listede olmayan biçim INDEX'te ve notta
@@ -98,7 +104,9 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   ile çevir ve PNG'yi `view` ile aç; olmazsa kullanıcıdan PNG iste ve aynı ada kaydet (Pillow'la EMF çevirisi yalnız
   Windows'ta ölçüldü). Kopya varken boş not FAIL'dir; notta PNG'den okunduğunu belirt. Paketin kendisi dönüştürmez:
   standart kütüphane EMF/WMF'yi PNG'ye çeviremez ve betiğe bağımlılık eklenmez. Word SVG'yi PNG yedeğiyle birlikte
-  saklar (`svgBlip`): yedek pakette varsa SVG ÖLÇÜLEMEDİ değildir, o PNG'nin bölümünde okunur. Görsel, klasör adından
+  saklar (`svgBlip`): yedek pakette varsa SVG ÖLÇÜLEMEDİ değildir, o PNG'nin bölümünde okunur (SVG dosyası `view`
+  ile açılmaz — SVG'de `view` ölçülmedi). Sözlük/yapı taşı belgesinin görselleri (`word/glossary/`) belge gövdesinde
+  görünmez: KG sayılmaz, not istenmez, INDEX'in XML dışı üye listesinde bu notla durur. Görsel, klasör adından
   değil görsel ilişkisinden ve uzantısından tanınır; dosyaya bağlanamayan başvuru (`⟦… başvurusu çözülemedi⟧`) ve dışa
   bağlı görsel (`⟦harici görsel bağlantısı — pakette yok⟧`) INDEX'te ve `iz`'de UYARI'dır.
 - **İz tablosu** git'te izlenen yerde durur: kaynak paketinin yanında değil, FS'in SAP paket klasöründe
@@ -125,10 +133,11 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
   `BİLGİ` = gereksinim taşımayan madde · `KAPSAM-DIŞI` = bilerek alınmayan madde, gerekçe zorunlu. Geri kalan her
   satır belgede gerçekten geçen kimlik(ler)e bağlanır. `iz` denetimi: tabloda olmayan madde · pakette olmayan madde ·
   boş eşleme · belgede olmayan kimlik · gerekçesiz KAPSAM-DIŞI · tablodaki sha256'nın ya da km şemasının paketinkiyle
-  uyuşmaması · Görülen alanı boş görüntülenebilir görsel (`GÖRSEL OKUNMADI: 2 — KG-02, KG-05`) ya da eksik
-  `gorsel-notlari.md` = **FAIL**; görüntülenemeyen biçimin boş notu = **ÖLÇÜLEMEDİ** (FAIL değil; SONUÇ satırı PASS'in
+  uyuşmaması · notu (işaretler arası) boş görüntülenebilir görsel (`GÖRSEL OKUNMADI: 2 — KG-02, KG-05`), işareti
+  eksik ya da bozuk not (`GÖRSEL NOTU BOZUK`) ya da eksik `gorsel-notlari.md` = **FAIL**; görüntülenemeyen biçimin boş notu = **ÖLÇÜLEMEDİ** (FAIL değil; SONUÇ satırı PASS'in
   bu görselleri kapsamadığını yazar); aynı madde iki satırda, belgede olup tabloda anılmayan FR/KR, görsel notunda
-  anılıp o görselin iz satırında olmayan kimlik, boş paket (0 madde), sha256'sız ya da km şemasız tablo = UYARI.
+  anılıp o görselin iz satırında olmayan kimlik, not dosyasında işaret dışında kalan metin ya da yinelenen işaret
+  çifti, boş paket (0 madde), sha256'sız ya da km şemasız tablo = UYARI.
   **Ölçmedikleri:** eşlemenin anlamca doğruluğu, BİLGİ/KAPSAM-DIŞI işaretinin haklılığı ve görsel notunun görseli
   doğru anlatıp anlatmadığı (`iz` yalnız notun dolu olduğunu sayar) — inceleyici bunları okur, görselleri `view` ile
   açar (`doc-checklist.md` §E "İZ TABLOSUNA DAYALI İNCELEME", AX-DOC-CR-06, AX-DOC-CR-07).
