@@ -81,9 +81,15 @@ GORUNTULENEBILIR = (".png", ".jpg", ".jpeg", ".gif")
 # Görüntülenemeyen görselin okunabilir kopyası: model (Pillow ile) ya da kullanıcı bu adla `media/`'ya koyar. Çıkarım
 # kendi dosyalarını DAİMA `<kimlik>_` ile adlandırır → bu ad çıkarımın üreteceği bir adla çakışmaz; sayımda sayılmaz.
 KULLANICI_PNG = "media/%s.kullanici.png"
-KULLANICI_PNG_RE = re.compile(r"^K[GN]-\d+\.kullanici\.png$")
-# Görülen alanında yer tutucu: harf/rakam içermeyen metin ya da (noktalama atılınca) bu sözcüklerden biri boş sayılır.
-YER_TUTUCU = ("todo", "boş", "doldurulacak", "na", "tbd", "yok", "x")  # "n/a" noktalama atılınca "na"
+# Harfe DUYARSIZ (Windows dosya sistemi `KG-02.kullanici.PNG` ile `.png`'yi aynı dosya sayar); ad harfi korunur.
+KULLANICI_PNG_RE = re.compile(r"^K[GN]-\d+\.kullanici\.png$", re.I)
+# Görsel notunda (işaretler arası) yer tutucu: harf/rakam içermeyen metin, yalnız x'lerden oluşan dizgi ya da (HTML
+# varlığı/etiketi, Markdown görsel bağlantısı, baştaki "todo:" ve noktalama atılınca) bu sözcüklerden biri boş sayılır.
+YER_TUTUCU = ("todo", "boş", "bos", "doldurulacak", "doldur", "na", "tbd", "tba", "yok", "none", "null")
+# Görsel açılamayınca yazılan ifade (notun TAMAMI buysa boş; diakritik atılmış biçimde karşılaştırılır). Cümle içinde
+# geçmesi notu boşaltmaz. Yalnız bir kimlikten ("KG-02") oluşan not da boştur.
+ACILAMADI = ("okunamadi", "okunmadi", "gorulmedi", "henuzyok", "acilamadi", "goruntulenemedi", "gorselacilamadi",
+             "gorselokunamadi", "nil")
 # Bu sayıyı aşan görsel + gömülü nesne INDEX'te UYARI alır (sert sınır değil; bağlam bütçesi ve not yükü için).
 COK_GORSEL = 500
 # Gömülü nesne (KN) bu uzantılardan biriyse görsel sayılır ve not bölümü alır (KG'lerin hepsi zaten alır).
@@ -161,8 +167,8 @@ SCOPE_IZ = (
     "paketinkiyle aynı mı; gorsel-notlari.md'de her görselin notu — YALNIZ `<!-- gorulen:KG-nn -->` ile "
     "`<!-- /gorulen:KG-nn -->` işaret satırlarının arası — dolu mu (görüntülenebilir biçimde ya da "
     "`media/<kimlik>.kullanici.png` kopyası varken boşsa FAIL, okunabilir kopyası olmayan biçimde ÖLÇÜLEMEDİ; PNG "
-    "yedeği olan SVG yedeğin bölümünde okunur); işareti eksik ya da sırası bozuk görsel (FAIL); işaret dışında kalan "
-    "metin ve yinelenen işaret çifti, çözülemeyen ve dışa bağlı görsel başvurusu (UYARI); belgedeki FR/KR tabloda anılıyor mu, görsel notunda anılan kimlik o "
+    "yedeği olan SVG yedeğin bölümünde okunur); işareti eksik ya da sırası bozuk görsel (FAIL); bir görsel bölümünde "
+    "işaret dışında kalan metin ve yinelenen işaret çifti, çözülemeyen ve dışa bağlı görsel başvurusu (UYARI); belgedeki FR/KR tabloda anılıyor mu, görsel notunda anılan kimlik o "
     "görselin iz satırında var mı, paket boş mu, tabloda sha256 / km şeması var mı (UYARI). "
     "BAKMADIKLARI: eşlemenin ANLAMCA doğruluğu (KM metni gerçekten o FR'de karşılanmış mı), BİLGİ/KAPSAM-DIŞI "
     "işaretinin haklılığı, görsel notunun görselle UYUMU (notun gerçekten görseli anlattığı; `iz` yalnız dolu olduğunu "
@@ -654,6 +660,7 @@ def _gorsel_uyeleri(z: zipfile.ZipFile, kok: str) -> list[str]:
     adlar = {a for a in z.namelist() if not a.endswith("/")}
     out = {a for a in adlar if a.startswith(kok + "/media/")}
     out |= {a for a in adlar if a.startswith(kok + "/") and Path(a).suffix.lower() in GORSEL_UZANTILARI}
+    govde_ref = set()
     for rels in adlar:
         if rels.startswith(kok + "/") and rels.endswith(".rels") and "_rels/" in rels:
             parca = rels.replace("_rels/", "", 1)[:-len(".rels")]
@@ -661,9 +668,15 @@ def _gorsel_uyeleri(z: zipfile.ZipFile, kok: str) -> list[str]:
                 hedefler = parca_iliskileri(z, parca).values()
             except ET.ParseError:
                 continue
-            out |= {h for tip, h in hedefler if tip.lower() == "image" and h in adlar}
-    # word/glossary/: yapı taşı (sözlük) belgesi — görselleri belge gövdesinde görünmez; XML dışı üye olarak listelenir.
-    return sorted(a for a in out if not a.startswith((kok + "/embeddings/", kok + "/glossary/")))
+            gorsel = {h for tip, h in hedefler if tip.lower() == "image" and h in adlar}
+            out |= gorsel
+            if not rels.startswith(kok + "/glossary/"):
+                govde_ref |= gorsel
+    # word/glossary/: yapı taşı (sözlük) belgesi — klasöründeki görsel, gövde parçaları (belge, üst/altbilgi …)
+    # başvurmadıkça belgede görünmez; XML dışı üye olarak listelenir. Gövdenin başvurduğu sözlük görseli KG'dir.
+    # (media/ altındaki görsel yalnız sözlükten anılsa da KG kalır: dışlanırsa ne KG ne XML dışı listesinde görünürdü.)
+    sozluk = {a for a in out if a.startswith(kok + "/glossary/")} - govde_ref
+    return sorted(a for a in out if not a.startswith(kok + "/embeddings/") and a not in sozluk)
 
 
 def dosya_uyeleri(z: zipfile.ZipFile) -> frozenset:
@@ -1786,6 +1799,7 @@ GORULEN_SATIRI = "- Görülen (yalnız aşağıdaki iki işaret satırının ARA
 ISKELET_SATIRI_RE = re.compile(r"^(?:##[ \t]+K[GN]-\d+\b.*|- (?:Dosya|Kaynak parçası|Konum|Biçim): .*|%s)$"
                                % re.escape(GORULEN_SATIRI))
 BOLUM_RE = re.compile(r"^##[ \t]+(K[GN]-\d+)\b")
+GORULEN_ALAN_RE = re.compile(r"^\s*-?\s*Görülen\b.*:\s*$")
 
 
 def isaret(kid: str, kapanis: bool = False) -> str:
@@ -1862,16 +1876,34 @@ def _bos_ad(hedef: Path, kok: str) -> str:
 
 
 def _kopyalari_tasi(kaynak: Path, hedef: Path) -> int:
-    """`<kimlik>.kullanici.png` kopyalarını taşır (notlarla aynı kaderi paylaşırlar: kaynak değişince kenara gider,
-    notlar geri yüklenince geri gelir). Taşınan sayısını döner."""
+    """`<kimlik>.kullanici.png` kopyalarını (ad harfe duyarsız tanınır, harfi korunur) taşır: notlarla aynı kaderi
+    paylaşırlar (kaynak değişince kenara gider, notlar geri yüklenince geri gelir). Hedefte aynı ad harf farkıyla bile
+    varsa EZİLMEZ: `media/`'ya dönüşte kopya kenarda kalır, kenara gidişte `.<n>` ekiyle yazılır. Taşınan sayısını döner."""
     n = 0
     if kaynak.is_dir():
         for p in sorted(kaynak.iterdir()):
-            if p.is_file() and KULLANICI_PNG_RE.match(p.name):
-                hedef.mkdir(parents=True, exist_ok=True)
-                p.replace(hedef / p.name)
-                n += 1
+            if not (p.is_file() and KULLANICI_PNG_RE.match(p.name)):
+                continue
+            hedef.mkdir(parents=True, exist_ok=True)
+            var = {q.name.casefold() for q in hedef.iterdir()}
+            ad, i = p.name, 2
+            while ad.casefold() in var:
+                if hedef.name == "media":
+                    ad = None
+                    break
+                ad, i = "%s.%d%s" % (p.stem, i, p.suffix), i + 1
+            if ad is None:
+                continue
+            p.replace(hedef / ad)
+            n += 1
     return n
+
+
+def kullanici_kopyasi(paket: Path, kimlik: str) -> list[Path]:
+    """`media/<kimlik>.kullanici.png` kopyaları — ad harfe duyarsız eşlenir (tek kanonik eşleşme beklenir)."""
+    d = paket / "media"
+    hedef = (KULLANICI_PNG % kimlik).split("/", 1)[1].casefold()
+    return sorted(p for p in d.iterdir() if p.is_file() and p.name.casefold() == hedef) if d.is_dir() else []
 
 
 def _bicim_satiri(g: dict) -> str:
@@ -1974,8 +2006,23 @@ def gorsel_notlari_yaz(hedef: Path, kaynak: Path, veri: bytes, gorseller: list[d
 
 def gorulen_bos(metin: str) -> bool:
     """Yer tutucu boş sayılır: harf/rakam yoksa ("-", "?", "…" çok satırlı da olsa) ya da noktalama atılınca YER_TUTUCU."""
-    net = re.sub(r"[\W_]+", "", metin.casefold())
-    return net == "" or net in YER_TUTUCU
+    s = re.sub(r"&#?\w+;", " ", metin)                  # HTML varlığı (&nbsp; …)
+    s = re.sub(r"<[^<>\n]*>", " ", s)                   # HTML etiketi (<br> …)
+    s = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", s)         # Markdown görsel bağlantısı
+    s = re.sub(r"^\W*todo\b:?", " ", s.casefold())      # baştaki "TODO:" ("TODO: doldur", "TODO TODO")
+    net = re.sub(r"[\W_]+", "", s)
+    duz = unicodedata.normalize("NFKD", net.replace("ı", "i")).encode("ascii", "ignore").decode()
+    return (net == "" or net in YER_TUTUCU or re.fullmatch(r"x+", net) is not None or duz in ACILAMADI
+            or re.fullmatch(r"k[gn]\d+", duz) is not None)
+
+
+def _not_govdesi(metin: str) -> str:
+    """Boşluk değerlendirmesi için işaretler arası metin: yorum (kapanmamışı dahil), iskelet satırı ("## KG-nn",
+    "- Dosya: …", Görülen satırı), Markdown başlığı ve kod çiti satırı atılır — bunlar bilgi taşımaz."""
+    s = re.sub(r"<!--.*", "", YORUM_RE.sub("", metin), flags=re.S)
+    return "\n".join(x for x in s.splitlines()
+                     if not (ISKELET_SATIRI_RE.match(x) or GORULEN_ALAN_RE.match(x) or re.match(r"^#{1,6}\s", x)
+                             or re.match(r"^\s*(```|~~~)\S*\s*$", x)))
 
 
 def gorsel_notlarini_oku(paket: Path) -> tuple[dict[str, str], list[str], dict[str, str]] | None:
@@ -2022,7 +2069,7 @@ def gorsel_notlarini_oku(paket: Path) -> tuple[dict[str, str], list[str], dict[s
         if kid in notlar:
             uyari.append("%s işaret çifti birden fazla — yalnız ilki sayıldı; fazlasını ilkine taşı" % kid)
         else:
-            notlar[kid] = "" if gorulen_bos(metin) else metin
+            notlar[kid] = "" if gorulen_bos(_not_govdesi(metin)) else metin
     if acik:
         bozuk.setdefault(acik, "kapanış işareti yok (dosya sonu)")
     for kid, satirlar in sorted(dis.items()):
@@ -2283,7 +2330,11 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
     gorsel_sorun, okunmadi, olculemedi, not_kimlik, not_bozuk = [], [], [], [], []
     # Görüntülenemeyen görselin okunabilir kopyası (`media/<kimlik>.kullanici.png`) varsa görsel okunabilir sayılır.
     kopyali = {g["kimlik"] for g in gorseller or [] if not g["goruntulenebilir"]
-               and (paket / (KULLANICI_PNG % g["kimlik"])).is_file()}
+               and len(kullanici_kopyasi(paket, g["kimlik"])) == 1}
+    for g in gorseller or []:
+        if len(kullanici_kopyasi(paket, g["kimlik"])) > 1:
+            not_yapi.append("%s için harf farkıyla birden çok kullanıcı kopyası (%s) — birini bırak" % (
+                g["kimlik"], ", ".join(gorunur(p.name) for p in kullanici_kopyasi(paket, g["kimlik"]))))
     if gorseller is None and meta.get("kg"):
         gorsel_sorun.append("paket.json'da görsel listesi yok — paket görsel notlarından önceki sürümle çıkarılmış; "
                             "yeniden çıkar")
