@@ -41,8 +41,8 @@ FAIL'e düşürür (`guncelle.py onkontrol` bunu ayrıca denetler).
    doldur). Çıktısındaki tek satır `<TMP>`'dir. Sıfırdan farklı dönerse DUR ve çıktıyı aynen göster.
    aXet `%TEMP%`'i proje içine (`.axet-code/tmp`) çektiği için komut tabanı `%LOCALAPPDATA%\Temp`'ten
    alır; klon ya da bir `.axet-code` dizini içine düşerse yarattığını silip durur. Bu komut bir yol bastıktan
-   sonra akış hangi yoldan biterse bitsin (normal bitiş, "Klon güncel", seçim beklemeyen DUR) son iş
-   **10. adımdır**; seçim bekleyen bir DUR'da akış henüz bitmemiştir.
+   sonra akış hangi yoldan biterse bitsin son iş **10. adımdır**; geri dönüş noktası atılmış ama `kapanis`
+   başarıyla bitmemişken gelen bir DUR'da akış henüz bitmemiştir (10. adımdaki kural).
 
 <!-- TMP-OLUSTUR:BASLA -->
 ```bash
@@ -83,13 +83,17 @@ python "<TMP>/scripts/guncelle.py" --klon "<KLON>" --help
    güncellemeyi BOZMAZ; `BT için elle kurulum komutu` satırını kendin çalıştırma. SAP açıksa aynı komut özel
    ajanları (`sap-*`) da eşitler: `AJANLAR: …` satırı basılırsa onu da AYNEN aktar (yeni tanımlar bir sonraki
    oturumda geçerli).
-10. **Akış GERÇEKTEN BİTTİĞİNDE — son iş geçici dizindir (akış başına BİR kez sor).** "Bitti" = ardından
-   motor (`<TMP>/scripts/guncelle.py`) gerektiren hiçbir adım ya da kullanıcı seçimi BEKLENMİYOR: normal bitiş
-   (7-9 tamam) · "Klon güncel" → BİTİR (`GUNCELLE.md` adım 2-4; 9. adım koştuktan sonra) · motor hiç
-   çıkarılamadan DUR (3. adım) ya da kullanıcı vazgeçti. **Sorma — henüz bitmedi:** kullanıcıdan seçim ya da
-   motor komutu bekleyen her DUR (ör. `GUNCELLE.md` adım 7 `durum` göster · adım 8 kartın DUR koşulu · adım 13
-   üç seçenek `geri-al` / `kapanis --kabul` · adım 14 seçenek). Silme sorusunu seçeneklerle AYNI mesajda sunma;
-   `<TMP>` silinirse `geri-al` ve `kapanis` motoru bulamaz. Seçim uygulanıp akış bitince sor.
+10. **Akış GERÇEKTEN BİTTİĞİNDE — son iş geçici dizindir (akış başına BİR kez sor).** Karar adım adına
+   değil **klonun durumuna** bakar:
+   - **Sor:** klonda bu akışın geri dönüş noktası HİÇ atılmadı (`hazirla` koşmadı, ya da `Klon güncel:` /
+     çıkış 2 / satırsız 1 ile hiçbir şey atmadı — "Klon güncel" → BİTİR, ön kontrol DUR'u, motor hiç
+     çıkarılamadan DUR, kullanıcı vazgeçti) **ya da** `kapanis` başarıyla bitti (çıkış 0 ya da `--kabul` ile 3)
+     ve 7-9 koştu.
+   - **Sorma — henüz bitmedi:** `hazirla` geri dönüş noktasını attıktan SONRA ve `kapanis` başarıyla bitmeden
+     gelen HER DUR, hangi adımda olursa olsun (ör. `GUNCELLE.md` adım 6-14: 7 `durum` · 8 kart · 10 kullanım
+     hatası · 11 açıklanamayan fark · 13 `geri-al` / `kapanis --kabul` · 14). Bu durumdan çıkış `geri-al` ya da
+     `kapanis` ister; `<TMP>` silinirse ikisi de motoru bulamaz. Silme sorusunu seçeneklerle AYNI mesajda sunma.
+     Seçim uygulanıp akış bitince (yukarıdaki "Sor" durumuna gelince) sor.
    TMP-OLUSTUR komutu (2. adım) bir `<TMP>` yolu bastıysa son mesajından ÖNCE yolunu söyle ve kullanıcıya
    "geçici dizin silinsin mi?" diye SOR. Onay verirse aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme
    komutu SEÇME). Komut yalnız mutlak yolla verilen, `axet_guncelle_` önekli, bağ/junction OLMAYAN, klonu

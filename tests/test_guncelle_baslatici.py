@@ -256,6 +256,13 @@ class TmpSilTest(GeciciTest):
         # soru orada sorulursa `<TMP>` silinir, ardından `geri-al`/`kapanis` motoru bulamaz.
         for parca in ("Sorma — henüz bitmedi", "geri-al", "kapanis --kabul", "AYNI mesajda", "Seçim uygulanıp akış bitince"):
             self.assertIn(parca, adim, f"10. adım seçim bekleyen DUR ayrımını yazmıyor: {parca}")
+        # bug-gate R3 N1: adım listesi üç turda üç kez eksik kaldı (F2 → F5 → N1: adım 10/11 DUR'u) ⇒ kural adım
+        # adına değil KLON DURUMUNA bağlı: `hazirla` geri dönüş noktasını attıktan sonra, `kapanis` başarıyla
+        # bitmeden gelen her DUR'da sorulmaz.
+        for parca in ("klonun durumuna", "`hazirla` geri dönüş noktasını attıktan SONRA",
+                      "`kapanis` başarıyla bitmeden", "hangi adımda olursa olsun"):
+            self.assertIn(parca, adim, f"10. adım kararı klon durumuna bağlamıyor: {parca}")
+        self.assertNotIn("seçim beklemeyen DUR", self.metin, "2. adım hâlâ adım/seçim bazlı ölçütle yönlendiriyor")
         # ÖNERİ (R2): silme yarıda hata verirse "silindi" denmez
         self.assertIn("`SILINDI:` satırı basmazsa", adim)
         self.assertIn("\"silindi\" DEME", adim)
