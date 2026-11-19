@@ -70,9 +70,19 @@ python "<TMP>/scripts/guncelle.py" --klon "<KLON>" --help
 7. **Bitişte** motorun ürettiği `RAPOR.md`'yi AYNEN göster ve gerekiyorsa "aXet'i kapatıp aç" de.
    Kapanış `KAPANDI — test borcu var: %testler` dediyse bunu da söyle: koşulmayan takımlar yeşil
    DEĞİLDİR; kullanıcı isterse güncellemeden sonra `%testler` ile koşar (süreyi `%testler` önce söyler).
-   `<TMP>` artık gereksizdir; kullanıcıya yolunu söyle, silmesini kendisi seçsin.
    RAPOR'da ya da sonrasında `doctor` FAIL/WARN satırı görürsen her birini `<KLON>/docs/onboarding.md` §5 "`doctor` bir şey bulursa" üç sınıfına koy
    (① ONAR · ② KULLANICI · ③ ŞABLON HATASI → `%hata-bildir` taslağı, göndermek kullanıcının) ve sınıfıyla raporla.
+   **`<TMP>` artık gereksizdir:** yolunu söyle ve kullanıcıya "geçici dizin silinsin mi?" diye SOR. Onay verirse
+   aşağıdaki tek komutu AYNEN çalıştır (`<TMP>` ve `<KLON>`'u doldur; kendin silme komutu SEÇME). Komut yalnız
+   `axet_guncelle_` önekli, klonu içermeyen ve klonun içinde olmayan dizini siler; başka bir yol verilirse hiçbir
+   şeye dokunmadan DUR der — o çıktıyı aynen göster. Onay vermezse dizini bırak (yolunu zaten söyledin).
+
+<!-- TMP-SIL:BASLA -->
+```bash
+python -c "import shutil,sys;from pathlib import Path as P;d=P(sys.argv[1]).resolve();k=P(sys.argv[2]).resolve();ok=d.is_dir() and d.name.startswith('axet_guncelle_') and d!=k and k not in d.parents and d not in k.parents;ok or sys.exit('DUR: silinmedi, beklenen gecici dizin degil: '+d.as_posix());shutil.rmtree(d);print('SILINDI: '+d.as_posix())" "<TMP>" "<KLON>"
+```
+<!-- TMP-SIL:BITIR -->
+
 8. **Tarayıcı hazırlığı (otomatik, soru sorma):** `GUNCELLE.md` 16. adım —
    `python "<KLON>/scripts/tarayici_hazirla.py"`. İlk satırı (`TARAYICI: HAZIR|ATLANDI|EKSİK — …`) AYNEN
    aktar. HAZIR değilse de güncelleme **tamamlanmıştır**; eksik kalan o satırda yazar.

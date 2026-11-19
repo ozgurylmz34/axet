@@ -414,7 +414,8 @@ def adt_atc_check(name: str, object_type: str = "class",
         max_verdicts: Maks bulgu sayısı.
 
     Returns:
-        {ok, name, type, variant, finding_count, findings: [...], client_log}
+        {ok, name, type, variant, finding_count, kesilmis_olabilir, kapsam, findings: [...], client_log}
+        `kesilmis_olabilir` = bulgu sayısı `max_verdicts` tavanına eşit (Z209) — "N bulgu" değil "en az N bulgu".
         ENHS (BAdI spot) → `atc_kapsam_disi` (istek GÖNDERİLMEZ): SAP spot için `FINDING_STATS 0,0,0` + boş obje
         listesi döndürür ve bu sonuç VAR OLMAYAN objeninkiyle aynıdır (kaynak çekirdek canlı ölçümü 2026-11-11) —
         "0 bulgu" temizlik kanıtı olamaz; ATC'yi BAdI arabirimi/sınıflarında koş.
@@ -459,12 +460,19 @@ def adt_atc_check(name: str, object_type: str = "class",
                 "finding_count_unverified": len(findings),
                 "client_log": buf.getvalue().strip(),
             }
+        # Z209 (2026-11-19): SAP en çok `max_verdicts` bulgu döndürür ⇒ sayı tavana eşitse liste kesilmiş olabilir;
+        # "100 bulgu" ile "en az 100 bulgu" ayırt edilsin.
+        kesilmis = len(findings) >= max_verdicts
         return {
             "ok": True,
             "name": name,
             "type": object_type,
             "variant": variant,
             "finding_count": len(findings),
+            "kesilmis_olabilir": kesilmis,
+            "kapsam": (f"KESİLMİŞ OLABİLİR: bulgu sayısı tavana eşit (max_verdicts={max_verdicts}) — gerçek sayı daha "
+                       "fazla olabilir; max_verdicts'i artırıp yeniden koş." if kesilmis else
+                       f"bulgu sayısı tavanın altında (max_verdicts={max_verdicts}) — liste tam."),
             "priority_1_count": len(prio1),          # ZORUNLU düzelt
             "other_priority_count": len(prio_other),  # kullanıcı onayıyla pass
             "must_fix": len(prio1) > 0,

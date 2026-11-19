@@ -26,6 +26,8 @@ SKILL = AXET_HOME / "skills" / "guncelle" / "SKILL.md"
 BASLA, BITIR = "<!-- MOTOR-CIKAR:BASLA -->", "<!-- MOTOR-CIKAR:BITIR -->"
 # Z67: `<TMP>`'yi yaratan hazır komut da belgeden PARSE edilip AYNEN koşulur (tek kaynak).
 TMP_BASLA, TMP_BITIR = "<!-- TMP-OLUSTUR:BASLA -->", "<!-- TMP-OLUSTUR:BITIR -->"
+# Z67 (b): akış sonunda `<TMP>` kullanıcı onayıyla belgedeki TEK komutla silinir (model silme komutu seçmez).
+TMP_SIL_BASLA, TMP_SIL_BITIR = "<!-- TMP-SIL:BASLA -->", "<!-- TMP-SIL:BITIR -->"
 
 
 def komut_blogu(metin: str, basla: str = BASLA, bitir: str = BITIR) -> list[str]:
@@ -203,7 +205,8 @@ class TmpOlusturTest(GeciciTest):
         self.assertIn("/c/", bolum, "`/c/...` yasağı How-to bölümünde yazmıyor")
         self.assertIn("$(date", bolum, "`$(date …)` yasağı How-to bölümünde yazmıyor")
         self.assertIn("C:/", bolum)
-        for s in komut_blogu(self.metin) + komut_blogu(self.metin, TMP_BASLA, TMP_BITIR):
+        for s in (komut_blogu(self.metin) + komut_blogu(self.metin, TMP_BASLA, TMP_BITIR)
+                  + komut_blogu(self.metin, TMP_SIL_BASLA, TMP_SIL_BITIR)):
             self.assertNotRegex(s, r"""(^|[\s"'])/[a-zA-Z]/""", f"blokta `/c/...` biçimli yol: {s}")
             self.assertNotIn("$(", s, f"blokta kabuk genişletmesi: {s}")
 
@@ -213,6 +216,81 @@ class TmpOlusturTest(GeciciTest):
         from test_sap_skill_bilgi import _kabuk_blogu
         satir = _kabuk_blogu(cekirdek)
         self.assertIn("/c/", satir, "Kabuk ortamı satırı `/c/...` tuzağını anmıyor")
+
+
+class TmpSilTest(GeciciTest):
+    """Z67 (b) — akış sonunda `<TMP>` SORULUR, onayla belgedeki tek komutla silinir.
+
+    Eskiden skill "silmesini kendisi seçsin" deyip bırakıyordu ⇒ eski `<TMP>`'ler birikti (ölçüldü 2026-09-23:
+    disk kökünde 660 KB'lık artık). Komut belgeden PARSE edilip AYNEN koşulur.
+    Koruma: yalnız `axet_guncelle_` önekli, klonu içermeyen / klonun içinde olmayan, var olan dizin silinir.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.metin = SKILL.read_text(encoding="utf-8")
+        self.klon = self.tmp / "klon"
+        (self.klon / "scripts").mkdir(parents=True)
+        (self.klon / "scripts" / "guncelle.py").write_text("# klon\n", encoding="utf-8")
+
+    def satir(self) -> str:
+        satirlar = komut_blogu(self.metin, TMP_SIL_BASLA, TMP_SIL_BITIR)
+        self.assertEqual(len(satirlar), 1, f"TMP-SIL bloğu TEK komut olmalı: {satirlar}")
+        return satirlar[0]
+
+    def sil(self, hedef: Path, klon: Path | None = None) -> subprocess.CompletedProcess:
+        return komutu_kos(self, self.satir(), klon or self.klon, str(hedef), self.env)
+
+    def test_onay_sorulur_ve_eski_birakma_cumlesi_yok(self):
+        i = self.metin.find("7. **Bitişte**")
+        j = self.metin.find("\n8. ", i)
+        self.assertGreater(i, 0, "adım 7 bulunamadı")
+        adim = self.metin[i:j]
+        self.assertIn("silinsin mi", adim, "adım 7 `<TMP>` silmeyi SORMUYOR")
+        self.assertIn(TMP_SIL_BASLA, adim, "TMP-SIL bloğu adım 7'nin içinde değil")
+        self.assertNotIn("silmesini kendisi seçsin", self.metin)
+
+    def test_gecici_dizin_icerigiyle_silinir(self):
+        d = self.tmp / "axet_guncelle_abc"
+        (d / "scripts").mkdir(parents=True)
+        (d / "motor.tar").write_bytes(b"x")
+        r = self.sil(d)
+        self.assertEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("SILINDI", r.stdout)
+        self.assertFalse(d.exists(), "<TMP> silinmedi")
+        self.assertTrue((self.klon / "scripts" / "guncelle.py").exists(), "klona dokunuldu")
+
+    def test_oneksiz_dizin_silinmez(self):
+        """Kontrol grubu (negatif): içerikli ama öneki olmayan dizin — model yanlış yol verirse."""
+        d = self.tmp / "proje"
+        d.mkdir()
+        (d / "dosya.txt").write_text("veri", encoding="utf-8")
+        r = self.sil(d)
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("DUR", self.cikti(r))
+        self.assertTrue((d / "dosya.txt").exists(), "öneksiz dizin silindi")
+
+    def test_klonun_kendisi_icereni_ve_icindeki_silinmez(self):
+        klon2 = self.tmp / "axet_guncelle_klon"           # klonun kendisi öneki taşısa bile
+        (klon2 / "x").mkdir(parents=True)
+        r = self.sil(klon2, klon=klon2)
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue((klon2 / "x").exists(), "klonun kendisi silindi")
+        ust = self.tmp / "axet_guncelle_ust"              # klonu İÇEREN önekli dizin
+        (ust / "klon" / "y").mkdir(parents=True)
+        r = self.sil(ust, klon=ust / "klon")
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue((ust / "klon" / "y").exists(), "klonu içeren dizin silindi")
+        icteki = self.klon / "axet_guncelle_ic"           # klonun İÇİNDEKİ önekli dizin
+        icteki.mkdir()
+        r = self.sil(icteki)
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertTrue(icteki.exists(), "klon içindeki dizin silindi")
+
+    def test_olmayan_yol_DUR(self):
+        r = self.sil(self.tmp / "axet_guncelle_yok")
+        self.assertNotEqual(r.returncode, 0, self.cikti(r))
+        self.assertIn("DUR", self.cikti(r))
 
 
 class MotorSurumTest(GeciciTest):

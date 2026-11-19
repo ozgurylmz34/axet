@@ -78,6 +78,9 @@ TUR_ETIKETI = {"duzeltme": "düzeltme", "yetenek": "yetenek", "kural": "kural", 
 ETIKET_BICIMI = re.compile(r"^v\d+\.\d+\.\d+(?:[-.][0-9A-Za-z.]+)?$")
 TARIH_BICIMI = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SURUM_BICIMI = re.compile(r"^\d+(?:\.\d+)*$")
+# Z242 (2026-11-19): katalog metninde kontrol karakteri (C0 + DEL). Tipik kaynak: ters bölü kaçışının bozulması
+# (`\b` → 0x08, `\a` → 0x07); CHANGELOG satır bazlıdır, satır sonu da metne giremez. Katalogda bugün 0 vaka (ölçüldü).
+KONTROL_KARAKTERI = re.compile(r"[\x00-\x1f\x7f]")
 KALEM_TRAILER = "Guncelleme-Kalemi"
 
 BLOCKER, WARNING = "BLOCKER", "WARNING"
@@ -686,7 +689,24 @@ def sema_dogrula(veri) -> list[str]:
         if _surum_anahtari(b) <= _surum_anahtari(a):
             s.append(f"şema: yayınlar eskiden yeniye sıralı olmalı — {a} sonrası {b} geliyor "
                      f"(motor son girdiyi en yeni sayar: scripts/guncelle.py:376)")
+    s.extend(f"şema: {yer} kontrol karakteri içeriyor ({kod}) — ters bölü kaçışı bozulmuş olabilir "
+             "(ör. 0x08 = `\\b`, 0x07 = `\\a`)" for yer, kod in _kontrol_karakterleri(veri, "yayinlar.json"))
     return s
+
+
+def _kontrol_karakterleri(deger, yer: str):
+    """Katalogdaki her metin değerinde (anahtarlar dahil) kontrol karakteri: (yer, '0x08, 0x07') üretir."""
+    if isinstance(deger, str):
+        bulunan = sorted({f"0x{ord(c):02x}" for c in KONTROL_KARAKTERI.findall(deger)})
+        if bulunan:
+            yield yer, ", ".join(bulunan)
+    elif isinstance(deger, dict):
+        for k, v in deger.items():
+            yield from _kontrol_karakterleri(k, f"{yer} anahtar {k!r}")
+            yield from _kontrol_karakterleri(v, f"{yer}.{k}")
+    elif isinstance(deger, list):
+        for i, v in enumerate(deger):
+            yield from _kontrol_karakterleri(v, f"{yer}[{i}]")
 
 
 def capraz_yayin_uyarilari(veri) -> list[str]:
@@ -1036,7 +1056,7 @@ def main() -> int:
         sorunlar = sema_dogrula(veri)
         print(f"Doğrulanan: {KOK / YAYINLAR_YOLU}")
         print("KAPSAM — bakılan: şema (alan adları/tipleri), kalem id tekilliği, tur=guvenlik ise kritik "
-              "kuralı, `gerektirir` çözünürlüğü ve sırası (+ çapraz-yayın bağı WARNING, Z57), yayın sürüm sırası, dışlanan yol beyanı. (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
+              "kuralı, `gerektirir` çözünürlüğü ve sırası (+ çapraz-yayın bağı WARNING, Z57), yayın sürüm sırası, dışlanan yol beyanı, metin değerlerinde kontrol karakteri (Z242). (Üretilen dosyaların beyanı 2026-09-20'den beri SERBEST ve gerçek yayında ZORUNLU — Z17.)")
         print("KAPSAM — bakılmayan: kalem-diff kapsamı (yalnız gerçek yayında ölçülür), `baslik`/`neden` "
               "metinlerinin doğruluğu, `test` kimliklerinin gerçekten koştuğu.")
         for s in sorunlar:
