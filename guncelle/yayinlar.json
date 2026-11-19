@@ -5182,9 +5182,10 @@
      "baslik": "Belge türüne göre doğru okuma aracı; ikili belge alt ajana yol olarak verilmez",
      "tur": "kural",
      "kritik": false,
-     "neden": "Ölçüldü (aXet.code 1.5.1): yerleşik okuma araçlarının sınırları belgeyi sessizce eksik okutuyordu — read_docx görselleri düşürüp tablo yapısını kaybediyor, read_xlsx metin hücrelerini boş getirebiliyor, read_pdf metin katmanlı PDF'te de başarısız olunca model belgeye yanlışlıkla 'taranmış' diyordu; view ikili dosyada hata verip modeli bash'e yönlendiriyordu. Yerleşik alt ajanda (task) read_* araçları hiç yok: .docx yolu verilen alt ajan belgeyi iki denemede de okuyamadı, aynı belgenin kaynak paketi verilince 45 saniyede doğru okudu. Çekirdeğe kısa bir tür → araç rehberi eklendi (docx, xlsx, pdf, görsel, pptx) ve alt ajana .docx/.xlsx/.pdf yolu yerine kaynak paketinin metin ve görsel yollarını verme kuralı yazıldı.",
+     "neden": "Ölçüldü (aXet.code 1.5.1): yerleşik okuma araçlarının sınırları belgeyi sessizce eksik okutuyordu — read_docx görselleri düşürüp tablo yapısını kaybediyor, read_xlsx metin hücrelerini boş getirebiliyor, read_pdf metin katmanlı PDF'te de başarısız olunca model belgeye yanlışlıkla 'taranmış' diyordu; view ikili dosyada hata verip modeli bash'e yönlendiriyordu. Yerleşik alt ajanda (task) read_* araçları hiç yok: .docx yolu verilen alt ajan belgeyi iki denemede de okuyamadı. Çekirdeğe kısa bir tür → araç rehberi eklendi (docx, xlsx, pdf, görsel, pptx) ve alt ajana .docx/.xlsx/.pdf yolu yerine çıkarılmış metnin dosya yolunu verme kuralı yazıldı. SAP paketinde FS/gereksinim belgesi için %sap-fs-ts-docs kaynak paketine yönlendirme SAP çekirdeğine girdi (paket yollarıyla alt ajan belgeyi 45 saniyede doğru okudu). Çekirdek kimlikleri `AXET-CORE-0.10.2` ve `AXET-SAP-0.5.5`: SAP projelerinde kesin yasak damgası \"farklı\" görünür ve `doctor` FAIL verir — `%guncelle-proje` ile `AGENTS.md` damgasını yenile, sonra yeni aXet oturumu aç.",
      "dosyalar": [
       "core/00-temel.md",
+      "core/sap/00-sap.md",
       "tests/test_sap_skill_bilgi.py"
      ],
      "gerektirir": [],
@@ -5195,14 +5196,13 @@
     },
     {
      "id": "0.5.24-41",
-     "baslik": "Özel SAP ajanları Word, Excel ve PDF belgesini izin sorusunda takılmadan okur",
+     "baslik": "Özel SAP alt ajanları Word, Excel ve PDF belgesini izin sorusunda takılmadan okur",
      "tur": "duzeltme",
      "kritik": false,
-     "neden": "Ölçüldü (aXet.code 1.5.1, etkileşimsiz kip): özel SAP alt ajanı read_docx çağırınca ana ekranda görünmeyen bir izin sorusunda bekliyor, koşu her seferinde zaman aşımına düşüyordu (3/3, 290 saniyeden uzun). Beş ajan tanımına yalnız üç okuma aracı (read_docx, read_xlsx, read_pdf) için izin satırı eklendi; bu izinle yapılan kontrollü denemede alt ajan belgeyi okuyup 41 saniyede bitirdi. Komut çalıştırma ve dosya yazma izinleri değişmedi; senin deny kuralların geçerli kalır.",
+     "neden": "Ölçüldü (aXet.code 1.5.1, etkileşimsiz kip): özel SAP alt ajanı read_docx çağırınca ana ekranda görünmeyen bir izin sorusunda bekliyor, koşu her seferinde zaman aşımına düşüyordu (3/3, 290 saniyeden uzun). Dört alt ajan tanımına (sap-arastirma, sap-backend, sap-ui5, sap-inceleme) yalnız üç okuma aracı (read_docx, read_xlsx, read_pdf) için izin satırı eklendi; bu izinle yapılan kontrollü denemede alt ajan belgeyi okuyup 41 saniyede bitirdi. Ana ajan sap-gelistirme değişmedi. İzin yol sınırı taşımaz: alt ajan proje dışındaki belgeyi de sormadan okur (kullanıcı belgeleri çoğunlukla proje dışında olduğu için bilinçli). Komut çalıştırma ve dosya yazma izinleri değişmedi; alt ajanlarda deny kuralları her iki taraftan geçerlidir (motor referansı).",
      "dosyalar": [
       "agents/sap-arastirma.md",
       "agents/sap-backend.md",
-      "agents/sap-gelistirme.md",
       "agents/sap-inceleme.md",
       "agents/sap-ui5.md",
       "agents/README.md",

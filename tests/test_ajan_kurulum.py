@@ -309,6 +309,12 @@ class SablonAjanlariTest(unittest.TestCase):
                 self.assertRegex(fm, r"(?m)^disallowedTools: \[edit, multiedit, write\]$")
 
     BELGE_IZNI = {"read_docx": "allow", "read_xlsx": "allow", "read_pdf": "allow"}
+    # Alt ajanlar izinli; ana ajan (mode: primary) izinsiz — ölçülen sorun yalnız alt ajanın asılmasıydı, ana ajana allow
+    # kullanıcının config'teki read_* kuralını ezebilir (bağımsız inceleme F4, ölçülmedi ⇒ bilinçli dışarıda).
+    IZINLI = {"sap-arastirma.md", "sap-backend.md", "sap-ui5.md", "sap-inceleme.md"}
+
+    def _beklenen_izin(self, ad: str) -> dict[str, str]:
+        return self.BELGE_IZNI if ad in self.IZINLI else {}
 
     def _izin_blogu(self, fm: str) -> dict[str, str]:
         """`permission:` bloğu → {araç: karar}. Blok yoksa {} (iki boşluk girintili `araç: karar` satırları)."""
@@ -319,11 +325,17 @@ class SablonAjanlariTest(unittest.TestCase):
 
     def test_belge_okuma_izni(self):
         """Ölçüldü (1.5.1 `run`): `permission` bloğu yokken özel alt ajanın `read_docx` çağrısı görünmeyen izin sorusunda
-        asılı kaldı (3/3, >290 sn); kontrollü deneyde aynı deneme ajanı blokla 41 sn'de okudu. Blok yalnız üç okuma aracını açar (bash/yazma yok)."""
+        asılı kaldı (3/3, >290 sn); kontrollü deneyde aynı deneme ajanı blokla 41 sn'de okudu. Blok yalnız üç okuma aracını
+        açar (bash/yazma yok) ve yalnız alt ajanlarda durur; ana ajan `sap-gelistirme`de blok YOK."""
+        self.assertEqual(self.IZINLI | {"sap-gelistirme.md"}, self.ZORUNLU)
         for p in self.AJANLAR:
             fm = self._fm(p.read_text(encoding="utf-8").replace("\r\n", "\n"))
             with self.subTest(ajan=p.name):
-                self.assertEqual(self._izin_blogu(fm), self.BELGE_IZNI)
+                self.assertEqual(self._izin_blogu(fm), self._beklenen_izin(p.name))
+                if p.name in self.IZINLI:
+                    self.assertRegex(fm, r"(?m)^mode: subagent$")
+                else:
+                    self.assertNotIn("permission", fm)
 
     def test_belge_okuma_izni_kurulumda_korunur(self):
         """Kurulum (`planla` → `uygula`; yer tutucu + işaret) frontmatter'daki izin bloğunu düşürmez/bozmaz."""
@@ -336,7 +348,7 @@ class SablonAjanlariTest(unittest.TestCase):
                 kurulu = (hedef / ad).read_text(encoding="utf-8")
                 with self.subTest(ajan=ad):
                     self.assertTrue(ak.bizim_mi(kurulu))
-                    self.assertEqual(self._izin_blogu(self._fm(kurulu)), self.BELGE_IZNI)
+                    self.assertEqual(self._izin_blogu(self._fm(kurulu)), self._beklenen_izin(ad))
 
     def test_izin_blogu_ayristirici_KONTROL(self):
         """Ayrıştırıcının kendisi: blok yok → {} · fazladan araç görünür (vakum-assertion'a karşı)."""
