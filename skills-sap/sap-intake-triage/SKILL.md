@@ -43,7 +43,7 @@ Tam protokol, kriterler ve örnekler: `references/protocol.md` — ilk kullanım
 3. **İsterlerden konu çıkar:** her anlamlı alan/gereksinim bir domain konusu doğurabilir ("kullanılabilir stok" → ATP; "kredi durumu" → kredi yönetimi).
    İster **`.docx`/`.xlsx`** olarak geldiyse önce tek betik çağrısıyla mekanik **kaynak paketi** üret ve onu oku:
    `python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py cikar <dosya>` → `.axet-code/tmp/<id>/INDEX.md`
-   (tam metin `KM-nnnn`, görseller, gömülü nesneler — ör. HTML ekran prototipi; `%sap-fs-ts-docs` `references/traceability.md` §2-B).
+   (çıkarım kapsamındaki metin `KM-nnnn`, yapılandırılmayan XML metni geri düşüş bölümünde, görseller, gömülü nesneler — ör. HTML ekran prototipi; `%sap-fs-ts-docs` `references/traceability.md` §2-B).
    Kaynak metnini modelle yeniden yazıp özetini kaynak yerine koyma; DOĞRULAMA FAIL ya da çıkış 3 (`.pdf`) ise kullanıcıya söyle.
 4. **3 eksende araştır** (kapsamla orantılı derinlik):
    - (a) **Domain:** nasıl çalışır — resmi kaynak; sözdizimi/annotation tahmin edilmez.

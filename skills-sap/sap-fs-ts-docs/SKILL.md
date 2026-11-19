@@ -77,8 +77,9 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 1. Girdileri oku; şablonun bölüm yapısını ve istenen kapsamı kullanıcıya bir paragrafta geri söyle.
 2. Girdi yetersizse **dur**: eksikleri araştırmayla bilgilendirilmiş sorulara çevir, **tek seferde, seçenekli ve önerili**
    `ask_user` ile sor; yanıt gelmeden tam FS üretme. Kullanıcı "taslak olarak ilerle" derse boşluklar `[Varsayım]` etiketiyle.
-3. Şablonu bölüm bölüm doldur — belge 150 satırı aşacaksa önce iskelet (başlıklar), sonra **her bölüm ayrı bir `edit`
-   çağrısıyla** (çekirdek §10: tek çağrıda uzun içerik model ağ geçidinde 504 aldı). Kullanıcının yazdığı her istek bir FR/KR'ye izlenebilir (İlke 1);
+3. Şablonu bölüm bölüm doldur — tek bir `write`/`edit` çağrısının içeriği 150 satırı aşacaksa önce iskelet (başlıklar),
+   sonra **her bölüm ayrı bir `edit` çağrısıyla**; 150 satırı aşan tek bölüm de bölünür (çekirdek §10: tek çağrıda uzun
+   içerik model ağ geçidinde 504 aldı). Kullanıcının yazdığı her istek bir FR/KR'ye izlenebilir (İlke 1);
    kaynak paketi varsa iz tablosunu bölümlerle birlikte doldur. Danışman katkısı `[Öneri]` → §11-A; karar verilemeyen
    nokta seçenek + öneri ile → §11-B (İlke 2). Gövdede süreç/sürüm anlatısı yok (İlke 2b).
 4. (kaynak paketi varsa) `kaynak_paketi.py iz` **PASS** → §4 kontrol listesi + bağımsız inceleme (§5 aşağıda; iz tablosu
@@ -141,7 +142,7 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 | `scripts/capture_kd_screens.js` | yapılandırma dosyasıyla adım adım ekran çekimi + model verisi enjeksiyonu (UI5 mock) |
 | `scripts/verify_doc_html.py` | ölü içindekiler bağlantısı, ham Mermaid sızıntısı, görsel sayısı/eksik dosya, PDF bağlantı sayısı |
 | `scripts/doc_equivalence_check.py` | yeniden yazımda veri kaybı (kimlik, mockup, değer, cümle) + kapanmış karar ters yönü |
-| `scripts/kaynak_paketi.py` | `cikar`: `.docx`/`.xlsx` istekten mekanik paket (tam metin KM-nnnn, görseller, OLE/altChunk gömülü nesneler, bağımsız sayımla doğrulama; `.pdf` desteklenmiyor) · `iz`: kaynak maddesi → belge kimliği tablosu denetimi |
+| `scripts/kaynak_paketi.py` | `cikar`: `.docx`/`.xlsx` istekten mekanik paket (çıkarım kapsamındaki metin KM-nnnn, yapılandırılmayan XML metni geri düşüş bölümünde, görseller, OLE/altChunk gömülü nesneler, bağımsız sayımla doğrulama; `.pdf` desteklenmiyor) · `iz`: kaynak maddesi → belge kimliği tablosu denetimi |
 | `scripts/check_fs_no_analysis_log.py` | FS gövdesinde analiz günlüğü izi sayımı (sürüm etiketi, inceleme kimliği, süreç ifadesi, kullanıcı alıntısı, önceden→şimdi) + §1.1 satır uzunluğu (DOC-FS-05/06a); uyarıdır, kapı değil |
 | `scripts/check_fm_signature_doc_sync.py` | dokümandaki `<!-- FM-IMZA: <FM> -->` bloğu ↔ FM kaynağındaki imza parametreleri, iki yönde (EKSİK · HAYALET); kaynak kökü `sap-project.json` `source_root` (AX-DOC-TS-03); uyarıdır, kapı değil |
 | `scripts/gen_field_table.py` | CDS (+ interface CDS, BDEF, CSV) → alan tablosu |

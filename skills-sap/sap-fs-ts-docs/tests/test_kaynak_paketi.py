@@ -6,6 +6,7 @@ sistem TEMP'inde (repo dışında) kurulur, paket hedefi daima açık verilir �
 """
 import json
 import os
+import re
 import shutil
 import struct
 import tempfile
@@ -353,8 +354,8 @@ class KaynakPaketiDocxTest(_Gecici):
         self.assertEqual(0, rc, out)
         orijinal = kp.docx_cikar
 
-        def kapsayicisiz(z):
-            c = orijinal(z)
+        def kapsayicisiz(z, *a):
+            c = orijinal(z, *a)
             c.satirlar = [s for s in c.satirlar if "Özel XML" not in s]
             return c
         with mock.patch.object(kp, "docx_cikar", kapsayicisiz):
@@ -503,11 +504,12 @@ class NesneMetniTest(_Gecici):
         self.assertIn("D01 SmartArt `word/diagrams/data1.xml`", self.oku("INDEX.md"))
 
     def test_smartart_dusurulurse_fail(self):
-        """Koruma: çıkarım nesnenin metnini düşürürse bağımsız sayım (ayrı kod) FAIL verir."""
+        """Koruma: çıkarım nesnenin metnini düşürürse parça hesabı (evren süpürmesi, ayrı kod) FAIL verir."""
         with mock.patch.object(kp, "nesne_hucreleri", return_value=[]):
             rc, out, _ = self.cikar()
         self.assertEqual(1, rc, out)
-        self.assertIn("nesne metni karakteri (D/G/K, boşluksuz): kaynak", out)
+        self.assertRegex(out, r"parça word/diagrams/data1\.xml: kaynak metni [1-9]\d* ≠ pakette 0")
+        self.assertRegex(out, r"parça word/charts/chart1\.xml: kaynak metni [1-9]\d* ≠ pakette 0")
         self.assertIn("metin yok", self.oku("metin.md"))
 
     def test_denklem_dusurulurse_fail(self):
@@ -639,22 +641,252 @@ class SaglamlikTest(_Gecici):
         self.assertEqual(["tmp"], os.listdir(os.path.join(self.d, "proje", ".axet-code")))
 
     def test_boyut_siniri_olculemedi(self):
-        docx_yaz(self.kaynak, p("x") + "<w:sectPr/>", rels=[], ekler={"word/media/b.bin": b"\x00" * 5000})
+        """Ö1: sınırı aşan METİN parçası ve toplam → çıkış 2, paket yazılmaz; sınırı aşan görsel atlanır, çıkarım sürer
+        (yer tutucu dosya + INDEX'te ÖLÇÜLEMEDİ — boyut)."""
+        docx_yaz(self.kaynak, p("x" * 5000) + "<w:sectPr/>", rels=[])
         with mock.patch.object(kp, "MAX_UYE", 4000):
             rc, _out, err = self.cikar()
         self.assertEqual(2, rc)
-        self.assertIn("boyut sınırı: word/media/b.bin açılınca 5000 bayt (sınır 4000)", err)
+        self.assertIn("boyut sınırı: word/document.xml açılınca 4000 bayttan fazla (sınır 4000)", err)
         self.assertFalse(os.path.exists(self.paket()), "sınırı aşan girdide paket yazılmaz")
         with mock.patch.object(kp, "MAX_TOPLAM", 4500):
             rc, _out, err = self.cikar()
         self.assertEqual(2, rc)
         self.assertIn("boyut sınırı: açılmış toplam", err)
+        docx_yaz(self.kaynak, p("x") + "<w:sectPr/>", rels=[], ekler={"word/media/b.bin": b"\x00" * 5000})
+        with mock.patch.object(kp, "MAX_UYE", 4000):
+            rc, out, err = self.cikar()
+        self.assertEqual(0, rc, out + err)
+        self.assertEqual(["KG-01_b.bin.OLCULEMEDI.txt"], os.listdir(self.paket("media")))
+        self.assertIn("ÖLÇÜLEMEDİ — boyut", self.oku("media", "KG-01_b.bin.OLCULEMEDI.txt"))
+        self.assertIn("ÖLÇÜLEMEDİ — boyut: word/media/b.bin", self.oku("INDEX.md"))
+        self.assertIn("| KG-01 | `word/media/b.bin` | `media/KG-01_b.bin.OLCULEMEDI.txt` | ÖLÇÜLEMEDİ — boyut",
+                      self.oku("INDEX.md"))
 
     def test_beklenmeyen_hata_fail_degil_olculemedi(self):
         with mock.patch.object(kp, "docx_cikar", side_effect=RuntimeError("deneme")):
             rc, _out, err = self.cikar()
         self.assertEqual(2, rc, "yakalanmayan hata Python'un çıkış 1'i olup FAIL ile karışmasın")
         self.assertIn("beklenmeyen hata (RuntimeError: deneme)", err)
+
+
+# ── BÖLÜM: evren süpürmesi / geri düşüş testleri (F10) ──
+CX = "http" + "://schemas.microsoft.com/office/drawing/2014/chartex"
+WP14 = "http" + "://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+CDR = _S + "drawingml/2006/chartDrawing"
+CHARTEX = ('<cx:chartSpace xmlns:cx="%s"><cx:chartData><cx:data id="0"><cx:strDim type="cat"><cx:lvl ptCount="2">'
+           '<cx:pt idx="0">Ege</cx:pt><cx:pt idx="1">Akdeniz</cx:pt></cx:lvl></cx:strDim><cx:numDim type="val">'
+           '<cx:lvl ptCount="2"><cx:pt idx="0">5</cx:pt><cx:pt idx="1">7</cx:pt></cx:lvl></cx:numDim></cx:data>'
+           '</cx:chartData></cx:chartSpace>' % CX)
+KONUM = ('<wp:positionH><mc:AlternateContent><mc:Choice Requires="wp14"><wp14:pctPosHOffset xmlns:wp14="%s">91000'
+         '</wp14:pctPosHOffset></mc:Choice><mc:Fallback><wp:posOffset>7077075</wp:posOffset></mc:Fallback>'
+         '</mc:AlternateContent></wp:positionH>' % WP14)
+
+
+def kutu(choice, fallback, konum=""):
+    """Metin kutusu: Choice (DrawingML) + Fallback (VML). choice None → Choice'suz AlternateContent."""
+    ch = ('<mc:Choice Requires="wps"><w:drawing><wp:anchor>%s<wps:txbx><w:txbxContent>%s</w:txbxContent></wps:txbx>'
+          '</wp:anchor></w:drawing></mc:Choice>' % (konum, p(choice))) if choice is not None else ""
+    return ('<w:r><mc:AlternateContent>%s<mc:Fallback><w:pict><v:textbox><w:txbxContent>%s</w:txbxContent>'
+            '</v:textbox></w:pict></mc:Fallback></mc:AlternateContent></w:r>' % (ch, p(fallback)))
+
+
+class EvrenGeriDususTest(_Gecici):
+    def docx(self, govde, ekler=None, rels=None):
+        docx_yaz(self.kaynak, govde + "<w:sectPr/>", rels=rels or [], ekler=ekler)
+        rc, out, err = self.cikar()
+        return rc, out + err, self.oku("metin.md") if os.path.exists(self.paket("metin.md")) else ""
+
+    def test_bilinmeyen_parca_geri_dususte_pass(self):
+        """F10: parça listesinde olmayan bir XML parçasının metni pakete girer (geri düşüş) ve doğrulama PASS."""
+        rc, out, metin = self.docx(p("Gövde"), ekler={
+            "word/foo/bar1.xml": '<x:kok xmlns:x="urn:ornek"><x:a>Bilinmeyen parça metni</x:a></x:kok>'})
+        self.assertEqual(0, rc, out)
+        self.assertIn("[KM-0002] ⟦P01 parça: word/foo/bar1.xml⟧ | Bilinmeyen parça metni |", metin)
+        index = self.oku("INDEX.md")
+        self.assertIn("Geri düşüşe giden parçalar", index)
+        self.assertIn("P01 `word/foo/bar1.xml`", index)
+        self.assertIn("| `word/foo/bar1.xml` | geri düşüş | 20 | 0 | 0 | 20 |", index)
+        meta = json.loads(self.oku("paket.json"))
+        self.assertEqual(["word/foo/bar1.xml"], [g["parca"] for g in meta["geri_dusus"]])
+        self.assertEqual(2, meta["km_toplam"])
+
+    def test_ust_altbilgi_dipnot_yorum_geri_dususte(self):
+        """Eskiden 'metin.md'ye alınmadı' notuyla dışarıda kalan parçalar artık metin olarak pakette."""
+        w = 'xmlns:w="%s"' % NS["w"]
+        rc, out, metin = self.docx(p("Gövde"), ekler={
+            "word/header1.xml": "<w:hdr %s>%s</w:hdr>" % (w, p("Üst bilgi metni")),
+            "word/footer1.xml": "<w:ftr %s>%s</w:ftr>" % (w, p("Alt bilgi metni")),
+            "word/footnotes.xml": '<w:footnotes %s><w:footnote w:id="1">%s</w:footnote></w:footnotes>'
+                                  % (w, p("Dipnot metni")),
+            "word/comments.xml": '<w:comments %s><w:comment w:id="0">%s</w:comment></w:comments>'
+                                 % (w, p("Yorum metni"))})
+        self.assertEqual(0, rc, out)
+        for parca, metin_ in (("word/comments.xml", "Yorum metni"), ("word/footer1.xml", "Alt bilgi metni"),
+                              ("word/footnotes.xml", "Dipnot metni"), ("word/header1.xml", "Üst bilgi metni")):
+            self.assertRegex(metin, r"\[KM-\d{4}\] ⟦P\d\d parça: %s⟧ \| %s \|" % (parca, metin_))
+        self.assertNotIn("ALINMADI", self.oku("INDEX.md"))
+        self.assertNotIn("alınmadı", self.oku("INDEX.md"))
+
+    def test_chartex_kategorileri_docx_ve_xlsx(self):
+        """n1: ChartEx kategori metni (cx:pt) grafik satırında; docx ve xlsx."""
+        rc, out, metin = self.docx(p("Grafik"), ekler={"word/charts/chartEx1.xml": CHARTEX})
+        self.assertEqual(0, rc, out)
+        self.assertIn("⟦G01 grafik: word/charts/chartEx1.xml⟧ | Ege | Akdeniz | 5 | 7 |", metin)
+        xl = kp.xlsx_okuyucu()
+        yol = os.path.join(self.d, "grafik.xlsx")
+        xl.write_xlsx(yol, [("Veri", [["Bölge"], ["Ege"]])])
+        with zipfile.ZipFile(yol, "a") as z:
+            z.writestr("xl/charts/chartEx1.xml", CHARTEX)
+        rc, out, err = self.cikar(yol)
+        self.assertEqual(0, rc, out + err)
+        self.assertIn("⟦G01 grafik: xl/charts/chartEx1.xml⟧ | Ege | Akdeniz | 5 | 7 |", self.oku("metin.md"))
+
+    def test_grafik_ustu_metin_kutusu_geri_dususte(self):
+        """n7: grafiğin üstüne çizilen metin kutusu (userShapes → word/drawings/drawingN.xml) pakette, PASS."""
+        us = ('<c:userShapes xmlns:c="%s" xmlns:cdr="%s" xmlns:a="%s"><cdr:relSizeAnchor><cdr:sp><cdr:txBody><a:p>'
+              '<a:r><a:t>Not: Marmara Q3 verisi eksik</a:t></a:r></a:p></cdr:txBody></cdr:sp></cdr:relSizeAnchor>'
+              '</c:userShapes>') % (NS["c"], CDR, NS["a"])
+        rc, out, metin = self.docx(p("Grafik:") + GRAFIK, rels=[("rIdCh", "chart", "charts/chart1.xml")],
+                                   ekler={"word/charts/chart1.xml": GRAFIK_VERI, "word/drawings/drawing1.xml": us})
+        self.assertEqual(0, rc, out)
+        self.assertIn("⟦P01 parça: word/drawings/drawing1.xml⟧ | Not: Marmara Q3 verisi eksik |", metin)
+
+    def test_fallback_yalniz_choice_esitse_yok_sayilir(self):
+        """Kural ②: Fallback yalnız karakteri eşit bir Choice varsa yok sayılır. Konum değeri (yok sayılan sınıf)
+        yalnız Choice'ta durur ve eşitliği bozmaz; iç içe konum AlternateContent'i dış Choice'u yarıda kesmez."""
+        govde = (p("Önce") + p("", ek=kutu("Aynı metin", "Aynı metin", KONUM)) + p("", ek=kutu("A", "Başka metin"))
+                 + p("", ek=kutu(None, "Yalnız eski gösterim")))
+        rc, out, metin = self.docx(govde)
+        self.assertEqual(0, rc, out)
+        self.assertEqual(1, metin.count("Aynı metin"), metin)
+        self.assertRegex(metin, r"⟦P01 parça: word/document\.xml⟧ \| Başka metin \|")
+        self.assertRegex(metin, r"⟦P01 parça: word/document\.xml⟧ \| Yalnız eski gösterim \|")
+        # Dış Fallback "Aynı metin" (9) düşer. İç konum bloğunun net metni 0 olduğundan o Fallback düşmez; konum
+        # değerleri (91000 + 7077075 = 12) kendi sınıfında sayılır.
+        self.assertIn("yinelenen gösterim (mc:Fallback, Choice ile eşit) 9", out)
+        self.assertIn("konum/ölçü değeri 12", out)
+
+    def test_alan_kodu_yok_sayilir_alan_sonucu_alinir(self):
+        """Kural ②: alan kodu sınıfı yalnız instrText; alan SONUCU (w:t) yapılandırılmış satırda."""
+        alan = ('<w:p><w:r><w:t xml:space="preserve">Sayfa </w:t></w:r><w:r><w:fldChar w:fldCharType="begin"/></w:r>'
+                '<w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar '
+                'w:fldCharType="separate"/></w:r><w:r><w:t>7</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>'
+                '</w:p>')
+        rc, out, metin = self.docx(alan)
+        self.assertEqual(0, rc, out)
+        self.assertIn("[KM-0001] Sayfa 7", metin)
+        self.assertNotIn("PAGE", metin)
+        self.assertIn("alan kodu (instrText) 4", out)
+
+    def test_yok_sayilan_her_sinif_karakteriyle_basilir(self):
+        """Koşul ①: her yok sayılan sınıf DOĞRULAMA satırında ve INDEX'te karakter sayısıyla (sıfır da) görünür."""
+        rc, out, err = self.cikar()
+        self.assertEqual(0, rc, out + err)
+        dogrulama = [s for s in out.splitlines() if s.startswith("DOĞRULAMA:")][0]
+        index = self.oku("INDEX.md")
+        for sinif in kp.YOK_SINIFLAR:
+            self.assertRegex(dogrulama, re.escape(sinif) + r" \d+")
+            self.assertRegex(index, re.escape(sinif) + r" \d+")
+        self.assertIn("yinelenen gösterim (mc:Fallback, Choice ile eşit) 9", dogrulama)  # KUTU: "Kutu metni"
+        self.assertEqual(set(kp.YOK_SINIFLAR), set(json.loads(self.oku("paket.json"))["yok_sayilan"]))
+
+    def test_definedname_yalniz_workbookta_yok_sayilir(self):
+        """definedName yalnız xl/workbook.xml'de formül/başvuru sınıfıdır; başka parçada geri düşüşe gider."""
+        xl = kp.xlsx_okuyucu()
+        yol = os.path.join(self.d, "liste.xlsx")
+        xl.write_xlsx(yol, [("Testler", [["No"], ["TS-01"]])])
+        with zipfile.ZipFile(yol) as z:
+            self.assertIn("definedName", z.read("xl/workbook.xml").decode("utf-8"), "fikstür ön koşulu")
+        rc, out, err = self.cikar(yol)
+        self.assertEqual(0, rc, out + err)
+        self.assertRegex(out, r"formül / veri başvurusu \(f, definedName\) [1-9]\d*")
+        self.assertNotIn("parça: xl/workbook.xml", self.oku("metin.md"))
+        rc, out, metin = self.docx(p("Gövde"), ekler={
+            "word/foo/ad.xml": '<x:kok xmlns:x="urn:ornek"><x:definedName>Gizli ad metni</x:definedName></x:kok>'})
+        self.assertEqual(0, rc, out)
+        self.assertIn("⟦P01 parça: word/foo/ad.xml⟧ | Gizli ad metni |", metin)
+        self.assertIn("formül / veri başvurusu (f, definedName) 0", out)
+
+
+def cfb_paylasimli(d=1, k=9):
+    """Döngüsüz, geçerli zincirli CFB; tek kusur: 4*d-1 akış AYNI k sektörlük veri zincirini gösterir (gerçek CFB'de
+    olmaz; paylaşım çıktıyı akış sayısıyla çarpar)."""
+    toplam = d + k
+    f = 1
+    while (f + toplam + 127) // 128 > f:
+        f += 1
+    fat = [FREESECT] * (f * 128)
+    for i in range(f):
+        fat[i] = FATSECT
+    dir0 = f
+    for i in range(d):
+        fat[dir0 + i] = dir0 + i + 1 if i < d - 1 else ENDOFCHAIN
+    v0 = f + d
+    for i in range(k):
+        fat[v0 + i] = v0 + i + 1 if i < k - 1 else ENDOFCHAIN
+
+    def girdi(ad, tur, bas, boy):
+        a = ad.encode("utf-16-le") + b"\0\0"
+        e = a.ljust(64, b"\0") + struct.pack("<HBB", len(a), tur, 1) + struct.pack("<III", NOSTREAM, NOSTREAM, NOSTREAM)
+        return e + b"\0" * 36 + struct.pack("<IQ", bas, boy)
+    dz = girdi("Root Entry", 5, ENDOFCHAIN, 0)
+    for i in range(4 * d - 1):
+        dz += girdi("s%d" % i, 2, v0, k * 512)
+    bas = kp.CFB_IMZA + b"\0" * 16 + struct.pack("<HHHHH", 0x3E, 3, 0xFFFE, 9, 6) + b"\0" * 6
+    bas += struct.pack("<IIIIIIIII", 0, f, dir0, 0, 4096, ENDOFCHAIN, 0, ENDOFCHAIN, 0)
+    bas += struct.pack("<109I", *(list(range(f)) + [FREESECT] * (109 - f)))
+    return bas + struct.pack("<%dI" % len(fat), *fat) + dz + b"A" * (k * 512)
+
+
+class BoyutVeCfbTest(_Gecici):
+    def test_zip_basligi_boyu_kucuk_beyan_ederse_olculemedi(self):
+        """F11: başlık açılmış boyu küçük beyan eder; üye gerçekten açılarak okunur → CRC/boy uyuşmazlığı ÖLÇÜLEMEDİ
+        (çıkış 2), beyana güvenip devam edilmez."""
+        docx_yaz(self.kaynak, p("x") + "<w:sectPr/>", rels=[], ekler={"word/media/b.bin": b"\x00" * 50000})
+        with open(self.kaynak, "rb") as fh:
+            b = bytearray(fh.read())
+        yamalanan = 0
+        for imza, ofs in ((b"PK\x03\x04", 22), (b"PK\x01\x02", 24)):
+            i = 0
+            while True:
+                i = b.find(imza, i)
+                if i < 0:
+                    break
+                if struct.unpack_from("<I", b, i + ofs)[0] == 50000:
+                    b[i + ofs:i + ofs + 4] = struct.pack("<I", 1000)
+                    yamalanan += 1
+                i += 4
+        self.assertEqual(2, yamalanan, "fikstür ön koşulu: yerel + merkezi başlık")
+        with open(self.kaynak, "wb") as fh:
+            fh.write(bytes(b))
+        rc, _out, err = self.cikar()
+        self.assertEqual(2, rc, err)
+        self.assertIn("zip üyesi açılamadı: word/media/b.bin", err)
+        self.assertFalse(os.path.exists(self.paket()), "okunamayan girdide paket yazılmaz")
+
+    def test_akisli_sayim_sinirda_keser(self):
+        """F11: sayım üyeyi parça parça açar ve sınırı geçince durur (tamamını belleğe almadan)."""
+        okunan = []
+        gercek = zipfile.ZipExtFile.read
+
+        def say(self_, n=-1):
+            veri = gercek(self_, n)
+            okunan.append(len(veri))
+            return veri
+        docx_yaz(self.kaynak, p("x" * 9000) + "<w:sectPr/>", rels=[])
+        with mock.patch.object(kp, "MAX_UYE", 4000), mock.patch.object(kp, "OKUMA_PARCASI", 1000), \
+                mock.patch.object(zipfile.ZipExtFile, "read", say):
+            rc, _out, err = self.cikar()
+        self.assertEqual(2, rc, err)
+        self.assertTrue(okunan and max(okunan) <= 1000, okunan[:5])
+
+    def test_cfb_paylasilan_sektor_cfbhata(self):
+        """F12: bir sektörü iki akışın paylaşması CfbHata (çıktı akış sayısıyla çarpılmaz); kontrol grubu: normal CFB
+        okunur."""
+        with self.assertRaisesRegex(kp.CfbHata, "birden çok yerde kullanılıyor"):
+            kp.cfb_akislari(cfb_paylasimli(1, 9))  # 9 sektör = 4608 bayt ≥ mini akış eşiği: düz FAT yolu
+        self.assertEqual(b"veri", kp.cfb_akislari(cfb_yaz([("Akis", b"veri")]))["Akis"])
 
 
 # ── BÖLÜM: iz testleri ──
@@ -770,6 +1002,33 @@ class IzDenetimiTest(_Gecici):
         self.assertEqual(2, rc)
         self.assertIn("ÖLÇÜLEMEDİ", err)
 
+    def test_km_semasi_tablo_ile_eslesir(self):
+        """F13: tablo başka bir numaralandırma şemasıyla eşlenmişse FAIL; şema yoksa UYARI; aynıysa PASS."""
+        meta = json.loads(self.oku("paket.json"))
+        self.assertEqual(kp.KM_SEMASI, meta["km_semasi"])
+        bas = "Kaynak: istek.docx · sha256 %s · km şeması %%d\n\n" % meta["kaynak"]["sha256"][:16]
+        rc, out, _ = self.iz(bas % kp.KM_SEMASI + IZ_TABLOSU)
+        self.assertEqual(0, rc, out)
+        self.assertIn("UYARI tabloda km şeması yok: 0", out)
+        self.assertIn("NUMARALANDIRMA ŞEMASI FARKLI — paketi yeniden çıkar, tabloyu yeniden eşle: 0", out)
+        rc, out, _ = self.iz(bas % (kp.KM_SEMASI - 1) + IZ_TABLOSU)
+        self.assertEqual(1, rc, out)
+        self.assertIn("NUMARALANDIRMA ŞEMASI FARKLI — paketi yeniden çıkar, tabloyu yeniden eşle: 1", out)
+        rc, out, _ = self.iz(IZ_TABLOSU)
+        self.assertEqual(0, rc, out)
+        self.assertIn("UYARI tabloda km şeması yok: 1", out)
+
+    def test_eski_paket_semasiz_sema_1_sayilir(self):
+        """F13: km_semasi alanı olmayan (eski betikle çıkarılmış) paket şema 1 sayılır; güncel şemayla eşlenmiş
+        tablo onunla FAIL verir."""
+        meta = json.loads(self.oku("paket.json"))
+        del meta["km_semasi"]
+        with open(self.paket("paket.json"), "w", encoding="utf-8") as fh:
+            json.dump(meta, fh, ensure_ascii=False)
+        rc, out, _ = self.iz("km şeması %d\n\n%s" % (kp.KM_SEMASI, IZ_TABLOSU))
+        self.assertEqual(1, rc, out)
+        self.assertIn("paket: km şeması 1", out)
+
 # ── BÖLÜM: kural metni testleri ──
 def _metin(*yol):
     with open(os.path.join(REPO, *yol), encoding="utf-8") as fh:
@@ -808,7 +1067,10 @@ class KaynakKuraliMetinTest(unittest.TestCase):
         self.assertIn("504 Gateway Timeout", cekirdek)
         for ad in ("fs-authoring.md", "ts-authoring.md", "kd-authoring.md", "../SKILL.md"):
             t = " ".join(_metin("skills-sap", "sap-fs-ts-docs", "references", *ad.split("/")).split())
-            self.assertRegex(t, r"150 satırı aşacaksa önce iskelet", ad + ": çekirdekteki koşulla aynı cümle")
+            # Ö3: eşik belgenin değil TEK ÇAĞRININ içeriğidir (çekirdek: "araç çağrısı ... 150 satırı aşacaksa").
+            self.assertRegex(t, r"çağrı(sı)?nın içeriği 150 satırı aşacaksa önce iskelet", ad + ": çekirdekteki koşul")
+            self.assertIn("150 satırı aşan tek bölüm de bölünür", t, ad)
+            self.assertNotRegex(t, r"(belge|Kılavuz|Dosya ya da parça) 150 satırı aşacaksa", ad)
             self.assertRegex(t, r"ayrı (bir )?`edit` çağrısıyla", ad)
             self.assertIn("çekirdek §10", t, ad)
 
@@ -827,7 +1089,12 @@ class KaynakKuraliMetinTest(unittest.TestCase):
         """F6: iz tablosu git dışı .axet-code/tmp'de değil, FS'in SAP paketinde ref_docs/ altında."""
         trace = _metin("skills-sap", "sap-fs-ts-docs", "references", "traceability.md")
         self.assertIn("--tablo <source_root>/<MODÜL>/<PAKET>/ref_docs/iz-<belge no>.md", trace)
-        self.assertIn("`Kaynak: <dosya adı> · sha256 <ilk 16 hane>`", trace)
+        self.assertIn("`Kaynak: <dosya adı> · sha256 <ilk 16 hane> · km şeması <n>`", trace)
+        # F13: kimlikler aynı kaynaktan yalnız AYNI BETİK SÜRÜMÜYLE yeniden üretilir; kaynak ikili dosyanın yeri yazılı.
+        t = " ".join(trace.split())
+        self.assertIn("**aynı betik sürümüyle** (aynı `km şeması`)", t)
+        self.assertIn("**kaynak ikili dosya** da saklanır — iz tablosunun yanında, `ref_docs/` altında", t)
+        self.assertNotIn("aynı kaynaktan `cikar` aynı kimliklerle", t)
         self.assertNotIn("paket klasöründe `iz-", trace)
         self.assertIn("ref_docs/iz-<belge no>.md", _metin("skills-sap", "sap-fs-ts-docs", "references",
                                                           "doc-checklist.md"))

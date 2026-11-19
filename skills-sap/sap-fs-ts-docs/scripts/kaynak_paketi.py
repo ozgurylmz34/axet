@@ -8,7 +8,8 @@ Kullanım:
 
 cikar: kaynak belgeyi model YENİDEN YAZMADAN pakete çıkarır → <hedef-kok>/<id>/ (varsayılan hedef kök:
   <çalışma dizini>/.axet-code/tmp, varsayılan id: <dosya adı>-<içerik özetinin ilk 8 hanesi>):
-    metin.md   tam metin, kaynak sırasıyla; her metin bloğu (başlık, paragraf, tablo satırı) bir kaynak maddesi KM-nnnn
+    metin.md   çıkarım kapsamındaki metin, kaynak sırasıyla; her metin bloğu (başlık, paragraf, tablo satırı, nesne,
+               geri düşüş grubu) bir kaynak maddesi KM-nnnn; yapılandırılmayan XML metni sonda ham (geri düşüş)
     media/     belgedeki görseller (KG-nn) · gomulu/  gömülü nesneler (KN-nn): OLE paket nesnesinin asıl dosyası
                (ör. HTML prototip), OLE içindeki OOXML paketi, altChunk içeriği; tanınmayan ham kopyalanır
     INDEX.md   sayım tablosu (kaynaktan bağımsız sayım ↔ diskteki paket) + dosya listesi + nasıl okunur
@@ -29,6 +30,7 @@ import re
 import struct
 import sys
 import zipfile
+import zlib
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -39,21 +41,83 @@ for _a in (sys.stdout, sys.stderr):
         pass
 
 HERE = Path(__file__).resolve().parent
+
+# KM numaralandırma şeması. Betik bir maddeyi farklı sırayla ya da farklı bölünmeyle numaralandırdığında artar; iz
+# tablosu bu sayıyı taşır ve `iz` farklıysa FAIL verir (aynı kaynak, başka şema = kimlikler kaymış olabilir).
+# 1: v0.5.24 ilk hâli · 2: grafik `pt` hücreleri + "Yapılandırılmamış parça metni" bölümü (geri düşüş).
+KM_SEMASI = 2
+
+# Muaf parçalar (evren süpürmesine girmez): YAPISAL parçalar — biçim, ilişki, tema, ayar, belge özelliği. Liste SCOPE'ta
+# basılır; her muaf parça INDEX'in parça hesabında metin karakteriyle görünür (muaf ≠ "metin yok").
+# Ölçüm (2026-11-19, Microsoft Office'in kurulu şablonları, 23 .dotx + 7 .xltx, yalnız okundu): içerik türleri, ilişki,
+# stil, tema, Word ayarı, hesap zinciri, SmartArt düzen/renk/stil → 0 metin karakteri. docProps 75 parça / 4478
+# karakter (başlık, yazar, uygulama adı — üst veri), customXml 94 parça / 8520 karakter (SharePoint form adları, base64
+# görsel eşlemesi, içerik denetimi bağlama verisi) → metin VAR, belge gövdesi değil. Yazıcı ayarı ve grafik stil/renk
+# bu kümede hiç yoktu → DOĞRULANMADI. SmartArt önbellek çizimi koşulludur (muaf_nedeni): 4 parça, metni veri parçasının
+# alt kümesi. Aynı ölçümde 30/30 dosyada parça hesabı tuttu.
+MUAF = [
+    ("içerik türleri", r"^\[Content_Types\]\.xml$"),
+    ("ilişki", r"(^|/)_rels/[^/]+\.rels$"),
+    ("stil", r"^(word|xl)/styles(WithEffects)?\.xml$"),
+    ("tema", r"^(word|xl)/theme/[^/]+\.xml$"),
+    ("Word ayarı (settings, webSettings, fontTable, numbering)", r"^word/(settings|webSettings|fontTable|numbering)\.xml$"),
+    ("belge özelliği", r"^docProps/"),
+    ("özel XML verisi", r"^customXml/"),
+    ("hesap zinciri", r"^xl/calcChain\.xml$"),
+    ("yazıcı ayarı", r"(^|/)printerSettings/"),
+    ("SmartArt düzen/renk/stil tanımı", r"^(word|xl)/diagrams/(layout|colors|quickStyle)\d*\.xml$"),
+    ("grafik stil/renk", r"^(word|xl)/charts/(style|colors)\d*\.xml$"),
+]
+MUAF_RE = [(ad, re.compile(d)) for ad, d in MUAF]
+# Dosya olarak çıkan üyeler (görsel KG, gömülü KN): içerikleri evrene girmez, adetleri ayrı sayılır.
+DOSYA_PARCA = re.compile(r"^(word|xl)/(media|embeddings)/")
+# Yok sayılan metin düğümleri (çıkarım bilerek almaz; evrenden de düşülür). Ad listesi kapsamı DARALTMAZ: burada
+# olmayan her metin ya yapılandırılmış satıra ya geri düşüş bölümüne gider.
+# mc:Fallback YALNIZ aynı mc:AlternateContent içinde metin karakteri Fallback'inkine EŞİT bir mc:Choice varsa yok
+# sayılır (gerçek yineleme); değilse metni geri düşüşe gider. Alan kodu sınıfı yalnız instrText'tir (alan SONUCU w:t
+# yapılandırılmış satırdadır). Yaprak sınıfları yalnız alt öğesi olmayan öğeye uygulanır.
+YOK_FALLBACK = "yinelenen gösterim (mc:Fallback, Choice ile eşit)"
+YOK_ALT_AGAC = {"rPh": "fonetik okunuş (rPh)"}
+YOK_YAPRAK = {"instrText": "alan kodu (instrText)", "delText": "izlenen değişiklikte silinen metin (delText)",
+              **{k: "formül / veri başvurusu (f, definedName)" for k in ("f", "definedName")},
+              "formatCode": "sayı biçim kodu (formatCode)",
+              **{k: "konum/ölçü değeri" for k in ("posOffset", "align", "pctWidth", "pctHeight", "pctPosHOffset",
+                                                  "pctPosVOffset", "col", "colOff", "row", "rowOff")}}
+# Parçaya bağlı yaprak sınıfı: yalnız desene uyan parçada yok sayılır, başka parçada aynı yerel ad geri düşüşe gider.
+# definedName yalnız çalışma kitabında (xl/workbook.xml) formül/başvurudur (_xlnm.Print_Area gibi sistem adları dahil).
+YOK_PARCA_SINIRI = {"definedName": re.compile(r"^xl/workbook\.xml$")}
+YOK_SINIFLAR = sorted({YOK_FALLBACK, *YOK_ALT_AGAC.values(), *YOK_YAPRAK.values()})
+
+
+def yaprak_sinifi(ad: str, parca: str | None) -> str | None:
+    """Yerel adı `ad` olan yaprak öğe bu parçada yok sayılan sınıfta mı? → sınıf adı ya da None."""
+    sinir = YOK_PARCA_SINIRI.get(ad)
+    if sinir is not None and not (parca and sinir.match(parca)):
+        return None
+    return YOK_YAPRAK.get(ad)
 SCOPE_CIKAR = (
     "KAPSAM (SCOPE): kaynak_paketi cikar — .docx: ana gövde (paragraf, başlık, tablo; tablo içi tablo hücre metnine "
     "düzleşir; metin kutusunun paragraf ve tabloları bulunduğu paragrafın satırına düzleşir; denklem metni satır içinde "
     "⟦denklem⟧ işaretiyle), SmartArt (D) ve grafik (G) metni kendi KM satırında, word/media görselleri, "
     "word/embeddings nesneleri, altChunk. .xlsx: sayfa satırları, xl/drawings metin kutuları (K), SmartArt, grafik, "
-    "xl/media, xl/embeddings. BAKMADIKLARI: üst/altbilgi, dipnot, yorum, izlenen değişiklikte silinen metin, "
-    "gömülü/altChunk içeriğin METNİ (dosya olarak çıkar, metin.md'ye girmez), görselin içindeki yazı, metin taşımayan "
-    "çizim öğeleri (mürekkep, 3B model), xlsx'te birleştirilmiş hücre/biçim, nesnenin hangi hücrede durduğu ve sayı/"
-    "tarih hücresinin karakteri (xlsx'te yalnız metin hücreleri karakter sayımına girer). Boyut sınırı: zip üyesi "
-    "≤ 100 MiB, açılmış toplam ≤ 512 MiB — aşan girdi ÖLÇÜLEMEDİ (çıkış 2). Doğrulama sayım eşitliğidir; içerik "
-    "doğruluğu değil.")
+    "xl/media, xl/embeddings. GERİ DÜŞÜŞ: yukarıdakilerin kapsamadığı her XML parçasının (üst/altbilgi, dipnot, yorum, "
+    "tanınmayan parçalar) ve yapılandırılmış parçalarda alınmayan metin düğümlerinin metni 'Yapılandırılmamış parça "
+    "metni' bölümüne ham yazılır. EVREN: zip'teki her XML parçasının her metin düğümü; parça başına evren − yok sayılan "
+    "= yapılandırılmış + geri düşüş, değilse FAIL. MUAF PARÇALAR: " + "; ".join("%s `%s`" % kv for kv in MUAF) + ". "
+    "YOK SAYILAN METİN DÜĞÜMLERİ (her biri karakter sayısıyla basılır): " + "; ".join(YOK_SINIFLAR) + " — parçaya "
+    "bağlı: " + "; ".join("%s yalnız `%s`" % (k, d.pattern) for k, d in YOK_PARCA_SINIRI.items()) + " (başka parçada "
+    "geri düşüşe gider); mc:Fallback yalnız aynı AlternateContent'te karakteri eşit bir Choice varsa; alan kodu "
+    "yalnız instrText (alan sonucu alınır). "
+    "BAKMADIKLARI: öznitelik metni (görsel alternatif metni, veri doğrulama istemi, köprü ipucu), gömülü/altChunk "
+    "içeriğin ve görselin METNİ (dosya olarak çıkar), Word'ün otomatik numaraları, xlsx'te birleştirilmiş hücre/biçim, "
+    "nesnenin hangi hücrede durduğu ve sayı/tarih hücresinin karakteri (xlsx'te yalnız metin hücreleri karakter "
+    "sayımına girer). Boyut sınırı: zip üyesi gerçekten açılarak sayılır, ≤ 100 MiB, açılmış toplam ≤ 512 MiB — aşan "
+    "metin parçası ya da toplam ÖLÇÜLEMEDİ (çıkış 2); aşan görsel/gömülü üye atlanır ve INDEX'te ÖLÇÜLEMEDİ yazar. "
+    "Doğrulama sayım eşitliğidir; içerik doğruluğu değil.")
 SCOPE_IZ = (
     "KAPSAM (SCOPE): kaynak_paketi iz — paketin her KM/KG/KN maddesi tabloda tam bir satırda mı, eşleme boş mu, "
-    "kimlik belgede geçiyor mu, tablo pakette olmayan madde anıyor mu, tablodaki kaynak sha256'sı paketinkiyle aynı mı; "
-    "belgedeki FR/KR tabloda anılıyor mu, paket boş mu, tabloda sha256 var mı (UYARI). "
+    "kimlik belgede geçiyor mu, tablo pakette olmayan madde anıyor mu, tablodaki kaynak sha256'sı ve km şeması "
+    "paketinkiyle aynı mı; belgedeki FR/KR tabloda anılıyor mu, paket boş mu, tabloda sha256 / km şeması var mı (UYARI). "
     "BAKMADIKLARI: eşlemenin ANLAMCA doğruluğu (KM metni gerçekten o FR'de karşılanmış mı), BİLGİ/KAPSAM-DIŞI "
     "işaretinin haklılığı — ikisi de inceleyici yargısıdır.")
 
@@ -72,12 +136,14 @@ NESNE_RE = re.compile(r"^⟦([DGK])\d+ (SmartArt|grafik|metin kutusu): [^⟧]*�
 NESNE_ANAHTAR = {"SmartArt": "diyagram", "grafik": "grafik", "metin kutusu": "metin_kutusu"}
 DENKLEM = "⟦denklem⟧"
 
-# Boyut sınırları (zip üyesinin açılmış boyu ve tüm üyelerin toplamı; zip başlığındaki beyandan okunur, açmadan).
+# Boyut sınırları (zip üyesinin açılmış boyu ve tüm üyelerin toplamı). Zip başlığındaki beyana GÜVENİLMEZ: her üye
+# 1 MiB'lık parçalarla gerçekten açılıp sayılır (yalan söyleyen başlık 339 MB'a çıkarmıştı — ölçüldü 2026-11-19).
 # Ölçülmüş bir eşik değil, paydır: tipik bir istek belgesi onlarca MB'ın altındadır; çıkarım üyeyi belleğe alır ve
-# tepe bellek açılmış boyun yaklaşık iki katıdır (ölçüldü 2026-11-19: 150 MB'lık sıkıştırılmış sıfır üyesi → 339 MB
-# tepe). Aşan girdi FAIL değil ÖLÇÜLEMEDİ'dir (çıkış 2): paket hiç yazılmaz.
+# tepe bellek açılmış boyun yaklaşık iki katıdır (150 MB'lık üye → 339 MB tepe). Aşan metin parçası ya da toplam
+# FAIL değil ÖLÇÜLEMEDİ'dir (çıkış 2, paket yazılmaz); aşan görsel/gömülü üye atlanır, INDEX'te ÖLÇÜLEMEDİ yazar.
 MAX_UYE = 100 * 1024 * 1024
 MAX_TOPLAM = 512 * 1024 * 1024
+OKUMA_PARCASI = 1024 * 1024
 
 
 class Okunamadi(Exception):
@@ -165,6 +231,17 @@ def _cfb_akislari(data: bytes) -> dict[str, bytes]:
     fat: list[int] = []
     for f in fat_ids[:n_fat]:
         fat += struct.unpack_from("<%dI" % (ssz // 4), sektor(f))
+    # Her sektörün tek sahibi olur (tablo, dizin, mini akış ya da tek bir akış). Paylaşılan sektör gerçek bir CFB'de
+    # olmaz; kabul edilirse aynı sektörleri gösteren N akış bellekte N kez kopyalanır (ölçüldü: 155 KB → 41 MB).
+    kullanilan: set[int] = set(gorulen) | set(fat_ids[:n_fat])
+    kullanilan_mini: set[int] = set()
+
+    def sahiplen(liste: list[int], kume: set[int], ne: str) -> list[int]:
+        for n in liste:
+            if n in kume:
+                raise CfbHata(f"sektör {n} birden çok yerde kullanılıyor ({ne}) — bozuk ya da kötü niyetli dosya")
+            kume.add(n)
+        return liste
 
     def zincir(start: int, tablo: list[int]) -> list[int]:
         out, n = [], start
@@ -175,7 +252,7 @@ def _cfb_akislari(data: bytes) -> dict[str, bytes]:
             n = tablo[n]
         return out
 
-    dir_data = b"".join(sektor(n) for n in zincir(first_dir, fat))
+    dir_data = b"".join(sektor(n) for n in sahiplen(zincir(first_dir, fat), kullanilan, "dizin"))
     girdiler = []
     for i in range(0, len(dir_data) - 127, 128):
         e = dir_data[i:i + 128]
@@ -191,19 +268,20 @@ def _cfb_akislari(data: bytes) -> dict[str, bytes]:
     kok = next((g for g in girdiler if g[1] == 5), None)
     if kok is None:
         raise CfbHata("kök girdi yok")
-    mini_stream = b"".join(sektor(n) for n in zincir(kok[2], fat))[:kok[3]] if kok[3] else b""
+    mini_stream = b"".join(sektor(n) for n in sahiplen(zincir(kok[2], fat), kullanilan, "mini akış"))[:kok[3]]         if kok[3] else b""
     minifat: list[int] = []
     if n_minifat and first_minifat not in (ENDOFCHAIN, FREESECT):
-        for n in zincir(first_minifat, fat):
+        for n in sahiplen(zincir(first_minifat, fat), kullanilan, "mini FAT"):
             minifat += struct.unpack_from("<%dI" % (ssz // 4), sektor(n))
     akislar: dict[str, bytes] = {}
     for ad, tur, start, size in girdiler:
         if tur != 2:
             continue
         if size < cutoff:
-            parca = b"".join(mini_stream[n * 64:(n + 1) * 64] for n in zincir(start, minifat)) if size else b""
+            parca = b"".join(mini_stream[n * 64:(n + 1) * 64]
+                             for n in sahiplen(zincir(start, minifat), kullanilan_mini, repr(ad))) if size else b""
         else:
-            parca = b"".join(sektor(n, tam=False) for n in zincir(start, fat))
+            parca = b"".join(sektor(n, tam=False) for n in sahiplen(zincir(start, fat), kullanilan, repr(ad)))
         if len(parca) < size:  # kesik dosya: akışı kısaltıp "tam" diye vermek yerine bozuk say
             raise CfbHata(f"akış kısa: {ad!r} {len(parca)}/{size} bayt")
         akislar[ad] = parca[:size]
@@ -332,32 +410,299 @@ def _temiz(s: str) -> str:
     return re.sub(r"\s+", " ", s.replace("\r", " ").replace("\n", " ")).strip()
 
 
-def nesne_hucreleri(z: zipfile.ZipFile, parca: str, tur: str) -> list[str]:
-    """SmartArt: her DrawingML paragrafı bir hücre · grafik: her yaprak `t`/`v` öğesi (başlık, seri adı, kategori,
-    değer) bir hücre. Boş hücre yazılmaz."""
-    kok = ET.fromstring(z.read(parca))
-    if tur == "diyagram":
-        hucreler = ["".join((x.text or "") for x in p.iter() if isinstance(x.tag, str) and x.tag.endswith(A_SON + "t"))
-                    for p in kok.iter() if isinstance(p.tag, str) and p.tag.endswith(A_SON + "p")]
+# ── Evren: metin düğümleri (düzenli ifade; çıkarımın ElementTree yürüyüşünden ve parça listelerinden BAĞIMSIZ) ──
+_ISLEMSIZ = re.compile(r"<!--.*?-->|<\?.*?\?>|<!DOCTYPE[^>]*>", re.S)
+_CDATA = re.compile(r"<!\[CDATA\[(.*?)\]\]>", re.S)
+_ATTR = r"""(?:[^>"'/]|/(?!>)|"[^"]*"|'[^']*')*"""   # öznitelik değerindeki '>' etiketi bitirmez
+_ETIKET = re.compile(r"""<(?:[^>"']|"[^"]*"|'[^']*')*>""")
+_AC_IC = re.compile(r"<((?:[\w.-]+:)?AlternateContent)\b%s>((?:(?!<(?:[\w.-]+:)?AlternateContent\b).)*?)</\1\s*>"
+                    % _ATTR, re.S)
+_BLOK = r"<((?:[\w.-]+:)?%s)\b" + _ATTR.replace("%", "%%") + r">.*?</\1\s*>"
+_CHOICE = re.compile(_BLOK % "Choice", re.S)
+_FALLBACK = re.compile(_BLOK % "Fallback", re.S)
+_AC_DAL = re.compile(r"<(/?)(?:[\w.-]+:)?(Choice|Fallback)\b")
+_ALT_AGAC_RE = {ad: re.compile(_BLOK % ad, re.S) for ad in YOK_ALT_AGAC}
+_YAPRAK_RE = re.compile(r"<((?:[\w.-]+:)?(%s))\b%s>([^<]*)</\1\s*>" % ("|".join(YOK_YAPRAK), _ATTR))
+
+
+def xml_metni(veri: bytes) -> str | None:
+    """Üye XML mi (içerikten, adından değil)? Öyleyse işlem talimatı/yorumu ayıklanmış metin; değilse None."""
+    if veri[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        s = veri.decode("utf-16", "replace")
     else:
-        hucreler = [(x.text or "") for x in kok.iter() if yerel(x.tag) in ("t", "v") and len(x) == 0]
-    return [h for h in (_temiz(h) for h in hucreler) if bosluksuz(h)]
+        s = veri.decode("utf-8", "replace").lstrip("﻿")
+    if not s.lstrip().startswith("<"):
+        return None
+    s = _ISLEMSIZ.sub("", s)
+    return _CDATA.sub(lambda m: html.escape(m.group(1), quote=False), s)
+
+
+def metin_dugumleri_re(s: str) -> list[str]:
+    """Etiketler arasındaki metinler (öğe metni ve kuyruğu), varlıkları çözülmüş."""
+    return [html.unescape(x) for x in _ETIKET.split(s)[1:-1]] if "<" in s else []
+
+
+def metin_karakteri(s: str) -> int:
+    return sum(bosluksuz(x) for x in metin_dugumleri_re(s))
+
+
+def yok_sayilani_cikar(s: str, parca: str | None = None) -> tuple[str, dict[str, int]]:
+    """Yok sayılan metni ayıklar → (net XML metni, {sınıf: karakter}). Fallback en içteki AlternateContent'ten başlayarak
+    yalnız Choice'un NET metin karakteri (yok sayılan sınıflar hariç: ör. DrawingML konumu yalnız Choice'ta durur)
+    Fallback'inkine eşitse düşülür (iç blokta düşülen, dış bloğun sayımına girmez); düşülen Fallback'in tüm metni
+    yinelenen gösterim sınıfına yazılır."""
+    yok = dict.fromkeys(YOK_SINIFLAR, 0)
+
+    def net_k(blok: str) -> int:
+        for desen in _ALT_AGAC_RE.values():
+            blok = desen.sub("", blok)
+        return metin_karakteri(_YAPRAK_RE.sub(lambda m: "" if yaprak_sinifi(m.group(2), parca) else m.group(0), blok))
+
+    def ac(m: re.Match) -> str:
+        ic = m.group(2)
+        choice = sum(net_k(b.group(0)) for b in _CHOICE.finditer(ic))
+        fb_net = sum(net_k(b.group(0)) for b in _FALLBACK.finditer(ic))
+        if fb_net and choice == fb_net:
+            yok[YOK_FALLBACK] += sum(metin_karakteri(b.group(0)) for b in _FALLBACK.finditer(ic))
+            ic = _FALLBACK.sub("", ic)
+        # İç blok çözüldü; dıştaki bir sonraki turda eşleşir. Kalan Choice/Fallback etiketleri yeniden adlandırılır:
+        # yoksa dış bloğun tembel Choice deseni içtekinin kapanışında durur ve dış Choice'u yarım ölçer (ölçüldü:
+        # wp14 konum bloğu içeren metin kutusunda Fallback düşülmedi, ElementTree tarafıyla ayrıştı).
+        return "<_ac_cozuldu>%s</_ac_cozuldu>" % _AC_DAL.sub(r"<\1_\2_cozuldu", ic)
+
+    while True:
+        yeni = _AC_IC.sub(ac, s)
+        if yeni == s:
+            break
+        s = yeni
+    for ad, desen in _ALT_AGAC_RE.items():
+        yok[YOK_ALT_AGAC[ad]] += sum(metin_karakteri(b.group(0)) for b in desen.finditer(s))
+        s = desen.sub("", s)
+
+    def yaprak(m: re.Match) -> str:
+        sinif = yaprak_sinifi(m.group(2), parca)
+        if sinif is None:
+            return m.group(0)
+        yok[sinif] += bosluksuz(html.unescape(m.group(3)))
+        return ""
+    s = _YAPRAK_RE.sub(yaprak, s)
+    return s, yok
+
+
+def muaf_nedeni(ad: str, metinler: dict[str, str] | None = None) -> str | None:
+    """Yapısal parça mı? SmartArt önbellek çizimi (diagrams/drawingN) YALNIZ metin düğümleri aynı paketteki SmartArt
+    veri parçalarınınkilerin alt kümesiyse muaftır (yineleme bu girdide ölçülür); değilse geri düşüşe gider."""
+    for neden, desen in MUAF_RE:
+        if desen.search(ad):
+            return neden
+    if metinler is not None and re.match(r"^(word|xl)/diagrams/drawing\d*\.xml$", ad) and ad in metinler:
+        def dugumler(s: str) -> set[str]:
+            return {_temiz(x) for x in metin_dugumleri_re(s) if bosluksuz(x)}
+        veri: set[str] = set()
+        for a, s in metinler.items():
+            if re.match(r"^(word|xl)/diagrams/data\d*\.xml$", a):
+                veri |= dugumler(s)
+        if dugumler(metinler[ad]) <= veri:
+            return "SmartArt önbellek çizimi (metni veri parçasını yineler — bu girdide ölçüldü)"
+    return None
+
+
+def xml_uyeleri(z: zipfile.ZipFile, atla: set[str] | frozenset = frozenset()) -> dict[str, str]:
+    """Zip'teki HER üye gezilir (parça listesi yok); XML olanlar {ad: metin}. Dosya olarak çıkan üyeler (görsel,
+    gömülü, altChunk) ve boyut sınırıyla atlananlar hariç."""
+    haric = _afchunk_hedefleri(z) | set(atla)
+    out: dict[str, str] = {}
+    for bilgi in z.infolist():
+        ad = bilgi.filename
+        if ad.endswith("/") or DOSYA_PARCA.match(ad) or ad in haric:
+            continue
+        s = xml_metni(z.read(ad))
+        if s is not None:
+            out[ad] = s
+    return out
+
+
+def evren_tara(z: zipfile.ZipFile, atla: set[str] | frozenset = frozenset()) -> dict[str, dict]:
+    """Her XML üyesi için {evren, net (evren − yok sayılan), yok {sınıf: karakter}, muaf (neden | None)}."""
+    metinler = xml_uyeleri(z, atla)
+    out = {}
+    for ad, s in metinler.items():
+        net, yok = yok_sayilani_cikar(s, ad)
+        out[ad] = {"evren": metin_karakteri(s), "net": metin_karakteri(net), "yok": yok,
+                   "muaf": muaf_nedeni(ad, metinler)}
+    return out
+
+# ── Çıkarım tarafı: ElementTree ile metin düğümü sınıflama (tüketilen / yok sayılan / geri düşüş) ──
+GRUP_ADLARI = ("p", "si")   # geri düşüşte metin düğümleri en yakın paragraf ya da paylaşılan dizge altında birleşir
+
+
+def _fallback_dusen(kok, parca: str | None = None) -> set[int]:
+    """Yok sayılacak mc:Fallback öğeleri: en içteki AlternateContent'ten başlayarak, Choice'un NET metin karakteri (içte
+    düşülenler ve yok sayılan sınıflar hariç) Fallback'inkine eşitse. Evren tarafındaki `yok_sayilani_cikar` ile aynı kural."""
+    dusen: set[int] = set()
+
+    def etkin(el) -> int:
+        if id(el) in dusen or yerel(el.tag) in YOK_ALT_AGAC:
+            return 0
+        oz = 0 if len(el) == 0 and yaprak_sinifi(yerel(el.tag), parca) else bosluksuz(el.text or "")
+        return oz + sum(etkin(c) + bosluksuz(c.tail or "") for c in el)
+
+    def sonra(el) -> None:
+        for c in el:
+            sonra(c)
+        if yerel(el.tag) == "AlternateContent":
+            choice = sum(etkin(c) for c in el if yerel(c.tag) == "Choice")
+            fb = [c for c in el if yerel(c.tag) == "Fallback"]
+            fb_k = sum(etkin(c) for c in fb)
+            if fb_k and choice == fb_k:
+                dusen.update(id(c) for c in fb)
+
+    sonra(kok)
+    return dusen
+
+
+def metin_dugumleri(kok, tuketilen: set[int] = frozenset(), parca: str | None = None) -> tuple[list[str], dict[str, int]]:
+    """Ağacın her metin düğümünü sınıflar → (geri düşüş grupları, {yok sayılan sınıf: karakter}). `tuketilen` = metni
+    yapılandırılmış satıra girmiş öğelerin id'leri. Sınıf kuralları evren tarafındaki düzenli ifadelerle aynıdır."""
+    gruplar: dict[int, list[str]] = {}
+    yok = dict.fromkeys(YOK_SINIFLAR, 0)
+
+    def ekle(grup: int, s: str | None) -> None:
+        if s and bosluksuz(s):
+            gruplar.setdefault(grup, []).append(s)
+
+    def say(sinif: str, s: str | None) -> None:
+        yok[sinif] += bosluksuz(s or "")
+
+    dusen = _fallback_dusen(kok, parca)
+
+    def yuru(el, sinif: str | None, grup: int | None) -> None:
+        ad = yerel(el.tag)
+        if sinif is None and ad in YOK_ALT_AGAC:
+            sinif = YOK_ALT_AGAC[ad]
+        yaprak = yaprak_sinifi(ad, parca) if sinif is None and len(el) == 0 else None
+        if ad in GRUP_ADLARI:
+            grup = id(el)
+        if sinif or yaprak:
+            say(sinif or yaprak, el.text)
+        elif id(el) not in tuketilen:
+            ekle(grup if grup is not None else id(el), el.text)
+        for c in el:
+            yuru(c, YOK_FALLBACK if id(c) in dusen else sinif, grup)
+            if sinif:
+                say(sinif, c.tail)
+            else:
+                ekle(grup if grup is not None else id(el), c.tail)
+
+    yuru(kok, None, None)
+    return [_temiz("".join(g)) for g in gruplar.values() if bosluksuz("".join(g))], yok
+
+
+def _a_t(x) -> bool:
+    return isinstance(x.tag, str) and x.tag.endswith(A_SON + "t")
+
+
+def nesne_secimi(kok, tur: str) -> list[list]:
+    """Yapılandırılmış nesne satırının hücreleri (öğe listeleri). SmartArt: her DrawingML paragrafının `a:t`'leri ·
+    grafik: her yaprak `t` / `v` / `pt` (başlık, seri adı, kategori, değer; ChartEx kategorileri `cx:pt`) ·
+    çizim (xlsx metin kutusu): her `txBody` içindeki paragrafların `a:t`'leri."""
+    if tur == "diyagram":
+        return [[x for x in p.iter() if _a_t(x)] for p in kok.iter() if isinstance(p.tag, str)
+                and p.tag.endswith(A_SON + "p")]
+    return [[x] for x in kok.iter() if yerel(x.tag) in ("t", "v", "pt") and len(x) == 0]
+
+
+def kutu_secimi(kok) -> list[list[list]]:
+    out = []
+    for tb in kok.iter():
+        if yerel(tb.tag) == "txBody":
+            out.append([[x for x in p.iter() if _a_t(x)] for p in tb.iter() if isinstance(p.tag, str)
+                        and p.tag.endswith(A_SON + "p")])
+    return out
+
+
+def _hucre(ogeler: list) -> str:
+    return _temiz("".join((x.text or "") for x in ogeler))
+
+
+def nesne_hucreleri(z: zipfile.ZipFile, parca: str, tur: str) -> list[str]:
+    """Nesne satırının hücre metinleri; boş hücre yazılmaz."""
+    kok = ET.fromstring(z.read(parca))
+    return [h for h in (_hucre(o) for o in nesne_secimi(kok, tur)) if bosluksuz(h)]
 
 
 def cizim_kutulari(z: zipfile.ZipFile, parca: str) -> list[list[str]]:
     """xlsx çizim parçasındaki metin kutuları: her `txBody` bir kutu, her DrawingML paragrafı bir hücre."""
     kok = ET.fromstring(z.read(parca))
     out = []
-    for tb in kok.iter():
-        if yerel(tb.tag) != "txBody":
-            continue
-        hucreler = [_temiz("".join((x.text or "") for x in p.iter() if isinstance(x.tag, str)
-                                   and x.tag.endswith(A_SON + "t")))
-                    for p in tb.iter() if isinstance(p.tag, str) and p.tag.endswith(A_SON + "p")]
-        hucreler = [h for h in hucreler if bosluksuz(h)]
+    for kutu in kutu_secimi(kok):
+        hucreler = [h for h in (_hucre(o) for o in kutu) if bosluksuz(h)]
         if hucreler:
             out.append(hucreler)
     return out
+
+
+def tuketilen_idler(gruplar) -> set[int]:
+    """İç içe öğe listelerinin id kümesi (yapılandırılmış satıra giren metin öğeleri)."""
+    out: set[int] = set()
+    for g in gruplar:
+        if isinstance(g, list):
+            out |= tuketilen_idler(g)
+        else:
+            out.add(id(g))
+    return out
+
+
+def nesne_yapilandir(c: "Cikti", z: zipfile.ZipFile, parca: str, tur: str, no: int) -> None:
+    """SmartArt/grafik parçası → KM satırı; satıra girmeyen metin düğümleri geri düşüşe. Okunamayan parça 'metin
+    alınmadı' der ve geri düşüşe de gitmez: evren metni bulursa parça hesabı FAIL verir."""
+    try:
+        hucreler = nesne_hucreleri(z, parca, tur)
+        kok = ET.fromstring(z.read(parca))
+    except ET.ParseError:
+        nesne_satiri(c, tur, no, parca, None)
+        c.artik[parca] = ([], "yapılandırılmış parça okunamadı — metin alınmadı")
+        return
+    nesne_satiri(c, tur, no, parca, hucreler)
+    parca_artigi(c, parca, kok, tuketilen_idler(nesne_secimi(kok, tur)))
+
+
+def parca_artigi(c: "Cikti", parca: str, kok, tuk: set[int]) -> None:
+    """Yapılandırılmış bir parçanın satıra girmeyen metin düğümleri → geri düşüş (parça daha önce işlendiyse eklenir)."""
+    gruplar, _yok = metin_dugumleri(kok, tuk, parca)
+    eski = c.artik.get(parca, ([], ""))[0]
+    c.artik[parca] = (eski + gruplar, "yapılandırılmış parçanın artığı")
+
+
+def geri_dusus_yaz(c: "Cikti", z: zipfile.ZipFile) -> None:
+    """Yapılandırılmamış her XML parçası (muaf değil) + yapılandırılmış parçaların artığı → metin.md sonunda ham
+    bölüm. Parça listesi YOKTUR: zip'teki her XML üyesi gezilir; yapılandırılmış çıkarımın işlemediği her parça buraya
+    gelir. Ayrıştırılamayan parça düz metin düğümleriyle yazılır ve INDEX'te ayrıca anılır."""
+    metinler = xml_uyeleri(z, set(c.atlanan))
+    for ad in sorted(metinler):
+        if ad in c.artik or muaf_nedeni(ad, metinler):
+            continue
+        try:
+            gruplar, _yok = metin_dugumleri(ET.fromstring(z.read(ad)), parca=ad)
+            c.artik[ad] = (gruplar, "yapılandırılmamış parça")
+        except ET.ParseError:
+            net, _yok = yok_sayilani_cikar(metinler[ad], ad)
+            c.artik[ad] = ([_temiz(x) for x in metin_dugumleri_re(net) if bosluksuz(x)],
+                           "ayrıştırılamadı — düz metin düğümleri")
+    baslik = ["", "## Yapılandırılmamış parça metni (ham — yapılandırılmış çıkarımın kapsamadığı XML metni; parça "
+              "başına metin düğümleri belge sırasıyla, paragraf altında birleşik)", ""]
+    for ad, (gruplar, notu) in c.artik.items():
+        if not gruplar:
+            continue
+        pid = "P%02d" % (len(c.geri) + 1)
+        c.satirlar += baslik
+        baslik = []
+        kimlikler = []
+        for g in gruplar:
+            kid = c.km_yeni()
+            kimlikler.append(kid)
+            c.satirlar.append("[%s] ⟦%s parça: %s⟧ | %s |" % (kid, pid, ad, _tablo_kacis(g)))
+        c.geri.append((pid, ad, kimlikler, notu))
 
 
 def nesne_satiri(c: "Cikti", tur: str, no: int, parca: str, hucreler: list[str] | None) -> None:
@@ -384,6 +729,9 @@ class Cikti:
         self.notlar: list[str] = []
         self.sayfalar: list[str] = []
         self.nesneler: list[tuple[str, str, str]] = []  # (D01/G01/K01, etiket, kaynak parçası)
+        self.artik: dict[str, tuple[list[str], str]] = {}  # parça → (geri düşüş grupları, not); sıra korunur
+        self.geri: list[tuple[str, str, list[str], str]] = []  # (P01, parça, KM kimlikleri, not)
+        self.atlanan: dict[str, int] = {}  # boyut sınırıyla atlanan görsel/gömülü üye → okunan bayt (> sınır)
 
     def km_yeni(self) -> str:
         self.km += 1
@@ -452,16 +800,21 @@ def stil_seviyeleri(z: zipfile.ZipFile) -> dict[str, int]:
     return out
 
 
-def _yuru(el, parcalar: list[str], nesneler: list[tuple[str, str]]):
-    """Metni ve nesne başvurularını belge sırasıyla toplar; mc:Fallback (yinelenen eski gösterim) atlanır."""
+def _yuru(el, parcalar: list[str], nesneler: list[tuple[str, str]], tuk: set[int] | None = None):
+    """Metni ve nesne başvurularını belge sırasıyla toplar; mc:Fallback (yinelenen eski gösterim) atlanır. `tuk` metni
+    satıra giren öğelerin id'lerini toplar; satıra girmeyen metin düğümleri sonra geri düşüşe gider (ya da yok sayılan
+    sınıftadır: Choice'a eşit Fallback, instrText, delText)."""
+    tuk = set() if tuk is None else tuk
     for c in el:
         t = yerel(c.tag)
         if t == "Fallback" or w(c.tag, "pPr") or w(c.tag, "rPr") or w(c.tag, "instrText") or w(c.tag, "delText"):
             continue
         if w(c.tag, "t"):
             parcalar.append((c.text or "").replace("\r", " ").replace("\n", " "))
+            tuk.add(id(c))
             continue
         if m_(c.tag, "oMath"):
+            tuk.update(id(x) for x in c.iter() if m_(x.tag, "t"))
             metin = _denklem_metni(c)
             if bosluksuz(metin):
                 parcalar.append(" %s %s " % (DENKLEM, metin))
@@ -487,7 +840,7 @@ def _yuru(el, parcalar: list[str], nesneler: list[tuple[str, str]]):
             rid = attr_yerel(c, "id")
             if rid:
                 nesneler.append(("gomulu", rid))
-        _yuru(c, parcalar, nesneler)
+        _yuru(c, parcalar, nesneler, tuk)
 
 
 def _tablo_kacis(s: str) -> str:
@@ -512,7 +865,16 @@ def _hucreler(el):
             yield from _hucreler(c)
 
 
-def docx_cikar(z: zipfile.ZipFile) -> Cikti:
+def atlanan_dosya(c: Cikti, kid: str, ad: str) -> tuple[str, str] | None:
+    """Boyut sınırıyla atlanan görsel/gömülü üye → (yer tutucu dosya adı, tür notu); atlanmadıysa None."""
+    if ad not in c.atlanan:
+        return None
+    return ("%s_%s.OLCULEMEDI.txt" % (kid, guvenli_ad(ad)),
+            "ÖLÇÜLEMEDİ — boyut: açılınca %d bayttan fazla (sınır %d); dosya çıkarılmadı, kaynağı aç"
+            % (MAX_UYE, MAX_UYE))
+
+
+def docx_cikar(z: zipfile.ZipFile, atla: dict[str, int] | None = None) -> Cikti:
     try:
         govde_xml = z.read("word/document.xml")
     except KeyError:
@@ -525,6 +887,7 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
     if govde is None:
         raise Okunamadi("belge gövdesi (body) yok")
     c = Cikti("docx")
+    c.atlanan = dict(atla or {})
     rels = parca_iliskileri(z, "word/document.xml")
     stiller = stil_seviyeleri(z)
     adlar = z.namelist()
@@ -532,7 +895,7 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
     kg_by = {}
     for i, ad in enumerate(sorted(a for a in adlar if a.startswith("word/media/") and not a.endswith("/")), 1):
         kid = "KG-%02d" % i
-        dosya = "%s_%s" % (kid, guvenli_ad(ad))
+        dosya = (atlanan_dosya(c, kid, ad) or ("%s_%s" % (kid, guvenli_ad(ad)),))[0]
         c.gorseller.append((kid, ad, dosya))
         kg_by[ad] = (kid, "media/" + dosya)
     gomulu_adlar = sorted(a for a in adlar if a.startswith("word/embeddings/") and not a.endswith("/"))
@@ -540,8 +903,12 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
     kn_by = {}
     for i, ad in enumerate(gomulu_adlar, 1):
         kid = "KN-%02d" % i
-        p_ad, icerik, tur = gomulu_coz(ad, z.read(ad))
-        dosya = "%s_%s" % (kid, p_ad)
+        yt = atlanan_dosya(c, kid, ad)
+        if yt:
+            dosya, icerik, tur = yt[0], yt[1].encode("utf-8"), yt[1]
+        else:
+            p_ad, icerik, tur = gomulu_coz(ad, z.read(ad))
+            dosya = "%s_%s" % (kid, p_ad)
         c.gomululer.append((kid, ad, dosya, icerik, tur))
         kn_by[ad] = (kid, "gomulu/" + dosya)
 
@@ -556,11 +923,7 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
             return
         yazilan_nesne.add(parca)
         tur, no = nesne_by[parca]
-        try:
-            hucreler = nesne_hucreleri(z, parca, tur)
-        except ET.ParseError:
-            hucreler = None
-        nesne_satiri(c, tur, no, parca, hucreler)
+        nesne_yapilandir(c, z, parca, tur, no)
 
     def notlar_metni(nesneler) -> tuple[str, list[str]]:
         """(satır sonu işaretleri, bu satırdan SONRA yazılacak metinli nesne parçaları)."""
@@ -580,10 +943,11 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
         return " ".join(dict.fromkeys(out)), list(dict.fromkeys(sonra))
 
     sayac = {"tablo": 0}
+    tuk: set[int] = set()
 
     def paragraf(p):
         parcalar, nesneler = [], []
-        _yuru(p, parcalar, nesneler)
+        _yuru(p, parcalar, nesneler, tuk)
         metin = re.sub(r"\s+", " ", "".join(parcalar).replace(PARAGRAF_AYRACI, " ")).strip()
         ek, sonra = notlar_metni(nesneler)
         seviye, liste = None, False
@@ -620,7 +984,7 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
             hucre_metinleri, nesneler = [], []
             for tc in _hucreler(tr):
                 parcalar = []
-                _yuru(tc, parcalar, nesneler)
+                _yuru(tc, parcalar, nesneler, tuk)
                 hucre_metinleri.append(re.sub(r"\s+", " ", "".join(parcalar)).strip())
             ek, sonra = notlar_metni(nesneler)
             if any(bosluksuz(h.replace(PARAGRAF_AYRACI, "")) for h in hucre_metinleri):
@@ -654,12 +1018,10 @@ def docx_cikar(z: zipfile.ZipFile) -> Cikti:
         c.satirlar += ["", "## Gövdede konumu bulunamayan metin nesneleri (üst/altbilgi ya da başka parçadan bağlı)", ""]
         for parca in kalan:
             nesne_yaz(parca)
-    for parca, aciklama in (("word/footnotes.xml", "dipnot"), ("word/endnotes.xml", "son not"),
-                            ("word/comments.xml", "yorum")):
-        if parca in adlar and re.search(rb"<w:t[ >]", z.read(parca)):
-            c.notlar.append(f"{aciklama} parçasında metin var — metin.md'ye ALINMADI (kaynağı Word'de aç)")
-    if any(re.match(r"word/(header|footer)\d*\.xml$", a) for a in adlar):
-        c.notlar.append("üst/altbilgi metni metin.md'ye alınmadı")
+    # Gövde parçasının satıra girmeyen metni (çizim konumu dışında tanınmayan her şey) geri düşüşe gider; sonra
+    # zip'teki diğer her XML parçası (üst/altbilgi, dipnot, yorum, tanınmayan parçalar).
+    c.artik = {"word/document.xml": (metin_dugumleri(kok, tuk, "word/document.xml")[0], "yapılandırılmış parçanın artığı"), **c.artik}
+    geri_dusus_yaz(c, z)
     return c
 
 # ── BÖLÜM: xlsx ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -685,8 +1047,43 @@ def _hucre_metni(v) -> str:
     return str(v)
 
 
-def xlsx_cikar(z: zipfile.ZipFile, yol: Path, xl) -> Cikti:
+def xlsx_artik(c: Cikti, z: zipfile.ZipFile, sayfa_parcalari: list[str]) -> None:
+    """Sayfa ve paylaşılan dizge parçalarının satıra girmeyen metni → geri düşüş. Satıra giren: hücrenin `v` metni ve
+    satır içi dizgesi (`is`), paylaşılan dizgede bir hücrenin andığı `si`. Geri kalan (üst/altbilgi, veri doğrulama
+    listesi, anılmayan dizge …) geri düşüşe gider; formül metni yok sayılan sınıftadır."""
+    anilan: set[int] = set()
+    for parca in sayfa_parcalari:
+        try:
+            kok = ET.fromstring(z.read(parca))
+        except (KeyError, ET.ParseError):
+            c.artik[parca] = ([], "sayfa parçası okunamadı — metin alınmadı")
+            continue
+        tuk: set[int] = set()
+        for h in kok.iter():
+            if yerel(h.tag) != "c":
+                continue
+            for ch in h:
+                if yerel(ch.tag) == "v":
+                    tuk.add(id(ch))
+                    if h.get("t") == "s" and (ch.text or "").strip().isdigit():
+                        anilan.add(int(ch.text.strip()))
+                elif yerel(ch.tag) == "is":
+                    tuk.update(id(x) for x in ch.iter())
+        parca_artigi(c, parca, kok, tuk)
+    ss = next((h for tip, h in parca_iliskileri(z, "xl/workbook.xml").values() if tip == "sharedStrings"), None)
+    if ss and ss in z.namelist():
+        try:
+            kok = ET.fromstring(z.read(ss))
+        except ET.ParseError:
+            c.artik[ss] = ([], "paylaşılan dizge parçası okunamadı — metin alınmadı")
+            return
+        si = [x for x in kok if yerel(x.tag) == "si"]
+        parca_artigi(c, ss, kok, {id(x) for i, s in enumerate(si) if i in anilan for x in s.iter()})
+
+
+def xlsx_cikar(z: zipfile.ZipFile, yol: Path, xl, atla: dict[str, int] | None = None) -> Cikti:
     c = Cikti("xlsx")
+    c.atlanan = dict(atla or {})
     try:
         sayfalar = xl.sheet_parts(z)
     except Exception as exc:
@@ -711,34 +1108,37 @@ def xlsx_cikar(z: zipfile.ZipFile, yol: Path, xl) -> Cikti:
         for no, parca in enumerate(sorted(a for a in adlar if NESNE_PARCA["xlsx"][tur].match(a)), 1):
             c.satirlar += nesne_basligi
             nesne_basligi = []
-            try:
-                hucreler = nesne_hucreleri(z, parca, tur)
-            except ET.ParseError:
-                hucreler = None
-            nesne_satiri(c, tur, no, parca, hucreler)
+            nesne_yapilandir(c, z, parca, tur, no)
     kutu_no = 0
     for parca in sorted(a for a in adlar if NESNE_PARCA["xlsx"]["cizim"].match(a)):
         try:
             kutular = cizim_kutulari(z, parca)
+            kok = ET.fromstring(z.read(parca))
         except ET.ParseError:
             c.notlar.append("çizim parçası okunamadı: %s — metin kutuları ALINMADI" % parca)
+            c.artik[parca] = ([], "yapılandırılmış parça okunamadı — metin alınmadı")
             continue
         for hucreler in kutular:
             kutu_no += 1
             c.satirlar += nesne_basligi
             nesne_basligi = []
             nesne_satiri(c, "metin_kutusu", kutu_no, parca, hucreler)
+        parca_artigi(c, parca, kok, tuketilen_idler(kutu_secimi(kok)))
     for i, ad in enumerate(sorted(a for a in adlar if a.startswith("xl/media/") and not a.endswith("/")), 1):
         kid = "KG-%02d" % i
-        c.gorseller.append((kid, ad, "%s_%s" % (kid, guvenli_ad(ad))))
+        c.gorseller.append((kid, ad, (atlanan_dosya(c, kid, ad) or ("%s_%s" % (kid, guvenli_ad(ad)),))[0]))
     for i, ad in enumerate(sorted(a for a in adlar if a.startswith("xl/embeddings/") and not a.endswith("/")), 1):
         kid = "KN-%02d" % i
+        yt = atlanan_dosya(c, kid, ad)
+        if yt:
+            c.gomululer.append((kid, ad, yt[0], yt[1].encode("utf-8"), yt[1]))
+            continue
         p_ad, icerik, tur = gomulu_coz(ad, z.read(ad))
         c.gomululer.append((kid, ad, "%s_%s" % (kid, p_ad), icerik, tur))
     if c.gorseller or c.gomululer:
         c.notlar.append("xlsx'te görsel/nesnenin hangi hücrede durduğu metin.md'ye yazılmaz (yalnız dosya olarak çıkar)")
-    if any(a.startswith("xl/comments") for a in adlar):
-        c.notlar.append("hücre yorumları metin.md'ye ALINMADI")
+    xlsx_artik(c, z, [p for _a, p in sayfalar])
+    geri_dusus_yaz(c, z)
     return c
 
 # ── BÖLÜM: bağımsız sayım + paket yazımı + doğrulama ──────────────────────────────────────────────────────────
@@ -750,11 +1150,11 @@ SAYIM_ADLARI = [("km", "kaynak maddesi (KM: başlık + paragraf + tablo satırı
                 ("karakter", "metin karakteri (boşluksuz; xlsx'te yalnız metin hücreleri)"),
                 ("denklem", "denklem"), ("sayfa", "çalışma sayfası"), ("diyagram", "SmartArt (D)"),
                 ("grafik", "grafik (G)"), ("metin_kutusu", "çizim metin kutusu (K)"),
-                ("nesne_karakteri", "nesne metni karakteri (D/G/K, boşluksuz)"),
+                ("parca_metni", "XML parça metni (evren − muaf − yok sayılan; boşluksuz)"),
                 ("gorsel", "görsel (KG)"), ("gomulu", "gömülü nesne (KN)")]
 _YAPRAK = r"<(?:\w+:)?(%s)(?:\s[^<>]*)?>([^<]*)</(?:\w+:)?\1>"
 _YAPRAK_T = re.compile(_YAPRAK % "t")
-_YAPRAK_TV = re.compile(_YAPRAK % "t|v")
+_YAPRAK_TVP = re.compile(_YAPRAK % "t|v|pt")
 _TXBODY = re.compile(r"<((?:\w+:)?txBody)\b.*?</\1>", re.S)
 
 
@@ -763,8 +1163,9 @@ def _yaprak_karakteri(xml: str, desen: re.Pattern) -> int:
 
 
 def _nesne_say(z: zipfile.ZipFile, tur: str) -> dict[str, int]:
-    """SmartArt / grafik / (xlsx) çizim metin kutusu: adet + metinli olanlar (KM) + metin karakteri."""
-    s = {"diyagram": 0, "grafik": 0, "nesne_km": 0, "nesne_karakteri": 0}
+    """SmartArt / grafik / (xlsx) çizim metin kutusu: adet + metinli olanlar (KM satırı). Metnin TAMAMININ pakete
+    girdiğini bu sayım değil, parça hesabı (evren süpürmesi) ölçer."""
+    s = {"diyagram": 0, "grafik": 0, "nesne_km": 0}
     if tur == "xlsx":
         s["metin_kutusu"] = 0
     for ad in z.namelist():
@@ -774,16 +1175,12 @@ def _nesne_say(z: zipfile.ZipFile, tur: str) -> dict[str, int]:
             xml = z.read(ad).decode("utf-8", "replace")
             if anahtar == "cizim":
                 for blok in _TXBODY.finditer(xml):
-                    n = _yaprak_karakteri(blok.group(0), _YAPRAK_T)
-                    if n:
+                    if _yaprak_karakteri(blok.group(0), _YAPRAK_T):
                         s["metin_kutusu"] += 1
                         s["nesne_km"] += 1
-                        s["nesne_karakteri"] += n
                 continue
             s[anahtar] += 1
-            n = _yaprak_karakteri(xml, _YAPRAK_T if anahtar == "diyagram" else _YAPRAK_TV)
-            s["nesne_karakteri"] += n
-            s["nesne_km"] += 1 if n else 0
+            s["nesne_km"] += 1 if _yaprak_karakteri(xml, _YAPRAK_T if anahtar == "diyagram" else _YAPRAK_TVP) else 0
     return s
 
 
@@ -944,7 +1341,39 @@ def bagimsiz_xlsx(z: zipfile.ZipFile) -> tuple[dict[str, int], set[tuple[int, in
     nesne = _nesne_say(z, "xlsx")
     s["km"] += nesne.pop("nesne_km")
     s.update(nesne)
-    return s, maske
+    return s, maske, xlsx_yapi_payi(z, sayfa_yollari, paylasilan_yolu)
+
+
+_HUCRE_RE = re.compile(r"<(?:[\w.-]+:)?c\b(%s)(?:/>|>(.*?)</(?:[\w.-]+:)?c\s*>)" % _ATTR, re.S)
+_V_RE = re.compile(r"<(?:[\w.-]+:)?v\b%s>([^<]*)</" % _ATTR)
+_IS_RE = re.compile(_BLOK % "is", re.S)
+_SI_RE = re.compile(_BLOK % "si", re.S)
+
+
+def xlsx_yapi_payi(z: zipfile.ZipFile, sayfa_yollari: list[str], ss_yolu: str | None) -> dict[str, int]:
+    """Sayfa ve paylaşılan dizge parçalarında hücre satırlarına giren metin (yok sayılan ayıklandıktan sonra):
+    sayfada hücrenin `v` ve `is` metni, paylaşılan dizgede bir hücrenin andığı `si`'ler. Parça hesabında bu pay +
+    diskteki geri düşüş = parçanın net evreni olmalı (hücre metninin pakete doğru yazıldığını karakter sayımı ölçer)."""
+    def net(ad: str) -> str:
+        try:
+            return yok_sayilani_cikar(xml_metni(z.read(ad)) or "", ad)[0]
+        except KeyError:
+            return ""
+    out: dict[str, int] = {}
+    anilan: set[int] = set()
+    for yol in sayfa_yollari:
+        n = 0
+        for attrs, ic in _HUCRE_RE.findall(net(yol)):
+            vler = _V_RE.findall(ic or "")
+            n += sum(bosluksuz(html.unescape(v)) for v in vler)
+            n += sum(metin_karakteri(b.group(0)) for b in _IS_RE.finditer(ic or ""))
+            if re.search(r'\bt\s*=\s*"s"', attrs) and vler and vler[0].strip().isdigit():
+                anilan.add(int(vler[0].strip()))
+        out[yol] = n
+    if ss_yolu:
+        si = [b.group(0) for b in _SI_RE.finditer(net(ss_yolu))]
+        out[ss_yolu] = sum(metin_karakteri(b) for i, b in enumerate(si) if i in anilan)
+    return out
 
 
 def _satir_karakteri(govde: str, tablo_satiri: bool) -> int:
@@ -977,13 +1406,19 @@ def _hucre_bol(govde: str) -> list[str]:
     return [h.strip() for h in hucreler]
 
 
-def diskten_say(paket: Path, tur: str, maske: set | None = None) -> tuple[dict[str, int], list[str]]:
-    """Paketi DİSKTEN okuyup sayar (bellekteki çıkarım sonucuna bakmaz). Döner: (sayım, biçim sorunları).
-    xlsx'te karakter yalnız `maske` (bağımsız sayımın metin hücresi konumları) verilirse sayılır."""
+GERI_RE = re.compile(r"^⟦P(\d+) parça: ([^⟧]*)⟧ ?")
+NESNE_PARCA_RE = re.compile(r"^⟦[DGK]\d+ [^:⟧]+: ([^⟧]*)⟧")
+
+
+def diskten_say(paket: Path, tur: str, maske: set | None = None) -> tuple[dict[str, int], list[str], dict]:
+    """Paketi DİSKTEN okuyup sayar (bellekteki çıkarım sonucuna bakmaz). Döner: (sayım, biçim sorunları, parça payları
+    {parça: {"yapi": n, "geri": n}}). xlsx'te karakter yalnız `maske` (bağımsız sayımın metin hücresi konumları)
+    verilirse sayılır. `km` yapılandırılmış maddelerdir; geri düşüş maddeleri `km_geri`."""
     sorunlar: list[str] = []
     metin = (paket / "metin.md").read_text(encoding="utf-8")
-    s = {"km": 0, "baslik": 0, "tablo": 0, "tablo_satiri": 0, "karakter": 0, "denklem": 0, "sayfa": 0,
-         "diyagram": 0, "grafik": 0, "metin_kutusu": 0, "nesne_karakteri": 0}
+    s = {"km": 0, "km_geri": 0, "baslik": 0, "tablo": 0, "tablo_satiri": 0, "karakter": 0, "denklem": 0, "sayfa": 0,
+         "diyagram": 0, "grafik": 0, "metin_kutusu": 0}
+    pay: dict[str, dict[str, int]] = {}
     beklenen = 1
     for satir in metin.splitlines():
         if re.match(r"^\*\*Tablo T\d+\*\* ", satir):
@@ -997,14 +1432,20 @@ def diskten_say(paket: Path, tur: str, maske: set | None = None) -> tuple[dict[s
             s[NESNE_ANAHTAR[om.group(2)]] += 1
         if not m:
             continue
-        s["km"] += 1
         if m.group(2) != "KM-%04d" % beklenen:
             sorunlar.append(f"KM sırası bozuk: {m.group(2)} (beklenen KM-{beklenen:04d})")
         beklenen = int(m.group(2)[3:]) + 1
+        gm = GERI_RE.match(govde)
+        if gm:
+            s["km_geri"] += 1
+            pay.setdefault(gm.group(2), {"yapi": 0, "geri": 0})["geri"] += _satir_karakteri(govde[gm.end():], True)
+            continue
+        s["km"] += 1
         if m.group(1):
             s["baslik"] += 1
         if om:
-            s["nesne_karakteri"] += _satir_karakteri(govde[om.end():], True)
+            parca = NESNE_PARCA_RE.match(govde).group(1)
+            pay.setdefault(parca, {"yapi": 0, "geri": 0})["yapi"] += _satir_karakteri(govde[om.end():], True)
             continue
         s["denklem"] += govde.count(DENKLEM)
         rm = SATIR_RE.match(govde)
@@ -1017,10 +1458,12 @@ def diskten_say(paket: Path, tur: str, maske: set | None = None) -> tuple[dict[s
                                      if (sno, rno, i) in maske)
             continue
         s["karakter"] += _satir_karakteri(govde[rm.end():] if rm else govde, bool(rm))
+    if tur == "docx":  # gövde satırlarının tamamı word/document.xml'den gelir
+        pay.setdefault("word/document.xml", {"yapi": 0, "geri": 0})["yapi"] += s["karakter"]
     for klasor, anahtar in (("media", "gorsel"), ("gomulu", "gomulu")):
         d = paket / klasor
         s[anahtar] = sum(1 for p in d.iterdir() if p.is_file()) if d.is_dir() else 0
-    return s, sorunlar
+    return s, sorunlar, pay
 
 
 def karsilastir(kaynak: dict[str, int], paket: dict[str, int]) -> list[str]:
@@ -1028,16 +1471,78 @@ def karsilastir(kaynak: dict[str, int], paket: dict[str, int]) -> list[str]:
             for k, ad in SAYIM_ADLARI if k in kaynak and kaynak[k] != paket.get(k, 0)]
 
 
-def boyut_denetle(z: zipfile.ZipFile) -> None:
-    """Zip başlığındaki açılmış boyları sınırla (MAX_UYE / MAX_TOPLAM); aşan girdi Okunamadi (çıkış 2)."""
-    toplam = 0
+def parca_hesabi(evren: dict[str, dict], pay: dict, yapi_kaynak: dict[str, int]) -> tuple[list[dict], list[str]]:
+    """Parça başına: evren − yok sayılan (bağımsız) = yapılandırılmış + geri düşüş (diskten; xlsx sayfa/paylaşılan
+    dizge parçalarında yapılandırılmış pay hücre tanımından). Pakette olup evrende olmayan parça da fark sayılır."""
+    satirlar, farklar = [], []
+    for ad in sorted(set(evren) | set(pay)):
+        e = evren.get(ad)
+        d = pay.get(ad, {"yapi": 0, "geri": 0})
+        if e and e["muaf"]:
+            satirlar.append({"parca": ad, "sinif": "muaf: " + e["muaf"], "evren": e["evren"], "yok": 0,
+                             "yapi": 0, "geri": d["geri"] + d["yapi"]})
+            if d["geri"] or d["yapi"]:
+                farklar.append("muaf parça pakette: %s" % ad)
+            continue
+        net = e["net"] if e else 0
+        yapi = yapi_kaynak.get(ad, d["yapi"])
+        if not (net or yapi or d["geri"]):
+            continue
+        sinif = "evrende yok" if not e else ("geri düşüş" if not yapi else "yapılandırılmış")
+        satirlar.append({"parca": ad, "sinif": sinif, "evren": e["evren"] if e else 0,
+                         "yok": (e["evren"] - net) if e else 0, "yapi": yapi, "geri": d["geri"]})
+        if net != yapi + d["geri"]:
+            farklar.append("parça %s: kaynak metni %d ≠ pakette %d (yapılandırılmış %d + geri düşüş %d)"
+                           % (ad, net, yapi + d["geri"], yapi, d["geri"]))
+    return satirlar, farklar
+
+
+def yok_toplami(evren: dict[str, dict]) -> dict[str, int]:
+    """Yok sayılan sınıfların toplam karakteri (muaf olmayan parçalarda; bağımsız taraftan). Sıfırlar da döner."""
+    out = dict.fromkeys(YOK_SINIFLAR, 0)
+    for e in evren.values():
+        if not e["muaf"]:
+            for k, n in e["yok"].items():
+                out[k] += n
+    return out
+
+
+def yok_satiri(yok: dict[str, int]) -> str:
+    return "yok sayılan: " + " · ".join("%s %d" % (k, yok[k]) for k in YOK_SINIFLAR)
+
+
+def boyut_denetle(z: zipfile.ZipFile) -> dict[str, int]:
+    """Her üye GERÇEKTEN açılıp (z.open, 1 MiB'lık parçalar) açılan bayt sayılır; zip başlığındaki beyana güvenilmez.
+    Sınırı aşan görsel/gömülü üye atlanır (döner {ad: okunan bayt}); sınırı aşan metin parçası, toplam ya da açılamayan
+    üye (bozuk sıkıştırma, CRC/boy uyuşmazlığı, şifre) → Okunamadi (çıkış 2)."""
+    toplam, atla = 0, {}
     for bilgi in z.infolist():
-        if bilgi.file_size > MAX_UYE:
-            raise Okunamadi("boyut sınırı: %s açılınca %d bayt (sınır %d) — çıkarım yapılmadı"
-                            % (bilgi.filename, bilgi.file_size, MAX_UYE))
-        toplam += bilgi.file_size
-    if toplam > MAX_TOPLAM:
-        raise Okunamadi("boyut sınırı: açılmış toplam %d bayt (sınır %d) — çıkarım yapılmadı" % (toplam, MAX_TOPLAM))
+        if bilgi.is_dir():
+            continue
+        n = 0
+        try:
+            with z.open(bilgi) as f:
+                while True:
+                    parca = f.read(OKUMA_PARCASI)
+                    if not parca:
+                        break
+                    n += len(parca)
+                    if n > MAX_UYE:
+                        break
+        except (zipfile.BadZipFile, zlib.error, EOFError, OSError, NotImplementedError, RuntimeError) as exc:
+            raise Okunamadi("zip üyesi açılamadı: %s (%s: %s) — başlıktaki boy/CRC içerikle uyuşmuyor olabilir"
+                            % (bilgi.filename, type(exc).__name__, exc)) from None
+        if n > MAX_UYE:
+            if DOSYA_PARCA.match(bilgi.filename):
+                atla[bilgi.filename] = n
+                continue
+            raise Okunamadi("boyut sınırı: %s açılınca %d bayttan fazla (sınır %d) — çıkarım yapılmadı"
+                            % (bilgi.filename, MAX_UYE, MAX_UYE))
+        toplam += n
+        if toplam > MAX_TOPLAM:
+            raise Okunamadi("boyut sınırı: açılmış toplam %d bayttan fazla (sınır %d) — çıkarım yapılmadı"
+                            % (MAX_TOPLAM, MAX_TOPLAM))
+    return atla
 
 
 def varsayilan_id(kaynak: Path, veri: bytes) -> str:
@@ -1048,37 +1553,51 @@ def varsayilan_id(kaynak: Path, veri: bytes) -> str:
 def paketi_yaz(c: Cikti, z: zipfile.ZipFile, kaynak: Path, veri: bytes, hedef: Path) -> None:
     (hedef / "media").mkdir(parents=True, exist_ok=True)
     (hedef / "gomulu").mkdir(parents=True, exist_ok=True)
-    bas = ["<!-- kaynak_paketi.py MEKANİK çıkarım: %s (sha256 %s). Elle ya da modelle yeniden yazılmaz; "
-           "işaretler INDEX.md 'Nasıl okunur' bölümünde. -->" % (kaynak.name, ozet(veri)[:16]), ""]
+    bas = ["<!-- kaynak_paketi.py MEKANİK çıkarım: %s (sha256 %s · km şeması %d). Elle ya da modelle yeniden "
+           "yazılmaz; işaretler INDEX.md 'Nasıl okunur' bölümünde. -->" % (kaynak.name, ozet(veri)[:16], KM_SEMASI), ""]
     (hedef / "metin.md").write_text("\n".join(bas + c.satirlar).rstrip() + "\n", encoding="utf-8")
-    for _kid, ad, dosya in c.gorseller:
-        (hedef / "media" / dosya).write_bytes(z.read(ad))
+    for kid, ad, dosya in c.gorseller:
+        yt = atlanan_dosya(c, kid, ad)
+        (hedef / "media" / dosya).write_bytes(yt[1].encode("utf-8") if yt else z.read(ad))
     for _kid, _ad, dosya, icerik, _tur in c.gomululer:
         (hedef / "gomulu" / dosya).write_bytes(icerik)
 
 
 def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict, paket_say: dict,
-              farklar: list[str]) -> None:
+              farklar: list[str], parca: list[dict], yok: dict[str, int]) -> None:
     sonuc = "PASS" if not farklar else "FAIL"
     L = ["# Kaynak paketi — %s" % kaynak.name, "",
          "> Mekanik çıkarım (`kaynak_paketi.py cikar`). Bu klasördeki metin model tarafından YENİDEN YAZILMAZ, "
          "özetlenip kaynağın yerine konmaz. Alt ajana ya da inceleyiciye ikili kaynağın değil bu klasörün yolu verilir.",
-         "", "- Kaynak: `%s` · %d bayt · sha256 `%s` · tür %s" % (kaynak.name, len(veri), ozet(veri), c.tur),
+         "", "- Kaynak: `%s` · %d bayt · sha256 `%s` · tür %s · km şeması %d" % (
+             kaynak.name, len(veri), ozet(veri), c.tur, KM_SEMASI),
          "- Paket: `%s`" % hedef.as_posix(),
          "- DOĞRULAMA: **%s** — kaynağın bağımsız sayımı ↔ diskteki paket%s" % (
              sonuc, "" if not farklar else " (EŞİT DEĞİL: " + "; ".join(farklar) + ") — bu paketi KULLANMA"),
+         "- " + yok_satiri(yok) + " (karakter; çıkarım bu metni bilerek almaz — sınıf tanımları SCOPE'ta)",
          "", "## Sayım", "", "| Ölçü | Kaynak (bağımsız) | Paket (diskten) | Durum |", "|---|---|---|---|"]
     for k, ad in SAYIM_ADLARI:
         if k in kaynak_say:
             L.append("| %s | %d | %d | %s |" % (ad, kaynak_say[k], paket_say.get(k, 0),
                                                "eşit" if kaynak_say[k] == paket_say.get(k, 0) else "**FARKLI**"))
+    L.append("| geri düşüş maddesi (bilgi; bağımsız karşılığı parça hesabıdır) | — | %d | — |" % paket_say.get("km_geri", 0))
+    L += ["", "## Parça hesabı (zip'teki her XML parçası; evren − yok sayılan = yapılandırılmış + geri düşüş)", "",
+          "| Parça | Sınıf | Evren | Yok sayılan | Yapılandırılmış | Geri düşüş |", "|---|---|---|---|---|---|"]
+    L += ["| `%s` | %s | %d | %d | %d | %d |" % (r["parca"], r["sinif"], r["evren"], r["yok"], r["yapi"], r["geri"])
+          for r in parca]
+    if c.geri:
+        L += ["", "**Geri düşüşe giden parçalar** (yapılandırılmış çıkarım bu metni tanımıyor; metni metin.md sonunda "
+              "ham — okurken bu parçaları ayrıca değerlendir): " + " · ".join(
+                  "%s `%s` (%s; %s)" % (p, a, "%s..%s" % (k[0], k[-1]) if len(k) > 1 else k[0], n)
+                  for p, a, k, n in c.geri), ""]
     L += ["", "## Dosyalar", "", "- `metin.md` — kaynak maddeleri %s" % (
         "KM-0001…KM-%04d" % c.km if c.km else "yok"), ""]
     if c.sayfalar:
         L += ["Sayfalar: " + " · ".join("SY%02d = %s" % (i, a) for i, a in enumerate(c.sayfalar, 1)), ""]
     if c.gorseller or c.gomululer:
         L += ["| Kimlik | Kaynak parçası | Paket dosyası | Tür |", "|---|---|---|---|"]
-        L += ["| %s | `%s` | `media/%s` | görsel |" % (k, a, d) for k, a, d in c.gorseller]
+        L += ["| %s | `%s` | `media/%s` | %s |" % (k, a, d, "görsel" if not atlanan_dosya(c, k, a) else
+                                                 atlanan_dosya(c, k, a)[1]) for k, a, d in c.gorseller]
         L += ["| %s | `%s` | `gomulu/%s` | %s |" % (k, a, d, t) for k, a, d, _i, t in c.gomululer]
         L.append("")
     if c.nesneler:
@@ -1089,7 +1608,10 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
     L += ["- " + n for n in c.notlar] or ["- (yok)"]
     if tanınmayan:
         L.append("- TANINMAYAN gömülü nesne: %s — ham kopyalandı, içeriği kullanıcıya sor" % ", ".join(tanınmayan))
-    L += ["- Otomatik numaralar (başlık/liste numarası) Word'ün ürettiği metindir, metin.md'de yoktur.", "",
+    if c.atlanan:
+        L.append("- ÖLÇÜLEMEDİ — boyut: %s — dosya çıkarılmadı, yerinde not dosyası var" % ", ".join(sorted(c.atlanan)))
+    L += ["- Otomatik numaralar (başlık/liste numarası) Word'ün ürettiği metindir, metin.md'de yoktur.",
+          "- Öznitelikteki metin (görsel alternatif metni, veri doğrulama istemi, köprü ipucu) alınmaz.", "",
           "## Nasıl okunur", "",
           "- Her `[KM-nnnn]` satırı bir kaynak maddesidir; `#` ile başlayan satır başlıktır.",
           "- `⟦T01.S03⟧ | a | b |` = tablo 1, satır 3; hücreler `|`, hücre içi paragraf `¶`; hücredeki gerçek `|`, `¶`, "
@@ -1097,16 +1619,23 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
           "- `⟦…⟧` paketin eklediği işarettir (görsel/gömülü nesnenin konumu, liste öğesi, `⟦denklem⟧`); kaynak metni "
           "değildir. `⟦D01 SmartArt: …⟧ | a | b |` = SmartArt'ın paragrafları, `⟦G01 grafik: …⟧` = grafiğin başlık, "
           "seri, kategori ve değer metni, `⟦K01 metin kutusu: …⟧` = xlsx çizimindeki metin kutusu.",
+          "- `⟦P01 parça: <zip parçası>⟧ | … |` = geri düşüş: yapılandırılmış çıkarımın kapsamadığı metin, parçadan ham "
+          "(paragraf altında birleşik). Üst/altbilgi, dipnot ve yorum buradadır; yapısı (hangi sayfa, hangi hücre) yoktur.",
           "- Gömülü HTML prototip tarayıcıda açılabilir; ekran görüntüsü `capture_kd_screens.js` ile `file://` "
           "adresinden çekilebilir.",
           "- İzlenebilirlik: FS yazılırken bu kimliklerle iz tablosu kurulur — paketin yanında DEĞİL, git'te izlenen "
           "`<source_root>/<MODÜL>/<PAKET>/ref_docs/iz-<belge no>.md` — ve `kaynak_paketi.py iz` ile denetlenir "
-          "(`traceability.md` §2-B). Tablonun başına kaynağın adı ve sha256'sı yazılır: paket bu klasörde git dışıdır, "
-          "aynı kaynaktan `cikar` ile aynı kimliklerle yeniden üretilir."]
+          "(`traceability.md` §2-B). Tablonun başına `Kaynak: %s · sha256 %s · km şeması %d` yazılır: paket git "
+          "dışıdır; aynı kaynaktan AYNI BETİK SÜRÜMÜYLE (aynı km şeması) `cikar` aynı kimlikleri yeniden üretir."
+          % (kaynak.name, ozet(veri)[:16], KM_SEMASI)]
     (hedef / "INDEX.md").write_text("\n".join(L) + "\n", encoding="utf-8")
-    meta = {"surum": 1, "kaynak": {"ad": kaynak.name, "boyut": len(veri), "sha256": ozet(veri), "tur": c.tur},
+    meta = {"surum": 1, "km_semasi": KM_SEMASI,
+            "kaynak": {"ad": kaynak.name, "boyut": len(veri), "sha256": ozet(veri), "tur": c.tur},
             "km_toplam": c.km, "kg": [k for k, _a, _d in c.gorseller], "kn": [k for k, *_r in c.gomululer],
             "sayim": {"kaynak": kaynak_say, "paket": paket_say}, "dogrulama": {"sonuc": sonuc, "farklar": farklar},
+            "yok_sayilan": yok, "parca_hesabi": parca,
+            "geri_dusus": [{"kimlik": p, "parca": a, "km": k, "not": n} for p, a, k, n in c.geri],
+            "atlanan": c.atlanan,
             "gomulu": [{"kimlik": k, "parca": a, "dosya": "gomulu/" + d, "tur": t} for k, a, d, _i, t in c.gomululer],
             "nesne": [{"kimlik": k, "tur": t, "parca": a} for k, t, a in c.nesneler]}
     (hedef / "paket.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -1115,6 +1644,7 @@ def index_yaz(c: Cikti, kaynak: Path, veri: bytes, hedef: Path, kaynak_say: dict
 MADDE_RE = re.compile(r"\b(K[MGN])-(\d+)(?:\s*(?:\.\.|…|–|—)\s*(?:K[MGN]-)?(\d+))?\b")
 GEREKSINIM_RE = re.compile(r"\b(?:FR|KR)-\d{3}\b")
 SHA_RE = re.compile(r"\bsha256\W{0,3}([0-9a-fA-F]{16,64})\b")
+SEMA_RE = re.compile(r"\bkm\s*[şs]emas[ıi]\W{0,3}(\d+)", re.I)
 
 
 def _norm(s: str) -> str:
@@ -1141,16 +1671,17 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
         meta = json.loads((paket / "paket.json").read_text(encoding="utf-8"))
         tablo_metni = tablo.read_text(encoding="utf-8")
         belge_metni = "\n".join(p.read_text(encoding="utf-8") for p in belgeler)
-        disk, _sorun = diskten_say(paket, meta.get("kaynak", {}).get("tur", ""))
+        disk, _sorun, _pay = diskten_say(paket, meta.get("kaynak", {}).get("tur", ""))
     except (OSError, ValueError) as exc:
         raise Okunamadi(str(exc)) from None
     fail: list[str] = []
     uyari: list[str] = []
     if meta.get("dogrulama", {}).get("sonuc") != "PASS":
         fail.append("paketin kendi doğrulaması PASS değil — önce paketi yeniden çıkar")
-    if disk["km"] != meta.get("km_toplam"):
+    if disk["km"] + disk["km_geri"] != meta.get("km_toplam"):
         fail.append("metin.md'deki KM sayısı (%d) paket.json ile (%s) uyuşmuyor — paket elle değiştirilmiş"
-                    % (disk["km"], meta.get("km_toplam")))
+                    % (disk["km"] + disk["km_geri"], meta.get("km_toplam")))
+    paket_sema = int(meta.get("km_semasi", 1))
     beklenen = {("KM", i) for i in range(1, int(meta.get("km_toplam") or 0) + 1)}
     beklenen |= {(k[:2], int(k[3:])) for k in meta.get("kg", []) + meta.get("kn", [])}
     belge_ids = belge_kimlikleri(belge_metni)
@@ -1197,8 +1728,14 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
     sha_tabloda = [x.lower() for x in SHA_RE.findall(tablo_metni)]
     sha_yanlis = ["tablo: %s · paket: %s" % (", ".join(sha_tabloda), sha[:16])] \
         if sha_tabloda and not any(sha.startswith(x) for x in sha_tabloda) else []
-    sha_yok = ["tablonun başına `Kaynak: %s · sha256 %s` satırını yaz" % (kaynak_bilgi.get("ad", "?"), sha[:16])] \
-        if not sha_tabloda else []
+    sha_yok = ["tablonun başına `Kaynak: %s · sha256 %s · km şeması %d` satırını yaz"
+               % (kaynak_bilgi.get("ad", "?"), sha[:16], paket_sema)] if not sha_tabloda else []
+    sema_tabloda = sorted({int(x) for x in SEMA_RE.findall(tablo_metni)})
+    sema_farkli = ["tablo: km şeması %s · paket: km şeması %d — paketi yeniden çıkar, tabloyu yeniden eşle"
+                   % (", ".join(map(str, sema_tabloda)), paket_sema)] \
+        if sema_tabloda and sema_tabloda != [paket_sema] else []
+    sema_yok = ["tablonun başlık satırına `km şeması %d` ekle — yoksa tablonun hangi numaralandırmayla eşlendiği "
+                "denetlenemez" % paket_sema] if not sema_tabloda else []
     bos_paket = ["paket 0 kaynak maddesi taşıyor — kaynak gerçekten boş mu? INDEX.md kapsam notlarına bak"] \
         if not beklenen else []
     eksik = sorted(beklenen - set(kapsanan))
@@ -1210,7 +1747,7 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
 
     L.append("## İz denetimi — paket `%s` · tablo `%s` · belge %s" % (
         paket.as_posix(), tablo.as_posix(), ", ".join("`%s`" % p.as_posix() for p in belgeler)))
-    L.append("kaynak: %s · sha256 %s" % (kaynak_bilgi.get("ad", "?"), sha[:16]))
+    L.append("kaynak: %s · sha256 %s · km şeması %d" % (kaynak_bilgi.get("ad", "?"), sha[:16], paket_sema))
     L.append("paket maddeleri: %d (KM %d · KG %d · KN %d) · madde anan tablo satırı: %d · kapsanan: %d/%d" % (
         len(beklenen), meta.get("km_toplam") or 0, len(meta.get("kg", [])), len(meta.get("kn", [])), satir_say,
         len(beklenen & set(kapsanan)), len(beklenen)))
@@ -1222,8 +1759,10 @@ def iz_denetle(paket: Path, tablo: Path, belgeler: list[Path]) -> tuple[int, lis
             ("BELGEDE YOK — eşlenen kimlik belgede geçmiyor", belgede_yok, fail),
             ("KAPSAM-DIŞI GEREKÇESİZ — not sütunu boş", gerekcesiz, fail),
             ("BAŞKA KAYNAĞIN TABLOSU — tablodaki sha256 paketin kaynağıyla uyuşmuyor", sha_yanlis, fail),
+            ("NUMARALANDIRMA ŞEMASI FARKLI — paketi yeniden çıkar, tabloyu yeniden eşle", sema_farkli, fail),
             ("UYARI boş paket", bos_paket, uyari),
             ("UYARI tabloda kaynak sha256'sı yok — iz hangi kaynağa ait olduğunu söylemiyor", sha_yok, uyari),
+            ("UYARI tabloda km şeması yok", sema_yok, uyari),
             ("UYARI çift eşleme — aynı madde birden çok satırda",
              ["%s (satır %s)" % (fmt(m), ", ".join(map(str, s))) for m, s in sorted(cift.items())], uyari),
             ("UYARI kaynaksız gereksinim — belgede var, tabloda anılmıyor (danışman önerisi mi? gerekçesi 11-A/EK'te mi?)",
@@ -1265,28 +1804,33 @@ def cikar(a: argparse.Namespace) -> int:
         print(f"[ÖLÇÜLEMEDİ] {kaynak.name}: zip değil — bozuk ya da uzantısı yanlış (eski .doc/.xls olabilir)",
               file=sys.stderr)
         return 2
-    maske = None
+    maske, yapi_kaynak = None, {}
     try:
-        boyut_denetle(z)
+        atla = boyut_denetle(z)
         if uz in (".xlsx", ".xlsm"):
             xl = xlsx_okuyucu()
             if xl is None:
                 print("DESTEKLENMİYOR: xlsx okuyucusu (skills/office-excel/scripts/xlsx_lite.py) bu klonda yok.")
                 return 3
-            c = xlsx_cikar(z, kaynak, xl)
-            kaynak_say, maske = bagimsiz_xlsx(z)
+            c = xlsx_cikar(z, kaynak, xl, atla)
+            kaynak_say, maske, yapi_kaynak = bagimsiz_xlsx(z)
         else:
-            c = docx_cikar(z)
+            c = docx_cikar(z, atla)
             kaynak_say = bagimsiz_docx(z)
+        evren = evren_tara(z, set(atla))
     except Okunamadi as exc:
         print(f"[ÖLÇÜLEMEDİ] {kaynak.name}: {exc}", file=sys.stderr)
         return 2
     kok = Path(a.hedef_kok) if a.hedef_kok else Path.cwd() / ".axet-code" / "tmp"
     hedef = (kok / guvenli_ad(a.id or varsayilan_id(kaynak, veri), "kaynak")).resolve()
     paketi_yaz(c, z, kaynak, veri, hedef)
-    paket_say, sorunlar = diskten_say(hedef, c.tur, maske)
-    farklar = karsilastir(kaynak_say, paket_say) + sorunlar
-    index_yaz(c, kaynak, veri, hedef, kaynak_say, paket_say, farklar)
+    paket_say, sorunlar, pay = diskten_say(hedef, c.tur, maske)
+    parca, parca_fark = parca_hesabi(evren, pay, yapi_kaynak)
+    kaynak_say["parca_metni"] = sum(e["net"] for e in evren.values() if not e["muaf"])
+    paket_say["parca_metni"] = sum(r["yapi"] + r["geri"] for r in parca if not r["sinif"].startswith("muaf"))
+    yok = yok_toplami(evren)
+    farklar = karsilastir(kaynak_say, paket_say) + parca_fark + sorunlar
+    index_yaz(c, kaynak, veri, hedef, kaynak_say, paket_say, farklar, parca, yok)
     print(f"PAKET: {hedef.as_posix()}")
     for k, ad in SAYIM_ADLARI:
         if k in kaynak_say:
@@ -1294,17 +1838,23 @@ def cikar(a: argparse.Namespace) -> int:
                                                        "" if kaynak_say[k] == paket_say.get(k, 0) else "  ← FARKLI"))
     for kid, _ad, dosya, _i, tur in c.gomululer:
         print(f"  {kid}: gomulu/{dosya} — {tur}")
-    for kid, etiket, parca in c.nesneler:
-        print(f"  {kid}: {etiket} — {parca} (metni metin.md'de)")
+    for kid, etiket, parca_adi in c.nesneler:
+        print(f"  {kid}: {etiket} — {parca_adi} (metni metin.md'de)")
+    for pid, parca_adi, kimlikler, notu in c.geri:
+        print(f"  {pid}: geri düşüş — {parca_adi} ({len(kimlikler)} KM; {notu})")
+    for parca_adi in sorted(c.atlanan):
+        print(f"  ÖLÇÜLEMEDİ — boyut: {parca_adi} (dosya çıkarılmadı)")
+    print("  " + yok_satiri(yok))
     try:
         hedef.relative_to(Path.cwd().resolve())
     except ValueError:
         print("UYARI: paket çalışma dizini DIŞINDA — alt ajanın dış okuması izin sorusunda asılı kalabilir; "
               "brife proje içindeki bir yol ver.")
     if farklar:
-        print("DOĞRULAMA: FAIL — " + "; ".join(farklar) + ". Bu paketi brife/yazıma KAYNAK olarak verme.")
+        print("DOĞRULAMA: FAIL — " + "; ".join(farklar) + " · " + yok_satiri(yok)
+              + ". Bu paketi brife/yazıma KAYNAK olarak verme.")
         return 1
-    print(f"DOĞRULAMA: PASS. Yazıma ve brife verilecek yol: {(hedef / 'INDEX.md').as_posix()}")
+    print(f"DOĞRULAMA: PASS · {yok_satiri(yok)}. Yazıma ve brife verilecek yol: {(hedef / 'INDEX.md').as_posix()}")
     return 0
 
 

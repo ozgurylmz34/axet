@@ -161,8 +161,9 @@ varyant, Excel'e aktarma) FS'te gereksinim olarak yazılır; kullanıcı ayrıca
 
 ## 7. Yazım kuralları
 **Yapılır:** her gereksinim test edilebilir · iş kuralı açık ve ölçülebilir ("10.000 kayıtta 3 saniye") · mockup eklenir ·
-kapsam dışı açıkça yazılır · onaysız geliştirme başlatılmaz · gövde = kapanmış hedef durum · belge 150 satırı aşacaksa
-önce iskelet, sonra her bölüm ayrı `edit` çağrısıyla yazılır (çekirdek §10: ~400 satırlık FS tek `write`'ta 504 aldı).
+kapsam dışı açıkça yazılır · onaysız geliştirme başlatılmaz · gövde = kapanmış hedef durum · tek çağrının içeriği
+150 satırı aşacaksa önce iskelet, sonra her bölüm ayrı `edit` çağrısıyla yazılır; 150 satırı aşan tek bölüm de bölünür
+(çekirdek §10: ~400 satırlık FS tek `write`'ta 504 aldı).
 **Büyük/küçük harf:** başlık, menü, içindekiler metinlerinde cümle düzeni; durum/aşama adları başlıkta Baş Harfleri Büyük;
 vurgu amaçlı BÜYÜK sözcük başlıkta yok; gövde ve tablolarda BÜYÜK HARF yalnız ekranda görülen sistem değeri için
 (`DURUM = BEKLEMEDE`). `## BÖLÜM N:` düzeyi büyük, `### x.y` cümle düzeni. Üreteçle yazılan eklerde bu tek bir başlık
