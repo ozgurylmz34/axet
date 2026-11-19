@@ -5240,6 +5240,30 @@
       "cd skills-sap/sap-fs-ts-docs/tests && python run_tests.py -k KaynakKurali",
       "python tests/run_tests.py -k sap_skill_bilgi"
      ]
+    },
+    {
+     "id": "0.5.24-50",
+     "baslik": "Kullanıcı belgeleri: güncelleme sonundaki geçici dizin sorusu, belge okuma sınırları, Word/Excel istekte kaynak paketi ve görsel notları",
+     "tur": "duzeltme",
+     "kritik": false,
+     "neden": "Kullanıcı belgeleri bu yayının değişikliklerine göre güncellendi. README: güncelleme bölümü %guncelle bitince geçici dizinin silinip silinmeyeceğinin bir kez sorulduğunu (yarım kalmış güncellemede sorulmadığını) söyler; Bilinen sınırlar belge okuma araçlarının sınırlarını yazar (aXet.code 1.5.1'de ölçüldü: read_docx görselleri düşürür ve tablo yapısını kaybeder, read_xlsx bazı metin hücrelerini boş getirir, read_pdf metin katmanlı PDF'te de başarısız olabilir, .pptx okuyan araç yok, view BMP/EMF/WMF açmaz, yerleşik görev ajanında okuma araçları yok) ve dört özel SAP alt ajanının Word, Excel ve PDF belgesini proje dışında da sormadan okuduğunu anlatır; Gereksinimler'de Pillow'un Word isteğindeki EMF/WMF/BMP görselini PNG'ye çevirmek için de kullanıldığı yazar. Kurulum rehberi (docs/onboarding.md) Word/Excel istekte kaynak paketi akışını ve güncelleme sonundaki soruyu anlatır; SAP skill listesi talep alımında kaynak paketini ve FS yazımında görsel notlarını anar. Kod davranışı değişmedi.",
+     "dosyalar": [
+      "README.md",
+      "docs/onboarding.md",
+      "skills-sap/README.md"
+     ],
+     "gerektirir": [
+      "0.5.24-02",
+      "0.5.24-04",
+      "0.5.24-06",
+      "0.5.24-27",
+      "0.5.24-40",
+      "0.5.24-41"
+     ],
+     "test": [
+      "python tests/run_tests.py -k readme",
+      "python tests/run_tests.py -k onboarding"
+     ]
     }
    ]
   }
