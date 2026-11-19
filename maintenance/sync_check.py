@@ -425,6 +425,15 @@ def _yazilmadi(mesaj: str, json_kipi: bool) -> None:
     print(("" if json_kipi else "\n") + mesaj, file=sys.stderr if json_kipi else sys.stdout)
 
 
+def _erken_hata(mesaj: str, json_kipi: bool) -> None:
+    """Z214: rapor basılmadan ÖNCE düşen hata. `--json` kipinde stdout yalnız geçerli JSON taşır (`{"hata": …}`)
+    — tüketen araç ayrıştırabilsin; düz kipte mesaj eskisi gibi stdout'a düz metin."""
+    if json_kipi:
+        print(json.dumps({"hata": mesaj}, ensure_ascii=False))
+    else:
+        print(mesaj)
+
+
 def kimlik_denetle_cli(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="aXet kimlik hizası denetimi (kayıt dosyasına karşı; çekirdeğe erişmez)")
     ap.add_argument("--kimlik-denetle", action="store_true")
@@ -470,21 +479,26 @@ def main() -> int:
                     help="DEV_CORE kaynağından maintenance/kimlik-kaydi.json üret (Z206)")
     args = ap.parse_args()
     if not args.source:
-        print("HATA: en az bir --source AD=YOL ver (ör. --source DEV_CORE=D:/repos/DEV_CORE).")
+        _erken_hata("HATA: en az bir --source AD=YOL ver (ör. --source DEV_CORE=D:/repos/DEV_CORE).", args.json)
         return 3
     if args.kimlik_kaydi and not any(s.partition("=")[0] == CEKIRDEK_KAYNAK for s in args.source):
-        print(f"HATA: --kimlik-kaydi için --source {CEKIRDEK_KAYNAK}=<yol> gerekir.")
+        _erken_hata(f"HATA: --kimlik-kaydi için --source {CEKIRDEK_KAYNAK}=<yol> gerekir.", args.json)
         return 3
 
-    data = json.loads(RULES_FILE.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(RULES_FILE.read_text(encoding="utf-8"))
+        lock = json.loads(LOCK_FILE.read_text(encoding="utf-8")) if LOCK_FILE.exists() else {"sources": {}}
+    except (OSError, ValueError) as exc:
+        _erken_hata(f"HATA: kural/kilit dosyası okunamadı: {exc}", args.json)
+        return 3
     if args.update_lock and CEKIRDEK_KAYNAK not in (data.get("sources") or {}):
         # Sabit ile kural dosyası ayrışırsa çekirdek raporu hiç bulunmaz ⇒ kilit yazılır, kayıt sessizce yazılmazdı.
-        _yazilmadi(f"--update-lock YAPILMADI: çekirdek kaynak adı ({CEKIRDEK_KAYNAK}) {RULES_FILE.name} 'sources' "
-                   "içinde yok — CEKIRDEK_KAYNAK ile kural dosyası ayrışmış; kilit ve kimlik kaydı yazılmadı.", args.json)
+        mesaj = (f"--update-lock YAPILMADI: çekirdek kaynak adı ({CEKIRDEK_KAYNAK}) {RULES_FILE.name} 'sources' "
+                 "içinde yok — CEKIRDEK_KAYNAK ile kural dosyası ayrışmış; kilit ve kimlik kaydı yazılmadı.")
+        (_erken_hata if args.json else _yazilmadi)(mesaj, args.json)
         return 3
     problems = validate(data)
     rules = data["rules"]
-    lock = json.loads(LOCK_FILE.read_text(encoding="utf-8")) if LOCK_FILE.exists() else {"sources": {}}
 
     report: dict = {"sources": {}, "rule_problems": problems}
     new_lock_sources: dict = {}
@@ -494,7 +508,8 @@ def main() -> int:
     for spec in args.source:
         name, sep, raw = spec.partition("=")
         if not sep or name not in (data.get("sources") or {}):
-            print(f"HATA: --source biçimi AD=YOL olmalı ve AD sync-rules.json 'sources' içinde olmalı: {spec!r}")
+            _erken_hata(f"HATA: --source biçimi AD=YOL olmalı ve AD sync-rules.json 'sources' içinde olmalı: {spec!r}",
+                        args.json)
             return 3
         src = Path(raw).resolve()
         try:
@@ -502,7 +517,7 @@ def main() -> int:
             commit = git(src, "rev-parse", "HEAD").strip()
             dirty = bool(git(src, "status", "--porcelain").strip())
         except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-            print(f"HATA: {name} git okunamadı ({src}): {exc}")
+            _erken_hata(f"HATA: {name} git okunamadı ({src}): {exc}", args.json)
             return 3
         checked_sources.add(name)
         locked = (lock.get("sources") or {}).get(name) or {}
@@ -571,7 +586,8 @@ def main() -> int:
         except ValueError as exc:
             report["kimlik_uyumu"] = {"olculemedi": str(exc)}
     if args.kimlik_kaydi and kimlik_kaydi_canli is None:
-        _yazilmadi(f"HATA: kimlik kaydı üretilemedi — {report['kimlik_uyumu']['olculemedi']}", args.json)
+        (_erken_hata if args.json else _yazilmadi)(  # Z214: rapor henüz basılmadı ⇒ --json'da stdout JSON
+            f"HATA: kimlik kaydı üretilemedi — {report['kimlik_uyumu']['olculemedi']}", args.json)
         return 3
 
     if args.json:

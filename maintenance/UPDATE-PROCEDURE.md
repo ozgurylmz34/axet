@@ -68,7 +68,7 @@ python maintenance\sync_check.py --source DEV_CORE=<DEV_CORE klonu> --source PRO
 2. `python scripts\doctor.py` (frontmatter, çekirdek boyutu, damga/kanonik bütünlük, davranış yüzeyi) — 0 FAIL.
 3. Değişen skill'in testleri (ör. `python skills-sap\sap-adt-foundation\tests\run_tests.py`, `skills-sap\sap-fs-ts-docs\tests\run_tests.py`).
 4. Davranış değiştiyse `_lab`'da ölçüm ve `docs/axet-davranis-olcumleri.md` güncellemesi.
-   **Lab kapanışı (Z162 ⓔ②):** lab bir tüketici klonuna (merkezi `%USERPROFILE%xet` dahil) dokunduysa
+   **Lab kapanışı (Z162 ⓔ②):** lab bir tüketici klonuna (merkezi `%USERPROFILE%\axet` dahil) dokunduysa
    `git -C <klon> status --short` ve `git -C <klon> diff --stat <son-etiket>` **BOŞ** ölçülmeden lab kapanmaz.
    *Vaka (2026-09-27):* klonda kalan tek bir lab artığı (`skills-sap/sap-dev/SKILL.md`) güncellemede yargı vakası
    sayıldı, CI ikamesini kapattı ve tam takımlar yerelde koşmaya başladı (11 dk sonra hâlâ sürüyordu); artık
@@ -113,10 +113,12 @@ Otomatik kurulum yok.
 ## 8. Template repo işletimi (sürüm, geri dönüş, onarım)
 - **Yazma disiplini:** template reposuna doğrudan `main` commit'i yok; dal + PR (barındırma/CI kararı verilene kadar
   en az yerel pre-commit + `doctor.py` 0 FAIL + değişen skill testleri). Kişi/müşteri/host izi taşıyan içerik girmez (§4).
-- **Bilinen-iyi sürüm etiketi:** her doğrulanmış kapanışta `stable` etiketi ilerletilir (remote varsa yalnız bakımcı:
-  `git tag -f stable` → `git push -f origin stable`; etiket koruması barındırma tarafında açılır).
-- **Geri dönüş:** template bir oturumu bozuyorsa kullanıcı merkezi klonu bilinen-iyiye çeker: `git -C <klon> fetch --tags`
-  → `git -C <klon> checkout stable`. Tüm projeler aynı klonu okuduğu için hepsi birlikte döner; onarımdan sonra
+- **Bilinen-iyi sürüm = son doğrulanmış yayın etiketi (`v0.5.x`).** Ayrı bir `stable` etiketi YOKTUR ve ilerletilmez
+  (kullanıcı kararı 2026-11-19, Z243: public ve private depoda hiç kurulmamıştı; her yayın zaten değişmez bir `v0.5.x`
+  etiketi taşır, ikinci bir hareketli etiket zorla push ister ve bakımı unutulur).
+- **Geri dönüş:** template bir oturumu bozuyorsa kullanıcı merkezi klonu son doğrulanmış yayına çeker:
+  `git -C <klon> fetch --tags` → `git -C <klon> checkout v0.5.x` (`x` = sorundan önceki, sorunsuz çalıştığı bilinen
+  yayın; `CHANGELOG.md` sırası). Tüm projeler aynı klonu okuduğu için hepsi birlikte döner; onarımdan sonra
   `git -C <klon> switch main`. Global config yolları değişmediği sürece `install.py` tekrar gerekmez.
 - **Güncelleme tek yerden iner:** `git -C <klon> pull` (kullanıcı akışı `%guncelle`); kurallar ve skill'ler klondan okunur. Projelerde
   yalnız şablondan üretilmiş kopyalar vardır (`AGENTS.md`, `.githooks`, denylist, `scripts/validators-local/` …) — onları
