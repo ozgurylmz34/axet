@@ -31,19 +31,33 @@ Kullanıcının isteği `.docx`/`.xlsx` olarak geldiyse oturumun **ilk** işi ka
 inceleyici aynı paketi okur. Kaynak metni model yeniden yazmaz, özetini kaynağın yerine koymaz.
 ```
 python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py cikar <istek.docx|.xlsx>
-      → <proje>/.axet-code/tmp/<ad>-<özet8>/  INDEX.md · metin.md · media/ · gomulu/ · paket.json
-python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> --tablo <paket>/iz-<belge no>.md --belge <FS.md>
+      → <proje>/.axet-code/tmp/<ad>-<özet8>/  INDEX.md · metin.md · media/ · gomulu/ · paket.json   (git dışı)
+python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> \
+      --tablo <source_root>/<MODÜL>/<PAKET>/ref_docs/iz-<belge no>.md --belge <FS.md>
 ```
-- **Paket:** `metin.md` kaynağın tam metnidir, sırası korunur; her başlık, paragraf ve metinli tablo satırı bir
-  **kaynak maddesi** `KM-nnnn`, her görsel `KG-nn`, her gömülü nesne `KN-nn` (OLE paket nesnesinin asıl dosyası — ör.
-  danışmanın HTML ekran prototipi —, OLE içindeki Excel/Word, altChunk; tanınmayan ham kopyalanır ve INDEX'te
-  "TANINMADI" yazar). `INDEX.md` kaynağın ayrı kodla yapılan sayımını diskteki paketle karşılaştırır: **DOĞRULAMA FAIL
-  olan paket kullanılmaz.** Çıkış `3` = biçim desteklenmiyor (`.pdf`, `.doc`, `.xls`): kullanıcıdan `.docx`/`.xlsx`
-  hâlini iste; olmuyorsa kaynak izi "ÖLÇÜLEMEDİ" kalır, metni elle yazıp paket gibi sunma.
-- **Kapsam dışı (INDEX'te yazar):** üst/altbilgi, dipnot, yorum, Word'ün otomatik numaraları, gömülü dosyanın ve
-  görselin içindeki metin. Gömülü HTML prototip tarayıcıda açılır; ekranı `capture_kd_screens.js` `file://` adresinden çeker.
-- **İz tablosu** (paket klasöründe `iz-<belge no>.md`; FS gövdesine girmez — İlke 2b). Her kaynak maddesi bir satırda;
-  aralık yazılabilir (`KM-0004..KM-0009`):
+- **Paket:** `metin.md` kaynağın **çıkarım kapsamındaki** metnidir, sırası korunur; her başlık, paragraf ve metinli
+  tablo satırı bir **kaynak maddesi** `KM-nnnn`. Metin kutusunun paragraf ve tabloları bulunduğu paragrafın satırına,
+  iç içe tablo hücre metnine düzleşir; denklem metni satır içinde `⟦denklem⟧` işaretiyle durur. SmartArt (`D01`) ve
+  grafik (`G01`; başlık, seri, kategori ve değer metni) kendi KM satırındadır; xlsx'te çizimdeki metin kutuları
+  (`K01`) de. Her görsel `KG-nn`, her gömülü nesne `KN-nn` (OLE paket nesnesinin asıl dosyası — ör. danışmanın HTML
+  ekran prototipi —, OLE içindeki Excel/Word, altChunk; tanınmayan ya da bozuk nesne ham kopyalanır ve INDEX'te
+  "TANINMADI" yazar). `INDEX.md` kaynağın ayrı kodla yapılan sayımını (madde, başlık, tablo, satır, karakter, denklem,
+  SmartArt, grafik, metin kutusu, nesne metni karakteri, görsel, gömülü nesne; xlsx'te karakter yalnız metin
+  hücrelerinden) diskteki paketle karşılaştırır: **DOĞRULAMA FAIL olan paket kullanılmaz.** Çıkış `2` = okunamadı ya
+  da boyut sınırı (zip üyesi 100 MiB, açılmış toplam 512 MiB) aşıldı; çıkış `3` = biçim desteklenmiyor (`.pdf`,
+  `.doc`, `.xls`): kullanıcıdan `.docx`/`.xlsx` hâlini iste; olmuyorsa kaynak izi "ÖLÇÜLEMEDİ" kalır, metni elle yazıp
+  paket gibi sunma.
+- **Kapsam dışı (INDEX'te yazar):** üst/altbilgi, dipnot, yorum, izlenen değişiklikte silinen metin, Word'ün otomatik
+  numaraları, gömülü dosyanın ve görselin içindeki metin, metin taşımayan çizim öğeleri, xlsx'te sayı/tarih hücresinin
+  biçimli gösterimi (satırda durur, karakter sayımına girmez) ve nesnenin hangi hücrede durduğu. Gömülü HTML prototip
+  tarayıcıda açılır; ekranı `capture_kd_screens.js` `file://` adresinden çeker.
+- **İz tablosu** git'te izlenen yerde durur: kaynak paketinin yanında değil, FS'in SAP paket klasöründe
+  `ref_docs/iz-<belge no>.md` (kaynak ve dönüşüm belgelerinin yeri; FS gövdesine girmez — İlke 2b). Ölçüldü: proje
+  şablonunun `.gitignore`'larıyla `git check-ignore` bu yolu izler, `.axet-code/tmp/**`'yu yok sayar. Kaynak paketi
+  git dışıdır; aynı kaynaktan
+  `cikar` aynı kimliklerle yeniden üretir. Bu yüzden tablonun ilk satırı kaynağı adlandırır:
+  `Kaynak: <dosya adı> · sha256 <ilk 16 hane>` (`iz` çıktısının `kaynak:` satırından kopyalanır). Her kaynak maddesi
+  bir satırda; aralık yazılabilir (`KM-0004..KM-0009`):
 
 | Kaynak | Belge kimliği | Not |
 |---|---|---|
@@ -56,9 +70,10 @@ python <TEMPLATE>/skills-sap/sap-fs-ts-docs/scripts/kaynak_paketi.py iz <paket> 
 
   `BİLGİ` = gereksinim taşımayan madde · `KAPSAM-DIŞI` = bilerek alınmayan madde, gerekçe zorunlu. Geri kalan her
   satır belgede gerçekten geçen kimlik(ler)e bağlanır. `iz` denetimi: tabloda olmayan madde · pakette olmayan madde ·
-  boş eşleme · belgede olmayan kimlik · gerekçesiz KAPSAM-DIŞI = **FAIL**; aynı madde iki satırda ve belgede olup
-  tabloda anılmayan FR/KR = UYARI. **Ölçmedikleri:** eşlemenin anlamca doğruluğu ve BİLGİ/KAPSAM-DIŞI işaretinin
-  haklılığı — inceleyici bunları okur (`doc-checklist.md` §E "İZ TABLOSUNA DAYALI İNCELEME", AX-DOC-CR-06).
+  boş eşleme · belgede olmayan kimlik · gerekçesiz KAPSAM-DIŞI · tablodaki sha256'nın paketin kaynağıyla uyuşmaması =
+  **FAIL**; aynı madde iki satırda, belgede olup tabloda anılmayan FR/KR, boş paket (0 madde) ve sha256'sız tablo =
+  UYARI. **Ölçmedikleri:** eşlemenin anlamca doğruluğu ve BİLGİ/KAPSAM-DIŞI işaretinin haklılığı — inceleyici bunları
+  okur (`doc-checklist.md` §E "İZ TABLOSUNA DAYALI İNCELEME", AX-DOC-CR-06).
 - TS için kaynak FS'in kendisidir: §2 matrisi FS'in her FR/KR'sini satır olarak taşır, iz tablosu yerine geçer.
 
 ## 3. Değişiklik kuralları

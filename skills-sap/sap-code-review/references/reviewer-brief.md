@@ -19,7 +19,8 @@ SİSTEMDE KALAN DOĞRULAMALAR + tek KARAR (§8).
 
 ## 2. BAĞLAM (konuşmayı ve proje kurallarını görmüyorsun; bilmen gerekenler burada)
 - Değişikliğin amacı / spesifikasyon: <SPEC dosya:satır ya da kullanıcı isteğinin metni> — istek `.docx`/`.xlsx`/`.pdf`
-  ise yolunu VERME (alt ajan ikili dosyayı okuyamaz, ölçüldü); `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
+  ise yolunu VERME (`view` ikili `.docx`'i açmadı, alt ajan okuyamadı — ölçüldü, tek oturum; başka okuma aracına
+  erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi); `%sap-fs-ts-docs` kaynak paketinin proje içi yolunu ver
   (`.axet-code/tmp/<id>/INDEX.md` · `metin.md`; `references/traceability.md` §2-B)
 - Değişen dosyalar ve diff: <git diff özeti · dosya:satır aralıkları>
 - Canlı kaynak çekimi: <obje · adt_get include_source=true · zaman> | "çekilmedi — ilk iş olarak çek"

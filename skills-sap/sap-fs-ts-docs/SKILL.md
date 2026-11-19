@@ -77,8 +77,8 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 1. Girdileri oku; şablonun bölüm yapısını ve istenen kapsamı kullanıcıya bir paragrafta geri söyle.
 2. Girdi yetersizse **dur**: eksikleri araştırmayla bilgilendirilmiş sorulara çevir, **tek seferde, seçenekli ve önerili**
    `ask_user` ile sor; yanıt gelmeden tam FS üretme. Kullanıcı "taslak olarak ilerle" derse boşluklar `[Varsayım]` etiketiyle.
-3. Şablonu bölüm bölüm doldur — önce iskelet (başlıklar), sonra **her bölüm ayrı bir `edit` çağrısıyla** (çekirdek §10:
-   tek çağrıda uzun içerik model ağ geçidinde 504 aldı). Kullanıcının yazdığı her istek bir FR/KR'ye izlenebilir (İlke 1);
+3. Şablonu bölüm bölüm doldur — belge 150 satırı aşacaksa önce iskelet (başlıklar), sonra **her bölüm ayrı bir `edit`
+   çağrısıyla** (çekirdek §10: tek çağrıda uzun içerik model ağ geçidinde 504 aldı). Kullanıcının yazdığı her istek bir FR/KR'ye izlenebilir (İlke 1);
    kaynak paketi varsa iz tablosunu bölümlerle birlikte doldur. Danışman katkısı `[Öneri]` → §11-A; karar verilemeyen
    nokta seçenek + öneri ile → §11-B (İlke 2). Gövdede süreç/sürüm anlatısı yok (İlke 2b).
 4. (kaynak paketi varsa) `kaynak_paketi.py iz` **PASS** → §4 kontrol listesi + bağımsız inceleme (§5 aşağıda; iz tablosu
@@ -111,7 +111,8 @@ başta **KAPSAM** satırı basar (neye baktığı / bakmadığı); "0 bulgu" yal
 2. `agent` aracıyla taze bir inceleyici çalıştır. Alt ajan skill dosyalarını ve konuşmayı **görmez** (ölçüldü): brifinge
    `references/doc-checklist.md` §E bloğunu, ilgili tip bölümünün (§A KD · §B FS · §C TS) ve §D çapraz kontrollerin
    **metnini yapıştır**; dokümanın yolunu ve (varsa) HTML/PDF/ekran görüntüsü yollarını ver. İkili kaynağın (`.docx`/
-   `.xlsx`/`.pdf`) yolunu verme: alt ajan okuyamaz (ölçüldü) — kaynak paketinin ve iz tablosunun yolunu ver (§E).
+   `.xlsx`/`.pdf`) yolunu verme: `view` ikili `.docx`'i açmadı, alt ajan okuyamadı (ölçüldü, tek oturum; başka okuma
+   aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi) — kaynak paketinin ve iz tablosunun yolunu ver (§E).
 3. Dönen her BLOCKER'ı kendin dokümanda okuyarak doğrula; doğrulanamayanı NOT'a indir.
 4. Düzeltme turu **ikinci kapıdan** geçmeden kapanmaz: dar kapsam (değişen satırlar + değişen sayı/adın diğer geçtiği
    yerler + kararın yayılım listesi), **başka** bir taze inceleyiciyle.

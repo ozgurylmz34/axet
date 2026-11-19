@@ -99,9 +99,10 @@ inceleme yorgunluğu doğar ve kapı mekanik onaya döner.
 Alt ajan bu dosyayı, skill'i, çekirdek kuralları ve konuşmayı **görmez**; aşağıdaki `<…>` yerlerine ilgili bölümlerin
 **metnini** yapıştır. Genel kanıt ve çıktı bölümleri için `skills/explore/references/brief-template.md` §5/§7/§8 eklenebilir.
 
-**İkili kaynak brife YOL olarak verilmez.** Girdi `.docx`/`.xlsx`/`.pdf` ise alt ajan onu okuyamaz (ölçüldü: `view` →
-"File appears to be binary", ajan ~20 dk dolambaçlı aramayla belgeyi okumaya çalıştı) ve proje dışındaki yol izin
-sorusunda asılı kalabilir. Brife **kaynak paketinin** proje içindeki yolu verilir (`.axet-code/tmp/<id>/INDEX.md`,
+**İkili kaynak brife YOL olarak verilmez.** Girdi `.docx`/`.xlsx`/`.pdf` ise yolu verilmez: `view` ikili `.docx`'i açmadı
+("File appears to be binary"), alt ajan okuyamadı ve ~20 dk dolambaçlı aramayla okumaya çalıştı (ölçüldü, tek oturum;
+alt ajanın başka okuma aracına erişimi ölçülmedi; `.xlsx`/`.pdf` denenmedi). Proje dışındaki yol izin sorusunda asılı
+kalabilir. Brife **kaynak paketinin** proje içindeki yolu verilir (`.axet-code/tmp/<id>/INDEX.md`,
 `kaynak_paketi.py cikar` — `traceability.md` §2-B). Kaynak metnini kendin yazıp dosyaya koyma: model yeniden yazınca
 kısaltır (ölçüldü: 21 test satırı → 13, bir başlık düştü). Paket `.pdf` için üretilemez → brife "kaynak: PDF, paket yok,
 kaynak izi ÖLÇÜLEMEDİ" yaz.
@@ -112,7 +113,7 @@ Hiçbir dosyayı değiştirme, yazan komut çalıştırma, SAP'ye bağlanma.
 DOKÜMAN: <md yolu>  ·  ÜRETİLEN: <html / pdf / screenshots klasörü yolları | yok>
 İLGİLİ DOKÜMANLAR: <FS no/yolu ↔ TS no/yolu ↔ KD no/yolu | yok>
 KAYNAK PAKETİ: <proje içi .axet-code/tmp/<id>/INDEX.md (metin.md · media/ · gomulu/) | kaynak md yolu | yok>
-İZ TABLOSU: <iz-<belge no>.md yolu + `kaynak_paketi.py iz` çıktısı | yok>
+İZ TABLOSU: <<source_root>/<MODÜL>/<PAKET>/ref_docs/iz-<belge no>.md + `kaynak_paketi.py iz` çıktısı | yok>
 KANIT EKLERİ: <canlı teyit turu raporu | denklik raporu | ekran envanteri eşleme tablosu | yok>
 BU TUR: <ilk inceleme | İZ TABLOSUNA DAYALI İNCELEME | İKİNCİ KAPI — yalnız: değişen satırlar <liste>,
         değişen sayı/adlar <liste>, yayılım listesi <liste>>
